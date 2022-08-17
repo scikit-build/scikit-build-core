@@ -1,0 +1,96 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scikit_build_core"
+authors = [
+    { name = "Henry Schreiner", email = "henryfs@princeton.edu" },
+]
+description = "PEP 517 builder for Scikit-Build"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Development Status :: 1 - Planning",
+]
+
+dynamic = ["version"]
+
+dependencies = [
+    "typing_extensions >=3.7; python_version<'3.8'",
+    "packaging",  # TODO: set a min version
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest >=7",
+]
+dev = [
+    "pytest >=7",
+]
+docs = [
+    "Sphinx>=4.0",
+    "myst_parser>=0.13",
+    "furo",
+    "sphinx_copybutton",
+]
+
+[project.urls]
+homepage = "https://github.com/scikit-build/scikit-build-core"
+
+
+[tool.hatch]
+version.path = "src/scikit_build_core/__init__.py"
+
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = ["error"]
+log_cli_level = "info"
+testpaths = [
+    "tests",
+]
+
+
+[tool.mypy]
+files = "src"
+python_version = "3.7"
+warn_unused_configs = true
+strict = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["cmake", "ninja"]
+ignore_missing_imports = true
+
+
+[tool.isort]
+profile = "black"
+
+
+[tool.pylint]
+master.py-version = "3.7"
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.disable = [
+  "design",
+  "fixme",
+  "line-too-long",
+  "wrong-import-position",
+]
