@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pathlib
 import shutil
 import subprocess
@@ -52,12 +53,13 @@ class CMake:
 
 
 class CMakeConfig:
-    __slots__ = ("cmake", "source_dir", "build_dir")
+    __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file")
 
     def __init__(self, cmake: CMake, *, source_dir: Path, build_dir: Path) -> None:
         self.cmake = cmake
         self.source_dir = source_dir
         self.build_dir = build_dir
+        self.init_cache_file = self.build_dir / "CMakeInit.txt"
 
         if not self.source_dir.is_dir():
             raise CMakeConfigError(f"source directory {self.source_dir} does not exist")
@@ -68,6 +70,19 @@ class CMakeConfig:
                 f"build directory {self.build} must be a (creatable) directory"
             )
 
+    def init_cache(
+        self, cache_settings: dict[str, str | os.PathLike[str] | bool]
+    ) -> None:
+        with self.init_cache_file.open("w", encoding="utf-8") as f:
+            for key, value in cache_settings.items():
+                if isinstance(value, bool):
+                    value = "ON" if value else "OFF"
+                    f.write(f'set({key} "{value}" CACHE BOOL "")\n')
+                elif isinstance(value, os.PathLike):
+                    f.write(f'set({key} "{value}" CACHE PATH "")\n')
+                else:
+                    f.write(f'set({key} "{value}" CACHE STRING "")\n')
+
     def configure(self) -> None:
         cmake_args = [
             f"-B{self.build_dir}",
@@ -77,6 +92,9 @@ class CMakeConfig:
         if not sys.platform.startswith("win32"):
             logger.debug("Selecting Ninja; other generators currently unsupported")
             cmake_args.append("-GNinja")
+
+        if self.init_cache_file.is_file():
+            cmake_args.append(f"-C{self.init_cache_file}")
 
         try:
             Run().live(self.cmake.cmake_path, *cmake_args)

@@ -24,8 +24,12 @@ def test_simple_pure(tmp_path):
 
     if not sys.platform.startswith("win32"):
         result = subprocess.run(
-            [str(build_dir / "simple_pure")], capture_output=True, text=True, check=True
+            [str(build_dir / "simple_pure")],
+            capture_output=True,
+            text=True,
+            check=False,
         )
+        assert result.returncode == 0
         assert result.stdout == "0 one 2 three \n"
 
     config.install(install_dir)
@@ -34,6 +38,22 @@ def test_simple_pure(tmp_path):
         [str(install_dir / "bin/simple_pure")],
         capture_output=True,
         text=True,
-        check=True,
+        check=False,
     )
+    assert result.returncode == 0
     assert result.stdout == "0 one 2 three \n"
+
+
+def test_variable_defined(tmp_path, capfd):
+    build_dir = tmp_path / "build"
+
+    cmake = CMake(minimum_version="3.15")
+    config = CMakeConfig(
+        cmake,
+        source_dir=DIR / "simple_pure",
+        build_dir=build_dir,
+    )
+    config.init_cache({"SKBUILD": True})
+    config.configure()
+
+    assert "SKBUILD is defined to ON" in capfd.readouterr().out

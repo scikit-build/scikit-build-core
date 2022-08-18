@@ -4,12 +4,14 @@
 [![Documentation Status][rtd-badge]][rtd-link]
 [![Code style: black][black-badge]][black-link]
 
+<!-- Not implemented yet
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 [![Gitter][gitter-badge]][gitter-link]
+-->
 
 The following limitations are present compared to classic scikit-build:
 
@@ -51,8 +53,8 @@ config.install(prefix)
 Works.
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/scikit-build/scikit-build-core/workflows/CI/badge.svg
-[actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
+[actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg
+[actions-link]:             https://github.com/henryiii/scikit-build-core/actions
 [black-badge]:              https://img.shields.io/badge/code%20style-black-000000.svg
 [black-link]:               https://github.com/psf/black
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core

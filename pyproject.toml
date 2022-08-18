@@ -90,6 +90,7 @@ profile = "black"
 master.py-version = "3.7"
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
+good-names = ["f",]
 messages_control.disable = [
   "design",
   "fixme",

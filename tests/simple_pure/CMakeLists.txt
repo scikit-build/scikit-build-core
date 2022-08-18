@@ -7,3 +7,7 @@ add_executable(simple_pure simple_pure.cpp)
 target_compile_features(simple_pure PUBLIC cxx_std_17)
 
 install(TARGETS simple_pure)
+
+if(DEFINED SKBUILD)
+    message(STATUS "SKBUILD is defined to ${SKBUILD}")
+endif()
