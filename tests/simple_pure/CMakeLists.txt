@@ -11,3 +11,7 @@ install(TARGETS simple_pure)
 if(DEFINED SKBUILD)
     message(STATUS "SKBUILD is defined to ${SKBUILD}")
 endif()
+
+if(DEFINED SKBUILD2)
+    message(STATUS "SKBUILD2 is defined to ${SKBUILD2}")
+endif()

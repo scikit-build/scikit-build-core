@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from packaging.version import Version
@@ -13,11 +14,28 @@ from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeAccessError, CMakeConfigError, FailedLiveProcessError
 
-__all__ = ["CMake", "CMakeConfig"]
+__all__ = ["CMake", "CMakeConfig", "get_cmake_path"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def get_cmake_path() -> Path:
+    """
+    Get the path to CMake.
+    """
+    try:
+        import cmake
+
+        return pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
+    except ImportError:
+        cmake_path = shutil.which("cmake")
+        if cmake_path is not None:
+            return pathlib.Path(cmake_path).resolve()
+
+        msg = "cmake package missing and cmake command not found on path"
+        raise RuntimeError(msg) from None
 
 
 class CMake:
@@ -25,18 +43,7 @@ class CMake:
 
     # TODO: add option to control search order, etc.
     def __init__(self, *, minimum_version: str | None = None) -> None:
-        try:
-            import cmake
-
-            self.cmake_path = pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
-        except ImportError:
-            cmake_path = shutil.which("cmake")
-            if cmake_path is not None:
-                self.cmake_path = pathlib.Path(cmake_path).resolve()
-            else:
-                raise RuntimeError(
-                    "cmake package missing and cmake command not found on path"
-                ) from None
+        self.cmake_path = get_cmake_path()
 
         try:
             result = Run().capture(self.cmake_path, "--version")
@@ -71,7 +78,7 @@ class CMakeConfig:
             )
 
     def init_cache(
-        self, cache_settings: dict[str, str | os.PathLike[str] | bool]
+        self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
     ) -> None:
         with self.init_cache_file.open("w", encoding="utf-8") as f:
             for key, value in cache_settings.items():
@@ -83,21 +90,39 @@ class CMakeConfig:
                 else:
                     f.write(f'set({key} "{value}" CACHE STRING "")\n')
 
-    def configure(self) -> None:
-        cmake_args = [
-            f"-B{self.build_dir}",
+    def configure(
+        self,
+        settings: Mapping[str, str | os.PathLike[str] | bool] | None = None,
+        *,
+        cmake_args: list[str] | None = None,
+    ) -> None:
+        settings = settings or {}
+
+        _cmake_args = [
             f"-S{self.source_dir}",
+            f"-B{self.build_dir}",
         ]
+
+        if self.init_cache_file.is_file():
+            _cmake_args.append(f"-C{self.init_cache_file}")
 
         if not sys.platform.startswith("win32"):
             logger.debug("Selecting Ninja; other generators currently unsupported")
-            cmake_args.append("-GNinja")
+            _cmake_args.append("-GNinja")
 
-        if self.init_cache_file.is_file():
-            cmake_args.append(f"-C{self.init_cache_file}")
+        for key, value in settings.items():
+            if isinstance(value, bool):
+                value = "ON" if value else "OFF"
+                _cmake_args.append(f"-D{key}:BOOL={value}")
+            elif isinstance(value, os.PathLike):
+                _cmake_args.append(f"-D{key}:PATH={value}")
+            else:
+                _cmake_args.append(f"-D{key}={value}")
+
+        _cmake_args += cmake_args or []
 
         try:
-            Run().live(self.cmake.cmake_path, *cmake_args)
+            Run().live(self.cmake.cmake_path, *_cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None

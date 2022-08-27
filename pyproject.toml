@@ -38,6 +38,7 @@ test = [
     "cmake",
     "ninja; platform_system!='Windows'",
     "pytest >=7",
+    "pytest-subprocess",
 ]
 dev = [
     "pytest >=7",

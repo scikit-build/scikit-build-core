@@ -54,6 +54,8 @@ def test_variable_defined(tmp_path, capfd):
         build_dir=build_dir,
     )
     config.init_cache({"SKBUILD": True})
-    config.configure()
+    config.configure({"SKBUILD2": True})
 
-    assert "SKBUILD is defined to ON" in capfd.readouterr().out
+    out = capfd.readouterr().out
+    assert "SKBUILD is defined to ON" in out
+    assert "SKBUILD2 is defined to ON" in out
