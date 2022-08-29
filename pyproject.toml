@@ -42,6 +42,7 @@ test = [
 ]
 dev = [
     "pytest >=7",
+    "rich",
 ]
 docs = [
     "Sphinx>=4.0",

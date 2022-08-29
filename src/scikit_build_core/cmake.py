@@ -13,6 +13,7 @@ from packaging.version import Version
 from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeAccessError, CMakeConfigError, FailedLiveProcessError
+from .file_api import Index, get_index
 
 __all__ = ["CMake", "CMakeConfig", "get_cmake_path"]
 
@@ -64,6 +65,10 @@ class CMake:
 
 class CMakeConfig:
     __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file")
+
+    @property
+    def api_dir(self) -> Path:
+        return self.build_dir / ".cmake/api/v1"
 
     def __init__(self, cmake: CMake, *, source_dir: Path, build_dir: Path) -> None:
         self.cmake = cmake
@@ -124,11 +129,20 @@ class CMakeConfig:
 
         _cmake_args += cmake_args or []
 
+        query_dir = self.api_dir / "query"
+        query_dir.mkdir(parents=True)
+        query_dir.joinpath("codemodel-v2").touch()
+
         try:
             Run().live(self.cmake, *_cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
+
+    def get_index(self) -> Index:
+        reply_dir = self.api_dir / "reply"
+        assert reply_dir.is_dir(), "Must be run after .configure()"
+        return get_index(reply_dir)
 
     def build(self) -> None:
         opts: dict[str, str] = {}

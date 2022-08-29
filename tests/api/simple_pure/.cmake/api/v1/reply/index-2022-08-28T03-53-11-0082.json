@@ -1,0 +1,51 @@
+{
+	"cmake" : 
+	{
+		"generator" : 
+		{
+			"multiConfig" : false,
+			"name" : "Ninja"
+		},
+		"paths" : 
+		{
+			"cmake" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/.venv/lib/python3.10/site-packages/cmake/data/CMake.app/Contents/bin/cmake",
+			"cpack" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/.venv/lib/python3.10/site-packages/cmake/data/CMake.app/Contents/bin/cpack",
+			"ctest" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/.venv/lib/python3.10/site-packages/cmake/data/CMake.app/Contents/bin/ctest",
+			"root" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/.venv/lib/python3.10/site-packages/cmake/data/CMake.app/Contents/share/cmake-3.24"
+		},
+		"version" : 
+		{
+			"isDirty" : false,
+			"major" : 3,
+			"minor" : 24,
+			"patch" : 0,
+			"string" : "3.24.0",
+			"suffix" : ""
+		}
+	},
+	"objects" : 
+	[
+		{
+			"jsonFile" : "codemodel-v2-366a827a171dd70caff8.json",
+			"kind" : "codemodel",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 4
+			}
+		}
+	],
+	"reply" : 
+	{
+		"codemodel-v2" : 
+		{
+			"jsonFile" : "codemodel-v2-366a827a171dd70caff8.json",
+			"kind" : "codemodel",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 4
+			}
+		}
+	}
+}
