@@ -16,6 +16,19 @@ DIR = Path(__file__).parent.absolute()
 cmake_path = get_cmake_path()
 
 
+def configure_args(config, *, init=False):
+    yield os.fspath(cmake_path)
+    yield f"-S{config.source_dir}"
+    yield f"-B{config.build_dir}"
+
+    if init:
+        cmake_init = config.build_dir / "CMakeInit.txt"
+        yield f"-C{cmake_init}"
+
+    if not sys.platform.startswith("win32"):
+        yield "-GNinja"
+
+
 def test_init_cache(fp, tmp_path):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
@@ -26,20 +39,13 @@ def test_init_cache(fp, tmp_path):
         {"SKBUILD": True, "SKBUILD_VERSION": "1.0.0", "SKBUILD_PATH": config.source_dir}
     )
 
-    cmake_init = config.build_dir / "CMakeInit.txt"
-    cmd = [
-        os.fspath(cmake_path),
-        f"-S{config.source_dir}",
-        f"-B{config.build_dir}",
-        f"-C{cmake_init}",
-    ]
-    if not sys.platform.startswith("win32"):
-        cmd.append("-GNinja")
+    cmd = list(configure_args(config, init=True))
 
-    print("Registering: ", *cmd)
+    print("Registering:", *cmd)
     fp.register(cmd)
     config.configure()
 
+    cmake_init = config.build_dir / "CMakeInit.txt"
     assert (
         cmake_init.read_text()
         == f"""\
@@ -68,15 +74,11 @@ def test_cmake_args(tmp_path, fp):
         CMake(), source_dir=DIR / "simple_pure", build_dir=tmp_path / "build"
     )
 
-    fp.register(
-        [
-            os.fspath(cmake_path),
-            f"-S{config.source_dir}",
-            f"-B{config.build_dir}",
-            "-GNinja",
-            "-DCMAKE_BUILD_TYPE=Debug",
-        ]
-    )
+    cmd = list(configure_args(config))
+    cmd.append("-DCMAKE_BUILD_TYPE=Debug")
+    print("Registering:", *cmd)
+    fp.register(cmd)
+
     config.configure(cmake_args=["-DCMAKE_BUILD_TYPE=Debug"])
 
     assert len(fp.calls) == 2
