@@ -9,9 +9,12 @@ from scikit_build_core.errors import CMakeConfigError
 
 DIR = Path(__file__).parent.absolute()
 
+# Due to https://github.com/scikit-build/cmake-python-distributions/pull/279
+# this is outside of the functions for now.
+cmake_path = get_cmake_path()
+
 
 def test_init_cache(fp, tmp_path):
-    cmake_path = get_cmake_path()
     fp.register([str(cmake_path), "--version"], stdout="3.14.0")
 
     config = CMakeConfig(
@@ -44,7 +47,6 @@ set(SKBUILD_PATH "{config.source_dir}" CACHE PATH "")
 
 
 def test_too_old(fp):
-    cmake_path = get_cmake_path()
     fp.register([str(cmake_path), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeConfigError) as excinfo:
@@ -56,7 +58,6 @@ def test_too_old(fp):
 
 
 def test_cmake_args(tmp_path, fp):
-    cmake_path = get_cmake_path()
     fp.register([str(cmake_path), "--version"], stdout="3.15.0")
 
     config = CMakeConfig(
