@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,7 @@ cmake_path = get_cmake_path()
 
 
 def test_init_cache(fp, tmp_path):
-    fp.register([str(cmake_path), "--version"], stdout="3.14.0")
+    fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
     config = CMakeConfig(
         CMake(), source_dir=DIR / "simple_pure", build_dir=tmp_path / "build"
@@ -25,15 +26,15 @@ def test_init_cache(fp, tmp_path):
     )
 
     cmake_init = config.build_dir / "CMakeInit.txt"
-    fp.register(
-        [
-            f"{cmake_path}",
-            f"-S{config.source_dir}",
-            f"-B{config.build_dir}",
-            f"-C{cmake_init}",
-            "-GNinja",
-        ]
-    )
+    cmd = [
+        os.fspath(cmake_path),
+        f"-S{config.source_dir}",
+        f"-B{config.build_dir}",
+        f"-C{cmake_init}",
+        "-GNinja",
+    ]
+    print("Registering: ", *cmd)
+    fp.register(cmd)
     config.configure()
 
     assert (
@@ -47,7 +48,7 @@ set(SKBUILD_PATH "{config.source_dir}" CACHE PATH "")
 
 
 def test_too_old(fp):
-    fp.register([str(cmake_path), "--version"], stdout="3.14.0")
+    fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeConfigError) as excinfo:
         CMake(minimum_version="3.15")
@@ -58,7 +59,7 @@ def test_too_old(fp):
 
 
 def test_cmake_args(tmp_path, fp):
-    fp.register([str(cmake_path), "--version"], stdout="3.15.0")
+    fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
 
     config = CMakeConfig(
         CMake(), source_dir=DIR / "simple_pure", build_dir=tmp_path / "build"
@@ -66,7 +67,7 @@ def test_cmake_args(tmp_path, fp):
 
     fp.register(
         [
-            f"{cmake_path}",
+            os.fspath(cmake_path),
             f"-S{config.source_dir}",
             f"-B{config.build_dir}",
             "-GNinja",
