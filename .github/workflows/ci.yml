@@ -10,6 +10,9 @@ on:
     types:
       - published
 
+env:
+  FORCE_COLOR: 3
+
 jobs:
   pre-commit:
     name: Format

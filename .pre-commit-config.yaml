@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black-jupyter
 
@@ -32,7 +32,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.0.0-alpha.0"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -42,7 +42,7 @@ repos:
     rev: v1.12.1
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==22.3.0]
+        additional_dependencies: [black==22.8.0]
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
@@ -60,7 +60,6 @@ repos:
     rev: v2.1.1
     hooks:
       - id: pycln
-        additional_dependencies: [click<8.1]
         args: [--all]
         stages: [manual]
 
@@ -90,7 +89,7 @@ repos:
           - packaging
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.0
+    rev: v2.2.1
     hooks:
       - id: codespell
         exclude: ^LICENSE$

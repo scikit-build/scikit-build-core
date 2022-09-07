@@ -45,7 +45,9 @@ class Run:
         kw_options = [
             item for key, value in kwargs.items() for item in (f"--{key}", f"{value}")
         ]
-        options = [f"{arg}" for arg in args] + kw_options
+        options = [
+            os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in args
+        ] + kw_options
 
         logger.debug("RUN: {}", " ".join(options))
 
