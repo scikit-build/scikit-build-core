@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -31,8 +32,10 @@ def test_init_cache(fp, tmp_path):
         f"-S{config.source_dir}",
         f"-B{config.build_dir}",
         f"-C{cmake_init}",
-        "-GNinja",
     ]
+    if not sys.platform.startswith("win32"):
+        cmd.append("-GNinja")
+
     print("Registering: ", *cmd)
     fp.register(cmd)
     config.configure()
