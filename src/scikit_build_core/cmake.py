@@ -39,14 +39,14 @@ def get_cmake_path() -> Path:
 
 
 class CMake:
-    __slots__ = ("version", "cmake_path")
+    __slots__ = ("version", "_cmake_path")
 
     # TODO: add option to control search order, etc.
     def __init__(self, *, minimum_version: str | None = None) -> None:
-        self.cmake_path = get_cmake_path()
+        self._cmake_path = get_cmake_path()
 
         try:
-            result = Run().capture(self.cmake_path, "--version")
+            result = Run().capture(self, "--version")
         except subprocess.CalledProcessError as err:
             msg = "CMake version undetermined"
             raise CMakeAccessError(err, msg) from None
@@ -57,6 +57,9 @@ class CMake:
         if minimum_version is not None and self.version < Version(minimum_version):
             msg = f"CMake version {self.version} is less than minimum version {minimum_version}"
             raise CMakeConfigError(msg)
+
+    def __fspath__(self) -> str:
+        return os.fspath(self._cmake_path)
 
 
 class CMakeConfig:
@@ -122,7 +125,7 @@ class CMakeConfig:
         _cmake_args += cmake_args or []
 
         try:
-            Run().live(self.cmake.cmake_path, *_cmake_args)
+            Run().live(self.cmake, *_cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
@@ -133,7 +136,7 @@ class CMakeConfig:
             opts["config"] = "Release"
 
         try:
-            Run().live(self.cmake.cmake_path, build=self.build_dir, **opts)
+            Run().live(self.cmake, build=self.build_dir, **opts)
         except subprocess.CalledProcessError:
             msg = "CMake build failed"
             raise FailedLiveProcessError(msg) from None
@@ -141,7 +144,7 @@ class CMakeConfig:
     def install(self, prefix: Path) -> None:
         try:
             Run().live(
-                self.cmake.cmake_path,
+                self.cmake,
                 install=self.build_dir,
                 prefix=prefix,
             )
