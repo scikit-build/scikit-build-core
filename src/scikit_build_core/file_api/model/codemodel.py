@@ -1,0 +1,113 @@
+import dataclasses
+from pathlib import Path
+from typing import List, Optional
+
+from .common import APIVersion, Paths
+
+
+@dataclasses.dataclass
+class Directory:
+    source: Path
+    build: Path
+    projectIndex: int
+    hasInstallRule: Optional[bool] = None
+
+
+@dataclasses.dataclass
+class Project:
+    name: str
+    directoryIndexes: List[int]
+
+
+@dataclasses.dataclass
+class Artifact:
+    path: Path
+
+
+@dataclasses.dataclass
+class Prefix:
+    path: Path
+
+
+@dataclasses.dataclass
+class Destination:
+    path: Path
+    backtrace: Optional[int] = None
+
+
+@dataclasses.dataclass
+class Install:
+    prefix: Prefix
+    destinations: List[Destination]
+
+
+@dataclasses.dataclass
+class CommandFragment:
+    fragment: str
+    role: str
+
+
+@dataclasses.dataclass
+class Sysroot:
+    path: Path
+
+
+@dataclasses.dataclass
+class Link:
+    language: str
+    commandFragments: List[CommandFragment]
+    lto: Optional[bool] = None
+    sysroot: Optional[Sysroot] = None
+
+
+@dataclasses.dataclass
+class Archive:
+    commandFragments: List[CommandFragment] = dataclasses.field(default_factory=list)
+    lto: Optional[bool] = None
+
+
+@dataclasses.dataclass
+class Dependency:
+    id: str
+    backtrace: Optional[int] = None
+
+
+@dataclasses.dataclass
+class Source:
+    path: Path
+    compileGroupIndex: Optional[int] = None
+    sourceGroupIndex: Optional[int] = None
+    isGenerated: Optional[bool] = None
+    backtrace: Optional[int] = None
+
+
+@dataclasses.dataclass
+class Target:
+    name: str
+    id: str
+    type: str
+    paths: Paths
+    sources = List[Source]
+    nameOnDisk: Optional[Path] = None
+    artifacts: List[Artifact] = dataclasses.field(default_factory=list)
+    isGeneratorProvided: Optional[bool] = None
+    install: Optional[Install] = None
+    link: Optional[Link] = None
+    archive: Optional[Archive] = None
+    dependencies: List[Dependency] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
+class Configuration:
+    name: str
+    directories: List[Directory]
+    projects: List[Project]
+    targets: List[Target]
+
+
+@dataclasses.dataclass
+class CodeModel:
+    kind: str
+    version: APIVersion
+    paths: Paths
+    configurations: List[Configuration]
