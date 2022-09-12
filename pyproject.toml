@@ -31,6 +31,7 @@ dynamic = ["version"]
 dependencies = [
     "typing_extensions >=3.7; python_version<'3.8'",
     "packaging",  # TODO: set a min version
+    "cattrs",
 ]
 
 [project.optional-dependencies]

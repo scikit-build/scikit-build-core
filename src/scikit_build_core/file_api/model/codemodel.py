@@ -6,17 +6,33 @@ from .common import APIVersion, Paths
 
 
 @dataclasses.dataclass
+class StringCMakeVersion:
+    string: str
+
+
+@dataclasses.dataclass
 class Directory:
     source: Path
     build: Path
+    jsonFile: Path
     projectIndex: int
-    hasInstallRule: Optional[bool] = None
+    parentIndex: Optional[int] = None
+    childIndexes: List[int] = dataclasses.field(default_factory=list)
+    targetIndexes: List[int] = dataclasses.field(default_factory=list)
+    minimumCMakeVersion: Optional[StringCMakeVersion] = None
+    hasInstallRule: bool = False
+
+
+# Directory is currently not resolved
 
 
 @dataclasses.dataclass
 class Project:
     name: str
     directoryIndexes: List[int]
+    parentIndex: Optional[int] = None
+    childIndexes: List[int] = dataclasses.field(default_factory=list)
+    targetIndexes: List[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
