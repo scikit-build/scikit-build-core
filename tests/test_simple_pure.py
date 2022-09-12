@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 
 from scikit_build_core.cmake import CMake, CMakeConfig
-from scikit_build_core.file_api.converter import read_index
+from scikit_build_core.file_api.loadfile import load_file
+from scikit_build_core.file_api.model._cattrs_converter import read_index
 
 DIR = Path(__file__).parent.absolute()
 
@@ -24,8 +25,9 @@ def test_simple_pure(tmp_path):
     reply_dir = config.query()
     config.configure()
 
-    index = read_index(reply_dir)
-    assert index is not None
+    cattrs_index = read_index(reply_dir)
+    index = load_file(reply_dir)
+    assert index == cattrs_index
 
     config.build()
 

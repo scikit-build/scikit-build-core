@@ -29,27 +29,29 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-    "typing_extensions >=3.7; python_version<'3.8'",
+    "exceptiongroup; python_version<'3.11'",
     "packaging",  # TODO: set a min version
-    "cattrs;platform_python_implementation!='PyPy'",
-    "cattrs @ git+https://github.com/python-attrs/cattrs&branch=bcaf2a7572de3582beb00f3f1ffb06007bbfda89;platform_python_implementation=='PyPy'",
+    "typing_extensions >=3.7; python_version<'3.8'",
 ]
 
 [project.optional-dependencies]
 test = [
+    "cattrs;platform_python_implementation!='PyPy'",
     "cmake",
     "ninja; platform_system!='Windows'",
     "pytest >=7",
     "pytest-subprocess",
 ]
 dev = [
+    "cattrs;platform_python_implementation!='PyPy'",
     "pytest >=7",
+    "pytest-subprocess",
     "rich",
 ]
 docs = [
-    "Sphinx>=4.0",
-    "myst_parser>=0.13",
     "furo",
+    "myst_parser>=0.13",
+    "sphinx>=4.0",
     "sphinx_copybutton",
 ]
 

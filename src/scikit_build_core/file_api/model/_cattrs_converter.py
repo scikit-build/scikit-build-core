@@ -5,10 +5,10 @@ from typing import Any, Dict, Type, TypeVar
 import cattr
 import cattr.preconf.json
 
-from .model.cache import Cache
-from .model.cmakefiles import CMakeFiles
-from .model.codemodel import CodeModel, Target
-from .model.index import Index, Reply
+from .cache import Cache
+from .cmakefiles import CMakeFiles
+from .codemodel import CodeModel, Target
+from .index import Index, Reply
 
 T = TypeVar("T")
 
