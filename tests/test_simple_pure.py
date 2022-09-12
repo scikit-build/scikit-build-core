@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 
 from scikit_build_core.cmake import CMake, CMakeConfig
+from scikit_build_core.file_api.converter import read_index
+from scikit_build_core.file_api.query import stateless_query
 
 DIR = Path(__file__).parent.absolute()
 
@@ -19,7 +21,14 @@ def test_simple_pure(tmp_path):
         source_dir=DIR / "simple_pure",
         build_dir=build_dir,
     )
+
+    reply_dir = stateless_query(config.build_dir)
+
     config.configure()
+
+    index = read_index(reply_dir)
+    assert index is not None
+
     config.build()
 
     if not sys.platform.startswith("win32"):

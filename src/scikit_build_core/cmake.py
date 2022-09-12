@@ -65,10 +65,6 @@ class CMake:
 class CMakeConfig:
     __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file")
 
-    @property
-    def api_dir(self) -> Path:
-        return self.build_dir / ".cmake/api/v1"
-
     def __init__(self, cmake: CMake, *, source_dir: Path, build_dir: Path) -> None:
         self.cmake = cmake
         self.source_dir = source_dir

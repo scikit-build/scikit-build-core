@@ -62,7 +62,7 @@ version.path = "src/scikit_build_core/__init__.py"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "info"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def stateless_query(build_dir: Path) -> None:
+def stateless_query(build_dir: Path) -> Path:
     api_dir = build_dir / ".cmake/api/v1"
     query = api_dir.joinpath("query")
     query.mkdir(parents=True, exist_ok=True)
@@ -12,6 +12,7 @@ def stateless_query(build_dir: Path) -> None:
     query.joinpath("cache-v2").touch()
     query.joinpath("cmakeFiles-v1").touch()
     query.joinpath("toolchains-v1").touch()
+    return api_dir / "reply"
 
 
 if __name__ == "__main__":
