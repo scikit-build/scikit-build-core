@@ -13,6 +13,7 @@ from packaging.version import Version
 from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeAccessError, CMakeConfigError, FailedLiveProcessError
+from .file_api.query import stateless_query
 
 __all__ = ["CMake", "CMakeConfig", "get_cmake_path"]
 
@@ -79,6 +80,9 @@ class CMakeConfig:
             raise CMakeConfigError(
                 f"build directory {self.build} must be a (creatable) directory"
             )
+
+    def query(self) -> Path:
+        return stateless_query(self.build_dir)
 
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]

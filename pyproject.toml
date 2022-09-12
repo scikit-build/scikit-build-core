@@ -31,7 +31,8 @@ dynamic = ["version"]
 dependencies = [
     "typing_extensions >=3.7; python_version<'3.8'",
     "packaging",  # TODO: set a min version
-    "cattrs",
+    "cattrs;platform_python_implementation!='PyPy'",
+    "cattrs @ git+https://github.com/python-attrs/cattrs&branch=bcaf2a7572de3582beb00f3f1ffb06007bbfda89;platform_python_implementation=='PyPy'",
 ]
 
 [project.optional-dependencies]
@@ -98,6 +99,7 @@ messages_control.disable = [
   "design",
   "fixme",
   "import-outside-toplevel",
+  "invalid-name",
   "line-too-long",
   "missing-class-docstring",
   "missing-function-docstring",

@@ -50,7 +50,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/private/var/folders/_8/xtbws09n017fbzdx9dmgnyyr0000gn/T/pytest-of-henryschreiner/pytest-57/test_simple_pure0/build",
+		"build" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/tests/simple_pure/build",
 		"source" : "/Users/henryschreiner/git/scikit-build/scikit-build-core/tests/simple_pure"
 	},
 	"version" : 

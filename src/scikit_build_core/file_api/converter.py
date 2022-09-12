@@ -5,6 +5,8 @@ from typing import Any, Dict, Type, TypeVar
 import cattr
 import cattr.preconf.json
 
+from .model.cache import Cache
+from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.index import Index, Reply
 
@@ -22,7 +24,12 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Path, to_path)
 
     st_hook = cattr.gen.make_dict_structure_fn(
-        Reply, converter, codemodel_v2=cattr.gen.override(rename="codemodel-v2")
+        Reply,
+        converter,
+        codemodel_v2=cattr.gen.override(rename="codemodel-v2"),
+        cache_v2=cattr.gen.override(rename="cache-v2"),
+        cmakefiles_v1=cattr.gen.override(rename="cmakeFiles-v1"),
+        toolchains_v1=cattr.gen.override(rename="toolchains-v1"),
     )
     converter.register_structure_hook(Reply, st_hook)
 
@@ -33,6 +40,8 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
 
     converter.register_structure_hook(CodeModel, from_json_file)
     converter.register_structure_hook(Target, from_json_file)
+    converter.register_structure_hook(Cache, from_json_file)
+    converter.register_structure_hook(CMakeFiles, from_json_file)
     return converter
 
 
@@ -41,7 +50,7 @@ def read_index(reply_dir: Path) -> Index:
     indexes = sorted(reply_dir.glob("index-*"))
     if not indexes:
         raise IndexError(f"index file not found in {reply_dir}")
-    index_file = indexes[0]
+    index_file = indexes[-1]
     return converter.loads(index_file.read_text(), Index)
 
 

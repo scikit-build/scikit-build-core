@@ -25,7 +25,7 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.", "pylint")
+    session.install("-e.", "pylint", "rich")
     session.run("pylint", "src", *session.posargs)
 
 

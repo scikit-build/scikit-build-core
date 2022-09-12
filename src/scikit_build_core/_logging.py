@@ -54,7 +54,6 @@ class ScikitBuildLogger:
     def log(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
         self.logger.log(level, FStringMessage(msg, *args, **kwargs))
 
-    # pylint: disable-next=invalid-name
     def setLevel(self, level: int) -> None:
         self.logger.setLevel(level)
 
