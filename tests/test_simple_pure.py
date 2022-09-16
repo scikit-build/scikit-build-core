@@ -7,8 +7,6 @@ from pathlib import Path
 import pytest
 
 from scikit_build_core.cmake import CMake, CMakeConfig
-from scikit_build_core.file_api.query import stateless_query
-from scikit_build_core.file_api.reply import load_reply_dir
 
 DIR = Path(__file__).parent.absolute()
 
@@ -26,7 +24,6 @@ def config(tmp_path_factory):
         build_dir=build_dir,
     )
 
-    stateless_query(config.build_dir)
     config.configure()
 
     config.build()
@@ -34,21 +31,8 @@ def config(tmp_path_factory):
     return config
 
 
-@pytest.mark.skipif(
-    sys.implementation.name == "pypy", reason="cattrs does not support pypy for 22.1"
-)
-def test_cattrs_comparison(config):
-    from scikit_build_core.file_api._cattrs_converter import (
-        load_reply_dir as load_reply_dir_cattrs,
-    )
-
-    reply_dir = stateless_query(config.build_dir)
-
-    cattrs_index = load_reply_dir_cattrs(reply_dir)
-    index = load_reply_dir(reply_dir)
-    assert index == cattrs_index
-
-
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.skipif(
     sys.platform.startswith("win32"),
     reason="Paths different in build dir on Windows",
@@ -64,6 +48,8 @@ def test_bin_in_config(config):
     assert result.stdout == "0 one 2 three \n"
 
 
+@pytest.mark.compile
+@pytest.mark.configure
 def test_install(config):
     install_dir = config.build_dir.parent / "install"
     config.install(install_dir)
@@ -78,6 +64,7 @@ def test_install(config):
     assert result.stdout == "0 one 2 three \n"
 
 
+@pytest.mark.configure
 def test_variable_defined(tmp_path, capfd):
     build_dir = tmp_path / "build"
 

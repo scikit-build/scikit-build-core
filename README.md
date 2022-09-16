@@ -63,7 +63,8 @@ config.configure()
 index = load_reply_dir(reply_dir)
 ```
 
-This mostly wraps the FileAPI in classes. It autoloads some jsonFiles.
+This mostly wraps the FileAPI in classes. It autoloads some jsonFiles. This
+throws an `ExceptionGroup` if parsing files. It is currently experimental.
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg

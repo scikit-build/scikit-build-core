@@ -72,6 +72,10 @@ log_cli_level = "info"
 testpaths = [
     "tests",
 ]
+markers = [
+    "compile: Compiles code",
+    "configure: Configures CMake code",
+]
 
 
 [tool.mypy]
