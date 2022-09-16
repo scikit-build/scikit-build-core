@@ -89,6 +89,7 @@ repos:
         additional_dependencies:
           - packaging
           - cattrs
+          - cmake
           - rich
 
   - repo: https://github.com/codespell-project/codespell

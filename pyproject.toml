@@ -32,6 +32,7 @@ dependencies = [
     "exceptiongroup; python_version<'3.11'",
     "packaging",  # TODO: set a min version
     "typing_extensions >=3.7; python_version<'3.8'",
+    "tomli; python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -88,7 +89,7 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["cmake", "ninja"]
+module = ["ninja"]
 ignore_missing_imports = true
 
 
