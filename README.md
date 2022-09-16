@@ -52,6 +52,19 @@ config.install(prefix)
 
 Works.
 
+If you want to access the File API, use:
+
+```python
+from scikit_build_core.fileapi.query import stateless_query
+from scikit_build_core.fileapi.reply import load_reply_dir
+
+reply_dir = stateless_query(config.build_dir)
+config.configure()
+index = load_reply_dir(reply_dir)
+```
+
+This mostly wraps the FileAPI in classes. It autoloads some jsonFiles.
+
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg
 [actions-link]:             https://github.com/henryiii/scikit-build-core/actions

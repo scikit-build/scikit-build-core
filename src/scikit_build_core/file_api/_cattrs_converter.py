@@ -1,3 +1,5 @@
+# pylint: disable=duplicate-code
+
 import json
 from pathlib import Path
 from typing import Any, Dict, Type, TypeVar
@@ -12,7 +14,7 @@ from .model.index import Index, Reply
 
 T = TypeVar("T")
 
-__all__ = ["make_converter", "read_index"]
+__all__ = ["make_converter", "load_reply_dir"]
 
 
 def to_path(path: str, _: Type[Path]) -> Path:
@@ -45,7 +47,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     return converter
 
 
-def read_index(reply_dir: Path) -> Index:
+def load_reply_dir(reply_dir: Path) -> Index:
     converter = make_converter(reply_dir)
     indexes = sorted(reply_dir.glob("index-*"))
     if not indexes:
@@ -55,7 +57,13 @@ def read_index(reply_dir: Path) -> Index:
 
 
 if __name__ == "__main__":
+    import argparse
+
     import rich
 
-    reply = Path("tests/api/simple_pure/.cmake/api/v1/reply")
-    rich.print(read_index(reply))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
+    args = parser.parse_args()
+
+    reply = Path(args.reply_dir)
+    rich.print(load_reply_dir(reply))

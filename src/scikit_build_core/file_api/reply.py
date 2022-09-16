@@ -10,9 +10,10 @@ if sys.version_info < (3, 11):
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
+from .model.directory import Directory
 from .model.index import Index
 
-__all__ = ["load_file"]
+__all__ = ["load_reply_dir"]
 
 T = TypeVar("T")
 
@@ -24,20 +25,29 @@ class Converter:
         self.base_dir = base_dir
 
     def load(self) -> Index:
+        """
+        Load the newest index.json file and return the Index object.
+        """
         index_file = sorted(self.base_dir.glob("index-*"))[-1]
         with open(index_file, encoding="utf-8") as f:
             data = json.load(f)
 
-        return self._convert_dataclass(data, Index)
+        return self.make_class(data, Index)
 
     def _load_from_json(self, name: Path, target: Type[T]) -> T:
         with open(self.base_dir / name, encoding="utf-8") as f:
             data = json.load(f)
 
-        return self._convert_dataclass(data, target)
+        return self.make_class(data, target)
 
-    def _convert_dataclass(self, data: InputDict, target: Type[T]) -> T:
-        if target in (CodeModel, Target, Cache, CMakeFiles) and "jsonFile" in data:
+    def make_class(self, data: InputDict, target: Type[T]) -> T:
+        """
+        Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
+        """
+        if (
+            target in (CodeModel, Target, Cache, CMakeFiles, Directory)
+            and "jsonFile" in data
+        ):
             return self._load_from_json(Path(data["jsonFile"]), target)
 
         input_dict = {}
@@ -69,7 +79,7 @@ class Converter:
 
     def _convert_any(self, item: Any, target: Type[T]) -> T:
         if dataclasses.is_dataclass(target):
-            return self._convert_dataclass(item, target)
+            return self.make_class(item, target)
         if hasattr(target, "__origin__"):
             if target.__origin__ == list:  # type: ignore[attr-defined]
                 return [self._convert_any(i, target.__args__[0]) for i in item]  # type: ignore[return-value,attr-defined]
@@ -79,5 +89,18 @@ class Converter:
         return target(item)  # type: ignore[call-arg]
 
 
-def load_file(path: Path) -> Index:
+def load_reply_dir(path: Path) -> Index:
     return Converter(path).load()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    import rich
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
+    args = parser.parse_args()
+
+    reply = Path(args.reply_dir)
+    rich.print(load_reply_dir(reply))

@@ -23,7 +23,7 @@ class Directory:
     hasInstallRule: bool = False
 
 
-# Directory is currently not resolved
+# Directory is currently not resolved automatically.
 
 
 @dataclasses.dataclass

@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from scikit_build_core.cmake import CMake, CMakeConfig
-from scikit_build_core.file_api.loadfile import load_file
+from scikit_build_core.file_api.query import stateless_query
+from scikit_build_core.file_api.reply import load_reply_dir
 
 DIR = Path(__file__).parent.absolute()
 
@@ -25,7 +26,7 @@ def config(tmp_path_factory):
         build_dir=build_dir,
     )
 
-    config.query()
+    stateless_query(config.build_dir)
     config.configure()
 
     config.build()
@@ -37,12 +38,14 @@ def config(tmp_path_factory):
     sys.implementation.name == "pypy", reason="cattrs does not support pypy for 22.1"
 )
 def test_cattrs_comparison(config):
-    from scikit_build_core.file_api._cattrs_converter import read_index
+    from scikit_build_core.file_api._cattrs_converter import (
+        load_reply_dir as load_reply_dir_cattrs,
+    )
 
-    reply_dir = config.query()
+    reply_dir = stateless_query(config.build_dir)
 
-    cattrs_index = read_index(reply_dir)
-    index = load_file(reply_dir)
+    cattrs_index = load_reply_dir_cattrs(reply_dir)
+    index = load_reply_dir(reply_dir)
     assert index == cattrs_index
 
 
