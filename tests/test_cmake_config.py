@@ -29,6 +29,7 @@ def configure_args(config, *, init=False):
         yield "-GNinja"
 
 
+@pytest.mark.configure
 def test_init_cache(fp, tmp_path):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
@@ -56,6 +57,7 @@ set(SKBUILD_PATH "{config.source_dir}" CACHE PATH "")
     )
 
 
+@pytest.mark.configure
 def test_too_old(fp):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
@@ -67,6 +69,7 @@ def test_too_old(fp):
     )
 
 
+@pytest.mark.configure
 def test_cmake_args(tmp_path, fp):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
 

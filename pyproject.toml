@@ -29,24 +29,29 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-    "typing_extensions >=3.7; python_version<'3.8'",
+    "exceptiongroup; python_version<'3.11'",
     "packaging",  # TODO: set a min version
+    "typing_extensions >=3.7; python_version<'3.8'",
 ]
 
 [project.optional-dependencies]
 test = [
+    "cattrs;platform_python_implementation!='PyPy'",
     "cmake",
     "ninja; platform_system!='Windows'",
     "pytest >=7",
     "pytest-subprocess",
 ]
 dev = [
+    "cattrs;platform_python_implementation!='PyPy'",
     "pytest >=7",
+    "pytest-subprocess",
+    "rich",
 ]
 docs = [
-    "Sphinx>=4.0",
-    "myst_parser>=0.13",
     "furo",
+    "myst_parser>=0.13",
+    "sphinx>=4.0",
     "sphinx_copybutton",
 ]
 
@@ -60,12 +65,16 @@ version.path = "src/scikit_build_core/__init__.py"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "info"
 testpaths = [
     "tests",
+]
+markers = [
+    "compile: Compiles code",
+    "configure: Configures CMake code",
 ]
 
 
@@ -96,6 +105,7 @@ messages_control.disable = [
   "design",
   "fixme",
   "import-outside-toplevel",
+  "invalid-name",
   "line-too-long",
   "missing-class-docstring",
   "missing-function-docstring",
