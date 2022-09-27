@@ -2,7 +2,6 @@ import dataclasses
 from pathlib import Path
 from typing import List
 
-# from scikit_build_core.settings.convert import read_config_settings
 from scikit_build_core.settings.sources import (
     ConfSource,
     EnvSource,

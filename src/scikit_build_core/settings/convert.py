@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from .model import CMakeSettings
@@ -13,7 +14,7 @@ else:
 
 
 def read_cmake_settings(
-    pyproject_toml: Path, config_settings: dict[str, str | list[str]]
+    pyproject_toml: Path, config_settings: Mapping[str, str | list[str]]
 ) -> CMakeSettings:
 
     with pyproject_toml.open("rb") as f:
@@ -22,7 +23,7 @@ def read_cmake_settings(
     cmake_section = pyproject.get("tool", {}).get("cmake", {})
 
     sources = SourceChain(
-        EnvSource("CMAKE_"),
+        EnvSource("SKBUILD"),
         ConfSource("cmake", settings=config_settings),
         TOMLSource(settings=cmake_section),
     )

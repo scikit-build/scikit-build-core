@@ -115,5 +115,4 @@ messages_control.disable = [
   "wrong-import-position",
   "unnecessary-ellipsis",
   "broad-except",
-  "",
 ]

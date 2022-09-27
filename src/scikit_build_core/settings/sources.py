@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, TypeVar, Union
 
@@ -18,7 +19,7 @@ else:
 T = TypeVar("T")
 
 
-def _dig(dict_: dict[str, Any], *names: str) -> Any:
+def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
     for name in names:
         dict_ = dict_[name]
     return dict_
@@ -47,7 +48,7 @@ class EnvSource:
     This is a source using environment variables.
     """
 
-    def __init__(self, prefix: str, *, env: dict[str, str] | None = None) -> None:
+    def __init__(self, prefix: str, *, env: Mapping[str, str] | None = None) -> None:
         self.env = env or os.environ
         self.prefix = prefix
 
@@ -82,7 +83,7 @@ class ConfSource:
     nested dicts.
     """
 
-    def __init__(self, *prefixes: str, settings: dict[str, str | list[str]]):
+    def __init__(self, *prefixes: str, settings: Mapping[str, str | list[str]]):
         self.prefixes = prefixes
         self.settings = settings
 
@@ -115,7 +116,7 @@ class ConfSource:
 
 
 class TOMLSource:
-    def __init__(self, *prefixes: str, settings: dict[str, Any]):
+    def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
         self.prefixes = prefixes
         self.settings = settings
 
