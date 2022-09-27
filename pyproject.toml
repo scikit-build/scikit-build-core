@@ -32,6 +32,7 @@ dependencies = [
     "exceptiongroup; python_version<'3.11'",
     "packaging",  # TODO: set a min version
     "typing_extensions >=3.7; python_version<'3.8'",
+    "tomli; python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -65,7 +66,7 @@ version.path = "src/scikit_build_core/__init__.py"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = ["-ra", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--tb=native"]
 xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "info"
@@ -88,7 +89,7 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module = ["cmake", "ninja"]
+module = ["ninja"]
 ignore_missing_imports = true
 
 
@@ -112,4 +113,6 @@ messages_control.disable = [
   "missing-function-docstring",
   "missing-module-docstring",
   "wrong-import-position",
+  "unnecessary-ellipsis",
+  "broad-except",
 ]
