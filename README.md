@@ -3,6 +3,7 @@
 [![Actions Status][actions-badge]][actions-link]
 [![Documentation Status][rtd-badge]][rtd-link]
 [![Code style: black][black-badge]][black-link]
+[![codecov][codecov-badge]][codecov-link]
 
 <!-- Not implemented yet
 [![PyPI version][pypi-version]][pypi-link]
@@ -77,6 +78,8 @@ throws an `ExceptionGroup` if parsing files. It is currently experimental.
 [github-discussions-link]:  https://github.com/scikit-build/scikit-build-core/discussions
 [gitter-badge]:             https://badges.gitter.im/https://github.com/scikit-build/scikit-build-core/community.svg
 [gitter-link]:              https://gitter.im/https://github.com/scikit-build/scikit-build-core/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+[codecov-badge]: https://codecov.io/gh/henryiii/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
+[codecov-link]: https://codecov.io/gh/henryiii/scikit-build-core
 [pypi-link]:                https://pypi.org/project/scikit-build-core/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/scikit-build-core
 [pypi-version]:             https://badge.fury.io/py/scikit-build-core.svg
