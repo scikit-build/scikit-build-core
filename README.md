@@ -39,7 +39,7 @@ This is very much a WIP, some missing features:
 Included features:
 
 ```python
-cmake = CMake(minimum_version="3.15")
+cmake = CMake.default_search(minimum_version="3.15")
 config = CMakeConfig(
     cmake,
     source_dir=source_dir,

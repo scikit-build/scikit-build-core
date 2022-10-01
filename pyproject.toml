@@ -113,6 +113,7 @@ messages_control.disable = [
   "missing-function-docstring",
   "missing-module-docstring",
   "wrong-import-position",
-  "unnecessary-ellipsis",
+  "unnecessary-ellipsis",  # Conflicts with Protocols
   "broad-except",
+  "class-variable-slots-conflict",  # Conflicts with dataclasses
 ]

@@ -25,7 +25,7 @@ def get_requires_for_build_wheel(
 
     packages = []
     try:
-        CMake(minimum_version=cmake_settings.min_version, module=False)
+        CMake.default_search(minimum_version=cmake_settings.min_version, module=False)
     except ScikitBuildError:
         packages.append(f"cmake>={cmake_settings.min_version}")
 

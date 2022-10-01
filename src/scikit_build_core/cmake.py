@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import os
 import pathlib
 import shutil
@@ -7,6 +8,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
+from typing import TypeVar
 
 from packaging.version import Version
 
@@ -46,39 +48,53 @@ def get_cmake_path(*, module: bool = True) -> Path:
     raise CMakeNotFoundError(msg) from None
 
 
+Self = TypeVar("Self", bound="CMake")
+
+
+@dataclasses.dataclass
 class CMake:
-    __slots__ = ("version", "_cmake_path")
+    __slots__ = ("version", "cmake_path")
+
+    version: Version
+    cmake_path: Path
 
     # TODO: add option to control search order, etc.
-    def __init__(
-        self, *, minimum_version: str | None = None, module: bool = True
-    ) -> None:
-        self._cmake_path = get_cmake_path(module=module)
+    @classmethod
+    def default_search(
+        cls: type[Self], *, minimum_version: str | None = None, module: bool = True
+    ) -> Self:
+        cmake_path = get_cmake_path(module=module)
 
         try:
-            result = Run().capture(self, "--version")
+            result = Run().capture(cmake_path, "--version")
         except subprocess.CalledProcessError as err:
             msg = "CMake version undetermined"
             raise CMakeAccessError(err, msg) from None
 
-        self.version = Version(result.stdout.splitlines()[0].split()[-1])
-        logger.info("CMake version: {}", self.version)
+        version = Version(result.stdout.splitlines()[0].split()[-1])
+        logger.info("CMake version: {}", version)
 
-        if minimum_version is not None and self.version < Version(minimum_version):
-            msg = f"CMake version {self.version} is less than minimum version {minimum_version}"
+        if minimum_version is not None and version < Version(minimum_version):
+            msg = f"CMake version {version} is less than minimum version {minimum_version}"
             raise CMakeConfigError(msg)
 
+        return cls(version=version, cmake_path=cmake_path)
+
     def __fspath__(self) -> str:
-        return os.fspath(self._cmake_path)
+        return os.fspath(self.cmake_path)
 
 
+@dataclasses.dataclass
 class CMakeConfig:
-    __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file")
+    __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file", "module_dirs")
 
-    def __init__(self, cmake: CMake, *, source_dir: Path, build_dir: Path) -> None:
-        self.cmake = cmake
-        self.source_dir = source_dir
-        self.build_dir = build_dir
+    cmake: CMake
+    source_dir: Path
+    build_dir: Path
+    init_cache_file: Path = dataclasses.field(init=False, default=Path())
+    module_dirs: list[Path] = dataclasses.field(default_factory=list)
+
+    def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
 
         if not self.source_dir.is_dir():
@@ -131,6 +147,10 @@ class CMakeConfig:
                 _cmake_args.append(f"-D{key}:PATH={value}")
             else:
                 _cmake_args.append(f"-D{key}={value}")
+
+        if self.module_dirs:
+            module_dirs_str = ";".join(map(str, self.module_dirs))
+            _cmake_args.append(f"-DCMAKE_MODULE_PATH={module_dirs_str}")
 
         _cmake_args += cmake_args or []
 

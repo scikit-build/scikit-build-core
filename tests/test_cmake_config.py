@@ -34,7 +34,9 @@ def test_init_cache(fp, tmp_path):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
     config = CMakeConfig(
-        CMake(), source_dir=DIR / "simple_pure", build_dir=tmp_path / "build"
+        CMake.default_search(),
+        source_dir=DIR / "simple_pure",
+        build_dir=tmp_path / "build",
     )
     config.init_cache(
         {"SKBUILD": True, "SKBUILD_VERSION": "1.0.0", "SKBUILD_PATH": config.source_dir}
@@ -62,7 +64,7 @@ def test_too_old(fp):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeConfigError) as excinfo:
-        CMake(minimum_version="3.15")
+        CMake.default_search(minimum_version="3.15")
     assert (
         "CMake version 3.14.0 is less than minimum version 3.15"
         in excinfo.value.args[0]
@@ -74,7 +76,9 @@ def test_cmake_args(tmp_path, fp):
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
 
     config = CMakeConfig(
-        CMake(), source_dir=DIR / "simple_pure", build_dir=tmp_path / "build"
+        CMake.default_search(),
+        source_dir=DIR / "simple_pure",
+        build_dir=tmp_path / "build",
     )
 
     cmd = list(configure_args(config))
