@@ -4,6 +4,12 @@ from typing import List, Optional, Union
 
 from .common import Paths
 
+__all__ = ["Target", "InstallRule", "Node", "BacktraceGraph", "Directory"]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class Target:

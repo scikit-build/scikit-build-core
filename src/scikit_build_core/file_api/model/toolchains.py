@@ -4,6 +4,12 @@ from typing import List, Optional
 
 from .common import APIVersion
 
+__all__ = ["Implicit", "Compiler", "Toolchain", "Toolchains"]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class Implicit:

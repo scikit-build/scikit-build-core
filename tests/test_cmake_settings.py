@@ -1,6 +1,6 @@
 import textwrap
 
-from scikit_build_core.settings.convert import read_cmake_settings
+from scikit_build_core.settings.cmake_settings import read_cmake_settings
 
 
 def test_cmake_settings_default(tmp_path):

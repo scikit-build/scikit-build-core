@@ -28,8 +28,7 @@ requirements & effort / maintainability.
 
 This is very much a WIP, some missing features:
 
-- Configuration support is currently not available - will use TOML + Env + PEP
-  517 config
+- PEP 517 config
 - The extensionlib integration is missing
 - The docs are not written
 - No PEP 517 interface is currently present
@@ -66,6 +65,48 @@ index = load_reply_dir(reply_dir)
 
 This mostly wraps the FileAPI in classes. It autoloads some jsonFiles. This
 throws an `ExceptionGroup` if parsing files. It is currently experimental.
+
+Configuration support uses plain dataclasses:
+
+```python
+@dataclasses.dataclass
+class NestedSettings:
+    one: str
+
+
+@dataclasses.dataclass
+class SettingChecker:
+    nested: NestedSettings
+```
+
+You can use different sources, currently environment variables:
+
+```yaml
+PREFIX_NESTED_ONE: "envvar"
+```
+
+PEP 517 config dictionaries:
+
+```python
+{"nested.one": "PEP 517 config"}
+```
+
+And TOML:
+
+```toml
+[tool.cmake]
+nested.one = "TOML config"
+```
+
+The CMake config is pre-configured and available in `.settings.cmake_model`,
+usable as:
+
+```python
+from scikit_build_core.settings.cmake_settings import read_cmake_settings
+
+cmake_settings = read_cmake_settings(Path("pyproject.toml"), config_settings or {})
+assert cmake_settings.min_version == "3.15"
+```
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg

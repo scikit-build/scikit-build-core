@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+__all__ = ["stateless_query"]
+
+
+def __dir__() -> list[str]:
+    return __all__
+
 
 def stateless_query(build_dir: Path) -> Path:
     api_dir = build_dir / ".cmake/api/v1"
