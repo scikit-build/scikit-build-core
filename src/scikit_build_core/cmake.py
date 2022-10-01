@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TypeVar
+from typing import Generator, TypeVar
 
 from packaging.version import Version
 
@@ -51,10 +51,8 @@ def get_cmake_path(*, module: bool = True) -> Path:
 Self = TypeVar("Self", bound="CMake")
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CMake:
-    __slots__ = ("version", "cmake_path")
-
     version: Version
     cmake_path: Path
 
@@ -86,8 +84,6 @@ class CMake:
 
 @dataclasses.dataclass
 class CMakeConfig:
-    __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file", "module_dirs")
-
     cmake: CMake
     source_dir: Path
     build_dir: Path
@@ -119,43 +115,43 @@ class CMakeConfig:
                 else:
                     f.write(f'set({key} "{value}" CACHE STRING "")\n')
 
+    def _compute_cmake_args(
+        self, settings: Mapping[str, str | os.PathLike[str] | bool]
+    ) -> Generator[str, None, None]:
+        yield f"-S{self.source_dir}"
+        yield f"-B{self.build_dir}"
+
+        if self.init_cache_file.is_file():
+            yield f"-C{self.init_cache_file}"
+
+        if not sys.platform.startswith("win32"):
+            logger.debug("Selecting Ninja; other generators currently unsupported")
+            yield "-GNinja"
+
+        for key, value in settings.items():
+            if isinstance(value, bool):
+                value = "ON" if value else "OFF"
+                yield f"-D{key}:BOOL={value}"
+            elif isinstance(value, os.PathLike):
+                yield f"-D{key}:PATH={value}"
+            else:
+                yield f"-D{key}={value}"
+
+        if self.module_dirs:
+            module_dirs_str = ";".join(map(str, self.module_dirs))
+            yield f"-DCMAKE_MODULE_PATH={module_dirs_str}"
+
     def configure(
         self,
         settings: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         *,
         cmake_args: list[str] | None = None,
     ) -> None:
-        settings = settings or {}
-
-        _cmake_args = [
-            f"-S{self.source_dir}",
-            f"-B{self.build_dir}",
-        ]
-
-        if self.init_cache_file.is_file():
-            _cmake_args.append(f"-C{self.init_cache_file}")
-
-        if not sys.platform.startswith("win32"):
-            logger.debug("Selecting Ninja; other generators currently unsupported")
-            _cmake_args.append("-GNinja")
-
-        for key, value in settings.items():
-            if isinstance(value, bool):
-                value = "ON" if value else "OFF"
-                _cmake_args.append(f"-D{key}:BOOL={value}")
-            elif isinstance(value, os.PathLike):
-                _cmake_args.append(f"-D{key}:PATH={value}")
-            else:
-                _cmake_args.append(f"-D{key}={value}")
-
-        if self.module_dirs:
-            module_dirs_str = ";".join(map(str, self.module_dirs))
-            _cmake_args.append(f"-DCMAKE_MODULE_PATH={module_dirs_str}")
-
-        _cmake_args += cmake_args or []
+        _cmake_args = self._compute_cmake_args(settings or {})
+        cmake_args = cmake_args or []
 
         try:
-            Run().live(self.cmake, *_cmake_args)
+            Run().live(self.cmake, *_cmake_args, *cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
