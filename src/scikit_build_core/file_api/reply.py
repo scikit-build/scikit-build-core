@@ -15,6 +15,11 @@ from .model.index import Index
 
 __all__ = ["load_reply_dir"]
 
+
+def __dir__() -> List[str]:
+    return __all__
+
+
 T = TypeVar("T")
 
 InputDict = Dict[str, Any]

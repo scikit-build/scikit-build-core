@@ -4,6 +4,12 @@ from typing import List
 
 from .common import Paths
 
+__all__ = ["Input", "CMakeFiles"]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class Input:

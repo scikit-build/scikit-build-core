@@ -3,6 +3,12 @@ from typing import List
 
 from .common import APIVersion
 
+__all__ = ["Property", "Entry", "Cache"]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class Property:

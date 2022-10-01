@@ -8,6 +8,20 @@ from .codemodel import CodeModel
 from .common import APIVersion
 from .toolchains import Toolchains
 
+__all__ = [
+    "CMakeVersion",
+    "CMakePaths",
+    "Generator",
+    "CMake",
+    "Reply",
+    "Object",
+    "Index",
+]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class CMakeVersion:

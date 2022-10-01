@@ -4,6 +4,29 @@ from typing import List, Optional
 
 from .common import APIVersion, Paths
 
+__all__ = [
+    "Archive",
+    "Artifact",
+    "CodeModel",
+    "CommandFragment",
+    "Configuration",
+    "Dependency",
+    "Destination",
+    "Directory",
+    "Install",
+    "Link",
+    "Prefix",
+    "Project",
+    "Source",
+    "StringCMakeVersion",
+    "Sysroot",
+    "Target",
+]
+
+
+def __dir__() -> List[str]:
+    return __all__
+
 
 @dataclasses.dataclass
 class StringCMakeVersion:

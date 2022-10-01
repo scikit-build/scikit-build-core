@@ -18,6 +18,12 @@ else:
 
 T = TypeVar("T")
 
+__all__ = ["Source", "SourceChain", "ConfSource", "EnvSource", "TOMLSource"]
+
+
+def __dir__() -> list[str]:
+    return __all__
+
 
 def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
     for name in names:
