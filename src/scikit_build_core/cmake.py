@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import os
 import pathlib
 import shutil
@@ -7,6 +8,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Generator, TypeVar
 
 from packaging.version import Version
 
@@ -46,39 +48,49 @@ def get_cmake_path(*, module: bool = True) -> Path:
     raise CMakeNotFoundError(msg) from None
 
 
+Self = TypeVar("Self", bound="CMake")
+
+
+@dataclasses.dataclass(frozen=True)
 class CMake:
-    __slots__ = ("version", "_cmake_path")
+    version: Version
+    cmake_path: Path
 
     # TODO: add option to control search order, etc.
-    def __init__(
-        self, *, minimum_version: str | None = None, module: bool = True
-    ) -> None:
-        self._cmake_path = get_cmake_path(module=module)
+    @classmethod
+    def default_search(
+        cls: type[Self], *, minimum_version: str | None = None, module: bool = True
+    ) -> Self:
+        cmake_path = get_cmake_path(module=module)
 
         try:
-            result = Run().capture(self, "--version")
+            result = Run().capture(cmake_path, "--version")
         except subprocess.CalledProcessError as err:
             msg = "CMake version undetermined"
             raise CMakeAccessError(err, msg) from None
 
-        self.version = Version(result.stdout.splitlines()[0].split()[-1])
-        logger.info("CMake version: {}", self.version)
+        version = Version(result.stdout.splitlines()[0].split()[-1])
+        logger.info("CMake version: {}", version)
 
-        if minimum_version is not None and self.version < Version(minimum_version):
-            msg = f"CMake version {self.version} is less than minimum version {minimum_version}"
+        if minimum_version is not None and version < Version(minimum_version):
+            msg = f"CMake version {version} is less than minimum version {minimum_version}"
             raise CMakeConfigError(msg)
 
+        return cls(version=version, cmake_path=cmake_path)
+
     def __fspath__(self) -> str:
-        return os.fspath(self._cmake_path)
+        return os.fspath(self.cmake_path)
 
 
+@dataclasses.dataclass
 class CMakeConfig:
-    __slots__ = ("cmake", "source_dir", "build_dir", "init_cache_file")
+    cmake: CMake
+    source_dir: Path
+    build_dir: Path
+    init_cache_file: Path = dataclasses.field(init=False, default=Path())
+    module_dirs: list[Path] = dataclasses.field(default_factory=list)
 
-    def __init__(self, cmake: CMake, *, source_dir: Path, build_dir: Path) -> None:
-        self.cmake = cmake
-        self.source_dir = source_dir
-        self.build_dir = build_dir
+    def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
 
         if not self.source_dir.is_dir():
@@ -103,39 +115,43 @@ class CMakeConfig:
                 else:
                     f.write(f'set({key} "{value}" CACHE STRING "")\n')
 
+    def _compute_cmake_args(
+        self, settings: Mapping[str, str | os.PathLike[str] | bool]
+    ) -> Generator[str, None, None]:
+        yield f"-S{self.source_dir}"
+        yield f"-B{self.build_dir}"
+
+        if self.init_cache_file.is_file():
+            yield f"-C{self.init_cache_file}"
+
+        if not sys.platform.startswith("win32"):
+            logger.debug("Selecting Ninja; other generators currently unsupported")
+            yield "-GNinja"
+
+        for key, value in settings.items():
+            if isinstance(value, bool):
+                value = "ON" if value else "OFF"
+                yield f"-D{key}:BOOL={value}"
+            elif isinstance(value, os.PathLike):
+                yield f"-D{key}:PATH={value}"
+            else:
+                yield f"-D{key}={value}"
+
+        if self.module_dirs:
+            module_dirs_str = ";".join(map(str, self.module_dirs))
+            yield f"-DCMAKE_MODULE_PATH={module_dirs_str}"
+
     def configure(
         self,
         settings: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         *,
         cmake_args: list[str] | None = None,
     ) -> None:
-        settings = settings or {}
-
-        _cmake_args = [
-            f"-S{self.source_dir}",
-            f"-B{self.build_dir}",
-        ]
-
-        if self.init_cache_file.is_file():
-            _cmake_args.append(f"-C{self.init_cache_file}")
-
-        if not sys.platform.startswith("win32"):
-            logger.debug("Selecting Ninja; other generators currently unsupported")
-            _cmake_args.append("-GNinja")
-
-        for key, value in settings.items():
-            if isinstance(value, bool):
-                value = "ON" if value else "OFF"
-                _cmake_args.append(f"-D{key}:BOOL={value}")
-            elif isinstance(value, os.PathLike):
-                _cmake_args.append(f"-D{key}:PATH={value}")
-            else:
-                _cmake_args.append(f"-D{key}={value}")
-
-        _cmake_args += cmake_args or []
+        _cmake_args = self._compute_cmake_args(settings or {})
+        cmake_args = cmake_args or []
 
         try:
-            Run().live(self.cmake, *_cmake_args)
+            Run().live(self.cmake, *_cmake_args, *cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
