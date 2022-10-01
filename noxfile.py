@@ -38,6 +38,16 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
+@nox.session(reuse_venv=True)
+def coverage(session: nox.Session) -> None:
+    """
+    Run coverage and report.
+    """
+
+    session.install("-e.[test]", "pytest-cov")
+    session.run("pytest", "--cov=scikit_build_core", *session.posargs)
+
+
 @nox.session
 def docs(session: nox.Session) -> None:
     """
