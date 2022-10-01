@@ -12,7 +12,12 @@ from packaging.version import Version
 
 from ._logging import logger
 from ._shutil import Run
-from .errors import CMakeAccessError, CMakeConfigError, FailedLiveProcessError
+from .errors import (
+    CMakeAccessError,
+    CMakeConfigError,
+    CMakeNotFoundError,
+    FailedLiveProcessError,
+)
 
 __all__ = ["CMake", "CMakeConfig", "get_cmake_path"]
 
@@ -21,29 +26,34 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def get_cmake_path() -> Path:
+def get_cmake_path(*, module: bool = True) -> Path:
     """
     Get the path to CMake.
     """
-    try:
-        import cmake
+    if module:
+        try:
+            import cmake
 
-        return pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
-    except ImportError:
-        cmake_path = shutil.which("cmake")
-        if cmake_path is not None:
-            return pathlib.Path(cmake_path).resolve()
+            return pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
+        except ImportError:
+            pass
 
-        msg = "cmake package missing and cmake command not found on path"
-        raise RuntimeError(msg) from None
+    cmake_path = shutil.which("cmake")
+    if cmake_path is not None:
+        return pathlib.Path(cmake_path).resolve()
+
+    msg = "cmake package missing and cmake command not found on path"
+    raise CMakeNotFoundError(msg) from None
 
 
 class CMake:
     __slots__ = ("version", "_cmake_path")
 
     # TODO: add option to control search order, etc.
-    def __init__(self, *, minimum_version: str | None = None) -> None:
-        self._cmake_path = get_cmake_path()
+    def __init__(
+        self, *, minimum_version: str | None = None, module: bool = True
+    ) -> None:
+        self._cmake_path = get_cmake_path(module=module)
 
         try:
             result = Run().capture(self, "--version")

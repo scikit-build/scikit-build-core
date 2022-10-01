@@ -4,12 +4,13 @@ import subprocess
 import textwrap
 
 __all__ = [
-    "ScikitBuildError",
-    "FailedProcessError",
     "CMakeAccessError",
-    "CMakeVersionError",
     "CMakeConfigError",
+    "CMakeNotFoundError",
+    "CMakeVersionError",
     "FailedLiveProcessError",
+    "FailedProcessError",
+    "ScikitBuildError",
 ]
 
 
@@ -20,6 +21,12 @@ def __dir__() -> list[str]:
 class ScikitBuildError(Exception):
     """
     Base class for all ScikitBuildError errors.
+    """
+
+
+class CMakeNotFoundError(ScikitBuildError):
+    """
+    Raised when CMake is not found.
     """
 
 
