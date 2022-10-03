@@ -67,7 +67,7 @@ jobs:
         run: python -m pytest -ra --showlocals --cov=scikit_build_core
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1
 
   dist:
     name: Distribution build
