@@ -37,22 +37,22 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "cattrs;platform_python_implementation!='PyPy'",
-    "cmake",
+    "cattrs >=22.2.0",
+    "cmake >=3.15",
     "ninja; platform_system!='Windows'",
     "pytest >=7",
     "pytest-subprocess",
 ]
 dev = [
-    "cattrs;platform_python_implementation!='PyPy'",
+    "cattrs >=22.2.0",
     "pytest >=7",
     "pytest-subprocess",
     "rich",
 ]
 docs = [
     "furo",
-    "myst_parser>=0.13",
-    "sphinx>=4.0",
+    "myst_parser >=0.13",
+    "sphinx >=4.0",
     "sphinx_copybutton",
 ]
 
@@ -70,9 +70,7 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "--tb=native"]
 xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "info"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 markers = [
     "compile: Compiles code",
     "configure: Configures CMake code",
