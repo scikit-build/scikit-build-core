@@ -86,10 +86,6 @@ show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 
-[[tool.mypy.overrides]]
-module = ["ninja"]
-ignore_missing_imports = true
-
 
 [tool.isort]
 profile = "black"
