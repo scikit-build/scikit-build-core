@@ -4,16 +4,15 @@ import dataclasses
 import os
 import sys
 from collections.abc import Mapping
-from pathlib import Path
 from typing import Any, TypeVar, Union
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 if sys.version_info >= (3, 8):
-    from typing import Protocol
+    from typing import Protocol, runtime_checkable
 else:
-    from typing_extensions import Protocol
+    from typing_extensions import Protocol, runtime_checkable
 
 
 T = TypeVar("T")
@@ -31,6 +30,32 @@ def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
     return dict_
 
 
+@runtime_checkable
+class TypeLike(Protocol):
+    @property
+    def __origin__(self) -> Any:
+        ...
+
+    @property
+    def __args__(self) -> list[Any]:
+        ...
+
+
+def _process_union(target: TypeLike) -> Any:
+    """
+    Selects the non-None item in an Optional or Optional-like Union.
+    """
+
+    if len(target.__args__) == 2:
+        items = list(target.__args__)
+        if type(None) not in items:
+            raise AssertionError(f"None must be in union, got {items}")
+        items.remove(type(None))
+        return items[0]
+
+    raise AssertionError("Only Unions with None supported")
+
+
 class Source(Protocol):
     def has_item(self, *fields: str) -> Source | None:
         """
@@ -45,7 +70,7 @@ class Source(Protocol):
         ...
 
     @classmethod
-    def convert(cls, item: Any, target: type[T]) -> T:
+    def convert(cls, item: Any, target: object) -> object:
         ...
 
 
@@ -73,13 +98,15 @@ class EnvSource:
         raise KeyError(f"{name!r} not found in environment")
 
     @classmethod
-    def convert(cls, item: str, target: type[T]) -> T:
-        if hasattr(target, "__origin__"):
-            if target.__origin__ == list:  # type: ignore[attr-defined]
-                return [cls.convert(i, target.__args__[0]) for i in item.split(";")]  # type: ignore[return-value,attr-defined]
-            if target.__origin__ == Union:  # type: ignore[attr-defined]
-                return cls.convert(item, target.__args__[0])  # type: ignore[no-any-return,attr-defined]
-        return target(item)  # type: ignore[call-arg]
+    def convert(cls, item: str, target: object) -> object:
+        if isinstance(target, TypeLike):
+            if target.__origin__ == list:
+                return [cls.convert(i, target.__args__[0]) for i in item.split(";")]
+            if target.__origin__ == Union:
+                return cls.convert(item, _process_union(target))
+        if callable(target):
+            return target(item)
+        raise AssertionError(f"Can't convert target {target}")
 
 
 class ConfSource:
@@ -112,13 +139,15 @@ class ConfSource:
         raise KeyError(f"{name!r} not found in configuration settings")
 
     @classmethod
-    def convert(cls, item: str | list[str], target: type[T]) -> T:
-        if isinstance(item, list):
-            return [cls.convert(i, target.__args__[0]) for i in item]  # type: ignore[return-value,attr-defined]
-        if hasattr(target, "__origin__"):
-            if target.__origin__ == Union:  # type: ignore[attr-defined]
-                return cls.convert(item, target.__args__[0])  # type: ignore[no-any-return,attr-defined]
-        return target(item)  # type: ignore[call-arg]
+    def convert(cls, item: str | list[str], target: object) -> object:
+        if isinstance(target, TypeLike):
+            if isinstance(item, list):
+                return [cls.convert(i, target.__args__[0]) for i in item]
+            if target.__origin__ == Union:
+                return cls.convert(item, _process_union(target))
+        if callable(target):
+            return target(item)
+        raise AssertionError(f"Can't convert target {target}")
 
 
 class TOMLSource:
@@ -146,10 +175,15 @@ class TOMLSource:
             raise KeyError(f"{names!r} not found in configuration settings") from None
 
     @classmethod
-    def convert(cls, item: Any, target: type[T]) -> T:
-        if isinstance(target, type) and issubclass(target, Path):  # type: ignore[redundant-expr]
-            return target(item)  # type: ignore[return-value]
-        return item  # type: ignore[no-any-return]
+    def convert(cls, item: Any, target: object) -> object:
+        if isinstance(target, TypeLike):
+            if target.__origin__ == list:
+                return [cls.convert(it, target.__args__[0]) for it in item]
+            if target.__origin__ == Union:
+                return cls.convert(item, _process_union(target))
+        if callable(target):
+            return target(item)
+        raise AssertionError(f"Can't convert target {target}")
 
 
 class SourceChain:
