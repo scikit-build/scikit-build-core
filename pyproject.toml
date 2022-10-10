@@ -43,6 +43,9 @@ test = [
     "pytest >=7",
     "pytest-subprocess",
 ]
+cov = [
+    "pytest-cov[toml]",
+]
 dev = [
     "cattrs >=22.2.0",
     "pytest >=7",
@@ -109,4 +112,11 @@ messages_control.disable = [
   "wrong-import-position",
   "unnecessary-ellipsis",  # Conflicts with Protocols
   "broad-except",
+]
+
+
+[tool.coverage]
+report.exclude_lines = [
+  "pragma: no cover",
+  '\.\.\.',
 ]

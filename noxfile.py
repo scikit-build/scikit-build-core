@@ -44,7 +44,7 @@ def coverage(session: nox.Session) -> None:
     Run coverage and report.
     """
 
-    session.install("-e.[test]", "pytest-cov")
+    session.install("-e.[test,cov]")
     session.run("pytest", "--cov=scikit_build_core", *session.posargs)
 
 
