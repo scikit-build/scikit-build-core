@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from scikit_build_core.settings.sources import (
     ConfSource,
@@ -19,6 +19,31 @@ class SettingChecker:
     four: List[int]
     five: str = "empty"
     six: Path = Path("empty")
+    seven: Union[int, None] = None
+
+
+def test_empty(monkeypatch):
+    monkeypatch.setenv("SKB_ZERO", "zero")
+    monkeypatch.setenv("SKB_ONE", "one")
+    monkeypatch.setenv("SKB_TWO", "2")
+    monkeypatch.setenv("SKB_THREE", "three")
+    monkeypatch.setenv("SKB_FOUR", "4")
+
+    sources = SourceChain(
+        EnvSource("SKB"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingChecker)
+
+    assert settings.zero == Path("zero")
+    assert settings.one == "one"
+    assert settings.two == 2
+    assert settings.three == ["three"]
+    assert settings.four == [4]
+    assert settings.five == "empty"
+    assert settings.six == Path("empty")
+    assert settings.seven is None
 
 
 def test_env(monkeypatch):
@@ -29,6 +54,7 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_FOUR", "4")
     monkeypatch.setenv("SKBUILD_FIVE", "five")
     monkeypatch.setenv("SKBUILD_SIX", "six")
+    monkeypatch.setenv("SKBUILD_SEVEN", "7")
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
@@ -44,6 +70,7 @@ def test_env(monkeypatch):
     assert settings.four == [4]
     assert settings.five == "five"
     assert settings.six == Path("six")
+    assert settings.seven == 7
 
 
 def test_conf():
@@ -55,6 +82,7 @@ def test_conf():
         "four": ["4"],
         "five": "five",
         "six": "six",
+        "seven": 7,
     }
 
     sources = SourceChain(
@@ -71,6 +99,7 @@ def test_conf():
     assert settings.four == [4]
     assert settings.five == "five"
     assert settings.six == Path("six")
+    assert settings.seven == 7
 
 
 def test_toml():
@@ -82,6 +111,7 @@ def test_toml():
         "four": [4],
         "five": "five",
         "six": "six",
+        "seven": 7,
     }
 
     sources = SourceChain(
@@ -98,6 +128,7 @@ def test_toml():
     assert settings.four == [4]
     assert settings.five == "five"
     assert settings.six == Path("six")
+    assert settings.seven == 7
 
 
 @dataclasses.dataclass
