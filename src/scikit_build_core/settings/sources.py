@@ -99,7 +99,7 @@ class EnvSource:
 
     @classmethod
     def convert(cls, item: str, target: object) -> object:
-        if isinstance(target, TypeLike):
+        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if target.__origin__ == list:
                 return [cls.convert(i, target.__args__[0]) for i in item.split(";")]
             if target.__origin__ == Union:
@@ -140,7 +140,8 @@ class ConfSource:
 
     @classmethod
     def convert(cls, item: str | list[str], target: object) -> object:
-        if isinstance(target, TypeLike):
+        # The hasattr is required for Python 3.7, though not quite sure why
+        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if isinstance(item, list):
                 return [cls.convert(i, target.__args__[0]) for i in item]
             if target.__origin__ == Union:
@@ -176,7 +177,7 @@ class TOMLSource:
 
     @classmethod
     def convert(cls, item: Any, target: object) -> object:
-        if isinstance(target, TypeLike):
+        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if target.__origin__ == list:
                 return [cls.convert(it, target.__args__[0]) for it in item]
             if target.__origin__ == Union:
