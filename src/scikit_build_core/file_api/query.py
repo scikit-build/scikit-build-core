@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 __all__ = ["stateless_query"]
@@ -28,4 +29,5 @@ if __name__ == "__main__":
     parser.add_argument("build_dir", type=Path, help="Path to the build directory")
     args = parser.parse_args()
 
-    stateless_query(args.build_dir)
+    result = stateless_query(args.build_dir)
+    sys.stdout.write(f"{result}\n")
