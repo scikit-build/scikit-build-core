@@ -61,7 +61,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: python -m pip install .[test] pytest-cov
+        run: python -m pip install .[test,cov]
 
       - name: Test package
         run: python -m pytest -ra --showlocals --cov=scikit_build_core

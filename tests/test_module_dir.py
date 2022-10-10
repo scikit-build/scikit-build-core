@@ -33,7 +33,11 @@ def test_all_modules_filter_all():
     for name in all_modules:
         module = importlib.import_module(name)
 
-        dir_module = set(dir(module))
+        try:
+            dir_module = set(dir(module))
+        except Exception:
+            print(f"dir() failed on {name}")
+            raise
         items = ["annotations", "os", "sys"]
         for item in items:
             assert item not in dir_module, f"{module.__file__} has {item!r}"
