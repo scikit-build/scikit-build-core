@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
 from scikit_build_core.cmake import CMake, CMakeConfig
+from scikit_build_core.file_api._cattrs_converter import (
+    load_reply_dir as load_reply_dir_cattrs,
+)
 from scikit_build_core.file_api.query import stateless_query
 from scikit_build_core.file_api.reply import load_reply_dir
 
@@ -13,13 +15,7 @@ DIR = Path(__file__).parent.absolute()
 
 
 @pytest.mark.configure
-@pytest.mark.skipif(
-    sys.implementation.name == "pypy", reason="cattrs does not support pypy for 22.1"
-)
 def test_cattrs_comparison(tmp_path):
-    from scikit_build_core.file_api._cattrs_converter import (
-        load_reply_dir as load_reply_dir_cattrs,
-    )
 
     build_dir = tmp_path / "build"
 
@@ -37,6 +33,15 @@ def test_cattrs_comparison(tmp_path):
     cattrs_index = load_reply_dir_cattrs(reply_dir)
     index = load_reply_dir(reply_dir)
     assert index == cattrs_index
+
+
+# TODO: Why is this an IndexError?
+def test_no_index(tmp_path):
+    with pytest.raises(IndexError):
+        load_reply_dir(tmp_path)
+
+    with pytest.raises(IndexError):
+        load_reply_dir_cattrs(tmp_path)
 
 
 @pytest.mark.configure

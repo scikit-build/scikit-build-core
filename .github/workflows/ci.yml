@@ -68,6 +68,8 @@ jobs:
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.1
+        with:
+          name: ${{ runner.os }}-${{ matrix.python-version }}
 
   dist:
     name: Distribution build

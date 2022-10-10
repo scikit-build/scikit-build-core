@@ -42,6 +42,7 @@ test = [
     "ninja; platform_system!='Windows'",
     "pytest >=7",
     "pytest-subprocess",
+    "rich",
 ]
 cov = [
     "pytest-cov[toml]",
