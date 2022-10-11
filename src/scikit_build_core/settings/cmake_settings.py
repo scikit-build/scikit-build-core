@@ -4,7 +4,7 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
-from .cmake_model import CMakeSettings
+from .cmake_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
 if sys.version_info >= (3, 11):
@@ -13,26 +13,26 @@ else:
     import tomli as tomllib
 
 
-__all__ = ["read_cmake_settings"]
+__all__ = ["read_settings"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-def read_cmake_settings(
+def read_settings(
     pyproject_toml: Path, config_settings: Mapping[str, str | list[str]]
-) -> CMakeSettings:
+) -> ScikitBuildSettings:
 
     with pyproject_toml.open("rb") as f:
         pyproject = tomllib.load(f)
 
-    cmake_section = pyproject.get("tool", {}).get("cmake", {})
+    cmake_section = pyproject.get("tool", {}).get("scikit-build", {})
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
-        ConfSource("cmake", settings=config_settings),
+        ConfSource("scikit-build", settings=config_settings),
         TOMLSource(settings=cmake_section),
     )
 
-    return sources.convert_target(CMakeSettings)
+    return sources.convert_target(ScikitBuildSettings)
