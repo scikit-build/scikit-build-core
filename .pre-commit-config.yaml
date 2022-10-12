@@ -93,6 +93,7 @@ repos:
           - ninja
           - packaging
           - rich
+          - types-setuptools
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2

@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.4...3.18)
+project(cmake_example)
+
+execute_process(
+COMMAND "${PYTHON_EXECUTABLE}" -c
+        "import pybind11; print(pybind11.get_cmake_dir())"
+OUTPUT_VARIABLE _tmp_dir
+OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+find_package(pybind11 CONFIG REQUIRED)
+pybind11_add_module(cmake_example src/main.cpp)
+
+# VERSION_INFO is defined by setup.py and passed into the C++ code as a
+# define (VERSION_INFO) here.
+target_compile_definitions(cmake_example
+                           PRIVATE VERSION_INFO=${VERSION_INFO})
