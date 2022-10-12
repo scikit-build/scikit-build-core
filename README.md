@@ -102,9 +102,9 @@ The CMake config is pre-configured and available in `.settings.cmake_model`,
 usable as:
 
 ```python
-from scikit_build_core.settings.cmake_settings import read_settings
+from scikit_build_core.settings.skbuild_settings import read_settings
 
-settings = read_cmake_settings(Path("pyproject.toml"), config_settings or {})
+settings = read_skbuild_settings(Path("pyproject.toml"), config_settings or {})
 assert settings.cmake.min_version == "3.15"
 assert settings.ninja.min_version == "0.0"
 ```

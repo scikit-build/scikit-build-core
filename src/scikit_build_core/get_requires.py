@@ -6,7 +6,7 @@ from pathlib import Path
 
 from scikit_build_core.cmake import CMake
 from scikit_build_core.errors import ScikitBuildError
-from scikit_build_core.settings.cmake_settings import read_settings
+from scikit_build_core.settings.skbuild_settings import read_settings
 
 __all__ = ["get_requires_for_build_wheel"]
 
