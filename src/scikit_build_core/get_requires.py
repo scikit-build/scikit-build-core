@@ -6,7 +6,7 @@ from pathlib import Path
 
 from scikit_build_core.cmake import CMake
 from scikit_build_core.errors import ScikitBuildError
-from scikit_build_core.settings.cmake_settings import read_cmake_settings
+from scikit_build_core.settings.skbuild_settings import read_settings
 
 __all__ = ["get_requires_for_build_wheel"]
 
@@ -21,17 +21,20 @@ def get_requires_for_build_wheel(
     | None = None
 ) -> list[str]:
 
-    cmake_settings = read_cmake_settings(Path("pyproject.toml"), config_settings or {})
+    settings = read_settings(Path("pyproject.toml"), config_settings or {})
 
     packages = []
     try:
-        CMake.default_search(minimum_version=cmake_settings.min_version, module=False)
+        CMake.default_search(minimum_version=settings.cmake.min_version, module=False)
     except ScikitBuildError:
-        packages.append(f"cmake>={cmake_settings.min_version}")
+        packages.append(f"cmake>={settings.cmake.min_version}")
 
+    ninja_min = settings.ninja.min_version
     if not sys.platform.startswith("win"):
         ninja = shutil.which("ninja")
         if ninja is None:
-            packages.append("ninja")
+            packages.append("ninja" if ninja_min == "0.0" else f"ninja>={ninja_min}")
+        elif ninja_min != "0.0":
+            raise NotImplementedError("Ninja limits not yet implemented")
 
     return packages

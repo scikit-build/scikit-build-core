@@ -36,7 +36,7 @@ def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
-    assert get_requires_for_build_wheel({"cmake.min-version": "3.20"}) == [
+    assert get_requires_for_build_wheel({"scikit-build.cmake.min-version": "3.20"}) == [
         "cmake>=3.20",
         *ninja,
     ]
@@ -46,7 +46,7 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
-        [tool.cmake]
+        [tool.scikit-build.cmake]
         min-version = "3.21"
         """
     )
