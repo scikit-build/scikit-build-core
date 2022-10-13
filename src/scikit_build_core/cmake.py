@@ -108,11 +108,16 @@ class CMakeConfig:
             for key, value in cache_settings.items():
                 if isinstance(value, bool):
                     value = "ON" if value else "OFF"
-                    f.write(f'set({key} "{value}" CACHE BOOL "")\n')
+                    f.write(f'set({key} {value} CACHE BOOL "")\n')
                 elif isinstance(value, os.PathLike):
-                    f.write(f'set({key} "{value}" CACHE PATH "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE PATH "")\n')
                 else:
-                    f.write(f'set({key} "{value}" CACHE STRING "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE STRING "")\n')
+        logger.debug(
+            "{}:\n{}",
+            self.init_cache_file,
+            self.init_cache_file.read_text(encoding="utf-8"),
+        )
 
     def _compute_cmake_args(
         self, settings: Mapping[str, str | os.PathLike[str] | bool]
