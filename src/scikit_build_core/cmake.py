@@ -88,6 +88,7 @@ class CMakeConfig:
     build_dir: Path
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
+    env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -154,7 +155,7 @@ class CMakeConfig:
         _cmake_args = self._compute_cmake_args(defines or {})
 
         try:
-            Run().live(self.cmake, *_cmake_args, *cmake_args)
+            Run(env=self.env).live(self.cmake, *_cmake_args, *cmake_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
@@ -165,7 +166,7 @@ class CMakeConfig:
             local_args += ["--config", "Release"]
 
         try:
-            Run().live(
+            Run(env=self.env).live(
                 self.cmake, "--build", self.build_dir, *build_args, *local_args
             )
         except subprocess.CalledProcessError:
@@ -174,7 +175,7 @@ class CMakeConfig:
 
     def install(self, prefix: Path) -> None:
         try:
-            Run().live(
+            Run(env=self.env).live(
                 self.cmake,
                 "--install",
                 self.build_dir,
