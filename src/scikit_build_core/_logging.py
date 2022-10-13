@@ -26,6 +26,11 @@ class FStringMessage:
     def __str__(self) -> str:
         return self.fmt.format(*self.args, **self.kwargs)
 
+    def __repr__(self) -> str:
+        return (
+            f"<FStringMessage {self.fmt!r} args={self.args!r} kwargs={self.kwargs!r}>"
+        )
+
 
 class ScikitBuildLogger:
     # pylint: disable-next=redefined-outer-name
