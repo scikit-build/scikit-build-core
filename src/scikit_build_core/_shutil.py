@@ -16,7 +16,7 @@ def __dir__() -> list[str]:
 
 @dataclasses.dataclass
 class Run:
-    env: dict[str, str | os.PathLike[str]] | None = None
+    env: dict[str, str] | None = None
     cwd: os.PathLike[str] | None = None
 
     def live(self, *args: str | os.PathLike[str]) -> None:
@@ -50,4 +50,6 @@ class Run:
             text=True,
             check=True,
             capture_output=capture,
+            env=self.env,
+            cwd=self.cwd,
         )
