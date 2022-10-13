@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import os
 import pathlib
@@ -33,12 +34,10 @@ def get_cmake_path(*, module: bool = True) -> Path:
     Get the path to CMake.
     """
     if module:
-        try:
+        with contextlib.suppress(ImportError):
             import cmake
 
             return pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
-        except ImportError:
-            pass
 
     cmake_path = shutil.which("cmake")
     if cmake_path is not None:
