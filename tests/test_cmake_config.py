@@ -52,9 +52,9 @@ def test_init_cache(fp, tmp_path):
     assert (
         cmake_init.read_text()
         == f"""\
-set(SKBUILD "ON" CACHE BOOL "")
-set(SKBUILD_VERSION "1.0.0" CACHE STRING "")
-set(SKBUILD_PATH "{config.source_dir}" CACHE PATH "")
+set(SKBUILD ON CACHE BOOL "")
+set(SKBUILD_VERSION [===[1.0.0]===] CACHE STRING "")
+set(SKBUILD_PATH [===[{config.source_dir}]===] CACHE PATH "")
 """
     )
 
