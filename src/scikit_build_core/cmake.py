@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Generator, TypeVar
 
@@ -142,12 +142,11 @@ class CMakeConfig:
 
     def configure(
         self,
-        settings: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         *,
-        cmake_args: list[str] | None = None,
+        defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
+        cmake_args: Sequence[str] = (),
     ) -> None:
-        _cmake_args = self._compute_cmake_args(settings or {})
-        cmake_args = cmake_args or []
+        _cmake_args = self._compute_cmake_args(defines or {})
 
         try:
             Run().live(self.cmake, *_cmake_args, *cmake_args)
@@ -155,13 +154,17 @@ class CMakeConfig:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
 
-    def build(self) -> None:
+    def build(self, build_args: Sequence[str] = (), *, verbose: int = 0) -> None:
         opts: dict[str, str] = {}
         if sys.platform.startswith("win32"):
             opts["config"] = "Release"
 
+        local_args = ["-v"] * verbose
+
         try:
-            Run().live(self.cmake, build=self.build_dir, **opts)
+            Run().live(
+                self.cmake, "--build", self.build_dir, *build_args, *local_args, **opts
+            )
         except subprocess.CalledProcessError:
             msg = "CMake build failed"
             raise FailedLiveProcessError(msg) from None
