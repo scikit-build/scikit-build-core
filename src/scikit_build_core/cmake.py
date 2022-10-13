@@ -95,7 +95,7 @@ class CMakeConfig:
         if not self.source_dir.is_dir():
             raise CMakeConfigError(f"source directory {self.source_dir} does not exist")
 
-        self.build_dir.mkdir(parents=True, exist_ok=False)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
         if not self.build_dir.is_dir():
             raise CMakeConfigError(
                 f"build directory {self.build} must be a (creatable) directory"
