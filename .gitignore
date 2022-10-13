@@ -106,10 +106,10 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
-.venv
-env/
-venv/
+.env*
+.venv*
+env*/
+venv*/
 ENV/
 env.bak/
 venv.bak/
@@ -140,3 +140,6 @@ cython_debug/
 
 # setuptools_scm
 src/*/_version.py
+
+# SKBuild cache dir
+_skbuild/
