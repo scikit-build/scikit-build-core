@@ -160,15 +160,13 @@ class CMakeConfig:
             raise FailedLiveProcessError(msg) from None
 
     def build(self, build_args: Sequence[str] = (), *, verbose: int = 0) -> None:
-        opts: dict[str, str] = {}
-        if sys.platform.startswith("win32"):
-            opts["config"] = "Release"
-
         local_args = ["-v"] * verbose
+        if sys.platform.startswith("win32"):
+            local_args += ["--config", "Release"]
 
         try:
             Run().live(
-                self.cmake, "--build", self.build_dir, *build_args, *local_args, **opts
+                self.cmake, "--build", self.build_dir, *build_args, *local_args
             )
         except subprocess.CalledProcessError:
             msg = "CMake build failed"
@@ -178,8 +176,10 @@ class CMakeConfig:
         try:
             Run().live(
                 self.cmake,
-                install=self.build_dir,
-                prefix=prefix,
+                "--install",
+                self.build_dir,
+                "--prefix",
+                prefix,
             )
         except subprocess.CalledProcessError:
             msg = "CMake install failed"
