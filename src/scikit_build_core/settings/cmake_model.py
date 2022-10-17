@@ -10,12 +10,12 @@ def __dir__() -> List[str]:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    min_version: str = "0.0"
+    minimum_version: str = "0.0"
 
 
 @dataclasses.dataclass
 class CMakeSettings:
-    min_version: str = "3.15"
+    minimum_version: str = "3.15"
 
 
 @dataclasses.dataclass

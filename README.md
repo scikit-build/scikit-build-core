@@ -105,8 +105,8 @@ usable as:
 from scikit_build_core.settings.skbuild_settings import read_settings
 
 settings = read_skbuild_settings(Path("pyproject.toml"), config_settings or {})
-assert settings.cmake.min_version == "3.15"
-assert settings.ninja.min_version == "0.0"
+assert settings.cmake.minimum_version == "3.15"
+assert settings.ninja.minimum_version == "0.0"
 ```
 
 <!-- prettier-ignore-start -->

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import os
-import pathlib
-import shutil
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -15,36 +12,14 @@ from packaging.version import Version
 
 from ._logging import logger
 from ._shutil import Run
-from .errors import (
-    CMakeAccessError,
-    CMakeConfigError,
-    CMakeNotFoundError,
-    FailedLiveProcessError,
-)
+from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
+from .program_search import best_program, get_cmake_programs
 
-__all__ = ["CMake", "CMakeConfig", "get_cmake_path"]
+__all__ = ["CMake", "CMakeConfig"]
 
 
 def __dir__() -> list[str]:
     return __all__
-
-
-def get_cmake_path(*, module: bool = True) -> Path:
-    """
-    Get the path to CMake.
-    """
-    if module:
-        with contextlib.suppress(ImportError):
-            import cmake
-
-            return pathlib.Path(cmake.CMAKE_BIN_DIR) / "cmake"
-
-    cmake_path = shutil.which("cmake")
-    if cmake_path is not None:
-        return pathlib.Path(cmake_path).resolve()
-
-    msg = "cmake package missing and cmake command not found on path"
-    raise CMakeNotFoundError(msg) from None
 
 
 Self = TypeVar("Self", bound="CMake")
@@ -55,27 +30,24 @@ class CMake:
     version: Version
     cmake_path: Path
 
-    # TODO: add option to control search order, etc.
     @classmethod
     def default_search(
-        cls: type[Self], *, minimum_version: str | None = None, module: bool = True
+        cls: type[Self], *, minimum_version: Version | None = None, module: bool = True
     ) -> Self:
-        cmake_path = get_cmake_path(module=module)
+        candidates = get_cmake_programs(module=module)
+        cmake_program = best_program(candidates, minimum_version=minimum_version)
 
-        try:
-            result = Run().capture(cmake_path, "--version")
-        except subprocess.CalledProcessError as err:
-            msg = "CMake version undetermined"
-            raise CMakeAccessError(err, msg) from None
+        if cmake_program is None:
+            raise CMakeNotFoundError(
+                f"Could not find CMake with version >= {minimum_version}"
+            )
+        if cmake_program.version is None:
+            msg = "CMake version undetermined @ {program.path}"
+            raise CMakeNotFoundError(msg)
 
-        version = Version(result.stdout.splitlines()[0].split()[-1])
-        logger.info("CMake version: {}", version)
+        logger.info("CMake version: {}", cmake_program.version)
 
-        if minimum_version is not None and version < Version(minimum_version):
-            msg = f"CMake version {version} is less than minimum version {minimum_version}"
-            raise CMakeConfigError(msg)
-
-        return cls(version=version, cmake_path=cmake_path)
+        return cls(version=cmake_program.version, cmake_path=cmake_program.path)
 
     def __fspath__(self) -> str:
         return os.fspath(self.cmake_path)
