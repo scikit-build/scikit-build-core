@@ -8,8 +8,11 @@ __all__ = [
     "CMakeConfigError",
     "CMakeNotFoundError",
     "CMakeVersionError",
+    "NinjaVersionError",
     "FailedLiveProcessError",
     "FailedProcessError",
+    "NinjaNotFoundError",
+    "NotFoundError",
     "ScikitBuildError",
 ]
 
@@ -24,9 +27,21 @@ class ScikitBuildError(Exception):
     """
 
 
-class CMakeNotFoundError(ScikitBuildError):
+class NotFoundError(ScikitBuildError):
     """
-    Raised when CMake is not found.
+    Raised when a program is not found.
+    """
+
+
+class CMakeNotFoundError(NotFoundError):
+    """
+    Raised when cmake is not found.
+    """
+
+
+class NinjaNotFoundError(NotFoundError):
+    """
+    Raised when ninja is not found.
     """
 
 
@@ -66,6 +81,12 @@ class CMakeAccessError(FailedProcessError):
 
 
 class CMakeVersionError(ScikitBuildError):
+    """
+    Error raised when CMake version is not supported.
+    """
+
+
+class NinjaVersionError(ScikitBuildError):
     """
     Error raised when CMake version is not supported.
     """

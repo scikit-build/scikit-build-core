@@ -39,7 +39,7 @@ dependencies = [
 test = [
     "cattrs >=22.2.0",
     "cmake >=3.15",
-    "ninja; platform_system!='Windows'",
+    "ninja",
     "pytest >=7",
     "pytest-subprocess",
     "rich",

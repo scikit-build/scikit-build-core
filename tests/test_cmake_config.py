@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 from pathlib import Path
 
+import cmake
 import pytest
+from packaging.version import Version
 
-from scikit_build_core.cmake import CMake, CMakeConfig, get_cmake_path
-from scikit_build_core.errors import CMakeConfigError
+from scikit_build_core.cmake import CMake, CMakeConfig
+from scikit_build_core.errors import CMakeNotFoundError
 
-DIR = Path(__file__).parent.absolute()
-
-# Due to https://github.com/scikit-build/cmake-python-distributions/pull/279
-# this is outside of the functions for now.
-cmake_path = get_cmake_path()
+DIR = Path(__file__).parent.resolve()
 
 
 def configure_args(config, *, init=False):
+    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     yield os.fspath(cmake_path)
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
@@ -31,6 +31,7 @@ def configure_args(config, *, init=False):
 
 @pytest.mark.configure
 def test_init_cache(fp, tmp_path):
+    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
     config = CMakeConfig(
@@ -60,19 +61,20 @@ set(SKBUILD_PATH [===[{config.source_dir}]===] CACHE PATH "")
 
 
 @pytest.mark.configure
-def test_too_old(fp):
+def test_too_old(fp, monkeypatch):
+    monkeypatch.setattr(shutil, "which", lambda x: None)
+    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
+    print(cmake_path)
 
-    with pytest.raises(CMakeConfigError) as excinfo:
-        CMake.default_search(minimum_version="3.15")
-    assert (
-        "CMake version 3.14.0 is less than minimum version 3.15"
-        in excinfo.value.args[0]
-    )
+    with pytest.raises(CMakeNotFoundError) as excinfo:
+        CMake.default_search(minimum_version=Version("3.15"))
+    assert "Could not find CMake with version >= 3.15" in excinfo.value.args[0]
 
 
 @pytest.mark.configure
 def test_cmake_args(tmp_path, fp):
+    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
 
     config = CMakeConfig(

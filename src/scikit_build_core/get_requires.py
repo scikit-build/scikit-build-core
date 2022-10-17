@@ -4,6 +4,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from packaging.version import Version
+
 from scikit_build_core.cmake import CMake
 from scikit_build_core.errors import ScikitBuildError
 from scikit_build_core.settings.skbuild_settings import read_settings
@@ -24,12 +26,13 @@ def get_requires_for_build_wheel(
     settings = read_settings(Path("pyproject.toml"), config_settings or {})
 
     packages = []
+    minimum_version = Version(settings.cmake.minimum_version)
     try:
-        CMake.default_search(minimum_version=settings.cmake.min_version, module=False)
+        CMake.default_search(minimum_version=minimum_version, module=False)
     except ScikitBuildError:
-        packages.append(f"cmake>={settings.cmake.min_version}")
+        packages.append(f"cmake>={settings.cmake.minimum_version}")
 
-    ninja_min = settings.ninja.min_version
+    ninja_min = settings.ninja.minimum_version
     if not sys.platform.startswith("win"):
         ninja = shutil.which("ninja")
         if ninja is None:
