@@ -7,7 +7,7 @@ from collections.abc import Generator, Iterable
 from pathlib import Path
 from typing import NamedTuple
 
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from ._logging import logger
 from ._shutil import Run
@@ -74,7 +74,8 @@ def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]
 
         try:
             version = Version(result.stdout.splitlines()[0].split()[-1])
-        except IndexError:
+        except (IndexError, InvalidVersion):
+            logger.warning(f"Could not determine CMake version, got {result.stdout!r}")
             yield Program(cmake_path, None)
             continue
 
