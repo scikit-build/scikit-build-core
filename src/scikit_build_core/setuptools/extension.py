@@ -95,19 +95,24 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
                 f"CMAKE_LIBRARY_OUTPUT_DIRECTORY_{config.build_type.upper()}"
             ] = f"{extdir}{os.path.sep}"
 
+        # Classic Find Python
         python_library = get_python_library()
         python_include_dir = get_python_include_dir()
+        cache_config["PYTHON_EXECUTABLE"] = sys.executable
+        cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir
+        if python_library:
+            cache_config["PYTHON_LIBRARY"] = python_library
 
-        for prefix in ["Python", "Python3", "PYTHON"]:
+        # Modern Find Python
+        for prefix in ["Python", "Python3"]:
             cache_config[f"{prefix}_EXECUTABLE"] = sys.executable
-            cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
-            if python_library:
-                cache_config[f"{prefix}_LIBRARY"] = python_library
+            cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
+            cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
         config.init_cache(cache_config)
 
         # Adding CMake arguments set as environment variable
-        # (needed e.g. to build for ARM OSx on conda-forge)
+        # (needed e.g. to build for ARM OSX on conda-forge)
         cmake_args = [
             item for item in config.env.get("CMAKE_ARGS", "").split(" ") if item
         ]
