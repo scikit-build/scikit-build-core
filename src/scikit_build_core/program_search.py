@@ -52,7 +52,8 @@ def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
 
             yield Path(ninja.BIN_DIR) / "ninja"
 
-    candidates = ("ninja", "ninja-build")
+    # Matches https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/CMakeNinjaFindMake.cmake
+    candidates = ("ninja-build", "ninja", "samu")
     for candidate in candidates:
         ninja_path = shutil.which(candidate)
         if ninja_path is not None:
@@ -107,7 +108,7 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
 
 
 def best_program(
-    programs: Iterable[Program], minimum_version: Version | None
+    programs: Iterable[Program], *, minimum_version: Version | None
 ) -> Program | None:
     """
     Select the first program entry that is of a supported version, or None if not found.

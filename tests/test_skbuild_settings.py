@@ -12,7 +12,7 @@ def test_skbuild_settings_default(tmp_path):
     settings = read_settings(pyproject_toml, config_settings)
 
     assert settings.cmake.minimum_version == "3.15"
-    assert settings.ninja.minimum_version == "0.0"
+    assert settings.ninja.minimum_version == "1.5"
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):

@@ -55,37 +55,37 @@ def test_get_cmake_programs_all(monkeypatch, fp):
     assert programs[1].path.name == "cmake"
     assert programs[1].version == Version("3.20.0")
 
-    best1 = best_program(programs, None)
+    best1 = best_program(programs, minimum_version=None)
     assert best1
     assert best1.path.name == "cmake3"
 
-    best2 = best_program(programs, Version("3.20.0"))
+    best2 = best_program(programs, minimum_version=Version("3.20.0"))
     assert best2
     assert best2.path.name == "cmake"
 
 
 def test_get_ninja_programs_all(monkeypatch, fp):
-    monkeypatch.setattr("shutil.which", lambda x: x)
+    monkeypatch.setattr("shutil.which", lambda x: x if "ninja" in x else None)
     ninja_path = Path("ninja").resolve()
     ninja_build_path = Path("ninja-build").resolve()
     fp.register(
-        [os.fspath(ninja_path), "--version"], stdout="1.8.2.git.kitware.jobserver-1"
+        [os.fspath(ninja_path), "--version"], stdout="1.10.1.git.kitware.jobserver-1"
     )
-    fp.register([os.fspath(ninja_build_path), "--version"], stdout="1.10.1")
+    fp.register([os.fspath(ninja_build_path), "--version"], stdout="1.8.2")
     programs = list(get_ninja_programs(module=False))
     assert len(programs) == 2
-    assert programs[0].path.name == "ninja"
+    assert programs[0].path.name == "ninja-build"
     assert programs[0].version == Version("1.8.2")
-    assert programs[1].path.name == "ninja-build"
+    assert programs[1].path.name == "ninja"
     assert programs[1].version == Version("1.10.1")
 
-    best1 = best_program(programs, None)
+    best1 = best_program(programs, minimum_version=None)
     assert best1
-    assert best1.path.name == "ninja"
+    assert best1.path.name == "ninja-build"
 
-    best2 = best_program(programs, Version("1.9"))
+    best2 = best_program(programs, minimum_version=Version("1.9"))
     assert best2
-    assert best2.path.name == "ninja-build"
+    assert best2.path.name == "ninja"
 
 
 def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
@@ -96,16 +96,17 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     fp.register([os.fspath(cmake_path), "--version"], stdout="scrambled output\n")
     fp.register([os.fspath(cmake3_path), "--version"], stdout="cmake version 3.17.3\n")
     programs = list(get_cmake_programs(module=False))
+    assert caplog.records
     assert "Could not determine CMake version" in str(caplog.records[0].msg)
     assert len(programs) == 2
 
-    best_none = best_program(programs, None)
+    best_none = best_program(programs, minimum_version=None)
     assert best_none
     assert best_none.path.name == "cmake3"
 
-    best_3_15 = best_program(programs, Version("3.15"))
+    best_3_15 = best_program(programs, minimum_version=Version("3.15"))
     assert best_3_15
     assert best_3_15.path.name == "cmake3"
 
-    best_3_20 = best_program(programs, Version("3.20"))
+    best_3_20 = best_program(programs, minimum_version=Version("3.20"))
     assert best_3_20 is None
