@@ -44,6 +44,8 @@ def test_init_cache(fp, tmp_path):
     )
 
     cmd = list(configure_args(config, init=True))
+    if not sys.platform.startswith("win32"):
+        cmd.append("-DCMAKE_BUILD_TYPE=Release")
 
     print("Registering:", *cmd)
     fp.register(cmd)
@@ -84,10 +86,12 @@ def test_cmake_args(tmp_path, fp):
     )
 
     cmd = list(configure_args(config))
-    cmd.append("-DCMAKE_BUILD_TYPE=Debug")
+    if not sys.platform.startswith("win32"):
+        cmd.append("-DCMAKE_BUILD_TYPE=Release")
+    cmd.append("-DSOMETHING=one")
     print("Registering:", *cmd)
     fp.register(cmd)
 
-    config.configure(cmake_args=["-DCMAKE_BUILD_TYPE=Debug"])
+    config.configure(cmake_args=["-DSOMETHING=one"])
 
     assert len(fp.calls) == 2

@@ -4,6 +4,7 @@ import dataclasses
 import os
 import subprocess
 import sys
+import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Generator, TypeVar
@@ -61,6 +62,7 @@ class CMakeConfig:
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
+    build_type: str = "Release"
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -86,10 +88,11 @@ class CMakeConfig:
                     f.write(f'set({key} [===[{value}]===] CACHE PATH "")\n')
                 else:
                     f.write(f'set({key} [===[{value}]===] CACHE STRING "")\n')
+        contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
             "{}:\n{}",
             self.init_cache_file,
-            self.init_cache_file.read_text(encoding="utf-8"),
+            textwrap.indent(contents.strip(), "  "),
         )
 
     def _compute_cmake_args(
@@ -104,6 +107,8 @@ class CMakeConfig:
         if not sys.platform.startswith("win32"):
             logger.debug("Selecting Ninja; other generators currently unsupported")
             yield "-GNinja"
+            if self.build_type:
+                yield f"-DCMAKE_BUILD_TYPE={self.build_type}"
 
         for key, value in settings.items():
             if isinstance(value, bool):
@@ -132,10 +137,19 @@ class CMakeConfig:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
 
-    def build(self, build_args: Sequence[str] = (), *, verbose: int = 0) -> None:
-        local_args = ["-v"] * verbose
+    def _compute_build_args(
+        self,
+        *,
+        verbose: int,
+    ) -> Generator[str, None, None]:
+        for _ in range(verbose):
+            yield "-v"
         if sys.platform.startswith("win32"):
-            local_args += ["--config", "Release"]
+            yield "--config"
+            yield self.build_type
+
+    def build(self, build_args: Sequence[str] = (), *, verbose: int = 0) -> None:
+        local_args = self._compute_build_args(verbose=verbose)
 
         try:
             Run(env=self.env).live(
