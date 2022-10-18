@@ -1,8 +1,15 @@
 import platform
+import pprint
+import sys
+import sysconfig
 
 import pytest
 
 from scikit_build_core.builder.macos import get_macosx_deployment_target
+from scikit_build_core.builder.sysconfig import (
+    get_python_include_dir,
+    get_python_library,
+)
 
 
 @pytest.mark.parametrize(
@@ -26,3 +33,18 @@ def test_macos_version(monkeypatch, pycom, envvar, answer):
         monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", envvar)
 
     assert get_macosx_deployment_target() == answer
+
+
+def test_get_python_include_dir():
+    assert get_python_include_dir().is_dir()
+
+
+def test_get_python_library():
+    pprint.pprint(sysconfig.get_config_vars())
+
+    lib = get_python_library()
+    if sys.platform.startswith("win"):
+        assert lib is None
+    else:
+        assert lib
+        assert lib.is_file()
