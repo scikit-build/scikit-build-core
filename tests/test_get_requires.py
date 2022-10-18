@@ -7,11 +7,11 @@ from pathlib import Path
 
 from scikit_build_core.get_requires import get_requires_for_build_wheel
 
-ninja = [] if sys.platform.startswith("win") else ["ninja"]
+ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
 
 
 def which_mock(name: str) -> str | None:
-    if name in ("ninja", "ninja-build", "cmake3"):
+    if name in ("ninja", "ninja-build", "cmake3", "samu"):
         return None
     if name == "cmake":
         return "cmake/path"

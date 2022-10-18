@@ -10,7 +10,7 @@ def __dir__() -> List[str]:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: str = "0.0"
+    minimum_version: str = "1.5"
 
 
 @dataclasses.dataclass
