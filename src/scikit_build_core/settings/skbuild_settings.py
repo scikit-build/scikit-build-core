@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+from .._compat import tomllib
 from .cmake_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
 
 __all__ = ["read_settings"]
 
