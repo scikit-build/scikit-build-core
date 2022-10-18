@@ -2,18 +2,11 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import sys
 from collections.abc import Mapping
 from typing import Any, TypeVar, Union
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol, runtime_checkable
-else:
-    from typing_extensions import Protocol, runtime_checkable
-
+from .._compat.builtins import ExceptionGroup
+from .._compat.typing import Protocol, runtime_checkable
 
 T = TypeVar("T")
 

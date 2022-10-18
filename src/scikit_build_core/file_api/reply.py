@@ -4,9 +4,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Type, TypeVar, Union
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
-
+from .._compat.builtins import ExceptionGroup
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
