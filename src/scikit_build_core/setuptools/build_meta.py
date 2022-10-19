@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scikit_build_core.get_requires import (
+from ..get_requires import (
     get_requires_for_build_wheel as skbuild_get_requires_for_build_wheel,
 )
 

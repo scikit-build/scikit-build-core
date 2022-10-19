@@ -81,7 +81,13 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             assert isinstance(value, str), "define_macros values must not be None"
             defines[key] = value
 
-        builder.configure(defines=defines, ext_dir=extdir)
+        dist = self.distribution  # type: ignore[attr-defined]
+        builder.configure(
+            defines=defines,
+            ext_dir=extdir,
+            name=dist.get_name(),
+            version=dist.get_version(),
+        )
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.

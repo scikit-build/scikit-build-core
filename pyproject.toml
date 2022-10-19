@@ -40,7 +40,10 @@ test = [
     "build",
     "cattrs >=22.2.0",
     "cmake >=3.15",
+    "distlib",
     "ninja",
+    "pathspec",
+    "pyproject-metadata",
     "pytest >=7",
     "pytest-subprocess",
     "pytest-virtualenv",
@@ -94,6 +97,10 @@ strict = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["distlib.*", "pathspec"]
+ignore_missing_imports = true
 
 
 [tool.isort]

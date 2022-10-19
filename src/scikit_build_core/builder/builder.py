@@ -30,7 +30,14 @@ class Builder:
     settings: ScikitBuildSettings
     config: CMakeConfig
 
-    def configure(self, *, defines: Mapping[str, str], ext_dir: Path) -> None:
+    def configure(
+        self,
+        *,
+        defines: Mapping[str, str],
+        ext_dir: Path,
+        name: str | None = None,
+        version: Version | None = None,
+    ) -> None:
         cmake_defines = dict(defines)
 
         # Ninja is currently required on Unix
@@ -51,6 +58,11 @@ class Builder:
             cache_config[
                 f"CMAKE_LIBRARY_OUTPUT_DIRECTORY_{self.config.build_type.upper()}"
             ] = f"{ext_dir}{os.path.sep}"
+
+        if name is not None:
+            cache_config["SKBUILD_PROJECT_NAME"] = name
+        if version is not None:
+            cache_config["SKBUILD_PROJECT_VERSION"] = str(version)
 
         # Classic Find Python
         python_library = get_python_library()
