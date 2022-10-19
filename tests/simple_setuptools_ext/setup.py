@@ -6,7 +6,7 @@ setup(
     name="cmake_example",
     version="0.0.1",
     ext_modules=[
-        CMakeExtension("cmake_example", define_macros=[("VERSION_INFO", "0.0.1")])
+        CMakeExtension("cmake_example", define_macros=[("EXAMPLE_INFO", "42")])
     ],
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},

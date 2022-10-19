@@ -25,7 +25,7 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev]", "pylint")
+    session.install("-e.[dev,test]", "pylint")
     session.run("pylint", "src", *session.posargs)
 
 
@@ -34,8 +34,10 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests.
     """
+    # TODO: build seems to be muddling the order here without unbuffered
+    env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1", "PYTHONUNBUFFERED": "1"}
     session.install("-e.[test]")
-    session.run("pytest", *session.posargs)
+    session.run("pytest", *session.posargs, env=env)
 
 
 @nox.session(reuse_venv=True)
