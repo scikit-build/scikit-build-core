@@ -19,24 +19,42 @@ The following limitations are present compared to classic scikit-build:
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.7
 - Only the Ninja generator is supported on UNIX
-- Only the MSVC generator (not tied to the current Python) is supported on
-  Windows
-- Only FindPython is supported
+- Only the MSVC generator (currently not tied to the current Python) is
+  supported on Windows
 
 Some of these limitations might be adjusted over time, based on user
 requirements & effort / maintainability.
 
 This is very much a WIP, some missing features:
 
-- PEP 517 config
 - The extensionlib integration is missing
 - The docs are not written
-- No PEP 517 interface is currently present
 - No discovery system is present
 - No support for other targets besides install
 - C++17 is required for the test suite because it's more fun than C++11/14
+- No support for caching between builds
+- No editable mode support
 
-Included features:
+Included modules:
+
+- `.cmake.` `CMake`/`CMakeConfig`: general interface for building code
+- `.fileapi`: Interface for reading the CMake File API
+- `.builder`: Generalized backend builder and related helpers
+- `.pyproject`: PEP 517 builder (used by the PEP 517 interface)
+- `.build`: The PEP 517 interface
+- `.setuptools`: The setuptools Extension interface (and PEP 517 hooks)
+- `.settings`: The configuration system, reading from pyproject.toml, PEP 517
+  config, and envvars
+
+Features over classic Scikit-build:
+
+- Better warnings and errors
+- No warning about unused variables
+- Automatically adds Ninja and/or CMake only as required
+- Closer to vanilla setuptools in setuptools mode, doesn't interfere with config
+- Powerful config system
+
+## Basic CMake usage
 
 ```python
 cmake = CMake.default_search(minimum_version="3.15")
@@ -50,7 +68,7 @@ config.build()
 config.install(prefix)
 ```
 
-Works.
+## File API
 
 If you want to access the File API, use:
 
@@ -65,6 +83,8 @@ index = load_reply_dir(reply_dir)
 
 This mostly wraps the FileAPI in classes. It autoloads some jsonFiles. This
 throws an `ExceptionGroup` if parsing files. It is currently experimental.
+
+## Configuration
 
 Configuration support uses plain dataclasses:
 
@@ -107,6 +127,97 @@ from scikit_build_core.settings.skbuild_settings import read_settings
 settings = read_skbuild_settings(Path("pyproject.toml"), config_settings or {})
 assert settings.cmake.minimum_version == "3.15"
 assert settings.ninja.minimum_version == "1.5"
+```
+
+## PEP 517 builder
+
+This is highly experimental, and currently only uses `.gitignore` to filter the
+SDist, and the wheel only contains the binary output.
+
+```toml
+[build-system]
+requires = [
+    "scikit_build_core",
+    "pybind11",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cmake_example"
+version = "0.0.1"
+requires-python = ">=3.7"
+
+[project.optional-dependencies]
+test = ["pytest>=6.0"]
+```
+
+```cmake
+cmake_minimum_required(VERSION 3.15...3.24)
+project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
+
+execute_process(
+COMMAND "${PYTHON_EXECUTABLE}" -c
+        "import pybind11; print(pybind11.get_cmake_dir())"
+OUTPUT_VARIABLE _tmp_dir
+OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+find_package(pybind11 CONFIG REQUIRED)
+pybind11_add_module(cmake_example src/main.cpp)
+
+target_compile_definitions(cmake_example
+                           PRIVATE VERSION_INFO=${PROJECT_VERSION})
+```
+
+## Setuptools builder
+
+Experimental. Supports only a single module, may not support extra Python files.
+
+`setup.py`:
+
+```python
+from setuptools import setup
+
+from scikit_build_core.setuptools.extension import CMakeBuild, CMakeExtension
+
+setup(
+    name="cmake_example",
+    version="0.0.1",
+    ext_modules=[CMakeExtension("cmake_example")],
+    zip_safe=False,
+    extras_require={"test": ["pytest>=6.0"]},
+    cmdclass={"build_ext": CMakeBuild},
+    python_requires=">=3.7",
+)
+```
+
+`pyproject.toml`:
+
+```toml
+[build-system]
+requires = [
+    "scikit_build_core",
+    "pybind11",
+]
+build-backend = "scikit_build_core.setuptools.build_meta"
+```
+
+```cmake
+cmake_minimum_required(VERSION 3.15...3.24)
+project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
+
+execute_process(
+COMMAND "${PYTHON_EXECUTABLE}" -c
+        "import pybind11; print(pybind11.get_cmake_dir())"
+OUTPUT_VARIABLE _tmp_dir
+OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+find_package(pybind11 CONFIG REQUIRED)
+pybind11_add_module(cmake_example src/main.cpp)
+
+target_compile_definitions(cmake_example
+                           PRIVATE VERSION_INFO=${PROJECT_VERSION})
 ```
 
 <!-- prettier-ignore-start -->
