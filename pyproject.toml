@@ -30,6 +30,8 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
+    "importlib_metadata>=3.6; python_version<'3.10'",
+    "importlib_resources>=1.3; python_version<'3.9'",
     "packaging",  # TODO: set a min version
     "tomli; python_version<'3.11'",
     "typing_extensions >=3.7; python_version<'3.8'",
@@ -73,6 +75,9 @@ docs = [
 [project.urls]
 homepage = "https://github.com/scikit-build/scikit-build-core"
 
+
+[project.entry-points."cmake.modules"]
+find-python = "scikit_build_core.resources.find_python"
 
 [tool.hatch]
 version.path = "src/scikit_build_core/__init__.py"

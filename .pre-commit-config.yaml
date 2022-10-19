@@ -90,17 +90,19 @@ repos:
         additional_dependencies:
           - cattrs
           - cmake
+          - importlib_metadata
+          - importlib_resources
           - ninja
           - packaging
+          - pyproject_metadata
           - rich
           - types-setuptools
-          - pyproject_metadata
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2
     hooks:
       - id: codespell
-        exclude: ^LICENSE$
+        exclude: ^(LICENSE|src/scikit_build_core/resources/find_python/Copyright.txt)$
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
