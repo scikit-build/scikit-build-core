@@ -37,20 +37,24 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
+    "build",
     "cattrs >=22.2.0",
     "cmake >=3.15",
     "ninja",
     "pytest >=7",
     "pytest-subprocess",
+    "pytest-virtualenv",
     "rich",
 ]
 cov = [
     "pytest-cov[toml]",
 ]
 dev = [
+    "build",
     "cattrs >=22.2.0",
     "pytest >=7",
     "pytest-subprocess",
+    "pytest-virtualenv",
     "rich",
 ]
 docs = [
@@ -78,6 +82,7 @@ testpaths = ["tests"]
 markers = [
     "compile: Compiles code",
     "configure: Configures CMake code",
+    "integration: Full package build",
 ]
 
 

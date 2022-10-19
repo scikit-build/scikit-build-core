@@ -1,0 +1,6 @@
+[build-system]
+requires = [
+    "scikit_build_core",
+    "pybind11",
+]
+build-backend = "scikit_build_core.setuptools.build_meta"
