@@ -121,7 +121,7 @@ class CMakeConfig:
 
         if self.module_dirs:
             module_dirs_str = ";".join(map(str, self.module_dirs))
-            yield f"-DCMAKE_MODULE_PATH={module_dirs_str}"
+            yield f"-DCMAKE_PREFIX_PATH={module_dirs_str}"
 
     def configure(
         self,

@@ -31,8 +31,8 @@ dynamic = ["version"]
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
     "packaging",  # TODO: set a min version
-    "typing_extensions >=3.7; python_version<'3.8'",
     "tomli; python_version<'3.11'",
+    "typing_extensions >=3.7; python_version<'3.8'",
 ]
 
 [project.optional-dependencies]
@@ -43,11 +43,14 @@ test = [
     "distlib",
     "ninja",
     "pathspec",
+    "pybind11",
     "pyproject-metadata",
     "pytest >=7",
     "pytest-subprocess",
     "pytest-virtualenv",
     "rich",
+    "setuptools",
+    "wheel",
 ]
 cov = [
     "pytest-cov[toml]",
@@ -79,7 +82,10 @@ version.path = "src/scikit_build_core/__init__.py"
 minversion = "7.0"
 addopts = ["-ra", "--strict-markers", "--strict-config", "--tb=native"]
 xfail_strict = true
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
+]
 log_cli_level = "info"
 testpaths = ["tests"]
 markers = [

@@ -1,3 +1,8 @@
 codecov:
   notify:
     after_n_builds: 10
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 10%
