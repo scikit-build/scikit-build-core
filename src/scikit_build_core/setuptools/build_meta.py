@@ -36,10 +36,12 @@ def get_requires_for_build_wheel(
 def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, str | list[str]] | None = None,
-) -> None:
+) -> str:
     import setuptools.build_meta
 
-    setuptools.build_meta.build_sdist(sdist_directory, config_settings)
+    return setuptools.build_meta.build_sdist(  # type: ignore[no-any-return]
+        sdist_directory, config_settings
+    )
 
 
 def build_wheel(

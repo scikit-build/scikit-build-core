@@ -1,5 +1,3 @@
-import shutil
-import subprocess
 import sys
 import tarfile
 import textwrap
@@ -8,12 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from scikit_build_core.build import build_sdist, build_wheel
+
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "simple_pyproject_ext"
 
 
-@pytest.mark.integration
-def test_pep518_sdist(pep518, virtualenv):
+def test_pep517_sdist(tmp_path, monkeypatch):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -25,13 +24,14 @@ def test_pep518_sdist(pep518, virtualenv):
         """
     )
 
-    dist = HELLO_PEP518 / "dist"
-    shutil.rmtree(dist, ignore_errors=True)
-    subprocess.run(
-        [sys.executable, "-m", "build", "--sdist"], cwd=HELLO_PEP518, check=True
-    )
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    monkeypatch.chdir(HELLO_PEP518)
+    out = build_sdist(str(dist))
+
     (sdist,) = dist.iterdir()
     assert "cmake-example-0.0.1.tar.gz" == sdist.name
+    assert sdist == dist / out
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
@@ -52,17 +52,13 @@ def test_pep518_sdist(pep518, virtualenv):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize(
-    "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
-)
-def test_pep518_wheel(pep518, virtualenv, build_args):
-    dist = HELLO_PEP518 / "dist"
-    shutil.rmtree(dist, ignore_errors=True)
-    subprocess.run(
-        [sys.executable, "-m", "build", *build_args], cwd=HELLO_PEP518, check=True
-    )
+def test_pep518_wheel(tmp_path, monkeypatch, virtualenv):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    monkeypatch.chdir(HELLO_PEP518)
+    out = build_wheel(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    assert wheel == dist / out
 
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
@@ -78,25 +74,6 @@ def test_pep518_wheel(pep518, virtualenv, build_args):
         print("SOFILE:", so_file)
 
     virtualenv.run(f"python -m pip install {wheel}")
-
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
-    )
-    assert version.strip() == "0.0.1"
-
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
-    )
-    assert add.strip() == "3"
-
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-def test_pep518_pip(pep518, virtualenv):
-    virtualenv.run(f"python -m pip install -v {HELLO_PEP518}")
 
     version = virtualenv.run(
         'python -c "import cmake_example; print(cmake_example.__version__)"',

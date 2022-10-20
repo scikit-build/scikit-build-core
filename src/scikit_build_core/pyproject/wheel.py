@@ -33,8 +33,8 @@ def build_wheel(
     # We don't support preparing metadata yet
     assert metadata_directory is None
 
-    with Path("pyproject.toml").open("rb") as f:
-        pyproject = tomllib.load(f)
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
     metadata = StandardMetadata.from_pyproject(pyproject)
 
     if metadata.version is None:
