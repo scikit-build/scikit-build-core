@@ -85,9 +85,9 @@ repos:
     rev: v0.982
     hooks:
       - id: mypy
-        files: src
+        files: ^(src|tests)
         args: []
-        additional_dependencies:
+        additional_dependencies: &mypy_dependencies
           - cattrs
           - cmake
           - importlib_metadata
@@ -95,6 +95,7 @@ repos:
           - ninja
           - packaging
           - pyproject_metadata
+          - pytest
           - rich
           - types-setuptools
 

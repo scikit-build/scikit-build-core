@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 from scikit_build_core.settings.sources import (
     ConfSource,
@@ -74,7 +74,7 @@ def test_env(monkeypatch):
 
 
 def test_conf():
-    config_settings = {
+    config_settings: Dict[str, Union[str, List[str]]] = {
         "zero": "zero",
         "one": "one",
         "two": "2",
@@ -82,7 +82,7 @@ def test_conf():
         "four": ["4"],
         "five": "five",
         "six": "six",
-        "seven": 7,
+        "seven": "7",
     }
 
     sources = SourceChain(
@@ -168,7 +168,7 @@ def test_env_nested(monkeypatch):
 
 
 def test_conf_nested():
-    config_settings = {
+    config_settings: Dict[str, Union[str, List[str]]] = {
         "zero": "zero",
         "one": "one",
         "two.zero": "zero",
