@@ -13,7 +13,7 @@ from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
 from ..builder.builder import Builder
-from ..builder.cmake_module_dirs import provide_cmake_modules
+from ..builder.cmake_module_dirs import get_cmake_modules
 from ..builder.macos import get_macosx_deployment_target
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
@@ -69,9 +69,7 @@ def build_wheel(
     def select(name: str) -> bool:
         return name != "find-python" or cmake.version < Version("3.24")
 
-    with tempfile.TemporaryDirectory() as tmpdir, provide_cmake_modules(
-        select
-    ) as module_dirs:
+    with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
         install_dir = build_tmp_folder / "install" / metadata.name
         build_dir = build_tmp_folder / "build"
@@ -80,7 +78,7 @@ def build_wheel(
             cmake,
             source_dir=Path("."),
             build_dir=build_dir,
-            module_dirs=module_dirs,
+            module_dirs=get_cmake_modules(select),
         )
 
         builder = Builder(

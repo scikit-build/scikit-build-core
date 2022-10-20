@@ -9,7 +9,7 @@ import setuptools.command.build_ext
 from packaging.version import Version
 
 from ..builder.builder import Builder
-from ..builder.cmake_module_dirs import provide_cmake_modules
+from ..builder.cmake_module_dirs import get_cmake_modules
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
 
@@ -66,46 +66,43 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         def select(name: str) -> bool:
             return name != "find-python" or cmake.version < Version("3.24")
 
-        with provide_cmake_modules(select) as module_dirs:
-            config = CMakeConfig(
-                cmake,
-                source_dir=ext.sourcedir,
-                build_dir=build_temp,
-                module_dirs=module_dirs,
-            )
+        config = CMakeConfig(
+            cmake,
+            source_dir=ext.sourcedir,
+            build_dir=build_temp,
+            module_dirs=get_cmake_modules(select),
+        )
 
-            builder = Builder(
-                settings=settings,
-                config=config,
-            )
+        builder = Builder(
+            settings=settings,
+            config=config,
+        )
 
-            debug = (
-                int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
-            )
-            builder.config.build_type = "Debug" if debug else "Release"
+        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        builder.config.build_type = "Debug" if debug else "Release"
 
-            defines: dict[str, str] = {}
+        defines: dict[str, str] = {}
 
-            for key, value in ext.define_macros:
-                assert isinstance(value, str), "define_macros values must not be None"
-                defines[key] = value
+        for key, value in ext.define_macros:
+            assert isinstance(value, str), "define_macros values must not be None"
+            defines[key] = value
 
-            dist = self.distribution  # type: ignore[attr-defined]
-            builder.configure(
-                defines=defines,
-                ext_dir=extdir,
-                name=dist.get_name(),
-                version=dist.get_version(),
-            )
+        dist = self.distribution  # type: ignore[attr-defined]
+        builder.configure(
+            defines=defines,
+            ext_dir=extdir,
+            name=dist.get_name(),
+            version=dist.get_version(),
+        )
 
-            # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
-            # across all generators.
-            build_args = []
-            if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env:
-                # self.parallel is a Python 3 only way to set parallel jobs by hand
-                # using -j in the build_ext call, not supported by pip or PyPA-build.
-                if hasattr(self, "parallel") and self.parallel:
-                    build_args.append(f"-j{self.parallel}")
+        # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
+        # across all generators.
+        build_args = []
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env:
+            # self.parallel is a Python 3 only way to set parallel jobs by hand
+            # using -j in the build_ext call, not supported by pip or PyPA-build.
+            if hasattr(self, "parallel") and self.parallel:
+                build_args.append(f"-j{self.parallel}")
 
-            builder.build(build_args=build_args)
-            builder.install(install_dir)
+        builder.build(build_args=build_args)
+        builder.install(install_dir)
