@@ -5,4 +5,4 @@ codecov:
     project:
       default:
         target: auto
-        threshold: 5%
+        threshold: 10%
