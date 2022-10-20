@@ -81,6 +81,13 @@ find-python = "scikit_build_core.resources.find_python"
 
 [tool.hatch]
 version.path = "src/scikit_build_core/__init__.py"
+build.exclude = ["extern"]
+
+[tool.hatch.build.force-include]
+"extern/cmake/Copyright.txt" = "src/scikit_build_core/resources/find_python/Copyright.txt"
+"extern/cmake/Modules/FindPython" = "src/scikit_build_core/resources/find_python/FindPython"
+"extern/cmake/Modules/FindPython.cmake" = "src/scikit_build_core/resources/find_python/FindPython.cmake"
+"extern/cmake/Modules/FindPython3.cmake" = "src/scikit_build_core/resources/find_python/FindPython3.cmake"
 
 
 [tool.pytest.ini_options]
