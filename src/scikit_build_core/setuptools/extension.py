@@ -9,7 +9,6 @@ import setuptools.command.build_ext
 from packaging.version import Version
 
 from ..builder.builder import Builder
-from ..builder.cmake_module_dirs import get_cmake_modules
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
 
@@ -63,14 +62,10 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             minimum_version=Version(settings.cmake.minimum_version)
         )
 
-        def select(name: str) -> bool:
-            return name != "find-python" or cmake.version < Version("3.24")
-
         config = CMakeConfig(
             cmake,
             source_dir=ext.sourcedir,
             build_dir=build_temp,
-            module_dirs=get_cmake_modules(select),
         )
 
         builder = Builder(
