@@ -87,7 +87,7 @@ repos:
       - id: mypy
         files: ^(src|tests)
         args: []
-        additional_dependencies: &mypy_dependencies
+        additional_dependencies:
           - cattrs
           - cmake
           - importlib_metadata
@@ -103,7 +103,7 @@ repos:
     rev: v2.2.2
     hooks:
       - id: codespell
-        exclude: ^(LICENSE|src/scikit_build_core/resources/find_python/Copyright.txt)$
+        exclude: ^LICENSE$
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
