@@ -28,8 +28,10 @@ requirements & effort / maintainability.
 This is very much a WIP, some missing features:
 
 - The extensionlib integration is missing
+- No hatchling plugin yet
 - The docs are not written
-- No discovery system is present
+- The logging system doesn't work very well
+- Dedicated entrypoints still need to be designed
 - No support for other targets besides install
 - C++17 is required for the test suite because it's more fun than C++11/14
 - No support for caching between builds
@@ -53,6 +55,9 @@ Features over classic Scikit-build:
 - Automatically adds Ninja and/or CMake only as required
 - Closer to vanilla setuptools in setuptools mode, doesn't interfere with config
 - Powerful config system
+- Automatic inclusion of site-packages in CMAKE_PREFIX_PATH
+- FindPython is backported if running on CMake < 3.24 (included via hatchling in
+  a submodule)
 
 ## Basic CMake usage
 
@@ -129,10 +134,15 @@ assert settings.cmake.minimum_version == "3.15"
 assert settings.ninja.minimum_version == "1.5"
 ```
 
-## PEP 517 builder
+## Builders
+
+The tools in `builder` are designed to make writing a builder easy. The
+`Builder` class is used in the various builder implementations.
+
+### PEP 517 builder
 
 This is highly experimental, and currently only uses `.gitignore` to filter the
-SDist, and the wheel only contains the binary output.
+SDist, and the wheel only contains the install directory - control using CMake.
 
 ```toml
 [build-system]
@@ -169,7 +179,7 @@ target_compile_definitions(cmake_example
                            PRIVATE VERSION_INFO=${PROJECT_VERSION})
 ```
 
-## Setuptools builder
+### Setuptools builder
 
 Experimental. Supports only a single module, may not support extra Python files.
 
