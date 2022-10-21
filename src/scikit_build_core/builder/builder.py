@@ -4,6 +4,7 @@ import dataclasses
 import os
 import re
 import sys
+import sysconfig
 from pathlib import Path
 from typing import Mapping
 
@@ -19,6 +20,8 @@ from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_ninja_programs
 
 __all__: list[str] = ["Builder"]
+
+DIR = Path(__file__).parent.resolve()
 
 
 def __dir__() -> list[str]:
@@ -39,6 +42,11 @@ class Builder:
         version: Version | None = None,
     ) -> None:
         cmake_defines = dict(defines)
+
+        site_packages = Path(sysconfig.get_path("purelib"))
+        self.config.prefix_dirs = [site_packages]
+        if site_packages != DIR.parent.parent:
+            self.config.prefix_dirs.append(DIR.parent.parent)
 
         # Ninja is currently required on Unix
         if not sys.platform.startswith("win32"):

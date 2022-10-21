@@ -31,6 +31,11 @@ def configure_args(
     if not sys.platform.startswith("win32"):
         yield "-GNinja"
 
+    if config.prefix_dirs:
+        yield "-DCMAKE_PREFIX_PATH={}".format(
+            ";".join(str(p) for p in config.prefix_dirs)
+        )
+
 
 @pytest.mark.configure
 def test_init_cache(fp, tmp_path):

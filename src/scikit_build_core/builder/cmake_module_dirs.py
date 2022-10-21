@@ -12,6 +12,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
+# TODO: really Traversable
 def get_cmake_modules(select: Callable[[str], bool] = lambda _: True) -> list[Path]:
     module_dirs = metadata.entry_points(group="cmake.modules")
     return [resources.files(ep.load()) for ep in module_dirs if select(ep.name)]

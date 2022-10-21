@@ -23,6 +23,8 @@ def __dir__() -> list[str]:
     return __all__
 
 
+DIR = Path(__file__).parent.resolve()
+
 Self = TypeVar("Self", bound="CMake")
 
 
@@ -61,6 +63,7 @@ class CMakeConfig:
     build_dir: Path
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
+    prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     build_type: str = "Release"
 
@@ -122,6 +125,10 @@ class CMakeConfig:
         if self.module_dirs:
             module_dirs_str = ";".join(map(str, self.module_dirs))
             yield f"-DCMAKE_MODULE_PATH={module_dirs_str}"
+
+        if self.prefix_dirs:
+            prefix_dirs_str = ";".join(map(str, self.prefix_dirs))
+            yield f"-DCMAKE_PREFIX_PATH={prefix_dirs_str}"
 
     def configure(
         self,
