@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import textwrap
 
 from scikit_build_core.settings.skbuild_settings import read_settings
@@ -7,7 +9,7 @@ def test_skbuild_settings_default(tmp_path):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
-    config_settings = {}
+    config_settings: dict[str, list[str] | str] = {}
 
     settings = read_settings(pyproject_toml, config_settings)
 
@@ -22,7 +24,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
-    config_settings = {}
+    config_settings: dict[str, list[str] | str] = {}
 
     settings = read_settings(pyproject_toml, config_settings)
 
@@ -58,7 +60,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
         encoding="utf-8",
     )
 
-    config_settings = {}
+    config_settings: dict[str, list[str] | str] = {}
 
     settings = read_settings(pyproject_toml, config_settings)
 

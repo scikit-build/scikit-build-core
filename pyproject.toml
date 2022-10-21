@@ -76,6 +76,15 @@ homepage = "https://github.com/scikit-build/scikit-build-core"
 
 [tool.hatch]
 version.path = "src/scikit_build_core/__init__.py"
+build.exclude = ["extern"]
+
+[tool.hatch.build.force-include]
+"extern/cmake/Copyright.txt" = "src/scikit_build_core/resources/find_python/Copyright.txt"
+"extern/cmake/Modules/FindPython" = "src/scikit_build_core/resources/find_python/FindPython"
+"extern/cmake/Modules/FindPython.cmake" = "src/scikit_build_core/resources/find_python/FindPython.cmake"
+"extern/cmake/Modules/FindPython3.cmake" = "src/scikit_build_core/resources/find_python/FindPython3.cmake"
+"extern/cmake/Modules/FindPackageHandleStandardArgs.cmake" = "src/scikit_build_core/resources/find_python/FindPackageHandleStandardArgs.cmake"
+"extern/cmake/Modules/FindPackageMessage.cmake" = "src/scikit_build_core/resources/find_python/FindPackageMessage.cmake"
 
 
 [tool.pytest.ini_options]
@@ -96,13 +105,31 @@ markers = [
 
 
 [tool.mypy]
-files = "src"
+files = ["src", "tests"]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 python_version = "3.7"
 warn_unused_configs = true
-strict = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
+
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_reexport = true
+strict_equality = true
+strict_concatenate = true
+
+[[tool.mypy.overrides]]
+module = ["scikit-build-core.*"]
+disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = ["distlib.*", "pathspec"]

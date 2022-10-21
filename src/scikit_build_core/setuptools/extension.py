@@ -61,6 +61,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         cmake = CMake.default_search(
             minimum_version=Version(settings.cmake.minimum_version)
         )
+
         config = CMakeConfig(
             cmake,
             source_dir=ext.sourcedir,

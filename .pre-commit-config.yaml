@@ -85,16 +85,17 @@ repos:
     rev: v0.982
     hooks:
       - id: mypy
-        files: src
+        files: ^(src|tests)
         args: []
         additional_dependencies:
           - cattrs
           - cmake
           - ninja
           - packaging
+          - pyproject_metadata
+          - pytest
           - rich
           - types-setuptools
-          - pyproject_metadata
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2

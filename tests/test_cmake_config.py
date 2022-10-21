@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+from collections.abc import Generator
 from pathlib import Path
 
 import cmake
@@ -15,7 +16,9 @@ from scikit_build_core.errors import CMakeNotFoundError
 DIR = Path(__file__).parent.resolve()
 
 
-def configure_args(config, *, init=False):
+def configure_args(
+    config: CMakeConfig, *, init: bool = False
+) -> Generator[str, None, None]:
     cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     yield os.fspath(cmake_path)
     yield f"-S{config.source_dir}"
@@ -27,6 +30,11 @@ def configure_args(config, *, init=False):
 
     if not sys.platform.startswith("win32"):
         yield "-GNinja"
+
+    if config.prefix_dirs:
+        yield "-DCMAKE_PREFIX_PATH={}".format(
+            ";".join(str(p) for p in config.prefix_dirs)
+        )
 
 
 @pytest.mark.configure

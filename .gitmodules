@@ -1,0 +1,3 @@
+[submodule "extern/cmake"]
+	path = extern/cmake
+	url = ../../kitware/cmake.git

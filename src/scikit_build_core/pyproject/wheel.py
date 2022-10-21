@@ -61,14 +61,15 @@ def build_wheel(
         "arch": [plat],
     }
 
+    cmake = CMake.default_search(
+        minimum_version=Version(settings.cmake.minimum_version)
+    )
+
     with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
         install_dir = build_tmp_folder / "install" / metadata.name
         build_dir = build_tmp_folder / "build"
 
-        cmake = CMake.default_search(
-            minimum_version=Version(settings.cmake.minimum_version)
-        )
         config = CMakeConfig(
             cmake,
             source_dir=Path("."),
