@@ -10,8 +10,6 @@ from typing import Mapping
 
 from packaging.version import Version
 
-from scikit_build_core.settings.cmake_model import ScikitBuildSettings
-
 from .._logging import logger
 from ..builder.macos import get_macosx_deployment_target
 from ..builder.sysconfig import get_python_include_dir, get_python_library
@@ -19,6 +17,7 @@ from ..cmake import CMakeConfig
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_ninja_programs
 from ..resources import find_python
+from ..settings.cmake_model import ScikitBuildSettings
 
 __all__: list[str] = ["Builder"]
 

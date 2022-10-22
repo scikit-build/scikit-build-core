@@ -5,12 +5,8 @@ from pathlib import Path
 
 from packaging.version import Version
 
-from scikit_build_core.program_search import (
-    best_program,
-    get_cmake_programs,
-    get_ninja_programs,
-)
-from scikit_build_core.settings.skbuild_settings import read_settings
+from ..program_search import best_program, get_cmake_programs, get_ninja_programs
+from ..settings.skbuild_settings import read_settings
 
 __all__ = ["get_requires_for_build_wheel"]
 

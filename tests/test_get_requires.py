@@ -5,7 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from scikit_build_core.get_requires import get_requires_for_build_wheel
+from scikit_build_core.builder.get_requires import get_requires_for_build_wheel
 
 ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
 
