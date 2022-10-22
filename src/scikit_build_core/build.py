@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from .builder.get_requires import (
-    get_requires_for_build_wheel as skbuild_get_requires_for_build_wheel,
-)
+from .builder.get_requires import cmake_ninja_for_build_wheel
 
 __all__ = [
     "build_sdist",
@@ -47,6 +45,6 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None
 ) -> list[str]:
-    return ["distlib", "pyproject_metadata"] + skbuild_get_requires_for_build_wheel(
+    return ["distlib", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
         config_settings
     )
