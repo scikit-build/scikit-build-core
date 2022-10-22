@@ -5,7 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from scikit_build_core.builder.get_requires import get_requires_for_build_wheel
+from scikit_build_core.builder.get_requires import cmake_ninja_for_build_wheel
 
 ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
 
@@ -22,23 +22,22 @@ def test_get_requires_for_build_wheel(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.14.0")
-    assert get_requires_for_build_wheel() == ["cmake>=3.15", *ninja]
+    assert cmake_ninja_for_build_wheel() == ["cmake>=3.15", *ninja]
 
 
 def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
-    assert get_requires_for_build_wheel() == [*ninja]
+    assert cmake_ninja_for_build_wheel() == [*ninja]
 
 
 def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
-    assert get_requires_for_build_wheel(
-        {"scikit-build.cmake.minimum-version": "3.20"}
-    ) == [
+    config = {"scikit-build.cmake.minimum-version": "3.20"}
+    assert cmake_ninja_for_build_wheel(config) == [
         "cmake>=3.20",
         *ninja,
     ]
@@ -55,4 +54,4 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
-    assert get_requires_for_build_wheel() == ["cmake>=3.21", *ninja]
+    assert cmake_ninja_for_build_wheel() == ["cmake>=3.21", *ninja]

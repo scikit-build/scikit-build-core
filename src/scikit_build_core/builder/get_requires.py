@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from packaging.version import Version
@@ -8,16 +9,16 @@ from packaging.version import Version
 from ..program_search import best_program, get_cmake_programs, get_ninja_programs
 from ..settings.skbuild_settings import read_settings
 
-__all__ = ["get_requires_for_build_wheel"]
+__all__ = ["cmake_ninja_for_build_wheel"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-def get_requires_for_build_wheel(
+def cmake_ninja_for_build_wheel(
     # pylint: disable-next=unused-argument
-    config_settings: dict[str, str | list[str]]
+    config_settings: Mapping[str, str | list[str]]
     | None = None
 ) -> list[str]:
 
