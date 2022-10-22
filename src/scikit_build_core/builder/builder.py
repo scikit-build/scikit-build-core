@@ -10,6 +10,7 @@ from typing import Mapping
 
 from packaging.version import Version
 
+from .. import __version__
 from .._logging import logger
 from ..builder.macos import get_macosx_deployment_target
 from ..builder.sysconfig import get_python_include_dir, get_python_library
@@ -64,6 +65,7 @@ class Builder:
         cache_config: dict[str, str | Path] = {
             "CMAKE_LIBRARY_OUTPUT_DIRECTORY": f"{ext_dir}{os.path.sep}",
             "SKBUILD": "2",
+            "SKBUILD_CORE_VERSION": __version__,
         }
         if sys.platform.startswith("win32"):
             cache_config[
