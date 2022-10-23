@@ -84,7 +84,6 @@ def build_wheel(
         defines: dict[str, str] = {}
         builder.configure(
             defines=defines,
-            ext_dir=install_dir,
             name=metadata.name,
             version=metadata.version,
         )

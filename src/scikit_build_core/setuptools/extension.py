@@ -44,7 +44,6 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             return
 
         build_tmp_folder = Path(self.build_temp)
-        install_dir = build_tmp_folder / ext.name
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
         # This dir doesn't exist, so Path.cwd() is needed for Python < 3.10
@@ -85,7 +84,6 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         dist = self.distribution  # type: ignore[attr-defined]
         builder.configure(
             defines=defines,
-            ext_dir=extdir,
             name=dist.get_name(),
             version=dist.get_version(),
         )
@@ -100,4 +98,4 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
                 build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
-        builder.install(install_dir)
+        builder.install(extdir)
