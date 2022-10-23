@@ -61,11 +61,11 @@ class CMakeConfig:
     cmake: CMake
     source_dir: Path
     build_dir: Path
-    init_cache_file: Path = dataclasses.field(init=False, default=Path())
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
-    env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     build_type: str = "Release"
+    init_cache_file: Path = dataclasses.field(init=False, default=Path())
+    env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
