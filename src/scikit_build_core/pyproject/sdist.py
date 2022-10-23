@@ -29,17 +29,17 @@ def build_sdist(
         pyproject = tomllib.load(f)
 
     metadata = StandardMetadata.from_pyproject(pyproject)
-    pkg_info = metadata.as_rfc822()
+    pkg_info = bytes(metadata.as_rfc822())
 
     srcdirname = f"{metadata.name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
 
     exclude_spec: pathspec.PathSpec | None = None
-    with contextlib.suppress(FileNotFoundError), open(
-        ".gitignore", encoding="utf-8"
-    ) as f:
-        exclude_spec = pathspec.GitIgnoreSpec.from_lines(f.readlines())
+    with contextlib.suppress(FileNotFoundError):
+        with open(".gitignore", encoding="utf-8") as f:
+            exclude_spec = pathspec.GitIgnoreSpec.from_lines(f.readlines())
 
+    # TODO: support SOURCE_DATE_EPOCH for reproducible builds
     with tarfile.open(sdist_dir / filename, "w:gz", format=tarfile.PAX_FORMAT) as tar:
         for dirpath, _dirnames, filenames in os.walk("."):
             paths = (Path(dirpath) / fn for fn in filenames)
@@ -48,10 +48,9 @@ def build_sdist(
             for filepath in paths:
                 tar.add(filepath, arcname=srcdirname / filepath)
 
-        fileobj = io.BytesIO(bytes(pkg_info))
-        fileobj.seek(0)
         tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
-        tarinfo.size = len(fileobj.getvalue())
-        tar.addfile(tarinfo, fileobj)
+        tarinfo.size = len(pkg_info)
+        with io.BytesIO(pkg_info) as fileobj:
+            tar.addfile(tarinfo, fileobj)
 
     return filename

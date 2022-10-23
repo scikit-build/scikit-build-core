@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 
 import distlib.wheel
-import packaging.tags
 import packaging.utils
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
 from ..builder.builder import Builder
-from ..builder.macos import get_macosx_deployment_target
+from ..builder.get_wheel_tag import WheelTag
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
 
@@ -38,28 +36,16 @@ def build_wheel(
     metadata = StandardMetadata.from_pyproject(pyproject)
 
     if metadata.version is None:
-        raise AssertionError(
-            "project.version is not statically specified, must be present currently"
-        )
+        msg = "project.version is not statically specified, must be present currently"
+        raise AssertionError(msg)
 
     settings = read_settings(Path("pyproject.toml"), config_settings or {})
-
-    best_tag = next(packaging.tags.sys_tags())
-    interp, abi, plat = (best_tag.interpreter, best_tag.abi, best_tag.platform)
-    if sys.platform.startswith("darwin"):
-        str_target = get_macosx_deployment_target()
-        min_macos, max_macos = str_target.split(".")
-        plat = next(packaging.tags.mac_platforms((int(min_macos), int(max_macos))))
 
     distlib.wheel.Wheel.wheel_version = (1, 0)
     wheel = distlib.wheel.Wheel()
     wheel.name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
     wheel.version = str(metadata.version)
-    tags = {
-        "pyver": [interp],
-        "abi": [abi],
-        "arch": [plat],
-    }
+    tags = WheelTag.compute_best()
 
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
@@ -101,7 +87,7 @@ def build_wheel(
             # TODO: implement
             f.write(b"")
 
-        out = wheel.build({"platlib": str(install_dir)}, tags=tags)
+        out = wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
         shutil.move(out, wheel_directory)
 
     wheel_filename: str = wheel.filename
