@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import os
 import re
 import sys
 import sysconfig
@@ -38,7 +37,6 @@ class Builder:
         self,
         *,
         defines: Mapping[str, str],
-        ext_dir: Path,
         name: str | None = None,
         version: Version | None = None,
     ) -> None:
@@ -63,14 +61,9 @@ class Builder:
             self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(ninja.path))
 
         cache_config: dict[str, str | Path] = {
-            "CMAKE_LIBRARY_OUTPUT_DIRECTORY": f"{ext_dir}{os.path.sep}",
             "SKBUILD": "2",
             "SKBUILD_CORE_VERSION": __version__,
         }
-        if sys.platform.startswith("win32"):
-            cache_config[
-                f"CMAKE_LIBRARY_OUTPUT_DIRECTORY_{self.config.build_type.upper()}"
-            ] = f"{ext_dir}{os.path.sep}"
 
         if name is not None:
             cache_config["SKBUILD_PROJECT_NAME"] = name

@@ -10,3 +10,5 @@ pybind11_add_module(cmake_example src/main.cpp)
 
 target_compile_definitions(cmake_example
                            PRIVATE VERSION_INFO=${PROJECT_VERSION})
+
+install(TARGETS cmake_example LIBRARY DESTINATION .)
