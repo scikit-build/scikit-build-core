@@ -7,7 +7,7 @@ from typing import TypeVar
 
 import packaging.tags
 
-from ..builder.macos import get_macosx_deployment_target_tuple
+from .macos import get_macosx_deployment_target_tuple
 
 __all__ = ["WheelTag"]
 

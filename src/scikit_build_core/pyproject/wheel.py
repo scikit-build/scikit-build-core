@@ -11,7 +11,7 @@ from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
 from ..builder.builder import Builder
-from ..builder.get_wheel_tag import WheelTag
+from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
 
