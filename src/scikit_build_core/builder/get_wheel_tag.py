@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import sys
+from collections.abc import Sequence
 from typing import TypeVar
 
 import packaging.tags
@@ -24,16 +25,24 @@ class WheelTag:
     abis: list[str]
     archs: list[str]
 
+    # TODO: plats only used on macOS
     @classmethod
-    def compute_best(cls: type[Self]) -> Self:
+    def compute_best(cls: type[Self], archs: Sequence[str] = ()) -> Self:
         best_tag = next(packaging.tags.sys_tags())
-        interp, abi, plat = (best_tag.interpreter, best_tag.abi, best_tag.platform)
+        interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         if sys.platform.startswith("darwin"):
             str_target = get_macosx_deployment_target()
-            min_macos, max_macos = str_target.split(".")
-            plat = next(packaging.tags.mac_platforms((int(min_macos), int(max_macos))))
-
-        return cls(pyvers=[interp], abis=[abi], archs=[plat])
+            min_macos, max_macos = (int(v) for v in str_target.split("."))
+            if archs:
+                plats = [
+                    next(packaging.tags.mac_platforms((min_macos, max_macos), arch))
+                    for arch in archs
+                ]
+            else:
+                plats = [
+                    next(packaging.tags.mac_platforms((int(min_macos), int(max_macos))))
+                ]
+        return cls(pyvers=[interp], abis=[abi], archs=plats)
 
     @property
     def pyver(self) -> str:
