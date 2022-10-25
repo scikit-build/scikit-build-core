@@ -3,23 +3,25 @@ from __future__ import annotations
 import os
 import platform
 
-__all__ = ["get_macosx_deployment_target"]
+__all__ = ["get_macosx_deployment_target", "get_macosx_deployment_target_tuple"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-def normalize_macos_version(version: str) -> str:
+def normalize_macos_version(version: str) -> tuple[int, int]:
     """
     Set minor version to 0 if major is 11+.
     """
-    major, minor = version.split(".")[0:2]
-    minor = "0" if int(major) >= 11 else minor
-    return f"{major}.{minor}"
+    if "." not in version:
+        version = f"{version}.0"
+    major, minor = (int(d) for d in version.split(".")[:2])
+    minor = 0 if major >= 11 else minor
+    return major, minor
 
 
-def get_macosx_deployment_target() -> str:
+def get_macosx_deployment_target_tuple() -> tuple[int, int]:
     """
     Get the MACOSX_DEPLOYMENT_TARGET environment variable or use the version
     Python was built with. Suggestion: do not touch MACOSX_DEPLOYMENT_TARGET
@@ -32,11 +34,17 @@ def get_macosx_deployment_target() -> str:
 
     env_target = ".".join(target.split(".")[:2]) if "." in target else f"{target}.0"
     try:
-        float(env_target)
+        norm_env_target = normalize_macos_version(env_target)
     except ValueError:
         return plat_target
 
-    norm_env_target = normalize_macos_version(env_target)
-    return (
-        norm_env_target if float(norm_env_target) > float(plat_target) else plat_target
-    )
+    return norm_env_target if norm_env_target > plat_target else plat_target
+
+
+def get_macosx_deployment_target() -> str:
+    """
+    Get the MACOSX_DEPLOYMENT_TARGET environment variable or use the version
+    Python was built with. Suggestion: do not touch MACOSX_DEPLOYMENT_TARGET
+    if it's set.
+    """
+    return ".".join(str(d) for d in get_macosx_deployment_target_tuple())

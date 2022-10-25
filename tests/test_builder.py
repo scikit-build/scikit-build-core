@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from scikit_build_core.builder.builder import Builder
+from scikit_build_core.builder.get_wheel_tag import WheelTag
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
     get_python_include_dir,
@@ -62,3 +63,29 @@ def test_builder_macos_arch(monkeypatch, archs):
     tmpcfg = SimpleNamespace(env=os.environ.copy())
     tmpbuilder = typing.cast(Builder, SimpleNamespace(config=tmpcfg))
     assert Builder.get_archs(tmpbuilder) == archs
+
+
+@pytest.mark.parametrize(
+    "minver,archs,answer",
+    [
+        pytest.param("10.12", ["x86_64"], "macosx_10_12_x86_64", id="10.12_x86_64"),
+        pytest.param("10.12", ["arm64"], "macosx_11_0_arm64", id="10.12_arm64"),
+        pytest.param(
+            "10.12", ["universal2"], "macosx_10_12_universal2", id="10.12_universal2"
+        ),
+        pytest.param(
+            "10.12",
+            ["x86_64", "arm64"],
+            "macosx_10_12_x86_64.macosx_10_12_arm64",  # It would be nice if this was 11_0
+            id="10.12_multi",
+        ),
+    ],
+)
+def test_wheel_tag(monkeypatch, minver, archs, answer):
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", minver)
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9", "", ""))
+
+    tags = WheelTag.compute_best(archs)
+    plat = str(tags).split("-")[-1]
+    assert plat == answer
