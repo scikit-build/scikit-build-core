@@ -60,6 +60,7 @@ class Builder:
         version: Version | None = None,
     ) -> None:
         cmake_defines = dict(defines)
+        cmake_args: list[str] = []
 
         site_packages = Path(sysconfig.get_path("purelib"))
         self.config.prefix_dirs.append(site_packages)
@@ -69,8 +70,13 @@ class Builder:
         if self.config.cmake.version < Version("3.24"):
             self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
 
-        # Ninja is currently required on Unix
-        if not sys.platform.startswith("win32"):
+        if sys.platform.startswith("win32"):
+            # TODO: support cross-compilation
+            is_64bit = sys.maxsize > 2**32
+            if not is_64bit:
+                cmake_args += ["-A", "Win32"]
+        else:
+            # Ninja is currently required on Unix
             ninja = best_program(
                 get_ninja_programs(),
                 minimum_version=Version(self.settings.ninja.minimum_version),
@@ -107,7 +113,7 @@ class Builder:
 
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
-        cmake_args = [
+        cmake_args += [
             item for item in self.config.env.get("CMAKE_ARGS", "").split(" ") if item
         ]
 
