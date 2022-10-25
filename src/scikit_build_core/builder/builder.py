@@ -33,6 +33,25 @@ class Builder:
     settings: ScikitBuildSettings
     config: CMakeConfig
 
+    # TODO: cross-compile support for other platforms
+    def get_archs(self) -> list[str]:
+        """
+        Takes macOS platform settings and returns a list of platforms.
+
+        Example (macOS):
+            ARCHFLAGS="-arch x86_64" -> ["x86_64"]
+            ARCHFLAGS="-arch x86_64 -arch arm64" -> ["x86_64", "arm64"]
+            ARCHFLAGS="-arch universal2" -> ["universal2"]
+
+        Returns an empty list otherwise or if ARCHFLAGS is not set.
+        """
+
+        if sys.platform.startswith("darwin"):
+            archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
+            return archs
+
+        return []
+
     def configure(
         self,
         *,
@@ -94,7 +113,7 @@ class Builder:
 
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set
-            archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
+            archs = self.get_archs()
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
 

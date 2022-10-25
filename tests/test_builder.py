@@ -1,10 +1,14 @@
+import os
 import platform
 import pprint
 import sys
 import sysconfig
+import typing
+from types import SimpleNamespace
 
 import pytest
 
+from scikit_build_core.builder.builder import Builder
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
     get_python_include_dir,
@@ -48,3 +52,13 @@ def test_get_python_library():
     else:
         assert lib
         assert lib.is_file()
+
+
+@pytest.mark.parametrize("archs", (["x86_64"], ["arm64", "universal2"]))
+def test_builder_macos_arch(monkeypatch, archs):
+    archflags = " ".join(f"-arch {arch}" for arch in archs)
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("ARCHFLAGS", archflags)
+    tmpcfg = SimpleNamespace(env=os.environ.copy())
+    tmpbuilder = typing.cast(Builder, SimpleNamespace(config=tmpcfg))
+    assert Builder.get_archs(tmpbuilder) == archs

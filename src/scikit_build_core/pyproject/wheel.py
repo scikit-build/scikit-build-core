@@ -45,7 +45,6 @@ def build_wheel(
     wheel = distlib.wheel.Wheel()
     wheel.name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
     wheel.version = str(metadata.version)
-    tags = WheelTag.compute_best()
 
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
@@ -66,6 +65,7 @@ def build_wheel(
             settings=settings,
             config=config,
         )
+        tags = WheelTag.compute_best(builder.get_archs())
 
         defines: dict[str, str] = {}
         builder.configure(
