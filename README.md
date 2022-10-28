@@ -36,15 +36,17 @@ This is very much a WIP, some missing features:
 - C++17 is required for the test suite because it's more fun than C++11/14
 - No support for caching between builds
 - No editable mode support
+- No extra directories (like headers) supported yet
 
 Included modules:
 
-- `.cmake.` `CMake`/`CMakeConfig`: general interface for building code
+- `.cmake` `CMake`/`CMakeConfig`: general interface for building code
 - `.fileapi`: Interface for reading the CMake File API
 - `.builder`: Generalized backend builder and related helpers
 - `.pyproject`: PEP 517 builder (used by the PEP 517 interface)
 - `.build`: The PEP 517 interface
 - `.setuptools`: The setuptools Extension interface (and PEP 517 hooks)
+- `.setuptools.build_api`: Wrapper injecting build requirements
 - `.settings`: The configuration system, reading from pyproject.toml, PEP 517
   config, and envvars
 
@@ -165,18 +167,13 @@ test = ["pytest>=6.0"]
 cmake_minimum_required(VERSION 3.15...3.24)
 project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
 
-execute_process(
-COMMAND "${PYTHON_EXECUTABLE}" -c
-        "import pybind11; print(pybind11.get_cmake_dir())"
-OUTPUT_VARIABLE _tmp_dir
-OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(cmake_example src/main.cpp)
 
 target_compile_definitions(cmake_example
                            PRIVATE VERSION_INFO=${PROJECT_VERSION})
+
+install(TARGETS cmake_example DESTINATION .)
 ```
 
 ### Setuptools builder
@@ -216,18 +213,13 @@ build-backend = "scikit_build_core.setuptools.build_meta"
 cmake_minimum_required(VERSION 3.15...3.24)
 project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
 
-execute_process(
-COMMAND "${PYTHON_EXECUTABLE}" -c
-        "import pybind11; print(pybind11.get_cmake_dir())"
-OUTPUT_VARIABLE _tmp_dir
-OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(cmake_example src/main.cpp)
 
 target_compile_definitions(cmake_example
                            PRIVATE VERSION_INFO=${PROJECT_VERSION})
+
+install(TARGETS cmake_example DESTINATION .)
 ```
 
 <!-- prettier-ignore-start -->
