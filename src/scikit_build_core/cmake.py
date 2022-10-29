@@ -48,8 +48,6 @@ class CMake:
             msg = "CMake version undetermined @ {program.path}"
             raise CMakeNotFoundError(msg)
 
-        logger.info("CMake version: {}", cmake_program.version)
-
         return cls(version=cmake_program.version, cmake_path=cmake_program.path)
 
     def __fspath__(self) -> str:
