@@ -83,9 +83,16 @@ def build_wheel(
         dist_info.mkdir(exist_ok=False)
         with dist_info.joinpath("METADATA").open("wb") as f:
             f.write(bytes(metadata.as_rfc822()))
-        with dist_info.joinpath("entry-points.txt").open("wb") as f:
-            # TODO: implement
-            f.write(b"")
+        with dist_info.joinpath("entrypoints.txt").open("w", encoding="utf_8") as f:
+            ep = metadata.entrypoints.copy()
+            ep["console_scripts"] = metadata.scripts
+            ep["gui_scripts"] = metadata.gui_scripts
+            for group, entries in ep.items():
+                if entries:
+                    f.write(f"[{group}]\n")
+                    for name, target in entries.items():
+                        f.write(f"{name} = {target}\n")
+                    f.write("\n")
 
         out = wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
         shutil.move(out, wheel_directory)
