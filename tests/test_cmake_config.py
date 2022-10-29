@@ -44,7 +44,7 @@ def test_init_cache(fp, tmp_path):
 
     config = CMakeConfig(
         CMake.default_search(),
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
     )
     config.init_cache(
@@ -89,7 +89,7 @@ def test_cmake_args(tmp_path, fp):
 
     config = CMakeConfig(
         CMake.default_search(),
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
     )
 

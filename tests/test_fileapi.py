@@ -23,7 +23,7 @@ def test_cattrs_comparison(tmp_path):
     cmake = CMake.default_search(minimum_version=Version("3.15"))
     config = CMakeConfig(
         cmake,
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
     )
 
@@ -52,7 +52,7 @@ def test_simple_pure(tmp_path):
     cmake = CMake.default_search(minimum_version=Version("3.15"))
     config = CMakeConfig(
         cmake,
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
     )
 

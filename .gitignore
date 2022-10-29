@@ -143,3 +143,6 @@ src/*/_version.py
 
 # SKBuild cache dir
 _skbuild/
+
+# Any build dirs in the tests
+tests/**/build/
