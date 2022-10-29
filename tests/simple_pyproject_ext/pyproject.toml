@@ -12,3 +12,12 @@ requires-python = ">=3.7"
 
 [project.optional-dependencies]
 test = ["pytest>=6.0"]
+
+[project.scripts]
+something = "other"
+
+[project.gui-scripts]
+guithing = "a.b:c"
+
+[project.entry-points."one.two"]
+three = "four"
