@@ -96,6 +96,11 @@ Python, and will handle PyPy for you if you are building from PyPy. You will
 need to install everything you want into the full final path inside site-modules
 (so you will usually prefix everything by the package name).
 
+> Warning: FindPython does not report the correct SOABI for PyPy due to the
+> SOABI being reported incorrectly. This will be fixed in the next release of
+> PyPy. And PyPy doesn't support skipping the SOABI to avoid clashes with
+> CPython. Pybind11's `pybind11_add_module` handles this correctly for you.
+
 ## Acknowledgements
 
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
