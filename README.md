@@ -106,8 +106,8 @@ need to install everything you want into the full final path inside site-modules
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 
 <!-- prettier-ignore-start -->
-[actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg
-[actions-link]:             https://github.com/henryiii/scikit-build-core/actions
+[actions-badge]:            https://github.com/scikit-build/scikit-build-core/workflows/CI/badge.svg
+[actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
 [black-badge]:              https://img.shields.io/badge/code%20style-black-000000.svg
 [black-link]:               https://github.com/psf/black
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
@@ -116,8 +116,8 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [github-discussions-link]:  https://github.com/scikit-build/scikit-build-core/discussions
 [gitter-badge]:             https://badges.gitter.im/https://github.com/scikit-build/scikit-build-core/community.svg
 [gitter-link]:              https://gitter.im/https://github.com/scikit-build/scikit-build-core/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-[codecov-badge]: https://codecov.io/gh/henryiii/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
-[codecov-link]: https://codecov.io/gh/henryiii/scikit-build-core
+[codecov-badge]:            https://codecov.io/gh/scikit-build/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
+[codecov-link]:             https://codecov.io/gh/scikit-build/scikit-build-core
 [pypi-link]:                https://pypi.org/project/scikit-build-core/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/scikit-build-core
 [pypi-version]:             https://badge.fury.io/py/scikit-build-core.svg
