@@ -38,7 +38,7 @@ This is very much a WIP, some missing features:
 - No editable mode support
 - No extra wheel directories (like headers) supported yet
 - Windows ARM support missing
-- No Limited API / Stable ABI support yet
+- No Limited API / Stable ABI support yet, or pythonless tags
 
 Features over classic Scikit-build:
 
@@ -104,7 +104,6 @@ need to install everything you want into the full final path inside site-modules
 ## Acknowledgements
 
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
-a
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg
