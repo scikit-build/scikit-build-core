@@ -91,7 +91,8 @@ class Builder:
         }
 
         if name is not None:
-            cache_config["SKBUILD_PROJECT_NAME"] = name
+            canonical_name = name.replace("-", "_").replace(".", "_")
+            cache_config["SKBUILD_PROJECT_NAME"] = canonical_name
         if version is not None:
             cache_config["SKBUILD_PROJECT_VERSION"] = str(version)
 
