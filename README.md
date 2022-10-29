@@ -30,25 +30,15 @@ This is very much a WIP, some missing features:
 - The extensionlib integration is missing
 - No hatchling plugin yet
 - The docs are not written
-- The logging system doesn't work very well
+- The logging system isn't ideal yet
 - Dedicated entrypoints still need to be designed
 - No support for other targets besides install
 - C++17 is required for the test suite because it's more fun than C++11/14
 - No support for caching between builds
 - No editable mode support
-- No extra directories (like headers) supported yet
-
-Included modules:
-
-- `.cmake` `CMake`/`CMakeConfig`: general interface for building code
-- `.fileapi`: Interface for reading the CMake File API
-- `.builder`: Generalized backend builder and related helpers
-- `.pyproject`: PEP 517 builder (used by the PEP 517 interface)
-- `.build`: The PEP 517 interface
-- `.setuptools`: The setuptools Extension interface (and PEP 517 hooks)
-- `.setuptools.build_api`: Wrapper injecting build requirements
-- `.settings`: The configuration system, reading from pyproject.toml, PEP 517
-  config, and envvars
+- No extra wheel directories (like headers) supported yet
+- Windows ARM support missing
+- No Limited API / Stable ABI support yet
 
 Features over classic Scikit-build:
 
@@ -57,174 +47,59 @@ Features over classic Scikit-build:
 - Automatically adds Ninja and/or CMake only as required
 - Closer to vanilla setuptools in setuptools mode, doesn't interfere with config
 - Powerful config system
-- Automatic inclusion of site-packages in CMAKE_PREFIX_PATH
+- Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.24 (included via hatchling in
   a submodule)
 
-## Basic CMake usage
+Currently, the recommended interface is the PEP 517 interface. There is also a
+setuptools-based interface that is being developed to provide a transition path
+for classic scikit-build.
 
-```python
-cmake = CMake.default_search(minimum_version="3.15")
-config = CMakeConfig(
-    cmake,
-    source_dir=source_dir,
-    build_dir=build_dir,
-)
-config.configure()
-config.build()
-config.install(prefix)
-```
+## Example
 
-## File API
-
-If you want to access the File API, use:
-
-```python
-from scikit_build_core.fileapi.query import stateless_query
-from scikit_build_core.fileapi.reply import load_reply_dir
-
-reply_dir = stateless_query(config.build_dir)
-config.configure()
-index = load_reply_dir(reply_dir)
-```
-
-This mostly wraps the FileAPI in classes. It autoloads some jsonFiles. This
-throws an `ExceptionGroup` if parsing files. It is currently experimental.
-
-## Configuration
-
-Configuration support uses plain dataclasses:
-
-```python
-@dataclasses.dataclass
-class NestedSettings:
-    one: str
-
-
-@dataclasses.dataclass
-class SettingChecker:
-    nested: NestedSettings
-```
-
-You can use different sources, currently environment variables:
-
-```yaml
-PREFIX_NESTED_ONE: "envvar"
-```
-
-PEP 517 config dictionaries:
-
-```python
-{"nested.one": "PEP 517 config"}
-```
-
-And TOML:
-
-```toml
-[tool.cmake]
-nested.one = "TOML config"
-```
-
-The CMake config is pre-configured and available in `.settings.cmake_model`,
-usable as:
-
-```python
-from scikit_build_core.settings.skbuild_settings import read_settings
-
-settings = read_skbuild_settings(Path("pyproject.toml"), config_settings or {})
-assert settings.cmake.minimum_version == "3.15"
-assert settings.ninja.minimum_version == "1.5"
-```
-
-## Builders
-
-The tools in `builder` are designed to make writing a builder easy. The
-`Builder` class is used in the various builder implementations.
-
-### PEP 517 builder
-
-This is highly experimental, and currently only uses `.gitignore` to filter the
-SDist, and the wheel only contains the install directory - control using CMake.
+To use scikit-build-core, add it to your `build-system.requires`, and specify
+the `scikit_build_core.build` builder as your `build-system.build-backend`. You
+do _not_ need to specify `cmake` or `ninja`; scikit-build-core will require them
+automatically if the system versions are not sufficient.
 
 ```toml
 [build-system]
-requires = [
-    "scikit_build_core",
-    "pybind11",
-]
+requires = ["scikit-build-core"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "cmake_example"
+name = "scikit_build_simplest"
 version = "0.0.1"
-requires-python = ">=3.7"
-
-[project.optional-dependencies]
-test = ["pytest>=6.0"]
 ```
+
+You can (and should) specify the rest of the entries in `project`, but these are
+the minimum to get started.
+
+An example `CMakeLists.txt`:
 
 ```cmake
 cmake_minimum_required(VERSION 3.15...3.24)
-project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
 
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(cmake_example src/main.cpp)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C VERSION ${SKBUILD_PROJECT_VERSION})
 
-target_compile_definitions(cmake_example
-                           PRIVATE VERSION_INFO=${PROJECT_VERSION})
+find_package(Python COMPONENTS Interpreter Development.Module)
 
-install(TARGETS cmake_example DESTINATION .)
+Python_add_library(_module MODULE src/module.c WITH_SOABI)
+
+install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
+install(FILES src/simplest/__init__.py
+        DESTINATION ${SKBUILD_PROJECT_NAME})
 ```
 
-### Setuptools builder
-
-Experimental. Supports only a single module, may not support extra Python files.
-
-`setup.py`:
-
-```python
-from setuptools import setup
-
-from scikit_build_core.setuptools.extension import CMakeBuild, CMakeExtension
-
-setup(
-    name="cmake_example",
-    version="0.0.1",
-    ext_modules=[CMakeExtension("cmake_example")],
-    zip_safe=False,
-    extras_require={"test": ["pytest>=6.0"]},
-    cmdclass={"build_ext": CMakeBuild},
-    python_requires=">=3.7",
-)
-```
-
-`pyproject.toml`:
-
-```toml
-[build-system]
-requires = [
-    "scikit_build_core",
-    "pybind11",
-]
-build-backend = "scikit_build_core.setuptools.build_meta"
-```
-
-```cmake
-cmake_minimum_required(VERSION 3.15...3.24)
-project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
-
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(cmake_example src/main.cpp)
-
-target_compile_definitions(cmake_example
-                           PRIVATE VERSION_INFO=${PROJECT_VERSION})
-
-install(TARGETS cmake_example DESTINATION .)
-```
+Scikit-build-core will backport FindPython from CMake 3.24 to older versions of
+Python, and will handle PyPy for you if you are building from PyPy. You will
+need to install everything you want into the full final path inside site-modules
+(so you will usually prefix everything by the package name).
 
 ## Acknowledgements
 
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
+a
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/henryiii/scikit-build-core/workflows/CI/badge.svg

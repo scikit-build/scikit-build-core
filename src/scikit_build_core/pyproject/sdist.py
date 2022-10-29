@@ -34,10 +34,20 @@ def build_sdist(
     srcdirname = f"{metadata.name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
 
-    exclude_spec: pathspec.PathSpec | None = None
+    exclude_lines = [
+        ".git/",
+        ".tox/",
+        ".nox/",
+        ".egg-info/",
+        "__pycache__/",
+        "__pypackages__/",
+    ]
+
     with contextlib.suppress(FileNotFoundError):
         with open(".gitignore", encoding="utf-8") as f:
-            exclude_spec = pathspec.GitIgnoreSpec.from_lines(f.readlines())
+            exclude_lines += f.readlines()
+
+    exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
 
     # TODO: support SOURCE_DATE_EPOCH for reproducible builds
     with tarfile.open(sdist_dir / filename, "w:gz", format=tarfile.PAX_FORMAT) as tar:
