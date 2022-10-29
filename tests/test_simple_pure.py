@@ -21,7 +21,7 @@ def config(tmp_path_factory):
     cmake = CMake.default_search(minimum_version=Version("3.15"))
     config = CMakeConfig(
         cmake,
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
     )
 
@@ -72,7 +72,7 @@ def test_variable_defined(tmp_path, capfd):
     cmake = CMake.default_search(minimum_version=Version("3.15"))
     config = CMakeConfig(
         cmake,
-        source_dir=DIR / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
     )
     config.init_cache({"SKBUILD": True})

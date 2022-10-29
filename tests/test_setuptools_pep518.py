@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "simple_setuptools_ext"
+HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 
 
 @pytest.mark.compile

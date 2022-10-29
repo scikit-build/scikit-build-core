@@ -8,7 +8,7 @@ import pytest
 from scikit_build_core.build import build_sdist, build_wheel
 
 DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "simple_pyproject_ext"
+HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 ENTRYPOINTS = """\
 [one.two]
 three = four
