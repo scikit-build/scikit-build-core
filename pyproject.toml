@@ -167,3 +167,6 @@ report.exclude_lines = [
   "pragma: no cover",
   '\.\.\.',
 ]
+
+[tool.check-wheel-contents]
+ignore = ["W002"]  # Triggers on __init__.py's

@@ -43,8 +43,6 @@ jobs:
         include:
           - python-version: "pypy-3.7"
             runs-on: ubuntu-latest
-          - python-version: "pypy-3.9"
-            runs-on: ubuntu-latest
           - python-version: "3.8"
             runs-on: ubuntu-latest
           - python-version: "3.9"
