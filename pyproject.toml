@@ -12,18 +12,20 @@ readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
     "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Build Tools",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Development Status :: 1 - Planning",
+    "Development Status :: 2 - Pre-Alpha",
 ]
 
 dynamic = ["version"]
