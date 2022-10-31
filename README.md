@@ -14,6 +14,10 @@
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
+**WARNING**: Experimental. All configuration subject to change. Only
+`scikit_build_core.build` should be used (setuptools backend is experimental and
+likely to move to a separate package).
+
 The following limitations are present compared to classic scikit-build:
 
 - The minimum supported CMake is 3.15
