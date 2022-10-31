@@ -1,0 +1,26 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: hynek/build-and-inspect-python-package@v1
+
+      - uses: pypa/gh-action-pypi-publish@v1.5.1
+        if: github.event_name == 'release' && github.event.action == 'published'
+        with:
+          password: ${{ secrets.pypi_password }}
