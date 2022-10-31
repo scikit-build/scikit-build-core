@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -75,8 +75,9 @@ homepage = "https://github.com/scikit-build/scikit-build-core"
 
 
 [tool.hatch]
-version.path = "src/scikit_build_core/__init__.py"
 build.exclude = ["extern"]
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 [tool.hatch.build.force-include]
 "extern/cmake/Copyright.txt" = "src/scikit_build_core/resources/find_python/Copyright.txt"
