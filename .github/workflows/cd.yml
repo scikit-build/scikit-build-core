@@ -18,7 +18,12 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - uses: hynek/build-and-inspect-python-package@v1
+      - name: Build package
+        run: pipx run build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*
 
       - uses: pypa/gh-action-pypi-publish@v1.5.1
         if: github.event_name == 'release' && github.event.action == 'published'
