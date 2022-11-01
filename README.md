@@ -105,6 +105,9 @@ need to install everything you want into the full final path inside site-modules
 > PyPy. And PyPy doesn't support skipping the SOABI to avoid clashes with
 > CPython. Pybind11's `pybind11_add_module` handles this correctly for you.
 
+More examples are in the
+[tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
+
 ## Acknowledgements
 
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].

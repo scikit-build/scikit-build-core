@@ -73,7 +73,8 @@ docs = [
 ]
 
 [project.urls]
-homepage = "https://github.com/scikit-build/scikit-build-core"
+Homepage = "https://github.com/scikit-build/scikit-build-core"
+Examples = "https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages"
 
 
 [tool.hatch]
