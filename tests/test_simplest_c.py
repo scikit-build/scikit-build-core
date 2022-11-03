@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import pytest
@@ -11,10 +10,6 @@ SIMPLEST = DIR / "packages/simplest_c"
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.skipif(
-    sys.implementation.name == "pypy",
-    reason="PyPy reports the wrong SOABI (fixed upstream)",
-)
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()

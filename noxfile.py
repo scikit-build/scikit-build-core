@@ -34,8 +34,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests.
     """
-    # TODO: build seems to be muddling the order here without unbuffered
-    env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1", "PYTHONUNBUFFERED": "1"}
+    env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
     session.install("-e.[test]")
     session.run("pytest", *session.posargs, env=env)
 

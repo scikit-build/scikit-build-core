@@ -110,6 +110,13 @@ class Builder:
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
+        # Workaround for bug in PyPy and packaging that is not handled in CMake
+        # According to PEP 3149, SOABI and EXT_SUFFIX are interchangeable (and
+        # the latter is much more likely to be correct as it is used elsewhere)
+        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+        assert ext_suffix
+        cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
+
         self.config.init_cache(cache_config)
 
         # Adding CMake arguments set as environment variable

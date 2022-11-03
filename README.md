@@ -89,6 +89,7 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C VERSION ${SKBUILD_PROJECT_VERSION})
 find_package(Python COMPONENTS Interpreter Development.Module)
 
 Python_add_library(_module MODULE src/module.c WITH_SOABI)
+set(Python_SOABI ${SKBUILD_SOABI})  # Required for PyPy support
 
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
 install(FILES src/simplest/__init__.py
@@ -99,11 +100,6 @@ Scikit-build-core will backport FindPython from CMake 3.24 to older versions of
 Python, and will handle PyPy for you if you are building from PyPy. You will
 need to install everything you want into the full final path inside site-modules
 (so you will usually prefix everything by the package name).
-
-> Warning: FindPython does not report the correct SOABI for PyPy due to the
-> SOABI being reported incorrectly. This will be fixed in the next release of
-> PyPy. And PyPy doesn't support skipping the SOABI to avoid clashes with
-> CPython. Pybind11's `pybind11_add_module` handles this correctly for you.
 
 More examples are in the
 [tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
