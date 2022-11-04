@@ -108,6 +108,7 @@ class Builder:
         for prefix in ["Python", "Python3"]:
             cache_config[f"{prefix}_EXECUTABLE"] = sys.executable
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
+            cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
         # Workaround for bug in PyPy and packaging that is not handled in CMake
