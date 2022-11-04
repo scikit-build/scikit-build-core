@@ -19,6 +19,12 @@ class CMakeSettings:
 
 
 @dataclasses.dataclass
+class LogggingSettings:
+    level: str = "WARNING"
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings
     ninja: NinjaSettings
+    logging: LogggingSettings

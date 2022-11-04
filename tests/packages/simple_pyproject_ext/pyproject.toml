@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "scikit_build_core",
+    "scikit_build_core[color]",
     "pybind11",
 ]
 build-backend = "scikit_build_core.build"

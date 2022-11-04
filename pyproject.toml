@@ -38,6 +38,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+color = [
+    "rich",
+]
 test = [
     "build",
     "cattrs >=22.2.0",
