@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -22,6 +21,10 @@ def __dir__() -> list[str]:
     return __all__
 
 
+class DistWheel(distlib.wheel.Wheel):  # type: ignore[misc]
+    wheel_version = (1, 0)
+
+
 def build_wheel(
     wheel_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
@@ -41,8 +44,8 @@ def build_wheel(
 
     settings = read_settings(Path("pyproject.toml"), config_settings or {})
 
-    distlib.wheel.Wheel.wheel_version = (1, 0)
-    wheel = distlib.wheel.Wheel()
+    wheel = DistWheel()
+    wheel.dirname = wheel_directory
     wheel.name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
     wheel.version = str(metadata.version)
 
@@ -94,8 +97,7 @@ def build_wheel(
                         f.write(f"{name} = {target}\n")
                     f.write("\n")
 
-        out = wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
-        shutil.move(out, wheel_directory)
+        wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
 
     wheel_filename: str = wheel.filename
     return wheel_filename
