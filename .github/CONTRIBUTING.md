@@ -234,15 +234,14 @@ Experimental. Supports only a single module, may not support extra Python files.
 ```python
 from setuptools import setup
 
-from scikit_build_core.setuptools.extension import CMakeBuild, CMakeExtension
+from scikit_build_core.setuptools.extension import CMakeExtension
 
 setup(
     name="cmake_example",
     version="0.0.1",
-    ext_modules=[CMakeExtension("cmake_example")],
+    cmake_extensions=[CMakeExtension("cmake_example")],
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
-    cmdclass={"build_ext": CMakeBuild},
     python_requires=">=3.7",
 )
 ```

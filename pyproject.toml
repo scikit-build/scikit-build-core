@@ -76,6 +76,8 @@ docs = [
 Homepage = "https://github.com/scikit-build/scikit-build-core"
 Examples = "https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages"
 
+[project.entry-points."distutils.setup_keywords"]
+cmake_extensions = "scikit_build_core.setuptools.extension:cmake_extensions"
 
 [tool.hatch]
 build.exclude = ["extern"]

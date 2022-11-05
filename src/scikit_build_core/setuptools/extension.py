@@ -7,12 +7,14 @@ from pathlib import Path
 import setuptools
 import setuptools.command.build_ext
 from packaging.version import Version
+from setuptools.dist import Distribution
 
+from .._compat.typing import Literal
 from ..builder.builder import Builder
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_settings import read_settings
 
-__all__: list[str] = ["CMakeExtension"]
+__all__: list[str] = ["CMakeExtension", "cmake_extensions"]
 
 
 def __dir__() -> list[str]:
@@ -99,3 +101,20 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 
         builder.build(build_args=build_args)
         builder.install(extdir)
+
+
+def add_cmake_extension(dist: Distribution) -> None:
+    dist.cmdclass["build_ext"] = CMakeBuild
+
+
+def cmake_extensions(
+    dist: Distribution, attr: Literal["cmake_extensions"], value: list[CMakeExtension]
+) -> None:
+
+    assert attr == "cmake_extensions"
+    assert len(value) > 0
+
+    dist.has_ext_modules = lambda: True  # type: ignore[attr-defined]
+    dist.ext_modules = (dist.ext_modules or []) + value
+
+    add_cmake_extension(dist)
