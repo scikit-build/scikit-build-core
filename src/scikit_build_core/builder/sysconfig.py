@@ -22,11 +22,11 @@ def get_python_library() -> Path | None:
     masd = sysconfig.get_config_var("multiarchsubdir")
 
     try:
-        libdir_is_dir = libdir.is_dir()
+        libdir_is_dir = libdir and ldlibrary and libdir.is_dir()
     except PermissionError:
         return None
 
-    if libdir and ldlibrary and libdir_is_dir:
+    if libdir_is_dir:
         if multiarch:
             if masd:
                 if masd.startswith(os.sep):
