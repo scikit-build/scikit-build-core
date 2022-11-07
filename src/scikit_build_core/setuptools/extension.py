@@ -89,6 +89,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             defines=defines,
             name=dist.get_name(),
             version=dist.get_version(),
+            limited_abi=ext.py_limited_api,
         )
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level

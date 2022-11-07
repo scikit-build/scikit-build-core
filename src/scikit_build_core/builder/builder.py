@@ -58,6 +58,7 @@ class Builder:
         defines: Mapping[str, str],
         name: str | None = None,
         version: Version | None = None,
+        limited_abi: bool | None = None,
     ) -> None:
         cmake_defines = dict(defines)
         cmake_args: list[str] = []
@@ -111,7 +112,10 @@ class Builder:
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
-        if self.settings.py_abi_tag.endswith("-abi3"):
+        if limited_abi is None:
+            limited_abi = self.settings.py_abi_tag.endswith("-abi3")
+
+        if limited_abi:
             cache_config["SKBUILD_SOABI"] = (
                 "" if sys.platform.startswith("win") else "abi3"
             )
