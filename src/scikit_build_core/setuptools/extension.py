@@ -12,7 +12,7 @@ from setuptools.dist import Distribution
 from .._compat.typing import Literal
 from ..builder.builder import Builder
 from ..cmake import CMake, CMakeConfig
-from ..settings.skbuild_settings import read_settings
+from ..settings.skbuild_read_settings import read_settings
 
 __all__: list[str] = ["CMakeExtension", "cmake_extensions"]
 

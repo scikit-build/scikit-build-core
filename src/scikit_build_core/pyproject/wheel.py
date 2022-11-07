@@ -12,7 +12,7 @@ from .._compat import tomllib
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMakeConfig
-from ..settings.skbuild_settings import read_settings
+from ..settings.skbuild_read_settings import read_settings
 from .init import setup_logging
 
 __all__: list[str] = ["build_wheel"]

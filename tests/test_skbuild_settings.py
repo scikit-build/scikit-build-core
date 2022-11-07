@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import textwrap
 
-from scikit_build_core.settings.skbuild_settings import read_settings
+from scikit_build_core.settings.skbuild_read_settings import read_settings
 
 
 def test_skbuild_settings_default(tmp_path):

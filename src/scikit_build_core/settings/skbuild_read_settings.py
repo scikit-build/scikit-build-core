@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from .._compat import tomllib
-from .cmake_model import ScikitBuildSettings
+from .skbuild_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
 __all__ = ["read_settings"]
