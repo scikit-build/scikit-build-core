@@ -1,3 +1,4 @@
+import shutil
 import sys
 import tarfile
 import zipfile
@@ -31,9 +32,10 @@ Requires-Dist: pytest>=6.0; extra == "test"
 
 def test_pep517_sdist(tmp_path, monkeypatch):
 
-    dist = tmp_path / "dist"
-    dist.mkdir()
+    dist = tmp_path.resolve() / "dist"
     monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
@@ -63,6 +65,8 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out

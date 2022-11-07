@@ -50,6 +50,7 @@ def build_sdist(
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
 
     # TODO: support SOURCE_DATE_EPOCH for reproducible builds
+    sdist_dir.mkdir(parents=True, exist_ok=True)
     with tarfile.open(sdist_dir / filename, "w:gz", format=tarfile.PAX_FORMAT) as tar:
         for dirpath, _dirnames, filenames in os.walk("."):
             paths = (Path(dirpath) / fn for fn in filenames)
