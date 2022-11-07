@@ -10,7 +10,7 @@ import pathspec
 from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
-from ..settings.skbuild_settings import read_settings
+from ..settings.skbuild_read_settings import read_settings
 from .init import setup_logging
 
 __all__: list[str] = ["build_sdist"]

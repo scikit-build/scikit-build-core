@@ -17,7 +17,7 @@ from ..cmake import CMakeConfig
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_ninja_programs
 from ..resources import find_python
-from ..settings.cmake_model import ScikitBuildSettings
+from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__: list[str] = ["Builder"]
 

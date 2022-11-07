@@ -7,7 +7,7 @@ from pathlib import Path
 from packaging.version import Version
 
 from ..program_search import best_program, get_cmake_programs, get_ninja_programs
-from ..settings.skbuild_settings import read_settings
+from ..settings.skbuild_read_settings import read_settings
 
 __all__ = ["cmake_ninja_for_build_wheel"]
 
