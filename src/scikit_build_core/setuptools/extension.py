@@ -114,14 +114,15 @@ def cmake_extensions(
 
     # A rather hacky way to enable ABI3 without using non-public code in wheel
     settings = read_settings(Path("pyproject.toml"), {})
-    if settings.abi_tag.startswith("cp3"):
+    if settings.py_abi_tag:
         bdist_wheel = dist.get_command_class("bdist_wheel")  # type: ignore[no-untyped-call]
         if "abi3" not in bdist_wheel.__class__.__name__:
 
             class bdist_wheel_abi3(bdist_wheel):  # type: ignore[valid-type, misc]
                 def get_tag(self):
                     _, _, plat = bdist_wheel.get_tag(self)
-                    return settings.abi_tag, "abi3", plat
+                    py, abi = settings.py_abi_tag.split("-")
+                    return py, abi, plat
 
             dist.cmdclass["bdist_wheel"] = bdist_wheel_abi3
 

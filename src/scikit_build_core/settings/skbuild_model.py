@@ -34,10 +34,11 @@ class ScikitBuildSettings:
     ninja: NinjaSettings
     logging: LogggingSettings
 
-    #: The ABI version to target. The default (empty string) will use the default
-    #: ABI version for the Python version. You can also set this to "cp37" to
-    #: enable the CPython 3.7+ Stable ABI / Limited API. Or you can set it to
-    #: "py3" or "py2.py3" to ignore Python ABI compatibility. For the stable ABI,
-    #: the CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems
-    #: (empty on Windows).
-    abi_tag: str = ""
+    #: The Python and ABI tags. The default (empty string) will use the default
+    #: Python version. You can also set this to "cp37-abi3" to enable the CPython
+    #: 3.7+ Stable ABI / Limited API. Or you can set it to "py3-none" or
+    #: "py2.py3-none" to ignore Python ABI compatibility. For the stable ABI, the
+    #: CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems
+    #: (empty on Windows). FindPython doesn't have a way to target python3.dll instead
+    #: of python3N.dll, so this is harder to use on Windows.
+    py_abi_tag: str = ""

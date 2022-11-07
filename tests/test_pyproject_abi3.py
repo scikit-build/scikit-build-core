@@ -16,6 +16,10 @@ ABI_PKG = DIR / "packages/abi3_pyproject_ext"
 @pytest.mark.skipif(
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="abi3 is hard to target with FindPython on Windows",
+)
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()

@@ -96,14 +96,14 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9", "", ""))
 
-    tags = WheelTag.compute_best(["x86_64"], abi_tag="cp39")
+    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp39-abi3")
     assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], abi_tag="cp37")
+    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp37-abi3")
     assert str(tags) == "cp37-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], abi_tag="py3")
+    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="py3-none")
     assert str(tags) == "py3-none-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], abi_tag="py2.py3")
+    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="py2.py3-none")
     assert str(tags) == "py2.py3-none-macosx_10_10_x86_64"

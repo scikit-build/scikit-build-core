@@ -28,7 +28,7 @@ class WheelTag:
     # TODO: plats only used on macOS
     @classmethod
     def compute_best(
-        cls: type[Self], archs: Sequence[str] = (), abi_tag: str = ""
+        cls: type[Self], archs: Sequence[str] = (), py_abi_tag: str = ""
     ) -> Self:
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
@@ -47,12 +47,9 @@ class WheelTag:
             else:
                 plats = [next(packaging.tags.mac_platforms((major, minor)))]
 
-        if abi_tag:
-            abi = "none" if abi_tag.startswith("py") else "abi3"
-            pyvers = abi_tag.split(".")
-            assert all(
-                x.startswith("py") or x.startswith("cp") for x in pyvers
-            ), "All abi_tag's must start with 'py' or 'cp.', or be empty"
+        if py_abi_tag:
+            pyver, abi = py_abi_tag.split("-")
+            pyvers = pyver.split(".")
 
         return cls(pyvers=pyvers, abis=[abi], archs=plats)
 

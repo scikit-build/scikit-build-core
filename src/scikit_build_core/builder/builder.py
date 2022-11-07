@@ -111,7 +111,7 @@ class Builder:
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
-        if self.settings.abi_tag.startswith("cp"):
+        if self.settings.py_abi_tag.endswith("-abi3"):
             cache_config["SKBUILD_SOABI"] = (
                 "" if sys.platform.startswith("win") else "abi3"
             )
