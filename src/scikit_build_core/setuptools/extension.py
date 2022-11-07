@@ -35,7 +35,7 @@ PLAT_TO_CMAKE = {
 # The sourcedir is relative to the setup.py directory, where the CMakeLists.txt lives
 class CMakeExtension(setuptools.Extension):
     def __init__(self, name: str, sourcedir: str = "", **kwargs: object) -> None:
-        setuptools.Extension.__init__(self, name, sources=[], **kwargs)
+        super().__init__(name, [], **kwargs)
         self.sourcedir = Path(sourcedir).resolve()
 
 
@@ -47,6 +47,8 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
+
+        dist = self.distribution  # type: ignore[attr-defined]
 
         # This dir doesn't exist, so Path.cwd() is needed for Python < 3.10
         # due to a Windows bug in resolve https://github.com/python/cpython/issues/82852
@@ -83,7 +85,6 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             assert isinstance(value, str), "define_macros values must not be None"
             defines[key] = value
 
-        dist = self.distribution  # type: ignore[attr-defined]
         builder.configure(
             defines=defines,
             name=dist.get_name(),
@@ -103,21 +104,34 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         builder.install(extdir)
 
 
-def add_cmake_extension(dist: Distribution) -> None:
-    dist.cmdclass["build_ext"] = CMakeBuild
-
-
 def cmake_extensions(
     dist: Distribution, attr: Literal["cmake_extensions"], value: list[CMakeExtension]
 ) -> None:
+    settings = read_settings(Path("pyproject.toml"), {})
 
     assert attr == "cmake_extensions"
     assert len(value) > 0
 
+    # A rather hacky way to enable ABI3 without using non-public code in wheel
+    settings = read_settings(Path("pyproject.toml"), {})
+    if settings.abi_tag.startswith("cp3"):
+        bdist_wheel = dist.get_command_class("bdist_wheel")  # type: ignore[no-untyped-call]
+        if "abi3" not in bdist_wheel.__class__.__name__:
+
+            class bdist_wheel_abi3(bdist_wheel):  # type: ignore[valid-type, misc]
+                def get_tag(self):
+                    _, _, plat = bdist_wheel.get_tag(self)
+                    return settings.abi_tag, "abi3", plat
+
+            dist.cmdclass["bdist_wheel"] = bdist_wheel_abi3
+
+        for ext in value:
+            ext.py_limited_api = True
+
     dist.has_ext_modules = lambda: True  # type: ignore[attr-defined]
     dist.ext_modules = (dist.ext_modules or []) + value
 
-    add_cmake_extension(dist)
+    dist.cmdclass["build_ext"] = CMakeBuild
 
 
 def cmake_source_dir(

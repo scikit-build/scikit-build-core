@@ -19,7 +19,7 @@ def __dir__() -> list[str]:
 Self = TypeVar("Self", bound="WheelTag")
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class WheelTag:
     pyvers: list[str]
     abis: list[str]
@@ -27,9 +27,12 @@ class WheelTag:
 
     # TODO: plats only used on macOS
     @classmethod
-    def compute_best(cls: type[Self], archs: Sequence[str] = ()) -> Self:
+    def compute_best(
+        cls: type[Self], archs: Sequence[str] = (), abi_tag: str = ""
+    ) -> Self:
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
+        pyvers = [interp]
         if sys.platform.startswith("darwin"):
             major, minor = get_macosx_deployment_target_tuple()
             if archs == ["arm64"] and major < 11:
@@ -44,7 +47,14 @@ class WheelTag:
             else:
                 plats = [next(packaging.tags.mac_platforms((major, minor)))]
 
-        return cls(pyvers=[interp], abis=[abi], archs=plats)
+        if abi_tag:
+            abi = "none" if abi_tag.startswith("py") else "abi3"
+            pyvers = abi_tag.split(".")
+            assert all(
+                x.startswith("py") or x.startswith("cp") for x in pyvers
+            ), "All abi_tag's must start with 'py' or 'cp.', or be empty"
+
+        return cls(pyvers=pyvers, abis=[abi], archs=plats)
 
     @property
     def pyver(self) -> str:
@@ -67,3 +77,23 @@ class WheelTag:
             "abi": self.abis,
             "arch": self.archs,
         }
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--archs",
+        nargs="*",
+        default=[],
+        help="Specify one or more archs (macOS only currently)",
+    )
+    parser.add_argument(
+        "--abi",
+        default="",
+        help="Specify abi min version, like 'cp37'. Use 'py3' to be pythonless",
+    )
+    args = parser.parse_args()
+    tag = WheelTag.compute_best(args.archs, args.abi)
+    print(tag)  # noqa: T201
