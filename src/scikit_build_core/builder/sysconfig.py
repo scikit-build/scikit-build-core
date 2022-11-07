@@ -21,22 +21,21 @@ def get_python_library() -> Path | None:
     multiarch = sysconfig.get_config_var("MULTIARCH")
     masd = sysconfig.get_config_var("multiarchsubdir")
 
-    try:
-        libdir_is_dir = libdir and ldlibrary and libdir.is_dir()
-    except PermissionError:
-        return None
-
-    if libdir_is_dir:
-        if multiarch:
-            if masd:
+    if libdir and ldlibrary:
+        try:
+            libdir_is_dir = libdir.is_dir()
+        except PermissionError:
+            return None
+        if libdir_is_dir:
+            if multiarch and masd:
                 if masd.startswith(os.sep):
                     masd = masd[len(os.sep) :]
                 libdir_masd = libdir / masd
                 if libdir_masd.is_dir():
                     libdir = libdir_masd
-        libpath = Path(libdir) / ldlibrary
-        if libpath.is_file():
-            return libpath
+            libpath = libdir / ldlibrary
+            if libpath.is_file():
+                return libpath
 
     framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
     if framework_prefix and Path(framework_prefix).is_dir() and ldlibrary:
