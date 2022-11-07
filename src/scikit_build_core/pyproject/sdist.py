@@ -10,6 +10,8 @@ import pathspec
 from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
+from ..settings.skbuild_settings import read_settings
+from .init import setup_logging
 
 __all__: list[str] = ["build_sdist"]
 
@@ -23,6 +25,9 @@ def build_sdist(
     # pylint: disable-next=unused-argument
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
+    settings = read_settings(Path("pyproject.toml"), config_settings or {})
+    setup_logging(settings.logging.level)
+
     sdist_dir = Path(sdist_directory)
 
     with Path("pyproject.toml").open("rb") as f:

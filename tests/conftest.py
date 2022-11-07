@@ -50,6 +50,7 @@ def pep518_wheelhouse(tmpdir_factory):
             "pathspec",
             "pybind11",
             "pyproject-metadata",
+            "rich",
             "setuptools",
             "tomli",
             "typing-extensions",
