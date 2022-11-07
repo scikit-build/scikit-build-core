@@ -44,10 +44,16 @@ class Builder:
             ARCHFLAGS="-arch universal2" -> ["universal2"]
 
         Returns an empty list otherwise or if ARCHFLAGS is not set.
+
+        If the extra_tags setting is True, then the list of platforms is
+        expanded to include extra matching platforms (universal2 also produces
+        x86_64 and arm64).
         """
 
         if sys.platform.startswith("darwin"):
             archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
+            if self.settings.extra_tags and ["universal2"] == archs:
+                archs += ["x86_64", "arm64"]
             return archs
 
         return []
