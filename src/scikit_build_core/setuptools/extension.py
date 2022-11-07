@@ -118,3 +118,16 @@ def cmake_extensions(
     dist.ext_modules = (dist.ext_modules or []) + value
 
     add_cmake_extension(dist)
+
+
+def cmake_source_dir(
+    dist: Distribution, attr: Literal["cmake_source_dir"], value: str
+) -> None:
+    assert attr == "cmake_source_dir"
+    assert Path(value).is_dir()
+    assert dist.cmake_extensions is None, "Combining cmake_source_dir= and cmake_extensions= is not allowed"  # type: ignore[attr-defined]
+    name = dist.get_name().replace("-", "_")  # type: ignore[attr-defined]
+
+    extensions = [CMakeExtension(name, value)]
+    dist.cmake_extensions = extensions  # type: ignore[attr-defined]
+    cmake_extensions(dist, "cmake_extensions", extensions)

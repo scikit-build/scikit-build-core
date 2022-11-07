@@ -234,12 +234,10 @@ Experimental. Supports only a single module, may not support extra Python files.
 ```python
 from setuptools import setup
 
-from scikit_build_core.setuptools.extension import CMakeExtension
-
 setup(
     name="cmake_example",
     version="0.0.1",
-    cmake_extensions=[CMakeExtension("cmake_example")],
+    cmake_source_dir=".",
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
     python_requires=">=3.7",
@@ -269,3 +267,13 @@ target_compile_definitions(cmake_example
 
 install(TARGETS cmake_example DESTINATION .)
 ```
+
+This is built on top of CMakeExtenion, which looks like this:
+
+```
+from scikit_build_core.setuptoools.extension import CMakeExtension
+...
+cmake_extensions=[CMakeExtension("cmake_example")],
+```
+
+Which should eventually support multiple extensions.
