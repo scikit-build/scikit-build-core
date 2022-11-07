@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import platform
 
+from .._logging import logger
+
 __all__ = ["get_macosx_deployment_target", "get_macosx_deployment_target_tuple"]
 
 
@@ -30,15 +32,24 @@ def get_macosx_deployment_target_tuple() -> tuple[int, int]:
     target = os.environ.get("MACOSX_DEPLOYMENT_TARGET", None)
     plat_target = normalize_macos_version(platform.mac_ver()[0])
     if target is None:
+        logger.debug("MACOSX_DEPLOYMENT_TARGET not set, using {}", plat_target)
         return plat_target
 
     env_target = ".".join(target.split(".")[:2]) if "." in target else f"{target}.0"
     try:
         norm_env_target = normalize_macos_version(env_target)
     except ValueError:
+        msg = "MACOSX_DEPLOYMENT_TARGET not readable ({}), using {} instead"
+        logger.warning(msg, env_target, plat_target)
         return plat_target
 
-    return norm_env_target if norm_env_target > plat_target else plat_target
+    if norm_env_target < plat_target:
+        msg = "MACOSX_DEPLOYMENT_TARGET ({}) is less than that which Python was compiled with, {}, using that instead"
+        logger.warning(msg, env_target, plat_target)
+        return plat_target
+
+    logger.debug("MACOSX_DEPLOYMENT_TARGET is set to {}", env_target)
+    return norm_env_target
 
 
 def get_macosx_deployment_target() -> str:
