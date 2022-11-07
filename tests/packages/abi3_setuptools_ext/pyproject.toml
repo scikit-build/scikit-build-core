@@ -1,0 +1,6 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.setuptools.build_meta"
+
+[tool.scikit-build]
+py-abi-tag = "cp37-abi3"
