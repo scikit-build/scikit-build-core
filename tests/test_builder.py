@@ -14,7 +14,7 @@ from scikit_build_core.builder.sysconfig import (
     get_python_library,
 )
 from scikit_build_core.builder.wheel_tag import WheelTag
-from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, Tags
 
 
 @pytest.mark.parametrize(
@@ -100,7 +100,9 @@ def test_builder_macos_arch_extra(monkeypatch):
     tmpcfg = SimpleNamespace(env=os.environ.copy())
     tmpbuilder = typing.cast(
         Builder,
-        SimpleNamespace(config=tmpcfg, settings=ScikitBuildSettings(extra_tags=True)),
+        SimpleNamespace(
+            config=tmpcfg, settings=ScikitBuildSettings(tags=Tags(extra=True))
+        ),
     )
     assert Builder.get_archs(tmpbuilder) == ["universal2", "x86_64", "arm64"]
 
