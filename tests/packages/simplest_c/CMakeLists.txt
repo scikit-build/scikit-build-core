@@ -8,5 +8,3 @@ set(Python_SOABI ${SKBUILD_SOABI})
 Python_add_library(_module MODULE src/module.c WITH_SOABI)
 
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
-install(FILES src/simplest/__init__.py
-        DESTINATION ${SKBUILD_PROJECT_NAME})

@@ -15,13 +15,13 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist.mkdir()
     monkeypatch.chdir(SIMPLEST)
     out = build_wheel(str(dist))
-    (wheel,) = dist.glob("scikit_build_simplest-0.0.1-*.whl")
+    (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
     virtualenv.run(f"python -m pip install {wheel}")
 
     version = virtualenv.run(
-        'python -c "from scikit_build_simplest import square; print(square(2))"',
+        'python -c "from simplest import square; print(square(2))"',
         capture=True,
     )
     assert version.strip() == "4.0"
