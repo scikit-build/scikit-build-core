@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15...3.24)
-project("${SKBUILD_PROJECT_NAME}" LANGUAGES CXX VERSION "${SKBUILD_PROJECT_VERSION}")
+project(
+  "${SKBUILD_PROJECT_NAME}"
+  LANGUAGES CXX
+  VERSION "${SKBUILD_PROJECT_VERSION}")
 
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(cmake_example src/main.cpp)
