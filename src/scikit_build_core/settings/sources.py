@@ -82,7 +82,7 @@ class EnvSource:
 
     def has_item(self, *fields: str) -> EnvSource | None:
         name = self._get_name(*fields)
-        return self if name in self.env else None
+        return self if name in self.env and self.env[name] else None
 
     def get_item(self, *fields: str) -> str:
         name = self._get_name(*fields)
@@ -94,9 +94,14 @@ class EnvSource:
     def convert(cls, item: str, target: object) -> object:
         if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if target.__origin__ == list:
-                return [cls.convert(i, target.__args__[0]) for i in item.split(";")]
+                return [
+                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
+                ]
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
+        if target is bool:
+            result = item.strip().lower() not in {"0", "false", "off", "no", ""}
+            return result
         if callable(target):
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
@@ -135,10 +140,18 @@ class ConfSource:
     def convert(cls, item: str | list[str], target: object) -> object:
         # The hasattr is required for Python 3.7, though not quite sure why
         if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if isinstance(item, list):
-                return [cls.convert(i, target.__args__[0]) for i in item]
+            if target.__origin__ == list:
+                if isinstance(item, list):
+                    return [cls.convert(i, target.__args__[0]) for i in item]
+                return [
+                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
+                ]
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
+        assert not isinstance(item, list), "Can't convert list to non-list"
+        if target is bool:
+            result = item.strip().lower() not in {"0", "false", "off", "no", ""}
+            return result
         if callable(target):
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
@@ -227,6 +240,9 @@ class SourceChain:
 
             if field.default is not dataclasses.MISSING:
                 prep[field.name] = field.default
+                continue
+            if field.default_factory is not dataclasses.MISSING:
+                prep[field.name] = field.default_factory()
                 continue
 
             errors.append(ValueError(f"Missing value for {field.name!r}"))

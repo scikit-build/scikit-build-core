@@ -1,6 +1,8 @@
 import dataclasses
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
+
+import pytest
 
 from scikit_build_core.settings.sources import (
     ConfSource,
@@ -16,7 +18,7 @@ class SettingChecker:
     one: str
     two: int
     three: List[str]
-    four: List[int]
+    four: List[int] = dataclasses.field(default_factory=list)
     five: str = "empty"
     six: Path = Path("empty")
     seven: Union[int, None] = None
@@ -27,7 +29,6 @@ def test_empty(monkeypatch):
     monkeypatch.setenv("SKB_ONE", "one")
     monkeypatch.setenv("SKB_TWO", "2")
     monkeypatch.setenv("SKB_THREE", "three")
-    monkeypatch.setenv("SKB_FOUR", "4")
 
     sources = SourceChain(
         EnvSource("SKB"),
@@ -40,7 +41,7 @@ def test_empty(monkeypatch):
     assert settings.one == "one"
     assert settings.two == 2
     assert settings.three == ["three"]
-    assert settings.four == [4]
+    assert settings.four == []
     assert settings.five == "empty"
     assert settings.six == Path("empty")
     assert settings.seven is None
@@ -227,3 +228,99 @@ def test_toml_nested():
     assert settings.two.five == "empty"
     assert settings.two.six == Path("empty")
     assert settings.three == 3
+
+
+@dataclasses.dataclass
+class SettingBools:
+    false: bool = False
+    true: bool = True
+
+
+def test_env_var_bools_empty(monkeypatch):
+    monkeypatch.setenv("SKBUILD_FALSE", "")
+    monkeypatch.setenv("SKBUILD_TRUE", "")
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingBools)
+
+    assert not settings.false
+    assert settings.true
+
+
+@pytest.mark.parametrize(
+    "truthy, falsey", [("1", "0"), ("true", "false"), ("yes", "no"), ("on", "off")]
+)
+def test_env_var_bools(monkeypatch, truthy, falsey):
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+
+    monkeypatch.setenv("SKBUILD_FALSE", truthy)
+    monkeypatch.setenv("SKBUILD_TRUE", falsey)
+
+    settings = sources.convert_target(SettingBools)
+
+    assert settings.false
+    assert not settings.true
+
+
+@dataclasses.dataclass
+class SettingLists:
+    list0: List[str] = dataclasses.field(default_factory=list)
+    list1: List[str] = dataclasses.field(default_factory=list)
+    list2: List[str] = dataclasses.field(default_factory=list)
+    list3: List[str] = dataclasses.field(default_factory=list)
+    list4: List[str] = dataclasses.field(default_factory=list)
+
+
+def test_lists(monkeypatch):
+    monkeypatch.setenv("SKBUILD_LIST1", "one;two;three")
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={"list2": ["one", "two", "three"], "list3": "one;two;three"}
+        ),
+        TOMLSource(settings={"list4": ["one", "two", "three"]}),
+    )
+    settings = sources.convert_target(SettingLists)
+
+    assert settings.list0 == []
+    assert settings.list1 == ["one", "two", "three"]
+    assert settings.list2 == ["one", "two", "three"]
+    assert settings.list3 == ["one", "two", "three"]
+    assert settings.list4 == ["one", "two", "three"]
+
+
+@dataclasses.dataclass
+class SettingListsOptional:
+    list0: Optional[List[str]] = None
+    list1: Optional[List[str]] = None
+    list2: Optional[List[str]] = None
+    list3: Optional[List[str]] = None
+    list4: Optional[List[str]] = None
+
+
+def test_lists_optional(monkeypatch):
+    monkeypatch.setenv("SKBUILD_LIST1", "one;two;three")
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={"list2": ["one", "two", "three"], "list3": "one;two;three"}
+        ),
+        TOMLSource(settings={"list4": ["one", "two", "three"]}),
+    )
+    settings = sources.convert_target(SettingListsOptional)
+
+    assert settings.list0 is None
+    assert settings.list1 == ["one", "two", "three"]
+    assert settings.list2 == ["one", "two", "three"]
+    assert settings.list3 == ["one", "two", "three"]
+    assert settings.list4 == ["one", "two", "three"]
