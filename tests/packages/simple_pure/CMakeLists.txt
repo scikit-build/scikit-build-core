@@ -9,9 +9,9 @@ target_compile_features(simple_pure PUBLIC cxx_std_17)
 install(TARGETS simple_pure)
 
 if(DEFINED SKBUILD)
-    message(STATUS "SKBUILD is defined to ${SKBUILD}")
+  message(STATUS "SKBUILD is defined to ${SKBUILD}")
 endif()
 
 if(DEFINED SKBUILD2)
-    message(STATUS "SKBUILD2 is defined to ${SKBUILD2}")
+  message(STATUS "SKBUILD2 is defined to ${SKBUILD2}")
 endif()
