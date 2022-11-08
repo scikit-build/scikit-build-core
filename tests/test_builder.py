@@ -15,6 +15,7 @@ from scikit_build_core.builder.sysconfig import (
     get_python_library,
 )
 from scikit_build_core.builder.wheel_tag import WheelTag
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 
 @pytest.mark.parametrize(
@@ -61,7 +62,9 @@ def test_builder_macos_arch(monkeypatch, archs):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("ARCHFLAGS", archflags)
     tmpcfg = SimpleNamespace(env=os.environ.copy())
-    tmpbuilder = typing.cast(Builder, SimpleNamespace(config=tmpcfg))
+    tmpbuilder = typing.cast(
+        Builder, SimpleNamespace(config=tmpcfg, settings=ScikitBuildSettings())
+    )
     assert Builder.get_archs(tmpbuilder) == archs
 
 
@@ -89,6 +92,18 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
     tags = WheelTag.compute_best(archs)
     plat = str(tags).split("-")[-1]
     assert plat == answer
+
+
+def test_builder_macos_arch_extra(monkeypatch):
+    archflags = "-arch universal2"
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("ARCHFLAGS", archflags)
+    tmpcfg = SimpleNamespace(env=os.environ.copy())
+    tmpbuilder = typing.cast(
+        Builder,
+        SimpleNamespace(config=tmpcfg, settings=ScikitBuildSettings(extra_tags=True)),
+    )
+    assert Builder.get_archs(tmpbuilder) == ["universal2", "x86_64", "arm64"]
 
 
 def test_wheel_tag_with_abi_darwin(monkeypatch):

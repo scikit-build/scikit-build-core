@@ -113,6 +113,11 @@ def cmake_extensions(
     assert attr == "cmake_extensions"
     assert len(value) > 0
 
+    assert not settings.extra_tags, "extra_tags is not supported in setuptools mode yet"
+    assert (
+        settings.logging.level == "WARNING"
+    ), "Logging is not adjustable in setuptools mode yet"
+
     # A rather hacky way to enable ABI3 without using non-public code in wheel
     settings = read_settings(Path("pyproject.toml"), {})
     if settings.py_abi_tag:
