@@ -46,6 +46,7 @@ test = [
     "cattrs >=22.2.0",
     "cmake >=3.15",
     "distlib",
+    "hatchling",
     "ninja",
     "pathspec",
     "pybind11",
@@ -141,7 +142,7 @@ module = ["scikit-build-core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["distlib.*", "pathspec"]
+module = ["distlib.*", "pathspec", "hatchling.builders.hooks.plugin.interface"]
 ignore_missing_imports = true
 
 
