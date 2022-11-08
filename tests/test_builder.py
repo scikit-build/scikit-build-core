@@ -1,5 +1,4 @@
 import os
-import platform
 import pprint
 import sys
 import sysconfig
@@ -31,7 +30,7 @@ from scikit_build_core.builder.wheel_tag import WheelTag
     ],
 )
 def test_macos_version(monkeypatch, pycom, envvar, answer):
-    monkeypatch.setattr(platform, "mac_ver", lambda: (pycom,))
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: f"macosx-{pycom}-x86_64")
     if envvar is None:
         monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
     else:
@@ -84,7 +83,7 @@ def test_builder_macos_arch(monkeypatch, archs):
 def test_wheel_tag(monkeypatch, minver, archs, answer):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", minver)
-    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9", "", ""))
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "macosx-10.9-x86_64")
 
     tags = WheelTag.compute_best(archs)
     plat = str(tags).split("-")[-1]
@@ -94,7 +93,7 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
 def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
-    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9", "", ""))
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "macosx-10.9-x86_64")
 
     tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp39-abi3")
     assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
