@@ -50,6 +50,10 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 
         dist = self.distribution  # type: ignore[attr-defined]
 
+        limited_api = dist.get_command_obj("bdist_wheel").py_limited_api
+        if limited_api:
+            ext.py_limited_api = True
+
         # This dir doesn't exist, so Path.cwd() is needed for Python < 3.10
         # due to a Windows bug in resolve https://github.com/python/cpython/issues/82852
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)  # type: ignore[no-untyped-call]
@@ -117,23 +121,9 @@ def cmake_extensions(
     assert (
         settings.logging.level == "WARNING"
     ), "Logging is not adjustable in setuptools mode yet"
-
-    # A rather hacky way to enable ABI3 without using non-public code in wheel
-    settings = read_settings(Path("pyproject.toml"), {})
-    if settings.py_abi_tag:
-        bdist_wheel = dist.get_command_class("bdist_wheel")  # type: ignore[no-untyped-call]
-        if "abi3" not in bdist_wheel.__class__.__name__:
-
-            class bdist_wheel_abi3(bdist_wheel):  # type: ignore[valid-type, misc]
-                def get_tag(self):
-                    _, _, plat = bdist_wheel.get_tag(self)
-                    py, abi = settings.py_abi_tag.split("-")
-                    return py, abi, plat
-
-            dist.cmdclass["bdist_wheel"] = bdist_wheel_abi3
-
-        for ext in value:
-            ext.py_limited_api = True
+    assert (
+        not settings.py_abi_tag
+    ), "py_abi_tag is not supported in setuptools mode, use bdist_wheel options instead"
 
     dist.has_ext_modules = lambda: True  # type: ignore[attr-defined]
     dist.ext_modules = (dist.ext_modules or []) + value
