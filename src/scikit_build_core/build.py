@@ -46,6 +46,6 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
-    return ["distlib", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
+    return ["distlib", "pathspec", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
         config_settings
     )

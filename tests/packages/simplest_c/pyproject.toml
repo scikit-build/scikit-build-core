@@ -3,5 +3,5 @@ requires = ["scikit-build-core"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "scikit_build_simplest"
+name = "simplest"
 version = "0.0.1"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -9,10 +10,12 @@ from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
+from .._logging import logger
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_read_settings import read_settings
+from .file_processor import each_unignored_file
 from .init import setup_logging
 
 __all__: list[str] = ["build_wheel"]
@@ -84,6 +87,23 @@ def build_wheel(
         builder.build(build_args=build_args)
 
         builder.install(install_dir)
+
+        # Auto package discovery
+        name = metadata.name.replace("-", "_").replace(".", "_")
+        for base_path in (Path("src"), Path(".")):
+            path = base_path / name
+            if path.is_dir() and (
+                (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
+            ):
+                logger.info("Discovered Python package at {}", path)
+                for filepath in each_unignored_file(path):
+                    install_path = install_dir / filepath.relative_to(base_path)
+                    if not install_path.is_file():
+                        install_path.parent.mkdir(exist_ok=True, parents=True)
+                        shutil.copyfile(filepath, install_path)
+                break
+        else:
+            logger.debug("Didn't find a Python package for {}", name)
 
         dist_info = install_dir / Path(f"{wheel.name}-{wheel.version}.dist-info")
         dist_info.mkdir(exist_ok=False)
