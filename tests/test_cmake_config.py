@@ -28,9 +28,6 @@ def configure_args(
         cmake_init = config.build_dir / "CMakeInit.txt"
         yield f"-C{cmake_init}"
 
-    if not sys.platform.startswith("win32"):
-        yield "-GNinja"
-
     if config.prefix_dirs:
         yield "-DCMAKE_PREFIX_PATH={}".format(
             ";".join(str(p) for p in config.prefix_dirs)

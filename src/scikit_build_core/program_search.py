@@ -107,6 +107,17 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
         yield Program(ninja_path, version)
 
 
+def get_make_programs() -> Generator[Path, None, None]:
+    """
+    Get the path to make.
+    """
+    candidates = ("gmake", "make")
+    for candidate in candidates:
+        make_path = shutil.which(candidate)
+        if make_path is not None:
+            yield Path(make_path).resolve()
+
+
 def best_program(
     programs: Iterable[Program], *, minimum_version: Version | None
 ) -> Program | None:

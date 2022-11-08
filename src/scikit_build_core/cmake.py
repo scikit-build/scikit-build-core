@@ -64,6 +64,7 @@ class CMakeConfig:
     build_type: str = "Release"
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
+    single_config: bool = not sys.platform.startswith("win32")
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -105,11 +106,8 @@ class CMakeConfig:
         if self.init_cache_file.is_file():
             yield f"-C{self.init_cache_file}"
 
-        if not sys.platform.startswith("win32"):
-            logger.debug("Selecting Ninja; other generators currently unsupported")
-            yield "-GNinja"
-            if self.build_type:
-                yield f"-DCMAKE_BUILD_TYPE={self.build_type}"
+        if self.single_config and self.build_type:
+            yield f"-DCMAKE_BUILD_TYPE={self.build_type}"
 
         for key, value in settings.items():
             if isinstance(value, bool):
@@ -134,6 +132,12 @@ class CMakeConfig:
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
     ) -> None:
+        if "CMAKE_GENERATOR" in self.env:
+            self.single_config = self.env["CMAKE_GENERATOR"] in {
+                "Ninja",
+                "Unix Makefiles",
+            }
+
         _cmake_args = self._compute_cmake_args(defines or {})
 
         try:
@@ -149,7 +153,7 @@ class CMakeConfig:
     ) -> Generator[str, None, None]:
         for _ in range(verbose):
             yield "-v"
-        if sys.platform.startswith("win32"):
+        if not self.single_config:
             yield "--config"
             yield self.build_type
 

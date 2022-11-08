@@ -11,7 +11,7 @@ ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
 
 
 def which_mock(name: str) -> str | None:
-    if name in ("ninja", "ninja-build", "cmake3", "samu"):
+    if name in ("ninja", "ninja-build", "cmake3", "samu", "gmake", "make"):
         return None
     if name == "cmake":
         return "cmake/path"
