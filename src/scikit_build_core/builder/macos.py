@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-import platform
+import sysconfig
 
 from .._logging import logger
 
@@ -30,7 +30,8 @@ def get_macosx_deployment_target_tuple() -> tuple[int, int]:
     if it's set.
     """
     target = os.environ.get("MACOSX_DEPLOYMENT_TARGET", None)
-    plat_target = normalize_macos_version(platform.mac_ver()[0])
+    plat_ver_str = sysconfig.get_platform().rsplit("-", 1)[0].split("-", 1)[1]
+    plat_target = normalize_macos_version(plat_ver_str)
     if target is None:
         logger.debug("MACOSX_DEPLOYMENT_TARGET not set, using {}", plat_target)
         return plat_target
