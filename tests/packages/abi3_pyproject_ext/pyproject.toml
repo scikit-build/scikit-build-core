@@ -7,4 +7,4 @@ name = "abi3-example"
 version = "0.0.1"
 
 [tool.scikit-build]
-py-abi-tag = "cp37-abi3"
+tags.py-abi = "cp37-abi3"

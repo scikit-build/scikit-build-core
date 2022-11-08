@@ -71,7 +71,7 @@ def build_wheel(
             settings=settings,
             config=config,
         )
-        tags = WheelTag.compute_best(builder.get_archs(), settings.py_abi_tag)
+        tags = WheelTag.compute_best(builder.get_archs(), settings.tags.py_abi)
 
         defines: dict[str, str] = {}
         builder.configure(
