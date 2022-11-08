@@ -6,7 +6,12 @@ from pathlib import Path
 
 from packaging.version import Version
 
-from ..program_search import best_program, get_cmake_programs, get_ninja_programs
+from ..program_search import (
+    best_program,
+    get_cmake_programs,
+    get_make_programs,
+    get_ninja_programs,
+)
 from ..settings.skbuild_read_settings import read_settings
 
 __all__ = ["cmake_ninja_for_build_wheel"]
@@ -36,6 +41,7 @@ def cmake_ninja_for_build_wheel(
             get_ninja_programs(module=False), minimum_version=ninja_min
         )
         if ninja is None:
-            packages.append(f"ninja>={ninja_min}")
+            if not settings.ninja.make_fallback or not list(get_make_programs()):
+                packages.append(f"ninja>={ninja_min}")
 
     return packages

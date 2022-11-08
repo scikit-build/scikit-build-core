@@ -1,7 +1,13 @@
 import dataclasses
 from typing import List
 
-__all__ = ["ScikitBuildSettings", "NinjaSettings", "CMakeSettings"]
+__all__ = [
+    "ScikitBuildSettings",
+    "NinjaSettings",
+    "CMakeSettings",
+    "LoggingSettings",
+    "TagsSettings",
+]
 
 
 def __dir__() -> List[str]:
@@ -14,6 +20,9 @@ class NinjaSettings:
     #: be upgraded via PyPI if possible. An empty string will disable this check.
     minimum_version: str = "1.5"
 
+    #: If make is present, do not add ninja if missing.
+    make_fallback: bool = True
+
 
 @dataclasses.dataclass
 class CMakeSettings:
@@ -23,13 +32,13 @@ class CMakeSettings:
 
 
 @dataclasses.dataclass
-class LogggingSettings:
+class LoggingSettings:
     #: The logging level to display.
     level: str = "WARNING"
 
 
 @dataclasses.dataclass
-class Tags:
+class TagsSettings:
     #: The Python and ABI tags. The default (empty string) will use the default
     #: Python version. You can also set this to "cp37-abi3" to enable the CPython
     #: 3.7+ Stable ABI / Limited API. Or you can set it to "py3-none" or
@@ -49,5 +58,5 @@ class Tags:
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
-    logging: LogggingSettings = dataclasses.field(default_factory=LogggingSettings)
-    tags: Tags = dataclasses.field(default_factory=Tags)
+    logging: LoggingSettings = dataclasses.field(default_factory=LoggingSettings)
+    tags: TagsSettings = dataclasses.field(default_factory=TagsSettings)
