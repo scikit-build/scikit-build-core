@@ -35,25 +35,27 @@ This is very much a WIP, some missing features:
 - No hatchling plugin yet
 - The docs are not written
 - The logging system isn't ideal yet
-- Dedicated entrypoints still need to be designed
+- Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - C++17 is required for the test suite because it's more fun than C++11/14
 - No support for caching between builds
 - No editable mode support
 - No extra wheel directories (like headers) supported yet
 - Windows ARM support missing
-- No Limited API / Stable ABI support yet, or pythonless tags
 
 Features over classic Scikit-build:
 
 - Better warnings and errors
 - No warning about unused variables
 - Automatically adds Ninja and/or CMake only as required
-- Closer to vanilla setuptools in setuptools mode, doesn't interfere with config
-- Powerful config system
+- No dependency on setuptools, distutils, or wheel in build mode.
+- Closer to vanilla setuptools in setuptools mode, doesn't interfere with
+  config.
+- Powerful config system, including config options support in build mode.
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.24 (included via hatchling in
   a submodule)
+- Limited API / Stable ABI and pythonless tags supported via config option
 
 Currently, the recommended interface is the PEP 517 interface. There is also a
 setuptools-based interface that is being developed to provide a transition path
@@ -92,8 +94,6 @@ Python_add_library(_module MODULE src/module.c WITH_SOABI)
 set(Python_SOABI ${SKBUILD_SOABI})  # Required for PyPy support
 
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
-install(FILES src/simplest/__init__.py
-        DESTINATION ${SKBUILD_PROJECT_NAME})
 ```
 
 Scikit-build-core will backport FindPython from CMake 3.24 to older versions of
@@ -103,6 +103,40 @@ need to install everything you want into the full final path inside site-modules
 
 More examples are in the
 [tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
+
+## Configuration
+
+Warning: still being developed, some things may change.
+
+All configuration options can be placed in `pyproject.toml`, passed via `-C`
+options in `pip` or `build` (warning: pip doesn't support list options), or set
+as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
+`-C` options, or `SKBUILD_*` for environment variables. The defaults are listed
+below:
+
+```toml
+[tool.scikit-build]
+# The PEP 517 build hooks will add ninja and/or cmake if the versions on the
+# system are not at least these versions.
+ninja.minimum_version = "1.5"
+cmake.minimum_version = "3.15"
+
+# Display logs at or above this level.
+logging.level = "WARNING"
+
+# Setting the py_abi to "cp37-abi3" would build ABI3 wheels for Python 3.7+.
+# Setting the py_abi to "py3-none" would build wheels that don't depend on
+# Python (ctypes, etc).
+tags.py_abi = ""
+
+# Setting this to true will expand extra tags (universal2 will add Intel and
+# Apple Silicon tags, for pip <21.0.1 compatibility).
+tags.extra = false
+```
+
+Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
+used to set extra CMake args. `ARCHFLAGS` is used to specify macOS universal2 or
+cross-compiles, just like setuptools.
 
 ## Acknowledgements
 
