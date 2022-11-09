@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 
 import distlib.wheel
@@ -27,6 +28,65 @@ def __dir__() -> list[str]:
 
 class DistWheel(distlib.wheel.Wheel):  # type: ignore[misc]
     wheel_version = (1, 0)
+
+
+def _copy_python_packages_to_wheel(
+    *,
+    packages: Sequence[str] | None,
+    name: str,
+    install_dir: Path,
+    include: Sequence[str],
+    exclude: Sequence[str],
+) -> None:
+    if packages is None:
+        # Auto package discovery
+        packages = []
+        for base_path in (Path("src"), Path(".")):
+            path = base_path / name
+            if path.is_dir() and (
+                (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
+            ):
+                logger.info("Discovered Python package at {}", path)
+                packages += [str(path)]
+                break
+        else:
+            logger.debug("Didn't find a Python package for {}", name)
+
+    for package in packages:
+        source_package = Path(package)
+        base_path = source_package.parent
+        for filepath in each_unignored_file(
+            source_package,
+            include=include,
+            exclude=exclude,
+        ):
+            install_path = install_dir / filepath.relative_to(base_path)
+            if not install_path.is_file():
+                install_path.parent.mkdir(exist_ok=True, parents=True)
+                shutil.copyfile(filepath, install_path)
+
+
+def _write_wheel_metadata(
+    *,
+    install_dir: Path,
+    metadata: StandardMetadata,
+) -> None:
+    name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
+    version = str(metadata.version)
+    dist_info = install_dir / Path(f"{name}-{version}.dist-info")
+    dist_info.mkdir(exist_ok=False)
+    with dist_info.joinpath("METADATA").open("wb") as f:
+        f.write(bytes(metadata.as_rfc822()))
+    with dist_info.joinpath("entrypoints.txt").open("w", encoding="utf_8") as f:
+        ep = metadata.entrypoints.copy()
+        ep["console_scripts"] = metadata.scripts
+        ep["gui_scripts"] = metadata.gui_scripts
+        for group, entries in ep.items():
+            if entries:
+                f.write(f"[{group}]\n")
+                for name, target in entries.items():
+                    f.write(f"{name} = {target}\n")
+                f.write("\n")
 
 
 def build_wheel(
@@ -74,7 +134,6 @@ def build_wheel(
             settings=settings,
             config=config,
         )
-        tags = WheelTag.compute_best(builder.get_archs(), settings.tags.py_abi)
 
         defines: dict[str, str] = {}
         builder.configure(
@@ -88,52 +147,17 @@ def build_wheel(
 
         builder.install(install_dir)
 
-        if settings.wheel.packages is not None:
-            packages = settings.wheel.packages
-        else:
-            # Auto package discovery
-            packages = []
-            name = metadata.name.replace("-", "_").replace(".", "_")
-            for base_path in (Path("src"), Path(".")):
-                path = base_path / name
-                if path.is_dir() and (
-                    (path / "__init__.py").is_file()
-                    or (path / "__init__.pyi").is_file()
-                ):
-                    logger.info("Discovered Python package at {}", path)
-                    packages += [str(path)]
-                    break
-            else:
-                logger.debug("Didn't find a Python package for {}", name)
+        _copy_python_packages_to_wheel(
+            packages=settings.wheel.packages,
+            name=metadata.name.replace("-", "_").replace(".", "_"),
+            install_dir=install_dir,
+            include=settings.sdist.include,
+            exclude=settings.sdist.exclude,
+        )
 
-        for package in packages:
-            source_package = Path(package)
-            base_path = source_package.parent
-            for filepath in each_unignored_file(
-                source_package,
-                include=settings.sdist.include,
-                exclude=settings.sdist.exclude,
-            ):
-                install_path = install_dir / filepath.relative_to(base_path)
-                if not install_path.is_file():
-                    install_path.parent.mkdir(exist_ok=True, parents=True)
-                    shutil.copyfile(filepath, install_path)
+        _write_wheel_metadata(install_dir=install_dir, metadata=metadata)
 
-        dist_info = install_dir / Path(f"{wheel.name}-{wheel.version}.dist-info")
-        dist_info.mkdir(exist_ok=False)
-        with dist_info.joinpath("METADATA").open("wb") as f:
-            f.write(bytes(metadata.as_rfc822()))
-        with dist_info.joinpath("entrypoints.txt").open("w", encoding="utf_8") as f:
-            ep = metadata.entrypoints.copy()
-            ep["console_scripts"] = metadata.scripts
-            ep["gui_scripts"] = metadata.gui_scripts
-            for group, entries in ep.items():
-                if entries:
-                    f.write(f"[{group}]\n")
-                    for name, target in entries.items():
-                        f.write(f"{name} = {target}\n")
-                    f.write("\n")
-
+        tags = WheelTag.compute_best(builder.get_archs(), settings.tags.py_abi)
         wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
 
     wheel_filename: str = wheel.filename
