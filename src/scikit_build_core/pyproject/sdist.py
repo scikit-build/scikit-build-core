@@ -99,7 +99,11 @@ def build_sdist(
         for filepath in each_unignored_file(
             Path("."), include=settings.sdist.include, exclude=settings.sdist.exclude
         ):
-            tar.add(filepath, arcname=srcdirname / filepath, filter=normalize_tar_info if reproducible else lambda x: x)
+            tar.add(
+                filepath,
+                arcname=srcdirname / filepath,
+                filter=normalize_tar_info if reproducible else lambda x: x,
+            )
 
         tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
         tarinfo.size = len(pkg_info)
