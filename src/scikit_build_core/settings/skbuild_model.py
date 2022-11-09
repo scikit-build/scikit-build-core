@@ -64,6 +64,10 @@ class SDistSettings:
     #: Files to exclude from the SDist even if they are included by default.
     exclude: List[str] = dataclasses.field(default_factory=list)
 
+    #: If set to True, try to build a reproducible distribution.
+    #: SOURCE_DATE_EPOCH will be used for timestamps, or a fixed value if not set.
+    reproducible: bool = True
+
 
 @dataclasses.dataclass
 class WheelSettings:

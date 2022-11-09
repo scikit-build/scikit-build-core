@@ -1,6 +1,8 @@
+import hashlib
 import shutil
 import sys
 import tarfile
+import time
 import zipfile
 from pathlib import Path
 
@@ -28,6 +30,11 @@ Requires-Python: >=3.7
 Provides-Extra: test
 Requires-Dist: pytest>=6.0; extra == "test"
 """
+
+mark_hashes_different = pytest.mark.xfail(
+    sys.version_info < (3, 9) or sys.platform.startswith("win32"),
+    reason="hashes differ on Windows and Python < 3.9",
+)
 
 
 def test_pep517_sdist(tmp_path, monkeypatch):
@@ -57,6 +64,79 @@ def test_pep517_sdist(tmp_path, monkeypatch):
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
         assert pkg_info_contents == METADATA
+
+
+@mark_hashes_different
+def test_pep517_sdist_hash(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+    out = build_sdist(str(dist))
+    sdist = dist / out
+    hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+    assert hash == "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
+
+
+def test_pep517_sdist_time_hash(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist))
+    sdist = dist / out
+    hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    time.sleep(2)
+    Path("src/main.cpp").touch()
+
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist))
+    sdist = dist / out
+
+    hash2 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    assert hash1 == hash2
+
+
+def test_pep517_sdist_time_hash_nonreproducable(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist), {"scikit-build.sdist.reproducible": "false"})
+    sdist = dist / out
+    hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    time.sleep(2)
+
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist))
+    sdist = dist / out
+
+    hash2 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    assert hash1 != hash2
+
+
+@mark_hashes_different
+def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist), {"scikit-build-core.sdist.reproducible": "false"})
+    sdist = dist / out
+    hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+    assert hash == "a39a0eecb02f7b583ab3008c0c64c55eaef9d0bb5e712b6cb8d469598771ddfb"
 
 
 @pytest.mark.compile

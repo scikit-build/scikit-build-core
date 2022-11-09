@@ -140,6 +140,10 @@ tags.extra = false
 sdist.include = []
 sdist.exclude = []
 
+# Make reproducible SDists (at least with Python 3.9+ and UNIX). Respects
+# SOURCE_DATE_EPOCH when true (the default).
+sdist.reproducible = true
+
 # The root-level packages to include. Special default: if not given, the package
 # is auto-discovered if it's name matches the main name.
 wheel.packages = ["src/<package>", "<package>"]
