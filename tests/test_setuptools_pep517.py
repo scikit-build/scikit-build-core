@@ -32,6 +32,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     monkeypatch.chdir(HELLO_PEP518)
     if Path("dist").is_dir():
         shutil.rmtree("dist")
+
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()

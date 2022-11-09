@@ -1,6 +1,8 @@
+import hashlib
 import shutil
 import sys
 import tarfile
+import time
 import zipfile
 from pathlib import Path
 
@@ -10,6 +12,7 @@ from scikit_build_core.build import build_sdist, build_wheel
 
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
+KNOWN_SDIST_HASH = "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
 ENTRYPOINTS = """\
 [one.two]
 three = four
@@ -57,6 +60,43 @@ def test_pep517_sdist(tmp_path, monkeypatch):
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
         assert pkg_info_contents == METADATA
+
+
+@pytest.mark.xfail(
+    sys.version_info < (3, 9) or sys.platform.startswith("win32"),
+    reason="hashes are different on Python < 3.9 or Windows",
+)
+def test_pep517_sdist_hash(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+    out = build_sdist(str(dist))
+    sdist = dist / out
+    assert hashlib.sha256(sdist.read_bytes()).hexdigest() == KNOWN_SDIST_HASH
+
+
+def test_pep517_sdist_time_hash(tmp_path, monkeypatch):
+    dist = tmp_path.resolve() / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist))
+    sdist = dist / out
+    hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    time.sleep(2)
+
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_sdist(str(dist))
+    sdist = dist / out
+
+    hash2 = hashlib.sha256(sdist.read_bytes()).hexdigest()
+
+    assert hash1 == hash2
 
 
 @pytest.mark.compile
