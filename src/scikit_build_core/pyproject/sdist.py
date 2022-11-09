@@ -79,15 +79,8 @@ def build_sdist(
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
-    if settings.sdist.reproducible:
-        transform_tar_info = normalize_tar_info
-        timestamp = get_reproducible_epoch()
-    else:
-
-        def transform_tar_info(tar_info):
-            return tar_info
-
-        timestamp = int(time.time())
+    reproducible = settings.sdist.reproducible
+    timestamp = get_reproducible_epoch() if reproducible else int(time.time())
 
     metadata = StandardMetadata.from_pyproject(pyproject)
     pkg_info = bytes(metadata.as_rfc822())
@@ -106,7 +99,7 @@ def build_sdist(
         for filepath in each_unignored_file(
             Path("."), include=settings.sdist.include, exclude=settings.sdist.exclude
         ):
-            tar.add(filepath, arcname=srcdirname / filepath, filter=transform_tar_info)
+            tar.add(filepath, arcname=srcdirname / filepath, filter=normalize_tar_info if reproducible else lambda x: x)
 
         tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
         tarinfo.size = len(pkg_info)
