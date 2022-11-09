@@ -25,7 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
 ]
 
 dynamic = ["version"]
@@ -36,8 +36,18 @@ dependencies = [
     "tomli; python_version<'3.11'",
     "typing_extensions >=3.7; python_version<'3.8'",
 ]
+# Note: for building wheels and sdists, there are also
+# additional dependencies:
+# pyproject_metadata, distlib, and pathspec
+# And cmake and possibly ninja if those are not already present (user
+# controllable)
 
 [project.optional-dependencies]
+pyproject = [
+    "pyproject_metadata",
+    "distlib",
+    "pathspec",
+]
 color = [
     "rich",
 ]

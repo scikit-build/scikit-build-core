@@ -2,10 +2,9 @@
 
 ## Version 0.1.0a1
 
-This is a second experimental snapshot. Two key fixes include better Pyodide
-support and corrected macOS minimum version tags. The provisional setuptools
-extension is beginning to look more like scikit-build classic with initial
-custom keyword support.
+This release brings a lot of further development. This is starting to be used by
+downstream projects; it is a good idea to be a little careful with versions
+still, configuration may change.
 
 ## What's Changed
 
@@ -15,6 +14,10 @@ custom keyword support.
   https://github.com/scikit-build/scikit-build-core/pull/53
 - feat(pyproject): include/exclude by @henryiii in
   https://github.com/scikit-build/scikit-build-core/pull/59
+- feat(pyproject): Color status messages for wheel by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/60
+- feat(pyproject): support reproducible sdist builds by @agoose77 in
+  https://github.com/scikit-build/scikit-build-core/pull/64
 - feat: cmake_source_dir from scikit-build classic by @henryiii in
   https://github.com/scikit-build/scikit-build-core/pull/45
 - feat: extra_tags by @henryiii in
@@ -52,18 +55,16 @@ custom keyword support.
 - refactor: rename `cmake_settings` to `skbuild_settings` by @henryiii in
   https://github.com/scikit-build/scikit-build-core/pull/46
 
+* chore(pyproject): refactor wheel code a bit to read better by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/65
+
 - chore: better logging on macOS for deployment target by @henryiii in
   https://github.com/scikit-build/scikit-build-core/pull/48
 - chore: format cmake files by @henryiii in
   https://github.com/scikit-build/scikit-build-core/pull/54
 
-## New Contributors
-
-- @agoose77 made their first contribution in
-  https://github.com/scikit-build/scikit-build-core/pull/43
-
-**Full Changelog**:
-https://github.com/scikit-build/scikit-build-core/compare/v0.1.0.a0...v0.1.0a1
+* tests: reproducible by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/66
 
 ## Version 0.1.0a0
 

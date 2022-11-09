@@ -38,11 +38,12 @@ This is very much a WIP, some missing features:
 - No support for caching between builds
 - No editable mode support
 - No extra wheel directories (like headers) supported yet
+- Wheels are not fully reproducible yet
 - Windows ARM support missing
 
 Features over classic Scikit-build:
 
-- Better warnings and errors
+- Better warnings, errors, and logging
 - No warning about unused variables
 - Automatically adds Ninja and/or CMake only as required
 - No dependency on setuptools, distutils, or wheel in build mode.
@@ -55,6 +56,7 @@ Features over classic Scikit-build:
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
+- SDists are reproducible by default (UNIX, Python 3.9+)
 
 Currently, the recommended interface is the PEP 517 interface. There is also a
 setuptools-based interface that is being developed to provide a transition path
@@ -140,7 +142,7 @@ tags.extra = false
 sdist.include = []
 sdist.exclude = []
 
-# Make reproducible SDists (at least with Python 3.9+ and UNIX). Respects
+# Make reproducible SDists (Python 3.9+ and UNIX recommended). Respects
 # SOURCE_DATE_EPOCH when true (the default).
 sdist.reproducible = true
 
