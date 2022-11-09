@@ -11,7 +11,6 @@ import pytest
 
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
-KNOWN_SDIST_HASH = "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
 
 
 @pytest.mark.integration
@@ -35,8 +34,18 @@ def test_pep518_sdist(pep518, virtualenv):
     (sdist,) = dist.iterdir()
     assert "cmake-example-0.0.1.tar.gz" == sdist.name
 
-    if sys.version_info >= (3, 9) and not sys.platform.startswith("win32"):
-        assert hashlib.sha256(sdist.read_bytes()).hexdigest() == KNOWN_SDIST_HASH
+    if not sys.platform.startswith("win32"):
+        hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+        if sys.version_info < (3, 9):
+            assert (
+                hash
+                == "09b0593a80d0b0c086fddb99378e6dc75ba50e041076cd4a9a7afe4053407362"
+            )
+        else:
+            assert (
+                hash
+                == "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
+            )
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
