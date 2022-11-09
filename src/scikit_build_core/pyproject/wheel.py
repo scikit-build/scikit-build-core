@@ -109,7 +109,11 @@ def build_wheel(
         for package in packages:
             source_package = Path(package)
             base_path = source_package.parent
-            for filepath in each_unignored_file(source_package):
+            for filepath in each_unignored_file(
+                source_package,
+                include=settings.sdist.include,
+                exclude=settings.sdist.exclude,
+            ):
                 install_path = install_dir / filepath.relative_to(base_path)
                 if not install_path.is_file():
                     install_path.parent.mkdir(exist_ok=True, parents=True)
