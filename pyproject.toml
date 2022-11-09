@@ -137,7 +137,7 @@ strict_equality = true
 strict_concatenate = true
 
 [[tool.mypy.overrides]]
-module = ["scikit-build-core.*"]
+module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
