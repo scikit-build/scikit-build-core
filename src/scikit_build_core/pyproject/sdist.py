@@ -40,7 +40,7 @@ def normalize_file_permissions(st_mode: int) -> int:
     permissions can vary on systems with different umasks. Normalising
     to 644 (non executable) or 755 (executable) makes builds more reproducible.
 
-    Taken from https://github.com/takluyver/flit/blob/6a2a8c6462e49f584941c667b70a6f48a7b3f9ab/flit_core/flit_core/common.py#L257
+    Taken from https://github.com/pypa/flit/blob/6a2a8c6462e49f584941c667b70a6f48a7b3f9ab/flit_core/flit_core/common.py#L257
     """
     # Set 644 permissions, leaving higher bits of st_mode unchanged
     new_mode = (st_mode | 0o644) & ~0o133
