@@ -88,22 +88,32 @@ def build_wheel(
 
         builder.install(install_dir)
 
-        # Auto package discovery
-        name = metadata.name.replace("-", "_").replace(".", "_")
-        for base_path in (Path("src"), Path(".")):
-            path = base_path / name
-            if path.is_dir() and (
-                (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
-            ):
-                logger.info("Discovered Python package at {}", path)
-                for filepath in each_unignored_file(path):
-                    install_path = install_dir / filepath.relative_to(base_path)
-                    if not install_path.is_file():
-                        install_path.parent.mkdir(exist_ok=True, parents=True)
-                        shutil.copyfile(filepath, install_path)
-                break
+        if settings.wheel.packages is not None:
+            packages = settings.wheel.packages
         else:
-            logger.debug("Didn't find a Python package for {}", name)
+            # Auto package discovery
+            packages = []
+            name = metadata.name.replace("-", "_").replace(".", "_")
+            for base_path in (Path("src"), Path(".")):
+                path = base_path / name
+                if path.is_dir() and (
+                    (path / "__init__.py").is_file()
+                    or (path / "__init__.pyi").is_file()
+                ):
+                    logger.info("Discovered Python package at {}", path)
+                    packages += [str(path)]
+                    break
+            else:
+                logger.debug("Didn't find a Python package for {}", name)
+
+        for package in packages:
+            source_package = Path(package)
+            base_path = source_package.parent
+            for filepath in each_unignored_file(source_package):
+                install_path = install_dir / filepath.relative_to(base_path)
+                if not install_path.is_file():
+                    install_path.parent.mkdir(exist_ok=True, parents=True)
+                    shutil.copyfile(filepath, install_path)
 
         dist_info = install_dir / Path(f"{wheel.name}-{wheel.version}.dist-info")
         dist_info.mkdir(exist_ok=False)

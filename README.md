@@ -22,9 +22,6 @@ The following limitations are present compared to classic scikit-build:
 
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.7
-- Only the Ninja generator is supported on UNIX
-- Only the MSVC generator (currently not tied to the current Python) is
-  supported on Windows
 
 Some of these limitations might be adjusted over time, based on user
 requirements & effort / maintainability.
@@ -56,6 +53,8 @@ Features over classic Scikit-build:
 - FindPython is backported if running on CMake < 3.24 (included via hatchling in
   a submodule)
 - Limited API / Stable ABI and pythonless tags supported via config option
+- No slow generator search, ninja/make or MSVC used by default, respects
+  `CMAKE_GENERATOR`
 
 Currently, the recommended interface is the PEP 517 interface. There is also a
 setuptools-based interface that is being developed to provide a transition path
