@@ -189,3 +189,31 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
         capture=True,
     )
     assert add.strip() == "3"
+
+
+@pytest.mark.skip(reason="Doesn't work yet")
+@pytest.mark.compile
+@pytest.mark.configure
+def test_pep517_wheel_time_hash(tmp_path, monkeypatch):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    monkeypatch.chdir(HELLO_PEP518)
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+    out = build_wheel(str(dist))
+    wheel = dist / out
+    hash1 = hashlib.sha256(wheel.read_bytes()).hexdigest()
+
+    time.sleep(2)
+    Path("src/main.cpp").touch()
+
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    out = build_wheel(str(dist))
+    wheel = dist / out
+
+    hash2 = hashlib.sha256(wheel.read_bytes()).hexdigest()
+
+    assert hash1 == hash2
