@@ -121,7 +121,7 @@ def build_wheel(
         minimum_version=Version(settings.cmake.minimum_version)
     )
     rich_print(
-        f"[green]•••[/green] 🪚 [bold][green]scikit-build-core {__version__}[/green] using [blue]CMake {cmake.version}[/blue]"
+        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green] using [blue]CMake {cmake.version}[/blue]"
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -140,7 +140,7 @@ def build_wheel(
             config=config,
         )
 
-        rich_print("[green]•••[/green] ⚙️️ [bold]Configurating CMake...")
+        rich_print("[green]***[/green] [bold]Configurating CMake...")
         defines: dict[str, str] = {}
         builder.configure(
             defines=defines,
@@ -152,15 +152,15 @@ def build_wheel(
             "CMAKE_GENERATOR", "MSVC" if sys.platform.startswith("win32") else "Unknown"
         )
         rich_print(
-            f"[green]•••[/green] 🛠️ [bold]Building project with [blue]{generator}[/blue]..."
+            f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
         )
         build_args: list[str] = []
         builder.build(build_args=build_args)
 
-        rich_print("[green]•••[/green] 📦 [bold]Installing project into wheel...")
+        rich_print("[green]***[/green] [bold]Installing project into wheel...")
         builder.install(install_dir)
 
-        rich_print("[green]•••[/green] 🧀 [bold]Making wheel...")
+        rich_print("[green]***[/green] [bold]Making wheel...")
         _copy_python_packages_to_wheel(
             packages=settings.wheel.packages,
             name=metadata.name.replace("-", "_").replace(".", "_"),
