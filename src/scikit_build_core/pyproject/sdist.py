@@ -107,7 +107,8 @@ def build_sdist(
 
         tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
         tarinfo.size = len(pkg_info)
-        tarinfo = transform_tar_info(tarinfo)
+        if reproducible:
+            tarinfo = normalize_tar_info(tarinfo)
         with io.BytesIO(pkg_info) as fileobj:
             tar.addfile(tarinfo, fileobj)
 
