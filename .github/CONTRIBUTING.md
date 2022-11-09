@@ -68,6 +68,15 @@ Use pytest to run the unit checks:
 pytest
 ```
 
+## Quick local running
+
+You can use this to build and use this with an isolated environment:
+
+```bash
+pipx run build --wheel
+PIP_FIND_LINKS="dist" pipx run build --wheel tests/packages/simple_pyproject_ext -o dist
+```
+
 ## Building docs
 
 You can build the docs using:

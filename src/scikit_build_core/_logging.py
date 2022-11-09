@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import sys
+import typing
 from typing import Any
 
-__all__ = ["logger", "raw_logger", "ScikitBuildLogger"]
+__all__ = ["logger", "raw_logger", "ScikitBuildLogger", "rich_print"]
 
 
 def __dir__() -> list[str]:
@@ -71,3 +72,19 @@ class ScikitBuildLogger:
 
 
 logger = ScikitBuildLogger(raw_logger)
+
+
+try:
+    from rich import print as rich_print
+except ModuleNotFoundError:
+    if not typing.TYPE_CHECKING:
+        import re
+
+        def _strip_rich(msg: object) -> object:
+            if isinstance(msg, str):
+                return re.sub(r"\[.*?\]", "", msg)
+            return msg
+
+        def rich_print(*args: object, **kwargs: object) -> None:
+            args_2 = (_strip_rich(arg) for arg in args)
+            print(*args_2, **kwargs)  # noqa: T201
