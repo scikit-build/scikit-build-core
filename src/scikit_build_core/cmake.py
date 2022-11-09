@@ -169,6 +169,9 @@ class CMakeConfig:
             raise FailedLiveProcessError(msg) from None
 
     def install(self, prefix: Path) -> None:
+        opts: list[str] = []
+        if not self.single_config and self.build_type:
+            opts += ["--config", self.build_type]
         try:
             Run(env=self.env).live(
                 self.cmake,
@@ -176,6 +179,7 @@ class CMakeConfig:
                 self.build_dir,
                 "--prefix",
                 prefix,
+                *opts,
             )
         except subprocess.CalledProcessError:
             msg = "CMake install failed"
