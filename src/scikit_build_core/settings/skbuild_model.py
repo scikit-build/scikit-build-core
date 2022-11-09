@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List
+from typing import List, Optional
 
 __all__ = [
     "ScikitBuildSettings",
@@ -7,6 +7,8 @@ __all__ = [
     "CMakeSettings",
     "LoggingSettings",
     "TagsSettings",
+    "SDistSettings",
+    "WheelSettings",
 ]
 
 
@@ -55,8 +57,31 @@ class TagsSettings:
 
 
 @dataclasses.dataclass
+class SDistSettings:
+    #: Files to include in the SDist even if they are skipped by default.
+    include: List[str] = dataclasses.field(default_factory=list)
+
+    #: Files to exclude from the SDist even if they are included by default.
+    exclude: List[str] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
+class WheelSettings:
+    #: A list of packages to auto-copy into the wheel. If this is None, it will
+    #: default to the first of ``src/<package>`` or ``<package>`` if they exist.
+    #: The prefix(s) will be stripped from the package name inside the wheel.
+    packages: Optional[List[str]] = None
+
+    #: A list of auto-generated (ignored) files to include in the wheel. You can
+    #: also use CMake to install files.
+    artifacts: List[str] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
     logging: LoggingSettings = dataclasses.field(default_factory=LoggingSettings)
     tags: TagsSettings = dataclasses.field(default_factory=TagsSettings)
+    sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
+    wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
