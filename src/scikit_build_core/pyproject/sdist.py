@@ -108,10 +108,10 @@ def build_sdist(
         ):
             tar.add(filepath, arcname=srcdirname / filepath, filter=transform_tar_info)
 
-        tar_info = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
-        tar_info.size = len(pkg_info)
-        tar_info = transform_tar_info(tar_info)
+        tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
+        tarinfo.size = len(pkg_info)
+        tarinfo = transform_tar_info(tarinfo)
         with io.BytesIO(pkg_info) as fileobj:
-            tar.addfile(tar_info, fileobj)
+            tar.addfile(tarinfo, fileobj)
 
     return filename
