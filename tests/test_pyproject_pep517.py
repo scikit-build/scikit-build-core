@@ -32,8 +32,8 @@ Requires-Dist: pytest>=6.0; extra == "test"
 """
 
 mark_hashes_different = pytest.mark.xfail(
-    sys.version_info < (3, 9) or sys.platform.startswith("win32"),
-    reason="hashes differ on Windows and Python < 3.9",
+    sys.platform.startswith("win32"),
+    reason="hashes differ on Windows",
 )
 
 
@@ -75,7 +75,14 @@ def test_pep517_sdist_hash(tmp_path, monkeypatch):
     out = build_sdist(str(dist))
     sdist = dist / out
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
-    assert hash == "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
+    if sys.version_info < (3, 9):
+        assert (
+            hash == "09b0593a80d0b0c086fddb99378e6dc75ba50e041076cd4a9a7afe4053407362"
+        )
+    else:
+        assert (
+            hash == "03455cc6996c1d0d4977bedb611180cf561ade9d70d7b5d1216a40405adf7b47"
+        )
 
 
 def test_pep517_sdist_time_hash(tmp_path, monkeypatch):
@@ -136,7 +143,14 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch):
     out = build_sdist(str(dist), {"scikit-build-core.sdist.reproducible": "false"})
     sdist = dist / out
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
-    assert hash == "a39a0eecb02f7b583ab3008c0c64c55eaef9d0bb5e712b6cb8d469598771ddfb"
+    if sys.version_info < (3, 9):
+        assert (
+            hash == "7656ce7df4c1d6bbd098f046f75bb610104260542de5eeaf40993bb2976bf34e"
+        )
+    else:
+        assert (
+            hash == "a39a0eecb02f7b583ab3008c0c64c55eaef9d0bb5e712b6cb8d469598771ddfb"
+        )
 
 
 @pytest.mark.compile
