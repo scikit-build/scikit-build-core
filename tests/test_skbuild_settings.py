@@ -21,7 +21,6 @@ def test_skbuild_settings_default(tmp_path):
     assert not settings.tags.extra
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
-    assert settings.wheel.artifacts == []
     assert settings.wheel.packages is None
 
 
@@ -52,7 +51,6 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
-    assert settings.wheel.artifacts == ["g", "h", "i"]
     assert settings.wheel.packages == ["j", "k", "l"]
 
 
@@ -83,7 +81,6 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
-    assert settings.wheel.artifacts == ["g", "h", "i"]
     assert settings.wheel.packages == ["j", "k", "l"]
 
 
@@ -120,5 +117,4 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
-    assert settings.wheel.artifacts == ["g", "h", "i"]
     assert settings.wheel.packages == ["j", "k", "l"]

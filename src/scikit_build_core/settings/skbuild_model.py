@@ -72,10 +72,6 @@ class WheelSettings:
     #: The prefix(s) will be stripped from the package name inside the wheel.
     packages: Optional[List[str]] = None
 
-    #: A list of auto-generated (ignored) files to include in the wheel. You can
-    #: also use CMake to install files.
-    artifacts: List[str] = dataclasses.field(default_factory=list)
-
 
 @dataclasses.dataclass
 class ScikitBuildSettings:

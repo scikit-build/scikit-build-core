@@ -40,7 +40,9 @@ def build_sdist(
     # TODO: support SOURCE_DATE_EPOCH for reproducible builds
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with tarfile.open(sdist_dir / filename, "w:gz", format=tarfile.PAX_FORMAT) as tar:
-        for filepath in each_unignored_file(Path(".")):
+        for filepath in each_unignored_file(
+            Path("."), include=settings.sdist.include, exclude=settings.sdist.exclude
+        ):
             tar.add(filepath, arcname=srcdirname / filepath)
 
         tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
