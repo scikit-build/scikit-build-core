@@ -117,8 +117,11 @@ below:
 [tool.scikit-build]
 # The PEP 517 build hooks will add ninja and/or cmake if the versions on the
 # system are not at least these versions.
-ninja.minimum_version = "1.5"
-cmake.minimum_version = "3.15"
+cmake.minimum-version = "3.15"
+ninja.minimum-version = "1.5"
+
+# Fallback on gmake/make if available and ninja is missing (Unix)
+ninja.make-fallback = true
 
 # Display logs at or above this level.
 logging.level = "WARNING"
@@ -126,11 +129,20 @@ logging.level = "WARNING"
 # Setting the py_abi to "cp37-abi3" would build ABI3 wheels for Python 3.7+.
 # Setting the py_abi to "py3-none" would build wheels that don't depend on
 # Python (ctypes, etc).
-tags.py_abi = ""
+tags.py-abi = ""
 
 # Setting this to true will expand extra tags (universal2 will add Intel and
 # Apple Silicon tags, for pip <21.0.1 compatibility).
 tags.extra = false
+
+# Include and exclude patterns, in gitignore syntax. Include overrides exclude.
+# Wheels include packages included in the sdist; CMake has the final say.
+sdist.include = []
+sdist.exclude = []
+
+# The root-level packages to include. Special default: if not given, the package
+# is auto-discovered if it's name matches the main name.
+wheel.packages = ["src/<package>", "<package>"]
 ```
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
