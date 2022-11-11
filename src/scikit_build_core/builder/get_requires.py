@@ -12,7 +12,7 @@ from ..program_search import (
     get_make_programs,
     get_ninja_programs,
 )
-from ..settings.skbuild_read_settings import read_settings
+from ..settings.skbuild_read_settings import SettingsReader
 
 __all__ = ["cmake_ninja_for_build_wheel"]
 
@@ -27,7 +27,7 @@ def cmake_ninja_for_build_wheel(
     | None = None
 ) -> list[str]:
 
-    settings = read_settings(Path("pyproject.toml"), config_settings or {})
+    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
 
     packages = []
     cmake_min = Version(settings.cmake.minimum_version)

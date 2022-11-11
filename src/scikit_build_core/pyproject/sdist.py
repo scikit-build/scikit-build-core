@@ -11,7 +11,7 @@ from pathlib import Path
 from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
-from ..settings.skbuild_read_settings import read_settings
+from ..settings.skbuild_read_settings import SettingsReader
 from .file_processor import each_unignored_file
 from .init import setup_logging
 
@@ -70,8 +70,11 @@ def build_sdist(
     # pylint: disable-next=unused-argument
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    settings = read_settings(Path("pyproject.toml"), config_settings or {})
+    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
+    settings = settings_reader.settings
     setup_logging(settings.logging.level)
+
+    settings_reader.validate_may_exit()
 
     sdist_dir = Path(sdist_directory)
 

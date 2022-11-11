@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
@@ -66,6 +66,9 @@ class Source(Protocol):
     def convert(cls, item: Any, target: object) -> object:
         ...
 
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        ...
+
 
 class EnvSource:
     """
@@ -106,17 +109,45 @@ class EnvSource:
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
 
+    # pylint: disable-next=unused-argument
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        yield from ()
+
+
+def _unrecognized_dict(
+    settings: Mapping[str, Any], options: object, above: Sequence[str] = ()
+) -> Generator[str, None, None]:
+    for keystr in settings:
+        matches = [x for x in dataclasses.fields(options) if x.name == keystr]
+        if not matches:
+            yield ".".join((*above, keystr))
+            continue
+        (inner_option_field,) = matches
+        inner_option = inner_option_field.type
+        if dataclasses.is_dataclass(inner_option):
+            yield from _unrecognized_dict(
+                settings[keystr], inner_option, (*above, keystr)
+            )
+
 
 class ConfSource:
     """
     This is a source for the PEP 517 configuration settings.
     You should initialize it with a dict from PEP 517. a.b will be treated as
-    nested dicts.
+    nested dicts. "verify" is a boolean that determines whether unrecognized
+    options should be checked for. Only set this to false if this might be sharing
+    config options at the same level.
     """
 
-    def __init__(self, *prefixes: str, settings: Mapping[str, str | list[str]]):
+    def __init__(
+        self,
+        *prefixes: str,
+        settings: Mapping[str, str | list[str]],
+        verify: bool = True,
+    ):
         self.prefixes = prefixes
         self.settings = settings
+        self.verify = verify
 
     def _get_name(self, *fields: str) -> list[str]:
         names = [field.replace("_", "-") for field in fields]
@@ -156,6 +187,20 @@ class ConfSource:
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
 
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        if not self.verify:
+            return
+        for keystr in self.settings:
+            inner_option = options
+            keys = keystr.split(".")[len(self.prefixes) :]
+            for i, key in enumerate(keys):
+                matches = [x for x in dataclasses.fields(inner_option) if x.name == key]
+                if not matches:
+                    yield ".".join(list(self.prefixes) + keys[: i + 1])
+                    break
+                (inner_option_field,) = matches
+                inner_option = inner_option_field.type
+
 
 class TOMLSource:
     def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
@@ -191,6 +236,10 @@ class TOMLSource:
         if callable(target):
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        settings = _dig(self.settings, *self.prefixes)
+        yield from _unrecognized_dict(settings, options, self.prefixes)
 
 
 class SourceChain:
@@ -252,3 +301,7 @@ class SourceChain:
             raise ExceptionGroup(f"Failed converting {prefix_str}", errors)
 
         return target(**prep)
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        for source in self.sources:
+            yield from source.unrecognized_options(options)

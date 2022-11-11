@@ -17,7 +17,7 @@ from .._logging import logger, rich_print
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMakeConfig
-from ..settings.skbuild_read_settings import read_settings
+from ..settings.skbuild_read_settings import SettingsReader
 from .file_processor import each_unignored_file
 from .init import setup_logging
 
@@ -96,8 +96,11 @@ def build_wheel(
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
-    settings = read_settings(Path("pyproject.toml"), config_settings or {})
+    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
+    settings = settings_reader.settings
     setup_logging(settings.logging.level)
+
+    settings_reader.validate_may_exit()
 
     # We don't support preparing metadata yet
     assert metadata_directory is None
@@ -109,8 +112,6 @@ def build_wheel(
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
         raise AssertionError(msg)
-
-    settings = read_settings(Path("pyproject.toml"), config_settings or {})
 
     wheel = DistWheel()
     wheel.dirname = wheel_directory

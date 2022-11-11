@@ -324,3 +324,71 @@ def test_lists_optional(monkeypatch):
     assert settings.list2 == ["one", "two", "three"]
     assert settings.list3 == ["one", "two", "three"]
     assert settings.list4 == ["one", "two", "three"]
+
+
+@pytest.mark.parametrize(
+    "prefixes", [(), ("x",), ("ab", "cd"), ("x", "other")], ids=".".join
+)
+def test_missing_opts_conf(prefixes):
+    settings = {
+        "one": "one",
+        "missing": "missing",
+        "two.one": "one",
+        "two.missing": "missing",
+        "other.missing": "missing",
+    }
+
+    settings = {".".join([*prefixes, k]): v for k, v in settings.items()}
+    print(settings)
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(*prefixes, settings=settings),
+        TOMLSource(settings={}),
+    )
+    answer = ["missing", "two.missing", "other"]
+    answer = [".".join([*prefixes, k]) for k in answer]
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == answer
+
+
+def test_ignore_conf():
+    settings = {
+        "one": "one",
+        "missing": "missing",
+        "two.one": "one",
+        "two.missing": "missing",
+        "other.missing": "missing",
+    }
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings=settings, verify=False),
+        TOMLSource(settings={}),
+    )
+
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == []
+
+
+def test_missing_opts_toml():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(
+            "tool",
+            settings={
+                "tool": {
+                    "one": "one",
+                    "missing": "missing",
+                    "two": {"one": "one", "missing": "missing"},
+                    "other": {"missing": "missing"},
+                },
+                "things": {"thing": "x"},
+            },
+        ),
+    )
+
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == [
+        "tool.missing",
+        "tool.two.missing",
+        "tool.other",
+    ]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import textwrap
 
-from scikit_build_core.settings.skbuild_read_settings import read_settings
+from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
 def test_skbuild_settings_default(tmp_path):
@@ -11,7 +11,7 @@ def test_skbuild_settings_default(tmp_path):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = read_settings(pyproject_toml, config_settings)
+    settings = SettingsReader(pyproject_toml, config_settings).settings
 
     assert settings.cmake.minimum_version == "3.15"
     assert settings.ninja.minimum_version == "1.5"
@@ -22,6 +22,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
     assert settings.wheel.packages is None
+    assert not settings.strict_config
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
@@ -33,15 +34,15 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_TAGS_EXTRA", "True")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
-    monkeypatch.setenv("SKBUILD_WHEEL_ARTIFACTS", "g;h;i")
     monkeypatch.setenv("SKBUILD_WHEEL_PACKAGES", "j; k; l")
+    monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "1")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = read_settings(pyproject_toml, config_settings)
+    settings = SettingsReader(pyproject_toml, config_settings).settings
 
     assert settings.cmake.minimum_version == "3.16"
     assert settings.ninja.minimum_version == "1.1"
@@ -52,6 +53,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert settings.wheel.packages == ["j", "k", "l"]
+    assert settings.strict_config
 
 
 def test_skbuild_settings_config_settings(tmp_path):
@@ -67,11 +69,11 @@ def test_skbuild_settings_config_settings(tmp_path):
         "scikit-build.tags.extra": "True",
         "scikit-build.sdist.include": ["a", "b", "c"],
         "scikit-build.sdist.exclude": "d;e;f",
-        "scikit-build.wheel.artifacts": "g; h;i",
         "scikit-build.wheel.packages": ["j", "k", "l"],
+        "scikit-build.strict-config": "1",
     }
 
-    settings = read_settings(pyproject_toml, config_settings)
+    settings = SettingsReader(pyproject_toml, config_settings).settings
 
     assert settings.cmake.minimum_version == "3.17"
     assert settings.ninja.minimum_version == "1.2"
@@ -82,6 +84,7 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert settings.wheel.packages == ["j", "k", "l"]
+    assert settings.strict_config
 
 
 def test_skbuild_settings_pyproject_toml(tmp_path):
@@ -98,8 +101,8 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
             tags.extra = true
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
-            wheel.artifacts = ["g", "h", "i"]
             wheel.packages = ["j", "k", "l"]
+            strict-config = true
             """
         ),
         encoding="utf-8",
@@ -107,7 +110,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = read_settings(pyproject_toml, config_settings)
+    settings = SettingsReader(pyproject_toml, config_settings).settings
 
     assert settings.cmake.minimum_version == "3.18"
     assert settings.ninja.minimum_version == "1.3"
@@ -118,3 +121,4 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert settings.wheel.packages == ["j", "k", "l"]
+    assert settings.strict_config

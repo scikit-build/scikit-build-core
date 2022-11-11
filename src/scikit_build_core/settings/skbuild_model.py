@@ -85,3 +85,7 @@ class ScikitBuildSettings:
     tags: TagsSettings = dataclasses.field(default_factory=TagsSettings)
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
+
+    #: Strictly check all config options. If not specified, warnings will be
+    #: printed for unknown options.
+    strict_config: bool = False
