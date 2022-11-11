@@ -21,6 +21,7 @@ def test_skbuild_settings_default(tmp_path):
     assert not settings.tags.extra
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
+    assert settings.sdist.reproducible
     assert settings.wheel.packages is None
     assert not settings.strict_config
 
@@ -34,6 +35,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_TAGS_EXTRA", "True")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
+    monkeypatch.setenv("SKBUILD_SDIST_REPRODUCIBLE", "OFF")
     monkeypatch.setenv("SKBUILD_WHEEL_PACKAGES", "j; k; l")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "1")
 
@@ -52,6 +54,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
+    assert not settings.sdist.reproducible
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.strict_config
 
@@ -69,6 +72,7 @@ def test_skbuild_settings_config_settings(tmp_path):
         "scikit-build.tags.extra": "True",
         "scikit-build.sdist.include": ["a", "b", "c"],
         "scikit-build.sdist.exclude": "d;e;f",
+        "scikit-build.sdist.reproducible": "false",
         "scikit-build.wheel.packages": ["j", "k", "l"],
         "scikit-build.strict-config": "1",
     }
@@ -83,6 +87,7 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
+    assert not settings.sdist.reproducible
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.strict_config
 
@@ -101,6 +106,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
             tags.extra = true
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
+            sdist.reproducible = false
             wheel.packages = ["j", "k", "l"]
             strict-config = true
             """
@@ -120,5 +126,6 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
+    assert not settings.sdist.reproducible
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.strict_config
