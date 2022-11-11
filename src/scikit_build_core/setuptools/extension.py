@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
+import sysconfig
 from pathlib import Path
 
 import setuptools
@@ -11,6 +13,7 @@ from setuptools.dist import Distribution
 
 from .._compat.typing import Literal
 from ..builder.builder import Builder
+from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMakeConfig
 from ..settings.skbuild_read_settings import read_settings
 
@@ -79,6 +82,13 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             settings=settings,
             config=config,
         )
+
+        # Setuptools requires this be specified if there's a mismatch.
+        if sys.platform.startswith("darwin"):
+            arm_only = builder.get_archs() == ["arm64"]
+            orig_macos_str = sysconfig.get_platform().rsplit("-", 1)[0].split("-", 1)[1]
+            orig_macos = normalize_macos_version(orig_macos_str, arm_only)
+            config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
         builder.config.build_type = "Debug" if debug else "Release"

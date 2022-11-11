@@ -40,7 +40,7 @@ def test_macos_version(monkeypatch, pycom, envvar, answer):
     else:
         monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", envvar)
 
-    assert get_macosx_deployment_target(arm=False) == answer
+    assert str(get_macosx_deployment_target(arm=False)) == answer
 
 
 def test_get_python_include_dir():
@@ -113,7 +113,7 @@ def test_builder_macos_arch_extra(monkeypatch):
 def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
-    monkeypatch.setattr(sysconfig, "get_platform", lambda: "macosx-10.9-x86_64")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
     tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp39-abi3")
     assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"

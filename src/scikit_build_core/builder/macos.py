@@ -2,17 +2,26 @@ from __future__ import annotations
 
 import os
 import platform
+from typing import NamedTuple
 
 from .._logging import logger
 
-__all__ = ["get_macosx_deployment_target", "get_macosx_deployment_target_tuple"]
+__all__ = ["normalize_macos_version", "get_macosx_deployment_target", "MacOSVer"]
+
+
+class MacOSVer(NamedTuple):
+    major: int
+    minor: int
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}"
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-def normalize_macos_version(version: str, arm: bool) -> tuple[int, int]:
+def normalize_macos_version(version: str, arm: bool) -> MacOSVer:
     """
     Set minor version to 0 if major is 11+.
     """
@@ -21,10 +30,10 @@ def normalize_macos_version(version: str, arm: bool) -> tuple[int, int]:
     major, minor = (int(d) for d in version.split(".")[:2])
     major = max(major, 11) if arm else major
     minor = 0 if major >= 11 else minor
-    return major, minor
+    return MacOSVer(major, minor)
 
 
-def get_macosx_deployment_target_tuple(arm: bool) -> tuple[int, int]:
+def get_macosx_deployment_target(arm: bool) -> MacOSVer:
     """
     Get the MACOSX_DEPLOYMENT_TARGET environment variable. If not set, use the
     current macOS version. If arm=True, then this will always return at least (11, 0).
@@ -47,12 +56,3 @@ def get_macosx_deployment_target_tuple(arm: bool) -> tuple[int, int]:
 
     logger.debug("MACOSX_DEPLOYMENT_TARGET is set to {}", env_target)
     return norm_env_target
-
-
-def get_macosx_deployment_target(arm: bool) -> str:
-    """
-    Get the MACOSX_DEPLOYMENT_TARGET environment variable. If not set, use the
-    current macOS version. If arm=True, then this will always return at least 11.0.
-    Versions after 11 will be normalized to 0 for minor version.
-    """
-    return ".".join(str(d) for d in get_macosx_deployment_target_tuple(arm))
