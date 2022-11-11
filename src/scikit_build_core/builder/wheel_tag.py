@@ -34,11 +34,7 @@ class WheelTag:
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
         if sys.platform.startswith("darwin"):
-            major, minor = get_macosx_deployment_target_tuple()
-            if archs == ["arm64"] and major < 11:
-                major = 11
-            if major >= 11:
-                minor = 0
+            major, minor = get_macosx_deployment_target_tuple(archs == ["arm64"])
             if archs:
                 plats = [
                     next(packaging.tags.mac_platforms((major, minor), arch))

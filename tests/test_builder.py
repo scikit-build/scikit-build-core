@@ -1,4 +1,5 @@
 import os
+import platform
 import pprint
 import sys
 import sysconfig
@@ -17,27 +18,29 @@ from scikit_build_core.builder.wheel_tag import WheelTag
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, TagsSettings
 
 
+# The envvar_higher case shouldn't happen, but the compiler should cause the
+# correct failure
 @pytest.mark.parametrize(
     "pycom,envvar,answer",
     [
         pytest.param("12.5.2", None, "12.0", id="only_plat_round"),
         pytest.param("10.12.2", None, "10.12", id="only_plat_classic"),
-        pytest.param("11.2.2", "10.14", "11.0", id="env_var_lower"),
+        pytest.param("10.12.2", "10.11", "10.11", id="env_var_lower"),
         pytest.param("10.12.2", "10.13", "10.13", id="env_var_higher"),
         pytest.param("11.2.12", "11.2", "11.0", id="same_vars_round"),
-        pytest.param("10.13.2", "11", "11.0", id="env_var_no_dot"),
+        pytest.param("12.1.2", "11", "11.0", id="env_var_no_dot"),
         pytest.param("11.2.12", "random", "11.0", id="invalid_env_var"),
         pytest.param("11.2.12", "rand.om", "11.0", id="invalid_env_var_with_dot"),
     ],
 )
 def test_macos_version(monkeypatch, pycom, envvar, answer):
-    monkeypatch.setattr(sysconfig, "get_platform", lambda: f"macosx-{pycom}-x86_64")
+    monkeypatch.setattr(platform, "mac_ver", lambda: (pycom, "", ""))
     if envvar is None:
         monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
     else:
         monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", envvar)
 
-    assert get_macosx_deployment_target() == answer
+    assert get_macosx_deployment_target(arm=False) == answer
 
 
 def test_get_python_include_dir():
@@ -86,7 +89,7 @@ def test_builder_macos_arch(monkeypatch, archs):
 def test_wheel_tag(monkeypatch, minver, archs, answer):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", minver)
-    monkeypatch.setattr(sysconfig, "get_platform", lambda: "macosx-10.9-x86_64")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
     tags = WheelTag.compute_best(archs)
     plat = str(tags).split("-")[-1]
