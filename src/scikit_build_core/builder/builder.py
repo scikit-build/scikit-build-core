@@ -10,8 +10,6 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
-from .._logging import logger
-from ..builder.macos import get_macosx_deployment_target
 from ..builder.sysconfig import get_python_include_dir, get_python_library
 from ..cmake import CMakeConfig
 from ..errors import NinjaNotFoundError
@@ -156,14 +154,6 @@ class Builder:
             archs = self.get_archs()
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
-
-            self.config.env.setdefault(
-                "MACOSX_DEPLOYMENT_TARGET", get_macosx_deployment_target()
-            )
-            logger.info(
-                "MACOSX_DEPLOYMENT_TARGET is {}",
-                self.config.env["MACOSX_DEPLOYMENT_TARGET"],
-            )
 
         self.config.configure(
             defines=cmake_defines,
