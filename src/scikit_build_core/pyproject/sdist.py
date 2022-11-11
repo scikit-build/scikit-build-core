@@ -6,7 +6,6 @@ import gzip
 import io
 import os
 import tarfile
-import time
 from pathlib import Path
 
 from pyproject_metadata import StandardMetadata
@@ -80,7 +79,7 @@ def build_sdist(
         pyproject = tomllib.load(f)
 
     reproducible = settings.sdist.reproducible
-    timestamp = get_reproducible_epoch() if reproducible else int(time.time())
+    timestamp = get_reproducible_epoch() if reproducible else None
 
     metadata = StandardMetadata.from_pyproject(pyproject)
     pkg_info = bytes(metadata.as_rfc822())
