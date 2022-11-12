@@ -17,7 +17,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
+def _dig_strict(dict_: Mapping[str, Any], *names: str) -> Any:
     for name in names:
         dict_ = dict_[name]
     return dict_
@@ -225,7 +225,7 @@ class TOMLSource:
     def has_item(self, *fields: str) -> TOMLSource | None:
         names = self._get_name(*fields)
         try:
-            _dig(self.settings, *names)
+            _dig_strict(self.settings, *names)
             return self
         except KeyError:
             return None
@@ -233,7 +233,7 @@ class TOMLSource:
     def get_item(self, *fields: str) -> Any:
         names = self._get_name(*fields)
         try:
-            return _dig(self.settings, *names)
+            return _dig_strict(self.settings, *names)
         except KeyError:
             raise KeyError(f"{names!r} not found in configuration settings") from None
 
