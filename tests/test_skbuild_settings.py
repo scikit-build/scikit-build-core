@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
@@ -11,7 +13,9 @@ def test_skbuild_settings_default(tmp_path):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = SettingsReader(pyproject_toml, config_settings).settings
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings = settings_reader.settings
+    assert list(settings_reader.unrecognized_options()) == []
 
     assert settings.cmake.minimum_version == "3.15"
     assert settings.ninja.minimum_version == "1.5"
@@ -44,7 +48,9 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = SettingsReader(pyproject_toml, config_settings).settings
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings = settings_reader.settings
+    assert list(settings_reader.unrecognized_options()) == []
 
     assert settings.cmake.minimum_version == "3.16"
     assert settings.ninja.minimum_version == "1.1"
@@ -77,7 +83,9 @@ def test_skbuild_settings_config_settings(tmp_path):
         "scikit-build.strict-config": "false",
     }
 
-    settings = SettingsReader(pyproject_toml, config_settings).settings
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings = settings_reader.settings
+    assert list(settings_reader.unrecognized_options()) == []
 
     assert settings.cmake.minimum_version == "3.17"
     assert settings.ninja.minimum_version == "1.2"
@@ -116,7 +124,9 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings = SettingsReader(pyproject_toml, config_settings).settings
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings = settings_reader.settings
+    assert list(settings_reader.unrecognized_options()) == []
 
     assert settings.cmake.minimum_version == "3.18"
     assert settings.ninja.minimum_version == "1.3"
@@ -129,3 +139,51 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert not settings.sdist.reproducible
     assert settings.wheel.packages == ["j", "k", "l"]
     assert not settings.strict_config
+
+
+def test_skbuild_settings_pyproject_toml_broken(tmp_path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.minimum-verison = "3.18"
+            ninja.minimum-version = "1.3"
+            ninja.make-fallback = false
+            logger.level = "ERROR"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_settings: dict[str, list[str] | str] = {}
+
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    assert list(settings_reader.unrecognized_options()) == [
+        "tool.scikit-build.cmake.minimum-verison",
+        "tool.scikit-build.logger",
+    ]
+
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+
+
+def test_skbuild_settings_pyproject_conf_broken(tmp_path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    config_settings: dict[str, str | list[str]] = {
+        "scikit-build.cmake.minimum-verison": "3.17",
+        "scikit-build.ninja.minimum-version": "1.2",
+        "scikit-build.ninja.make-fallback": "False",
+        "scikit-build.logger.level": "INFO",
+    }
+
+    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    assert list(settings_reader.unrecognized_options()) == [
+        "scikit-build.cmake.minimum-verison",
+        "scikit-build.logger",
+    ]
+
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()

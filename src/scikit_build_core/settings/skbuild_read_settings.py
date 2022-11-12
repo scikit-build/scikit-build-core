@@ -5,7 +5,7 @@ from collections.abc import Generator, Mapping
 from pathlib import Path
 
 from .._compat import tomllib
-from .._logging import logger
+from .._logging import logger, rich_print
 from .skbuild_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
@@ -26,12 +26,10 @@ class SettingsReader:
         with pyproject_toml.open("rb") as f:
             pyproject = tomllib.load(f)
 
-        cmake_section = pyproject.get("tool", {}).get("scikit-build", {})
-
         self.sources = SourceChain(
             EnvSource("SKBUILD"),
             ConfSource("scikit-build", settings=config_settings, verify=verify_conf),
-            TOMLSource(settings=cmake_section),
+            TOMLSource("tool", "scikit-build", settings=pyproject),
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
 
@@ -43,6 +41,10 @@ class SettingsReader:
         if unrecognized:
             if self.settings.strict_config:
                 sys.stdout.flush()
-                logger.error("Unrecognized options:\n\n  {}", "\n  ".join(unrecognized))
+                rich_print(
+                    "[red][bold]ERROR:[/bold] Unrecognized options:", file=sys.stderr
+                )
+                for option in unrecognized:
+                    rich_print(f"  [red]{option}", file=sys.stderr)
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))

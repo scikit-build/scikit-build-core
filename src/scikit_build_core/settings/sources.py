@@ -23,6 +23,12 @@ def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
     return dict_
 
 
+def _dig_not_strict(dict_: Mapping[str, Any], *names: str) -> Any:
+    for name in names:
+        dict_ = dict_.get(name, {})
+    return dict_
+
+
 @runtime_checkable
 class TypeLike(Protocol):
     @property
@@ -115,10 +121,12 @@ class EnvSource:
 
 
 def _unrecognized_dict(
-    settings: Mapping[str, Any], options: object, above: Sequence[str] = ()
+    settings: Mapping[str, Any], options: object, above: Sequence[str]
 ) -> Generator[str, None, None]:
     for keystr in settings:
-        matches = [x for x in dataclasses.fields(options) if x.name == keystr]
+        matches = [
+            x for x in dataclasses.fields(options) if x.name.replace("_", "-") == keystr
+        ]
         if not matches:
             yield ".".join((*above, keystr))
             continue
@@ -194,7 +202,11 @@ class ConfSource:
             inner_option = options
             keys = keystr.split(".")[len(self.prefixes) :]
             for i, key in enumerate(keys):
-                matches = [x for x in dataclasses.fields(inner_option) if x.name == key]
+                matches = [
+                    x
+                    for x in dataclasses.fields(inner_option)
+                    if x.name.replace("_", "-") == key
+                ]
                 if not matches:
                     yield ".".join(list(self.prefixes) + keys[: i + 1])
                     break
@@ -205,11 +217,10 @@ class ConfSource:
 class TOMLSource:
     def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
         self.prefixes = prefixes
-        self.settings = settings
+        self.settings = _dig_not_strict(settings, *prefixes)
 
     def _get_name(self, *fields: str) -> list[str]:
-        names = [field.replace("_", "-") for field in fields]
-        return [*self.prefixes, *names]
+        return [field.replace("_", "-") for field in fields]
 
     def has_item(self, *fields: str) -> TOMLSource | None:
         names = self._get_name(*fields)
@@ -238,8 +249,7 @@ class TOMLSource:
         raise AssertionError(f"Can't convert target {target}")
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
-        settings = _dig(self.settings, *self.prefixes)
-        yield from _unrecognized_dict(settings, options, self.prefixes)
+        yield from _unrecognized_dict(self.settings, options, self.prefixes)
 
 
 class SourceChain:
