@@ -22,6 +22,7 @@ class SettingChecker:
     five: str = "empty"
     six: Path = Path("empty")
     seven: Union[int, None] = None
+    eight: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 def test_empty(monkeypatch):
@@ -45,6 +46,7 @@ def test_empty(monkeypatch):
     assert settings.five == "empty"
     assert settings.six == Path("empty")
     assert settings.seven is None
+    assert settings.eight == {}
 
 
 def test_env(monkeypatch):
@@ -56,6 +58,8 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_FIVE", "five")
     monkeypatch.setenv("SKBUILD_SIX", "six")
     monkeypatch.setenv("SKBUILD_SEVEN", "7")
+    monkeypatch.setenv("SKBUILD_EIGHT_thing", "8")
+    monkeypatch.setenv("SKBUILD_EIGHT_thought", "9")
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
@@ -72,6 +76,7 @@ def test_env(monkeypatch):
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"thing": "8", "thought": "9"}
 
 
 def test_conf():
@@ -84,6 +89,8 @@ def test_conf():
         "five": "five",
         "six": "six",
         "seven": "7",
+        "eight.foo": "one",
+        "eight.bar": "two",
     }
 
     sources = SourceChain(
@@ -101,6 +108,7 @@ def test_conf():
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"foo": "one", "bar": "two"}
 
 
 def test_toml():
@@ -113,6 +121,7 @@ def test_toml():
         "five": "five",
         "six": "six",
         "seven": 7,
+        "eight": {"one": "one", "two": "two"},
     }
 
     sources = SourceChain(
@@ -130,6 +139,7 @@ def test_toml():
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"one": "one", "two": "two"}
 
 
 @dataclasses.dataclass

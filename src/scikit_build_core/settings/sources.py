@@ -56,7 +56,7 @@ def _process_union(target: TypeLike) -> Any:
 
 
 class Source(Protocol):
-    def has_item(self, *fields: str) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> Source | None:
         """
         Check if the source contains a chain of fields. For example, feilds =
         [Field(name="a"), Field(name="b")] will check if the source contains the
@@ -65,7 +65,7 @@ class Source(Protocol):
         """
         ...
 
-    def get_item(self, *fields: str) -> Any:
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         ...
 
     @classmethod
@@ -89,11 +89,26 @@ class EnvSource:
         names = [field.upper() for field in fields]
         return "_".join([self.prefix, *names] if self.prefix else names)
 
-    def has_item(self, *fields: str) -> EnvSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> EnvSource | None:
+        if is_dict:
+            name = self._get_name(*fields)
+            return self if any(k.startswith(f"{name}_") for k in self.env) else None
+
         name = self._get_name(*fields)
         return self if name in self.env and self.env[name] else None
 
-    def get_item(self, *fields: str) -> str:
+    def get_item(self, *fields: str, is_dict: bool) -> str | dict[str, str]:
+        if is_dict:
+            name = self._get_name(*fields)
+            d = {
+                k[len(name) + 1 :]: v
+                for k, v in self.env.items()
+                if k.startswith(f"{name}_")
+            }
+            if d:
+                return d
+            raise KeyError(f"Dict items {name}_* not found in environment")
+
         name = self._get_name(*fields)
         if name in self.env:
             return self.env[name]
@@ -106,6 +121,8 @@ class EnvSource:
                 return [
                     cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
                 ]
+            if target.__origin__ == dict:
+                return item
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
         if target is bool:
@@ -161,15 +178,29 @@ class ConfSource:
         names = [field.replace("_", "-") for field in fields]
         return [*self.prefixes, *names]
 
-    def has_item(self, *fields: str) -> ConfSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> ConfSource | None:
         names = self._get_name(*fields)
         name = ".".join(names)
+
+        if is_dict:
+            return (
+                self if any(k.startswith(f"{name}.") for k in self.settings) else None
+            )
 
         return self if name in self.settings else None
 
-    def get_item(self, *fields: str) -> str | list[str]:
+    def get_item(self, *fields: str, is_dict: bool) -> str | list[str] | dict[str, str]:
         names = self._get_name(*fields)
         name = ".".join(names)
+        if is_dict:
+            d = {
+                k[len(name) + 1 :]: str(v)
+                for k, v in self.settings.items()
+                if k.startswith(f"{name}.")
+            }
+            if d:
+                return d
+            raise KeyError(f"Dict items {name}.* not found in settings")
         if name in self.settings:
             return self.settings[name]
 
@@ -185,6 +216,8 @@ class ConfSource:
                 return [
                     cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
                 ]
+            if target.__origin__ == dict:
+                return item
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
         assert not isinstance(item, list), "Can't convert list to non-list"
@@ -222,7 +255,8 @@ class TOMLSource:
     def _get_name(self, *fields: str) -> list[str]:
         return [field.replace("_", "-") for field in fields]
 
-    def has_item(self, *fields: str) -> TOMLSource | None:
+    # pylint: disable-next=unused-argument
+    def has_item(self, *fields: str, is_dict: bool) -> TOMLSource | None:
         names = self._get_name(*fields)
         try:
             _dig_strict(self.settings, *names)
@@ -230,7 +264,8 @@ class TOMLSource:
         except KeyError:
             return None
 
-    def get_item(self, *fields: str) -> Any:
+    # pylint: disable-next=unused-argument
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         names = self._get_name(*fields)
         try:
             return _dig_strict(self.settings, *names)
@@ -242,6 +277,13 @@ class TOMLSource:
         if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if target.__origin__ == list:
                 return [cls.convert(it, target.__args__[0]) for it in item]
+            if target.__origin__ == dict:
+                return {
+                    cls.convert(k, target.__args__[0]): cls.convert(
+                        v, target.__args__[1]
+                    )
+                    for k, v in item.items()
+                }
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
         if callable(target):
@@ -256,17 +298,17 @@ class SourceChain:
     def __init__(self, *sources: Source):
         self.sources = sources
 
-    def has_item(self, *fields: str) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> Source | None:
         for source in self.sources:
-            check = source.has_item(*fields)
+            check = source.has_item(*fields, is_dict=is_dict)
             if check is not None:
                 return check
         return None
 
-    def get_item(self, *fields: str) -> Any:
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         for source in self.sources:
-            if source.has_item(*fields):
-                return source.get_item(*fields)
+            if source.has_item(*fields, is_dict=is_dict) is not None:
+                return source.get_item(*fields, is_dict=is_dict)
         raise KeyError(f"{fields!r} not found in any source")
 
     @classmethod
@@ -288,9 +330,15 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            local_source = self.has_item(*prefixes, field.name)
+            is_dict = (
+                isinstance(field.type, TypeLike)
+                and hasattr(field.type, "__origin__")
+                and field.type.__origin__ == dict
+            )
+
+            local_source = self.has_item(*prefixes, field.name, is_dict=is_dict)
             if local_source is not None:
-                simple = local_source.get_item(*prefixes, field.name)
+                simple = local_source.get_item(*prefixes, field.name, is_dict=is_dict)
                 try:
                     prep[field.name] = local_source.convert(simple, field.type)
                 except Exception as e:
