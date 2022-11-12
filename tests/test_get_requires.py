@@ -36,7 +36,7 @@ def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
-    config = {"scikit-build.cmake.minimum-version": "3.20"}
+    config = {"cmake.minimum-version": "3.20"}
     assert cmake_ninja_for_build_wheel(config) == [
         "cmake>=3.20",
         *ninja,

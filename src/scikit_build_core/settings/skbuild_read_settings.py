@@ -28,7 +28,7 @@ class SettingsReader:
 
         self.sources = SourceChain(
             EnvSource("SKBUILD"),
-            ConfSource("scikit-build", settings=config_settings, verify=verify_conf),
+            ConfSource(settings=config_settings, verify=verify_conf),
             TOMLSource("tool", "scikit-build", settings=pyproject),
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)

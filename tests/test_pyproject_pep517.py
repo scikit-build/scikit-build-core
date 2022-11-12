@@ -115,7 +115,7 @@ def test_pep517_sdist_time_hash_nonreproducable(tmp_path, monkeypatch):
     if Path("dist").is_dir():
         shutil.rmtree("dist")
 
-    out = build_sdist(str(dist), {"scikit-build.sdist.reproducible": "false"})
+    out = build_sdist(str(dist), {"sdist.reproducible": "false"})
     sdist = dist / out
     hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
 
@@ -140,7 +140,7 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch):
     if Path("dist").is_dir():
         shutil.rmtree("dist")
 
-    out = build_sdist(str(dist), {"scikit-build-core.sdist.reproducible": "false"})
+    out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
     if sys.version_info < (3, 9):

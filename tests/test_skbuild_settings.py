@@ -70,17 +70,17 @@ def test_skbuild_settings_config_settings(tmp_path):
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, str | list[str]] = {
-        "scikit-build.cmake.minimum-version": "3.17",
-        "scikit-build.ninja.minimum-version": "1.2",
-        "scikit-build.ninja.make-fallback": "False",
-        "scikit-build.logging.level": "INFO",
-        "scikit-build.tags.py-abi": "cp39-abi3",
-        "scikit-build.tags.extra": "True",
-        "scikit-build.sdist.include": ["a", "b", "c"],
-        "scikit-build.sdist.exclude": "d;e;f",
-        "scikit-build.sdist.reproducible": "false",
-        "scikit-build.wheel.packages": ["j", "k", "l"],
-        "scikit-build.strict-config": "false",
+        "cmake.minimum-version": "3.17",
+        "ninja.minimum-version": "1.2",
+        "ninja.make-fallback": "False",
+        "logging.level": "INFO",
+        "tags.py-abi": "cp39-abi3",
+        "tags.extra": "True",
+        "sdist.include": ["a", "b", "c"],
+        "sdist.exclude": "d;e;f",
+        "sdist.reproducible": "false",
+        "wheel.packages": ["j", "k", "l"],
+        "strict-config": "false",
     }
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
@@ -173,16 +173,16 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path):
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, str | list[str]] = {
-        "scikit-build.cmake.minimum-verison": "3.17",
-        "scikit-build.ninja.minimum-version": "1.2",
-        "scikit-build.ninja.make-fallback": "False",
-        "scikit-build.logger.level": "INFO",
+        "cmake.minimum-verison": "3.17",
+        "ninja.minimum-version": "1.2",
+        "ninja.make-fallback": "False",
+        "logger.level": "INFO",
     }
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
     assert list(settings_reader.unrecognized_options()) == [
-        "scikit-build.cmake.minimum-verison",
-        "scikit-build.logger",
+        "cmake.minimum-verison",
+        "logger",
     ]
 
     with pytest.raises(SystemExit):

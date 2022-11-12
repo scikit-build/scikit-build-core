@@ -97,9 +97,9 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     out = build_wheel(
         str(dist),
         {
-            "scikit-build.sdist.include": "src/simplest/*included*.txt",
-            "scikit-build.sdist.exclude": "src/simplest/*excluded*.txt",
-            "scikit-build.wheel.packages": ["src/simplest", "src/not_a_package"],
+            "sdist.include": "src/simplest/*included*.txt",
+            "sdist.exclude": "src/simplest/*excluded*.txt",
+            "wheel.packages": ["src/simplest", "src/not_a_package"],
         },
     )
 
