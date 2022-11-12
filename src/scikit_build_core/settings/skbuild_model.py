@@ -86,6 +86,6 @@ class ScikitBuildSettings:
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
 
-    #: Strictly check all config options. If not specified, warnings will be
-    #: printed for unknown options.
-    strict_config: bool = False
+    #: Strictly check all config options. If False, warnings will be
+    #: printed for unknown options. If True, an error will be raised.
+    strict_config: bool = True
