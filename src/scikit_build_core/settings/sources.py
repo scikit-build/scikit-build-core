@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
@@ -17,9 +17,15 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _dig(dict_: Mapping[str, Any], *names: str) -> Any:
+def _dig_strict(dict_: Mapping[str, Any], *names: str) -> Any:
     for name in names:
         dict_ = dict_[name]
+    return dict_
+
+
+def _dig_not_strict(dict_: Mapping[str, Any], *names: str) -> Any:
+    for name in names:
+        dict_ = dict_.get(name, {})
     return dict_
 
 
@@ -66,6 +72,9 @@ class Source(Protocol):
     def convert(cls, item: Any, target: object) -> object:
         ...
 
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        ...
+
 
 class EnvSource:
     """
@@ -106,17 +115,47 @@ class EnvSource:
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
 
+    # pylint: disable-next=unused-argument
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        yield from ()
+
+
+def _unrecognized_dict(
+    settings: Mapping[str, Any], options: object, above: Sequence[str]
+) -> Generator[str, None, None]:
+    for keystr in settings:
+        matches = [
+            x for x in dataclasses.fields(options) if x.name.replace("_", "-") == keystr
+        ]
+        if not matches:
+            yield ".".join((*above, keystr))
+            continue
+        (inner_option_field,) = matches
+        inner_option = inner_option_field.type
+        if dataclasses.is_dataclass(inner_option):
+            yield from _unrecognized_dict(
+                settings[keystr], inner_option, (*above, keystr)
+            )
+
 
 class ConfSource:
     """
     This is a source for the PEP 517 configuration settings.
     You should initialize it with a dict from PEP 517. a.b will be treated as
-    nested dicts.
+    nested dicts. "verify" is a boolean that determines whether unrecognized
+    options should be checked for. Only set this to false if this might be sharing
+    config options at the same level.
     """
 
-    def __init__(self, *prefixes: str, settings: Mapping[str, str | list[str]]):
+    def __init__(
+        self,
+        *prefixes: str,
+        settings: Mapping[str, str | list[str]],
+        verify: bool = True,
+    ):
         self.prefixes = prefixes
         self.settings = settings
+        self.verify = verify
 
     def _get_name(self, *fields: str) -> list[str]:
         names = [field.replace("_", "-") for field in fields]
@@ -156,20 +195,37 @@ class ConfSource:
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
 
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        if not self.verify:
+            return
+        for keystr in self.settings:
+            inner_option = options
+            keys = keystr.split(".")[len(self.prefixes) :]
+            for i, key in enumerate(keys):
+                matches = [
+                    x
+                    for x in dataclasses.fields(inner_option)
+                    if x.name.replace("_", "-") == key
+                ]
+                if not matches:
+                    yield ".".join(list(self.prefixes) + keys[: i + 1])
+                    break
+                (inner_option_field,) = matches
+                inner_option = inner_option_field.type
+
 
 class TOMLSource:
     def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
         self.prefixes = prefixes
-        self.settings = settings
+        self.settings = _dig_not_strict(settings, *prefixes)
 
     def _get_name(self, *fields: str) -> list[str]:
-        names = [field.replace("_", "-") for field in fields]
-        return [*self.prefixes, *names]
+        return [field.replace("_", "-") for field in fields]
 
     def has_item(self, *fields: str) -> TOMLSource | None:
         names = self._get_name(*fields)
         try:
-            _dig(self.settings, *names)
+            _dig_strict(self.settings, *names)
             return self
         except KeyError:
             return None
@@ -177,7 +233,7 @@ class TOMLSource:
     def get_item(self, *fields: str) -> Any:
         names = self._get_name(*fields)
         try:
-            return _dig(self.settings, *names)
+            return _dig_strict(self.settings, *names)
         except KeyError:
             raise KeyError(f"{names!r} not found in configuration settings") from None
 
@@ -191,6 +247,9 @@ class TOMLSource:
         if callable(target):
             return target(item)
         raise AssertionError(f"Can't convert target {target}")
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        yield from _unrecognized_dict(self.settings, options, self.prefixes)
 
 
 class SourceChain:
@@ -252,3 +311,7 @@ class SourceChain:
             raise ExceptionGroup(f"Failed converting {prefix_str}", errors)
 
         return target(**prep)
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        for source in self.sources:
+            yield from source.unrecognized_options(options)
