@@ -40,10 +40,17 @@ class TypeLike(Protocol):
         ...
 
 
-def _process_union(target: TypeLike) -> Any:
+def _process_union(target: type[Any]) -> Any:
     """
-    Selects the non-None item in an Optional or Optional-like Union.
+    Selects the non-None item in an Optional or Optional-like Union. Passes through non-Unions.
     """
+
+    if (
+        not isinstance(target, TypeLike)
+        or not hasattr(target, "__origin__")
+        or target.__origin__ is not Union
+    ):
+        return target
 
     if len(target.__args__) == 2:
         items = list(target.__args__)
@@ -53,6 +60,36 @@ def _process_union(target: TypeLike) -> Any:
         return items[0]
 
     raise AssertionError("Only Unions with None supported")
+
+
+def _get_target_raw_type(target: type[Any]) -> type[Any]:
+    """
+    Takes a type like Optional[str] and returns str,
+    or Optional[Dict[str, int]] and returns dict.
+    """
+
+    target = _process_union(target)
+    # The hasattr is required for Python 3.7, though not quite sure why
+    if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
+        return target.__origin__
+    return target
+
+
+def _get_inner_type(target: type[Any]) -> type[Any]:
+    """
+    Takes a types like List[str] and returns str,
+    or Dict[str, int] and returns int.
+    """
+
+    raw_target = _get_target_raw_type(target)
+    target = _process_union(target)
+    if raw_target == list:
+        assert isinstance(target, TypeLike)
+        return target.__args__[0]
+    if raw_target == dict:
+        assert isinstance(target, TypeLike)
+        return target.__args__[1]
+    raise AssertionError("Expected a list or dict")
 
 
 class Source(Protocol):
@@ -69,7 +106,7 @@ class Source(Protocol):
         ...
 
     @classmethod
-    def convert(cls, item: Any, target: object) -> object:
+    def convert(cls, item: Any, target: type[Any]) -> object:
         ...
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -102,23 +139,22 @@ class EnvSource:
         raise KeyError(f"{name!r} not found in environment")
 
     @classmethod
-    def convert(cls, item: str, target: object) -> object:
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                return [
-                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
-                ]
-            if target.__origin__ == dict:
-                items = (i.strip().split("=") for i in item.split(";"))
-                return {k: cls.convert(v, target.__args__[1]) for k, v in items}
+    def convert(cls, item: str, target: type[Any]) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            return [
+                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+            ]
+        if raw_target == dict:
+            items = (i.strip().split("=") for i in item.split(";"))
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
 
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
-        if target is bool:
+        if raw_target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
-        if callable(target):
-            return target(item)
+
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     # pylint: disable-next=unused-argument
@@ -196,29 +232,28 @@ class ConfSource:
         raise KeyError(f"{name!r} not found in configuration settings")
 
     @classmethod
-    def convert(cls, item: str | list[str] | dict[str, str], target: object) -> object:
-        # The hasattr is required for Python 3.7, though not quite sure why
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                if isinstance(item, list):
-                    return [cls.convert(i, target.__args__[0]) for i in item]
-                assert not isinstance(item, dict)
-                return [
-                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
-                ]
-            if target.__origin__ == dict:
-                assert not isinstance(item, (str, list))
-                return {k: cls.convert(v, target.__args__[1]) for k, v in item.items()}
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
+    def convert(
+        cls, item: str | list[str] | dict[str, str], target: type[Any]
+    ) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            if isinstance(item, list):
+                return [cls.convert(i, _get_inner_type(target)) for i in item]
+            assert not isinstance(item, dict)
+            return [
+                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+            ]
+        if raw_target == dict:
+            assert not isinstance(item, (str, list))
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         assert not isinstance(
             item, (list, dict)
         ), "Can't convert list or dict to non-list/dict"
-        if target is bool:
+        if raw_target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
-        if callable(target):
-            return target(item)
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -266,21 +301,14 @@ class TOMLSource:
             raise KeyError(f"{names!r} not found in configuration settings") from None
 
     @classmethod
-    def convert(cls, item: Any, target: object) -> object:
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                return [cls.convert(it, target.__args__[0]) for it in item]
-            if target.__origin__ == dict:
-                return {
-                    cls.convert(k, target.__args__[0]): cls.convert(
-                        v, target.__args__[1]
-                    )
-                    for k, v in item.items()
-                }
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
-        if callable(target):
-            return target(item)
+    def convert(cls, item: Any, target: type[Any]) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            return [cls.convert(it, _get_inner_type(target)) for it in item]
+        if raw_target == dict:
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -323,19 +351,27 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            is_dict = (
-                isinstance(field.type, TypeLike)
-                and hasattr(field.type, "__origin__")
-                and field.type.__origin__ == dict
-            )
+            is_dict = _get_target_raw_type(field.type) == dict
 
-            local_source = self.has_item(*prefixes, field.name, is_dict=is_dict)
-            if local_source is not None:
-                simple = local_source.get_item(*prefixes, field.name, is_dict=is_dict)
-                try:
-                    prep[field.name] = local_source.convert(simple, field.type)
-                except Exception as e:
-                    errors.append(e)
+            for source in self.sources:
+                if source.has_item(*prefixes, field.name, is_dict=is_dict) is not None:
+                    simple = source.get_item(*prefixes, field.name, is_dict=is_dict)
+                    try:
+                        tmp = source.convert(simple, field.type)
+                    except Exception as e:
+                        errors.append(e)
+                        prep[field.name] = None
+                        break
+
+                    if is_dict:
+                        assert isinstance(tmp, dict), f"{field.name} must be a dict"
+                        prep[field.name] = {**tmp, **prep.get(field.name, {})}
+                        continue
+
+                    prep[field.name] = tmp
+                    break
+
+            if field.name in prep:
                 continue
 
             if field.default is not dataclasses.MISSING:

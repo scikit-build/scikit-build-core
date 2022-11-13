@@ -409,3 +409,26 @@ def test_missing_opts_toml():
         "tool.two.missing",
         "tool.other",
     ]
+
+
+@dataclasses.dataclass
+class SettingsOverride:
+    dict0: Dict[str, str] = dataclasses.field(default_factory=dict)
+    dict1: Optional[Dict[str, int]] = None
+    dict2: Optional[Dict[str, str]] = None
+
+
+def test_override():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={"dict0.one": "one", "dict0.two": "two", "dict1.other": "2"}
+        ),
+        TOMLSource(settings={"dict0": {"two": "TWO", "three": "THREE"}, "dict2": {}}),
+    )
+
+    settings = sources.convert_target(SettingsOverride)
+
+    assert settings.dict0 == {"one": "one", "two": "two", "three": "THREE"}
+    assert settings.dict1 == {"other": 2}
+    assert settings.dict2 == {}
