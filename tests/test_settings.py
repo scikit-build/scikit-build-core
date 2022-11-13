@@ -23,6 +23,7 @@ class SettingChecker:
     six: Path = Path("empty")
     seven: Union[int, None] = None
     eight: Dict[str, str] = dataclasses.field(default_factory=dict)
+    nine: Dict[str, int] = dataclasses.field(default_factory=dict)
 
 
 def test_empty(monkeypatch):
@@ -47,6 +48,7 @@ def test_empty(monkeypatch):
     assert settings.six == Path("empty")
     assert settings.seven is None
     assert settings.eight == {}
+    assert settings.nine == {}
 
 
 def test_env(monkeypatch):
@@ -58,8 +60,8 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_FIVE", "five")
     monkeypatch.setenv("SKBUILD_SIX", "six")
     monkeypatch.setenv("SKBUILD_SEVEN", "7")
-    monkeypatch.setenv("SKBUILD_EIGHT_thing", "8")
-    monkeypatch.setenv("SKBUILD_EIGHT_thought", "9")
+    monkeypatch.setenv("SKBUILD_EIGHT", "thing=8;thought=9")
+    monkeypatch.setenv("SKBUILD_NINE", "thing=8")
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
@@ -77,6 +79,7 @@ def test_env(monkeypatch):
     assert settings.six == Path("six")
     assert settings.seven == 7
     assert settings.eight == {"thing": "8", "thought": "9"}
+    assert settings.nine == {"thing": 8}
 
 
 def test_conf():
@@ -91,6 +94,7 @@ def test_conf():
         "seven": "7",
         "eight.foo": "one",
         "eight.bar": "two",
+        "nine.thing": "8",
     }
 
     sources = SourceChain(
@@ -109,6 +113,7 @@ def test_conf():
     assert settings.six == Path("six")
     assert settings.seven == 7
     assert settings.eight == {"foo": "one", "bar": "two"}
+    assert settings.nine == {"thing": 8}
 
 
 def test_toml():
@@ -122,6 +127,7 @@ def test_toml():
         "six": "six",
         "seven": 7,
         "eight": {"one": "one", "two": "two"},
+        "nine": {"thing": 8},
     }
 
     sources = SourceChain(
@@ -140,6 +146,7 @@ def test_toml():
     assert settings.six == Path("six")
     assert settings.seven == 7
     assert settings.eight == {"one": "one", "two": "two"}
+    assert settings.nine == {"thing": 8}
 
 
 @dataclasses.dataclass

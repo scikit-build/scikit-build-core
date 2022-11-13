@@ -89,26 +89,13 @@ class EnvSource:
         names = [field.upper() for field in fields]
         return "_".join([self.prefix, *names] if self.prefix else names)
 
+    # pylint: disable-next=unused-argument
     def has_item(self, *fields: str, is_dict: bool) -> EnvSource | None:
-        if is_dict:
-            name = self._get_name(*fields)
-            return self if any(k.startswith(f"{name}_") for k in self.env) else None
-
         name = self._get_name(*fields)
         return self if name in self.env and self.env[name] else None
 
+    # pylint: disable-next=unused-argument
     def get_item(self, *fields: str, is_dict: bool) -> str | dict[str, str]:
-        if is_dict:
-            name = self._get_name(*fields)
-            d = {
-                k[len(name) + 1 :]: v
-                for k, v in self.env.items()
-                if k.startswith(f"{name}_")
-            }
-            if d:
-                return d
-            raise KeyError(f"Dict items {name}_* not found in environment")
-
         name = self._get_name(*fields)
         if name in self.env:
             return self.env[name]
@@ -122,7 +109,9 @@ class EnvSource:
                     cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
                 ]
             if target.__origin__ == dict:
-                return item
+                items = (i.strip().split("=") for i in item.split(";"))
+                return {k: cls.convert(v, target.__args__[1]) for k, v in items}
+
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
         if target is bool:
@@ -207,20 +196,24 @@ class ConfSource:
         raise KeyError(f"{name!r} not found in configuration settings")
 
     @classmethod
-    def convert(cls, item: str | list[str], target: object) -> object:
+    def convert(cls, item: str | list[str] | dict[str, str], target: object) -> object:
         # The hasattr is required for Python 3.7, though not quite sure why
         if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
             if target.__origin__ == list:
                 if isinstance(item, list):
                     return [cls.convert(i, target.__args__[0]) for i in item]
+                assert not isinstance(item, dict)
                 return [
                     cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
                 ]
             if target.__origin__ == dict:
-                return item
+                assert not isinstance(item, (str, list))
+                return {k: cls.convert(v, target.__args__[1]) for k, v in item.items()}
             if target.__origin__ == Union:
                 return cls.convert(item, _process_union(target))
-        assert not isinstance(item, list), "Can't convert list to non-list"
+        assert not isinstance(
+            item, (list, dict)
+        ), "Can't convert list or dict to non-list/dict"
         if target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
