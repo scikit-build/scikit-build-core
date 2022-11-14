@@ -21,9 +21,15 @@ def test_pep517_wheel_extra_dirs(tmp_path, monkeypatch):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(HELLO_PEP518)
+    monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
+    monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DSOME_ARGS1=baz")
+
     if Path("dist").is_dir():
         shutil.rmtree("dist")
-    out = build_wheel(str(dist))
+    out = build_wheel(
+        str(dist),
+        {"cmake.define.SOME_DEFINE2": "bar", "cmake.define.SOME_DEFINE3": "bar"},
+    )
     (wheel,) = dist.glob("cmake_dirs-0.0.1-*.whl")
     assert wheel == dist / out
 

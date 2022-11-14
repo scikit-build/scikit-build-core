@@ -17,9 +17,11 @@ def test_skbuild_settings_default(tmp_path):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.cmake.minimum_version == "3.15"
     assert settings.ninja.minimum_version == "1.5"
     assert settings.ninja.make_fallback
+    assert settings.cmake.minimum_version == "3.15"
+    assert settings.cmake.args == []
+    assert settings.cmake.define == {}
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
@@ -32,9 +34,11 @@ def test_skbuild_settings_default(tmp_path):
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
-    monkeypatch.setenv("SKBUILD_CMAKE_MINIMUM_VERSION", "3.16")
     monkeypatch.setenv("SKBUILD_NINJA_MINIMUM_VERSION", "1.1")
     monkeypatch.setenv("SKBUILD_NINJA_MAKE_FALLBACK", "0")
+    monkeypatch.setenv("SKBUILD_CMAKE_MINIMUM_VERSION", "3.16")
+    monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DFOO=BAR;-DBAR=FOO")
+    monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "a=1;b=2")
     monkeypatch.setenv("SKBUILD_LOGGING_LEVEL", "DEBUG")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
@@ -54,8 +58,10 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.cmake.minimum_version == "3.16"
     assert settings.ninja.minimum_version == "1.1"
+    assert settings.cmake.minimum_version == "3.16"
+    assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
+    assert settings.cmake.define == {"a": "1", "b": "2"}
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -73,9 +79,12 @@ def test_skbuild_settings_config_settings(tmp_path):
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, str | list[str]] = {
-        "cmake.minimum-version": "3.17",
         "ninja.minimum-version": "1.2",
         "ninja.make-fallback": "False",
+        "cmake.minimum-version": "3.17",
+        "cmake.args": ["-DFOO=BAR", "-DBAR=FOO"],
+        "cmake.define.a": "1",
+        "cmake.define.b": "2",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -91,9 +100,11 @@ def test_skbuild_settings_config_settings(tmp_path):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.cmake.minimum_version == "3.17"
     assert settings.ninja.minimum_version == "1.2"
     assert not settings.ninja.make_fallback
+    assert settings.cmake.minimum_version == "3.17"
+    assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
+    assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -111,9 +122,11 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
         textwrap.dedent(
             """\
             [tool.scikit-build]
-            cmake.minimum-version = "3.18"
             ninja.minimum-version = "1.3"
             ninja.make-fallback = false
+            cmake.minimum-version = "3.18"
+            cmake.args = ["-DFOO=BAR", "-DBAR=FOO"]
+            cmake.define = {a = "1", b = "2"}
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -134,9 +147,11 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.cmake.minimum_version == "3.18"
     assert settings.ninja.minimum_version == "1.3"
     assert not settings.ninja.make_fallback
+    assert settings.cmake.minimum_version == "3.18"
+    assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
+    assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

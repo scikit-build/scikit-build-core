@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 __all__ = [
     "ScikitBuildSettings",
@@ -30,6 +30,12 @@ class CMakeSettings:
     #: The minimum version of CMake to use. If CMake is older than this, it will
     #: be upgraded via PyPI if possible. An empty string will disable this check.
     minimum_version: str = "3.15"
+
+    #: A list of args to pass to CMake when configuring the project.
+    args: List[str] = dataclasses.field(default_factory=list)
+
+    # A table of defines to pass to CMake when configuring the project. Additive.
+    define: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass

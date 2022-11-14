@@ -150,6 +150,9 @@ class Builder:
 
         self.config.init_cache(cache_config)
 
+        # Add the pre-defined or passed CMake args
+        cmake_args += self.settings.cmake.args
+
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
         cmake_args += [
@@ -161,6 +164,9 @@ class Builder:
             archs = self.get_archs()
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
+
+        # Add the pre-defined or passed CMake defines
+        cmake_defines.update(self.settings.cmake.define)
 
         self.config.configure(
             defines=cmake_defines,

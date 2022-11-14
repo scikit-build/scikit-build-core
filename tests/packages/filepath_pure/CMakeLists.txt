@@ -19,3 +19,27 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/in_scripts.py
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/in_data.txt
         DESTINATION ${SKBUILD_DATA_DIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/main.py DESTINATION .)
+
+if(NOT "${SOME_DEFINE}" STREQUAL "foo")
+  message(FATAL_ERROR "SOME_DEFINE should be foo, is '${SOME_DEFINE}'")
+endif()
+
+if(NOT "${SOME_DEFINE2}" STREQUAL "bar")
+  message(FATAL_ERROR "SOME_DEFINE2 should be bar, is '${SOME_DEFINE2}'")
+endif()
+
+if(NOT "${SOME_DEFINE3}" STREQUAL "baz")
+  message(FATAL_ERROR "SOME_DEFINE3 should be baz, is '${SOME_DEFINE3}'")
+endif()
+
+if(NOT "${SOME_DEFINE4}" STREQUAL "baz")
+  message(FATAL_ERROR "SOME_DEFINE3 should be baz, is '${SOME_DEFINE3}'")
+endif()
+
+if(NOT "${SOME_ARGS1}" STREQUAL "baz")
+  message(FATAL_ERROR "SOME_ARGS1 should be baz, is '${SOME_ARGS1}'")
+endif()
+
+if(DEFINED "${SOME_ARGS2}")
+  message(FATAL_ERROR "args should not be combined, last one wins")
+endif()
