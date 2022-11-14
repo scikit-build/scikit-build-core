@@ -61,7 +61,7 @@ test = [
     "pathspec",
     "pybind11",
     "pyproject-metadata",
-    "pytest >=7",
+    "pytest >=7.2",
     "pytest-subprocess",
     "pytest-virtualenv",
     "rich",
@@ -74,7 +74,7 @@ cov = [
 dev = [
     "build",
     "cattrs >=22.2.0",
-    "pytest >=7",
+    "pytest >=7.2",
     "pytest-subprocess",
     "pytest-virtualenv",
     "rich",
@@ -109,8 +109,8 @@ build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = ["-ra", "--strict-markers", "--strict-config", "--tb=native"]
+minversion = "7.2"
+addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
     "error",
