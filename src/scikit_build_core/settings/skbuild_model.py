@@ -6,7 +6,6 @@ __all__ = [
     "NinjaSettings",
     "CMakeSettings",
     "LoggingSettings",
-    "TagsSettings",
     "SDistSettings",
     "WheelSettings",
 ]
@@ -40,24 +39,6 @@ class LoggingSettings:
 
 
 @dataclasses.dataclass
-class TagsSettings:
-    #: The Python and ABI tags. The default (empty string) will use the default
-    #: Python version. You can also set this to "cp37-abi3" to enable the CPython
-    #: 3.7+ Stable ABI / Limited API (only on CPython and if the version is
-    #: sufficient, otherwise this has no effect). Or you can set it to "py3-none"
-    #: or "py2.py3-none" to ignore Python ABI compatibility. For the stable ABI,
-    #: the CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems
-    #: (empty on Windows). FindPython doesn't have a way to target python3.dll
-    #: instead of python3N.dll, so this is harder to use on Windows.
-    api_abi: str = ""
-
-    #: Fill out extra tags that are not required. Currently, this means adding
-    #: "x86_64" and "arm64" to the list of platforms when "universal2" is used,
-    #: which helps older Pip's (before 21.0.1) find the correct wheel.
-    extra: bool = False
-
-
-@dataclasses.dataclass
 class SDistSettings:
     #: Files to include in the SDist even if they are skipped by default.
     include: List[str] = dataclasses.field(default_factory=list)
@@ -77,13 +58,28 @@ class WheelSettings:
     #: The prefix(s) will be stripped from the package name inside the wheel.
     packages: Optional[List[str]] = None
 
+    #: The Python tags. The default (empty string) will use the default
+    #: Python version. You can also set this to "cp37" to enable the CPython
+    #: 3.7+ Stable ABI / Limited API (only on CPython and if the version is
+    #: sufficient, otherwise this has no effect). Or you can set it to "py3"
+    #: or "py2.py3" to ignore Python ABI compatibility. For the stable ABI,
+    #: the CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems
+    #: (empty on Windows). FindPython doesn't have a way to target python3.dll
+    #: instead of python3N.dll, so this is harder to use on Windows.
+    #: The ABI tag is inferred from this tag.
+    py_api: str = ""
+
+    #: Fill out extra tags that are not required. This adds "x86_64" and "arm64"
+    #: to the list of platforms when "universal2" is used, which helps older
+    #: Pip's (before 21.0.1) find the correct wheel.
+    expand_macos_universal_tags: bool = False
+
 
 @dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
     logging: LoggingSettings = dataclasses.field(default_factory=LoggingSettings)
-    tags: TagsSettings = dataclasses.field(default_factory=TagsSettings)
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
 
