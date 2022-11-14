@@ -128,15 +128,15 @@ ninja.make-fallback = true
 # Display logs at or above this level.
 logging.level = "WARNING"
 
-# Setting the api-abi to "cp37-abi3" would build ABI3 wheels for Python 3.7+.
-# If CPython is less than this value, or on PyPy, this will be ignored.
-# Setting the api-abi to "py3-none" would build wheels that don't depend on
-# Python (ctypes, etc).
-tags.api-abi = ""
+# Setting py-api to "cp37" would build ABI3 wheels for Python 3.7+.  If CPython
+# is less than this value, or on PyPy, this will be ignored.  Setting the api to
+# "py3" or "py2.py3" would build wheels that don't depend on Python (ctypes,
+# etc).
+wheel.py-api = ""
 
-# Setting this to true will expand extra tags (universal2 will add Intel and
-# Apple Silicon tags, for pip <21.0.1 compatibility).
-tags.extra = false
+# Setting this to true will expand tags (universal2 will add Intel and Apple
+# Silicon tags, for pip <21.0.1 compatibility).
+wheel.expand-macos-universal-tags = false
 
 # Include and exclude patterns, in gitignore syntax. Include overrides exclude.
 # Wheels include packages included in the sdist; CMake has the final say.

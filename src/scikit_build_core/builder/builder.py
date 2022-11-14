@@ -50,7 +50,10 @@ class Builder:
 
         if sys.platform.startswith("darwin"):
             archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
-            if self.settings.tags.extra and ["universal2"] == archs:
+            if (
+                self.settings.wheel.expand_macos_universal_tags
+                and ["universal2"] == archs
+            ):
                 archs += ["x86_64", "arm64"]
             return archs
 
@@ -127,7 +130,7 @@ class Builder:
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
         if limited_abi is None:
-            limited_abi = self.settings.tags.api_abi.endswith("-abi3")
+            limited_abi = self.settings.wheel.py_api.startswith("cp3")
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (

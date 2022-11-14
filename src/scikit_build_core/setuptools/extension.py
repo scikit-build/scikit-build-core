@@ -127,13 +127,15 @@ def cmake_extensions(
     assert attr == "cmake_extensions"
     assert len(value) > 0
 
-    assert not settings.tags.extra, "extra_tags is not supported in setuptools mode"
+    assert (
+        not settings.wheel.expand_macos_universal_tags
+    ), "wheel.expand_macos_universal_tags is not supported in setuptools mode"
     assert (
         settings.logging.level == "WARNING"
     ), "Logging is not adjustable in setuptools mode yet"
     assert (
-        not settings.tags.api_abi
-    ), "api_abi is not supported in setuptools mode, use bdist_wheel options instead"
+        not settings.wheel.py_api
+    ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
 
     dist.has_ext_modules = lambda: True  # type: ignore[attr-defined]
     dist.ext_modules = (dist.ext_modules or []) + value

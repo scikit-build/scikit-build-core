@@ -15,7 +15,7 @@ from scikit_build_core.builder.sysconfig import (
     get_python_library,
 )
 from scikit_build_core.builder.wheel_tag import WheelTag
-from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, TagsSettings
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, WheelSettings
 
 
 # The envvar_higher case shouldn't happen, but the compiler should cause the
@@ -104,7 +104,10 @@ def test_builder_macos_arch_extra(monkeypatch):
     tmpbuilder = typing.cast(
         Builder,
         SimpleNamespace(
-            config=tmpcfg, settings=ScikitBuildSettings(tags=TagsSettings(extra=True))
+            config=tmpcfg,
+            settings=ScikitBuildSettings(
+                wheel=WheelSettings(expand_macos_universal_tags=True)
+            ),
         ),
     )
     assert Builder.get_archs(tmpbuilder) == ["universal2", "x86_64", "arm64"]
@@ -115,7 +118,7 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
-    tags = WheelTag.compute_best(["x86_64"], api_abi="cp39-abi3")
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp39")
     if sys.version_info < (3, 9) or sys.implementation.name != "cpython":
         assert "macosx_10_10_x86_64" in str(tags)
         assert "abi3" not in str(tags)
@@ -123,7 +126,7 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     else:
         assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], api_abi="cp37-abi3")
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp37")
     if sys.implementation.name != "cpython":
         assert "macosx_10_10_x86_64" in str(tags)
         assert "abi3" not in str(tags)
@@ -131,8 +134,8 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     else:
         assert str(tags) == "cp37-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], api_abi="py3-none")
+    tags = WheelTag.compute_best(["x86_64"], py_api="py3")
     assert str(tags) == "py3-none-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], api_abi="py2.py3-none")
+    tags = WheelTag.compute_best(["x86_64"], py_api="py2.py3")
     assert str(tags) == "py2.py3-none-macosx_10_10_x86_64"
