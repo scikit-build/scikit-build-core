@@ -21,7 +21,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.ninja.minimum_version == "1.5"
     assert settings.ninja.make_fallback
     assert settings.logging.level == "WARNING"
-    assert settings.tags.py_abi == ""
+    assert settings.tags.api_abi == ""
     assert not settings.tags.extra
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
@@ -35,7 +35,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_NINJA_MINIMUM_VERSION", "1.1")
     monkeypatch.setenv("SKBUILD_NINJA_MAKE_FALLBACK", "0")
     monkeypatch.setenv("SKBUILD_LOGGING_LEVEL", "DEBUG")
-    monkeypatch.setenv("SKBUILD_TAGS_PY_ABI", "cp39-abi3")
+    monkeypatch.setenv("SKBUILD_TAGS_API_ABI", "cp39-abi3")
     monkeypatch.setenv("SKBUILD_TAGS_EXTRA", "True")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
@@ -56,7 +56,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.ninja.minimum_version == "1.1"
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
-    assert settings.tags.py_abi == "cp39-abi3"
+    assert settings.tags.api_abi == "cp39-abi3"
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -74,7 +74,7 @@ def test_skbuild_settings_config_settings(tmp_path):
         "ninja.minimum-version": "1.2",
         "ninja.make-fallback": "False",
         "logging.level": "INFO",
-        "tags.py-abi": "cp39-abi3",
+        "tags.api-abi": "cp39-abi3",
         "tags.extra": "True",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -91,7 +91,7 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.ninja.minimum_version == "1.2"
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "INFO"
-    assert settings.tags.py_abi == "cp39-abi3"
+    assert settings.tags.api_abi == "cp39-abi3"
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -110,7 +110,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
             ninja.minimum-version = "1.3"
             ninja.make-fallback = false
             logging.level = "ERROR"
-            tags.py-abi = "cp39-abi3"
+            tags.api-abi = "cp39-abi3"
             tags.extra = true
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -132,7 +132,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.ninja.minimum_version == "1.3"
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "ERROR"
-    assert settings.tags.py_abi == "cp39-abi3"
+    assert settings.tags.api_abi == "cp39-abi3"
     assert settings.tags.extra
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

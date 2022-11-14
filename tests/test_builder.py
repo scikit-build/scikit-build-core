@@ -115,14 +115,24 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
-    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp39-abi3")
-    assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
+    tags = WheelTag.compute_best(["x86_64"], api_abi="cp39-abi3")
+    if sys.version_info < (3, 9) or sys.implementation.name != "cpython":
+        assert "macosx_10_10_x86_64" in str(tags)
+        assert "abi3" not in str(tags)
+        assert "cp39" not in str(tags)
+    else:
+        assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="cp37-abi3")
-    assert str(tags) == "cp37-abi3-macosx_10_10_x86_64"
+    tags = WheelTag.compute_best(["x86_64"], api_abi="cp37-abi3")
+    if sys.implementation.name != "cpython":
+        assert "macosx_10_10_x86_64" in str(tags)
+        assert "abi3" not in str(tags)
+        assert "cp37" not in str(tags)
+    else:
+        assert str(tags) == "cp37-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="py3-none")
+    tags = WheelTag.compute_best(["x86_64"], api_abi="py3-none")
     assert str(tags) == "py3-none-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], py_abi_tag="py2.py3-none")
+    tags = WheelTag.compute_best(["x86_64"], api_abi="py2.py3-none")
     assert str(tags) == "py2.py3-none-macosx_10_10_x86_64"

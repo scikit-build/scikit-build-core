@@ -7,6 +7,7 @@ from typing import TypeVar
 
 import packaging.tags
 
+from .._logging import logger
 from .macos import get_macosx_deployment_target
 
 __all__ = ["WheelTag"]
@@ -28,7 +29,7 @@ class WheelTag:
     # TODO: plats only used on macOS
     @classmethod
     def compute_best(
-        cls: type[Self], archs: Sequence[str] = (), py_abi_tag: str = ""
+        cls: type[Self], archs: Sequence[str] = (), api_abi: str = ""
     ) -> Self:
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
@@ -43,9 +44,31 @@ class WheelTag:
             else:
                 plats = [next(packaging.tags.mac_platforms((major, minor)))]
 
-        if py_abi_tag:
-            pyver, abi = py_abi_tag.split("-")
-            pyvers = pyver.split(".")
+        if api_abi:
+            pyver_new, abi_new = api_abi.split("-")
+            pyvers_new = pyver_new.split(".")
+            if all(x.startswith("cp") for x in pyvers_new) and abi_new == "abi3":
+                if len(pyvers_new) > 1:
+                    raise AssertionError(
+                        "Unexpected api-abi, must be a single cp version (e.g. cp39)"
+                    )
+                minor = int(pyvers_new[0][3:])
+                if (
+                    sys.implementation.name == "cpython"
+                    and minor <= sys.version_info.minor
+                ):
+                    pyvers = pyvers_new
+                    abi = abi_new
+                else:
+                    msg = "Ignoring api-abi, not a CPython interpreter ({}) or version (3.{}) is too high"
+                    logger.debug(msg, sys.implementation.name, minor)
+            elif all(x.startswith("py") for x in pyvers_new) and abi_new == "none":
+                pyvers = pyvers_new
+                abi = abi_new
+            else:
+                raise AssertionError(
+                    "Unexpected api-abi, must be abi3 (e.g. cp39-abi3) or Pythonless (e.g. py2.py3-none)"
+                )
 
         return cls(pyvers=pyvers, abis=[abi], archs=plats)
 
@@ -85,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--abi",
         default="",
-        help="Specify abi min version, like 'cp37'. Use 'py3' to be pythonless",
+        help="Specify api-abi, like 'cp37-abi3' or 'py3-none'",
     )
     args = parser.parse_args()
     tag = WheelTag.compute_best(args.archs, args.abi)

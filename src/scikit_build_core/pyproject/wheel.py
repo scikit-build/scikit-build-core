@@ -172,7 +172,7 @@ def build_wheel(
 
         _write_wheel_metadata(install_dir=install_dir, metadata=metadata)
 
-        tags = WheelTag.compute_best(builder.get_archs(), settings.tags.py_abi)
+        tags = WheelTag.compute_best(builder.get_archs(), settings.tags.api_abi)
         wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
 
     wheel_filename: str = wheel.filename
