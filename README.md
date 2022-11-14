@@ -118,25 +118,16 @@ below:
 ```toml
 [tool.scikit-build]
 # The PEP 517 build hooks will add ninja and/or cmake if the versions on the
-# system are not at least these versions.
+# system are not at least these versions. Disabled by an empty string.
 cmake.minimum-version = "3.15"
 ninja.minimum-version = "1.5"
 
-# Fallback on gmake/make if available and ninja is missing (Unix)
+# Fallback on gmake/make if available and ninja is missing (Unix). Will only
+# fallback on platforms without a known ninja wheel.
 ninja.make-fallback = true
 
 # Display logs at or above this level.
 logging.level = "WARNING"
-
-# Setting py-api to "cp37" would build ABI3 wheels for Python 3.7+.  If CPython
-# is less than this value, or on PyPy, this will be ignored.  Setting the api to
-# "py3" or "py2.py3" would build wheels that don't depend on Python (ctypes,
-# etc).
-wheel.py-api = ""
-
-# Setting this to true will expand tags (universal2 will add Intel and Apple
-# Silicon tags, for pip <21.0.1 compatibility).
-wheel.expand-macos-universal-tags = false
 
 # Include and exclude patterns, in gitignore syntax. Include overrides exclude.
 # Wheels include packages included in the sdist; CMake has the final say.
@@ -150,6 +141,27 @@ sdist.reproducible = true
 # The root-level packages to include. Special default: if not given, the package
 # is auto-discovered if it's name matches the main name.
 wheel.packages = ["src/<package>", "<package>"]
+
+# This allows you to change the install dir, such as to the package name. The
+# original dir is still at SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are
+# available)
+wheel.install-dir = "."
+
+# Setting py-api to "cp37" would build ABI3 wheels for Python 3.7+.  If CPython
+# is less than this value, or on PyPy, this will be ignored.  Setting the api to
+# "py3" or "py2.py3" would build wheels that don't depend on Python (ctypes,
+# etc).
+wheel.py-api = ""
+
+# Setting this to true will expand tags (universal2 will add Intel and Apple
+# Silicon tags, for pip <21.0.1 compatibility).
+wheel.expand-macos-universal-tags = false
+
+# Enable experimental features if any are available
+experimental = false
+
+# Strictly validate config options
+strict-config = true
 ```
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
