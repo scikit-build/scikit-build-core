@@ -32,6 +32,7 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
+    "importlib_resources; python_version<'3.9'",
     "packaging",  # TODO: set a min version
     "tomli; python_version<'3.11'",
     "typing_extensions >=3.7; python_version<'3.8'",

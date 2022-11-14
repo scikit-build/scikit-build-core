@@ -1,0 +1,35 @@
+[tool.scikit-build.cmake]
+known-wheels = [
+    "win_amd64",
+    "win32",
+    "macosx_10_10_universal2",
+    "musllinux_1_1_x86_64",
+    "musllinux_1_1_s390x",
+    "musllinux_1_1_ppc64le",
+    "musllinux_1_1_i686",
+    "musllinux_1_1_aarch64",
+    "manylinux_2_17_s390x",
+    "manylinux_2_17_ppc64le",
+    "manylinux_2_17_aarch64",
+    "manylinux_2_17_x86_64",
+    "manylinux_2_17_i686",
+    "manylinux_2_5_x86_64",
+    "manylinux_2_5_i686",
+]
+
+[tool.scikit-build.ninja]
+known-wheels = [
+    "win_amd64",
+    "win32",
+    "macosx_10_9_universal2",
+    "musllinux_1_1_x86_64",
+    "musllinux_1_1_s390x",
+    "musllinux_1_1_ppc64le",
+    "musllinux_1_1_i686",
+    "musllinux_1_1_aarch64",
+    "manylinux_2_17_s390x",
+    "manylinux_2_17_ppc64le",
+    "manylinux_2_17_aarch64",
+    "manylinux_2_5_x86_64",
+    "manylinux_2_5_i686",
+]
