@@ -1,0 +1,14 @@
+[build-system]
+requires = ["scikit_build_core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cmake_dirs"
+version = "0.0.1"
+requires-python = ">=3.7"
+
+[project.optional-dependencies]
+test = ["pytest>=6.0"]
+
+[tool.scikit-build]
+wheel.install-dir = "cmake_dirs"

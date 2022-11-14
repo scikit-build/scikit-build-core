@@ -74,6 +74,11 @@ class WheelSettings:
     #: Pip's (before 21.0.1) find the correct wheel.
     expand_macos_universal_tags: bool = False
 
+    #: The install directory for the wheel. This is relative to the platlib root.
+    #: EXPERIMENTAL: An absolute path will be one level higher than the platlib
+    #: root, giving access to "/platlib", "/data", "/headers", and "/scripts".
+    install_dir: str = ""
+
 
 @dataclasses.dataclass
 class ScikitBuildSettings:
@@ -86,3 +91,6 @@ class ScikitBuildSettings:
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.
     strict_config: bool = True
+
+    #: Enable early previews of features not finalized yet.
+    experimental: bool = False

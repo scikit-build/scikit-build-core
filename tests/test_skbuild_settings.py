@@ -28,6 +28,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
     assert settings.strict_config
+    assert not settings.experimental
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
@@ -42,6 +43,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_WHEEL_PY_API", "cp39")
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
+    monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -63,6 +65,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
+    assert settings.experimental
 
 
 def test_skbuild_settings_config_settings(tmp_path):
@@ -81,6 +84,7 @@ def test_skbuild_settings_config_settings(tmp_path):
         "wheel.py-api": "cp39",
         "wheel.expand-macos-universal-tags": "True",
         "strict-config": "false",
+        "experimental": "1",
     }
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
@@ -98,6 +102,7 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
+    assert settings.experimental
 
 
 def test_skbuild_settings_pyproject_toml(tmp_path):
@@ -117,6 +122,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
             wheel.py-api = "cp39"
             wheel.expand-macos-universal-tags = true
             strict-config = false
+            experimental = true
             """
         ),
         encoding="utf-8",
@@ -139,6 +145,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
+    assert settings.experimental
 
 
 def test_skbuild_settings_pyproject_toml_broken(tmp_path):
