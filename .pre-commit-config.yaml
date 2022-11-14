@@ -97,6 +97,7 @@ repos:
           - cattrs
           - cmake
           - importlib_metadata
+          - importlib_resources
           - ninja
           - packaging
           - pyproject_metadata

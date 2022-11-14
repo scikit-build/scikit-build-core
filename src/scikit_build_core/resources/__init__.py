@@ -1,3 +1,8 @@
 from __future__ import annotations
 
-__all__: list[str] = []
+from .._compat.importlib import resources as _resources
+
+__all__: list[str] = ["resources"]
+
+
+resources = _resources.files(__name__)
