@@ -29,6 +29,16 @@ def _dig_not_strict(dict_: Mapping[str, Any], *names: str) -> Any:
     return dict_
 
 
+def _dig_fields(__opt: object, *names: str) -> Any:
+    for name in names:
+        fields = dataclasses.fields(__opt)
+        types = [x.type for x in fields if x.name == name]
+        if len(types) != 1:
+            raise KeyError("Could not access {'.'.join(names)}")
+        (__opt,) = types
+    return __opt
+
+
 @runtime_checkable
 class TypeLike(Protocol):
     @property
@@ -257,19 +267,20 @@ class ConfSource:
         if not self.verify:
             return
         for keystr in self.settings:
-            inner_option = options
-            keys = keystr.split(".")[len(self.prefixes) :]
-            for i, key in enumerate(keys):
-                matches = [
-                    x
-                    for x in dataclasses.fields(inner_option)
-                    if x.name.replace("_", "-") == key
-                ]
-                if not matches:
-                    yield ".".join(list(self.prefixes) + keys[: i + 1])
-                    break
-                (inner_option_field,) = matches
-                inner_option = inner_option_field.type
+            keys = keystr.replace("-", "_").split(".")[len(self.prefixes) :]
+            try:
+                outer_option = _dig_fields(options, *keys[:-1])
+            except KeyError:
+                yield ".".join(keystr.split(".")[:-1])
+                continue
+            if dataclasses.is_dataclass(outer_option):
+                try:
+                    _dig_fields(outer_option, keys[-1])
+                except KeyError:
+                    yield keystr
+                    continue
+            if _get_target_raw_type(outer_option) == dict:
+                continue
 
 
 class TOMLSource:

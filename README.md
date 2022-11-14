@@ -126,6 +126,11 @@ ninja.minimum-version = "1.5"
 # fallback on platforms without a known ninja wheel.
 ninja.make-fallback = true
 
+# Extra args for CMake. Pip, unlike build, does not support lists, so simicolon
+# can be used to separate. Setting this in config or envvar will override the
+# entire list). See also cmake.define.
+cmake.args = []
+
 # Display logs at or above this level.
 logging.level = "WARNING"
 
@@ -162,6 +167,9 @@ experimental = false
 
 # Strictly validate config options
 strict-config = true
+
+[tool.scikit-build.cmake.define]
+# Put CMake defines in this table.
 ```
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be

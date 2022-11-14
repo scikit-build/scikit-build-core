@@ -12,3 +12,9 @@ test = ["pytest>=6.0"]
 
 [tool.scikit-build]
 wheel.install-dir = "cmake_dirs"
+cmake.args = ["-DSOME_ARGS1=foo", "-DSOME_ARGS2=foo"]
+
+[tool.scikit-build.cmake.define]
+SOME_DEFINE = "foo"
+SOME_DEFINE2 = "foo"
+SOME_DEFINE3 = "foo"
