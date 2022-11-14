@@ -127,7 +127,7 @@ class Builder:
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
 
         if limited_abi is None:
-            limited_abi = self.settings.tags.py_abi.endswith("-abi3")
+            limited_abi = self.settings.tags.api_abi.endswith("-abi3")
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (

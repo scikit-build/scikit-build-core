@@ -128,10 +128,11 @@ ninja.make-fallback = true
 # Display logs at or above this level.
 logging.level = "WARNING"
 
-# Setting the py_abi to "cp37-abi3" would build ABI3 wheels for Python 3.7+.
-# Setting the py_abi to "py3-none" would build wheels that don't depend on
+# Setting the api-abi to "cp37-abi3" would build ABI3 wheels for Python 3.7+.
+# If CPython is less than this value, or on PyPy, this will be ignored.
+# Setting the api-abi to "py3-none" would build wheels that don't depend on
 # Python (ctypes, etc).
-tags.py-abi = ""
+tags.api-abi = ""
 
 # Setting this to true will expand extra tags (universal2 will add Intel and
 # Apple Silicon tags, for pip <21.0.1 compatibility).
