@@ -93,12 +93,11 @@ def _get_inner_type(target: type[Any]) -> type[Any]:
 
 
 class Source(Protocol):
-    def has_item(self, *fields: str, is_dict: bool) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
         Check if the source contains a chain of fields. For example, feilds =
         [Field(name="a"), Field(name="b")] will check if the source contains the
-        key "a.b". Returns the first source that contains the field (possibly
-        self).
+        key "a.b".
         """
         ...
 
@@ -127,9 +126,9 @@ class EnvSource:
         return "_".join([self.prefix, *names] if self.prefix else names)
 
     # pylint: disable-next=unused-argument
-    def has_item(self, *fields: str, is_dict: bool) -> EnvSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         name = self._get_name(*fields)
-        return self if name in self.env and self.env[name] else None
+        return name in self.env and self.env[name] != ""
 
     # pylint: disable-next=unused-argument
     def get_item(self, *fields: str, is_dict: bool) -> str | dict[str, str]:
@@ -203,16 +202,14 @@ class ConfSource:
         names = [field.replace("_", "-") for field in fields]
         return [*self.prefixes, *names]
 
-    def has_item(self, *fields: str, is_dict: bool) -> ConfSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         names = self._get_name(*fields)
         name = ".".join(names)
 
         if is_dict:
-            return (
-                self if any(k.startswith(f"{name}.") for k in self.settings) else None
-            )
+            return any(k.startswith(f"{name}.") for k in self.settings)
 
-        return self if name in self.settings else None
+        return name in self.settings
 
     def get_item(self, *fields: str, is_dict: bool) -> str | list[str] | dict[str, str]:
         names = self._get_name(*fields)
@@ -284,13 +281,13 @@ class TOMLSource:
         return [field.replace("_", "-") for field in fields]
 
     # pylint: disable-next=unused-argument
-    def has_item(self, *fields: str, is_dict: bool) -> TOMLSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         names = self._get_name(*fields)
         try:
             _dig_strict(self.settings, *names)
-            return self
+            return True
         except KeyError:
-            return None
+            return False
 
     # pylint: disable-next=unused-argument
     def get_item(self, *fields: str, is_dict: bool) -> Any:
@@ -319,16 +316,15 @@ class SourceChain:
     def __init__(self, *sources: Source):
         self.sources = sources
 
-    def has_item(self, *fields: str, is_dict: bool) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         for source in self.sources:
-            check = source.has_item(*fields, is_dict=is_dict)
-            if check is not None:
-                return check
-        return None
+            if source.has_item(*fields, is_dict=is_dict):
+                return True
+        return False
 
     def get_item(self, *fields: str, is_dict: bool) -> Any:
         for source in self.sources:
-            if source.has_item(*fields, is_dict=is_dict) is not None:
+            if source.has_item(*fields, is_dict=is_dict):
                 return source.get_item(*fields, is_dict=is_dict)
         raise KeyError(f"{fields!r} not found in any source")
 
@@ -354,7 +350,7 @@ class SourceChain:
             is_dict = _get_target_raw_type(field.type) == dict
 
             for source in self.sources:
-                if source.has_item(*prefixes, field.name, is_dict=is_dict) is not None:
+                if source.has_item(*prefixes, field.name, is_dict=is_dict):
                     simple = source.get_item(*prefixes, field.name, is_dict=is_dict)
                     try:
                         tmp = source.convert(simple, field.type)
