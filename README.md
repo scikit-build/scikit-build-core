@@ -168,6 +168,10 @@ experimental = false
 # Strictly validate config options
 strict-config = true
 
+# This provides some backward compatibility if set. Defaults to the latest
+# scikit-build-core version.
+minimum-version = "0.1" # current version
+
 [tool.scikit-build.cmake.define]
 # Put CMake defines in this table.
 ```

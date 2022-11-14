@@ -4,8 +4,12 @@ import sys
 from collections.abc import Generator, Mapping
 from pathlib import Path
 
+from packaging.version import Version
+
+from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
+from ..errors import CMakeConfigError
 from .skbuild_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
@@ -32,6 +36,16 @@ class SettingsReader:
             TOMLSource("tool", "scikit-build", settings=pyproject),
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+
+        if self.settings.minimum_version:
+            current_version = Version(__version__)
+            minimum_version = Version(self.settings.minimum_version)
+            if current_version < minimum_version:
+                msg = (
+                    f"scikit-build-core version {__version__} is too old. "
+                    f"Minimum required version is {self.settings.minimum_version}."
+                )
+                raise CMakeConfigError(msg)
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from scikit_build_core.build import build_wheel
+from scikit_build_core.errors import CMakeConfigError
 
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/filepath_pure"
@@ -60,3 +61,24 @@ def test_pep517_wheel_extra_dirs(tmp_path, monkeypatch):
         assert data == {"in_data.txt"}
         assert headers == {"in_headers.h"}
         assert scripts == {"in_scripts.py"}
+
+
+def test_pep517_wheel_too_old_core(tmp_path, monkeypatch):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    monkeypatch.chdir(HELLO_PEP518)
+    monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
+    monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DSOME_ARGS1=baz")
+
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+    with pytest.raises(CMakeConfigError):
+        build_wheel(
+            str(dist),
+            {
+                "cmake.define.SOME_DEFINE2": "bar",
+                "cmake.define.SOME_DEFINE3": "bar",
+                "minimum-version": "99",
+            },
+        )
