@@ -22,6 +22,8 @@ class SettingChecker:
     five: str = "empty"
     six: Path = Path("empty")
     seven: Union[int, None] = None
+    eight: Dict[str, str] = dataclasses.field(default_factory=dict)
+    nine: Dict[str, int] = dataclasses.field(default_factory=dict)
 
 
 def test_empty(monkeypatch):
@@ -45,6 +47,8 @@ def test_empty(monkeypatch):
     assert settings.five == "empty"
     assert settings.six == Path("empty")
     assert settings.seven is None
+    assert settings.eight == {}
+    assert settings.nine == {}
 
 
 def test_env(monkeypatch):
@@ -56,6 +60,8 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_FIVE", "five")
     monkeypatch.setenv("SKBUILD_SIX", "six")
     monkeypatch.setenv("SKBUILD_SEVEN", "7")
+    monkeypatch.setenv("SKBUILD_EIGHT", "thing=8;thought=9")
+    monkeypatch.setenv("SKBUILD_NINE", "thing=8")
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
@@ -72,6 +78,8 @@ def test_env(monkeypatch):
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"thing": "8", "thought": "9"}
+    assert settings.nine == {"thing": 8}
 
 
 def test_conf():
@@ -84,6 +92,9 @@ def test_conf():
         "five": "five",
         "six": "six",
         "seven": "7",
+        "eight.foo": "one",
+        "eight.bar": "two",
+        "nine.thing": "8",
     }
 
     sources = SourceChain(
@@ -101,6 +112,8 @@ def test_conf():
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"foo": "one", "bar": "two"}
+    assert settings.nine == {"thing": 8}
 
 
 def test_toml():
@@ -113,6 +126,8 @@ def test_toml():
         "five": "five",
         "six": "six",
         "seven": 7,
+        "eight": {"one": "one", "two": "two"},
+        "nine": {"thing": 8},
     }
 
     sources = SourceChain(
@@ -130,6 +145,8 @@ def test_toml():
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
+    assert settings.eight == {"one": "one", "two": "two"}
+    assert settings.nine == {"thing": 8}
 
 
 @dataclasses.dataclass
@@ -392,3 +409,26 @@ def test_missing_opts_toml():
         "tool.two.missing",
         "tool.other",
     ]
+
+
+@dataclasses.dataclass
+class SettingsOverride:
+    dict0: Dict[str, str] = dataclasses.field(default_factory=dict)
+    dict1: Optional[Dict[str, int]] = None
+    dict2: Optional[Dict[str, str]] = None
+
+
+def test_override():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={"dict0.one": "one", "dict0.two": "two", "dict1.other": "2"}
+        ),
+        TOMLSource(settings={"dict0": {"two": "TWO", "three": "THREE"}, "dict2": {}}),
+    )
+
+    settings = sources.convert_target(SettingsOverride)
+
+    assert settings.dict0 == {"one": "one", "two": "two", "three": "THREE"}
+    assert settings.dict1 == {"other": 2}
+    assert settings.dict2 == {}

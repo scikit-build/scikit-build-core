@@ -40,10 +40,17 @@ class TypeLike(Protocol):
         ...
 
 
-def _process_union(target: TypeLike) -> Any:
+def _process_union(target: type[Any]) -> Any:
     """
-    Selects the non-None item in an Optional or Optional-like Union.
+    Selects the non-None item in an Optional or Optional-like Union. Passes through non-Unions.
     """
+
+    if (
+        not isinstance(target, TypeLike)
+        or not hasattr(target, "__origin__")
+        or target.__origin__ is not Union
+    ):
+        return target
 
     if len(target.__args__) == 2:
         items = list(target.__args__)
@@ -55,21 +62,50 @@ def _process_union(target: TypeLike) -> Any:
     raise AssertionError("Only Unions with None supported")
 
 
+def _get_target_raw_type(target: type[Any]) -> type[Any]:
+    """
+    Takes a type like Optional[str] and returns str,
+    or Optional[Dict[str, int]] and returns dict.
+    """
+
+    target = _process_union(target)
+    # The hasattr is required for Python 3.7, though not quite sure why
+    if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
+        return target.__origin__
+    return target
+
+
+def _get_inner_type(target: type[Any]) -> type[Any]:
+    """
+    Takes a types like List[str] and returns str,
+    or Dict[str, int] and returns int.
+    """
+
+    raw_target = _get_target_raw_type(target)
+    target = _process_union(target)
+    if raw_target == list:
+        assert isinstance(target, TypeLike)
+        return target.__args__[0]
+    if raw_target == dict:
+        assert isinstance(target, TypeLike)
+        return target.__args__[1]
+    raise AssertionError("Expected a list or dict")
+
+
 class Source(Protocol):
-    def has_item(self, *fields: str) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
         Check if the source contains a chain of fields. For example, feilds =
         [Field(name="a"), Field(name="b")] will check if the source contains the
-        key "a.b". Returns the first source that contains the field (possibly
-        self).
+        key "a.b".
         """
         ...
 
-    def get_item(self, *fields: str) -> Any:
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         ...
 
     @classmethod
-    def convert(cls, item: Any, target: object) -> object:
+    def convert(cls, item: Any, target: type[Any]) -> object:
         ...
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -89,30 +125,35 @@ class EnvSource:
         names = [field.upper() for field in fields]
         return "_".join([self.prefix, *names] if self.prefix else names)
 
-    def has_item(self, *fields: str) -> EnvSource | None:
+    # pylint: disable-next=unused-argument
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         name = self._get_name(*fields)
-        return self if name in self.env and self.env[name] else None
+        return name in self.env and self.env[name] != ""
 
-    def get_item(self, *fields: str) -> str:
+    # pylint: disable-next=unused-argument
+    def get_item(self, *fields: str, is_dict: bool) -> str | dict[str, str]:
         name = self._get_name(*fields)
         if name in self.env:
             return self.env[name]
         raise KeyError(f"{name!r} not found in environment")
 
     @classmethod
-    def convert(cls, item: str, target: object) -> object:
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                return [
-                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
-                ]
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
-        if target is bool:
+    def convert(cls, item: str, target: type[Any]) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            return [
+                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+            ]
+        if raw_target == dict:
+            items = (i.strip().split("=") for i in item.split(";"))
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
+
+        if raw_target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
-        if callable(target):
-            return target(item)
+
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     # pylint: disable-next=unused-argument
@@ -161,38 +202,55 @@ class ConfSource:
         names = [field.replace("_", "-") for field in fields]
         return [*self.prefixes, *names]
 
-    def has_item(self, *fields: str) -> ConfSource | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         names = self._get_name(*fields)
         name = ".".join(names)
 
-        return self if name in self.settings else None
+        if is_dict:
+            return any(k.startswith(f"{name}.") for k in self.settings)
 
-    def get_item(self, *fields: str) -> str | list[str]:
+        return name in self.settings
+
+    def get_item(self, *fields: str, is_dict: bool) -> str | list[str] | dict[str, str]:
         names = self._get_name(*fields)
         name = ".".join(names)
+        if is_dict:
+            d = {
+                k[len(name) + 1 :]: str(v)
+                for k, v in self.settings.items()
+                if k.startswith(f"{name}.")
+            }
+            if d:
+                return d
+            raise KeyError(f"Dict items {name}.* not found in settings")
         if name in self.settings:
             return self.settings[name]
 
         raise KeyError(f"{name!r} not found in configuration settings")
 
     @classmethod
-    def convert(cls, item: str | list[str], target: object) -> object:
-        # The hasattr is required for Python 3.7, though not quite sure why
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                if isinstance(item, list):
-                    return [cls.convert(i, target.__args__[0]) for i in item]
-                return [
-                    cls.convert(i.strip(), target.__args__[0]) for i in item.split(";")
-                ]
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
-        assert not isinstance(item, list), "Can't convert list to non-list"
-        if target is bool:
+    def convert(
+        cls, item: str | list[str] | dict[str, str], target: type[Any]
+    ) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            if isinstance(item, list):
+                return [cls.convert(i, _get_inner_type(target)) for i in item]
+            assert not isinstance(item, dict)
+            return [
+                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+            ]
+        if raw_target == dict:
+            assert not isinstance(item, (str, list))
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+        assert not isinstance(
+            item, (list, dict)
+        ), "Can't convert list or dict to non-list/dict"
+        if raw_target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
-        if callable(target):
-            return target(item)
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -222,15 +280,17 @@ class TOMLSource:
     def _get_name(self, *fields: str) -> list[str]:
         return [field.replace("_", "-") for field in fields]
 
-    def has_item(self, *fields: str) -> TOMLSource | None:
+    # pylint: disable-next=unused-argument
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         names = self._get_name(*fields)
         try:
             _dig_strict(self.settings, *names)
-            return self
+            return True
         except KeyError:
-            return None
+            return False
 
-    def get_item(self, *fields: str) -> Any:
+    # pylint: disable-next=unused-argument
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         names = self._get_name(*fields)
         try:
             return _dig_strict(self.settings, *names)
@@ -238,14 +298,14 @@ class TOMLSource:
             raise KeyError(f"{names!r} not found in configuration settings") from None
 
     @classmethod
-    def convert(cls, item: Any, target: object) -> object:
-        if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-            if target.__origin__ == list:
-                return [cls.convert(it, target.__args__[0]) for it in item]
-            if target.__origin__ == Union:
-                return cls.convert(item, _process_union(target))
-        if callable(target):
-            return target(item)
+    def convert(cls, item: Any, target: type[Any]) -> object:
+        raw_target = _get_target_raw_type(target)
+        if raw_target == list:
+            return [cls.convert(it, _get_inner_type(target)) for it in item]
+        if raw_target == dict:
+            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+        if callable(raw_target):
+            return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
@@ -256,17 +316,16 @@ class SourceChain:
     def __init__(self, *sources: Source):
         self.sources = sources
 
-    def has_item(self, *fields: str) -> Source | None:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
         for source in self.sources:
-            check = source.has_item(*fields)
-            if check is not None:
-                return check
-        return None
+            if source.has_item(*fields, is_dict=is_dict):
+                return True
+        return False
 
-    def get_item(self, *fields: str) -> Any:
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
         for source in self.sources:
-            if source.has_item(*fields):
-                return source.get_item(*fields)
+            if source.has_item(*fields, is_dict=is_dict):
+                return source.get_item(*fields, is_dict=is_dict)
         raise KeyError(f"{fields!r} not found in any source")
 
     @classmethod
@@ -288,13 +347,27 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            local_source = self.has_item(*prefixes, field.name)
-            if local_source is not None:
-                simple = local_source.get_item(*prefixes, field.name)
-                try:
-                    prep[field.name] = local_source.convert(simple, field.type)
-                except Exception as e:
-                    errors.append(e)
+            is_dict = _get_target_raw_type(field.type) == dict
+
+            for source in self.sources:
+                if source.has_item(*prefixes, field.name, is_dict=is_dict):
+                    simple = source.get_item(*prefixes, field.name, is_dict=is_dict)
+                    try:
+                        tmp = source.convert(simple, field.type)
+                    except Exception as e:
+                        errors.append(e)
+                        prep[field.name] = None
+                        break
+
+                    if is_dict:
+                        assert isinstance(tmp, dict), f"{field.name} must be a dict"
+                        prep[field.name] = {**tmp, **prep.get(field.name, {})}
+                        continue
+
+                    prep[field.name] = tmp
+                    break
+
+            if field.name in prep:
                 continue
 
             if field.default is not dataclasses.MISSING:
