@@ -36,7 +36,7 @@ def _copy_python_packages_to_wheel(
     *,
     packages: Sequence[str] | None,
     name: str,
-    install_dir: Path,
+    platlib_dir: Path,
     include: Sequence[str],
     exclude: Sequence[str],
 ) -> None:
@@ -62,20 +62,20 @@ def _copy_python_packages_to_wheel(
             include=include,
             exclude=exclude,
         ):
-            install_path = install_dir / filepath.relative_to(base_path)
-            if not install_path.is_file():
-                install_path.parent.mkdir(exist_ok=True, parents=True)
-                shutil.copyfile(filepath, install_path)
+            package_dir = platlib_dir / filepath.relative_to(base_path)
+            if not package_dir.is_file():
+                package_dir.parent.mkdir(exist_ok=True, parents=True)
+                shutil.copyfile(filepath, package_dir)
 
 
 def _write_wheel_metadata(
     *,
-    install_dir: Path,
+    packages_dir: Path,
     metadata: StandardMetadata,
 ) -> None:
     name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
     version = str(metadata.version)
-    dist_info = install_dir / Path(f"{name}-{version}.dist-info")
+    dist_info = packages_dir / Path(f"{name}-{version}.dist-info")
     dist_info.mkdir(exist_ok=False)
     with dist_info.joinpath("METADATA").open("wb") as f:
         f.write(bytes(metadata.as_rfc822()))
@@ -127,8 +127,31 @@ def build_wheel(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
-        install_dir = build_tmp_folder / "install" / metadata.name
+        wheel_dir = build_tmp_folder / "wheel"
         build_dir = build_tmp_folder / "build"
+
+        wheel_dirs = {
+            "platlib": wheel_dir / "platlib",
+            "data": wheel_dir / "data",
+            "headers": wheel_dir / "headers",
+            "scripts": wheel_dir / "scripts",
+        }
+
+        for wheel_dir in wheel_dirs.values():
+            wheel_dir.mkdir(parents=True)
+
+        if ".." in settings.wheel.install_dir:
+            raise AssertionError("wheel.install_dir must not contain '..'")
+        if settings.wheel.install_dir.startswith("/"):
+            if not settings.experimental:
+                raise AssertionError(
+                    "Experimental features must be enabled to use absolute paths in wheel.install_dir"
+                )
+            if not settings.wheel.install_dir[1:].startswith(tuple(wheel_dirs)):
+                raise AssertionError("Must target a valid wheel directory")
+            install_dir = wheel_dir / settings.wheel.install_dir[1:]
+        else:
+            install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
 
         config = CMakeConfig(
             cmake,
@@ -143,8 +166,10 @@ def build_wheel(
 
         rich_print("[green]***[/green] [bold]Configurating CMake...")
         defines: dict[str, str] = {}
+        cache_entries = {f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()}
         builder.configure(
             defines=defines,
+            cache_entries=cache_entries,
             name=metadata.name,
             version=metadata.version,
         )
@@ -165,15 +190,15 @@ def build_wheel(
         _copy_python_packages_to_wheel(
             packages=settings.wheel.packages,
             name=metadata.name.replace("-", "_").replace(".", "_"),
-            install_dir=install_dir,
+            platlib_dir=wheel_dirs["platlib"],
             include=settings.sdist.include,
             exclude=settings.sdist.exclude,
         )
 
-        _write_wheel_metadata(install_dir=install_dir, metadata=metadata)
+        _write_wheel_metadata(packages_dir=wheel_dirs["platlib"], metadata=metadata)
 
         tags = WheelTag.compute_best(builder.get_archs(), settings.wheel.py_api)
-        wheel.build({"platlib": str(install_dir)}, tags=tags.tags_dict())
+        wheel.build({k: str(v) for k, v in wheel_dirs.items()}, tags=tags.tags_dict())
 
     wheel_filename: str = wheel.filename
     return wheel_filename

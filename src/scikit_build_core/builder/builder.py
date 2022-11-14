@@ -63,6 +63,7 @@ class Builder:
         self,
         *,
         defines: Mapping[str, str],
+        cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
         limited_abi: bool | None = None,
@@ -143,6 +144,9 @@ class Builder:
             ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
             assert ext_suffix
             cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
+
+        if cache_entries:
+            cache_config.update(cache_entries)
 
         self.config.init_cache(cache_config)
 
