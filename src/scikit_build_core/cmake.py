@@ -149,15 +149,15 @@ class CMakeConfig:
     def _compute_build_args(
         self,
         *,
-        verbose: int,
+        verbose: bool,
     ) -> Generator[str, None, None]:
-        for _ in range(verbose):
+        if verbose:
             yield "-v"
         if not self.single_config:
             yield "--config"
             yield self.build_type
 
-    def build(self, build_args: Sequence[str] = (), *, verbose: int = 0) -> None:
+    def build(self, build_args: Sequence[str] = (), *, verbose: bool = False) -> None:
         local_args = self._compute_build_args(verbose=verbose)
 
         try:
