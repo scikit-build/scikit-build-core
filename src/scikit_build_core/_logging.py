@@ -71,6 +71,9 @@ class ScikitBuildLogger:
     def setLevel(self, level: int) -> None:
         self.logger.setLevel(level)
 
+    def addHandler(self, handler: logging.Handler) -> None:
+        self.logger.addHandler(handler)
+
 
 logger = ScikitBuildLogger(raw_logger)
 

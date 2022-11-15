@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import sys
+
+from ._logging import rich_print
 from .builder.get_requires import cmake_ninja_for_build_wheel
+from .errors import FailedLiveProcessError
 
 __all__ = [
     "build_sdist",
@@ -23,7 +27,12 @@ def build_wheel(
 ) -> str:
     from .pyproject.wheel import build_wheel as skbuild_build_wheel
 
-    return skbuild_build_wheel(wheel_directory, config_settings, metadata_directory)
+    try:
+        return skbuild_build_wheel(wheel_directory, config_settings, metadata_directory)
+    except FailedLiveProcessError as err:
+        sys.stdout.flush()
+        rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
+        raise SystemExit(1) from None
 
 
 def build_sdist(
