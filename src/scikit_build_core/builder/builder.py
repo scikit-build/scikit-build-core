@@ -174,8 +174,7 @@ class Builder:
         )
 
     def build(self, build_args: list[str]) -> None:
-        # TODO: configure verbose
-        self.config.build(build_args=build_args, verbose=1)
+        self.config.build(build_args=build_args, verbose=self.settings.cmake.verbose)
 
     def install(self, install_dir: Path) -> None:
         self.config.install(install_dir)

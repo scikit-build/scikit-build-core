@@ -23,6 +23,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.cmake.minimum_version == "3.15"
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
+    assert not settings.cmake.verbose
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
@@ -55,6 +56,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
     monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
+    monkeypatch.setenv("SKBUILD_CMAKE_VERBOSE", "TRUE")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -69,6 +71,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.cmake.minimum_version == "3.16"
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
+    assert settings.cmake.verbose
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -83,7 +86,6 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
 
 
 def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
-
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
     )
@@ -98,6 +100,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "cmake.args": ["-DFOO=BAR", "-DBAR=FOO"],
         "cmake.define.a": "1",
         "cmake.define.b": "2",
+        "cmake.verbose": "true",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -119,6 +122,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.cmake.minimum_version == "3.17"
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
+    assert settings.cmake.verbose
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -145,6 +149,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             cmake.minimum-version = "3.18"
             cmake.args = ["-DFOO=BAR", "-DBAR=FOO"]
             cmake.define = {a = "1", b = "2"}
+            cmake.verbose = true
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -171,6 +176,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.cmake.minimum_version == "3.18"
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
+    assert settings.cmake.verbose
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

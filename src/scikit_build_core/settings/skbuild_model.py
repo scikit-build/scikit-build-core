@@ -34,8 +34,11 @@ class CMakeSettings:
     #: A list of args to pass to CMake when configuring the project.
     args: List[str] = dataclasses.field(default_factory=list)
 
-    # A table of defines to pass to CMake when configuring the project. Additive.
+    #: A table of defines to pass to CMake when configuring the project. Additive.
     define: Dict[str, str] = dataclasses.field(default_factory=dict)
+
+    #: Verbose printout when building
+    verbose: bool = False
 
 
 @dataclasses.dataclass
