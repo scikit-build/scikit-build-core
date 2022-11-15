@@ -4,6 +4,7 @@ import textwrap
 
 import pytest
 
+import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
@@ -31,9 +32,14 @@ def test_skbuild_settings_default(tmp_path):
     assert not settings.wheel.expand_macos_universal_tags
     assert settings.strict_config
     assert not settings.experimental
+    assert settings.minimum_version is None
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+    )
+
     monkeypatch.setenv("SKBUILD_NINJA_MINIMUM_VERSION", "1.1")
     monkeypatch.setenv("SKBUILD_NINJA_MAKE_FALLBACK", "0")
     monkeypatch.setenv("SKBUILD_CMAKE_MINIMUM_VERSION", "3.16")
@@ -48,6 +54,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
+    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -72,9 +79,15 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
     assert settings.experimental
+    assert settings.minimum_version == "0.1"
 
 
-def test_skbuild_settings_config_settings(tmp_path):
+def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
+
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+    )
+
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
@@ -94,6 +107,7 @@ def test_skbuild_settings_config_settings(tmp_path):
         "wheel.expand-macos-universal-tags": "True",
         "strict-config": "false",
         "experimental": "1",
+        "minimum-version": "0.1",
     }
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
@@ -114,9 +128,13 @@ def test_skbuild_settings_config_settings(tmp_path):
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
     assert settings.experimental
+    assert settings.minimum_version == "0.1"
 
 
-def test_skbuild_settings_pyproject_toml(tmp_path):
+def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+    )
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
@@ -136,6 +154,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
             wheel.expand-macos-universal-tags = true
             strict-config = false
             experimental = true
+            minimum-version = "0.1"
             """
         ),
         encoding="utf-8",
@@ -161,9 +180,10 @@ def test_skbuild_settings_pyproject_toml(tmp_path):
     assert settings.wheel.expand_macos_universal_tags
     assert not settings.strict_config
     assert settings.experimental
+    assert settings.minimum_version == "0.1"
 
 
-def test_skbuild_settings_pyproject_toml_broken(tmp_path):
+def test_skbuild_settings_pyproject_toml_broken(tmp_path, monkeypatch):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(

@@ -100,3 +100,6 @@ class ScikitBuildSettings:
 
     #: Enable early previews of features not finalized yet.
     experimental: bool = False
+
+    #: If set, this will provide a method for backward compatibility.
+    minimum_version: Optional[str] = None
