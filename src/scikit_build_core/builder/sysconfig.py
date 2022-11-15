@@ -16,10 +16,10 @@ def __dir__() -> list[str]:
 def get_python_library() -> Path | None:
     libdirstr = sysconfig.get_config_var("LIBDIR")
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
-    libdir = libdirstr and Path(libdirstr)
-    ldlibrary = ldlibrarystr and Path(ldlibrarystr)
-    multiarch = sysconfig.get_config_var("MULTIARCH")
-    masd = sysconfig.get_config_var("multiarchsubdir")
+    libdir: Path | None = libdirstr and Path(libdirstr)
+    ldlibrary: Path | None = ldlibrarystr and Path(ldlibrarystr)
+    multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
+    masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
     if libdir and ldlibrary:
         try:
