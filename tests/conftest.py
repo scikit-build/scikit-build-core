@@ -1,3 +1,4 @@
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -66,3 +67,18 @@ def pep518(pep518_wheelhouse, monkeypatch):
     monkeypatch.setenv("PIP_FIND_LINKS", pep518_wheelhouse)
     monkeypatch.setenv("PIP_NO_INDEX", "true")
     return pep518_wheelhouse
+
+
+has_pyvenv = importlib.util.find_spec("pytest_virtualenv") is not None
+
+if not has_pyvenv:
+
+    @pytest.fixture
+    def virtualenv():
+        pytest.skip("pytest-virtualenv not available")
+
+
+def pytest_collection_modifyitems(items):
+    for item in items:
+        if "virtualenv" in item.fixturenames:
+            item.add_marker(pytest.mark.virtualenv)
