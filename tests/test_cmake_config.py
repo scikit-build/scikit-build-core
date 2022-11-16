@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import os
 import shutil
 import sys
@@ -12,14 +13,26 @@ from packaging.version import Version
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
 
-cmake = pytest.importorskip("cmake")
-
 DIR = Path(__file__).parent.resolve()
 
 
+@functools.lru_cache(1)
+def cmake_path() -> str:
+    try:
+        import cmake
+    except ModuleNotFoundError:
+        cmake_str = shutil.which("cmake")
+        print(cmake_str)
+        if cmake_str is None:
+            pytest.skip("cmake must be installed for this test")
+        return os.fspath(Path(cmake_str).resolve())
+
+    return os.fspath(Path(cmake.CMAKE_BIN_DIR) / "cmake")
+
+
 def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
-    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
-    yield os.fspath(cmake_path)
+
+    yield cmake_path()
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
 
@@ -35,8 +48,7 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
 
 @pytest.mark.configure
 def test_init_cache(fp, tmp_path):
-    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
-    fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
+    fp.register([cmake_path(), "--version"], stdout="3.14.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -70,8 +82,7 @@ set(SKBUILD_PATH [===[{config.source_dir}]===] CACHE PATH "")
 @pytest.mark.configure
 def test_too_old(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda x: None)
-    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
-    fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
+    fp.register([cmake_path(), "--version"], stdout="3.14.0")
     print(cmake_path)
 
     with pytest.raises(CMakeNotFoundError) as excinfo:
@@ -81,8 +92,7 @@ def test_too_old(fp, monkeypatch):
 
 @pytest.mark.configure
 def test_cmake_args(tmp_path, fp):
-    cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
-    fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
+    fp.register([cmake_path(), "--version"], stdout="3.15.0")
 
     config = CMaker(
         CMake.default_search(),
