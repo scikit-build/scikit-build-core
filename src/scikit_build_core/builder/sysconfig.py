@@ -34,7 +34,7 @@ def get_python_library() -> Path | None:
                 if libdir_masd.is_dir():
                     libdir = libdir_masd
             libpath = libdir / ldlibrary
-            if libpath.is_file():
+            if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
 
     framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
