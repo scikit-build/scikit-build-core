@@ -11,7 +11,7 @@ from packaging.version import Version
 
 from .. import __version__
 from ..builder.sysconfig import get_python_include_dir, get_python_library
-from ..cmake import CMakeConfig
+from ..cmake import CMaker
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_make_programs, get_ninja_programs
 from ..resources import find_python
@@ -29,7 +29,7 @@ def __dir__() -> list[str]:
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
-    config: CMakeConfig
+    config: CMaker
 
     # TODO: cross-compile support for other platforms
     def get_archs(self) -> list[str]:

@@ -16,7 +16,7 @@ from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
-from ..cmake import CMake, CMakeConfig
+from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 from .file_processor import each_unignored_file
 from .init import setup_logging
@@ -153,7 +153,7 @@ def build_wheel(
         else:
             install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
 
-        config = CMakeConfig(
+        config = CMaker(
             cmake,
             source_dir=Path("."),
             build_dir=build_dir,

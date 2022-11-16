@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from packaging.version import Version
 
-from scikit_build_core.cmake import CMake, CMakeConfig
+from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
 
 cmake = pytest.importorskip("cmake")
@@ -17,9 +17,7 @@ cmake = pytest.importorskip("cmake")
 DIR = Path(__file__).parent.resolve()
 
 
-def configure_args(
-    config: CMakeConfig, *, init: bool = False
-) -> Generator[str, None, None]:
+def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
     cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     yield os.fspath(cmake_path)
     yield f"-S{config.source_dir}"
@@ -40,7 +38,7 @@ def test_init_cache(fp, tmp_path):
     cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.14.0")
 
-    config = CMakeConfig(
+    config = CMaker(
         CMake.default_search(),
         source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
@@ -85,7 +83,7 @@ def test_cmake_args(tmp_path, fp):
     cmake_path = Path(cmake.CMAKE_BIN_DIR) / "cmake"
     fp.register([os.fspath(cmake_path), "--version"], stdout="3.15.0")
 
-    config = CMakeConfig(
+    config = CMaker(
         CMake.default_search(),
         source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",

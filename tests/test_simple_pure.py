@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from packaging.version import Version
 
-from scikit_build_core.cmake import CMake, CMakeConfig
+from scikit_build_core.cmake import CMake, CMaker
 
 DIR = Path(__file__).parent.absolute()
 
@@ -19,7 +19,7 @@ def config(tmp_path_factory):
     build_dir = tmp_path / "build"
 
     cmake = CMake.default_search(minimum_version=Version("3.15"))
-    config = CMakeConfig(
+    config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
@@ -74,7 +74,7 @@ def test_variable_defined(tmp_path, capfd):
     build_dir = tmp_path / "build"
 
     cmake = CMake.default_search(minimum_version=Version("3.15"))
-    config = CMakeConfig(
+    config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,

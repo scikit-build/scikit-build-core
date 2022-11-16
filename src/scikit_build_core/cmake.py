@@ -16,7 +16,7 @@ from ._shutil import Run
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
 
-__all__ = ["CMake", "CMakeConfig"]
+__all__ = ["CMake", "CMaker"]
 
 
 def __dir__() -> list[str]:
@@ -55,7 +55,7 @@ class CMake:
 
 
 @dataclasses.dataclass
-class CMakeConfig:
+class CMaker:
     cmake: CMake
     source_dir: Path
     build_dir: Path
