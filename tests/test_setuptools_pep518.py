@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.setuptools
+
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 

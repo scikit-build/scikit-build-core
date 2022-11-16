@@ -9,6 +9,8 @@ import pytest
 
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
+pytestmark = pytest.mark.setuptools
+
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 
