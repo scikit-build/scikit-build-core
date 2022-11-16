@@ -6,12 +6,13 @@ import sys
 from collections.abc import Generator
 from pathlib import Path
 
-import cmake
 import pytest
 from packaging.version import Version
 
 from scikit_build_core.cmake import CMake, CMakeConfig
 from scikit_build_core.errors import CMakeNotFoundError
+
+cmake = pytest.importorskip("cmake")
 
 DIR = Path(__file__).parent.resolve()
 
