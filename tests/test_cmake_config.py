@@ -44,6 +44,7 @@ def test_init_cache(fp, tmp_path):
         CMake.default_search(),
         source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
+        build_type="Release",
     )
     config.init_cache(
         {"SKBUILD": True, "SKBUILD_VERSION": "1.0.0", "SKBUILD_PATH": config.source_dir}
@@ -89,6 +90,7 @@ def test_cmake_args(tmp_path, fp):
         CMake.default_search(),
         source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
+        build_type="Release",
     )
 
     cmd = list(configure_args(config))

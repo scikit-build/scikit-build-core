@@ -25,6 +25,7 @@ def test_cattrs_comparison(tmp_path):
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
+        build_type="Release",
     )
 
     reply_dir = stateless_query(config.build_dir)
@@ -54,6 +55,7 @@ def test_simple_pure(tmp_path):
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
+        build_type="Release",
     )
 
     reply_dir = stateless_query(config.build_dir)
