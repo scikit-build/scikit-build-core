@@ -14,7 +14,7 @@ from setuptools.dist import Distribution
 from .._compat.typing import Literal
 from ..builder.builder import Builder
 from ..builder.macos import normalize_macos_version
-from ..cmake import CMake, CMakeConfig
+from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
 __all__: list[str] = ["CMakeExtension", "cmake_extensions"]
@@ -72,7 +72,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             minimum_version=Version(settings.cmake.minimum_version)
         )
 
-        config = CMakeConfig(
+        config = CMaker(
             cmake,
             source_dir=ext.sourcedir,
             build_dir=build_temp,

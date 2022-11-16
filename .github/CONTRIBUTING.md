@@ -109,7 +109,7 @@ This section covers the design of scikit-build-core.
 
 Included modules:
 
-- `.cmake` `CMake`/`CMakeConfig`: general interface for building code
+- `.cmake` `CMake`/`CMaker`: general interface for building code
 - `.fileapi`: Interface for reading the CMake File API
 - `.builder`: Generalized backend builder and related helpers
 - `.pyproject`: PEP 517 builder (used by the PEP 517 interface)
@@ -123,7 +123,7 @@ Included modules:
 
 ```python
 cmake = CMake.default_search(minimum_version="3.15")
-config = CMakeConfig(
+config = CMaker(
     cmake,
     source_dir=source_dir,
     build_dir=build_dir,
@@ -279,7 +279,7 @@ target_compile_definitions(cmake_example
 install(TARGETS cmake_example DESTINATION .)
 ```
 
-This is built on top of CMakeExtenion, which looks like this:
+This is built on top of CMakeExtension, which looks like this:
 
 ```
 from scikit_build_core.setuptoools.extension import CMakeExtension
