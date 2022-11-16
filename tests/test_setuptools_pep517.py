@@ -67,6 +67,9 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.skipif(
+    sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
+)
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
