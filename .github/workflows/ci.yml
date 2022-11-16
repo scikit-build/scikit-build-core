@@ -87,15 +87,10 @@ jobs:
             python39-pip
 
       - name: Install
-        run: python3.9 -m pip install .[test,cov]
+        run: python3.9 -m pip install .[test]
 
       - name: Test package
-        run: python3.9 -m pytest -ra --showlocals --cov=scikit_build_core
-
-      - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.1
-        with:
-          name: ${{ runner.os }}-cygwin3.9
+        run: python3.9 -m pytest -ra --showlocals
 
   dist:
     name: Distribution build

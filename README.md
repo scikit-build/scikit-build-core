@@ -14,32 +14,32 @@
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
-**WARNING**: Experimental. All configuration subject to change. Only
-`scikit_build_core.build` should be used (setuptools backend is experimental and
-likely to move to a separate package).
+**WARNING**: Only the pyproject-based builder should be used (setuptools backend
+is experimental and likely to move to a separate package), and internal API is
+still being solidified. A future version of this package will support creating
+new build extensions.
 
 The following limitations are present compared to classic scikit-build:
 
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.7
 
-Some of these limitations might be adjusted over time, based on user
-requirements & effort / maintainability.
+Some know missing features that will be developed soon:
 
-This is very much a WIP, some missing features:
-
-- The extensionlib integration is missing
-- No hatchling plugin yet
+- No support for caching between builds
+- No editable mode support
 - The docs are not written
-- The logging system isn't ideal yet
 - Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - C++17 is required for the test suite because it's more fun than C++11/14
-- No support for caching between builds
-- No editable mode support
-- No extra wheel directories (like headers) supported yet
 - Wheels are not fully reproducible yet
 - Windows ARM support missing
+
+Other backends are also planned:
+
+- Setuptools integration highly experimental currently
+- The extensionlib integration is missing
+- No hatchling plugin yet
 
 Features over classic Scikit-build:
 
@@ -47,8 +47,6 @@ Features over classic Scikit-build:
 - No warning about unused variables
 - Automatically adds Ninja and/or CMake only as required
 - No dependency on setuptools, distutils, or wheel in build mode.
-- Closer to vanilla setuptools in setuptools mode, doesn't interfere with
-  config.
 - Powerful config system, including config options support in build mode.
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.24 (included via hatchling in
@@ -80,7 +78,8 @@ version = "0.0.1"
 ```
 
 You can (and should) specify the rest of the entries in `project`, but these are
-the minimum to get started.
+the minimum to get started. You can also add the `color` (more colorful
+printouts) or `pyproject` (pre-load some dependencies) extras if you want.
 
 An example `CMakeLists.txt`:
 
@@ -107,8 +106,6 @@ More examples are in the
 
 ## Configuration
 
-Warning: still being developed, some things may change.
-
 All configuration options can be placed in `pyproject.toml`, passed via `-C`
 options in `pip` or `build` (warning: pip doesn't support list options), or set
 as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
@@ -131,6 +128,12 @@ ninja.make-fallback = true
 # entire list). See also cmake.define.
 cmake.args = []
 
+# This activates verbose builds
+cmake.verbose = false
+
+# This controls the CMake build type
+build_type = "Release"
+
 # Display logs at or above this level.
 logging.level = "WARNING"
 
@@ -147,11 +150,6 @@ sdist.reproducible = true
 # is auto-discovered if it's name matches the main name.
 wheel.packages = ["src/<package>", "<package>"]
 
-# This allows you to change the install dir, such as to the package name. The
-# original dir is still at SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are
-# available)
-wheel.install-dir = "."
-
 # Setting py-api to "cp37" would build ABI3 wheels for Python 3.7+.  If CPython
 # is less than this value, or on PyPy, this will be ignored.  Setting the api to
 # "py3" or "py2.py3" would build wheels that don't depend on Python (ctypes,
@@ -162,6 +160,11 @@ wheel.py-api = ""
 # Silicon tags, for pip <21.0.1 compatibility).
 wheel.expand-macos-universal-tags = false
 
+# This allows you to change the install dir, such as to the package name. The
+# original dir is still at SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are
+# available)
+wheel.install-dir = "."
+
 # Enable experimental features if any are available
 experimental = false
 
@@ -170,7 +173,7 @@ strict-config = true
 
 # This provides some backward compatibility if set. Defaults to the latest
 # scikit-build-core version.
-minimum-version = "0.1" # current version
+minimum-version = "0.1"  # current version
 
 [tool.scikit-build.cmake.define]
 # Put CMake defines in this table.
