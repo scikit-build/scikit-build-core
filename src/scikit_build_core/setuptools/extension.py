@@ -76,6 +76,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             cmake,
             source_dir=ext.sourcedir,
             build_dir=build_temp,
+            build_type=settings.cmake.build_type,
         )
 
         builder = Builder(

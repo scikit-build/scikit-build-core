@@ -157,6 +157,7 @@ def build_wheel(
             cmake,
             source_dir=Path("."),
             build_dir=build_dir,
+            build_type=settings.cmake.build_type,
         )
 
         builder = Builder(

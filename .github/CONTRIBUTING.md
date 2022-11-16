@@ -127,6 +127,7 @@ config = CMakeConfig(
     cmake,
     source_dir=source_dir,
     build_dir=build_dir,
+    build_type="Release",
 )
 config.configure()
 config.build()

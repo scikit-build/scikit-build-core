@@ -40,6 +40,11 @@ class CMakeSettings:
     #: Verbose printout when building
     verbose: bool = False
 
+    #: The build type to use when building the project.
+    #: Valid options are: "Debug", "Release", "RelWithDebInfo", "MinSizeRel",
+    #: "", etc.
+    build_type: str = "Release"
+
 
 @dataclasses.dataclass
 class LoggingSettings:

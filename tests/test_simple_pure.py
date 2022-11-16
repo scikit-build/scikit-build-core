@@ -23,6 +23,7 @@ def config(tmp_path_factory):
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
+        build_type="Release",
     )
 
     config.configure()
@@ -78,6 +79,7 @@ def test_variable_defined(tmp_path, capfd):
         cmake,
         source_dir=DIR / "packages/simple_pure",
         build_dir=build_dir,
+        build_type="Release",
     )
     config.init_cache({"SKBUILD": True})
     config.configure(defines={"SKBUILD2": True})
