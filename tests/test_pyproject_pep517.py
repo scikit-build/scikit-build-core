@@ -32,7 +32,7 @@ Requires-Dist: pytest>=6.0; extra == "test"
 """
 
 mark_hashes_different = pytest.mark.xfail(
-    sys.platform.startswith("win32"),
+    sys.platform.startswith("win32") or sys.platform.startswith("cygwin"),
     reason="hashes differ on Windows",
 )
 

@@ -153,7 +153,7 @@ class CMakeConfig:
     ) -> Generator[str, None, None]:
         if verbose:
             yield "-v"
-        if not self.single_config:
+        if self.build_type and not self.single_config:
             yield "--config"
             yield self.build_type
 

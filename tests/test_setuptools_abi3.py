@@ -38,8 +38,8 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
             file_names = {p.name for p in p.iterdir()}
 
         so_file = (
-            "abi3_example.pyd"
-            if sys.platform.startswith("win")
+            "abi3_example.abi3.dll"
+            if sys.platform.startswith("cygwin")
             else "abi3_example.abi3.so"
         )
         assert so_file in file_names

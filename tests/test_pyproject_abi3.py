@@ -44,11 +44,12 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         file_names.remove("abi3_example-0.0.1.dist-info")
         (so_file,) = file_names
 
-        assert (
-            so_file == "abi3_example.pyd"
-            if sys.platform.startswith("win")
-            else "abi3_example.abi3.so"
-        )
+        if sys.platform.startswith("win"):
+            assert so_file == "abi3_example.pyd"
+        elif sys.platform.startswith("cygwin"):
+            assert so_file == "abi3_example.abi3.dll"
+        else:
+            assert so_file == "abi3_example.abi3.so"
 
     virtualenv.run(f"python -m pip install {wheel}")
 

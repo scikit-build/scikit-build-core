@@ -4,8 +4,7 @@ import logging
 import os
 from pathlib import Path
 
-import cmake
-import ninja
+import pytest
 from packaging.version import Version
 
 from scikit_build_core.program_search import (
@@ -16,6 +15,7 @@ from scikit_build_core.program_search import (
 
 
 def test_get_cmake_programs_cmake_module(monkeypatch):
+    cmake = pytest.importorskip("cmake")
     monkeypatch.setattr("shutil.which", lambda x: None)
     programs = list(get_cmake_programs())
     assert len(programs) == 1
@@ -24,6 +24,7 @@ def test_get_cmake_programs_cmake_module(monkeypatch):
 
 
 def test_get_ninja_programs_cmake_module(monkeypatch):
+    ninja = pytest.importorskip("ninja")
     monkeypatch.setattr("shutil.which", lambda x: None)
     programs = list(get_ninja_programs())
     assert len(programs) == 1

@@ -34,7 +34,7 @@ def test_pep518_sdist(pep518, virtualenv):
     (sdist,) = dist.iterdir()
     assert "cmake-example-0.0.1.tar.gz" == sdist.name
 
-    if not sys.platform.startswith("win32"):
+    if not (sys.platform.startswith("win32") or sys.platform.startswith("cygwin")):
         hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
         if sys.version_info < (3, 9):
             assert (
