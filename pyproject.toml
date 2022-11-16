@@ -121,6 +121,7 @@ markers = [
     "configure: Configures CMake code",
     "integration: Full package build",
     "setuptools: Tests setuptools integration",
+    "virtualenv: Needs a virtualenv",
 ]
 
 
