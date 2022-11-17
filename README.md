@@ -77,7 +77,7 @@ version = "0.0.1"
 ```
 
 You can (and should) specify the rest of the entries in `project`, but these are
-the minimum to get started. You can also add the `color` (more colorful
+the minimum to get started. You can also add the `rich` (more colorful
 printouts) or `pyproject` (pre-load some dependencies) extras if you want.
 
 An example `CMakeLists.txt`:
