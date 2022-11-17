@@ -4,7 +4,7 @@ project(simple_pure LANGUAGES CXX)
 
 add_executable(simple_pure simple_pure.cpp)
 
-target_compile_features(simple_pure PUBLIC cxx_std_17)
+target_compile_features(simple_pure PUBLIC cxx_std_11)
 
 install(TARGETS simple_pure)
 
