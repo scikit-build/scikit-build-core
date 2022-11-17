@@ -96,11 +96,11 @@ repos:
         additional_dependencies:
           - cattrs
           - cmake
-          - importlib_metadata
-          - importlib_resources
+          - importlib-metadata
+          - importlib-resources
           - ninja
           - packaging
-          - pyproject_metadata
+          - pyproject-metadata
           - pytest
           - rich
           - types-setuptools

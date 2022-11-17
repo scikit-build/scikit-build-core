@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from ..builder.get_requires import cmake_ninja_for_build_wheel
+from ..settings.skbuild_read_settings import SettingsReader
 
 __all__ = [
     "prepare_metadata_for_build_wheel",
@@ -26,7 +29,9 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None
 ) -> list[str]:
-    return ["setuptools", "wheel"] + cmake_ninja_for_build_wheel(config_settings)
+
+    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
+    return ["setuptools", "wheel"] + cmake_ninja_for_build_wheel(settings)
 
 
 def build_sdist(

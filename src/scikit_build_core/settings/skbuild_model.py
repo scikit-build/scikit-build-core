@@ -103,6 +103,20 @@ class BackportSettings:
 
 
 @dataclasses.dataclass
+class VersionSettings:
+    #: The path to the version file. This is relative to the project root.
+    #: __init__.py is used by default if there's only one package, unless
+    #: setuptools_scm is used, in which case it uses tools.setuptools_scm.write_to.
+    path: Optional[str] = None
+
+    # The pattern to look for, as a regex.
+    pattern: str = r'(?i)^(__version__|VERSION) *= *([\'"])v?(?P<version>.+?)\2'
+
+    #: Use setuptools_scm to generate the version. write_to is required.
+    setuptools_scm: Dict[str, str] = dataclasses.field(default_factory=dict)
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -120,3 +134,6 @@ class ScikitBuildSettings:
 
     #: If set, this will provide a method for backward compatibility.
     minimum_version: Optional[str] = None
+
+    #: Dynamic version settings. "dynamic" must contain "version" to use this.
+    version: VersionSettings = dataclasses.field(default_factory=VersionSettings)

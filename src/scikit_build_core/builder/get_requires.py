@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import functools
 import sys
-from collections.abc import Mapping
-from pathlib import Path
 
 from packaging.tags import sys_tags
 from packaging.version import Version
@@ -17,7 +15,7 @@ from ..program_search import (
     get_ninja_programs,
 )
 from ..resources import resources
-from ..settings.skbuild_read_settings import SettingsReader
+from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["cmake_ninja_for_build_wheel"]
 
@@ -40,13 +38,7 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
     return False
 
 
-def cmake_ninja_for_build_wheel(
-    # pylint: disable-next=unused-argument
-    config_settings: Mapping[str, str | list[str]]
-    | None = None
-) -> list[str]:
-
-    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
+def cmake_ninja_for_build_wheel(settings: ScikitBuildSettings) -> list[str]:
 
     packages = []
     cmake_min = Version(settings.cmake.minimum_version)

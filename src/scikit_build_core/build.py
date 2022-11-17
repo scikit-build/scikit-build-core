@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from ._logging import rich_print
 from .builder.get_requires import cmake_ninja_for_build_wheel
 from .errors import FailedLiveProcessError
+from .settings.skbuild_read_settings import SettingsReader
 
 __all__ = [
     "build_sdist",
@@ -49,12 +51,21 @@ def get_requires_for_build_sdist(
     config_settings: dict[str, str | list[str]]
     | None = None
 ) -> list[str]:
-    return ["pathspec", "pyproject_metadata"]
+    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
+    reqs = ["pathspec", "pyproject_metadata"]
+    if settings.version.setuptools_scm:
+        reqs.append("setuptools_scm")
+    return reqs
 
 
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
-    return ["distlib", "pathspec", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
-        config_settings
-    )
+    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
+
+    reqs = ["distlib", "pathspec", "pyproject_metadata"]
+    reqs.extend(cmake_ninja_for_build_wheel(settings))
+
+    if settings.version.setuptools_scm:
+        reqs.append("setuptools_scm")
+    return reqs
