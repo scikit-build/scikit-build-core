@@ -48,7 +48,7 @@ pyproject = [
     "distlib",
     "pathspec",
 ]
-color = [
+rich = [
     "rich",
 ]
 test = [
