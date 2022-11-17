@@ -2,6 +2,32 @@
 
 ## Version 0.1.0b1
 
+### What's Changed
+
+This release is focused on preparing for conda-forge and some macOS fixes.
+
+Features:
+
+- Configuration setting for FindPython backport by @henryiii in #103
+
+Fixes:
+
+- Conda prefix lib support by @henryiii in #95
+- Guess single config for more generators by @henryiii in #101
+- Universal2 tags computation was incorrect by @henryiii in #97
+- Universal2 tags computation was incorrect again by @henryiii in #100
+
+Refactoring:
+
+- Rename extra color -> rich by @henryiii in #98
+
+Other things:
+
+- Run more tests without the cmake module by @henryiii in #96
+- Support running without pytest-virtualenv by @henryiii in #94
+
+## Version 0.1.0b0
+
 This release adds a lot of configuration options, including `minimum-version`,
 which can be set to 0.0 to ensure defaults remain consistent (similar to
 `cmake_minimum_required`).
