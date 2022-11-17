@@ -15,6 +15,7 @@ from scikit_build_core.builder.sysconfig import (
     get_python_library,
 )
 from scikit_build_core.builder.wheel_tag import WheelTag
+from scikit_build_core.cmake import CMaker
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, WheelSettings
 
 
@@ -97,20 +98,24 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
 
 
 def test_builder_macos_arch_extra(monkeypatch):
-    archflags = "-arch universal2"
+    archflags = "-arch arm64 -arch x86_64"
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("ARCHFLAGS", archflags)
-    tmpcfg = SimpleNamespace(env=os.environ.copy())
-    tmpbuilder = typing.cast(
-        Builder,
-        SimpleNamespace(
-            config=tmpcfg,
-            settings=ScikitBuildSettings(
-                wheel=WheelSettings(expand_macos_universal_tags=True)
-            ),
-        ),
+    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
     )
-    assert Builder.get_archs(tmpbuilder) == ["universal2", "x86_64", "arm64"]
+    assert tmpbuilder.get_arch_tags() == ["universal2"]
+
+    tmpbuilder_ex = Builder(
+        settings=ScikitBuildSettings(
+            wheel=WheelSettings(expand_macos_universal_tags=True)
+        ),
+        config=tmpcfg,
+    )
+    assert tmpbuilder_ex.get_arch_tags() == ["universal2", "x86_64", "arm64"]
 
 
 def test_wheel_tag_with_abi_darwin(monkeypatch):
