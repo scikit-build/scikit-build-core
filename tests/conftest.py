@@ -82,3 +82,5 @@ def pytest_collection_modifyitems(items):
     for item in items:
         if "virtualenv" in item.fixturenames:
             item.add_marker(pytest.mark.virtualenv)
+        if "pep518" in item.nodeid:
+            item.add_marker(pytest.mark.isolated)
