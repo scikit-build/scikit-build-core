@@ -31,7 +31,6 @@ Some know missing features that will be developed soon:
 - The docs are not written
 - Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
-- C++17 is required for the test suite because it's more fun than C++11/14
 - Wheels are not fully reproducible yet
 - Windows ARM support missing
 
