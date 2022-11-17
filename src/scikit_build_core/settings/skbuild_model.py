@@ -95,12 +95,20 @@ class WheelSettings:
 
 
 @dataclasses.dataclass
+class BackportSettings:
+    #: If CMake is less than this value, backport a copy of FindPython. Set
+    #: to 0 disable this, or the empty string.
+    find_python: str = "3.24"
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
     logging: LoggingSettings = dataclasses.field(default_factory=LoggingSettings)
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
+    backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
 
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.
