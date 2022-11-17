@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import TypeVar
 
 import packaging.tags
@@ -29,20 +29,37 @@ class WheelTag:
     # TODO: plats only used on macOS
     @classmethod
     def compute_best(
-        cls: type[Self], archs: Sequence[str] = (), py_api: str = ""
+        cls: type[Self],
+        archs: Sequence[str],
+        py_api: str = "",
+        expand_macos: bool = False,
     ) -> Self:
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
         if sys.platform.startswith("darwin"):
-            major, minor = get_macosx_deployment_target(archs == ["arm64"])
-            if archs:
-                plats = [
-                    next(packaging.tags.mac_platforms((major, minor), arch))
-                    for arch in archs
-                ]
+            pairs: Iterable[tuple[str | None, bool]]
+            if expand_macos and archs == ["universal2"]:
+                pairs = zip(
+                    ["universal2", "universal2", "x86_64", "arm64"],
+                    [False, True, False, True],
+                )
+            elif not archs:
+                # It's okay to set arm to False, since this would be a native build,
+                # and that will already be 11+ for ARM anyway.
+                pairs = zip([None], [False])
             else:
-                plats = [next(packaging.tags.mac_platforms((major, minor)))]
+                pairs = zip(archs, [a == "arm64" for a in archs])
+            plats = [
+                next(
+                    packaging.tags.mac_platforms(
+                        get_macosx_deployment_target(arm), arch
+                    )
+                )
+                for arch, arm in pairs
+            ]
+            # Remove duplicates (e.g. universal2 if macOS > 11.0 and expanded)
+            plats = list(dict.fromkeys(plats))
 
         if py_api:
             pyvers_new = py_api.split(".")

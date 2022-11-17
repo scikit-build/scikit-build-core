@@ -71,6 +71,19 @@ def test_builder_macos_arch(monkeypatch, archs):
     assert Builder.get_archs(tmpbuilder) == archs
 
 
+def test_builder_macos_arch_extra(monkeypatch):
+    archflags = "-arch arm64 -arch x86_64"
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("ARCHFLAGS", archflags)
+    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
+    )
+    assert tmpbuilder.get_arch_tags() == ["universal2"]
+
+
 @pytest.mark.parametrize(
     "minver,archs,answer",
     [
@@ -78,12 +91,6 @@ def test_builder_macos_arch(monkeypatch, archs):
         pytest.param("10.12", ["arm64"], "macosx_11_0_arm64", id="10.12_arm64"),
         pytest.param(
             "10.12", ["universal2"], "macosx_10_12_universal2", id="10.12_universal2"
-        ),
-        pytest.param(
-            "10.12",
-            ["x86_64", "arm64"],
-            "macosx_10_12_x86_64.macosx_10_12_arm64",  # It would be nice if this was 11_0
-            id="10.12_multi",
         ),
     ],
 )
@@ -97,25 +104,35 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
     assert plat == answer
 
 
-def test_builder_macos_arch_extra(monkeypatch):
-    archflags = "-arch arm64 -arch x86_64"
+def test_wheel_tag_expand(monkeypatch):
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setenv("ARCHFLAGS", archflags)
-    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
-    tmpbuilder = Builder(
-        settings=ScikitBuildSettings(wheel=WheelSettings()),
-        config=tmpcfg,
-    )
-    assert tmpbuilder.get_arch_tags() == ["universal2"]
+    tags = WheelTag.compute_best(["universal2"])
+    plat = str(tags).split("-")[-1]
+    assert plat == "macosx_10_10_universal2"
 
-    tmpbuilder_ex = Builder(
-        settings=ScikitBuildSettings(
-            wheel=WheelSettings(expand_macos_universal_tags=True)
-        ),
-        config=tmpcfg,
+    tags = WheelTag.compute_best(["universal2"], expand_macos=True)
+    plat = str(tags).split("-")[-1]
+    assert (
+        plat
+        == "macosx_10_10_universal2.macosx_11_0_universal2.macosx_10_10_x86_64.macosx_11_0_arm64"
     )
-    assert tmpbuilder_ex.get_arch_tags() == ["universal2", "x86_64", "arm64"]
+
+
+def test_wheel_tag_expand_11(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "11.2")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(["universal2"])
+    plat = str(tags).split("-")[-1]
+    assert plat == "macosx_11_0_universal2"
+
+    tags = WheelTag.compute_best(["universal2"], expand_macos=True)
+    plat = str(tags).split("-")[-1]
+    assert plat == "macosx_11_0_universal2.macosx_11_0_x86_64.macosx_11_0_arm64"
 
 
 def test_wheel_tag_with_abi_darwin(monkeypatch):
