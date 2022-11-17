@@ -53,14 +53,11 @@ class Builder:
         """
         This function returns tags suitable for use in wheels. The main
         difference between this method and get_archs() is that this returns
-        universal2 instead of separate tags for x86_64 and arm64, or all of them
-        if wheel.expand-macos-universal-tags is true.
+        universal2 instead of separate tags for x86_64 and arm64.
         """
 
         archs = self.get_archs()
         if sys.platform.startswith("darwin") and set(archs) == {"arm64", "x86_64"}:
-            if self.settings.wheel.expand_macos_universal_tags:
-                return ["universal2", "x86_64", "arm64"]
             return ["universal2"]
         return archs
 
