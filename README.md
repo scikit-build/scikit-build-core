@@ -165,6 +165,11 @@ wheel.expand-macos-universal-tags = false
 # available)
 wheel.install-dir = "."
 
+# This will backport an internal copy of FindPython if CMake is less than this
+# value. Set to 0 or the empty string to disable. The default will be kept in
+# sync with the version of FindPython stored in scikit-build-core.
+backport.find-python = "3.24"
+
 # Enable experimental features if any are available
 experimental = false
 

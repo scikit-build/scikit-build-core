@@ -32,6 +32,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
+    assert settings.backport.find_python == "3.24"
     assert settings.strict_config
     assert not settings.experimental
     assert settings.minimum_version is None
@@ -55,6 +56,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_WHEEL_PACKAGES", "j; k; l")
     monkeypatch.setenv("SKBUILD_WHEEL_PY_API", "cp39")
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
+    monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
     monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
@@ -83,6 +85,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
+    assert settings.backport.find_python == "0"
     assert not settings.strict_config
     assert settings.experimental
     assert settings.minimum_version == "0.1"
@@ -112,6 +115,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "wheel.packages": ["j", "k", "l"],
         "wheel.py-api": "cp39",
         "wheel.expand-macos-universal-tags": "True",
+        "backport.find-python": "",
         "strict-config": "false",
         "experimental": "1",
         "minimum-version": "0.1",
@@ -135,6 +139,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
+    assert settings.backport.find_python == ""
     assert not settings.strict_config
     assert settings.experimental
     assert settings.minimum_version == "0.1"
@@ -163,6 +168,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             wheel.packages = ["j", "k", "l"]
             wheel.py-api = "cp39"
             wheel.expand-macos-universal-tags = true
+            backport.find-python = "3.18"
             strict-config = false
             experimental = true
             minimum-version = "0.1"
@@ -191,6 +197,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
+    assert settings.backport.find_python == "3.18"
     assert not settings.strict_config
     assert settings.experimental
     assert settings.minimum_version == "0.1"

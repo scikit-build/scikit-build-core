@@ -78,7 +78,8 @@ class Builder:
         if site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
 
-        if self.config.cmake.version < Version("3.24"):
+        fp_backport = self.settings.backport.find_python
+        if fp_backport and self.config.cmake.version < Version(fp_backport):
             self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
 
         if sys.platform.startswith("win32"):
