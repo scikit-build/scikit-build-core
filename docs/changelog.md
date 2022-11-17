@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 0.1.0b2
+
+A quick fix for macOS universal2 tags not expanding when enabled.
+
+### What's Changed
+
+Fixes:
+
+- Expand macos tags missing by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/105
+
+Other things:
+
+- Add tests marker for PEP 518 by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/104
+- Require C++11 only in tests by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/106
+- Xfail a non-important test by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/107
+
+**Full Changelog**:
+https://github.com/scikit-build/scikit-build-core/compare/v0.1.0b1...v0.1.0b2
+
 ## Version 0.1.0b1
 
 ### What's Changed
