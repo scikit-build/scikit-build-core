@@ -39,25 +39,30 @@ class Builder:
         Example (macOS):
             ARCHFLAGS="-arch x86_64" -> ["x86_64"]
             ARCHFLAGS="-arch x86_64 -arch arm64" -> ["x86_64", "arm64"]
-            ARCHFLAGS="-arch universal2" -> ["universal2"]
 
         Returns an empty list otherwise or if ARCHFLAGS is not set.
-
-        If the extra_tags setting is True, then the list of platforms is
-        expanded to include extra matching platforms (universal2 also produces
-        x86_64 and arm64).
         """
 
         if sys.platform.startswith("darwin"):
             archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
-            if (
-                self.settings.wheel.expand_macos_universal_tags
-                and ["universal2"] == archs
-            ):
-                archs += ["x86_64", "arm64"]
             return archs
 
         return []
+
+    def get_arch_tags(self) -> list[str]:
+        """
+        This function returns tags suitable for use in wheels. The main
+        difference between this method and get_archs() is that this returns
+        universal2 instead of separate tags for x86_64 and arm64, or all of them
+        if wheel.expand-macos-universal-tags is true.
+        """
+
+        archs = self.get_archs()
+        if sys.platform.startswith("darwin") and set(archs) == {"arm64", "x86_64"}:
+            if self.settings.wheel.expand_macos_universal_tags:
+                return ["universal2", "x86_64", "arm64"]
+            return ["universal2"]
+        return archs
 
     def configure(
         self,
