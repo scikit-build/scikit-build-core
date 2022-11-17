@@ -91,17 +91,8 @@ cmake_source_dir = "scikit_build_core.setuptools.extension:cmake_source_dir"
 
 
 [tool.hatch]
-build.exclude = ["extern"]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
-
-[tool.hatch.build.force-include]
-"extern/cmake/Copyright.txt" = "src/scikit_build_core/resources/find_python/Copyright.txt"
-"extern/cmake/Modules/FindPython" = "src/scikit_build_core/resources/find_python/FindPython"
-"extern/cmake/Modules/FindPython.cmake" = "src/scikit_build_core/resources/find_python/FindPython.cmake"
-"extern/cmake/Modules/FindPython3.cmake" = "src/scikit_build_core/resources/find_python/FindPython3.cmake"
-"extern/cmake/Modules/FindPackageHandleStandardArgs.cmake" = "src/scikit_build_core/resources/find_python/FindPackageHandleStandardArgs.cmake"
-"extern/cmake/Modules/FindPackageMessage.cmake" = "src/scikit_build_core/resources/find_python/FindPackageMessage.cmake"
 
 
 [tool.pytest.ini_options]

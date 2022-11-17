@@ -6,7 +6,6 @@ project(
   VERSION ${SKBUILD_PROJECT_VERSION})
 
 find_package(Python COMPONENTS Interpreter Development.Module)
-set(Python_SOABI ${SKBUILD_SOABI})
 
 python_add_library(_module MODULE src/module.c WITH_SOABI)
 
