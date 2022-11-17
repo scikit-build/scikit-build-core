@@ -133,10 +133,8 @@ class CMaker:
         cmake_args: Sequence[str] = (),
     ) -> None:
         if "CMAKE_GENERATOR" in self.env:
-            self.single_config = self.env["CMAKE_GENERATOR"] in {
-                "Ninja",
-                "Unix Makefiles",
-            }
+            gen = self.env["CMAKE_GENERATOR"]
+            self.single_config = gen == "Ninja" or "Makefiles" in gen
 
         _cmake_args = self._compute_cmake_args(defines or {})
 
