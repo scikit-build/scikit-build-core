@@ -122,6 +122,7 @@ markers = [
     "integration: Full package build",
     "setuptools: Tests setuptools integration",
     "virtualenv: Needs a virtualenv",
+    "isolated: Isolated builds",
 ]
 
 
