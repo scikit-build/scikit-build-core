@@ -87,8 +87,9 @@ class Builder:
             is_64bit = sys.maxsize > 2**32
             if not is_64bit:
                 cmake_args += ["-A", "Win32"]
-        else:
-            # Ninja is currently required on Unix
+        elif self.config.env.get(
+            "CMAKE_GENERATOR", "Ninja"
+        ) == "Ninja" and not self.config.env.get("CMAKE_MAKE_PROGRAM", ""):
             ninja = best_program(
                 get_ninja_programs(),
                 minimum_version=Version(self.settings.ninja.minimum_version),
@@ -101,8 +102,8 @@ class Builder:
                 make_programs = list(get_make_programs())
                 if not make_programs:
                     raise NinjaNotFoundError(msg)
-                self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(make_programs[0]))
                 self.config.env.setdefault("CMAKE_GENERATOR", "Unix Makefiles")
+                self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(make_programs[0]))
             else:
                 self.config.env.setdefault("CMAKE_GENERATOR", "Ninja")
                 self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(ninja.path))

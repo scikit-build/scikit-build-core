@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import os
 import sys
 from collections.abc import Mapping
 from pathlib import Path
@@ -54,7 +55,11 @@ def cmake_ninja_for_build_wheel(
     if cmake is None:
         packages.append(f"cmake>={cmake_min}")
 
-    if not sys.platform.startswith("win"):
+    if (
+        not sys.platform.startswith("win")
+        and os.environ.get("CMAKE_GENERATOR", "Ninja") == "Ninja"
+        and not os.environ.get("CMAKE_MAKE_PROGRAM", "")
+    ):
         ninja_min = Version(settings.ninja.minimum_version)
         ninja = best_program(
             get_ninja_programs(module=False), minimum_version=ninja_min
