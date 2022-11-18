@@ -7,6 +7,7 @@ __all__ = [
     "CMakeSettings",
     "LoggingSettings",
     "SDistSettings",
+    "BackportSettings",
     "WheelSettings",
 ]
 
