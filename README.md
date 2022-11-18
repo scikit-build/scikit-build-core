@@ -24,7 +24,7 @@ The following limitations are present compared to classic scikit-build:
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.7
 
-Some know missing features that will be developed soon:
+Some known missing features that will be developed soon:
 
 - No support for caching between builds
 - No editable mode support
@@ -106,10 +106,10 @@ More examples are in the
 ## Configuration
 
 All configuration options can be placed in `pyproject.toml`, passed via `-C`
-options in `pip` or `build` (warning: pip doesn't support list options), or set
-as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
-`-C` options, or `SKBUILD_*` for environment variables. The defaults are listed
-below:
+(build only) or `--config-settins` options in `pip` or `build` (warning: pip
+doesn't support list options), or set as environment variables.
+`tool.scikit-build` is used in toml, `skbuild.` for `-C` options, or `SKBUILD_*`
+for environment variables. The defaults are listed below:
 
 ```toml
 [tool.scikit-build]
@@ -131,7 +131,7 @@ cmake.args = []
 cmake.verbose = false
 
 # This controls the CMake build type
-build_type = "Release"
+cmake.build-type = "Release"
 
 # Display logs at or above this level.
 logging.level = "WARNING"
