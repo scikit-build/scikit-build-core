@@ -109,11 +109,10 @@ This section covers the design of scikit-build-core.
 
 Included modules:
 
-- `.cmake` `CMake`/`CMaker`: general interface for building code
+- `.cmake`: `CMake`/`CMaker` general interface for building code
 - `.fileapi`: Interface for reading the CMake File API
 - `.builder`: Generalized backend builder and related helpers
-- `.pyproject`: PEP 517 builder (used by the PEP 517 interface)
-- `.build`: The PEP 517 interface
+- `.build`: PEP 517 builder
 - `.setuptools`: The setuptools Extension interface (and PEP 517 hooks)
 - `.setuptools.build_api`: Wrapper injecting build requirements
 - `.settings`: The configuration system, reading from pyproject.toml, PEP 517

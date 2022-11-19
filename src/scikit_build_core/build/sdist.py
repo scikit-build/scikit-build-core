@@ -12,8 +12,8 @@ from pyproject_metadata import StandardMetadata
 
 from .._compat import tomllib
 from ..settings.skbuild_read_settings import SettingsReader
-from .file_processor import each_unignored_file
-from .init import setup_logging
+from ._file_processor import each_unignored_file
+from ._init import setup_logging
 
 __all__: list[str] = ["build_sdist"]
 
