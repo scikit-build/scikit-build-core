@@ -51,6 +51,8 @@ jobs:
             runs-on: ubuntu-latest
           - python-version: "3.8"
             runs-on: windows-2019
+          - python-version: "3.12-dev"
+            runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
