@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import sys
 
-from ._logging import rich_print
-from .builder.get_requires import cmake_ninja_for_build_wheel
-from .errors import FailedLiveProcessError
-
 __all__ = [
     "build_sdist",
     "build_wheel",
@@ -16,16 +12,14 @@ __all__ = [
 ]
 
 
-def __dir__() -> list[str]:
-    return __all__
-
-
 def build_wheel(
     wheel_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
-    from .pyproject.wheel import build_wheel as skbuild_build_wheel
+    from ..errors import FailedLiveProcessError
+    from .._logging import rich_print
+    from .wheel import build_wheel as skbuild_build_wheel
 
     try:
         return skbuild_build_wheel(wheel_directory, config_settings, metadata_directory)
@@ -39,7 +33,7 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    from .pyproject.sdist import build_sdist as skbuild_build_sdist
+    from .sdist import build_sdist as skbuild_build_sdist
 
     return skbuild_build_sdist(sdist_directory, config_settings)
 
@@ -55,6 +49,8 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
+    from ..builder.get_requires import cmake_ninja_for_build_wheel
+
     return ["distlib", "pathspec", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
         config_settings
     )
