@@ -16,10 +16,11 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
+@pytest.mark.isolated
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_wheel(pep518, virtualenv):
+def test_pep518_wheel(virtualenv):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
 
@@ -61,10 +62,11 @@ def test_pep518_wheel(pep518, virtualenv):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
+@pytest.mark.isolated
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_pip(pep518, virtualenv):
+def test_pep518_pip(virtualenv):
     virtualenv.run(f"python -m pip install -v {HELLO_PEP518}")
 
     version = virtualenv.run(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.util
 import subprocess
 import sys
@@ -10,28 +12,22 @@ BASE = DIR.parent
 
 
 @pytest.fixture(scope="session")
-def pep518_wheelhouse(tmpdir_factory):
-    wheelhouse = tmpdir_factory.mktemp("wheelhouse")
-    dist = tmpdir_factory.mktemp("dist")
-    subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist)],
-        cwd=str(BASE),
-        check=True,
-    )
-    (wheel_path,) = dist.visit("*.whl")
+def pep518_wheelhouse(tmppath_factory: pytest.TempPathFactory) -> str:
+    wheelhouse = tmppath_factory.mktemp("wheelhouse")
+
     subprocess.run(
         [
             sys.executable,
             "-m",
             "pip",
-            "download",
-            "-q",
-            "-d",
+            "wheel",
+            "--wheel-dir",
             str(wheelhouse),
-            str(wheel_path),
+            f"{BASE}[pyproject]",
         ],
         check=True,
     )
+
     subprocess.run(
         [
             sys.executable,
@@ -43,18 +39,11 @@ def pep518_wheelhouse(tmpdir_factory):
             str(wheelhouse),
             "build",
             "cmake",
-            "distlib",
-            "exceptiongroup",
             "ninja",
             "numpy",
-            "packaging",
-            "pathspec",
             "pybind11",
-            "pyproject-metadata",
             "rich",
             "setuptools",
-            "tomli",
-            "typing-extensions",
             "wheel",
         ],
         check=True,
@@ -63,10 +52,9 @@ def pep518_wheelhouse(tmpdir_factory):
 
 
 @pytest.fixture
-def pep518(pep518_wheelhouse, monkeypatch):
+def isolated(pep518_wheelhouse: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PIP_FIND_LINKS", pep518_wheelhouse)
     monkeypatch.setenv("PIP_NO_INDEX", "true")
-    return pep518_wheelhouse
 
 
 has_pyvenv = importlib.util.find_spec("pytest_virtualenv") is not None
@@ -74,13 +62,20 @@ has_pyvenv = importlib.util.find_spec("pytest_virtualenv") is not None
 if not has_pyvenv:
 
     @pytest.fixture
-    def virtualenv():
+    def virtualenv() -> None:
         pytest.skip("pytest-virtualenv not available")
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
-        if "virtualenv" in item.fixturenames:
+        # Ensure all tests using virtualenv are marked as such
+        if "virtualenv" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.virtualenv)
-        if "pep518" in item.nodeid:
-            item.add_marker(pytest.mark.isolated)
+
+        # Ensure all tests with a pep518 name are marked as isolated
+        if "pep518" in item.nodeid and item.get_closest_marker("isolated") is None:
+            raise AssertionError("PEP 518 tests must be isolated")
+
+        # Marking with an isolated marker turns on the isolated fixture
+        if item.get_closest_marker("isolated") is not None:
+            item.add_marker(pytest.mark.usefixtures("isolated"))
