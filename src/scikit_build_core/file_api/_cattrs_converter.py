@@ -1,8 +1,9 @@
 # pylint: disable=duplicate-code
 
+import builtins
 import json
 from pathlib import Path
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Callable, Dict, Type, TypeVar
 
 import cattr
 import cattr.preconf.json
@@ -61,11 +62,15 @@ def load_reply_dir(reply_dir: Path) -> Index:
 if __name__ == "__main__":
     import argparse
 
-    import rich
+    rich_print: Callable[[object], None]
+    try:
+        from rich import print as rich_print
+    except ModuleNotFoundError:
+        rich_print = builtins.print
 
     parser = argparse.ArgumentParser()
     parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
     args = parser.parse_args()
 
     reply = Path(args.reply_dir)
-    rich.print(load_reply_dir(reply))
+    rich_print(load_reply_dir(reply))

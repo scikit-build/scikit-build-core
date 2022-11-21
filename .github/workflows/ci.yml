@@ -60,15 +60,31 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: python -m pip install .[test,cov] cmake ninja
+        run: pip install .[test,cov] cmake ninja rich
 
       - name: Test package
-        run: python -m pytest -ra --showlocals --cov=scikit_build_core
+        run: pytest -ra --showlocals --cov=scikit_build_core
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.1
         with:
           name: ${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Min requirements
+        if: runner.os != 'Windows'
+        run: |
+          pip uninstall -y cmake ninja
+          pip install --constraint tests/constraints.txt .[test]
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        if: runner.os != 'Windows'
+        with:
+          cmake-version: "3.15.x"
+
+      - name: Test min package
+        if: runner.os != 'Windows'
+        run: pytest -ra --showlocals
 
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
