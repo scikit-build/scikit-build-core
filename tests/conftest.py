@@ -5,6 +5,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.version_info < (3, 8):
+    import importlib_metadata as metadata
+else:
+    from importlib import metadata
+
+import distlib.wheel
 import pytest
 
 DIR = Path(__file__).parent.resolve()
@@ -79,3 +85,35 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         # Marking with an isolated marker turns on the isolated fixture
         if item.get_closest_marker("isolated") is not None:
             item.add_marker(pytest.mark.usefixtures("isolated"))
+
+
+def pytest_report_header() -> str:
+    interesting_packages = {
+        "packaging",
+        "pyproject_metadata",
+        "distlib",
+        "pathspec",
+        "rich",
+        "build",
+        "pip",
+        "setuptools",
+        "wheel",
+        "pybind11",
+    }
+    valid = []
+    for package in interesting_packages:
+        try:
+            version = metadata.version(package)  # type: ignore[no-untyped-call]
+        except ModuleNotFoundError:
+            continue
+        valid.append(f"{package}=={version}")
+    reqs = " ".join(sorted(valid))
+    pkg_line = f"installed packages of interest: {reqs}"
+
+    wheel = distlib.wheel.Wheel()
+    wheel.abi = [distlib.wheel.ABI]
+    wheel.pyver = [distlib.wheel.IMPVER]
+    wheel.arch = [distlib.wheel.ARCH]
+    wheel_line = f"default wheelname: {wheel.filename}"
+
+    return "\n".join([pkg_line, wheel_line])
