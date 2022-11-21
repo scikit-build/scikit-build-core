@@ -1,8 +1,9 @@
+import builtins
 import dataclasses
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Type, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
 from .model.cache import Cache
@@ -24,7 +25,7 @@ InputDict = Dict[str, Any]
 
 
 class Converter:
-    def __init__(self, base_dir: Path):
+    def __init__(self, base_dir: Path) -> None:
         self.base_dir = base_dir
 
     def load(self) -> Index:
@@ -100,11 +101,15 @@ def load_reply_dir(path: Path) -> Index:
 if __name__ == "__main__":
     import argparse
 
-    import rich
+    rich_print: Callable[[object], None]
+    try:
+        from rich import print as rich_print
+    except ModuleNotFoundError:
+        rich_print = builtins.print
 
     parser = argparse.ArgumentParser()
     parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
     args = parser.parse_args()
 
     reply = Path(args.reply_dir)
-    rich.print(load_reply_dir(reply))
+    rich_print(load_reply_dir(reply))
