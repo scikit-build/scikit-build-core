@@ -90,7 +90,7 @@ jobs:
         run: python3.9 -m pip install .[test]
 
       - name: Test package
-        run: python3.9 -m pytest -ra --showlocals
+        run: python3.9 -m pytest -ra --showlocals -m "not virtualenv"
 
   msys:
     name: Tests on 🐍 3 • msys
@@ -148,7 +148,9 @@ jobs:
         run: python -m pip install .[test]
 
       - name: Test package
-        run: python -m pytest -ra --showlocals -k "not test_setuptools_pep518"
+        run: python -m pytest -ra --showlocals -m "not setuptools"
+        env:
+          SETUPTOOLS_USE_DISTUTILS: "local"
 
   dist:
     name: Distribution build

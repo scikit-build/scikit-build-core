@@ -33,9 +33,9 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
-    "importlib_resources; python_version<'3.9'",
-    "packaging",  # TODO: set a min version
-    "tomli; python_version<'3.11'",
+    "importlib_resources>=1.3; python_version<'3.9'",
+    "packaging>=20.9",
+    "tomli>=1.1; python_version<'3.11'",
     "typing_extensions >=3.7; python_version<'3.8'",
 ]
 # Note: for building wheels and sdists, there are also additional dependencies
@@ -44,24 +44,23 @@ dependencies = [
 
 [project.optional-dependencies]
 pyproject = [
-    "pyproject_metadata",
-    "distlib",
-    "pathspec",
+    "pyproject-metadata>=0.5",
+    "distlib>=0.3.5",
+    "pathspec>=0.10.1",
 ]
 rich = [
     "rich",
 ]
 test = [
-    "build",
+    "build[virtualenv]",
     "cattrs >=22.2.0",
-    "distlib",
+    "distlib>=0.3.5",
     "importlib_metadata; python_version<'3.8'",
-    "pathspec",
+    "pathspec>=0.10.1",
     "pybind11",
-    "pyproject-metadata",
+    "pyproject-metadata>=0.5",
     "pytest >=7.2",
     "pytest-subprocess",
-    "virtualenv",
     "rich",
     "setuptools",
     "wheel",
@@ -74,7 +73,6 @@ dev = [
     "cattrs >=22.2.0",
     "pytest >=7.2",
     "pytest-subprocess",
-    "virtualenv",
     "rich",
 ]
 docs = [
@@ -154,7 +152,7 @@ module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["distlib.*", "pathspec", "virtualenv"]
+module = ["distlib.*", "pathspec"]
 ignore_missing_imports = true
 
 
