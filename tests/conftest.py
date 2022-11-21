@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import importlib.util
+import dataclasses
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -63,13 +64,33 @@ def isolated(pep518_wheelhouse: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PIP_NO_INDEX", "true")
 
 
-has_pyvenv = importlib.util.find_spec("pytest_virtualenv") is not None
+@dataclasses.dataclass
+class VirtualEnvWrap:
+    base: Path
 
-if not has_pyvenv:
+    def run(self, expression: str, *, capture: bool = True) -> str:
+        assert capture, "Always capture for now"
+        env = os.environ.copy()
+        env["PATH"] = f"{self.base / 'bin'}{os.pathsep}{env['PATH']}"
+        env["VIRTUAL_ENV"] = str(self.base)
+        return subprocess.run(
+            expression,
+            check=True,
+            capture_output=capture,
+            text=True,
+            shell=True,
+            env=env,
+        ).stdout.strip()
 
-    @pytest.fixture
-    def virtualenv() -> None:
-        pytest.skip("pytest-virtualenv not available")
+
+@pytest.fixture
+def virtualenv(tmp_path: Path) -> VirtualEnvWrap:
+    path = tmp_path / "venv"
+    from virtualenv import cli_run
+
+    cli_run([str(path)])
+
+    return VirtualEnvWrap(path)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

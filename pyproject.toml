@@ -61,7 +61,7 @@ test = [
     "pyproject-metadata",
     "pytest >=7.2",
     "pytest-subprocess",
-    "pytest-virtualenv",
+    "virtualenv",
     "rich",
     "setuptools",
     "wheel",
@@ -74,7 +74,7 @@ dev = [
     "cattrs >=22.2.0",
     "pytest >=7.2",
     "pytest-subprocess",
-    "pytest-virtualenv",
+    "virtualenv",
     "rich",
 ]
 docs = [
@@ -154,7 +154,7 @@ module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["distlib.*", "pathspec"]
+module = ["distlib.*", "pathspec", "virtualenv"]
 ignore_missing_imports = true
 
 
