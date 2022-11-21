@@ -13,8 +13,9 @@ DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 
 
+@pytest.mark.isolated
 @pytest.mark.integration
-def test_pep518_sdist(pep518, virtualenv):
+def test_pep518_sdist():
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -67,10 +68,11 @@ def test_pep518_sdist(pep518, virtualenv):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
+@pytest.mark.isolated
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel(pep518, virtualenv, build_args):
+def test_pep518_wheel(virtualenv, build_args):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
     subprocess.run(
@@ -109,7 +111,8 @@ def test_pep518_wheel(pep518, virtualenv, build_args):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-def test_pep518_pip(pep518, virtualenv):
+@pytest.mark.isolated
+def test_pep518_pip(virtualenv):
     virtualenv.run(f"python -m pip install -v {HELLO_PEP518}")
 
     version = virtualenv.run(
