@@ -55,6 +55,7 @@ test = [
     "build",
     "cattrs >=22.2.0",
     "distlib",
+    "importlib_metadata; python_version<'3.8'",
     "pathspec",
     "pybind11",
     "pyproject-metadata",
