@@ -87,6 +87,8 @@ class CMaker:
                     value = "ON" if value else "OFF"
                     f.write(f'set({key} {value} CACHE BOOL "")\n')
                 elif isinstance(value, os.PathLike):
+                    # Convert to CMake's internal path format
+                    value = str(value).replace("\\", "/")
                     f.write(f'set({key} [===[{value}]===] CACHE PATH "")\n')
                 else:
                     f.write(f'set({key} [===[{value}]===] CACHE STRING "")\n')
@@ -114,17 +116,19 @@ class CMaker:
                 value = "ON" if value else "OFF"
                 yield f"-D{key}:BOOL={value}"
             elif isinstance(value, os.PathLike):
+                value = str(value).replace("\\", "/")
                 yield f"-D{key}:PATH={value}"
             else:
                 yield f"-D{key}={value}"
 
         if self.module_dirs:
-            module_dirs_str = ";".join(map(str, self.module_dirs))
-            yield f"-DCMAKE_MODULE_PATH={module_dirs_str}"
+            # Convert to CMake's internal path format, otherwise this breaks try_compile on Windows
+            module_dirs_str = ";".join(map(str, self.module_dirs)).replace("\\", "/")
+            yield f"-DCMAKE_MODULE_PATH:PATH={module_dirs_str}"
 
         if self.prefix_dirs:
-            prefix_dirs_str = ";".join(map(str, self.prefix_dirs))
-            yield f"-DCMAKE_PREFIX_PATH={prefix_dirs_str}"
+            prefix_dirs_str = ";".join(map(str, self.prefix_dirs)).replace("\\", "/")
+            yield f"-DCMAKE_PREFIX_PATH:PATH={prefix_dirs_str}"
 
     def configure(
         self,
