@@ -105,8 +105,8 @@ More examples are in the
 
 ## Configuration
 
-All configuration options can be placed in `pyproject.toml`, passed via `-C`
-(build only) or `--config-settins` options in `pip` or `build` (warning: pip
+All configuration options can be placed in `pyproject.toml`, passed via `-C` or
+`--config-setting` in build or `--config-settings` in `pip` (warning: pip
 doesn't support list options), or set as environment variables.
 `tool.scikit-build` is used in toml, `skbuild.` for `-C` options, or `SKBUILD_*`
 for environment variables. The defaults are listed below:
