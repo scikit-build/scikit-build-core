@@ -23,7 +23,7 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CMakeVersion:
     major: int
     minor: int
@@ -33,7 +33,7 @@ class CMakeVersion:
     isDirty: bool
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CMakePaths:
     cmake: Path
     ctest: Path
@@ -41,21 +41,21 @@ class CMakePaths:
     root: Path
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Generator:
-    multiConfig: bool
     name: str
+    multiConfig: Optional[bool] = None
     platform: Optional[str] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CMake:
     version: CMakeVersion
     paths: CMakePaths
     generator: Generator
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Reply:
     codemodel_v2: Optional[CodeModel]
     cache_v2: Optional[Cache]
@@ -63,14 +63,14 @@ class Reply:
     toolchains_v1: Optional[Toolchains]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Object:
     kind: str
     version: APIVersion
     jsonFile: Path
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Index:
     cmake: CMake
     objects: List[Object]

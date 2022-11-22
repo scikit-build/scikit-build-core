@@ -11,13 +11,13 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Target:
     id: str
     index: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class InstallRule:
     component: str
     type = str
@@ -42,7 +42,7 @@ class InstallRule:
     backtrace: Optional[int] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Node:
     file: int
     line: Optional[int] = None
@@ -50,14 +50,14 @@ class Node:
     parent: Optional[int] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class BacktraceGraph:
     nodes: List[Node]
     commands: List[str]
     files: List[Path]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Directory:
     paths: Paths
     installers: List[InstallRule]

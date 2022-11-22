@@ -50,6 +50,7 @@ class Converter:
         if (
             target in (CodeModel, Target, Cache, CMakeFiles, Directory)
             and "jsonFile" in data
+            and data["jsonFile"] is not None
         ):
             return self._load_from_json(Path(data["jsonFile"]), target)
 

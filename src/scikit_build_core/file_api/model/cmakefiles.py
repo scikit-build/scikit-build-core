@@ -11,7 +11,7 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Input:
     path: Path
     isGenerated: bool = False
@@ -19,7 +19,7 @@ class Input:
     isCMake: bool = False
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CMakeFiles:
     kind: str
     paths: Paths
