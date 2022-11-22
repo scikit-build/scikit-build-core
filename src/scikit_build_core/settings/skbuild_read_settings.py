@@ -11,7 +11,7 @@ from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
 from .skbuild_model import ScikitBuildSettings
-from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
+from .sources import ConfSource, EnvSource, FailedOption, SourceChain, TOMLSource
 
 __all__ = ["SettingsReader"]
 
@@ -47,7 +47,7 @@ class SettingsReader:
                 )
                 raise CMakeConfigError(msg)
 
-    def unrecognized_options(self) -> Generator[str, None, None]:
+    def unrecognized_options(self) -> Generator[FailedOption, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 
     def validate_may_exit(self) -> None:
@@ -59,6 +59,9 @@ class SettingsReader:
                     "[red][bold]ERROR:[/bold] Unrecognized options:", file=sys.stderr
                 )
                 for option in unrecognized:
-                    rich_print(f"  [red]{option}", file=sys.stderr)
+                    rich_print(f"  [red]{option.option}", file=sys.stderr)
                 raise SystemExit(7)
-            logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
+            logger.warning(
+                "Unrecognized options: {}",
+                ", ".join(fail.option for fail in unrecognized),
+            )

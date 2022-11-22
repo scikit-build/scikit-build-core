@@ -365,7 +365,9 @@ def test_missing_opts_conf(prefixes):
     )
     answer = ["missing", "two.missing", "other"]
     answer = [".".join([*prefixes, k]) for k in answer]
-    assert list(sources.unrecognized_options(NestedSettingChecker)) == answer
+    assert [
+        x.option for x in sources.unrecognized_options(NestedSettingChecker)
+    ] == answer
 
 
 def test_ignore_conf():
@@ -404,7 +406,7 @@ def test_missing_opts_toml():
         ),
     )
 
-    assert list(sources.unrecognized_options(NestedSettingChecker)) == [
+    assert [x.option for x in sources.unrecognized_options(NestedSettingChecker)] == [
         "tool.missing",
         "tool.two.missing",
         "tool.other",

@@ -3,14 +3,27 @@ from __future__ import annotations
 import dataclasses
 import os
 from collections.abc import Generator, Mapping, Sequence
-from typing import Any, TypeVar, Union
+from typing import Any, NamedTuple, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import Protocol, runtime_checkable
 
 T = TypeVar("T")
 
-__all__ = ["Source", "SourceChain", "ConfSource", "EnvSource", "TOMLSource"]
+__all__ = [
+    "Source",
+    "SourceChain",
+    "ConfSource",
+    "EnvSource",
+    "TOMLSource",
+    "FailedOption",
+]
+
+
+class FailedOption(NamedTuple):
+    source: str
+    option: str
+    suggestions: list[str]
 
 
 def __dir__() -> list[str]:
@@ -118,7 +131,9 @@ class Source(Protocol):
     def convert(cls, item: Any, target: type[Any]) -> object:
         ...
 
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object
+    ) -> Generator[FailedOption, None, None]:
         ...
 
 
@@ -167,20 +182,23 @@ class EnvSource:
         raise AssertionError(f"Can't convert target {target}")
 
     # pylint: disable-next=unused-argument
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object
+    ) -> Generator[FailedOption, None, None]:
         yield from ()
 
 
 def _unrecognized_dict(
     settings: Mapping[str, Any], options: object, above: Sequence[str]
-) -> Generator[str, None, None]:
+) -> Generator[FailedOption, None, None]:
     for keystr in settings:
         matches = [
             x for x in dataclasses.fields(options) if x.name.replace("_", "-") == keystr
         ]
         if not matches:
-            yield ".".join((*above, keystr))
+            yield FailedOption("TOMLSource", ".".join((*above, keystr)), [])
             continue
+
         (inner_option_field,) = matches
         inner_option = inner_option_field.type
         if dataclasses.is_dataclass(inner_option):
@@ -263,7 +281,9 @@ class ConfSource:
             return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object
+    ) -> Generator[FailedOption, None, None]:
         if not self.verify:
             return
         for keystr in self.settings:
@@ -271,13 +291,14 @@ class ConfSource:
             try:
                 outer_option = _dig_fields(options, *keys[:-1])
             except KeyError:
-                yield ".".join(keystr.split(".")[:-1])
+                option = ".".join(keystr.split(".")[:-1])
+                yield FailedOption("ConfSource", option, [])
                 continue
             if dataclasses.is_dataclass(outer_option):
                 try:
                     _dig_fields(outer_option, keys[-1])
                 except KeyError:
-                    yield keystr
+                    yield FailedOption("ConfSource", keystr, [])
                     continue
             if _get_target_raw_type(outer_option) == dict:
                 continue
@@ -319,7 +340,9 @@ class TOMLSource:
             return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object
+    ) -> Generator[FailedOption, None, None]:
         yield from _unrecognized_dict(self.settings, options, self.prefixes)
 
 
@@ -396,6 +419,8 @@ class SourceChain:
 
         return target(**prep)
 
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object
+    ) -> Generator[FailedOption, None, None]:
         for source in self.sources:
             yield from source.unrecognized_options(options)

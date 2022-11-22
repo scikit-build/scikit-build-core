@@ -221,7 +221,7 @@ def test_skbuild_settings_pyproject_toml_broken(tmp_path, monkeypatch):
     config_settings: dict[str, list[str] | str] = {}
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
-    assert list(settings_reader.unrecognized_options()) == [
+    assert [fail.option for fail in settings_reader.unrecognized_options()] == [
         "tool.scikit-build.cmake.minimum-verison",
         "tool.scikit-build.logger",
     ]
@@ -242,7 +242,7 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path):
     }
 
     settings_reader = SettingsReader(pyproject_toml, config_settings)
-    assert list(settings_reader.unrecognized_options()) == [
+    assert [fail.option for fail in settings_reader.unrecognized_options()] == [
         "cmake.minimum-verison",
         "logger",
     ]
