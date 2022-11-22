@@ -1,5 +1,4 @@
 import shutil
-import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -16,17 +15,15 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.isolated
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_wheel(virtualenv):
+def test_pep518_wheel(monkeypatch, virtualenv):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
-
-    subprocess.run(
-        [sys.executable, "-m", "build", "--wheel"], cwd=HELLO_PEP518, check=True
-    )
+    monkeypatch.chdir(HELLO_PEP518)
+    virtualenv.install("build[virtualenv]")
+    virtualenv.module("build", "--wheel")
     (wheel,) = dist.iterdir()
     assert "cmake_example-0.0.1" in wheel.name
     assert wheel.suffix == ".whl"
@@ -44,39 +41,32 @@ def test_pep518_wheel(virtualenv):
         assert so_file.startswith("cmake_example")
         print("SOFILE:", so_file)
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)"
     )
-    assert version.strip() == "0.0.1"
+    assert version == "0.0.1"
 
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
-    )
-    assert add.strip() == "3"
+    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add == "3"
 
 
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.isolated
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
 def test_pep518_pip(virtualenv):
-    virtualenv.run(f"python -m pip install -v {HELLO_PEP518}")
+    virtualenv.install("-v", HELLO_PEP518)
 
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)",
     )
-    assert version.strip() == "0.0.1"
+    assert version == "0.0.1"
 
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
+    add = virtualenv.execute(
+        "import cmake_example; print(cmake_example.add(1, 2))",
     )
-    assert add.strip() == "3"
+    assert add == "3"

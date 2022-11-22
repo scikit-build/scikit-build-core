@@ -13,7 +13,6 @@ DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 
 
-@pytest.mark.isolated
 @pytest.mark.integration
 def test_pep518_sdist():
     correct_metadata = textwrap.dedent(
@@ -68,23 +67,18 @@ def test_pep518_sdist():
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.isolated
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel(virtualenv, build_args):
+def test_pep518_wheel(virtualenv, build_args, monkeypatch):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "build",
-            "--config-setting=logging.level=DEBUG",
-            *build_args,
-        ],
-        cwd=HELLO_PEP518,
-        check=True,
+    monkeypatch.chdir(HELLO_PEP518)
+    virtualenv.install("build[virtualenv]")
+    virtualenv.module(
+        "build",
+        "--config-setting=logging.level=DEBUG",
+        *build_args,
     )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
 
@@ -101,36 +95,27 @@ def test_pep518_wheel(virtualenv, build_args):
         assert so_file.startswith("cmake_example")
         print("SOFILE:", so_file)
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)"
     )
-    assert version.strip() == "0.0.1"
+    assert version == "0.0.1"
 
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
-    )
-    assert add.strip() == "3"
+    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add == "3"
 
 
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.isolated
 def test_pep518_pip(virtualenv):
-    virtualenv.run(f"python -m pip install -v {HELLO_PEP518}")
+    virtualenv.install("-v", HELLO_PEP518)
 
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)"
     )
-    assert version.strip() == "0.0.1"
+    assert version == "0.0.1"
 
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
-    )
-    assert add.strip() == "3"
+    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add == "3"

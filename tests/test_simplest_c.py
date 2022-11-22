@@ -55,7 +55,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
@@ -78,11 +78,8 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
         # Note that generated_ignored.txt is here because all CMake installed files are
         # present, CMake has the final say.
 
-    version = virtualenv.run(
-        'python -c "from simplest import square; print(square(2))"',
-        capture=True,
-    )
-    assert version.strip() == "4.0"
+    version = virtualenv.execute("from simplest import square; print(square(2))")
+    assert version == "4.0"
 
 
 @pytest.mark.compile
@@ -106,7 +103,7 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
@@ -129,8 +126,7 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
         } == filtered_pkg
         assert {"simple.txt"} == not_a_pkg
 
-    version = virtualenv.run(
-        'python -c "from simplest import square; print(square(2))"',
-        capture=True,
+    version = virtualenv.execute(
+        "from simplest import square; print(square(2))",
     )
-    assert version.strip() == "4.0"
+    assert version == "4.0"

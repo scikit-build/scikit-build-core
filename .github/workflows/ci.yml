@@ -73,7 +73,7 @@ jobs:
       - name: Min requirements
         if: runner.os != 'Windows'
         run: |
-          pip uninstall -y cmake ninja
+          pip uninstall -y cmake
           pip install --constraint tests/constraints.txt .[test]
 
       - name: Setup cmake

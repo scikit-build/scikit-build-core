@@ -51,10 +51,9 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         else:
             assert so_file == "abi3_example.abi3.so"
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
-    output = virtualenv.run(
-        'python -c "import abi3_example; print(abi3_example.square(2))"',
-        capture=True,
+    output = virtualenv.execute(
+        "import abi3_example; print(abi3_example.square(2))",
     )
     assert output.strip() == "4.0"
