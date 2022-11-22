@@ -9,13 +9,13 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class APIVersion:
     major: int
     minor: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Paths:
     source: Path
     build: Path

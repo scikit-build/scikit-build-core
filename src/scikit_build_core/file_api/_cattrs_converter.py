@@ -36,6 +36,8 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Reply, st_hook)
 
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
+        if with_path["jsonFile"] is None:
+            return converter.structure_attrs_fromdict({}, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
         return converter.structure_attrs_fromdict(raw, t)

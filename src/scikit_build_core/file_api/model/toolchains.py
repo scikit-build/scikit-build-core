@@ -11,7 +11,7 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Implicit:
     includeDirectories: List[Path] = dataclasses.field(default_factory=list)
     linkDirectories: List[Path] = dataclasses.field(default_factory=list)
@@ -19,7 +19,7 @@ class Implicit:
     linkLibraries: List[Path] = dataclasses.field(default_factory=list)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Compiler:
     implicit: Implicit
     path: Optional[Path] = None
@@ -28,15 +28,15 @@ class Compiler:
     target: Optional[str] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Toolchain:
     language: str  # Unique, since CMake supports one toolchain per language
     compiler: Compiler
     sourceFileExtensions: List[str] = dataclasses.field(default_factory=list)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Toolchains:
-    kind: str
-    version: APIVersion
+    kind: str = "toolchains"
+    version: APIVersion = APIVersion(1, 0)
     toolchains: List[Toolchain] = dataclasses.field(default_factory=list)

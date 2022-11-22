@@ -10,13 +10,13 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Property:
     name: str
     value: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Entry:
     name: str
     value: str
@@ -24,7 +24,7 @@ class Entry:
     properties: List[Property]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Cache:
     kind: str
     version: APIVersion

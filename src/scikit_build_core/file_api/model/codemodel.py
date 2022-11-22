@@ -28,17 +28,17 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class StringCMakeVersion:
     string: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Directory:
     source: Path
     build: Path
-    jsonFile: Path
     projectIndex: int
+    jsonFile: Optional[Path] = None
     parentIndex: Optional[int] = None
     childIndexes: List[int] = dataclasses.field(default_factory=list)
     targetIndexes: List[int] = dataclasses.field(default_factory=list)
@@ -49,7 +49,7 @@ class Directory:
 # Directory is currently not resolved automatically.
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Project:
     name: str
     directoryIndexes: List[int]
@@ -58,40 +58,40 @@ class Project:
     targetIndexes: List[int] = dataclasses.field(default_factory=list)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Artifact:
     path: Path
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Prefix:
     path: Path
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Destination:
     path: Path
     backtrace: Optional[int] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Install:
     prefix: Prefix
     destinations: List[Destination]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CommandFragment:
     fragment: str
     role: str
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Sysroot:
     path: Path
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Link:
     language: str
     commandFragments: List[CommandFragment]
@@ -99,19 +99,19 @@ class Link:
     sysroot: Optional[Sysroot] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Archive:
     commandFragments: List[CommandFragment] = dataclasses.field(default_factory=list)
     lto: Optional[bool] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Dependency:
     id: str
     backtrace: Optional[int] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Source:
     path: Path
     compileGroupIndex: Optional[int] = None
@@ -120,7 +120,7 @@ class Source:
     backtrace: Optional[int] = None
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Target:
     name: str
     id: str
@@ -136,15 +136,15 @@ class Target:
     dependencies: List[Dependency] = dataclasses.field(default_factory=list)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Configuration:
     name: str
-    directories: List[Directory]
     projects: List[Project]
     targets: List[Target]
+    directories: List[Directory]
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class CodeModel:
     kind: str
     version: APIVersion
