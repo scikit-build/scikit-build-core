@@ -76,7 +76,15 @@ def test_pep518_wheel(virtualenv, build_args):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
     subprocess.run(
-        [sys.executable, "-m", "build", *build_args], cwd=HELLO_PEP518, check=True
+        [
+            sys.executable,
+            "-m",
+            "build",
+            "--config-setting=logging.level=DEBUG",
+            *build_args,
+        ],
+        cwd=HELLO_PEP518,
+        check=True,
     )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
 
