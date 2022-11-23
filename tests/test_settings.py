@@ -149,6 +149,27 @@ def test_toml():
     assert settings.nine == {"thing": 8}
 
 
+def test_all_names():
+
+    keys = [x.name for x in dataclasses.fields(SettingChecker)]
+
+    envame = [f"SKBUILD_{x.upper()}" for x in keys]
+    assert list(EnvSource("SKBUILD").all_option_names(SettingChecker)) == envame
+
+    assert list(ConfSource(settings={}).all_option_names(SettingChecker)) == keys
+    skkeys = [f"skbuild.{x}" for x in keys]
+    assert (
+        list(ConfSource("skbuild", settings={}).all_option_names(SettingChecker))
+        == skkeys
+    )
+
+    assert list(TOMLSource(settings={}).all_option_names(SettingChecker)) == keys
+    assert (
+        list(TOMLSource("skbuild", settings={}).all_option_names(SettingChecker))
+        == skkeys
+    )
+
+
 @dataclasses.dataclass
 class NestedSettingChecker:
     zero: Path
@@ -245,6 +266,28 @@ def test_toml_nested():
     assert settings.two.five == "empty"
     assert settings.two.six == Path("empty")
     assert settings.three == 3
+
+
+def test_all_names_nested():
+    keys_two = [x.name for x in dataclasses.fields(SettingChecker)]
+    ikeys = [["zero"], ["one"], *[["two", k] for k in keys_two], ["three"]]
+
+    envame = [f"SKBUILD_{'_'.join(x).upper()}" for x in ikeys]
+    assert list(EnvSource("SKBUILD").all_option_names(NestedSettingChecker)) == envame
+
+    keys = [".".join(x) for x in ikeys]
+    assert list(ConfSource(settings={}).all_option_names(NestedSettingChecker)) == keys
+    skkeys = [f"skbuild.{x}" for x in keys]
+    assert (
+        list(ConfSource("skbuild", settings={}).all_option_names(NestedSettingChecker))
+        == skkeys
+    )
+
+    assert list(TOMLSource(settings={}).all_option_names(NestedSettingChecker)) == keys
+    assert (
+        list(TOMLSource("skbuild", settings={}).all_option_names(NestedSettingChecker))
+        == skkeys
+    )
 
 
 @dataclasses.dataclass

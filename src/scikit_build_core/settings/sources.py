@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator, Iterator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
@@ -102,6 +102,18 @@ def _get_inner_type(target: type[Any]) -> type[Any]:
     raise AssertionError("Expected a list or dict")
 
 
+def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[str]]:
+    """
+    Yields each entry, like ("a", "b", "c") for a.b.c
+    """
+
+    if dataclasses.is_dataclass(target):
+        for field in dataclasses.fields(target):
+            yield from _nested_dataclass_to_names(field.type, *inner, field.name)
+    else:
+        yield list(inner)
+
+
 class Source(Protocol):
     def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
@@ -119,6 +131,9 @@ class Source(Protocol):
         ...
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        ...
+
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
         ...
 
 
@@ -169,6 +184,11 @@ class EnvSource:
     # pylint: disable-next=unused-argument
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         yield from ()
+
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        prefix = [self.prefix] if self.prefix else []
+        for names in _nested_dataclass_to_names(target):
+            yield "_".join(prefix + names).upper()
 
 
 def _unrecognized_dict(
@@ -282,6 +302,11 @@ class ConfSource:
             if _get_target_raw_type(outer_option) == dict:
                 continue
 
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        for names in _nested_dataclass_to_names(target):
+            dash_names = [name.replace("_", "-") for name in names]
+            yield ".".join((*self.prefixes, *dash_names))
+
 
 class TOMLSource:
     def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
@@ -322,10 +347,18 @@ class TOMLSource:
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         yield from _unrecognized_dict(self.settings, options, self.prefixes)
 
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        for names in _nested_dataclass_to_names(target):
+            dash_names = [name.replace("_", "-") for name in names]
+            yield ".".join((*self.prefixes, *dash_names))
+
 
 class SourceChain:
-    def __init__(self, *sources: Source):
+    def __init__(self, *sources: Source) -> None:
         self.sources = sources
+
+    def __getitem__(self, index: int) -> Source:
+        return self.sources[index]
 
     def has_item(self, *fields: str, is_dict: bool) -> bool:
         for source in self.sources:
@@ -399,3 +432,7 @@ class SourceChain:
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         for source in self.sources:
             yield from source.unrecognized_options(options)
+
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        for source in self.sources:
+            yield from source.all_option_names(target)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import textwrap
 
 import pytest
@@ -203,7 +204,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.minimum_version == "0.1"
 
 
-def test_skbuild_settings_pyproject_toml_broken(tmp_path, monkeypatch):
+def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
@@ -229,8 +230,19 @@ def test_skbuild_settings_pyproject_toml_broken(tmp_path, monkeypatch):
     with pytest.raises(SystemExit):
         settings_reader.validate_may_exit()
 
+    ex = capsys.readouterr().out
+    ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
+    assert (
+        ex.split()
+        == """\
+      ERROR: Unrecognized options in pyproject.toml:
+        tool.scikit-build.cmake.minimum-verison -> Did you mean: tool.scikit-build.cmake.minimum-version, tool.scikit-build.minimum-version, tool.scikit-build.ninja.minimum-version?
+        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.wheel, tool.scikit-build.cmake?
+      """.split()
+    )
 
-def test_skbuild_settings_pyproject_conf_broken(tmp_path):
+
+def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
@@ -249,3 +261,15 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path):
 
     with pytest.raises(SystemExit):
         settings_reader.validate_may_exit()
+
+    ex = capsys.readouterr().out
+    # Filter terminal color codes
+    ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
+    assert (
+        ex.split()
+        == """\
+      ERROR: Unrecognized options in config-settings:
+        cmake.minimum-verison -> Did you mean: cmake.minimum-version, minimum-version, ninja.minimum-version?
+        logger -> Did you mean: logging?
+      """.split()
+    )
