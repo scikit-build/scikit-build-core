@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.1.0rc2
+
+Still preparing for release. One small addition to the error printout.
+
+# ## What's Changed
+
+Features:
+
+- Did you mean? for config-settings and pyproject.toml by @henryiii in #135
+
+Testing:
+
+- Split up isolated and virtualenv fixtures by @henryiii in #134
+
 ## Version 0.1.0rc1
 
 Preparing for a non-beta release.
