@@ -18,12 +18,12 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_wheel(monkeypatch, virtualenv):
+def test_pep518_wheel(monkeypatch, isolated):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
     monkeypatch.chdir(HELLO_PEP518)
-    virtualenv.install("build[virtualenv]")
-    virtualenv.module("build", "--wheel")
+    isolated.install("build[virtualenv]")
+    isolated.module("build", "--wheel")
     (wheel,) = dist.iterdir()
     assert "cmake_example-0.0.1" in wheel.name
     assert wheel.suffix == ".whl"
@@ -41,14 +41,12 @@ def test_pep518_wheel(monkeypatch, virtualenv):
         assert so_file.startswith("cmake_example")
         print("SOFILE:", so_file)
 
-    virtualenv.install(wheel)
+    isolated.install(wheel)
 
-    version = virtualenv.execute(
-        "import cmake_example; print(cmake_example.__version__)"
-    )
+    version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"
 
-    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    add = isolated.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add == "3"
 
 
@@ -58,15 +56,15 @@ def test_pep518_wheel(monkeypatch, virtualenv):
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_pip(virtualenv):
-    virtualenv.install("-v", HELLO_PEP518)
+def test_pep518_pip(isolated):
+    isolated.install("-v", HELLO_PEP518)
 
-    version = virtualenv.execute(
+    version = isolated.execute(
         "import cmake_example; print(cmake_example.__version__)",
     )
     assert version == "0.0.1"
 
-    add = virtualenv.execute(
+    add = isolated.execute(
         "import cmake_example; print(cmake_example.add(1, 2))",
     )
     assert add == "3"

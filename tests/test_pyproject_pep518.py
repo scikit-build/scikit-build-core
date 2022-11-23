@@ -70,12 +70,12 @@ def test_pep518_sdist():
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel(virtualenv, build_args, monkeypatch):
+def test_pep518_wheel(isolated, build_args, monkeypatch):
     dist = HELLO_PEP518 / "dist"
     shutil.rmtree(dist, ignore_errors=True)
     monkeypatch.chdir(HELLO_PEP518)
-    virtualenv.install("build[virtualenv]")
-    virtualenv.module(
+    isolated.install("build[virtualenv]")
+    isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
         *build_args,
@@ -95,27 +95,23 @@ def test_pep518_wheel(virtualenv, build_args, monkeypatch):
         assert so_file.startswith("cmake_example")
         print("SOFILE:", so_file)
 
-    virtualenv.install(wheel)
+    isolated.install(wheel)
 
-    version = virtualenv.execute(
-        "import cmake_example; print(cmake_example.__version__)"
-    )
+    version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"
 
-    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    add = isolated.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add == "3"
 
 
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-def test_pep518_pip(virtualenv):
-    virtualenv.install("-v", HELLO_PEP518)
+def test_pep518_pip(isolated):
+    isolated.install("-v", HELLO_PEP518)
 
-    version = virtualenv.execute(
-        "import cmake_example; print(cmake_example.__version__)"
-    )
+    version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"
 
-    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    add = isolated.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add == "3"

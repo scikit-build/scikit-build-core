@@ -144,10 +144,19 @@ class VEnv(EnvBuilder):
 
 
 @pytest.fixture
-def virtualenv(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, None]:
+def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, None]:
     path = tmp_path / "venv"
     try:
         yield VEnv(path, wheelhouse=pep518_wheelhouse)
+    finally:
+        shutil.rmtree(path)
+
+
+@pytest.fixture
+def virtualenv(tmp_path: Path) -> Generator[VEnv, None, None]:
+    path = tmp_path / "venv"
+    try:
+        yield VEnv(path)
     finally:
         shutil.rmtree(path)
 
@@ -157,6 +166,9 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         # Ensure all tests using virtualenv are marked as such
         if "virtualenv" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.virtualenv)
+        if "isolated" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.virtualenv)
+            item.add_marker(pytest.mark.isolated)
 
 
 def pytest_report_header() -> str:
