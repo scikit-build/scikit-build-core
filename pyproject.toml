@@ -120,6 +120,7 @@ markers = [
     "integration: Full package build",
     "setuptools: Tests setuptools integration",
     "virtualenv: Needs a virtualenv",
+    "isolated: Needs an isolated virtualenv",
 ]
 
 
