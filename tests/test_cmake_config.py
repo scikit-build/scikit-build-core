@@ -3,7 +3,6 @@ from __future__ import annotations
 import functools
 import os
 import shutil
-import sys
 from collections.abc import Generator
 from pathlib import Path
 
@@ -40,9 +39,17 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
         cmake_init = config.build_dir / "CMakeInit.txt"
         yield f"-C{cmake_init}"
 
+    if config.single_config:
+        yield f"-DCMAKE_BUILD_TYPE={config.build_type}"
+
+    if config.module_dirs:
+        yield "-DCMAKE_MODULE_PATH:PATH={}".format(
+            ";".join(str(p).replace("\\", "/") for p in config.module_dirs)
+        )
+
     if config.prefix_dirs:
-        yield "-DCMAKE_PREFIX_PATH={}".format(
-            ";".join(str(p) for p in config.prefix_dirs)
+        yield "-DCMAKE_PREFIX_PATH:PATH={}".format(
+            ";".join(str(p).replace("\\", "/") for p in config.prefix_dirs)
         )
 
 
@@ -61,20 +68,18 @@ def test_init_cache(fp, tmp_path):
     )
 
     cmd = list(configure_args(config, init=True))
-    if not sys.platform.startswith("win32"):
-        cmd.append("-DCMAKE_BUILD_TYPE=Release")
-
     print("Registering:", *cmd)
     fp.register(cmd)
     config.configure()
 
     cmake_init = config.build_dir / "CMakeInit.txt"
+    source_dir_str = str(config.source_dir).replace("\\", "/")
     assert (
         cmake_init.read_text()
         == f"""\
 set(SKBUILD ON CACHE BOOL "")
 set(SKBUILD_VERSION [===[1.0.0]===] CACHE STRING "")
-set(SKBUILD_PATH [===[{config.source_dir}]===] CACHE PATH "")
+set(SKBUILD_PATH [===[{source_dir_str}]===] CACHE PATH "")
 """
     )
 
@@ -102,12 +107,32 @@ def test_cmake_args(tmp_path, fp):
     )
 
     cmd = list(configure_args(config))
-    if not sys.platform.startswith("win32"):
-        cmd.append("-DCMAKE_BUILD_TYPE=Release")
     cmd.append("-DSOMETHING=one")
     print("Registering:", *cmd)
     fp.register(cmd)
 
     config.configure(cmake_args=["-DSOMETHING=one"])
+
+    assert len(fp.calls) == 2
+
+
+@pytest.mark.configure
+def test_cmake_paths(tmp_path, fp):
+    fp.register([cmake_path(), "--version"], stdout="3.15.0")
+
+    config = CMaker(
+        CMake.default_search(),
+        source_dir=DIR / "packages/simple_pure",
+        build_dir=tmp_path / "build",
+        build_type="Release",
+        prefix_dirs=[tmp_path / "prefix"],
+        module_dirs=[tmp_path / "module"],
+    )
+
+    cmd = list(configure_args(config))
+    print("Registering:", *cmd)
+    fp.register(cmd)
+
+    config.configure()
 
     assert len(fp.calls) == 2
