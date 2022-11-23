@@ -78,11 +78,11 @@ def test_pep517_sdist_hash(tmp_path, monkeypatch):
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
     if sys.version_info < (3, 9):
         assert (
-            hash == "0f2ef937723753cb4df8154cddfc71d9b6451738f55392b184a0ca49ed8b2364"
+            hash == "600ed996e51642027557759ee9eeb31b5cae1f443313f5f7d0a40d9cc9cbdd13"
         )
     else:
         assert (
-            hash == "f22eaa307456a812fce6b9bd7386189c9c7e3bd10bbc6feee4f5ab0b1733b272"
+            hash == "4f47a4e797db1cb8e15afb368360d5f2ac5ae4b6c7e38e0771f8eba65fab65e4"
         )
 
 
@@ -146,11 +146,11 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch):
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
     if sys.version_info < (3, 9):
         assert (
-            hash == "df1d1d2fd7a8a438d506d7e734f00790dd2c37e52cde9874cc2300dd2c21660e"
+            hash == "505cb72c11e9b8344e6d467aef94f3e96d66d1c618a0703e4fcdbb623f28c23c"
         )
     else:
         assert (
-            hash == "03273c438a0215e476060f6dfa21e2e87e410e10f4f17ad706fdf37b43612942"
+            hash == "68703d101d8185d86ec7496285ddf46e302166c60a10372682de82f70bba847a"
         )
 
 
