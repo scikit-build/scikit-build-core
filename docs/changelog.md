@@ -1,5 +1,30 @@
 # Changelog
 
+## Version 0.1.0rc1
+
+Preparing for a non-beta release.
+
+### What's Changed
+
+Fixes:
+
+- Paths on Windows by @henryiii in #126
+- Support pre-set generators by @henryiii in #118
+- Warn on scripts with invalid shebangs by @henryiii in #132
+- Minimum constraints now set by @henryiii in #129
+
+Refactoring:
+
+- Rename pyproject -> build dir by @henryiii in #121
+
+Testing:
+
+- Add msys2 to the CI by @henryiii in #119
+- Add test report header by @henryiii in #124
+- Test min constraints without Windows by @henryiii in #129
+- Remove pytest-virtualenv by @henryiii in #125 and #131
+- Mark unimportant test xfail non-strict for conda-forge by @henryiii in #108
+
 ## Version 0.1.0b2
 
 A quick fix for macOS universal2 tags not expanding when enabled.
