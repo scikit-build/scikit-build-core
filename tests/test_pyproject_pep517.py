@@ -191,17 +191,15 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
-    version = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.__version__)"',
-        capture=True,
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)",
     )
     assert version.strip() == "0.0.1"
 
-    add = virtualenv.run(
-        'python -c "import cmake_example; print(cmake_example.add(1, 2))"',
-        capture=True,
+    add = virtualenv.execute(
+        "import cmake_example; print(cmake_example.add(1, 2))",
     )
     assert add.strip() == "3"
 

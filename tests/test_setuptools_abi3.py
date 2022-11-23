@@ -34,6 +34,8 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     assert wheel == dist / out
     assert "-cp37-abi3-" in out
 
+    assert virtualenv.execute("print('hello')") == "hello"
+
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
             p = zipfile.Path(f)
@@ -46,10 +48,7 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         )
         assert so_file in file_names
 
-    virtualenv.run(f"python -m pip install {wheel}")
+    virtualenv.install(wheel)
 
-    output = virtualenv.run(
-        'python -c "import abi3_example; print(abi3_example.square(2))"',
-        capture=True,
-    )
-    assert output.strip() == "4.0"
+    output = virtualenv.execute("import abi3_example; print(abi3_example.square(2))")
+    assert output == "4.0"
