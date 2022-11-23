@@ -43,7 +43,7 @@ def get_python_library() -> Path | None:
         if libpath.is_file():
             return libpath
 
-    logger.error(
+    logger.warning(
         "Can't find a Python library, got libdir={}, ldlibrary={}, multiarch={}, masd={}",
         libdir,
         ldlibrary,
