@@ -196,6 +196,15 @@ def build_wheel(
             exclude=settings.sdist.exclude,
         )
 
+        for item in wheel_dirs["scripts"].iterdir():
+            with item.open("rb") as f:
+                content = f.read(len(b"#!python"))
+                if content.startswith(b"#!/") and not b"#!python" != content:
+                    logger.warning(
+                        "Files in scripts/ are not post-processed yet for shabang fixes"
+                    )
+                    break
+
         _write_wheel_metadata(packages_dir=wheel_dirs["platlib"], metadata=metadata)
 
         tags = WheelTag.compute_best(
