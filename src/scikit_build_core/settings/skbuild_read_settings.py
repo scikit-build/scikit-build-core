@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import sys
 from collections.abc import Generator, Mapping
 from pathlib import Path
@@ -50,15 +51,37 @@ class SettingsReader:
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 
+    def suggestions(self, index: int) -> dict[str, list[str]]:
+        all_options = list(self.sources[index].all_option_names(ScikitBuildSettings))
+        result: dict[str, list[str]] = {
+            k: [] for k in self.sources[index].unrecognized_options(ScikitBuildSettings)
+        }
+        for option in result:
+            possibilities = {
+                ".".join(k.split(".")[: option.count(".") + 1]) for k in all_options
+            }
+            result[option] = difflib.get_close_matches(option, possibilities, n=3)
+
+        return result
+
+    def print_suggestions(self) -> None:
+        for index in (1, 2):
+            name = {1: "config-settings", 2: "pyproject.toml"}[index]
+            suggestions_dict = self.suggestions(index)
+            if suggestions_dict:
+                rich_print(f"[red][bold]ERROR:[/bold] Unrecognized options in {name}:")
+                for option, suggestions in suggestions_dict.items():
+                    rich_print(f"  [red]{option}", end="")
+                    if suggestions:
+                        sugstr = ", ".join(suggestions)
+                        rich_print(f"[yellow] -> Did you mean: {sugstr}?", end="")
+                    rich_print()
+
     def validate_may_exit(self) -> None:
         unrecognized = list(self.unrecognized_options())
         if unrecognized:
             if self.settings.strict_config:
                 sys.stdout.flush()
-                rich_print(
-                    "[red][bold]ERROR:[/bold] Unrecognized options:", file=sys.stderr
-                )
-                for option in unrecognized:
-                    rich_print(f"  [red]{option}", file=sys.stderr)
+                self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
