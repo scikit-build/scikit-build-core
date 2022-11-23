@@ -39,12 +39,12 @@ def test_pep518_sdist():
         if sys.version_info < (3, 9):
             assert (
                 hash
-                == "0f2ef937723753cb4df8154cddfc71d9b6451738f55392b184a0ca49ed8b2364"
+                == "600ed996e51642027557759ee9eeb31b5cae1f443313f5f7d0a40d9cc9cbdd13"
             )
         else:
             assert (
                 hash
-                == "f22eaa307456a812fce6b9bd7386189c9c7e3bd10bbc6feee4f5ab0b1733b272"
+                == "4f47a4e797db1cb8e15afb368360d5f2ac5ae4b6c7e38e0771f8eba65fab65e4"
             )
 
     with tarfile.open(sdist) as f:

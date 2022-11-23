@@ -48,8 +48,8 @@ Features over classic Scikit-build:
 - No dependency on setuptools, distutils, or wheel in build mode.
 - Powerful config system, including config options support in build mode.
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
-- FindPython is backported if running on CMake < 3.24 (included via hatchling in
-  a submodule)
+- FindPython is backported if running on CMake 3.24 (included via hatchling in a
+  submodule)
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
@@ -83,7 +83,7 @@ printouts) or `pyproject` (pre-load some dependencies) extras if you want.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.24)
+cmake_minimum_required(VERSION 3.15...3.25)
 
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C VERSION ${SKBUILD_PROJECT_VERSION})
 
