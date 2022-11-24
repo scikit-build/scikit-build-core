@@ -10,7 +10,11 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
-from ..builder.sysconfig import get_python_include_dir, get_python_library
+from ..builder.sysconfig import (
+    get_cmake_platform,
+    get_python_include_dir,
+    get_python_library,
+)
 from ..cmake import CMaker
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_make_programs, get_ninja_programs
@@ -82,11 +86,12 @@ class Builder:
         if fp_backport and self.config.cmake.version < Version(fp_backport):
             self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
 
-        if sys.platform.startswith("win32"):
-            # TODO: support cross-compilation
-            is_64bit = sys.maxsize > 2**32
-            if not is_64bit:
-                cmake_args += ["-A", "Win32"]
+        if sys.platform.startswith("win32") and "Visual Studio" in self.config.env.get(
+            "CMAKE_GENERATOR", "Visual Studio"
+        ):
+            self.config.env.setdefault(
+                "CMAKE_GENERATOR_PLATFORM", get_cmake_platform(self.config.env)
+            )
         elif self.config.env.get(
             "CMAKE_GENERATOR", "Ninja"
         ) == "Ninja" and not self.config.env.get("CMAKE_MAKE_PROGRAM", ""):

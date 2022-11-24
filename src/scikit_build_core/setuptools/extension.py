@@ -24,15 +24,6 @@ def __dir__() -> list[str]:
     return __all__
 
 
-# Convert distutils Windows platform specifiers to CMake -A arguments
-PLAT_TO_CMAKE = {
-    "win32": "Win32",
-    "win-amd64": "x64",
-    "win-arm32": "ARM",
-    "win-arm64": "ARM64",
-}
-
-
 # A CMakeExtension needs a sourcedir instead of a file list.
 # The name must be the _single_ output extension from the CMake build.
 # The sourcedir is relative to the setup.py directory, where the CMakeLists.txt lives
