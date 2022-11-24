@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.1.0
+
+First non-prerelease! Scikit-build-core is ready to be used. The remaining
+limitations (like support for editable mode and build caching) will be addressed
+in future releases. If you set `tool.scikit-build.minimum-version = "0.1"`,
+scikit-build-core will try to respect old defaults when new versions are
+released.
+
 ## Version 0.1.0rc2
 
 Still preparing for release. One small addition to the error printout.
