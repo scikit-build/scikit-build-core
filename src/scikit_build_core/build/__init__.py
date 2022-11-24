@@ -17,8 +17,8 @@ def build_wheel(
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
-    from ..errors import FailedLiveProcessError
     from .._logging import rich_print
+    from ..errors import FailedLiveProcessError
     from .wheel import build_wheel as skbuild_build_wheel
 
     try:

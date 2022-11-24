@@ -128,7 +128,7 @@ class Builder:
             cache_config["PYTHON_LIBRARY"] = python_library
 
         # Modern Find Python
-        for prefix in ["Python", "Python3"]:
+        for prefix in ("Python", "Python3"):
             cache_config[f"{prefix}_EXECUTABLE"] = sys.executable
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
