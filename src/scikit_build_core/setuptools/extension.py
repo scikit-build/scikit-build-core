@@ -126,7 +126,7 @@ def cmake_extensions(
     settings = SettingsReader(Path("pyproject.toml"), {}).settings
 
     assert attr == "cmake_extensions"
-    assert len(value) > 0
+    assert value
 
     assert (
         not settings.wheel.expand_macos_universal_tags

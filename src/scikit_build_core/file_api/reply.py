@@ -33,7 +33,7 @@ class Converter:
         Load the newest index.json file and return the Index object.
         """
         index_file = sorted(self.base_dir.glob("index-*"))[-1]
-        with open(index_file, encoding="utf-8") as f:
+        with index_file.open(encoding="utf-8") as f:
             data = json.load(f)
 
         return self.make_class(data, Index)
