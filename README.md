@@ -1,16 +1,16 @@
 # scikit-build-core
 
 [![Actions Status][actions-badge]][actions-link]
-[![Documentation Status][rtd-badge]][rtd-link]
 [![Code style: black][black-badge]][black-link]
 [![codecov][codecov-badge]][codecov-link]
+[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 
-<!-- Not implemented yet
 [![PyPI version][pypi-version]][pypi-link]
-[![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
-[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+<!-- Not implemented yet
+[![Documentation Status][rtd-badge]][rtd-link]
+[![Conda-Forge][conda-badge]][conda-link]
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
@@ -18,6 +18,21 @@
 is experimental and likely to move to a separate package), and internal API is
 still being solidified. A future version of this package will support creating
 new build extensions.
+
+Features over classic Scikit-build:
+
+- Better warnings, errors, and logging
+- No warning about unused variables
+- Automatically adds Ninja and/or CMake only as required
+- No dependency on setuptools, distutils, or wheel in build mode.
+- Powerful config system, including config options support in build mode.
+- Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
+- FindPython is backported if running on CMake < 3.24 (included via hatchling in
+  a submodule, configurable)
+- Limited API / Stable ABI and pythonless tags supported via config option
+- No slow generator search, ninja/make or MSVC used by default, respects
+  `CMAKE_GENERATOR`
+- SDists are reproducible by default (UNIX, Python 3.9+)
 
 The following limitations are present compared to classic scikit-build:
 
@@ -36,26 +51,11 @@ Some known missing features that will be developed soon:
 
 Other backends are also planned:
 
-- Setuptools integration highly experimental currently
+- Setuptools integration highly experimental
 - The extensionlib integration is missing
 - No hatchling plugin yet
 
-Features over classic Scikit-build:
-
-- Better warnings, errors, and logging
-- No warning about unused variables
-- Automatically adds Ninja and/or CMake only as required
-- No dependency on setuptools, distutils, or wheel in build mode.
-- Powerful config system, including config options support in build mode.
-- Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
-- FindPython is backported if running on CMake < 3.24 (included via hatchling in
-  a submodule, configurable)
-- Limited API / Stable ABI and pythonless tags supported via config option
-- No slow generator search, ninja/make or MSVC used by default, respects
-  `CMAKE_GENERATOR`
-- SDists are reproducible by default (UNIX, Python 3.9+)
-
-Currently, the recommended interface is the PEP 517 interface. There is also a
+The recommended interface is the PEP 517 interface. There is also a
 setuptools-based interface that is being developed to provide a transition path
 for classic scikit-build.
 
@@ -199,7 +199,7 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
 [conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
 [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
-[github-discussions-link]:  https://github.com/scikit-build/scikit-build-core/discussions
+[github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
 [gitter-badge]:             https://badges.gitter.im/https://github.com/scikit-build/scikit-build-core/community.svg
 [gitter-link]:              https://gitter.im/https://github.com/scikit-build/scikit-build-core/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
 [codecov-badge]:            https://codecov.io/gh/scikit-build/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
@@ -209,6 +209,5 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [pypi-version]:             https://badge.fury.io/py/scikit-build-core.svg
 [rtd-badge]:                https://readthedocs.org/projects/scikit-build-core/badge/?version=latest
 [rtd-link]:                 https://scikit-build-core.readthedocs.io/en/latest/?badge=latest
-[sk-badge]:                 https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
 [OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
 <!-- prettier-ignore-end -->
