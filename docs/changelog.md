@@ -1,5 +1,17 @@
 # Changelog
 
+### What's Changed
+
+Fixes:
+
+- Windows non-default generators by @henryiii in #137
+- Compute the correct default generator for CMake by @henryiii in #139
+
+Testing:
+
+- Support make missing by @henryiii in #140
+- Clear `CMAKE_GENERATOR` by @henryiii in #141
+
 ## Version 0.1.0
 
 First non-prerelease! Scikit-build-core is ready to be used. The remaining
@@ -12,7 +24,7 @@ released.
 
 Still preparing for release. One small addition to the error printout.
 
-# ## What's Changed
+### What's Changed
 
 Features:
 

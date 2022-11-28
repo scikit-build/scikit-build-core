@@ -11,6 +11,7 @@ from packaging.version import Version
 
 from .._compat import tomllib
 from .._compat.typing import Literal
+from .._logging import logger
 from ..program_search import (
     best_program,
     get_cmake_programs,
@@ -54,6 +55,8 @@ def cmake_ninja_for_build_wheel(
     cmake = best_program(get_cmake_programs(module=False), minimum_version=cmake_min)
     if cmake is None:
         packages.append(f"cmake>={cmake_min}")
+    else:
+        logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
 
     if (
         not sys.platform.startswith("win")
@@ -71,5 +74,11 @@ def cmake_ninja_for_build_wheel(
                 or not list(get_make_programs())
             ):
                 packages.append(f"ninja>={ninja_min}")
+            else:
+                logger.debug(
+                    "Found system Make & not on known platform - not requiring PyPI package for Ninja"
+                )
+        else:
+            logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
 
     return packages
