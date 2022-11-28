@@ -10,6 +10,7 @@ Fixes:
 Testing:
 
 - Support make missing by @henryiii in #140
+- Clear `CMAKE_GENERATOR` by @henryiii in #141
 
 ## Version 0.1.0
 
