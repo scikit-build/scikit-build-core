@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -13,6 +16,21 @@ from scikit_build_core.file_api.query import stateless_query
 from scikit_build_core.file_api.reply import load_reply_dir
 
 DIR = Path(__file__).parent.absolute()
+
+has_make = shutil.which("make") is not None or shutil.which("gmake") is not None
+has_ninja = shutil.which("ninja") is not None
+
+
+def prepare_env_or_skip() -> None:
+    if (
+        "CMAKE_GENERATOR" not in os.environ
+        and not sys.platform.startswith("win32")
+        and not has_make
+    ):
+        if has_ninja:
+            os.environ["CMAKE_GENERATOR"] = "Ninja"
+        else:
+            pytest.skip("No build system found")
 
 
 @pytest.mark.configure
