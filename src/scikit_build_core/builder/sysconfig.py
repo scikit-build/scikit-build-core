@@ -1,12 +1,29 @@
 from __future__ import annotations
 
 import os
+import sys
 import sysconfig
+from collections.abc import Mapping
 from pathlib import Path
 
 from .._logging import logger
 
-__all__ = ["get_python_include_dir", "get_python_library"]
+__all__ = ["get_python_include_dir", "get_python_library", "get_cmake_platform"]
+
+
+TARGET_TO_PLAT = {
+    "x86": "win32",
+    "x64": "win-amd64",
+    "arm": "win-arm32",
+    "arm64": "win-arm64",
+}
+
+PLAT_TO_CMAKE = {
+    "win32": "Win32",
+    "win-amd64": "x64",
+    "win-arm32": "ARM",
+    "win-arm64": "ARM64",
+}
 
 
 def __dir__() -> list[str]:
@@ -55,3 +72,38 @@ def get_python_library() -> Path | None:
 
 def get_python_include_dir() -> Path:
     return Path(sysconfig.get_path("include"))
+
+
+def get_host_platform() -> str:
+    """
+    Return a string that identifies the current platform. This mimics
+    setuptools get_host_platform (without 3.8 aix compat).
+    """
+
+    if sys.version_info < (3, 8):
+        if os.name == "nt":
+            if "(arm)" in sys.version.lower():
+                return "win-arm32"
+            if "(arm64)" in sys.version.lower():
+                return "win-arm64"
+
+    return sysconfig.get_platform()
+
+
+def get_platform(env: Mapping[str, str] | None = None) -> str:
+    """
+    Return the Python platform name for a platform, respecting VSCMD_ARG_TGT_ARCH.
+    """
+    if env is None:
+        env = os.environ
+    if os.name == "nt" and "VSCMD_ARG_TGT_ARCH" in env:
+        return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
+    return get_host_platform()
+
+
+def get_cmake_platform(env: Mapping[str, str] | None) -> str:
+    """
+    Return the CMake platform name for a platform, respecting VSCMD_ARG_TGT_ARCH.
+    """
+    plat = get_platform(env)
+    return PLAT_TO_CMAKE.get(plat, plat)
