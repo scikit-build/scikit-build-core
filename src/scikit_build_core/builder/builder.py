@@ -10,16 +10,11 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
-from ..builder.sysconfig import (
-    get_cmake_platform,
-    get_python_include_dir,
-    get_python_library,
-)
 from ..cmake import CMaker
-from ..errors import NinjaNotFoundError
-from ..program_search import best_program, get_make_programs, get_ninja_programs
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
+from .generator import set_environment_for_gen
+from .sysconfig import get_python_include_dir, get_python_library
 
 __all__: list[str] = ["Builder"]
 
@@ -86,32 +81,7 @@ class Builder:
         if fp_backport and self.config.cmake.version < Version(fp_backport):
             self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
 
-        if sys.platform.startswith("win32") and "Visual Studio" in self.config.env.get(
-            "CMAKE_GENERATOR", "Visual Studio"
-        ):
-            self.config.env.setdefault(
-                "CMAKE_GENERATOR_PLATFORM", get_cmake_platform(self.config.env)
-            )
-        elif self.config.env.get(
-            "CMAKE_GENERATOR", "Ninja"
-        ) == "Ninja" and not self.config.env.get("CMAKE_MAKE_PROGRAM", ""):
-            ninja = best_program(
-                get_ninja_programs(),
-                minimum_version=Version(self.settings.ninja.minimum_version),
-            )
-            if ninja is None:
-                msg = "Ninja or make is required to build"
-                if not self.settings.ninja.make_fallback:
-                    raise NinjaNotFoundError(msg)
-
-                make_programs = list(get_make_programs())
-                if not make_programs:
-                    raise NinjaNotFoundError(msg)
-                self.config.env.setdefault("CMAKE_GENERATOR", "Unix Makefiles")
-                self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(make_programs[0]))
-            else:
-                self.config.env.setdefault("CMAKE_GENERATOR", "Ninja")
-                self.config.env.setdefault("CMAKE_MAKE_PROGRAM", str(ninja.path))
+        set_environment_for_gen(self.config.cmake, self.config.env, self.settings.ninja)
 
         cache_config: dict[str, str | Path] = {
             "SKBUILD": "2",
