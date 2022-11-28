@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -12,8 +14,26 @@ from scikit_build_core.cmake import CMake, CMaker
 DIR = Path(__file__).parent.absolute()
 
 
+has_make = shutil.which("make") is not None or shutil.which("gmake") is not None
+has_ninja = shutil.which("ninja") is not None
+
+
+def prepare_env_or_skip() -> None:
+    if (
+        "CMAKE_GENERATOR" not in os.environ
+        and not sys.platform.startswith("win32")
+        and not has_make
+    ):
+        if has_ninja:
+            os.environ["CMAKE_GENERATOR"] = "Ninja"
+        else:
+            pytest.skip("No build system found")
+
+
 @pytest.fixture(scope="session")
 def config(tmp_path_factory):
+    prepare_env_or_skip()
+
     tmp_path = tmp_path_factory.mktemp("build")
 
     build_dir = tmp_path / "build"
@@ -72,6 +92,8 @@ def test_install(config):
 
 @pytest.mark.configure
 def test_variable_defined(tmp_path, capfd):
+    prepare_env_or_skip()
+
     build_dir = tmp_path / "build"
 
     cmake = CMake.default_search(minimum_version=Version("3.15"))
