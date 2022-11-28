@@ -21,6 +21,7 @@ def which_mock(name: str) -> str | None:
 def test_get_requires_for_build_wheel(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.14.0")
     assert cmake_ninja_for_build_wheel() == ["cmake>=3.15", *ninja]
 
@@ -28,6 +29,7 @@ def test_get_requires_for_build_wheel(fp, monkeypatch):
 def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
     assert cmake_ninja_for_build_wheel() == [*ninja]
 
@@ -35,6 +37,7 @@ def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
 def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
     config = {"cmake.minimum-version": "3.20"}
     assert cmake_ninja_for_build_wheel(config) == [
@@ -53,5 +56,6 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
     )
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
     assert cmake_ninja_for_build_wheel() == ["cmake>=3.21", *ninja]
