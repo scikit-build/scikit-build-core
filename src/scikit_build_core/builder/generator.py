@@ -69,6 +69,8 @@ def set_environment_for_gen(
 
     if sys.platform.startswith("win32"):
         if "Visual Studio" in env.get("CMAKE_GENERATOR", default):
+            # This must also be set when *_PLATFORM is set.
+            env.setdefault("CMAKE_GENERATOR", default)
             env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
     elif env.get("CMAKE_GENERATOR", "Ninja") == "Ninja" and not env.get(
         "CMAKE_MAKE_PROGRAM", ""
