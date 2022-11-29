@@ -135,6 +135,7 @@ def build_wheel(
             "data": wheel_dir / "data",
             "headers": wheel_dir / "headers",
             "scripts": wheel_dir / "scripts",
+            "null": wheel_dir / "null",
         }
 
         for wheel_dir in wheel_dirs.values():
@@ -212,7 +213,10 @@ def build_wheel(
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
         )
-        wheel.build({k: str(v) for k, v in wheel_dirs.items()}, tags=tags.tags_dict())
+        wheel.build(
+            {k: str(v) for k, v in wheel_dirs.items() if k != "null"},
+            tags=tags.tags_dict(),
+        )
 
     wheel_filename: str = wheel.filename
     return wheel_filename
