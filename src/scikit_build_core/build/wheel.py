@@ -138,8 +138,8 @@ def build_wheel(
             "null": wheel_dir / "null",
         }
 
-        for wheel_dir in wheel_dirs.values():
-            wheel_dir.mkdir(parents=True)
+        for d in wheel_dirs.values():
+            d.mkdir(parents=True)
 
         if ".." in settings.wheel.install_dir:
             raise AssertionError("wheel.install_dir must not contain '..'")
@@ -148,7 +148,7 @@ def build_wheel(
                 raise AssertionError(
                     "Experimental features must be enabled to use absolute paths in wheel.install_dir"
                 )
-            if not settings.wheel.install_dir[1:].startswith(tuple(wheel_dirs)):
+            if not settings.wheel.install_dir[1:].split("/")[0] in wheel_dirs:
                 raise AssertionError("Must target a valid wheel directory")
             install_dir = wheel_dir / settings.wheel.install_dir[1:]
         else:
