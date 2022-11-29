@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.1.2
+
+### What's changed
+
+Features:
+
+- Provide null directory (not installed) by @henryiii in #143
+
+Fixes:
+
+- Fix issue with 32-bit Windows in 0.1.1 by @henryiii in #142
+
+## Version 0.1.1
+
 ### What's Changed
 
 Fixes:
