@@ -187,7 +187,11 @@ jobs:
       - uses: hynek/build-and-inspect-python-package@v1
 
   pass:
+    if: always()
     needs: [lint, checks, cygwin, dist]
     runs-on: ubuntu-latest
     steps:
-      - run: echo "All jobs passed"
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
