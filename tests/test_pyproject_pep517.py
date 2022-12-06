@@ -38,14 +38,6 @@ mark_hashes_different = pytest.mark.xfail(
 )
 
 
-_each_unignored_file = _file_processor.each_unignored_file
-
-
-def each_unignored_file_reversed(*args, **kwargs):
-    paths = list(_each_unignored_file(*args, **kwargs))
-    return reversed(paths)
-
-
 def test_pep517_sdist(tmp_path, monkeypatch):
 
     dist = tmp_path.resolve() / "dist"
@@ -150,10 +142,11 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
     if Path("dist").is_dir():
         shutil.rmtree("dist")
 
-    if reverse_order:
-        monkeypatch.setattr(
-            _file_processor, "each_unignored_file", each_unignored_file_reversed
-        )
+    _each_unignored_file = _file_processor.each_unignored_file
+    def each_unignored_file_ordered(*args, **kwargs):
+        return sorted(_each_unignored_file(*args, **kwargs), reverse=reverse_order)
+
+    monkeypatch.setattr(_file_processor, 'each_unignored_file', each_unignored_file_ordered)
 
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
