@@ -143,10 +143,13 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
         shutil.rmtree("dist")
 
     _each_unignored_file = _file_processor.each_unignored_file
+
     def each_unignored_file_ordered(*args, **kwargs):
         return sorted(_each_unignored_file(*args, **kwargs), reverse=reverse_order)
 
-    monkeypatch.setattr(_file_processor, 'each_unignored_file', each_unignored_file_ordered)
+    monkeypatch.setattr(
+        _file_processor, "each_unignored_file", each_unignored_file_ordered
+    )
 
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
