@@ -105,7 +105,6 @@ def build_sdist(
                 exclude=settings.sdist.exclude,
             )
         )
-        paths.sort()
         for filepath in paths:
             tar.add(
                 filepath,
