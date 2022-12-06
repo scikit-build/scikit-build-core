@@ -98,9 +98,13 @@ def build_sdist(
         tar = stack.enter_context(
             tarfile.TarFile(fileobj=gzip_container, mode="w", format=tarfile.PAX_FORMAT)
         )
-        for filepath in each_unignored_file(
-            Path("."), include=settings.sdist.include, exclude=settings.sdist.exclude
-        ):
+        paths = list(
+            each_unignored_file(
+                Path("."), include=settings.sdist.include, exclude=settings.sdist.exclude
+            )
+        )
+        paths.sort()
+        for filepath in paths:
             tar.add(
                 filepath,
                 arcname=srcdirname / filepath,
