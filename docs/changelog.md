@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.1.3
+
+### What's Changed
+
+Fixes:
+
+- Issue with experimental extra directory targeting by @henryiii in #144
+- Sort SDist filepaths for reproducibility by @agoose77 in #153
+
 ## Version 0.1.2
 
 ### What's changed
