@@ -26,7 +26,7 @@ def pylint(session: nox.Session) -> None:
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
     session.install("-e.[dev,test]", "pylint")
-    session.run("pylint", "src", *session.posargs)
+    session.run("pylint", "scikit_build_core", *session.posargs)
 
 
 @nox.session(reuse_venv=True)

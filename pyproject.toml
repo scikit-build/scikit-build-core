@@ -160,7 +160,8 @@ profile = "black"
 
 
 [tool.pylint]
-master.py-version = "3.7"
+py-version = "3.7"
+jobs = "0"
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 good-names = ["f"]
