@@ -19,6 +19,8 @@ def which_mock(name: str) -> str | None:
 
 
 def test_get_requires_for_build_wheel(fp, monkeypatch):
+    # This needs to be passed due to packaging.tags 22 extra checks if macos 10.16 is reported
+    fp.pass_command([sys.executable, fp.any()])
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
@@ -27,6 +29,7 @@ def test_get_requires_for_build_wheel(fp, monkeypatch):
 
 
 def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
+    fp.pass_command([sys.executable, fp.any()])
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
@@ -35,6 +38,7 @@ def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
 
 
 def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
+    fp.pass_command([sys.executable, fp.any()])
     cmake = Path("cmake/path").resolve()
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
@@ -47,6 +51,7 @@ def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
 
 
 def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
+    fp.pass_command([sys.executable, fp.any()])
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
