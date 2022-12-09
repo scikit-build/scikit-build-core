@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scikit_build_core.build import build_sdist, build_wheel
+from scikit_build_core.build import _file_processor, build_sdist, build_wheel
 
 DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
@@ -134,12 +134,22 @@ def test_pep517_sdist_time_hash_nonreproducable(tmp_path, monkeypatch):
 
 
 @mark_hashes_different
-def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch):
+@pytest.mark.parametrize("reverse_order", [False, True])
+def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
     dist = tmp_path.resolve() / "dist"
     monkeypatch.chdir(HELLO_PEP518)
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
     if Path("dist").is_dir():
         shutil.rmtree("dist")
+
+    _each_unignored_file = _file_processor.each_unignored_file
+
+    def each_unignored_file_ordered(*args, **kwargs):
+        return sorted(_each_unignored_file(*args, **kwargs), reverse=reverse_order)
+
+    monkeypatch.setattr(
+        _file_processor, "each_unignored_file", each_unignored_file_ordered
+    )
 
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
