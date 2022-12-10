@@ -122,9 +122,9 @@ ninja.minimum-version = "1.5"
 # fallback on platforms without a known ninja wheel.
 ninja.make-fallback = true
 
-# Extra args for CMake. Pip, unlike build, does not support lists, so simicolon
+# Extra args for CMake. Pip, unlike build, does not support lists, so semicolon
 # can be used to separate. Setting this in config or envvar will override the
-# entire list). See also cmake.define.
+# entire list. See also cmake.define.
 cmake.args = []
 
 # This activates verbose builds
