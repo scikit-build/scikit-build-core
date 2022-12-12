@@ -55,13 +55,10 @@ def config(tmp_path_factory):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.skipif(
-    sys.platform.startswith("win32") or sys.platform.startswith("cygwin"),
-    reason="Paths different in build dir on Windows",
-)
 def test_bin_in_config(config):
+    pkg = "simple_pure" if config.single_config else "Release/simple_pure"
     result = subprocess.run(
-        [str(config.build_dir / "simple_pure")],
+        [str(config.build_dir / pkg)],
         capture_output=True,
         text=True,
         check=False,
