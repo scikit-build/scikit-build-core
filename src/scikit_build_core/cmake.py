@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import re
 import subprocess
 import sys
 import textwrap
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Generator
 from pathlib import Path
-from typing import Generator, TypeVar
+from typing import TypeVar
 
 from packaging.version import Version
 
@@ -15,6 +16,7 @@ from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
+from ._compat.typing import Protocol
 
 __all__ = ["CMake", "CMaker"]
 
@@ -54,6 +56,23 @@ class CMake:
         return os.fspath(self.cmake_path)
 
 
+def _parse_help_default(txt: str) -> str | None:
+    """
+    Parses the default generator from the output of cmake --help.
+    """
+
+    lines: list[str] = re.findall(
+        r"^\*\s*(.*?)(?:\s*\[arch\])?\s*= Generate", txt, re.MULTILINE
+    )
+    if len(lines) != 1:
+        return None
+
+    return lines[0]
+
+def _is_single_config(gen: str) -> bool:
+    return gen == "Ninja" or "Makefiles" in gen
+
+
 @dataclasses.dataclass
 class CMaker:
     cmake: CMake
@@ -64,7 +83,8 @@ class CMaker:
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
-    single_config: bool = not sys.platform.startswith("win32")
+    single_config: bool | None = None
+    generator: str | None = None
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -77,6 +97,23 @@ class CMaker:
             raise CMakeConfigError(
                 f"build directory {self.build} must be a (creatable) directory"
             )
+
+        if self.generator is None:
+            self.generator = self._get_default_generator()
+        if self.single_config is None and self.generator is not None:
+            self.single_config = _is_single_config(self.generator)
+
+    def _get_default_generator(self) -> str | None:
+        result = subprocess.run(
+            [os.fspath(self.cmake), "--help"],
+            check=False,
+            capture_output=True,
+            encoding="utf-8",
+        )
+        if result.returncode != 0:
+            return None
+
+        return _parse_help_default(result.stdout)
 
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
@@ -137,8 +174,8 @@ class CMaker:
         cmake_args: Sequence[str] = (),
     ) -> None:
         if "CMAKE_GENERATOR" in self.env:
-            gen = self.env["CMAKE_GENERATOR"]
-            self.single_config = gen == "Ninja" or "Makefiles" in gen
+            self.generator = self.env["CMAKE_GENERATOR"]
+            self.single_config = _is_single_config(self.generator)
 
         _cmake_args = self._compute_cmake_args(defines or {})
 
