@@ -59,7 +59,7 @@ def test_bin_in_config(config):
     # TODO: this should use config.single_config, but that's not always correct currently
     pkg = (
         config.build_dir / "Release/simple_pure"
-        if config.build_dir.joinpath("Release")
+        if config.build_dir.joinpath("Release").is_dir()
         else "simple_pure"
     )
     result = subprocess.run(
