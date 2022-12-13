@@ -4,7 +4,6 @@ import dataclasses
 import re
 import sys
 import sysconfig
-import typing
 from pathlib import Path
 from typing import Mapping
 
@@ -125,12 +124,10 @@ class Builder:
                 # See https://github.com/python/cpython/issues/84006
                 import distutils.sysconfig  # pylint: disable=deprecated-module
 
-                ext_suffix = typing.cast(
-                    str, distutils.sysconfig.get_config_var("EXT_SUFFIX")
-                )
+                ext_suffix =  distutils.sysconfig.get_config_var("EXT_SUFFIX")
             else:
                 ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
-            assert ext_suffix
+            assert isinstance(ext_suffix, str)
             cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
         if cache_entries:
