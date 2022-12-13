@@ -53,15 +53,23 @@ def config(tmp_path_factory):
     return config
 
 
+# TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.skipif(
-    sys.platform.startswith("win32") or sys.platform.startswith("cygwin"),
-    reason="Paths different in build dir on Windows",
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    strict=False,
+    reason="No idea why this fails on Cygwin",
 )
 def test_bin_in_config(config):
+    # TODO: this should use config.single_config, but that's not always correct currently
+    pkg = config.build_dir / (
+        "Release/simple_pure"
+        if config.build_dir.joinpath("Release").is_dir()
+        else "simple_pure"
+    )
     result = subprocess.run(
-        [str(config.build_dir / "simple_pure")],
+        [str(pkg)],
         capture_output=True,
         text=True,
         check=False,
@@ -74,7 +82,9 @@ def test_bin_in_config(config):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.xfail(
-    sys.platform.startswith("cygwin"), strict=False, reason="No idea why this fails"
+    sys.platform.startswith("cygwin"),
+    strict=False,
+    reason="No idea why this fails on Cygwin",
 )
 def test_install(config):
     install_dir = config.build_dir.parent / "install"

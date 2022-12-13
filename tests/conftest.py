@@ -149,7 +149,7 @@ def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, N
     try:
         yield VEnv(path, wheelhouse=pep518_wheelhouse)
     finally:
-        shutil.rmtree(path)
+        shutil.rmtree(path, ignore_errors=True)
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ def virtualenv(tmp_path: Path) -> Generator[VEnv, None, None]:
     try:
         yield VEnv(path)
     finally:
-        shutil.rmtree(path)
+        shutil.rmtree(path, ignore_errors=True)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
