@@ -124,7 +124,7 @@ class Builder:
                 # See https://github.com/python/cpython/issues/84006
                 import distutils.sysconfig  # pylint: disable=deprecated-module
 
-                ext_suffix =  distutils.sysconfig.get_config_var("EXT_SUFFIX")
+                ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
             else:
                 ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
             assert isinstance(ext_suffix, str)
