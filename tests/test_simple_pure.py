@@ -56,9 +56,10 @@ def config(tmp_path_factory):
 @pytest.mark.compile
 @pytest.mark.configure
 def test_bin_in_config(config):
-    pkg = "simple_pure" if config.single_config else "Release/simple_pure"
+    # TODO: this should use config.single_config, but that's not always correct currently
+    pkg = config.build_dir / "Release/simple_pure" if config.build_dir.joinpath("Release") else "simple_pure"
     result = subprocess.run(
-        [str(config.build_dir / pkg)],
+        [str(pkg)],
         capture_output=True,
         text=True,
         check=False,
