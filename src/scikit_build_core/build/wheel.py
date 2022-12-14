@@ -79,7 +79,7 @@ def _write_wheel_metadata(
     dist_info.mkdir(exist_ok=False)
     with dist_info.joinpath("METADATA").open("wb") as f:
         f.write(bytes(metadata.as_rfc822()))
-    with dist_info.joinpath("entrypoints.txt").open("w", encoding="utf_8") as f:
+    with dist_info.joinpath("entry_points.txt").open("w", encoding="utf_8") as f:
         ep = metadata.entrypoints.copy()
         ep["console_scripts"] = metadata.scripts
         ep["gui_scripts"] = metadata.gui_scripts
