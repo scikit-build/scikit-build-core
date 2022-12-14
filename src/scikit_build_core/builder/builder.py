@@ -14,7 +14,7 @@ from ..cmake import CMaker
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
 from .generator import set_environment_for_gen
-from .sysconfig import get_python_include_dir, get_python_library
+from .sysconfig import get_platform, get_python_include_dir, get_python_library
 
 __all__: list[str] = ["Builder"]
 
@@ -45,6 +45,9 @@ class Builder:
         if sys.platform.startswith("darwin"):
             archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
             return archs
+        if sys.platform.startswith("win"):
+            if get_platform(self.config.env) == "win-arm64":
+                return ["win_arm64"]
 
         return []
 
@@ -94,9 +97,13 @@ class Builder:
         if version is not None:
             cache_config["SKBUILD_PROJECT_VERSION"] = str(version)
 
-        # Classic Find Python
-        python_library = get_python_library()
+        if limited_abi is None:
+            limited_abi = self.settings.wheel.py_api.startswith("cp3")
+
+        python_library = get_python_library(self.config.env, abi3=limited_abi)
         python_include_dir = get_python_include_dir()
+
+        # Classic Find Python
         cache_config["PYTHON_EXECUTABLE"] = sys.executable
         cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir
         if python_library:
@@ -108,9 +115,6 @@ class Builder:
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
-
-        if limited_abi is None:
-            limited_abi = self.settings.wheel.py_api.startswith("cp3")
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (

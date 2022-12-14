@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import configparser
 import os
 import sys
 import sysconfig
@@ -30,7 +31,18 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def get_python_library() -> Path | None:
+def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | None:
+    # When cross-compiling, check DIST_EXTRA_CONFIG first
+    config_file = env.get("DIST_EXTRA_CONFIG", None)
+    if config_file and Path(config_file).is_file():
+        cp = configparser.ConfigParser()
+        cp.read(config_file)
+        result = cp.get("build_ext", "library_dirs", fallback="")
+        if result:
+            logger.info("Reading DIST_EXTRA_CONFIG:build_ext.library_dirs={}", result)
+            minor = "" if abi3 else sys.version_info[1]
+            return Path(result) / f"python3{minor}.lib"
+
     libdirstr = sysconfig.get_config_var("LIBDIR")
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
     libdir: Path | None = libdirstr and Path(libdirstr)
@@ -96,8 +108,11 @@ def get_platform(env: Mapping[str, str] | None = None) -> str:
     """
     if env is None:
         env = os.environ
-    if os.name == "nt" and "VSCMD_ARG_TGT_ARCH" in env:
-        return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
+    if sys.platform.startswith("win"):
+        if "VSCMD_ARG_TGT_ARCH" in env:
+            return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
+        if "arm64" in env.get("SETUPTOOLS_EXT_SUFFIX", "").lower():
+            return "win-arm64"
     return get_host_platform()
 
 
