@@ -182,7 +182,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
             file_names = [p.name for p in p.iterdir()]
             metadata = p.joinpath("cmake_example-0.0.1.dist-info/METADATA").read_text()
             entry_points = p.joinpath(
-                "cmake_example-0.0.1.dist-info/entrypoints.txt"
+                "cmake_example-0.0.1.dist-info/entry_points.txt"
             ).read_text()
 
         assert len(file_names) == 2
