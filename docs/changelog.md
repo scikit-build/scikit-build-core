@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 0.1.4
+
+### What's Changed
+
+Fixes:
+
+- `entrypoints.txt` should be `entry_points.txt` by @njzjz in #161
+- `EXT_SUFFIX` is wrong before 3.8.7 by @henryiii in #160
+- Make tests pass on native Windows ARM by @henryiii in #157
+- fix: Windows ARM experimental cross-compile support by @henryiii in #162
+
+Other things:
+
+- Fix spelling mistake by @maxbachmann in #156
+- Add Python 3.12 alpha 3 to the CI by @henryiii in #120
+- Fix issues mocking in tests with packaging 22 by @henryiii in #155
+
 ## Version 0.1.3
 
 ### What's Changed
