@@ -4,6 +4,7 @@ import pprint
 import sys
 import sysconfig
 import typing
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -54,12 +55,32 @@ def test_get_python_include_dir():
 def test_get_python_library():
     pprint.pprint(sysconfig.get_config_vars())
 
-    lib = get_python_library()
+    lib = get_python_library({})
     if sys.platform.startswith("win"):
         assert lib is None
     else:
         assert lib
         assert lib.is_file()
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_get_python_library_xcompile(tmp_path):
+    config_path = tmp_path / "tmp.cfg"
+    config_path.write_text(
+        """\
+[build_ext]
+library_dirs=C:\\Python\\libs
+    """
+    )
+    env = {"DIST_EXTRA_CONFIG": str(config_path)}
+    lib = get_python_library(env)
+    assert lib
+    assert lib.parent == Path("C:\\Python\\libs")
+    assert lib.parent != Path("C:\\Python\\libs\\python3.lib")
+
+    lib2 = get_python_library(env, abi3=True)
+    assert lib2
+    assert lib2 == Path("C:\\Python\\libs\\python3.lib")
 
 
 @pytest.mark.parametrize("archs", (["x86_64"], ["arm64", "universal2"]))
