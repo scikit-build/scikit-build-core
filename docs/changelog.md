@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.1.5
+
+### What's Changed
+
+Fixes:
+
+- Ninja path not being set correctly by @henryiii in #166
+- Minor touchup to ninja / make by @henryiii in #167
+
 ## Version 0.1.4
 
 ### What's Changed
@@ -9,7 +18,7 @@ Fixes:
 - `entrypoints.txt` should be `entry_points.txt` by @njzjz in #161
 - `EXT_SUFFIX` is wrong before 3.8.7 by @henryiii in #160
 - Make tests pass on native Windows ARM by @henryiii in #157
-- fix: Windows ARM experimental cross-compile support by @henryiii in #162
+- Windows ARM experimental cross-compile support by @henryiii in #162
 
 Other things:
 
