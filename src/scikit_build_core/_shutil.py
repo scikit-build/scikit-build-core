@@ -43,6 +43,10 @@ class Run:
             os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in args
         ]
 
+        if self.env:
+            logger.debug(
+                "RUNENV: {}", " ".join(f"{k}={v}" for k, v in self.env.items())
+            )
         logger.debug("RUN: {}", " ".join(options))
 
         return subprocess.run(
