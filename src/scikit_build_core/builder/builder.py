@@ -84,7 +84,10 @@ class Builder:
         if fp_backport and self.config.cmake.version < Version(fp_backport):
             self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
 
-        set_environment_for_gen(self.config.cmake, self.config.env, self.settings.ninja)
+        local_def = set_environment_for_gen(
+            self.config.cmake, self.config.env, self.settings.ninja
+        )
+        cmake_defines.update(local_def)
 
         cache_config: dict[str, str | Path] = {
             "SKBUILD": "2",

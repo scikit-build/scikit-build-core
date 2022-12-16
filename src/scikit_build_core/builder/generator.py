@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 
 from packaging.version import Version
 
@@ -55,7 +55,7 @@ def get_default(cmake: CMake) -> str | None:
 
 def set_environment_for_gen(
     cmake: CMake, env: MutableMapping[str, str], ninja_settings: NinjaSettings
-) -> None:
+) -> Mapping[str, str]:
     """
     This function modifies the environment as needed to safely set a generator.
 
@@ -72,25 +72,28 @@ def set_environment_for_gen(
             # This must also be set when *_PLATFORM is set.
             env.setdefault("CMAKE_GENERATOR", default)
             env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
-    elif env.get("CMAKE_GENERATOR", "Ninja") == "Ninja" and not env.get(
+            return {}
+    if env.get("CMAKE_GENERATOR", "Ninja") == "Ninja" and not env.get(
         "CMAKE_MAKE_PROGRAM", ""
     ):
         ninja = best_program(
             get_ninja_programs(),
             minimum_version=Version(ninja_settings.minimum_version),
         )
-        if ninja is None:
-            msg = "Ninja or make is required to build"
-            if not ninja_settings.make_fallback:
-                raise NinjaNotFoundError(msg)
-
-            make_programs = list(get_make_programs())
-            if not make_programs:
-                raise NinjaNotFoundError(msg)
-            env.setdefault("CMAKE_GENERATOR", "Unix Makefiles")
-            env.setdefault("CMAKE_MAKE_PROGRAM", str(make_programs[0]))
-            logger.debug("CMAKE_GENERATOR: Using make: {}", make_programs[0])
-        else:
+        if ninja is not None:
             env.setdefault("CMAKE_GENERATOR", "Ninja")
-            env.setdefault("CMAKE_MAKE_PROGRAM", str(ninja.path))
             logger.debug("CMAKE_GENERATOR: Using ninja: {}", ninja.path)
+            return {"CMAKE_MAKE_PROGRAM": str(ninja.path)}
+
+        msg = "Ninja or make is required to build"
+        if not ninja_settings.make_fallback:
+            raise NinjaNotFoundError(msg)
+
+        make_programs = list(get_make_programs())
+        if not make_programs:
+            raise NinjaNotFoundError(msg)
+        env.setdefault("CMAKE_GENERATOR", "Unix Makefiles")
+        logger.debug("CMAKE_GENERATOR: Using make: {}", make_programs[0])
+        return {"CMAKE_MAKE_PROGRAM": str(make_programs[0])}
+
+    return {}
