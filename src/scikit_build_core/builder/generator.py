@@ -73,25 +73,25 @@ def set_environment_for_gen(
             env.setdefault("CMAKE_GENERATOR", default)
             env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
             return {}
-    if env.get("CMAKE_GENERATOR", "Ninja") == "Ninja" and not env.get(
-        "CMAKE_MAKE_PROGRAM", ""
-    ):
-        ninja = best_program(
-            get_ninja_programs(),
-            minimum_version=Version(ninja_settings.minimum_version),
-        )
+
+    if env.get("CMAKE_GENERATOR", default or "Ninja") == "Ninja":
+        min_ninja = Version(ninja_settings.minimum_version)
+        ninja = best_program(get_ninja_programs(), minimum_version=min_ninja)
+
         if ninja is not None:
             env.setdefault("CMAKE_GENERATOR", "Ninja")
             logger.debug("CMAKE_GENERATOR: Using ninja: {}", ninja.path)
             return {"CMAKE_MAKE_PROGRAM": str(ninja.path)}
 
-        msg = "Ninja or make is required to build"
+        msg = "Ninja is required to build"
         if not ninja_settings.make_fallback:
             raise NinjaNotFoundError(msg)
 
+        msg = "Ninja or make is required to build"
         make_programs = list(get_make_programs())
         if not make_programs:
             raise NinjaNotFoundError(msg)
+
         env.setdefault("CMAKE_GENERATOR", "Unix Makefiles")
         logger.debug("CMAKE_GENERATOR: Using make: {}", make_programs[0])
         return {"CMAKE_MAKE_PROGRAM": str(make_programs[0])}
