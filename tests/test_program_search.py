@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 
 import pytest
@@ -42,11 +41,11 @@ def test_get_cmake_programs_all(monkeypatch, fp):
     cmake_path = Path("cmake").resolve()
     cmake3_path = Path("cmake3").resolve()
     fp.register(
-        [os.fspath(cmake_path), "--version"],
+        [cmake_path, "--version"],
         stdout="cmake version 3.20.0\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
     )
     fp.register(
-        [os.fspath(cmake3_path), "--version"],
+        [cmake3_path, "--version"],
         stdout="cmake version 3.19.0\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
     )
     programs = list(get_cmake_programs(module=False))
@@ -69,10 +68,8 @@ def test_get_ninja_programs_all(monkeypatch, fp):
     monkeypatch.setattr("shutil.which", lambda x: x if "ninja" in x else None)
     ninja_path = Path("ninja").resolve()
     ninja_build_path = Path("ninja-build").resolve()
-    fp.register(
-        [os.fspath(ninja_path), "--version"], stdout="1.10.1.git.kitware.jobserver-1"
-    )
-    fp.register([os.fspath(ninja_build_path), "--version"], stdout="1.8.2")
+    fp.register([ninja_path, "--version"], stdout="1.10.1.git.kitware.jobserver-1")
+    fp.register([ninja_build_path, "--version"], stdout="1.8.2")
     programs = list(get_ninja_programs(module=False))
     assert len(programs) == 2
     assert programs[0].path.name == "ninja-build"
@@ -94,8 +91,8 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     monkeypatch.setattr("shutil.which", lambda x: x)
     cmake_path = Path("cmake").resolve()
     cmake3_path = Path("cmake3").resolve()
-    fp.register([os.fspath(cmake_path), "--version"], stdout="scrambled output\n")
-    fp.register([os.fspath(cmake3_path), "--version"], stdout="cmake version 3.17.3\n")
+    fp.register([cmake_path, "--version"], stdout="scrambled output\n")
+    fp.register([cmake3_path, "--version"], stdout="cmake version 3.17.3\n")
     programs = list(get_cmake_programs(module=False))
     assert caplog.records
     assert "Could not determine CMake version" in str(caplog.records[0].msg)

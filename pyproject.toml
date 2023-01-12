@@ -60,7 +60,7 @@ test = [
     "pybind11",
     "pyproject-metadata>=0.5",
     "pytest >=7.2",
-    "pytest-subprocess",
+    "pytest-subprocess @ git+https://github.com/henryiii/pytest-subprocess@henryiii/fix/winerr",
     "setuptools",
     "wheel",
 ]
@@ -94,6 +94,7 @@ cmake_source_dir = "scikit_build_core.setuptools.extension:cmake_source_dir"
 build.exclude = ["extern"]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
+metadata.allow-direct-references = true
 
 [tool.hatch.build.force-include]
 "extern/cmake/Copyright.txt" = "src/scikit_build_core/resources/find_python/Copyright.txt"
