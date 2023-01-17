@@ -59,7 +59,7 @@ class FailedProcessError(Exception):
 
     def __str__(self) -> str:
         cmd = " ".join(self.exception.cmd)
-        description = f"{self._description}\n  Command '{cmd}' failed with return code {self.exception.returncode}"
+        description = f"{self._description}\n  Command {cmd!r} failed with return code {self.exception.returncode}"
         for stream_name in ("stdout", "stderr"):
             stream = getattr(self.exception, stream_name)
             if stream:
