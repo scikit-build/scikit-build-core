@@ -83,7 +83,7 @@ library_dirs=C:\\Python\\libs
     assert lib2 == Path("C:\\Python\\libs\\python3.lib")
 
 
-@pytest.mark.parametrize("archs", [["x86_64"], ["arm64", "universal2"]])  # noqa: PT007
+@pytest.mark.parametrize("archs", [["x86_64"], ["arm64", "universal2"]])
 def test_builder_macos_arch(monkeypatch, archs):
     archflags = " ".join(f"-arch {arch}" for arch in archs)
     monkeypatch.setattr(sys, "platform", "darwin")
