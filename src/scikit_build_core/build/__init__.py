@@ -1,5 +1,3 @@
-# pylint: disable=unused-argument
-
 from __future__ import annotations
 
 import sys
@@ -39,9 +37,7 @@ def build_sdist(
 
 
 def get_requires_for_build_sdist(
-    # pylint: disable-next=unused-argument
-    config_settings: dict[str, str | list[str]]
-    | None = None
+    config_settings: dict[str, str | list[str]] | None = None  # noqa: ARG001
 ) -> list[str]:
     return ["pathspec", "pyproject_metadata"]
 

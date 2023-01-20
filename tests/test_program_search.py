@@ -16,7 +16,7 @@ from scikit_build_core.program_search import (
 
 def test_get_cmake_programs_cmake_module(monkeypatch):
     cmake = pytest.importorskip("cmake")
-    monkeypatch.setattr("shutil.which", lambda x: None)
+    monkeypatch.setattr("shutil.which", lambda _: None)
     programs = list(get_cmake_programs())
     assert len(programs) == 1
     assert programs[0].path.name == "cmake"
@@ -25,7 +25,7 @@ def test_get_cmake_programs_cmake_module(monkeypatch):
 
 def test_get_ninja_programs_cmake_module(monkeypatch):
     ninja = pytest.importorskip("ninja")
-    monkeypatch.setattr("shutil.which", lambda x: None)
+    monkeypatch.setattr("shutil.which", lambda _: None)
     programs = list(get_ninja_programs())
     assert len(programs) == 1
     assert programs[0].path.name == "ninja"

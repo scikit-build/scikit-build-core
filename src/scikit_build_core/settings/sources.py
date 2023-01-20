@@ -150,13 +150,13 @@ class EnvSource:
         names = [field.upper() for field in fields]
         return "_".join([self.prefix, *names] if self.prefix else names)
 
-    # pylint: disable-next=unused-argument
-    def has_item(self, *fields: str, is_dict: bool) -> bool:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:  # noqa: ARG002
         name = self._get_name(*fields)
         return name in self.env and self.env[name] != ""
 
-    # pylint: disable-next=unused-argument
-    def get_item(self, *fields: str, is_dict: bool) -> str | dict[str, str]:
+    def get_item(
+        self, *fields: str, is_dict: bool  # noqa: ARG002
+    ) -> str | dict[str, str]:
         name = self._get_name(*fields)
         if name in self.env:
             return self.env[name]
@@ -181,8 +181,9 @@ class EnvSource:
             return raw_target(item)
         raise AssertionError(f"Can't convert target {target}")
 
-    # pylint: disable-next=unused-argument
-    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+    def unrecognized_options(
+        self, options: object  # noqa: ARG002
+    ) -> Generator[str, None, None]:
         yield from ()
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
@@ -316,8 +317,7 @@ class TOMLSource:
     def _get_name(self, *fields: str) -> list[str]:
         return [field.replace("_", "-") for field in fields]
 
-    # pylint: disable-next=unused-argument
-    def has_item(self, *fields: str, is_dict: bool) -> bool:
+    def has_item(self, *fields: str, is_dict: bool) -> bool:  # noqa: ARG002
         names = self._get_name(*fields)
         try:
             _dig_strict(self.settings, *names)
@@ -325,8 +325,7 @@ class TOMLSource:
         except KeyError:
             return False
 
-    # pylint: disable-next=unused-argument
-    def get_item(self, *fields: str, is_dict: bool) -> Any:
+    def get_item(self, *fields: str, is_dict: bool) -> Any:  # noqa: ARG002
         names = self._get_name(*fields)
         try:
             return _dig_strict(self.settings, *names)
@@ -361,10 +360,7 @@ class SourceChain:
         return self.sources[index]
 
     def has_item(self, *fields: str, is_dict: bool) -> bool:
-        for source in self.sources:
-            if source.has_item(*fields, is_dict=is_dict):
-                return True
-        return False
+        return any(source.has_item(*fields, is_dict=is_dict) for source in self.sources)
 
     def get_item(self, *fields: str, is_dict: bool) -> Any:
         for source in self.sources:

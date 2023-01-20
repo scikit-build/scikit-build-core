@@ -11,8 +11,8 @@ DIR = Path(__file__).parent.resolve()
 ABI_PKG = DIR / "packages/abi3_pyproject_ext"
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 @pytest.mark.skipif(
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )

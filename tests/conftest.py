@@ -16,7 +16,7 @@ if sys.version_info < (3, 8):
     from typing_extensions import Literal, overload
 else:
     from importlib import metadata
-    from typing import overload, Literal
+    from typing import Literal, overload
 
 import distlib.wheel
 import pytest
@@ -143,7 +143,7 @@ class VEnv(EnvBuilder):
         self.module("pip", "install", *args)
 
 
-@pytest.fixture
+@pytest.fixture()
 def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, None]:
     path = tmp_path / "venv"
     try:
@@ -152,7 +152,7 @@ def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, N
         shutil.rmtree(path, ignore_errors=True)
 
 
-@pytest.fixture
+@pytest.fixture()
 def virtualenv(tmp_path: Path) -> Generator[VEnv, None, None]:
     path = tmp_path / "venv"
     try:

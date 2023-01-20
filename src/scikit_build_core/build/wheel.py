@@ -148,7 +148,7 @@ def build_wheel(
                 raise AssertionError(
                     "Experimental features must be enabled to use absolute paths in wheel.install_dir"
                 )
-            if not settings.wheel.install_dir[1:].split("/")[0] in wheel_dirs:
+            if settings.wheel.install_dir[1:].split("/")[0] not in wheel_dirs:
                 raise AssertionError("Must target a valid wheel directory")
             install_dir = wheel_dir / settings.wheel.install_dir[1:]
         else:
@@ -200,7 +200,7 @@ def build_wheel(
         for item in wheel_dirs["scripts"].iterdir():
             with item.open("rb") as f:
                 content = f.read(len(b"#!python"))
-                if content.startswith(b"#!/") and not b"#!python" != content:
+                if content.startswith(b"#!/") and content == b"#!python":
                     logger.warning(
                         "Files in scripts/ are not post-processed yet for shabang fixes"
                     )

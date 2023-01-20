@@ -53,7 +53,7 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
         )
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_init_cache(fp, tmp_path):
     fp.register([cmake_path(), "--version"], stdout="3.14.0")
 
@@ -84,9 +84,9 @@ set(SKBUILD_PATH [===[{source_dir_str}]===] CACHE PATH "")
     )
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_too_old(fp, monkeypatch):
-    monkeypatch.setattr(shutil, "which", lambda x: None)
+    monkeypatch.setattr(shutil, "which", lambda _: None)
     fp.register([cmake_path(), "--version"], stdout="3.14.0")
     print(cmake_path)
 
@@ -95,7 +95,7 @@ def test_too_old(fp, monkeypatch):
     assert "Could not find CMake with version >= 3.15" in excinfo.value.args[0]
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_cmake_args(tmp_path, fp):
     fp.register([cmake_path(), "--version"], stdout="3.15.0")
 
@@ -116,7 +116,7 @@ def test_cmake_args(tmp_path, fp):
     assert len(fp.calls) == 2
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_cmake_paths(tmp_path, fp):
     fp.register([cmake_path(), "--version"], stdout="3.15.0")
 

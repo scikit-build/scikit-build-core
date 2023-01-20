@@ -101,11 +101,15 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
         build_args = []
-        if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env:
-            # self.parallel is a Python 3 only way to set parallel jobs by hand
-            # using -j in the build_ext call, not supported by pip or PyPA-build.
-            if hasattr(self, "parallel") and self.parallel:
-                build_args.append(f"-j{self.parallel}")
+
+        # self.parallel is a Python 3 only way to set parallel jobs by hand
+        # using -j in the build_ext call, not supported by pip or PyPA-build.
+        if (
+            "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env
+            and hasattr(self, "parallel")
+            and self.parallel
+        ):
+            build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
         builder.install(extdir)

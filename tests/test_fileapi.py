@@ -33,7 +33,7 @@ def prepare_env_or_skip() -> None:
             pytest.skip("No build system found")
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_cattrs_comparison(tmp_path):
 
     build_dir = tmp_path / "build"
@@ -64,7 +64,7 @@ def test_no_index(tmp_path):
         load_reply_dir_cattrs(tmp_path)
 
 
-@pytest.mark.configure
+@pytest.mark.configure()
 def test_simple_pure(tmp_path):
     build_dir = tmp_path / "build"
 

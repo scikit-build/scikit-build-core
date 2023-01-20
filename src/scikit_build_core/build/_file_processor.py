@@ -34,9 +34,10 @@ def each_unignored_file(
     Runs through all non-ignored files. Must be run from the root directory.
     """
     exclude_lines = EXCLUDE_LINES + list(exclude)
-    with contextlib.suppress(FileNotFoundError):
-        with open(".gitignore", encoding="utf-8") as f:
-            exclude_lines += f.readlines()
+    with contextlib.suppress(FileNotFoundError), open(
+        ".gitignore", encoding="utf-8"
+    ) as f:
+        exclude_lines += f.readlines()
 
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)

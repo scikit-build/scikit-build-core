@@ -12,9 +12,9 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 
 
 # TODO: work out why this fails on Cygwin
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
@@ -50,9 +50,9 @@ def test_pep518_wheel(monkeypatch, isolated):
     assert add == "3"
 
 
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
