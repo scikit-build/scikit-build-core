@@ -45,9 +45,11 @@ class Builder:
         if sys.platform.startswith("darwin"):
             archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
             return archs
-        if sys.platform.startswith("win"):
-            if get_platform(self.config.env) == "win-arm64":
-                return ["win_arm64"]
+        if (
+            sys.platform.startswith("win")
+            and get_platform(self.config.env) == "win-arm64"
+        ):
+            return ["win_arm64"]
 
         return []
 

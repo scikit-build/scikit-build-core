@@ -12,8 +12,8 @@ DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/filepath_pure"
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 @pytest.mark.skipif(
     sys.version_info < (3, 8),
     reason="Python 3.7 doesn't have a nice Path zipfile interface",

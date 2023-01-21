@@ -38,7 +38,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
-    assert "cmake-example-0.0.1.tar.gz" == sdist.name
+    assert sdist.name == "cmake-example-0.0.1.tar.gz"
     assert sdist == dist / out
 
     with tarfile.open(sdist) as f:
@@ -67,8 +67,8 @@ def test_pep517_sdist(tmp_path, monkeypatch):
         assert metadata_set <= pkg_info_contents
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )

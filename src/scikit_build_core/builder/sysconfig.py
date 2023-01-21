@@ -92,12 +92,11 @@ def get_host_platform() -> str:
     setuptools get_host_platform (without 3.8 aix compat).
     """
 
-    if sys.version_info < (3, 8):
-        if os.name == "nt":
-            if "(arm)" in sys.version.lower():
-                return "win-arm32"
-            if "(arm64)" in sys.version.lower():
-                return "win-arm64"
+    if sys.version_info < (3, 8) and os.name == "nt":
+        if "(arm)" in sys.version.lower():
+            return "win-arm32"
+        if "(arm64)" in sys.version.lower():
+            return "win-arm64"
 
     return sysconfig.get_platform()
 

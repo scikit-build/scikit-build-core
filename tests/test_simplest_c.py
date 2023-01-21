@@ -21,7 +21,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
-    assert "simplest-0.0.1.tar.gz" == sdist.name
+    assert sdist.name == "simplest-0.0.1.tar.gz"
     assert sdist == dist / out
 
     with tarfile.open(sdist) as f:
@@ -43,8 +43,8 @@ def test_pep517_sdist(tmp_path, monkeypatch):
         }
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
@@ -82,8 +82,8 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     assert version == "4.0"
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()

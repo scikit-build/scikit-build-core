@@ -23,7 +23,7 @@ from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, WheelS
 # The envvar_higher case shouldn't happen, but the compiler should cause the
 # correct failure
 @pytest.mark.parametrize(
-    "pycom,envvar,answer",
+    ("pycom", "envvar", "answer"),
     [
         pytest.param("12.5.2", None, "12.0", id="only_plat_round"),
         pytest.param("10.12.2", None, "10.12", id="only_plat_classic"),
@@ -83,7 +83,7 @@ library_dirs=C:\\Python\\libs
     assert lib2 == Path("C:\\Python\\libs\\python3.lib")
 
 
-@pytest.mark.parametrize("archs", (["x86_64"], ["arm64", "universal2"]))
+@pytest.mark.parametrize("archs", [["x86_64"], ["arm64", "universal2"]])
 def test_builder_macos_arch(monkeypatch, archs):
     archflags = " ".join(f"-arch {arch}" for arch in archs)
     monkeypatch.setattr(sys, "platform", "darwin")
@@ -109,7 +109,7 @@ def test_builder_macos_arch_extra(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "minver,archs,answer",
+    ("minver", "archs", "answer"),
     [
         pytest.param("10.12", ["x86_64"], "macosx_10_12_x86_64", id="10.12_x86_64"),
         pytest.param("10.12", ["arm64"], "macosx_11_0_arm64", id="10.12_arm64"),

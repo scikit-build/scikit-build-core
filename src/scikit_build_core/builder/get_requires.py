@@ -29,23 +29,18 @@ def __dir__() -> list[str]:
 
 
 @functools.lru_cache(maxsize=2)
-def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:
+def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:  # noqa: F821
     with resources.joinpath("known_wheels.toml").open("rb") as f:
         return frozenset(tomllib.load(f)["tool"]["scikit-build"][name]["known-wheels"])
 
 
 @functools.lru_cache(maxsize=2)
 def is_known_platform(platforms: frozenset[str]) -> bool:
-    for tag in sys_tags():
-        if tag.platform in platforms:
-            return True
-    return False
+    return any(tag.platform in platforms for tag in sys_tags())
 
 
 def cmake_ninja_for_build_wheel(
-    # pylint: disable-next=unused-argument
-    config_settings: Mapping[str, str | list[str]]
-    | None = None
+    config_settings: Mapping[str, str | list[str]] | None = None
 ) -> list[str]:
 
     settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings

@@ -1,5 +1,3 @@
-# pylint: disable=unused-argument
-
 from __future__ import annotations
 
 import sys
@@ -39,9 +37,7 @@ def build_sdist(
 
 
 def get_requires_for_build_sdist(
-    # pylint: disable-next=unused-argument
-    config_settings: dict[str, str | list[str]]
-    | None = None
+    config_settings: dict[str, str | list[str]] | None = None  # noqa: ARG001
 ) -> list[str]:
     return ["pathspec", "pyproject_metadata"]
 
@@ -51,6 +47,9 @@ def get_requires_for_build_wheel(
 ) -> list[str]:
     from ..builder.get_requires import cmake_ninja_for_build_wheel
 
-    return ["distlib", "pathspec", "pyproject_metadata"] + cmake_ninja_for_build_wheel(
-        config_settings
-    )
+    return [
+        "distlib",
+        "pathspec",
+        "pyproject_metadata",
+        *cmake_ninja_for_build_wheel(config_settings),
+    ]

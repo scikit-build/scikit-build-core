@@ -70,7 +70,7 @@ class Converter:
                 except TypeError as err:
                     msg = f"Failed to convert field {field.name!r} of type {field.type}"
                     if sys.version_info < (3, 11):
-                        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+                        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
                     else:
                         err.add_note(msg)  # pylint: disable=no-member
                     exceptions.append(err)

@@ -312,7 +312,7 @@ def test_env_var_bools_empty(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "truthy, falsey", [("1", "0"), ("true", "false"), ("yes", "no"), ("on", "off")]
+    ("truthy", "falsey"), [("1", "0"), ("true", "false"), ("yes", "no"), ("on", "off")]
 )
 def test_env_var_bools(monkeypatch, truthy, falsey):
     sources = SourceChain(

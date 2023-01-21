@@ -13,7 +13,7 @@ DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 def test_pep518_sdist():
     correct_metadata = textwrap.dedent(
         """\
@@ -32,7 +32,7 @@ def test_pep518_sdist():
         [sys.executable, "-m", "build", "--sdist"], cwd=HELLO_PEP518, check=True
     )
     (sdist,) = dist.iterdir()
-    assert "cmake-example-0.0.1.tar.gz" == sdist.name
+    assert sdist.name == "cmake-example-0.0.1.tar.gz"
 
     if not (sys.platform.startswith("win32") or sys.platform.startswith("cygwin")):
         hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
@@ -64,9 +64,9 @@ def test_pep518_sdist():
         assert correct_metadata == pkg_info_contents
 
 
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
@@ -104,9 +104,9 @@ def test_pep518_wheel(isolated, build_args, monkeypatch):
     assert add == "3"
 
 
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
 def test_pep518_pip(isolated):
     isolated.install("-v", HELLO_PEP518)
 

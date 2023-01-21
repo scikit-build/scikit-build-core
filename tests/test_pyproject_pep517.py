@@ -47,7 +47,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
-    assert "cmake-example-0.0.1.tar.gz" == sdist.name
+    assert sdist.name == "cmake-example-0.0.1.tar.gz"
     assert sdist == dist / out
 
     with tarfile.open(sdist) as f:
@@ -164,8 +164,8 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
         )
 
 
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
@@ -215,8 +215,8 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
 
 
 @pytest.mark.skip(reason="Doesn't work yet")
-@pytest.mark.compile
-@pytest.mark.configure
+@pytest.mark.compile()
+@pytest.mark.configure()
 def test_pep517_wheel_time_hash(tmp_path, monkeypatch):
     dist = tmp_path / "dist"
     dist.mkdir()

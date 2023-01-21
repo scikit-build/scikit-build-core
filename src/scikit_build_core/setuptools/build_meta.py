@@ -16,9 +16,7 @@ def __dir__() -> list[str]:
 
 
 def get_requires_for_build_sdist(
-    # pylint: disable-next=unused-argument
-    config_settings: dict[str, str | list[str]]
-    | None = None
+    config_settings: dict[str, str | list[str]] | None = None  # noqa: ARG001
 ) -> list[str]:
     return ["setuptools"]
 
@@ -26,7 +24,7 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None
 ) -> list[str]:
-    return ["setuptools", "wheel"] + cmake_ninja_for_build_wheel(config_settings)
+    return ["setuptools", "wheel", *cmake_ninja_for_build_wheel(config_settings)]
 
 
 def build_sdist(

@@ -67,7 +67,6 @@ def normalize_tar_info(tar_info: tarfile.TarInfo) -> tarfile.TarInfo:
 
 def build_sdist(
     sdist_directory: str,
-    # pylint: disable-next=unused-argument
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
     settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
