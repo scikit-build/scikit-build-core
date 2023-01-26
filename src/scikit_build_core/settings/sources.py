@@ -34,7 +34,8 @@ def _dig_fields(__opt: object, *names: str) -> Any:
         fields = dataclasses.fields(__opt)
         types = [x.type for x in fields if x.name == name]
         if len(types) != 1:
-            raise KeyError("Could not access {'.'.join(names)}")
+            msg = f"Could not access {'.'.join(names)}"
+            raise KeyError(msg)
         (__opt,) = types
     return __opt
 
@@ -65,11 +66,13 @@ def _process_union(target: type[Any]) -> Any:
     if len(target.__args__) == 2:
         items = list(target.__args__)
         if type(None) not in items:
-            raise AssertionError(f"None must be in union, got {items}")
+            msg = f"None must be in union, got {items}"
+            raise AssertionError(msg)
         items.remove(type(None))
         return items[0]
 
-    raise AssertionError("Only Unions with None supported")
+    msg = "Only Unions with None supported"
+    raise AssertionError(msg)
 
 
 def _get_target_raw_type(target: type[Any]) -> type[Any]:
@@ -99,7 +102,8 @@ def _get_inner_type(target: type[Any]) -> type[Any]:
     if raw_target == dict:
         assert isinstance(target, TypeLike)
         return target.__args__[1]
-    raise AssertionError("Expected a list or dict")
+    msg = f"Expected a list or dict, got {target!r}"
+    raise AssertionError(msg)
 
 
 def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[str]]:
@@ -160,7 +164,8 @@ class EnvSource:
         name = self._get_name(*fields)
         if name in self.env:
             return self.env[name]
-        raise KeyError(f"{name!r} not found in environment")
+        msg = f"{name!r} not found in environment"
+        raise KeyError(msg)
 
     @classmethod
     def convert(cls, item: str, target: type[Any]) -> object:
@@ -179,7 +184,8 @@ class EnvSource:
 
         if callable(raw_target):
             return raw_target(item)
-        raise AssertionError(f"Can't convert target {target}")
+        msg = f"Can't convert target {target}"
+        raise AssertionError(msg)
 
     def unrecognized_options(
         self, options: object  # noqa: ARG002
@@ -253,11 +259,13 @@ class ConfSource:
             }
             if d:
                 return d
-            raise KeyError(f"Dict items {name}.* not found in settings")
+            msg = f"Dict items {name}.* not found in settings"
+            raise KeyError(msg)
         if name in self.settings:
             return self.settings[name]
 
-        raise KeyError(f"{name!r} not found in configuration settings")
+        msg = f"{name!r} not found in configuration settings"
+        raise KeyError(msg)
 
     @classmethod
     def convert(
@@ -282,7 +290,8 @@ class ConfSource:
             return result
         if callable(raw_target):
             return raw_target(item)
-        raise AssertionError(f"Can't convert target {target}")
+        msg = f"Can't convert target {target}"
+        raise AssertionError(msg)
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         if not self.verify:
@@ -330,7 +339,8 @@ class TOMLSource:
         try:
             return _dig_strict(self.settings, *names)
         except KeyError:
-            raise KeyError(f"{names!r} not found in configuration settings") from None
+            msg = f"{names!r} not found in configuration settings"
+            raise KeyError(msg) from None
 
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
@@ -341,7 +351,8 @@ class TOMLSource:
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if callable(raw_target):
             return raw_target(item)
-        raise AssertionError(f"Can't convert target {target}")
+        msg = f"Can't convert target {target}"
+        raise AssertionError(msg)
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         yield from _unrecognized_dict(self.settings, options, self.prefixes)
@@ -366,13 +377,13 @@ class SourceChain:
         for source in self.sources:
             if source.has_item(*fields, is_dict=is_dict):
                 return source.get_item(*fields, is_dict=is_dict)
-        raise KeyError(f"{fields!r} not found in any source")
+        msg = f"{fields!r} not found in any source"
+        raise KeyError(msg)
 
     @classmethod
-    def convert(cls, item: Any, target: type[T]) -> T:
-        raise NotImplementedError(
-            "SourceChain cannot convert items, use the result from has_item"
-        )
+    def convert(cls, item: Any, target: type[T]) -> T:  # noqa: ARG003
+        msg = "SourceChain cannot convert items, use the result from has_item"
+        raise NotImplementedError(msg)
 
     def convert_target(self, target: type[T], *prefixes: str) -> T:
         errors = []
@@ -421,7 +432,8 @@ class SourceChain:
 
         if errors:
             prefix_str = ".".join(prefixes)
-            raise ExceptionGroup(f"Failed converting {prefix_str}", errors)
+            msg = f"Failed converting {prefix_str}"
+            raise ExceptionGroup(msg, errors)
 
         return target(**prep)
 

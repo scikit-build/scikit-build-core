@@ -78,7 +78,8 @@ class Converter:
                     exceptions.append(err)
 
         if exceptions:
-            raise ExceptionGroup(f"Failed converting {target}", exceptions)
+            msg = f"Failed converting {target}"
+            raise ExceptionGroup(msg, exceptions)
 
         return target(**input_dict)
 

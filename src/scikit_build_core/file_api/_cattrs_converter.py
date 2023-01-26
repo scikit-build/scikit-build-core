@@ -54,7 +54,8 @@ def load_reply_dir(reply_dir: Path) -> Index:
     converter = make_converter(reply_dir)
     indexes = sorted(reply_dir.glob("index-*"))
     if not indexes:
-        raise IndexError(f"index file not found in {reply_dir}")
+        msg = f"index file not found in {reply_dir}"
+        raise IndexError(msg)
     index_file = indexes[-1]
     return converter.loads(index_file.read_text(), Index)
 
