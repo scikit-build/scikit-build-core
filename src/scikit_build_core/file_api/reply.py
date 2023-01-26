@@ -39,7 +39,7 @@ class Converter:
         return self.make_class(data, Index)
 
     def _load_from_json(self, name: Path, target: Type[T]) -> T:
-        with open(self.base_dir / name, encoding="utf-8") as f:
+        with self.base_dir.joinpath(name).open(encoding="utf-8") as f:
             data = json.load(f)
 
         return self.make_class(data, target)
