@@ -16,10 +16,16 @@ cmake_policy (SET CMP0007 NEW)
 cmake_policy (SET CMP0012 NEW)
 # IN_LIST operator
 cmake_policy (SET CMP0057 NEW)
-# foreach loop variable scope
-cmake_policy (SET CMP0124 NEW)
-# registry view behavior
-cmake_policy (SET CMP0134 NEW)
+# XXX(cmake 3.20)
+if (NOT CMAKE_VERSION VERSION_LESS 3.21)
+  # foreach loop variable scope
+  cmake_policy (SET CMP0124 NEW)
+endif ()
+
+if (NOT CMAKE_VERSION VERSION_LESS 3.24)
+  # registry view behavior
+  cmake_policy (SET CMP0134 NEW)
+endif ()
 
 if (NOT DEFINED _PYTHON_PREFIX)
   message (FATAL_ERROR "FindPython: INTERNAL ERROR")
@@ -1420,7 +1426,12 @@ if (CMAKE_SIZEOF_VOID_P)
       OR "Development.Embed" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
     # In this case, search only for 64bit or 32bit
     set (_${_PYTHON_PREFIX}_ARCH2 ${_${_PYTHON_PREFIX}_ARCH})
-    set (_${_PYTHON_PREFIX}_REGISTRY_VIEW REGISTRY_VIEW ${_${_PYTHON_PREFIX}_ARCH})
+    # XXX(cmake-3.25)
+    if (CMAKE_VERSION VERSION_LESS 3.25)
+      set (_${_PYTHON_PREFIX}_REGISTRY_VIEW "")
+    else()
+      set (_${_PYTHON_PREFIX}_REGISTRY_VIEW REGISTRY_VIEW ${_${_PYTHON_PREFIX}_ARCH})
+    endif()
   else()
     if (_${_PYTHON_PREFIX}_ARCH EQUAL "32")
       set (_${_PYTHON_PREFIX}_ARCH2 64)
@@ -1768,6 +1779,13 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
         list (APPEND _${_PYTHON_PREFIX}_VALIDATE_OPTIONS VERSION ${${_PYTHON_PREFIX}_FIND_VERSION})
       endif()
 
+      # XXX(cmake-3.25) VALIDATOR
+      if (CMAKE_VERSION VERSION_LESS 3.25)
+        set (_SKBUILD_PYTHONO_VALIDATOR "")
+      else ()
+        set (_SKBUILD_PYTHON_VALIDATOR "VALIDATOR _python_validate_find_interpreter")
+      endif ()
+
       while (TRUE)
         # Virtual environments handling
         if (_${_PYTHON_PREFIX}_FIND_VIRTUALENV MATCHES "^(FIRST|ONLY)$")
@@ -1781,7 +1799,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1802,7 +1820,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1818,7 +1836,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1832,7 +1850,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                       NO_SYSTEM_ENVIRONMENT_PATH
                       NO_CMAKE_SYSTEM_PATH
-                      VALIDATOR _python_validate_find_interpreter)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
           break()
         endif()
@@ -1841,7 +1859,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       NAMES ${_${_PYTHON_PREFIX}_NAMES}
                       NAMES_PER_DIR
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
-                      VALIDATOR _python_validate_find_interpreter)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
           break()
         endif()
@@ -1854,7 +1872,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATHS ${_${_PYTHON_PREFIX}_FRAMEWORK_PATHS}
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1868,7 +1886,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1903,7 +1921,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_EXECUTABLE)
             break()
           endif()
@@ -1924,7 +1942,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
         endif()
 
         # Windows registry
@@ -1938,7 +1956,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
         endif()
 
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
@@ -1953,7 +1971,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                       NO_SYSTEM_ENVIRONMENT_PATH
                       NO_CMAKE_SYSTEM_PATH
-                      VALIDATOR _python_validate_find_interpreter)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
           break()
         endif()
@@ -1963,7 +1981,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       NAMES ${_${_PYTHON_PREFIX}_NAMES}
                       NAMES_PER_DIR
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
-                      VALIDATOR _python_validate_find_interpreter)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
           break()
         endif()
@@ -1976,7 +1994,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATHS ${_${_PYTHON_PREFIX}_FRAMEWORK_PATHS}
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
         endif()
 
         # Windows registry
@@ -1988,7 +2006,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_interpreter)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
         endif()
 
         if (_${_PYTHON_PREFIX}_EXECUTABLE)
@@ -2004,7 +2022,7 @@ if ("Interpreter" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
         find_program (_${_PYTHON_PREFIX}_EXECUTABLE
                       NAMES ${_${_PYTHON_PREFIX}_NAMES}
                       NAMES_PER_DIR
-                      VALIDATOR _python_validate_find_interpreter)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
       endif()
     endif()
   endif()
@@ -2258,7 +2276,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2274,7 +2292,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2288,7 +2306,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                       NO_SYSTEM_ENVIRONMENT_PATH
                       NO_CMAKE_SYSTEM_PATH
-                      VALIDATOR _python_validate_find_compiler)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_COMPILER)
           break()
         endif()
@@ -2298,7 +2316,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       NAMES ${_${_PYTHON_PREFIX}_COMPILER_NAMES}
                       NAMES_PER_DIR
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
-                      VALIDATOR _python_validate_find_compiler)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_COMPILER)
           break()
         endif()
@@ -2311,7 +2329,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATHS ${_${_PYTHON_PREFIX}_FRAMEWORK_PATHS}
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2326,7 +2344,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2373,7 +2391,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         NO_CMAKE_ENVIRONMENT_PATH
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2389,7 +2407,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_SYSTEM_ENVIRONMENT_PATH
                         NO_CMAKE_SYSTEM_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2403,7 +2421,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                       PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                       NO_SYSTEM_ENVIRONMENT_PATH
                       NO_CMAKE_SYSTEM_PATH
-                      VALIDATOR _python_validate_find_compiler)
+                      ${_SKBUILD_PYTHON_VALIDATOR})
         if (_${_PYTHON_PREFIX}_COMPILER)
           break()
         endif()
@@ -2416,7 +2434,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATHS ${_${_PYTHON_PREFIX}_FRAMEWORK_PATHS}
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2430,7 +2448,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                         PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
                         ${_${_PYTHON_PREFIX}_REGISTRY_VIEW}
                         NO_DEFAULT_PATH
-                        VALIDATOR _python_validate_find_compiler)
+                        ${_SKBUILD_PYTHON_VALIDATOR})
           if (_${_PYTHON_PREFIX}_COMPILER)
             break()
           endif()
@@ -2452,7 +2470,7 @@ if ("Compiler" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS)
                     NAMES_PER_DIR
                     HINTS ${_${_PYTHON_PREFIX}_IRON_ROOT} ${_${_PYTHON_PREFIX}_HINTS}
                     PATH_SUFFIXES ${_${_PYTHON_PREFIX}_PATH_SUFFIXES}
-                    VALIDATOR _python_validate_find_compiler)
+                    ${_SKBUILD_PYTHON_VALIDATOR})
     endif()
   endif()
 
@@ -3603,9 +3621,25 @@ if (("Development.Module" IN_LIST ${_PYTHON_PREFIX}_FIND_COMPONENTS
     unset(_${_PYTHON_PREFIX}_is_prefix)
     foreach (_${_PYTHON_PREFIX}_implementation IN LISTS _${_PYTHON_PREFIX}_FIND_IMPLEMENTATIONS)
       foreach (_${_PYTHON_PREFIX}_framework IN LISTS _${_PYTHON_PREFIX}_${_${_PYTHON_PREFIX}_implementation}_FRAMEWORKS)
-        cmake_path (IS_PREFIX _${_PYTHON_PREFIX}_framework "${${_PYTHON_PREFIX}_LIBRARY_RELEASE}" _${_PYTHON_PREFIX}_is_prefix)
+        # XXX(cmake-3.20) cmake_path
+        if (CMAKE_VERSION VERSION_LESS "3.20")
+          file(RELATIVE_PATH _${_PYTHON_PREFIX}_fw_rel "${_${_PYTHON_PREFIX}_framework}" "${${_PYTHON_PREFIX}_LIBRARY_RELEASE}")
+          if (_${_PYTHON_PREFIX}_fw_rel MATCHES "^\.\.[/\\\\]?")
+            set(_${_PYTHON_PREFIX}_is_prefix 0)
+          else ()
+            set(_${_PYTHON_PREFIX}_is_prefix 1)
+          endif ()
+          unset(_${_PYTHON_PREFIX}_fw_rel)
+        else ()
+          cmake_path (IS_PREFIX _${_PYTHON_PREFIX}_framework "${${_PYTHON_PREFIX}_LIBRARY_RELEASE}" _${_PYTHON_PREFIX}_is_prefix)
+        endif ()
         if (_${_PYTHON_PREFIX}_is_prefix)
-          cmake_path (GET _${_PYTHON_PREFIX}_framework PARENT_PATH _${_PYTHON_PREFIX}_framework)
+          # XXX(cmake-3.20): cmake_path
+          if (CMAKE_VERSION VERSION_LESS "3.20")
+            get_filename_component("_${_PYTHON_PREFIX}_framework" "${_${_PYTHON_PREFIX}_framework}" DIRECTORY)
+          else()
+            cmake_path (GET _${_PYTHON_PREFIX}_framework PARENT_PATH _${_PYTHON_PREFIX}_framework)
+          endif()
           set (${_PYTHON_PREFIX}_LINK_OPTIONS "LINKER:-rpath,${_${_PYTHON_PREFIX}_framework}")
           break()
         endif()
