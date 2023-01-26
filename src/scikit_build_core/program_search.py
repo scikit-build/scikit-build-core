@@ -30,9 +30,10 @@ def _get_cmake_path(*, module: bool = True) -> Generator[Path, None, None]:
     """
     if module:
         with contextlib.suppress(ImportError):
-            import cmake
+            # If a "cmake" directory exists, this will also ImportError
+            from cmake import CMAKE_BIN_DIR
 
-            yield Path(cmake.CMAKE_BIN_DIR) / "cmake"
+            yield Path(CMAKE_BIN_DIR) / "cmake"
 
     candidates = ("cmake3", "cmake")
     for candidate in candidates:
@@ -48,9 +49,9 @@ def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
 
     if module:
         with contextlib.suppress(ImportError):
-            import ninja
+            from ninja import BIN_DIR
 
-            yield Path(ninja.BIN_DIR) / "ninja"
+            yield Path(BIN_DIR) / "ninja"
 
     # Matches https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/CMakeNinjaFindMake.cmake
     candidates = ("ninja-build", "ninja", "samu")
