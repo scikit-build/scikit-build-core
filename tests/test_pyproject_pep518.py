@@ -126,7 +126,7 @@ def test_pep518_rebuild_build_dir(isolated, monkeypatch, tmp_path, build_args):
             "build",
             *build_args,
             "--config-setting=logging.level=DEBUG",
-            f"--config-setting=cmake.build-dir={build_dir}",
+            f"--config-setting=build-dir={build_dir}",
         )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
 
