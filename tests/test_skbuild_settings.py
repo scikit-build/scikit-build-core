@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -25,6 +26,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
     assert not settings.cmake.verbose
+    assert settings.cmake.build_dir is None
     assert settings.cmake.build_type == "Release"
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
@@ -50,6 +52,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DFOO=BAR;-DBAR=FOO")
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "a=1;b=2")
     monkeypatch.setenv("SKBUILD_CMAKE_BUILD_TYPE", "Debug")
+    monkeypatch.setenv("SKBUILD_CMAKE_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_LOGGING_LEVEL", "DEBUG")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
@@ -78,6 +81,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
+    assert settings.cmake.build_dir == Path("a/b/c")
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -109,6 +113,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "cmake.define.b": "2",
         "cmake.verbose": "true",
         "cmake.build-type": "Debug",
+        "cmake.build-dir": "a/b/c",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -133,6 +138,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
+    assert settings.cmake.build_dir == Path("a/b/c")
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -162,6 +168,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             cmake.define = {a = "1", b = "2"}
             cmake.build-type = "Debug"
             cmake.verbose = true
+            cmake.build-dir = "a/b/c"
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -191,6 +198,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
+    assert settings.cmake.build_dir == Path("a/b/c")
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

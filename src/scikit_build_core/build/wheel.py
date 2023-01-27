@@ -128,7 +128,11 @@ def build_wheel(
     with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
         wheel_dir = build_tmp_folder / "wheel"
-        build_dir = build_tmp_folder / "build"
+
+        # A build dir can be specified, otherwise use a temporary directory
+        build_dir = settings.cmake.build_dir or build_tmp_folder / "build"
+
+        logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {
             "platlib": wheel_dir / "platlib",

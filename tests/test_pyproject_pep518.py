@@ -108,6 +108,50 @@ def test_pep518_wheel(isolated, build_args, monkeypatch):
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.parametrize(
+    "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
+)
+def test_pep518_rebuild_build_dir(isolated, monkeypatch, tmp_path, build_args):
+    dist = HELLO_PEP518 / "dist"
+    monkeypatch.chdir(HELLO_PEP518)
+    isolated.install("build[virtualenv]")
+
+    build_dir = tmp_path.joinpath("build")
+    build_dir.mkdir()
+    build_dir = build_dir.resolve()
+
+    for _ in range(2):
+        shutil.rmtree(dist, ignore_errors=True)
+        isolated.module(
+            "build",
+            *build_args,
+            "--config-setting=logging.level=DEBUG",
+            f"--config-setting=cmake.build-dir={build_dir}",
+        )
+    (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+
+    if sys.version_info >= (3, 8):
+        with wheel.open("rb") as f:
+            p = zipfile.Path(f)
+            file_names = [p.name for p in p.iterdir()]
+
+        assert len(file_names) == 2
+        assert "cmake_example-0.0.1.dist-info" in file_names
+        file_names.remove("cmake_example-0.0.1.dist-info")
+        (so_file,) = file_names
+
+        assert so_file.startswith("cmake_example")
+        print("SOFILE:", so_file)
+
+    isolated.install(wheel)
+
+    version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
+    assert version == "0.0.1"
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
 def test_pep518_pip(isolated):
     isolated.install("-v", HELLO_PEP518)
 

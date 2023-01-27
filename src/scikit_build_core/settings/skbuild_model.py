@@ -1,4 +1,5 @@
 import dataclasses
+from pathlib import Path
 from typing import Dict, List, Optional
 
 __all__ = [
@@ -45,6 +46,9 @@ class CMakeSettings:
     #: Valid options are: "Debug", "Release", "RelWithDebInfo", "MinSizeRel",
     #: "", etc.
     build_type: str = "Release"
+
+    #: The build directory. Defaults to a temporary directory, but can be set.
+    build_dir: Optional[Path] = None
 
 
 @dataclasses.dataclass

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -77,6 +78,29 @@ class CMaker:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
             raise CMakeConfigError(msg)
 
+        # If these were the same, the following check could wipe the source directory!
+        if self.build_dir.resolve() == self.source_dir.resolve():
+            msg = "build directory must be different from source directory"
+            raise CMakeConfigError(msg)
+
+        # If building via SDist, this could be pre-filled, so delete it if it exists
+        try:
+            with self.build_dir.joinpath("CMakeCache.txt").open("r") as f:
+                for line in f:
+                    if line.startswith("CMAKE_HOME_DIRECTORY:INTERNAL="):
+                        cached_source_dir = Path(line.split("=", 1)[1].strip())
+                        if cached_source_dir != self.source_dir:
+                            logger.info(
+                                "Original src {} != {}, wiping build directory",
+                                cached_source_dir,
+                                self.source_dir,
+                            )
+                            shutil.rmtree(self.build_dir)
+                            self.build_dir.mkdir()
+                        break
+        except FileNotFoundError:
+            pass
+
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
     ) -> None:
@@ -84,13 +108,13 @@ class CMaker:
             for key, value in cache_settings.items():
                 if isinstance(value, bool):
                     value = "ON" if value else "OFF"
-                    f.write(f'set({key} {value} CACHE BOOL "")\n')
+                    f.write(f'set({key} {value} CACHE BOOL "" FORCE)\n')
                 elif isinstance(value, os.PathLike):
                     # Convert to CMake's internal path format
                     value = str(value).replace("\\", "/")
-                    f.write(f'set({key} [===[{value}]===] CACHE PATH "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE PATH "" FORCE)\n')
                 else:
-                    f.write(f'set({key} [===[{value}]===] CACHE STRING "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE STRING "" FORCE)\n')
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
             "{}:\n{}",
