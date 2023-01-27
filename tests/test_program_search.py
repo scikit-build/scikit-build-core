@@ -39,8 +39,8 @@ def test_get_ninja_programs_cmake_module(monkeypatch):
 
 def test_get_cmake_programs_all(monkeypatch, fp):
     monkeypatch.setattr("shutil.which", lambda x: x)
-    cmake_path = Path("cmake").resolve()
-    cmake3_path = Path("cmake3").resolve()
+    cmake_path = Path("cmake")
+    cmake3_path = Path("cmake3")
     fp.register(
         [os.fspath(cmake_path), "--version"],
         stdout="cmake version 3.20.0\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
@@ -67,8 +67,8 @@ def test_get_cmake_programs_all(monkeypatch, fp):
 
 def test_get_ninja_programs_all(monkeypatch, fp):
     monkeypatch.setattr("shutil.which", lambda x: x if "ninja" in x else None)
-    ninja_path = Path("ninja").resolve()
-    ninja_build_path = Path("ninja-build").resolve()
+    ninja_path = Path("ninja")
+    ninja_build_path = Path("ninja-build")
     fp.register(
         [os.fspath(ninja_path), "--version"], stdout="1.10.1.git.kitware.jobserver-1"
     )
@@ -92,8 +92,8 @@ def test_get_ninja_programs_all(monkeypatch, fp):
 def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     caplog.set_level(logging.WARNING)
     monkeypatch.setattr("shutil.which", lambda x: x)
-    cmake_path = Path("cmake").resolve()
-    cmake3_path = Path("cmake3").resolve()
+    cmake_path = Path("cmake")
+    cmake3_path = Path("cmake3")
     fp.register([os.fspath(cmake_path), "--version"], stdout="scrambled output\n")
     fp.register([os.fspath(cmake3_path), "--version"], stdout="cmake version 3.17.3\n")
     programs = list(get_cmake_programs(module=False))

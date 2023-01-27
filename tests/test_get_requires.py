@@ -21,7 +21,7 @@ def which_mock(name: str) -> str | None:
 def test_get_requires_for_build_wheel(fp, monkeypatch):
     # This needs to be passed due to packaging.tags 22 extra checks if macos 10.16 is reported
     fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path").resolve()
+    cmake = Path("cmake/path")
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.14.0")
@@ -30,7 +30,7 @@ def test_get_requires_for_build_wheel(fp, monkeypatch):
 
 def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
     fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path").resolve()
+    cmake = Path("cmake/path")
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
@@ -39,7 +39,7 @@ def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
 
 def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path").resolve()
+    cmake = Path("cmake/path")
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
@@ -59,7 +59,7 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
         minimum-version = "3.21"
         """
     )
-    cmake = Path("cmake/path").resolve()
+    cmake = Path("cmake/path")
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([os.fspath(cmake), "--version"], stdout="3.18.0")
