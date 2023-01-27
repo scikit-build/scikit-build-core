@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import os
 import shutil
 import subprocess
@@ -14,6 +15,7 @@ from packaging.version import Version
 
 from ._logging import logger
 from ._shutil import Run
+from ._version import __version__
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
 
@@ -83,23 +85,33 @@ class CMaker:
             msg = "build directory must be different from source directory"
             raise CMakeConfigError(msg)
 
+        skbuild_info = self.build_dir / ".skbuild-info.json"
         # If building via SDist, this could be pre-filled, so delete it if it exists
         try:
-            with self.build_dir.joinpath("CMakeCache.txt").open("r") as f:
-                for line in f:
-                    if line.startswith("CMAKE_HOME_DIRECTORY:INTERNAL="):
-                        cached_source_dir = Path(line.split("=", 1)[1].strip())
-                        if cached_source_dir != self.source_dir:
-                            logger.info(
-                                "Original src {} != {}, wiping build directory",
-                                cached_source_dir,
-                                self.source_dir,
-                            )
-                            shutil.rmtree(self.build_dir)
-                            self.build_dir.mkdir()
-                        break
+            with skbuild_info.open("r", encoding="utf-8") as f:
+                info = json.load(f)
+                cached_source_dir = info["source_dir"]
+                if cached_source_dir != self.source_dir:
+                    logger.info(
+                        "Original src {} != {}, wiping build directory",
+                        cached_source_dir,
+                        self.source_dir,
+                    )
+                    shutil.rmtree(self.build_dir)
+                    self.build_dir.mkdir()
         except FileNotFoundError:
             pass
+
+        with skbuild_info.open("w", encoding="utf-8") as f:
+            info = {
+                "source_dir": os.fspath(self.source_dir.resolve()),
+                "build_dir": os.fspath(self.build_dir.resolve()),
+                "cmake_path": os.fspath(self.cmake),
+                "skbuild_path": os.fspath(DIR),
+                "skbuild_version": __version__,
+                "python_executable": sys.executable,
+            }
+            json.dump(info, f, indent=2)
 
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
