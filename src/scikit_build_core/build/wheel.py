@@ -131,7 +131,6 @@ def build_wheel(
 
         # A build dir can be specified, otherwise use a temporary directory
         build_dir = settings.cmake.build_dir or build_tmp_folder / "build"
-
         logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {

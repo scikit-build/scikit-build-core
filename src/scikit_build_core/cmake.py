@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import json
 import os
@@ -87,31 +88,35 @@ class CMaker:
 
         skbuild_info = self.build_dir / ".skbuild-info.json"
         # If building via SDist, this could be pre-filled, so delete it if it exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             with skbuild_info.open("r", encoding="utf-8") as f:
                 info = json.load(f)
-                cached_source_dir = info["source_dir"]
-                if cached_source_dir != self.source_dir:
-                    logger.info(
-                        "Original src {} != {}, wiping build directory",
-                        cached_source_dir,
-                        self.source_dir,
-                    )
-                    shutil.rmtree(self.build_dir)
-                    self.build_dir.mkdir()
-        except FileNotFoundError:
-            pass
+
+            cached_source_dir = info["source_dir"]
+            if cached_source_dir != self.source_dir:
+                logger.info(
+                    "Original src {} != {}, wiping build directory",
+                    cached_source_dir,
+                    self.source_dir,
+                )
+                shutil.rmtree(self.build_dir)
+                self.build_dir.mkdir()
 
         with skbuild_info.open("w", encoding="utf-8") as f:
-            info = {
-                "source_dir": os.fspath(self.source_dir.resolve()),
-                "build_dir": os.fspath(self.build_dir.resolve()),
-                "cmake_path": os.fspath(self.cmake),
-                "skbuild_path": os.fspath(DIR),
-                "skbuild_version": __version__,
-                "python_executable": sys.executable,
-            }
-            json.dump(info, f, indent=2)
+            json.dump(self._info_dict(), f, indent=2)
+
+    def _info_dict(self) -> dict[str, str]:
+        """
+        Produce an information dict about the current run that can be stored in a json file.
+        """
+        return {
+            "source_dir": os.fspath(self.source_dir.resolve()),
+            "build_dir": os.fspath(self.build_dir.resolve()),
+            "cmake_path": os.fspath(self.cmake),
+            "skbuild_path": os.fspath(DIR),
+            "skbuild_version": __version__,
+            "python_executable": sys.executable,
+        }
 
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
