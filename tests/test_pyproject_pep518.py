@@ -13,6 +13,7 @@ DIR = Path(__file__).parent.resolve()
 HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 
 
+@pytest.mark.isolated()
 @pytest.mark.integration()
 def test_pep518_sdist():
     correct_metadata = textwrap.dedent(
