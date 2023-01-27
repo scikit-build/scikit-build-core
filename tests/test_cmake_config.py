@@ -24,7 +24,7 @@ def cmake_path() -> str:
         print(cmake_str)
         if cmake_str is None:
             pytest.skip("cmake must be installed for this test")
-        return os.fspath(Path(cmake_str).resolve())
+        return os.fspath(Path(cmake_str))
 
     return os.fspath(Path(cmake.CMAKE_BIN_DIR) / "cmake")
 

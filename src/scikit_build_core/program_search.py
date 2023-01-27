@@ -39,7 +39,7 @@ def _get_cmake_path(*, module: bool = True) -> Generator[Path, None, None]:
     for candidate in candidates:
         cmake_path = shutil.which(candidate)
         if cmake_path is not None:
-            yield Path(cmake_path).resolve()
+            yield Path(cmake_path)
 
 
 def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
@@ -58,7 +58,7 @@ def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
     for candidate in candidates:
         ninja_path = shutil.which(candidate)
         if ninja_path is not None:
-            yield Path(ninja_path).resolve()
+            yield Path(ninja_path)
 
 
 def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]:
@@ -116,7 +116,7 @@ def get_make_programs() -> Generator[Path, None, None]:
     for candidate in candidates:
         make_path = shutil.which(candidate)
         if make_path is not None:
-            yield Path(make_path).resolve()
+            yield Path(make_path)
 
 
 def best_program(
