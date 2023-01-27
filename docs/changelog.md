@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.1.6
+
+### What's changed
+
+Fixes:
+
+- fix: handle local cmake dir for search by @henryiii in #179
+- fix: avoid resolving cmake/ninja paths by @henryiii in #183
+
+Other things:
+
+- chore: use ruff by @henryiii in #175
+- chore: ruff related additions by @henryiii in #180
+- tests: add `isolated` marker to `test_pep518_sdist` by @bnavigator in #182
+
 ## Version 0.1.5
 
 ### What's Changed
