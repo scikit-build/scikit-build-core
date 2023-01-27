@@ -92,9 +92,9 @@ class CMaker:
             with skbuild_info.open("r", encoding="utf-8") as f:
                 info = json.load(f)
 
-            cached_source_dir = info["source_dir"]
-            if cached_source_dir != self.source_dir:
-                logger.info(
+            cached_source_dir = Path(info["source_dir"])
+            if cached_source_dir.resolve() != self.source_dir.resolve():
+                logger.warning(
                     "Original src {} != {}, wiping build directory",
                     cached_source_dir,
                     self.source_dir,
