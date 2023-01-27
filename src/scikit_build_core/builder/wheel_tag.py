@@ -65,9 +65,8 @@ class WheelTag:
             pyvers_new = py_api.split(".")
             if all(x.startswith("cp3") and x[3:].isdecimal() for x in pyvers_new):
                 if len(pyvers_new) != 1:
-                    raise AssertionError(
-                        "Unexpected py-api, must be a single cp version (e.g. cp39)"
-                    )
+                    msg = "Unexpected py-api, must be a single cp version (e.g. cp39), not {py_api}"
+                    raise AssertionError(msg)
                 minor = int(pyvers_new[0][3:])
                 if (
                     sys.implementation.name == "cpython"
@@ -82,9 +81,8 @@ class WheelTag:
                 pyvers = pyvers_new
                 abi = "none"
             else:
-                raise AssertionError(
-                    "Unexpected py-api, must be abi3 (e.g. cp39) or Pythonless (e.g. py2.py3)"
-                )
+                msg = f"Unexpected py-api, must be abi3 (e.g. cp39) or Pythonless (e.g. py2.py3), not {py_api}"
+                raise AssertionError(msg)
 
         return cls(pyvers=pyvers, abis=[abi], archs=plats)
 

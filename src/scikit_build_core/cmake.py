@@ -41,9 +41,8 @@ class CMake:
         cmake_program = best_program(candidates, minimum_version=minimum_version)
 
         if cmake_program is None:
-            raise CMakeNotFoundError(
-                f"Could not find CMake with version >= {minimum_version}"
-            )
+            msg = f"Could not find CMake with version >= {minimum_version}"
+            raise CMakeNotFoundError(msg)
         if cmake_program.version is None:
             msg = "CMake version undetermined @ {program.path}"
             raise CMakeNotFoundError(msg)
@@ -70,13 +69,13 @@ class CMaker:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
 
         if not self.source_dir.is_dir():
-            raise CMakeConfigError(f"source directory {self.source_dir} does not exist")
+            msg = f"source directory {self.source_dir} does not exist"
+            raise CMakeConfigError(msg)
 
         self.build_dir.mkdir(parents=True, exist_ok=True)
         if not self.build_dir.is_dir():
-            raise CMakeConfigError(
-                f"build directory {self.build} must be a (creatable) directory"
-            )
+            msg = f"build directory {self.build_dir} must be a (creatable) directory"
+            raise CMakeConfigError(msg)
 
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
