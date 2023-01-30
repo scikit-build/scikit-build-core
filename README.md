@@ -179,6 +179,9 @@ strict-config = true
 # scikit-build-core version.
 minimum-version = "0.1"  # current version
 
+# Build directory (empty will use a temporary directory)
+build-dir = ""
+
 [tool.scikit-build.cmake.define]
 # Put CMake defines in this table.
 ```

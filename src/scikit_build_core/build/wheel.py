@@ -128,7 +128,14 @@ def build_wheel(
     with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
         wheel_dir = build_tmp_folder / "wheel"
-        build_dir = build_tmp_folder / "build"
+
+        # A build dir can be specified, otherwise use a temporary directory
+        build_dir = (
+            Path(settings.build_dir.format(cache_tag=sys.implementation.cache_tag))
+            if settings.build_dir
+            else build_tmp_folder / "build"
+        )
+        logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {
             "platlib": wheel_dir / "platlib",

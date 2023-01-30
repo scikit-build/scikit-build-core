@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
+import json
 import os
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -13,6 +16,7 @@ from packaging.version import Version
 
 from ._logging import logger
 from ._shutil import Run
+from ._version import __version__
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
 
@@ -77,6 +81,43 @@ class CMaker:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
             raise CMakeConfigError(msg)
 
+        # If these were the same, the following check could wipe the source directory!
+        if self.build_dir.resolve() == self.source_dir.resolve():
+            msg = "build directory must be different from source directory"
+            raise CMakeConfigError(msg)
+
+        skbuild_info = self.build_dir / ".skbuild-info.json"
+        # If building via SDist, this could be pre-filled, so delete it if it exists
+        with contextlib.suppress(FileNotFoundError):
+            with skbuild_info.open("r", encoding="utf-8") as f:
+                info = json.load(f)
+
+            cached_source_dir = Path(info["source_dir"])
+            if cached_source_dir.resolve() != self.source_dir.resolve():
+                logger.warning(
+                    "Original src {} != {}, wiping build directory",
+                    cached_source_dir,
+                    self.source_dir,
+                )
+                shutil.rmtree(self.build_dir)
+                self.build_dir.mkdir()
+
+        with skbuild_info.open("w", encoding="utf-8") as f:
+            json.dump(self._info_dict(), f, indent=2)
+
+    def _info_dict(self) -> dict[str, str]:
+        """
+        Produce an information dict about the current run that can be stored in a json file.
+        """
+        return {
+            "source_dir": os.fspath(self.source_dir.resolve()),
+            "build_dir": os.fspath(self.build_dir.resolve()),
+            "cmake_path": os.fspath(self.cmake),
+            "skbuild_path": os.fspath(DIR),
+            "skbuild_version": __version__,
+            "python_executable": sys.executable,
+        }
+
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
     ) -> None:
@@ -84,13 +125,13 @@ class CMaker:
             for key, value in cache_settings.items():
                 if isinstance(value, bool):
                     value = "ON" if value else "OFF"
-                    f.write(f'set({key} {value} CACHE BOOL "")\n')
+                    f.write(f'set({key} {value} CACHE BOOL "" FORCE)\n')
                 elif isinstance(value, os.PathLike):
                     # Convert to CMake's internal path format
                     value = str(value).replace("\\", "/")
-                    f.write(f'set({key} [===[{value}]===] CACHE PATH "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE PATH "" FORCE)\n')
                 else:
-                    f.write(f'set({key} [===[{value}]===] CACHE STRING "")\n')
+                    f.write(f'set({key} [===[{value}]===] CACHE STRING "" FORCE)\n')
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
             "{}:\n{}",

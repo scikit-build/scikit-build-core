@@ -120,3 +120,6 @@ class ScikitBuildSettings:
 
     #: If set, this will provide a method for backward compatibility.
     minimum_version: Optional[str] = None
+
+    #: The build directory. Defaults to a temporary directory, but can be set.
+    build_dir: str = ""
