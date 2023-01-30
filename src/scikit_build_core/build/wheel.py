@@ -131,7 +131,7 @@ def build_wheel(
 
         # A build dir can be specified, otherwise use a temporary directory
         build_dir = (
-            Path(settings.build_dir)
+            Path(settings.build_dir.format(cache_tag=sys.implementation.cache_tag))
             if settings.build_dir
             else build_tmp_folder / "build"
         )
