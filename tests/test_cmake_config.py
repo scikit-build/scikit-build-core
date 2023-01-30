@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import functools
-import os
 import shutil
 from collections.abc import Generator
 from pathlib import Path
@@ -15,23 +13,8 @@ from scikit_build_core.errors import CMakeNotFoundError
 DIR = Path(__file__).parent.resolve()
 
 
-@functools.lru_cache(1)
-def cmake_path() -> str:
-    try:
-        import cmake
-    except ModuleNotFoundError:
-        cmake_str = shutil.which("cmake")
-        print(cmake_str)
-        if cmake_str is None:
-            pytest.skip("cmake must be installed for this test")
-        return os.fspath(Path(cmake_str))
-
-    return os.fspath(Path(cmake.CMAKE_BIN_DIR) / "cmake")
-
-
 def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
 
-    yield cmake_path()
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
 
@@ -55,7 +38,7 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
 
 @pytest.mark.configure()
 def test_init_cache(fp, tmp_path):
-    fp.register([cmake_path(), "--version"], stdout="3.14.0")
+    fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -68,8 +51,8 @@ def test_init_cache(fp, tmp_path):
     )
 
     cmd = list(configure_args(config, init=True))
-    print("Registering:", *cmd)
-    fp.register(cmd)
+    print("Registering: cmake", *cmd)
+    fp.register([fp.program("cmake"), *cmd])
     config.configure()
 
     cmake_init = config.build_dir / "CMakeInit.txt"
@@ -87,8 +70,7 @@ set(SKBUILD_PATH [===[{source_dir_str}]===] CACHE PATH "")
 @pytest.mark.configure()
 def test_too_old(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda _: None)
-    fp.register([cmake_path(), "--version"], stdout="3.14.0")
-    print(cmake_path)
+    fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeNotFoundError) as excinfo:
         CMake.default_search(minimum_version=Version("3.15"))
@@ -97,7 +79,7 @@ def test_too_old(fp, monkeypatch):
 
 @pytest.mark.configure()
 def test_cmake_args(tmp_path, fp):
-    fp.register([cmake_path(), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -108,8 +90,8 @@ def test_cmake_args(tmp_path, fp):
 
     cmd = list(configure_args(config))
     cmd.append("-DSOMETHING=one")
-    print("Registering:", *cmd)
-    fp.register(cmd)
+    print("Registering: cmake", *cmd)
+    fp.register([fp.program("cmake"), *cmd])
 
     config.configure(cmake_args=["-DSOMETHING=one"])
 
@@ -118,7 +100,7 @@ def test_cmake_args(tmp_path, fp):
 
 @pytest.mark.configure()
 def test_cmake_paths(tmp_path, fp):
-    fp.register([cmake_path(), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -130,8 +112,8 @@ def test_cmake_paths(tmp_path, fp):
     )
 
     cmd = list(configure_args(config))
-    print("Registering:", *cmd)
-    fp.register(cmd)
+    print("Registering: cmake", *cmd)
+    fp.register([fp.program("cmake"), *cmd])
 
     config.configure()
 
