@@ -149,14 +149,15 @@ def build_wheel(
             d.mkdir(parents=True)
 
         if ".." in settings.wheel.install_dir:
-            raise AssertionError("wheel.install_dir must not contain '..'")
+            msg = "wheel.install_dir must not contain '..'"
+            raise AssertionError(msg)
         if settings.wheel.install_dir.startswith("/"):
             if not settings.experimental:
-                raise AssertionError(
-                    "Experimental features must be enabled to use absolute paths in wheel.install_dir"
-                )
+                msg = "Experimental features must be enabled to use absolute paths in wheel.install_dir"
+                raise AssertionError(msg)
             if settings.wheel.install_dir[1:].split("/")[0] not in wheel_dirs:
-                raise AssertionError("Must target a valid wheel directory")
+                msg = "Must target a valid wheel directory"
+                raise AssertionError(msg)
             install_dir = wheel_dir / settings.wheel.install_dir[1:]
         else:
             install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
