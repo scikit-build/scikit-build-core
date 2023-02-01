@@ -39,7 +39,6 @@ mark_hashes_different = pytest.mark.xfail(
 
 
 def test_pep517_sdist(tmp_path, monkeypatch):
-
     dist = tmp_path.resolve() / "dist"
     monkeypatch.chdir(HELLO_PEP518)
     if Path("dist").is_dir():

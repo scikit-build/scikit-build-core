@@ -35,7 +35,6 @@ def prepare_env_or_skip() -> None:
 
 @pytest.mark.configure()
 def test_cattrs_comparison(tmp_path):
-
     build_dir = tmp_path / "build"
 
     cmake = CMake.default_search(minimum_version=Version("3.15"))

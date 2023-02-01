@@ -38,7 +38,6 @@ class Run:
         args: Iterable[str | os.PathLike[str]],
         capture: bool,
     ) -> subprocess.CompletedProcess[str]:
-
         options = [
             os.fspath(arg) if isinstance(arg, os.PathLike) else arg for arg in args
         ]

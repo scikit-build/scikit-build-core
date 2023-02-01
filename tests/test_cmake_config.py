@@ -14,7 +14,6 @@ DIR = Path(__file__).parent.resolve()
 
 
 def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
-
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
 
