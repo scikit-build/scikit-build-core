@@ -45,7 +45,6 @@ dependencies = [
 [project.optional-dependencies]
 pyproject = [
     "pyproject-metadata >=0.5",
-    "distlib >=0.3.5",
     "pathspec >=0.10.1",
 ]
 rich = [
@@ -54,7 +53,6 @@ rich = [
 test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",
-    "distlib >=0.3.5",
     "importlib_metadata; python_version<'3.8'",
     "pathspec >=0.10.1",
     "pybind11",
@@ -151,7 +149,7 @@ module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["distlib.*", "pathspec"]
+module = ["pathspec"]
 ignore_missing_imports = true
 
 
@@ -175,6 +173,7 @@ messages_control.disable = [
   "unnecessary-ellipsis",  # Conflicts with Protocols
   "broad-except",
   "unused-argument",  # Handled by Ruff
+  "redefined-builtin",  # ExceptionGroup is a builtin
 ]
 
 
@@ -214,7 +213,7 @@ ignore = ["PLR2004", "E501"]
 target-version = "py37"
 typing-modules = ["scikit_build_core._compat.typing"]
 src = ["src"]
-unfixable = ["T20"]
+unfixable = ["T20", "F841"]
 exclude = []
 
 [tool.ruff.per-file-ignores]

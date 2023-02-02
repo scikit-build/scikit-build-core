@@ -6,8 +6,6 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-import distlib.wheel
-import packaging.utils
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
@@ -20,16 +18,13 @@ from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
+from ._wheelfile import WheelWriter
 
 __all__: list[str] = ["build_wheel"]
 
 
 def __dir__() -> list[str]:
     return __all__
-
-
-class DistWheel(distlib.wheel.Wheel):  # type: ignore[misc]
-    wheel_version = (1, 0)
 
 
 def _copy_python_packages_to_wheel(
@@ -68,29 +63,6 @@ def _copy_python_packages_to_wheel(
                 shutil.copyfile(filepath, package_dir)
 
 
-def _write_wheel_metadata(
-    *,
-    packages_dir: Path,
-    metadata: StandardMetadata,
-) -> None:
-    name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
-    version = str(metadata.version)
-    dist_info = packages_dir / Path(f"{name}-{version}.dist-info")
-    dist_info.mkdir(exist_ok=False)
-    with dist_info.joinpath("METADATA").open("wb") as f:
-        f.write(bytes(metadata.as_rfc822()))
-    with dist_info.joinpath("entry_points.txt").open("w", encoding="utf_8") as f:
-        ep = metadata.entrypoints.copy()
-        ep["console_scripts"] = metadata.scripts
-        ep["gui_scripts"] = metadata.gui_scripts
-        for group, entries in ep.items():
-            if entries:
-                f.write(f"[{group}]\n")
-                for name, target in entries.items():
-                    f.write(f"{name} = {target}\n")
-                f.write("\n")
-
-
 def build_wheel(
     wheel_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
@@ -112,11 +84,6 @@ def build_wheel(
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
         raise AssertionError(msg)
-
-    wheel = DistWheel()
-    wheel.dirname = wheel_directory
-    wheel.name = packaging.utils.canonicalize_name(metadata.name).replace("-", "_")
-    wheel.version = str(metadata.version)
 
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
@@ -214,17 +181,14 @@ def build_wheel(
                     )
                     break
 
-        _write_wheel_metadata(packages_dir=wheel_dirs["platlib"], metadata=metadata)
-
         tags = WheelTag.compute_best(
             builder.get_arch_tags(),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
         )
-        wheel.build(
-            {k: str(v) for k, v in wheel_dirs.items() if k != "null"},
-            tags=tags.tags_dict(),
-        )
 
-    wheel_filename: str = wheel.filename
+        with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
+            wheel.build(wheel_dirs)
+
+    wheel_filename: str = wheel.wheelpath.name
     return wheel_filename

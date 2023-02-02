@@ -18,7 +18,6 @@ else:
     from importlib import metadata
     from typing import Literal, overload
 
-import distlib.wheel
 import pytest
 
 DIR = Path(__file__).parent.resolve()
@@ -174,7 +173,6 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 def pytest_report_header() -> str:
     interesting_packages = {
         "build",
-        "distlib",
         "packaging",
         "pathspec",
         "pip",
@@ -195,10 +193,4 @@ def pytest_report_header() -> str:
     reqs = " ".join(sorted(valid))
     pkg_line = f"installed packages of interest: {reqs}"
 
-    wheel = distlib.wheel.Wheel()
-    wheel.abi = [distlib.wheel.ABI]
-    wheel.pyver = [distlib.wheel.IMPVER]
-    wheel.arch = [distlib.wheel.ARCH]
-    wheel_line = f"default wheelname: {wheel.filename}"
-
-    return "\n".join([pkg_line, wheel_line])
+    return "\n".join([pkg_line])
