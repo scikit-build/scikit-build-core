@@ -29,9 +29,15 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
       - id: black-jupyter
+
+  - repo: https://github.com/asottile/blacken-docs
+    rev: 1.13.0
+    hooks:
+      - id: blacken-docs
+        additional_dependencies: [black==23.1.0]
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
@@ -46,14 +52,8 @@ repos:
         args: [--prose-wrap=always]
         exclude: "^tests"
 
-  - repo: https://github.com/asottile/blacken-docs
-    rev: 1.13.0
-    hooks:
-      - id: blacken-docs
-        additional_dependencies: [black==22.8.0]
-
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.238
+    rev: v0.0.239
     hooks:
       - id: ruff
         args: ["--fix"]

@@ -150,7 +150,6 @@ def test_toml():
 
 
 def test_all_names():
-
     keys = [x.name for x in dataclasses.fields(SettingChecker)]
 
     envame = [f"SKBUILD_{x.upper()}" for x in keys]
