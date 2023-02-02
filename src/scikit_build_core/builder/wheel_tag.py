@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import sys
 from collections.abc import Iterable, Sequence
 from typing import TypeVar
@@ -107,6 +108,10 @@ class WheelTag:
             "abi": self.abis,
             "arch": self.archs,
         }
+
+    def as_tags_set(self) -> frozenset[packaging.tags.Tag]:
+        vals = itertools.product(self.pyvers, self.abis, self.archs)
+        return frozenset(packaging.tags.Tag(*v) for v in vals)
 
 
 if __name__ == "__main__":

@@ -48,7 +48,6 @@ def get_requires_for_build_wheel(
     from ..builder.get_requires import cmake_ninja_for_build_wheel
 
     return [
-        "distlib",
         "pathspec",
         "pyproject_metadata",
         *cmake_ninja_for_build_wheel(config_settings),
