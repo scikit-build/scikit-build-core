@@ -63,11 +63,30 @@ def _copy_python_packages_to_wheel(
                 shutil.copyfile(filepath, package_dir)
 
 
+def prepare_metadata_for_build_wheel(
+    metadata_directory: str,
+    config_settings: dict[str, list[str] | str] | None = None,
+) -> str:
+    return _build_wheel_impl(None, config_settings, metadata_directory)
+
+
 def build_wheel(
     wheel_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
+    return _build_wheel_impl(wheel_directory, config_settings, metadata_directory)
+
+
+def _build_wheel_impl(
+    wheel_directory: str | None,
+    config_settings: dict[str, list[str] | str] | None = None,
+    metadata_directory: str | None = None,
+) -> str:
+    """
+    Build a wheel or just prepare metadata (if wheel dir is None).
+    """
+
     settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
@@ -141,6 +160,26 @@ def build_wheel(
             config=config,
         )
 
+        tags = WheelTag.compute_best(
+            builder.get_arch_tags(),
+            settings.wheel.py_api,
+            expand_macos=settings.wheel.expand_macos_universal_tags,
+        )
+
+        if wheel_directory is None:
+            if metadata_directory is None:
+                msg = "metadata_directory must be specified if wheel_directory is None"
+                raise AssertionError(msg)
+            with WheelWriter(
+                metadata, Path(metadata_directory), tags.as_tags_set()
+            ) as wheel:
+                dist_info_contents = wheel.dist_info_contents()
+                dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+                for key, data in dist_info_contents.items():
+                    path = dist_info / key
+                    path.write_bytes(data)
+            return dist_info.name
+
         rich_print("[green]***[/green] [bold]Configurating CMake...")
         defines: dict[str, str] = {}
         cache_entries = {f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()}
@@ -181,14 +220,19 @@ def build_wheel(
                     )
                     break
 
-        tags = WheelTag.compute_best(
-            builder.get_arch_tags(),
-            settings.wheel.py_api,
-            expand_macos=settings.wheel.expand_macos_universal_tags,
-        )
-
         with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
             wheel.build(wheel_dirs)
+
+    if metadata_directory is not None:
+        dist_info_contents = wheel.dist_info_contents()
+        dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+        for key, data in dist_info_contents.items():
+            path = dist_info / key
+            prevous_data = path.read_bytes()
+            if prevous_data != data:
+                msg = f"Metadata mismatch in {key}"
+                logger.error("{}: {!r} != {!r}", msg, prevous_data, data)
+                raise AssertionError()
 
     wheel_filename: str = wheel.wheelpath.name
     return wheel_filename
