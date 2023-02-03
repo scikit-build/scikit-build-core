@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import nox
@@ -35,7 +36,14 @@ def tests(session: nox.Session) -> None:
     Run the unit and regular tests.
     """
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-    session.install("-e.[test]")
+    extra = []
+    # This will not work if system CMake is too old (<3.15)
+    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+        extra.append("cmake")
+    if shutil.which("ninja") is None:
+        extra.append("ninja")
+
+    session.install("-e.[test]", *extra)
     session.run("pytest", *session.posargs, env=env)
 
 
