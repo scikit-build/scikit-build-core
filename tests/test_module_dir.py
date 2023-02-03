@@ -29,7 +29,7 @@ def on_all_modules(
 
 def test_all_modules_filter_all():
     all_modules = on_all_modules("scikit_build_core", pkg=False)
-    all_modules = (n for n in all_modules if not n.split(".")[-1].startswith("_"))
+    all_modules = (n for n in all_modules if not n.split(".")[-1].startswith("__"))
     for name in all_modules:
         module = importlib.import_module(name)
 
