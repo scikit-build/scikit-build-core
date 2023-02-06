@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import csv
 import dataclasses
 import hashlib
@@ -115,7 +116,7 @@ class WheelWriter:
 
         self.wheel_metadata.tags = self.tags
         return {
-            "METADATA": bytes(self.metadata.as_rfc822()),
+            "METADATA": bytes(copy.copy(self.metadata).as_rfc822()),
             "WHEEL": self.wheel_metadata.as_bytes(),
             "entry_points.txt": entry_points.getvalue().encode("utf-8"),
         }

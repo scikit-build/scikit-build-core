@@ -7,6 +7,7 @@ import textwrap
 import zipfile
 from pathlib import Path
 
+import build.util
 import pytest
 
 DIR = Path(__file__).parent.resolve()
@@ -160,3 +161,20 @@ def test_pep518_pip(isolated):
 
     add = isolated.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add == "3"
+
+
+def test_prepare_metdata_for_build_wheel():
+    metadata = build.util.project_wheel_metadata(HELLO_PEP518, isolated=False)
+    answer = {
+        "Metadata-Version": "2.1",
+        "Name": "cmake-example",
+        "Version": "0.0.1",
+        "Requires-Python": ">=3.7",
+        "Provides-Extra": "test",
+        "Requires-Dist": 'pytest>=6.0; extra == "test"',
+    }
+
+    for k, b in answer.items():
+        assert metadata[k] == b
+
+    assert len(metadata) == len(answer)

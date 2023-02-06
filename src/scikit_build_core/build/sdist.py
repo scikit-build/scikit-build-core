@@ -84,7 +84,7 @@ def build_sdist(
     timestamp = get_reproducible_epoch() if reproducible else None
 
     metadata = StandardMetadata.from_pyproject(pyproject)
-    pkg_info = bytes(metadata.as_rfc822())
+    pkg_info = bytes(copy.copy(metadata).as_rfc822())
 
     srcdirname = f"{metadata.name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"

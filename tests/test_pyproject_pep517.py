@@ -6,7 +6,6 @@ import time
 import zipfile
 from pathlib import Path
 
-import build.util
 import pytest
 
 from scikit_build_core.build import _file_processor, build_sdist, build_wheel
@@ -240,20 +239,3 @@ def test_pep517_wheel_time_hash(tmp_path, monkeypatch):
     hash2 = hashlib.sha256(wheel.read_bytes()).hexdigest()
 
     assert hash1 == hash2
-
-
-def test_prepare_metdata_for_build_wheel():
-    metadata = build.util.project_wheel_metadata(HELLO_PEP518, isolated=False)
-    answer = {
-        "Metadata-Version": "2.1",
-        "Name": "cmake-example",
-        "Version": "0.0.1",
-        "Requires-Python": ">=3.7",
-        "Provides-Extra": "test",
-        "Requires-Dist": 'pytest>=6.0; extra == "test"',
-    }
-
-    for k, b in answer.items():
-        assert metadata[k] == b
-
-    assert len(metadata) == len(answer)

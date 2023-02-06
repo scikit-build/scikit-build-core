@@ -93,9 +93,6 @@ def _build_wheel_impl(
 
     settings_reader.validate_may_exit()
 
-    # We don't support preparing metadata yet
-    assert metadata_directory is None
-
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     metadata = StandardMetadata.from_pyproject(pyproject)
@@ -175,6 +172,7 @@ def _build_wheel_impl(
             ) as wheel:
                 dist_info_contents = wheel.dist_info_contents()
                 dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+                dist_info.mkdir(parents=True)
                 for key, data in dist_info_contents.items():
                     path = dist_info / key
                     path.write_bytes(data)
@@ -225,14 +223,14 @@ def _build_wheel_impl(
 
     if metadata_directory is not None:
         dist_info_contents = wheel.dist_info_contents()
-        dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+        dist_info = Path(metadata_directory)
         for key, data in dist_info_contents.items():
             path = dist_info / key
             prevous_data = path.read_bytes()
             if prevous_data != data:
                 msg = f"Metadata mismatch in {key}"
                 logger.error("{}: {!r} != {!r}", msg, prevous_data, data)
-                raise AssertionError()
+                raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name
     return wheel_filename

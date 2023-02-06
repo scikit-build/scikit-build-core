@@ -7,6 +7,7 @@ __all__ = [
     "build_wheel",
     "get_requires_for_build_sdist",
     "get_requires_for_build_wheel",
+    "prepare_metadata_for_build_wheel",
 ]
 
 
@@ -25,6 +26,17 @@ def build_wheel(
         sys.stdout.flush()
         rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
         raise SystemExit(1) from None
+
+
+def prepare_metadata_for_build_wheel(
+    metadata_directory: str,
+    config_settings: dict[str, list[str] | str] | None = None,
+) -> str:
+    from .wheel import (
+        prepare_metadata_for_build_wheel as skbuild_prepare_metadata_for_build_wheel,
+    )
+
+    return skbuild_prepare_metadata_for_build_wheel(metadata_directory, config_settings)
 
 
 def build_sdist(
