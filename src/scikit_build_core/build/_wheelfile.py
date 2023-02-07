@@ -116,7 +116,7 @@ class WheelWriter:
 
         self.wheel_metadata.tags = self.tags
         return {
-            "METADATA": bytes(copy.copy(self.metadata).as_rfc822()),
+            "METADATA": bytes(copy.deepcopy(self.metadata).as_rfc822()),
             "WHEEL": self.wheel_metadata.as_bytes(),
             "entry_points.txt": entry_points.getvalue().encode("utf-8"),
         }
