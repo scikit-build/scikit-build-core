@@ -66,6 +66,7 @@ repos:
         files: ^(src|tests)
         args: []
         additional_dependencies:
+          - build
           - cattrs
           - cmake
           - exceptiongroup

@@ -7,6 +7,7 @@ __all__ = [
     "build_wheel",
     "get_requires_for_build_sdist",
     "get_requires_for_build_wheel",
+    "prepare_metadata_for_build_wheel",
 ]
 
 
@@ -17,14 +18,23 @@ def build_wheel(
 ) -> str:
     from .._logging import rich_print
     from ..errors import FailedLiveProcessError
-    from .wheel import build_wheel as skbuild_build_wheel
+    from .wheel import _build_wheel_impl
 
     try:
-        return skbuild_build_wheel(wheel_directory, config_settings, metadata_directory)
+        return _build_wheel_impl(wheel_directory, config_settings, metadata_directory)
     except FailedLiveProcessError as err:
         sys.stdout.flush()
         rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
         raise SystemExit(1) from None
+
+
+def prepare_metadata_for_build_wheel(
+    metadata_directory: str,
+    config_settings: dict[str, list[str] | str] | None = None,
+) -> str:
+    from .wheel import _build_wheel_impl
+
+    return _build_wheel_impl(None, config_settings, metadata_directory)
 
 
 def build_sdist(
