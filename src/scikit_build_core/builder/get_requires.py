@@ -29,7 +29,7 @@ def __dir__() -> list[str]:
 
 
 @functools.lru_cache(maxsize=2)
-def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:  # noqa: F821
+def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:
     with resources.joinpath("known_wheels.toml").open("rb") as f:
         return frozenset(tomllib.load(f)["tool"]["scikit-build"][name]["known-wheels"])
 
