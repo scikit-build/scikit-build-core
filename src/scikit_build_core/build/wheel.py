@@ -20,7 +20,7 @@ from ._file_processor import each_unignored_file
 from ._init import setup_logging
 from ._wheelfile import WheelWriter
 
-__all__: list[str] = ["build_wheel"]
+__all__: list[str] = ["_build_wheel_impl"]
 
 
 def __dir__() -> list[str]:
@@ -61,21 +61,6 @@ def _copy_python_packages_to_wheel(
             if not package_dir.is_file():
                 package_dir.parent.mkdir(exist_ok=True, parents=True)
                 shutil.copyfile(filepath, package_dir)
-
-
-def prepare_metadata_for_build_wheel(
-    metadata_directory: str,
-    config_settings: dict[str, list[str] | str] | None = None,
-) -> str:
-    return _build_wheel_impl(None, config_settings, metadata_directory)
-
-
-def build_wheel(
-    wheel_directory: str,
-    config_settings: dict[str, list[str] | str] | None = None,
-    metadata_directory: str | None = None,
-) -> str:
-    return _build_wheel_impl(wheel_directory, config_settings, metadata_directory)
 
 
 def _build_wheel_impl(

@@ -18,10 +18,10 @@ def build_wheel(
 ) -> str:
     from .._logging import rich_print
     from ..errors import FailedLiveProcessError
-    from .wheel import build_wheel as skbuild_build_wheel
+    from .wheel import _build_wheel_impl
 
     try:
-        return skbuild_build_wheel(wheel_directory, config_settings, metadata_directory)
+        return _build_wheel_impl(wheel_directory, config_settings, metadata_directory)
     except FailedLiveProcessError as err:
         sys.stdout.flush()
         rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
@@ -32,11 +32,9 @@ def prepare_metadata_for_build_wheel(
     metadata_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    from .wheel import (
-        prepare_metadata_for_build_wheel as skbuild_prepare_metadata_for_build_wheel,
-    )
+    from .wheel import _build_wheel_impl
 
-    return skbuild_prepare_metadata_for_build_wheel(metadata_directory, config_settings)
+    return _build_wheel_impl(None, config_settings, metadata_directory)
 
 
 def build_sdist(

@@ -83,6 +83,8 @@ def build_sdist(
     reproducible = settings.sdist.reproducible
     timestamp = get_reproducible_epoch() if reproducible else None
 
+    # Using deepcopy here because of a bug in pyproject-metadata
+    # https://github.com/FFY00/python-pyproject-metadata/pull/49
     metadata = StandardMetadata.from_pyproject(pyproject)
     pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
 

@@ -115,6 +115,8 @@ class WheelWriter:
                 entry_points.write("\n")
 
         self.wheel_metadata.tags = self.tags
+        # Using deepcopy here because of a bug in pyproject-metadata
+        # https://github.com/FFY00/python-pyproject-metadata/pull/49
         return {
             "METADATA": bytes(copy.deepcopy(self.metadata).as_rfc822()),
             "WHEEL": self.wheel_metadata.as_bytes(),
