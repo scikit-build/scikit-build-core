@@ -53,7 +53,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.239
+    rev: v0.0.243
     hooks:
       - id: ruff
         args: ["--fix"]
