@@ -209,7 +209,7 @@ select = [
   "UP",          # pyupgrade
   "YTT",         # flake8-2020
 ]
-ignore = ["PLR2004", "E501"]
+extend-ignore = ["PLR0915", "PLR0912", "PLR2004", "E501"]
 target-version = "py37"
 typing-modules = ["scikit_build_core._compat.typing"]
 src = ["src"]
