@@ -31,7 +31,13 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
     dist = tmp_path / "dist"
     dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
+
+    # create a temporary copy of the package source so we don't contaminate the
+    # main source tree with build artefacts
+    src = tmp_path / "src"
+    shutil.copytree(HELLO_PEP518, src)
+    monkeypatch.chdir(src)
+
     if Path("dist").is_dir():
         shutil.rmtree("dist")
 
@@ -75,7 +81,13 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
+
+    # create a temporary copy of the package source so we don't contaminate the
+    # main source tree with build artefacts
+    src = tmp_path / "src"
+    shutil.copytree(HELLO_PEP518, src)
+    monkeypatch.chdir(src)
+
     if Path("dist").is_dir():
         shutil.rmtree("dist")
     out = build_wheel(str(dist))

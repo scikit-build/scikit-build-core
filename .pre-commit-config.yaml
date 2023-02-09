@@ -63,7 +63,12 @@ repos:
     rev: v1.0.0
     hooks:
       - id: mypy
-        exclude: tests/packages/(simplest_c/src/simplest/__init__.py|.*/setup.py)
+        exclude: |
+          (?x)^(
+            tests/packages/simplest_c/src/simplest/__init__.py|
+            tests/packages/dynamic_metadata/src/dynamic/__init__.py|
+            tests/packages/.*/setup.py
+          )
         files: ^(src|tests)
         args: []
         additional_dependencies:
@@ -71,13 +76,16 @@ repos:
           - cattrs
           - cmake
           - exceptiongroup
-          - importlib_metadata
+          - gitpython
+          - hatch-fancy-pypi-readme
+          - importlib-metadata
           - importlib_resources
           - ninja
           - packaging
           - pyproject_metadata
           - pytest
           - rich
+          - setuptools-scm
           - tomli
           - types-setuptools
           - typing_extensions >=4; python_version<'3.11'
