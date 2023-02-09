@@ -33,6 +33,7 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
+    "importlib-metadata >=4.13; python_version<'3.11'",
     "importlib_resources >=1.3; python_version<'3.9'",
     "packaging >=20.9",
     "tomli >=1.1; python_version<'3.11'",
@@ -53,13 +54,16 @@ rich = [
 test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",
+    "gitpython",
     "importlib_metadata; python_version<'3.8'",
+    "hatch-fancy-pypi-readme",
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     "setuptools",
+    "setuptools-scm",
     "wheel",
 ]
 cov = [
@@ -87,6 +91,9 @@ Examples = "https://github.com/scikit-build/scikit-build-core/tree/main/tests/pa
 cmake_extensions = "scikit_build_core.setuptools.extension:cmake_extensions"
 cmake_source_dir = "scikit_build_core.setuptools.extension:cmake_source_dir"
 
+[project.entry-points.skbuild]
+setuptools_scm = "scikit_build_core.settings.metadata:setuptools_scm_version"
+fancy_pypi_readme = "scikit_build_core.settings.metadata:fancy_pypi_readme"
 
 [tool.hatch]
 version.source = "vcs"
@@ -129,7 +136,7 @@ module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["pathspec"]
+module = ["pathspec", "setuptools_scm", "hatch_fancy_pypi_readme"]
 ignore_missing_imports = true
 
 
