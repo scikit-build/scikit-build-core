@@ -49,6 +49,12 @@ class SettingsReader:
                 )
                 raise CMakeConfigError(msg)
 
+        if self.settings.editable.mode != "static":
+            if self.settings.strict_config:
+                rich_print("[red][bold]ERROR:[/bold] editable mode must be 'static'")
+                raise SystemExit(7)
+            logger.warning("editable mode must be 'static', ignoring")
+
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 

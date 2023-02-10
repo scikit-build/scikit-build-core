@@ -42,6 +42,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.minimum_version is None
     assert settings.build_dir == ""
     assert settings.metadata == {}
+    assert settings.editable.mode == "static"
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
