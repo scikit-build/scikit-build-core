@@ -32,33 +32,49 @@ jobs:
           pipx run nox -s pylint
 
   checks:
-    name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    name:
+      Check 🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }}
+      on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "pypy-3.8", "3.11"]
-        runs-on: [ubuntu-latest, macos-latest, windows-2022]
+        runs-on: [ubuntu-latest, macos-latest]
+        cmake-version: ["3.15.x"]
 
         include:
+          - python-version: "3.7"
+            runs-on: windows-2022
+            cmake-version: "3.21.x"
+          - python-version: "pypy-3.8"
+            runs-on: windows-2022
+            cmake-version: "3.21.x"
+          - python-version: "3.11"
+            runs-on: windows-2022
+            cmake-version: "3.25.x"
           - python-version: "pypy-3.7"
             runs-on: ubuntu-latest
+            cmake-version: "3.15.x"
           - python-version: "3.8"
             runs-on: ubuntu-latest
+            cmake-version: "3.21.x"
           - python-version: "3.9"
             runs-on: ubuntu-latest
+            cmake-version: "3.20.x"
           - python-version: "3.10"
             runs-on: ubuntu-latest
+            cmake-version: "3.22.x"
           - python-version: "3.8"
             runs-on: windows-2019
+            cmake-version: "3.24.x"
           - python-version: "3.12-dev"
             runs-on: ubuntu-latest
+            cmake-version: "3.15.x"
     continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
 
       - uses: actions/setup-python@v4
         with:
@@ -80,17 +96,10 @@ jobs:
           pip uninstall -y cmake
           pip install --constraint tests/constraints.txt .[test]
 
-      - name: Setup CMake 3.15
+      - name: Setup CMake ${{ matrix.cmake-version }}
         uses: jwlawson/actions-setup-cmake@v1.13
-        if: matrix.runs-on != 'windows-2022'
         with:
-          cmake-version: "3.15.x"
-
-      - name: Setup CMake 3.21
-        uses: jwlawson/actions-setup-cmake@v1.13
-        if: matrix.runs-on == 'windows-2022'
-        with:
-          cmake-version: "3.21.x"
+          cmake-version: "${{ matrix.cmake-version }}"
 
       - name: Test min package
         run: pytest -ra --showlocals
@@ -185,7 +194,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - uses: hynek/build-and-inspect-python-package@v1
 

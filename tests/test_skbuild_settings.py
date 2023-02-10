@@ -33,7 +33,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
-    assert settings.backport.find_python == "3.24"
+    assert settings.backport.find_python == "3.26"
     assert settings.strict_config
     assert not settings.experimental
     assert settings.minimum_version is None
