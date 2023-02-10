@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import shutil
 import sys
 import tempfile
@@ -34,7 +35,8 @@ def _copy_python_packages_to_wheel(
     platlib_dir: Path,
     include: Sequence[str],
     exclude: Sequence[str],
-) -> None:
+) -> dict[str, str]:
+    mapping = {}
     if packages is None:
         # Auto package discovery
         packages = []
@@ -61,13 +63,22 @@ def _copy_python_packages_to_wheel(
             if not package_dir.is_file():
                 package_dir.parent.mkdir(exist_ok=True, parents=True)
                 shutil.copyfile(filepath, package_dir)
+                mapping[str(filepath)] = str(package_dir)
+
+    return mapping
+
+
+@dataclasses.dataclass
+class WheelImplReturn:
+    wheel_filename: str
+    mapping: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 def _build_wheel_impl(
     wheel_directory: str | None,
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
-) -> str:
+) -> WheelImplReturn:
     """
     Build a wheel or just prepare metadata (if wheel dir is None).
     """
@@ -161,7 +172,7 @@ def _build_wheel_impl(
                 for key, data in dist_info_contents.items():
                     path = dist_info / key
                     path.write_bytes(data)
-            return dist_info.name
+            return WheelImplReturn(wheel_filename=dist_info.name)
 
         rich_print("[green]***[/green] [bold]Configurating CMake...")
         defines: dict[str, str] = {}
@@ -186,7 +197,7 @@ def _build_wheel_impl(
         builder.install(install_dir)
 
         rich_print("[green]***[/green] [bold]Making wheel...")
-        _copy_python_packages_to_wheel(
+        mapping = _copy_python_packages_to_wheel(
             packages=settings.wheel.packages,
             name=metadata.name.replace("-", "_").replace(".", "_"),
             platlib_dir=wheel_dirs["platlib"],
@@ -218,4 +229,4 @@ def _build_wheel_impl(
                 raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name
-    return wheel_filename
+    return WheelImplReturn(wheel_filename=wheel_filename, mapping=mapping)

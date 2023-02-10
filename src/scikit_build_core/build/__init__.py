@@ -26,7 +26,9 @@ def build_wheel(
     from .wheel import _build_wheel_impl
 
     try:
-        return _build_wheel_impl(wheel_directory, config_settings, metadata_directory)
+        return _build_wheel_impl(
+            wheel_directory, config_settings, metadata_directory
+        ).wheel_filename
     except FailedLiveProcessError as err:
         sys.stdout.flush()
         rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
@@ -39,7 +41,7 @@ def prepare_metadata_for_build_wheel(
 ) -> str:
     from .wheel import _build_wheel_impl
 
-    return _build_wheel_impl(None, config_settings, metadata_directory)
+    return _build_wheel_impl(None, config_settings, metadata_directory).wheel_filename
 
 
 def build_sdist(
