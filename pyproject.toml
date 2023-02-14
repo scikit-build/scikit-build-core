@@ -57,7 +57,7 @@ test = [
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
-    "pytest >=7.2",
+    "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     "setuptools",
     "wheel",
@@ -68,7 +68,7 @@ cov = [
 dev = [
     "build",
     "cattrs >=22.2.0",
-    "pytest >=7.2",
+    "pytest >=7.0",
     "pytest-subprocess",
     "rich",
 ]
@@ -94,7 +94,7 @@ build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
 [tool.pytest.ini_options]
-minversion = "7.2"
+minversion = "7.0"
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
