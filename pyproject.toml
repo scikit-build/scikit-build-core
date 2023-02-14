@@ -33,7 +33,7 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
-    "importlib_resources>=1.3; python_version<'3.9'",
+    "importlib_resources >=1.3; python_version<'3.9'",
     "packaging >=20.9",
     "tomli >=1.1; python_version<'3.11'",
     "typing_extensions >=3.10.0; python_version<'3.8'",
@@ -120,20 +120,8 @@ python_version = "3.7"
 warn_unused_configs = true
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-
-disallow_any_generics = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-no_implicit_reexport = true
-strict_equality = true
-strict_concatenate = true
+strict = true
+disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = ["scikit_build_core.*"]
@@ -151,28 +139,28 @@ reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 good-names = ["f"]
 messages_control.disable = [
-  "design",
-  "fixme",
-  "import-outside-toplevel",
-  "invalid-name",
-  "line-too-long",
-  "missing-class-docstring",
-  "missing-function-docstring",
-  "missing-function-docstring",
-  "missing-module-docstring",
-  "wrong-import-position",
-  "unnecessary-ellipsis",  # Conflicts with Protocols
-  "broad-except",
-  "unused-argument",  # Handled by Ruff
-  "redefined-builtin",  # ExceptionGroup is a builtin
+    "design",
+    "fixme",
+    "import-outside-toplevel",
+    "invalid-name",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "wrong-import-position",
+    "unnecessary-ellipsis",  # Conflicts with Protocols
+    "broad-except",
+    "unused-argument",  # Handled by Ruff
+    "redefined-builtin",  # ExceptionGroup is a builtin
 ]
 
 
 [tool.coverage]
 report.exclude_lines = [
-  'pragma: no cover',
-  '\.\.\.',
-  'if typing.TYPE_CHECKING:',
+    'pragma: no cover',
+    '\.\.\.',
+    'if typing.TYPE_CHECKING:',
 ]
 
 [tool.check-wheel-contents]
@@ -181,25 +169,25 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 [tool.ruff]
 select = [
-  "E", "F", "W", # flake8
-  "B",  "B904",  # flake8-bugbear
-  "I",           # isort
-  "ARG",         # flake8-unused-arguments
-  "C4",          # flake8-comprehensions
-  "EM",          # flake8-errmsg
-  "ICN",         # flake8-import-conventions
-  "ISC",         # flake8-implicit-str-concat
-  "PGH",         # pygrep-hooks
-  "PIE",         # flake8-pie
-  "PL",          # pylint
-  "PT",          # flake8-pytest-style
-  "PTH",         # flake8-use-pathlib
-  "RET",         # flake8-return
-  "RUF",         # Ruff-specific
-  "SIM",         # flake8-simplify
-  "T20",         # flake8-print
-  "UP",          # pyupgrade
-  "YTT",         # flake8-2020
+    "E", "F", "W", # flake8
+    "B",  "B904",  # flake8-bugbear
+    "I",           # isort
+    "ARG",         # flake8-unused-arguments
+    "C4",          # flake8-comprehensions
+    "EM",          # flake8-errmsg
+    "ICN",         # flake8-import-conventions
+    "ISC",         # flake8-implicit-str-concat
+    "PGH",         # pygrep-hooks
+    "PIE",         # flake8-pie
+    "PL",          # pylint
+    "PT",          # flake8-pytest-style
+    "PTH",         # flake8-use-pathlib
+    "RET",         # flake8-return
+    "RUF",         # Ruff-specific
+    "SIM",         # flake8-simplify
+    "T20",         # flake8-print
+    "UP",          # pyupgrade
+    "YTT",         # flake8-2020
 ]
 extend-ignore = ["PLR0915", "PLR0912", "PLR2004", "E501"]
 target-version = "py37"
