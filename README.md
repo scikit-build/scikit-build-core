@@ -41,13 +41,12 @@ The following limitations are present compared to classic scikit-build:
 
 Some known missing features that will be developed soon:
 
-- No support for caching between builds
+- Support for caching between builds is currently opt-in with `build-dir`
 - No editable mode support
 - The docs are not written
 - Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
-- Windows ARM support missing
 
 Other backends are also planned:
 
@@ -179,7 +178,8 @@ strict-config = true
 # scikit-build-core version.
 minimum-version = "0.1"  # current version
 
-# Build directory (empty will use a temporary directory)
+# Build directory (empty will use a temporary directory). {cache_tag} is
+# available to provide a unique directory per interpreter.
 build-dir = ""
 
 [tool.scikit-build.cmake.define]
