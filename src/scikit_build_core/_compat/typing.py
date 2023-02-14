@@ -21,6 +21,8 @@ if sys.version_info < (3, 11):
         from typing_extensions import Self
     else:
         Self = object
+else:
+    from typing import Self
 
 __all__ = ["Protocol", "runtime_checkable", "Literal", "Self"]
 
