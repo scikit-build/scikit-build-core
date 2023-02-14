@@ -1,19 +1,53 @@
 # Changelog
 
+## Version 0.2.0
+
+This version adds local build directory support - you can now set `build-dir`
+and reuse build targets. This does not yet default to on, so please test it out.
+This can dramatically speed up rebuilds. If you want to mimic setuptools, you
+can set this to `build/{cache_tag}`. Or you can chose some other directory, like
+scikit-build classic's `_skbuild`. Along with this, we now have a native wheel
+writer implementation and support `prepare_metadata_for_build_wheel`.
+
+Scikit-build-core now also contains a backport of FindPython from CMake 3.26,
+which fixes SOABI on PyPy and supports the Stable ABI / Limited API.
+
+### What's Changed
+
+Features:
+
+- Local build directory setting & build reuse by @henryiii in #181
+- Add `prepare_metadata_for_build_wheel` by @henryiii in #191
+- Native wheel writer implementation by @henryiii in #188
+- Use 3.26 dev version port of FindPython by @henryiii in #102
+
+Tests:
+
+- tests: allow pytest 7.0+ instead of 7.2+ by @henryiii in #200
+- tests: include cmake and ninja if missing in nox by @henryiii in #190
+- tests: simpler pytest-subprocess by @henryiii in #159
+
+Other things:
+
+- chore: Python 3.11 Self usage by @henryiii in #199
+- chore: fix Ruff configuration by @henryiii in #186
+- chore: minor adjustments to wheel returns by @henryiii in #195
+- chore: remove duplicate Ruff code by @burgholzer in #184
+
 ## Version 0.1.6
 
 ### What's changed
 
 Fixes:
 
-- fix: handle local cmake dir for search by @henryiii in #179
-- fix: avoid resolving cmake/ninja paths by @henryiii in #183
+- Handle local cmake dir for search by @henryiii in #179
+- Avoid resolving cmake/ninja paths by @henryiii in #183
 
 Other things:
 
-- chore: use ruff by @henryiii in #175
-- chore: ruff related additions by @henryiii in #180
-- tests: add `isolated` marker to `test_pep518_sdist` by @bnavigator in #182
+- Use Ruff by @henryiii in #175
+- Ruff related additions by @henryiii in #180
+- Add `isolated` marker to `test_pep518_sdist` by @bnavigator in #182
 
 ## Version 0.1.5
 
