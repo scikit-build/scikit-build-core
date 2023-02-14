@@ -6,7 +6,6 @@ import shutil
 import subprocess
 import sys
 import types
-import typing
 import warnings
 from collections.abc import Generator
 from pathlib import Path
@@ -14,14 +13,7 @@ from venv import EnvBuilder
 
 if sys.version_info < (3, 8):
     import importlib_metadata as metadata
-
-    if typing.TYPE_CHECKING:
-        from typing_extensions import Literal, overload
-    else:
-        Literal = object
-
-        def overload(x):
-            return x
+    from typing_extensions import Literal, overload
 
 else:
     from importlib import metadata
