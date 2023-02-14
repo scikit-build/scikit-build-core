@@ -4,14 +4,7 @@ import sys
 import typing
 
 if sys.version_info < (3, 8):
-    if typing.TYPE_CHECKING:
-        from typing_extensions import Literal, Protocol, runtime_checkable
-    else:
-        Literal = object
-        Protocol = object
-
-        def runtime_checkable(x):
-            return x
+    from typing_extensions import Literal, Protocol, runtime_checkable
 
 else:
     from typing import Literal, Protocol, runtime_checkable
