@@ -14,7 +14,6 @@ from venv import EnvBuilder
 if sys.version_info < (3, 8):
     import importlib_metadata as metadata
     from typing_extensions import Literal, overload
-
 else:
     from importlib import metadata
     from typing import Literal, overload
