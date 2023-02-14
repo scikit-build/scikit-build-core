@@ -14,11 +14,6 @@
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
-**WARNING**: Only the pyproject-based builder should be used (setuptools backend
-is experimental and likely to move to a separate package), and internal API is
-still being solidified. A future version of this package will support creating
-new build extensions.
-
 Features over classic Scikit-build:
 
 - Better warnings, errors, and logging
@@ -27,12 +22,14 @@ Features over classic Scikit-build:
 - No dependency on setuptools, distutils, or wheel in build mode.
 - Powerful config system, including config options support in build mode.
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
-- FindPython is backported if running on CMake < 3.24 (included via hatchling in
-  a submodule, configurable)
+- FindPython is backported if running on CMake < 3.26 (configurable), supports
+  PyPY SOABI.
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
 - SDists are reproducible by default (UNIX, Python 3.9+)
+- Support for caching between builds (opt-in by setting `build-dir`)
+- Support for writing out to extra wheel folders (scripts, headers, data)
 
 The following limitations are present compared to classic scikit-build:
 
@@ -41,12 +38,12 @@ The following limitations are present compared to classic scikit-build:
 
 Some known missing features that will be developed soon:
 
-- Support for caching between builds is currently opt-in with `build-dir`
 - No editable mode support
 - The docs are not written
 - Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
+- Dynamic metadata support is being developed
 
 Other backends are also planned:
 
@@ -54,9 +51,14 @@ Other backends are also planned:
 - The extensionlib integration is missing
 - No hatchling plugin yet
 
-The recommended interface is the PEP 517 interface. There is also a
+The recommended interface is the PEP 517 interface. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
 for classic scikit-build.
+
+**WARNING**: Only the pyproject-based builder should be used; the setuptools
+backend is experimental and likely to move to a separate package before being
+declared stable, and internal API is still being solidified. A future version of
+this package will support creating new build extensions.
 
 ## Example
 
@@ -82,7 +84,7 @@ printouts) or `pyproject` (pre-load some dependencies) extras if you want.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.25)
+cmake_minimum_required(VERSION 3.15...3.26)
 
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C VERSION ${SKBUILD_PROJECT_VERSION})
 
@@ -166,7 +168,7 @@ wheel.install-dir = "."
 # This will backport an internal copy of FindPython if CMake is less than this
 # value. Set to 0 or the empty string to disable. The default will be kept in
 # sync with the version of FindPython stored in scikit-build-core.
-backport.find-python = "3.24"
+backport.find-python = "3.26"
 
 # Enable experimental features if any are available
 experimental = false
@@ -176,7 +178,7 @@ strict-config = true
 
 # This provides some backward compatibility if set. Defaults to the latest
 # scikit-build-core version.
-minimum-version = "0.1"  # current version
+minimum-version = "0.2"  # current version
 
 # Build directory (empty will use a temporary directory). {cache_tag} is
 # available to provide a unique directory per interpreter.
