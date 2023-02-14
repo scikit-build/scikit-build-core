@@ -75,6 +75,8 @@ def test_fancy_metadata(tmp_path, monkeypatch):
     monkeypatch.chdir(build_dir)
 
     repo = git.repo.base.Repo.init(build_dir, initial_branch="main")
+    repo.config_writer().set_value("user", "name", "bot").release()
+    repo.config_writer().set_value("user", "email", "bot@scikit-build.net").release()
     repo.index.add(["pyproject.toml"])
     repo.index.commit("first commit")
     repo.create_tag("v0.1.0", message="initial commit")
