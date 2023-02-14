@@ -10,10 +10,11 @@ import sys
 import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Generator, TypeVar
+from typing import Generator
 
 from packaging.version import Version
 
+from ._compat.typing import Self
 from ._logging import logger
 from ._shutil import Run
 from ._version import __version__
@@ -29,8 +30,6 @@ def __dir__() -> list[str]:
 
 DIR = Path(__file__).parent.resolve()
 
-Self = TypeVar("Self", bound="CMake")
-
 
 @dataclasses.dataclass(frozen=True)
 class CMake:
@@ -39,7 +38,7 @@ class CMake:
 
     @classmethod
     def default_search(
-        cls: type[Self], *, minimum_version: Version | None = None, module: bool = True
+        cls, *, minimum_version: Version | None = None, module: bool = True
     ) -> Self:
         candidates = get_cmake_programs(module=module)
         cmake_program = best_program(candidates, minimum_version=minimum_version)
