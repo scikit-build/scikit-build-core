@@ -170,8 +170,9 @@ messages_control.disable = [
 
 [tool.coverage]
 report.exclude_lines = [
-  "pragma: no cover",
+  'pragma: no cover',
   '\.\.\.',
+  'if typing.TYPE_CHECKING:',
 ]
 
 [tool.check-wheel-contents]

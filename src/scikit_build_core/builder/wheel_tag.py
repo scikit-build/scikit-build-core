@@ -4,10 +4,10 @@ import dataclasses
 import itertools
 import sys
 from collections.abc import Iterable, Sequence
-from typing import TypeVar
 
 import packaging.tags
 
+from .._compat.typing import Self
 from .._logging import logger
 from .macos import get_macosx_deployment_target
 
@@ -16,9 +16,6 @@ __all__ = ["WheelTag"]
 
 def __dir__() -> list[str]:
     return __all__
-
-
-Self = TypeVar("Self", bound="WheelTag")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -30,7 +27,7 @@ class WheelTag:
     # TODO: plats only used on macOS
     @classmethod
     def compute_best(
-        cls: type[Self],
+        cls,
         archs: Sequence[str],
         py_api: str = "",
         expand_macos: bool = False,

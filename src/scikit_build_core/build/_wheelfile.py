@@ -14,7 +14,6 @@ from collections.abc import Set
 from email.message import Message
 from email.policy import EmailPolicy
 from pathlib import Path, PurePosixPath
-from typing import TypeVar
 from zipfile import ZipInfo
 
 import packaging.utils
@@ -22,13 +21,12 @@ from packaging.tags import Tag
 from packaging.utils import BuildTag
 from pyproject_metadata import StandardMetadata
 
+from .._compat.typing import Self
 from .._version import __version__
 
 EMAIL_POLICY = EmailPolicy(max_line_length=0, mangle_from_=False, utf8=True)
 
 MIN_TIMESTAMP = 315532800  # 1980-01-01 00:00:00 UTC
-
-WWSelf = TypeVar("WWSelf", bound="WheelWriter")
 
 
 def _b64encode(data: bytes) -> bytes:
@@ -170,7 +168,7 @@ class WheelWriter:
             zinfo.external_attr = 0o664 << 16
         self.zipfile.writestr(zinfo, data)
 
-    def __enter__(self: WWSelf) -> WWSelf:
+    def __enter__(self) -> Self:
         if not self.wheelpath.parent.exists():
             self.wheelpath.parent.mkdir(parents=True)
 
