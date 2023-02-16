@@ -8,7 +8,7 @@ import git
 import pyproject_metadata
 import pytest
 
-from scikit_build_core._compat import importlib
+from scikit_build_core._compat import importlib, tomllib
 from scikit_build_core.build import build_wheel
 from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
@@ -56,22 +56,25 @@ def mock_entry_points():
 def test_dynamic_metadata(monkeypatch):
     monkeypatch.chdir(DYNAMIC)
 
-    settings_reader = SettingsReader(Path("pyproject.toml"), {})
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
 
-    metadata = get_standard_metadata(Path("pyproject.toml"), settings)
+    metadata = get_standard_metadata(pyproject, settings)
 
     assert str(metadata.version) == "0.0.2"
     assert metadata.license == pyproject_metadata.License("MIT License", None)
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 
 
-def test_fancy_metadata(tmp_path, monkeypatch):
+def test_plugin_metadata(tmp_path, monkeypatch):
     build_dir = tmp_path / "build"
+    build_dir.mkdir()
 
-    shutil.copytree(DYNAMIC, build_dir)
+    shutil.copy(DYNAMIC / "plugin_project.toml", build_dir / "pyproject.toml")
     monkeypatch.chdir(build_dir)
 
     repo = git.repo.base.Repo.init(build_dir, initial_branch="main")
@@ -81,12 +84,14 @@ def test_fancy_metadata(tmp_path, monkeypatch):
     repo.index.commit("first commit")
     repo.create_tag("v0.1.0", message="initial commit")
 
-    settings_reader = SettingsReader(Path("fancy_project.toml"), {})
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
 
-    metadata = get_standard_metadata(Path("fancy_project.toml"), settings)
+    metadata = get_standard_metadata(pyproject, settings)
 
     assert str(metadata.version) == "0.1.0"
     assert metadata.readme == pyproject_metadata.Readme(
@@ -96,24 +101,29 @@ def test_fancy_metadata(tmp_path, monkeypatch):
 
 def test_faulty_metadata(monkeypatch):
     monkeypatch.chdir(DYNAMIC)
-    settings_reader = SettingsReader(Path("faulty_project.toml"), {})
+
+    with Path("faulty_project.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
 
     with pytest.raises(KeyError):
-        get_standard_metadata(Path("faulty_project.toml"), settings)
+        get_standard_metadata(pyproject, settings)
 
 
 def test_warn_metadata(monkeypatch):
     monkeypatch.chdir(DYNAMIC)
-    settings_reader = SettingsReader(Path("warn_project.toml"), {})
+    with Path("warn_project.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
 
     with pytest.warns():
-        get_standard_metadata(Path("warn_project.toml"), settings)
+        get_standard_metadata(pyproject, settings)
 
 
 @pytest.mark.compile()

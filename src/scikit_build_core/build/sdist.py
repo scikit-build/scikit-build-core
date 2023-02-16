@@ -8,9 +8,8 @@ import os
 import tarfile
 from pathlib import Path
 
-from pyproject_metadata import StandardMetadata
-
 from .._compat import tomllib
+from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
@@ -69,7 +68,10 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
+    with Path("pyproject.toml").open("rb") as f:
+        pyproject = tomllib.load(f)
+
+    settings_reader = SettingsReader(pyproject, config_settings or {})
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 
@@ -77,15 +79,12 @@ def build_sdist(
 
     sdist_dir = Path(sdist_directory)
 
-    with Path("pyproject.toml").open("rb") as f:
-        pyproject = tomllib.load(f)
-
     reproducible = settings.sdist.reproducible
     timestamp = get_reproducible_epoch() if reproducible else None
 
+    metadata = get_standard_metadata(pyproject, settings)
     # Using deepcopy here because of a bug in pyproject-metadata
     # https://github.com/FFY00/python-pyproject-metadata/pull/49
-    metadata = StandardMetadata.from_pyproject(pyproject)
     pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
 
     srcdirname = f"{metadata.name}-{metadata.version}"
