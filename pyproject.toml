@@ -56,14 +56,12 @@ test = [
     "cattrs >=22.2.0",
     "gitpython",
     "importlib_metadata; python_version<'3.8'",
-    "hatch-fancy-pypi-readme",
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     "setuptools",
-    "setuptools-scm",
     "wheel",
 ]
 cov = [
