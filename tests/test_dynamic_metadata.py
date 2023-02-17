@@ -23,19 +23,34 @@ DYNAMIC = DIR / "packages/dynamic_metadata"
 # these are mock plugins returning known results
 # it turns out to be easier to create EntryPoint objects pointing to real
 # functions than to mock them.
-def ep_version(_pyproject_dict: dict[str, Any]) -> str:
-    return "0.0.2"
+def ep_version(
+    _pyproject_dict: dict[str, Any]
+) -> dict[str, str | dict[str, str | None]]:
+    return {"version": "0.0.2"}
 
 
-def ep_readme(_pyproject_dict: dict[str, Any]) -> dict[str, str]:
+def ep_readme(
+    _pyproject_dict: dict[str, Any]
+) -> dict[str, str | dict[str, str | None]]:
     return {
-        "content-type": "text/x-rst",
-        "text": "Some text",
+        "readme": {
+            "content-type": "text/x-rst",
+            "text": "Some text",
+        }
     }
 
 
-def ep_license(_pyproject_dict: dict[str, Any]) -> dict[str, str]:
-    return {"text": "MIT License"}
+def ep_license(
+    _pyproject_dict: dict[str, Any]
+) -> dict[str, str | dict[str, str | None]]:
+    return {"license": {"text": "MIT License"}}
+
+
+def ep_dual(_pyproject_dict: dict[str, Any]) -> dict[str, str | dict[str, str | None]]:
+    return {
+        "version": "0.3",
+        "license": {"text": "BSD License"},
+    }
 
 
 @pytest.fixture()
@@ -50,6 +65,9 @@ def mock_entry_points():
             ),
             importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
                 "test_readme", f"{__name__}:ep_readme", "scikit_build.metadata"
+            ),
+            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
+                "test_dual", f"{__name__}:ep_dual", "scikit_build.metadata"
             ),
         )
     )
@@ -138,6 +156,32 @@ def test_warn_metadata(monkeypatch):
     settings_reader.validate_may_exit()
 
     with pytest.warns():
+        get_standard_metadata(pyproject, settings)
+
+
+@pytest.mark.usefixtures("mock_entry_points")
+def test_dual_metadata(monkeypatch):
+    monkeypatch.chdir(DYNAMIC)
+
+    with Path("dual_project.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
+    settings = settings_reader.settings
+
+    settings_reader.validate_may_exit()
+
+    metadata = get_standard_metadata(pyproject, settings)
+    assert str(metadata.version) == "0.3"
+    assert metadata.license == pyproject_metadata.License("BSD License", None)
+
+    with Path("faulty_dual_project.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
+    settings = settings_reader.settings
+
+    settings_reader.validate_may_exit()
+
+    with pytest.raises(KeyError):
         get_standard_metadata(pyproject, settings)
 
 
