@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import shutil
 import sys
 import zipfile
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 import git
@@ -17,38 +20,44 @@ DIR = Path(__file__).parent.resolve()
 DYNAMIC = DIR / "packages/dynamic_metadata"
 
 
-@pytest.fixture()
-def mock_entry_points():
-    mock_version = mock.Mock()
-    mock_version.load.return_value = lambda _: "0.0.2"
-    mock_version.name = "test_version"
-    mock_version.group = "skbuild"
-    mock_version.matches.side_effect = AttributeError()
+# these are mock plugins returning known results
+# it turns out to be easier to create EntryPoint objects pointing to real
+# functions than to mock them.
+def ep_version(_pyproject_dict: dict[str, Any]) -> str:
+    return "0.0.2"
 
-    mock_readme = mock.Mock()
-    mock_readme.load.return_value = lambda _: {
+
+def ep_readme(_pyproject_dict: dict[str, Any]) -> dict[str, str]:
+    return {
         "content-type": "text/x-rst",
         "text": "Some text",
     }
-    mock_readme.name = "test_readme"
-    mock_readme.group = "skbuild"
-    mock_readme.matches.side_effect = AttributeError()
 
-    mock_license = mock.Mock()
-    mock_license.load.return_value = lambda _: {"text": "MIT License"}
-    mock_license.name = "test_license"
-    mock_license.group = "skbuild"
-    mock_license.matches.side_effect = AttributeError()
 
-    def mock_ep(**_):
-        result: importlib.metadata.EntryPoints = importlib.metadata.EntryPoints(
-            (mock_version, mock_readme, mock_license)
+def ep_license(_pyproject_dict: dict[str, Any]) -> dict[str, str]:
+    return {"text": "MIT License"}
+
+
+@pytest.fixture()
+def mock_entry_points():
+    mocked = importlib.metadata.EntryPoints(
+        (
+            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
+                "test_version", f"{__name__}:ep_version", "scikit_build.metadata"
+            ),
+            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
+                "test_license", f"{__name__}:ep_license", "scikit_build.metadata"
+            ),
+            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
+                "test_readme", f"{__name__}:ep_readme", "scikit_build.metadata"
+            ),
         )
-        return result
+    )
 
     with mock.patch(
-        "scikit_build_core.settings.metadata.importlib.metadata.entry_points", mock_ep
-    ) as mocked:
+        "scikit_build_core.settings.metadata.importlib.metadata.entry_points"
+    ) as mocked_eps:
+        mocked_eps.return_value = mocked
         yield mocked
 
 
