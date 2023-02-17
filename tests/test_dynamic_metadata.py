@@ -80,6 +80,12 @@ def test_dynamic_metadata(monkeypatch):
 
 
 def test_plugin_metadata(tmp_path, monkeypatch):
+    reason_msg = (
+        "install hatch-fancy-pypi-readme and setuptools-scm to test the "
+        "dynamic metadata plugins"
+    )
+    pytest.importorskip("hatch_fancy_pypi_readme", reason=reason_msg)
+    pytest.importorskip("setuptools_scm", reason=reason_msg)
     build_dir = tmp_path / "build"
     build_dir.mkdir()
 
