@@ -199,8 +199,9 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     assert wheel == dist / out
 
     virtualenv.install(wheel)
+    virtualenv.install("importlib-metadata==4.13.0")
     license = virtualenv.execute(
-        "from importlib.metadata import metadata; print(metadata('dynamic')['License'])"
+        "from importlib_metadata import metadata; print(metadata('dynamic')['License'])"
     )
     assert license == "MIT License"
 
