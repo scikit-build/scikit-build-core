@@ -27,7 +27,9 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev,test]", "pylint")
+    session.install(
+        "-e.[dev,test]", "pylint", "hatch-fancy-pypi-readme", "setuptools-scm"
+    )
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
