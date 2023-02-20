@@ -1,17 +1,18 @@
 from __future__ import annotations
 
+import importlib
 import shutil
 import sys
+import types
 import zipfile
 from pathlib import Path
 from typing import Any
-from unittest import mock
 
 import git
 import pyproject_metadata
 import pytest
 
-from scikit_build_core._compat import importlib, tomllib
+from scikit_build_core._compat import tomllib
 from scikit_build_core.build import build_wheel
 from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
@@ -53,30 +54,33 @@ def ep_dual(_pyproject_dict: dict[str, Any]) -> dict[str, str | dict[str, str | 
     }
 
 
-@pytest.fixture()
-def mock_entry_points():
-    mocked = importlib.metadata.EntryPoints(
-        (
-            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
-                "test_version", f"{__name__}:ep_version", "scikit_build.metadata"
-            ),
-            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
-                "test_license", f"{__name__}:ep_license", "scikit_build.metadata"
-            ),
-            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
-                "test_readme", f"{__name__}:ep_readme", "scikit_build.metadata"
-            ),
-            importlib.metadata.EntryPoint(  # type: ignore[no-untyped-call]
-                "test_dual", f"{__name__}:ep_dual", "scikit_build.metadata"
-            ),
-        )
-    )
+original_loader = importlib.import_module
 
-    with mock.patch(
-        "scikit_build_core.settings.metadata.importlib.metadata.entry_points"
-    ) as mocked_eps:
-        mocked_eps.return_value = mocked
-        yield mocked
+
+def special_loader(name: str, *args: Any, **kwargs: Any) -> Any:
+    if name == "test_version":
+        test_version = types.ModuleType("test_version")
+        test_version.dynamic_metadata = ep_version  # type: ignore[attr-defined]
+        return test_version
+    if name == "test_readme":
+        test_readme = types.ModuleType("test_readme")
+        test_readme.dynamic_metadata = ep_readme  # type: ignore[attr-defined]
+        return test_readme
+    if name == "test_license":
+        test_license = types.ModuleType("test_license")
+        test_license.dynamic_metadata = ep_license  # type: ignore[attr-defined]
+        return test_license
+    if name == "test_dual":
+        test_dual = types.ModuleType("test_dual")
+        test_dual.dynamic_metadata = ep_dual  # type: ignore[attr-defined]
+        return test_dual
+
+    return original_loader(name, *args, **kwargs)
+
+
+@pytest.fixture()
+def mock_entry_points(monkeypatch):
+    monkeypatch.setattr(importlib, "import_module", special_loader)
 
 
 @pytest.mark.usefixtures("mock_entry_points")
@@ -155,7 +159,7 @@ def test_warn_metadata(monkeypatch):
 
     settings_reader.validate_may_exit()
 
-    with pytest.warns():
+    with pytest.raises(ModuleNotFoundError):
         get_standard_metadata(pyproject, settings)
 
 

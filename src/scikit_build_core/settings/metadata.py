@@ -1,50 +1,21 @@
 from __future__ import annotations
 
-import warnings
-from pathlib import Path
+import importlib
 from typing import Any
 
 from pyproject_metadata import StandardMetadata
 
-from .._compat import importlib
 from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["setuptools_scm_version", "fancy_pypi_readme", "get_standard_metadata"]
+__all__ = ["get_standard_metadata"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-def setuptools_scm_version(
-    _pyproject_dict: dict[str, Any]
-) -> dict[str, str | dict[str, str | None]]:
-    # this is a placeholder version of this function, waiting for the release
-    # of vcs-versioning and an improved public interface
-    from setuptools_scm import Configuration, _get_version
-
-    config = Configuration.from_file(str(Path("pyproject.toml")))
-    version: str = _get_version(config)
-
-    return {"version": version}
-
-
-def fancy_pypi_readme(
-    pyproject_dict: dict[str, Any]
-) -> dict[str, str | dict[str, str | None]]:
-    from hatch_fancy_pypi_readme._builder import build_text
-    from hatch_fancy_pypi_readme._config import load_and_validate_config
-
-    config = load_and_validate_config(
-        pyproject_dict["tool"]["hatch"]["metadata"]["hooks"]["fancy-pypi-readme"]
-    )
-
-    return {
-        "readme": {
-            "content-type": config.content_type,
-            "text": build_text(config.fragments, config.substitutions),
-        }
-    }
+def _load(mod_name: str, pyproject_dict: dict[str, Any]) -> dict[str, Any]:
+    return importlib.import_module(mod_name).dynamic_metadata(pyproject_dict)  # type: ignore[no-any-return]
 
 
 def get_standard_metadata(
@@ -53,33 +24,23 @@ def get_standard_metadata(
     metadata = StandardMetadata.from_pyproject(pyproject_dict)
 
     # handle any dynamic metadata
-    # start by collecting all the scikit-build entrypoints
-    eps: importlib.metadata.EntryPoints = importlib.metadata.entry_points(
-        group="scikit_build.metadata"
-    )
-    cached_plugins = {}
-    for field, ep_name in settings.metadata.items():
+    for field in settings.metadata:
         if field not in metadata.dynamic:
             msg = f"{field} is not in project.dynamic"
             raise KeyError(msg)
-        if ep_name not in cached_plugins:
-            try:
-                ep = eps[ep_name]
-            except KeyError:
-                warnings.warn(
-                    f"could not find requested entrypoint {ep_name} for field {field}"
-                )
-                continue
-            else:
-                cached_plugins[ep_name] = ep.load()(pyproject_dict)
-        if field in cached_plugins[ep_name]:
-            # would be better to update the metadata directly but this is
-            # currently not supported by pyproject_metadata
-            # metadata.__setattr__(field, ep.load()(pyproject_path)
-            pyproject_dict["project"][field] = cached_plugins[ep_name][field]
+
+    plugins = set(settings.metadata.values())
+    cached_plugins = {key: _load(key, pyproject_dict) for key in plugins}
+
+    for field, mod_name in settings.metadata.items():
+        # would be better to update the metadata directly but this is
+        # currently not supported by pyproject_metadata
+        # metadata.__setattr__(field, ep.load()(pyproject_path)
+        if field in cached_plugins[mod_name]:
+            pyproject_dict["project"][field] = cached_plugins[mod_name][field]
             pyproject_dict["project"]["dynamic"].remove(field)
         else:
-            msg = f"{field} is not provided by plugin {ep_name}"
+            msg = f"{field} is not provided by plugin {mod_name}"
             raise KeyError(msg)
 
     # if pyproject-metadata supports updates, we won't need this line anymore
