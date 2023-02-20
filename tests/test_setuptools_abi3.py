@@ -25,7 +25,12 @@ ABI_PKG = DIR / "packages/abi3_setuptools_ext"
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
-    monkeypatch.chdir(ABI_PKG)
+
+    # create a temporary copy of the package source so we don't contaminate the
+    # main source tree with build artefacts
+    src = tmp_path / "src"
+    shutil.copytree(ABI_PKG, src)
+    monkeypatch.chdir(src)
     if Path("dist").is_dir():
         shutil.rmtree("dist")
 
