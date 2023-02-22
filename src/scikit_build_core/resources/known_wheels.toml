@@ -1,5 +1,6 @@
 [tool.scikit-build.cmake]
 known-wheels = [
+    "win_arm64",
     "win_amd64",
     "win32",
     "macosx_10_10_universal2",
@@ -19,6 +20,7 @@ known-wheels = [
 
 [tool.scikit-build.ninja]
 known-wheels = [
+    "win_arm64",
     "win_amd64",
     "win32",
     "macosx_10_9_universal2",
