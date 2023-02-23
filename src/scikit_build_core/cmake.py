@@ -139,7 +139,7 @@ class CMaker:
         )
 
     def _compute_cmake_args(
-        self, settings: Mapping[str, str | os.PathLike[str] | bool]
+        self, defines: Mapping[str, str | os.PathLike[str] | bool]
     ) -> Generator[str, None, None]:
         yield f"-S{self.source_dir}"
         yield f"-B{self.build_dir}"
@@ -150,7 +150,7 @@ class CMaker:
         if self.single_config and self.build_type:
             yield f"-DCMAKE_BUILD_TYPE={self.build_type}"
 
-        for key, value in settings.items():
+        for key, value in defines.items():
             if isinstance(value, bool):
                 value = "ON" if value else "OFF"
                 yield f"-D{key}:BOOL={value}"

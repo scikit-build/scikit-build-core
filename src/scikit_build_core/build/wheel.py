@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import shutil
 import sys
 import tempfile
@@ -13,7 +14,7 @@ from pyproject_metadata import StandardMetadata
 from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
-from ..builder.builder import Builder
+from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
@@ -108,9 +109,18 @@ def _build_wheel_impl(
         build_tmp_folder = Path(tmpdir)
         wheel_dir = build_tmp_folder / "wheel"
 
+        tags = WheelTag.compute_best(
+            archs_to_tags(get_archs(os.environ)),
+            settings.wheel.py_api,
+            expand_macos=settings.wheel.expand_macos_universal_tags,
+        )
+
         # A build dir can be specified, otherwise use a temporary directory
         build_dir = (
-            Path(settings.build_dir.format(cache_tag=sys.implementation.cache_tag))
+            Path(
+                settings.build_dir.format(cache_tag=sys.implementation.cache_tag),
+                wheel_tag=str(tags),
+            )
             if settings.build_dir
             else build_tmp_folder / "build"
         )
@@ -151,12 +161,6 @@ def _build_wheel_impl(
         builder = Builder(
             settings=settings,
             config=config,
-        )
-
-        tags = WheelTag.compute_best(
-            builder.get_arch_tags(),
-            settings.wheel.py_api,
-            expand_macos=settings.wheel.expand_macos_universal_tags,
         )
 
         if wheel_directory is None:

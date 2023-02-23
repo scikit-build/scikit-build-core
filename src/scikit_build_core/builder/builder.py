@@ -4,6 +4,7 @@ import dataclasses
 import re
 import sys
 import sysconfig
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Mapping
 
@@ -17,7 +18,7 @@ from ..settings.skbuild_model import ScikitBuildSettings
 from .generator import set_environment_for_gen
 from .sysconfig import get_platform, get_python_include_dir, get_python_library
 
-__all__: list[str] = ["Builder"]
+__all__: list[str] = ["Builder", "get_archs", "archs_to_tags"]
 
 DIR = Path(__file__).parent.resolve()
 
@@ -26,45 +27,53 @@ def __dir__() -> list[str]:
     return __all__
 
 
+# TODO: cross-compile support for other platforms
+def get_archs(env: Mapping[str, str], cmake_args: Sequence[str] = ()) -> list[str]:
+    """
+    Takes macOS platform settings and returns a list of platforms.
+
+    Example (macOS):
+        ARCHFLAGS="-arch x86_64" -> ["x86_64"]
+        ARCHFLAGS="-arch x86_64 -arch arm64" -> ["x86_64", "arm64"]
+
+    Returns an empty list otherwise or if ARCHFLAGS is not set.
+    """
+
+    if sys.platform.startswith("darwin"):
+        for cmake_arg in cmake_args:
+            if "CMAKE_SYSTEM_PROCESSOR" in cmake_arg:
+                return [cmake_arg.split("=")[1]]
+        archs = re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
+        return archs
+    if sys.platform.startswith("win") and get_platform(env) == "win-arm64":
+        return ["win_arm64"]
+
+    return []
+
+
+def archs_to_tags(archs: list[str]) -> list[str]:
+    """
+    Convert a list of architectures to a list of tags (e.g. "universal2").
+    """
+    if sys.platform.startswith("darwin") and set(archs) == {"arm64", "x86_64"}:
+        return ["universal2"]
+    return archs
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
     config: CMaker
 
-    # TODO: cross-compile support for other platforms
-    def get_archs(self) -> list[str]:
+    def get_cmake_args(self) -> list[str]:
         """
-        Takes macOS platform settings and returns a list of platforms.
-
-        Example (macOS):
-            ARCHFLAGS="-arch x86_64" -> ["x86_64"]
-            ARCHFLAGS="-arch x86_64 -arch arm64" -> ["x86_64", "arm64"]
-
-        Returns an empty list otherwise or if ARCHFLAGS is not set.
+        Get CMake args from the settings and environment.
         """
+        # Adding CMake arguments set as environment variable
+        # (needed e.g. to build for ARM OSX on conda-forge)
+        env_cmake_args = filter(None, self.config.env.get("CMAKE_ARGS", "").split(" "))
 
-        if sys.platform.startswith("darwin"):
-            archs = re.findall(r"-arch (\S+)", self.config.env.get("ARCHFLAGS", ""))
-            return archs
-        if (
-            sys.platform.startswith("win")
-            and get_platform(self.config.env) == "win-arm64"
-        ):
-            return ["win_arm64"]
-
-        return []
-
-    def get_arch_tags(self) -> list[str]:
-        """
-        This function returns tags suitable for use in wheels. The main
-        difference between this method and get_archs() is that this returns
-        universal2 instead of separate tags for x86_64 and arm64.
-        """
-
-        archs = self.get_archs()
-        if sys.platform.startswith("darwin") and set(archs) == {"arm64", "x86_64"}:
-            return ["universal2"]
-        return archs
+        return [*self.settings.cmake.args, *env_cmake_args]
 
     def configure(
         self,
@@ -76,7 +85,6 @@ class Builder:
         limited_abi: bool | None = None,
     ) -> None:
         cmake_defines = dict(defines)
-        cmake_args: list[str] = []
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
@@ -151,18 +159,9 @@ class Builder:
 
         self.config.init_cache(cache_config)
 
-        # Add the pre-defined or passed CMake args
-        cmake_args += self.settings.cmake.args
-
-        # Adding CMake arguments set as environment variable
-        # (needed e.g. to build for ARM OSX on conda-forge)
-        cmake_args += [
-            item for item in self.config.env.get("CMAKE_ARGS", "").split(" ") if item
-        ]
-
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set
-            archs = self.get_archs()
+            archs = get_archs(self.config.env)
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
 
@@ -171,7 +170,7 @@ class Builder:
 
         self.config.configure(
             defines=cmake_defines,
-            cmake_args=cmake_args,
+            cmake_args=self.get_cmake_args(),
         )
 
     def build(self, build_args: list[str]) -> None:

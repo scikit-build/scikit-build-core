@@ -12,7 +12,7 @@ from packaging.version import Version
 from setuptools.dist import Distribution
 
 from .._compat.typing import Literal
-from ..builder.builder import Builder
+from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
@@ -77,7 +77,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 
         # Setuptools requires this be specified if there's a mismatch.
         if sys.platform.startswith("darwin"):
-            arm_only = builder.get_archs() == ["arm64"]
+            arm_only = get_archs(builder.config.env) == ["arm64"]
             orig_macos_str = sysconfig.get_platform().rsplit("-", 1)[0].split("-", 1)[1]
             orig_macos = normalize_macos_version(orig_macos_str, arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
