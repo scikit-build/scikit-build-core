@@ -10,7 +10,6 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
-from .._logging import logger
 from ..cmake import CMaker
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
