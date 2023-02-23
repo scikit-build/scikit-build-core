@@ -10,6 +10,7 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
+from .._logging import logger
 from ..cmake import CMaker
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
@@ -80,13 +81,17 @@ class Builder:
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
         self.config.prefix_dirs.append(site_packages)
+        logging.debug("SITE_PACKAGES: {}", site_packages)
         if site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
+            logging.debug("Extra SITE_PACKAGES: {}", site_packages)
 
         # Add the FindPython backport if needed
         fp_backport = self.settings.backport.find_python
         if fp_backport and self.config.cmake.version < Version(fp_backport):
-            self.config.module_dirs.append(Path(find_python.__file__).parent.resolve())
+            fp_dir = Path(find_python.__file__).parent.resolve()
+            self.config.module_dirs.append(fp_dir)
+            logging.debug("FindPython backport activated at {}", fp_dir)
 
         local_def = set_environment_for_gen(
             self.config.cmake, self.config.env, self.settings.ninja
