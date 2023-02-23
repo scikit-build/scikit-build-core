@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from scikit_build_core.builder.builder import Builder
+from scikit_build_core.builder.builder import Builder, archs_to_tags, get_archs
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
     get_python_include_dir,
@@ -87,12 +87,7 @@ library_dirs=C:\\Python\\libs
 def test_builder_macos_arch(monkeypatch, archs):
     archflags = " ".join(f"-arch {arch}" for arch in archs)
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setenv("ARCHFLAGS", archflags)
-    tmpcfg = SimpleNamespace(env=os.environ.copy())
-    tmpbuilder = typing.cast(
-        Builder, SimpleNamespace(config=tmpcfg, settings=ScikitBuildSettings())
-    )
-    assert Builder.get_archs(tmpbuilder) == archs
+    assert get_archs({"ARCHFLAGS": archflags}) == archs
 
 
 def test_builder_macos_arch_extra(monkeypatch):
@@ -105,7 +100,7 @@ def test_builder_macos_arch_extra(monkeypatch):
         settings=ScikitBuildSettings(wheel=WheelSettings()),
         config=tmpcfg,
     )
-    assert tmpbuilder.get_arch_tags() == ["universal2"]
+    assert archs_to_tags(get_archs(tmpbuilder.config.env)) == ["universal2"]
 
 
 @pytest.mark.parametrize(
