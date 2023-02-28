@@ -109,8 +109,14 @@ def get_platform(env: Mapping[str, str] | None = None) -> str:
         env = os.environ
     if sys.platform.startswith("win"):
         if "VSCMD_ARG_TGT_ARCH" in env:
+            logger.debug(
+                "Selecting {} or {} due to VSCMD_ARG_TARGET_ARCH",
+                TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]),
+                get_host_platform(),
+            )
             return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
         if "arm64" in env.get("SETUPTOOLS_EXT_SUFFIX", "").lower():
+            logger.debug("Windows ARM targeted via SETUPTOOLS_EXT_SUFFIX")
             return "win-arm64"
     return get_host_platform()
 
