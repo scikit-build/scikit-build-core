@@ -38,6 +38,7 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
 @pytest.mark.configure()
 def test_init_cache(fp, tmp_path):
     fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
+    fp.register([fp.program("cmake3"), "--version"], stdout="3.14.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -52,6 +53,7 @@ def test_init_cache(fp, tmp_path):
     cmd = list(configure_args(config, init=True))
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
+    fp.register([fp.program("cmake3"), *cmd])
     config.configure()
 
     cmake_init = config.build_dir / "CMakeInit.txt"
@@ -70,6 +72,7 @@ set(SKBUILD_PATH [===[{source_dir_str}]===] CACHE PATH "" FORCE)
 def test_too_old(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda _: None)
     fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
+    fp.register([fp.program("cmake3"), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeNotFoundError) as excinfo:
         CMake.default_search(minimum_version=Version("3.15"))
@@ -79,6 +82,7 @@ def test_too_old(fp, monkeypatch):
 @pytest.mark.configure()
 def test_cmake_args(tmp_path, fp):
     fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake3"), "--version"], stdout="3.15.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -91,6 +95,7 @@ def test_cmake_args(tmp_path, fp):
     cmd.append("-DSOMETHING=one")
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
+    fp.register([fp.program("cmake3"), *cmd])
 
     config.configure(cmake_args=["-DSOMETHING=one"])
 
@@ -100,6 +105,7 @@ def test_cmake_args(tmp_path, fp):
 @pytest.mark.configure()
 def test_cmake_paths(tmp_path, fp):
     fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake3"), "--version"], stdout="3.15.0")
 
     config = CMaker(
         CMake.default_search(),
@@ -113,6 +119,7 @@ def test_cmake_paths(tmp_path, fp):
     cmd = list(configure_args(config))
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
+    fp.register([fp.program("cmake3"), *cmd])
 
     config.configure()
 
