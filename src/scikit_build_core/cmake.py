@@ -123,12 +123,12 @@ class CMaker:
         with self.init_cache_file.open("w", encoding="utf-8") as f:
             for key, value in cache_settings.items():
                 if isinstance(value, bool):
-                    value = "ON" if value else "OFF"
-                    f.write(f'set({key} {value} CACHE BOOL "" FORCE)\n')
+                    str_value = "ON" if value else "OFF"
+                    f.write(f'set({key} {str_value} CACHE BOOL "" FORCE)\n')
                 elif isinstance(value, os.PathLike):
                     # Convert to CMake's internal path format
-                    value = str(value).replace("\\", "/")
-                    f.write(f'set({key} [===[{value}]===] CACHE PATH "" FORCE)\n')
+                    str_value = str(value).replace("\\", "/")
+                    f.write(f'set({key} [===[{str_value}]===] CACHE PATH "" FORCE)\n')
                 else:
                     f.write(f'set({key} [===[{value}]===] CACHE STRING "" FORCE)\n')
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
@@ -152,11 +152,11 @@ class CMaker:
 
         for key, value in defines.items():
             if isinstance(value, bool):
-                value = "ON" if value else "OFF"
-                yield f"-D{key}:BOOL={value}"
+                str_value = "ON" if value else "OFF"
+                yield f"-D{key}:BOOL={str_value}"
             elif isinstance(value, os.PathLike):
-                value = str(value).replace("\\", "/")
-                yield f"-D{key}:PATH={value}"
+                str_value = str(value).replace("\\", "/")
+                yield f"-D{key}:PATH={str_value}"
             else:
                 yield f"-D{key}={value}"
 
