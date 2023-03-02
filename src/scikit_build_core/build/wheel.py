@@ -18,8 +18,8 @@ from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
-from ._file_processor import each_unignored_file
 from ._init import setup_logging
+from ._pathutil import packages_to_file_mapping
 from ._wheelfile import WheelWriter
 
 __all__: list[str] = ["_build_wheel_impl"]
@@ -29,44 +29,24 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _copy_python_packages_to_wheel(
-    *,
-    packages: Sequence[str] | None,
-    name: str,
-    platlib_dir: Path,
-    include: Sequence[str],
-    exclude: Sequence[str],
-) -> dict[str, str]:
-    mapping = {}
-    if packages is None:
-        # Auto package discovery
-        packages = []
-        for base_path in (Path("src"), Path(".")):
-            path = base_path / name
-            if path.is_dir() and (
-                (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
-            ):
-                logger.info("Discovered Python package at {}", path)
-                packages += [str(path)]
-                break
-        else:
-            logger.debug("Didn't find a Python package for {}", name)
+def _get_packages(*, packages: Sequence[str] | None, name: str) -> list[str]:
+    if packages is not None:
+        return list(packages)
 
-    for package in packages:
-        source_package = Path(package)
-        base_path = source_package.parent
-        for filepath in each_unignored_file(
-            source_package,
-            include=include,
-            exclude=exclude,
+    # Auto package discovery
+    packages = []
+    for base_path in (Path("src"), Path(".")):
+        path = base_path / name
+        if path.is_dir() and (
+            (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
         ):
-            package_dir = platlib_dir / filepath.relative_to(base_path)
-            if not package_dir.is_file():
-                package_dir.parent.mkdir(exist_ok=True, parents=True)
-                shutil.copyfile(filepath, package_dir)
-                mapping[str(filepath)] = str(package_dir)
+            logger.info("Discovered Python package at {}", path)
+            packages += [str(path)]
+            break
+    else:
+        logger.debug("Didn't find a Python package for {}", name)
 
-    return mapping
+    return packages
 
 
 @dataclasses.dataclass
@@ -203,13 +183,20 @@ def _build_wheel_impl(
         builder.install(install_dir)
 
         rich_print("[green]***[/green] [bold]Making wheel...")
-        mapping = _copy_python_packages_to_wheel(
+        packages = _get_packages(
             packages=settings.wheel.packages,
             name=normalized_name,
+        )
+        mapping = packages_to_file_mapping(
+            packages=packages,
             platlib_dir=wheel_dirs["platlib"],
             include=settings.sdist.include,
             exclude=settings.sdist.exclude,
         )
+
+        for filepath, package_dir in mapping.items():
+            Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
+            shutil.copyfile(filepath, package_dir)
 
         for item in wheel_dirs["scripts"].iterdir():
             with item.open("rb") as f:
