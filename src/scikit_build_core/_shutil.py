@@ -44,7 +44,7 @@ class Run:
 
         if self.env:
             logger.debug(
-                "RUNENV: {}", " ".join(f"{k}={v}" for k, v in self.env.items())
+                "RUNENV:\n  {}", "\n  ".join(f"{k}={v}" for k, v in self.env.items())
             )
         logger.debug("RUN: {}", " ".join(options))
 
