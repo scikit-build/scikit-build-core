@@ -5,6 +5,10 @@ from typing import Any
 __all__ = ["dynamic_metadata"]
 
 
+def __dir__() -> list[str]:
+    return __all__
+
+
 def dynamic_metadata(
     pyproject_dict: dict[str, Any]
 ) -> dict[str, str | dict[str, str | None]]:
