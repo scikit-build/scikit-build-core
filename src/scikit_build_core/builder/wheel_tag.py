@@ -24,7 +24,7 @@ class WheelTag:
     abis: list[str]
     archs: list[str]
 
-    # TODO: plats only used on macOS
+    # TODO: plats only used on macOS & Windows
     @classmethod
     def compute_best(
         cls,
@@ -35,7 +35,10 @@ class WheelTag:
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
-        if sys.platform.startswith("darwin"):
+
+        if sys.platform.startswith("win") and archs:
+            plats = (x.replace("-", "_") for x in archs)
+        elif sys.platform.startswith("darwin"):
             pairs: Iterable[tuple[str | None, bool]]
             if expand_macos and archs == ["universal2"]:
                 pairs = zip(
