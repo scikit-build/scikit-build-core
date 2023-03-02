@@ -7,12 +7,7 @@ if sys.version_info < (3, 9):
 else:
     from importlib import resources
 
-if sys.version_info < (3, 11):
-    import importlib_metadata as metadata
-else:
-    from importlib import metadata
-
-__all__ = ["metadata", "resources"]
+__all__ = ["resources"]
 
 
 def __dir__() -> list[str]:
