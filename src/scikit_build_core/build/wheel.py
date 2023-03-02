@@ -77,8 +77,8 @@ class WheelImplReturn:
 
 def _build_wheel_impl(
     wheel_directory: str | None,
-    config_settings: dict[str, list[str] | str] | None = None,
-    metadata_directory: str | None = None,
+    config_settings: dict[str, list[str] | str] | None,
+    metadata_directory: str | None,
 ) -> WheelImplReturn:
     """
     Build a wheel or just prepare metadata (if wheel dir is None).
@@ -97,6 +97,8 @@ def _build_wheel_impl(
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
         raise AssertionError(msg)
+
+    normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
@@ -203,7 +205,7 @@ def _build_wheel_impl(
         rich_print("[green]***[/green] [bold]Making wheel...")
         mapping = _copy_python_packages_to_wheel(
             packages=settings.wheel.packages,
-            name=metadata.name.replace("-", "_").replace(".", "_"),
+            name=normalized_name,
             platlib_dir=wheel_dirs["platlib"],
             include=settings.sdist.include,
             exclude=settings.sdist.exclude,

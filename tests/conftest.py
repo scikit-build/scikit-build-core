@@ -108,6 +108,7 @@ class VEnv(EnvBuilder):
         ...
 
     def run(self, *args: str, capture: bool = False) -> str | None:
+        __tracebackhide__ = True
         env = os.environ.copy()
         env["PATH"] = f"{self.executable.parent}{os.pathsep}{env['PATH']}"
         env["VIRTUAL_ENV"] = str(self.env_dir)
@@ -116,20 +117,31 @@ class VEnv(EnvBuilder):
             env["PIP_NO_INDEX"] = "ON"
             env["PIP_FIND_LINKS"] = str(self.wheelhouse)
 
+        str_args = [os.fspath(a) for a in args]
+
         if capture:
-            return subprocess.run(
-                [os.fspath(a) for a in args],
-                check=True,
+            result = subprocess.run(
+                str_args,
+                check=False,
                 capture_output=True,
                 text=True,
                 env=env,
-            ).stdout.strip()
+            )
+            if result.returncode != 0:
+                print(result.stdout, file=sys.stdout)
+                print(result.stderr, file=sys.stderr)
+                print("FAILED RUN:", *str_args, file=sys.stderr)
+                raise SystemExit(result.returncode)
+            return result.stdout.strip()
 
-        subprocess.run(
-            [os.fspath(a) for a in args],
-            check=True,
+        result_bytes = subprocess.run(
+            str_args,
+            check=False,
             env=env,
         )
+        if result_bytes.returncode != 0:
+            print("FAILED RUN:", *str_args, file=sys.stderr)
+            raise SystemExit(result_bytes.returncode)
         return None
 
     def execute(self, command: str) -> str:

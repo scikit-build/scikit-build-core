@@ -93,6 +93,10 @@ class WheelWriter:
     def wheelpath(self) -> Path:
         return self.folder / f"{self.basename}.whl"
 
+    @property
+    def dist_info(self) -> str:
+        return f"{self.name_ver}.dist-info"
+
     @staticmethod
     def timestamp(mtime: float | None = None) -> tuple[int, int, int, int, int, int]:
         timestamp = int(os.environ.get("SOURCE_DATE_EPOCH", mtime or time.time()))
@@ -145,7 +149,7 @@ class WheelWriter:
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
-            self.writestr(f"{self.name_ver}.dist-info/{key}", data)
+            self.writestr(f"{self.dist_info}/{key}", data)
 
     def write(self, filename: str, arcname: str | None = None) -> None:
         """Write a file to the archive."""
@@ -179,7 +183,7 @@ class WheelWriter:
 
     def __exit__(self, *args: object) -> None:
         assert self.zipfile is not None
-        record = f"{self.name_ver}.dist-info/RECORD"
+        record = f"{self.dist_info}/RECORD"
         data = io.StringIO()
         writer = csv.writer(data, delimiter=",", quotechar='"', lineterminator="\n")
         for member in self.zipfile.infolist():
