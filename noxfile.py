@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import shutil
 from pathlib import Path
 
@@ -63,16 +64,36 @@ def docs(session: nox.Session) -> None:
     Build the docs. Pass "--serve" to serve.
     """
 
-    session.install(".[docs]")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--serve", action="store_true", help="Serve after building")
+    args = parser.parse_args(session.posargs)
+
+    session.install(".[docs,pyproject]")
     session.chdir("docs")
     session.run("sphinx-build", "-M", "html", ".", "_build")
 
-    if session.posargs:
-        if "--serve" in session.posargs:
-            print("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
-            session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
-        else:
-            session.warn("Unsupported argument to docs")
+    if args.serve:
+        print("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
+        session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
+
+
+@nox.session
+def build_api_docs(session: nox.Session) -> None:
+    """
+    Build (regenerate) API docs.
+    """
+
+    session.install("sphinx")
+    session.chdir("docs")
+    session.run(
+        "sphinx-apidoc",
+        "-o",
+        "api/",
+        "--no-toc",
+        "--force",
+        "--module-first",
+        "../src/scikit_build_core",
+    )
 
 
 @nox.session

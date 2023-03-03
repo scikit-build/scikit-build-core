@@ -32,10 +32,19 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
 
+source_suffix = [".rst", ".md"]
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store", ".env"]
+exclude_patterns = [
+    "_build",
+    "**.ipynb_checkpoints",
+    "Thumbs.db",
+    ".DS_Store",
+    ".env",
+    ".venv",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -45,19 +54,9 @@ exclude_patterns = ["_build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store", 
 #
 html_theme = "furo"
 
-html_title = f"{project}"
 
-html_baseurl = "https://scikit_build_core.readthedocs.io/en/latest/"
-
-html_theme_options = {
-    "home_page_in_toc": True,
-    "repository_url": "https://github.com/scikit-build/scikit-build-core",
-    "use_repository_button": True,
-    "use_issues_button": True,
-    "use_edit_page_button": True,
-}
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path: list[str] = []
+# -- Extension configuration -------------------------------------------------
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+]

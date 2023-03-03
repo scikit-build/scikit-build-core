@@ -1,12 +1,12 @@
 
-Welcome to documentation!
-=========================
+Welcome to scikit-build-core's documentation!
+=============================================
 
 
 Introduction
 ------------
 
-This should be updated!
+The docs are in progress. Please refer to the README for now.
 
 .. toctree::
    :maxdepth: 2
@@ -14,6 +14,16 @@ This should be updated!
    :caption: Contents
    :glob:
 
+   readme
+   changelog
+
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+   :caption: API Reference:
+
+   api/scikit_build_core
 
 
 Indices and tables

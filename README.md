@@ -14,6 +14,8 @@
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
+<!-- SPHINX-START -->
+
 Features over classic Scikit-build:
 
 - Better warnings, errors, and logging
