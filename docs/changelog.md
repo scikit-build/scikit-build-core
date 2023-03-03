@@ -1,5 +1,33 @@
 # Changelog
 
+## Version 0.2.1
+
+This release fixes the tag for Windows ARM wheels, and has some internal
+refactoring to prepare for the next new features. A new `{wheel_tag}` value is
+available for `build-dir`. Some basic setup was done on the docs, as well. Debug
+logging and test output has been improved a little, as well.
+
+### What's Changed
+
+Changes:
+
+- Add `{wheel_tag}` for `build-dir` by @henryiii in #207
+- Support for conda's `CMAKE_SYSTEM_PROCESSOR` by @henryiii in #207
+
+Fixes:
+
+- fix: Windows ARM tag by @henryiii in #215
+- fix: include Windows ARM in known wheels by @henryiii in #203
+- fix: print out paths by @henryiii in #205
+
+Other things:
+
+- docs: update readme for 3.26 backport by @henryiii in #206
+- tests: support running tests with system `cmake3` visible by @LecrisUT in #211
+- tests: nicer exit, minor refactors by @henryiii in #213
+- refactor: minor changes & nicer environment logging printout by @henryiii in
+  #214
+
 ## Version 0.2.0
 
 This version adds local build directory support - you can now set `build-dir`
@@ -23,9 +51,9 @@ Features:
 
 Tests:
 
-- tests: allow pytest 7.0+ instead of 7.2+ by @henryiii in #200
-- tests: include cmake and ninja if missing in nox by @henryiii in #190
-- tests: simpler pytest-subprocess by @henryiii in #159
+- Allow pytest 7.0+ instead of 7.2+ by @henryiii in #200
+- Include cmake and ninja if missing in nox by @henryiii in #190
+- Simpler pytest-subprocess by @henryiii in #159
 
 Other things:
 
