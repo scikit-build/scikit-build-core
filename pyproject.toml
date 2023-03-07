@@ -99,6 +99,7 @@ addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
     "error",
+    "ignore:pkg_resources is deprecated as an API:DeprecationWarning",  # Caused by wheel in tests
     "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
 ]
 log_cli_level = "info"
