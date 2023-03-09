@@ -18,14 +18,13 @@ def _load(mod_name: str, pyproject_dict: dict[str, Any]) -> dict[str, Any]:
     return importlib.import_module(mod_name).dynamic_metadata(pyproject_dict)  # type: ignore[no-any-return]
 
 
+# If pyproject-metadata eventually supports updates, this can be simplified
 def get_standard_metadata(
     pyproject_dict: dict[str, Any], settings: ScikitBuildSettings
 ) -> StandardMetadata:
-    metadata = StandardMetadata.from_pyproject(pyproject_dict)
-
-    # handle any dynamic metadata
+    # Handle any dynamic metadata
     for field in settings.metadata:
-        if field not in metadata.dynamic:
+        if field not in pyproject_dict.get("project", {}).get("dynamic", []):
             msg = f"{field} is not in project.dynamic"
             raise KeyError(msg)
 
@@ -33,16 +32,11 @@ def get_standard_metadata(
     cached_plugins = {key: _load(key, pyproject_dict) for key in plugins}
 
     for field, mod_name in settings.metadata.items():
-        # would be better to update the metadata directly but this is
-        # currently not supported by pyproject_metadata
-        # metadata.__setattr__(field, ep.load()(pyproject_path)
-        if field in cached_plugins[mod_name]:
-            pyproject_dict["project"][field] = cached_plugins[mod_name][field]
-            pyproject_dict["project"]["dynamic"].remove(field)
-        else:
+        if field not in cached_plugins[mod_name]:
             msg = f"{field} is not provided by plugin {mod_name}"
             raise KeyError(msg)
 
-    # if pyproject-metadata supports updates, we won't need this line anymore
-    metadata = StandardMetadata.from_pyproject(pyproject_dict)
-    return metadata
+        pyproject_dict["project"][field] = cached_plugins[mod_name][field]
+        pyproject_dict["project"]["dynamic"].remove(field)
+
+    return StandardMetadata.from_pyproject(pyproject_dict)
