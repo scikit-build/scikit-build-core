@@ -37,7 +37,7 @@ class WheelTag:
         pyvers = [interp]
 
         if sys.platform.startswith("win") and archs:
-            plats = (x.replace("-", "_") for x in archs)
+            plats = [x.replace("-", "_") for x in archs]
         elif sys.platform.startswith("darwin"):
             pairs: Iterable[tuple[str | None, bool]]
             if expand_macos and archs == ["universal2"]:
