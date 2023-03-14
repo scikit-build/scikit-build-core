@@ -202,6 +202,4 @@ def pytest_report_header() -> str:
         with contextlib.suppress(ModuleNotFoundError):
             valid.append(f"{package}=={metadata.version(package)}")  # type: ignore[no-untyped-call]
     reqs = " ".join(valid)
-    pkg_line = f"installed packages of interest: {reqs}"
-
-    return "\n".join([pkg_line])
+    return f"installed packages of interest: {reqs}"
