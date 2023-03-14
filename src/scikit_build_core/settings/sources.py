@@ -29,7 +29,7 @@ def _dig_not_strict(dict_: Mapping[str, Any], *names: str) -> Any:
     return dict_
 
 
-def _dig_fields(__opt: object, *names: str) -> Any:
+def _dig_fields(__opt: Any, *names: str) -> Any:
     for name in names:
         fields = dataclasses.fields(__opt)
         types = [x.type for x in fields if x.name == name]
@@ -156,7 +156,7 @@ class EnvSource:
 
     def has_item(self, *fields: str, is_dict: bool) -> bool:  # noqa: ARG002
         name = self._get_name(*fields)
-        return name in self.env and self.env[name] != ""
+        return bool(self.env.get(name, ""))
 
     def get_item(
         self, *fields: str, is_dict: bool  # noqa: ARG002
@@ -199,9 +199,10 @@ class EnvSource:
 
 
 def _unrecognized_dict(
-    settings: Mapping[str, Any], options: object, above: Sequence[str]
+    settings: Mapping[str, Any], options: Any, above: Sequence[str]
 ) -> Generator[str, None, None]:
     for keystr in settings:
+        # We don't have DataclassInstance exposed in typing yet
         matches = [
             x for x in dataclasses.fields(options) if x.name.replace("_", "-") == keystr
         ]
@@ -388,7 +389,7 @@ class SourceChain:
     def convert_target(self, target: type[T], *prefixes: str) -> T:
         errors = []
         prep = {}
-        for field in dataclasses.fields(target):
+        for field in dataclasses.fields(target):  # type: ignore[arg-type]
             if dataclasses.is_dataclass(field.type):
                 try:
                     prep[field.name] = self.convert_target(
