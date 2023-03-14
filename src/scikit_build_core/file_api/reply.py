@@ -58,7 +58,8 @@ class Converter:
         input_dict = {}
         exceptions: List[Exception] = []
 
-        for field in dataclasses.fields(target):
+        # We don't have DataclassInstance exposed in typing yet
+        for field in dataclasses.fields(target):  # type: ignore[arg-type]
             json_field = field.name.replace("_v", "-v").replace(
                 "cmakefiles", "cmakeFiles"
             )
@@ -85,7 +86,8 @@ class Converter:
 
     def _convert_any(self, item: Any, target: Type[T]) -> T:
         if dataclasses.is_dataclass(target):
-            return self.make_class(item, target)
+            # We don't have DataclassInstance exposed in typing yet
+            return self.make_class(item, target)  # type: ignore[return-value]
         if hasattr(target, "__origin__"):
             if target.__origin__ == list:  # type: ignore[attr-defined]
                 return [self._convert_any(i, target.__args__[0]) for i in item]  # type: ignore[return-value,attr-defined]
