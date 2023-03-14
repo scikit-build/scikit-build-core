@@ -69,6 +69,8 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
 @mark_hashes_different
 def test_pep517_sdist_hash(tmp_path, monkeypatch):
+    # Unset SOURCE_DATE_EPOCH in order to guarantee the hash match
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     dist = tmp_path.resolve() / "dist"
     monkeypatch.chdir(HELLO_PEP518)
     if Path("dist").is_dir():
