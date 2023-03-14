@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import os
 import shutil
@@ -183,7 +184,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 
 def pytest_report_header() -> str:
-    interesting_packages = {
+    interesting_packages = [
         "build",
         "packaging",
         "pathspec",
@@ -191,18 +192,16 @@ def pytest_report_header() -> str:
         "pybind11",
         "pyproject_metadata",
         "rich",
+        "scikit_build_core",
         "setuptools",
         "virtualenv",
         "wheel",
-    }
+    ]
     valid = []
     for package in interesting_packages:
-        try:
-            version = metadata.version(package)  # type: ignore[no-untyped-call]
-        except ModuleNotFoundError:
-            continue
-        valid.append(f"{package}=={version}")
-    reqs = " ".join(sorted(valid))
+        with contextlib.suppress(ModuleNotFoundError):
+            valid.append(f"{package}=={metadata.version(package)}")  # type: ignore[no-untyped-call]
+    reqs = " ".join(valid)
     pkg_line = f"installed packages of interest: {reqs}"
 
     return "\n".join([pkg_line])
