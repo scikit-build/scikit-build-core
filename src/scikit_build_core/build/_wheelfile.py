@@ -158,6 +158,7 @@ class WheelWriter:
             st = os.fstat(f.fileno())
             data = f.read()
         zinfo = ZipInfo(arcname or str(filename), date_time=self.timestamp(st.st_mtime))
+        zinfo.compress_type = zipfile.ZIP_DEFLATED
         zinfo.external_attr = (stat.S_IMODE(st.st_mode) | stat.S_IFMT(st.st_mode)) << 16
         self.writestr(zinfo, data)
 
@@ -169,7 +170,8 @@ class WheelWriter:
             zinfo = zinfo_or_arcname
         else:
             zinfo = zipfile.ZipInfo(zinfo_or_arcname, date_time=self.timestamp())
-            zinfo.external_attr = 0o664 << 16
+            zinfo.compress_type = zipfile.ZIP_DEFLATED
+            zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
         self.zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
@@ -192,8 +194,6 @@ class WheelWriter:
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")
             writer.writerow((member.filename, f"sha256={sha}", member.file_size))
         writer.writerow((record, "", ""))
-        zi = zipfile.ZipInfo(record, date_time=self.timestamp())
-        zi.external_attr = 0o664 << 16
-        self.zipfile.writestr(zi, data.getvalue().encode("utf-8"))
+        self.writestr(record, data.getvalue().encode("utf-8"))
         self.zipfile.close()
         self.zipfile = None

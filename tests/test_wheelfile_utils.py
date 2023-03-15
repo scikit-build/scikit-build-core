@@ -1,3 +1,4 @@
+import stat
 import zipfile
 
 from packaging.tags import Tag
@@ -67,3 +68,7 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
             zf.read("something-1.2.3.dist-info/entry_points.txt")
             == dist_info["entry_points.txt"]
         )
+
+        for info in zf.infolist():
+            assert info.external_attr == (0o664 | stat.S_IFREG) << 16
+            assert info.compress_type == zipfile.ZIP_DEFLATED
