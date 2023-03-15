@@ -388,7 +388,7 @@ class SourceChain:
 
     def convert_target(self, target: type[T], *prefixes: str) -> T:
         errors = []
-        prep = {}
+        prep: dict[str, Any] = {}
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
             if dataclasses.is_dataclass(field.type):
                 try:
