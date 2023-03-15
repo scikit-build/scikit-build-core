@@ -70,6 +70,5 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
         )
 
         for info in zf.infolist():
-            print(info)
             assert info.external_attr == (0o664 | stat.S_IFREG) << 16
             assert info.compress_type == zipfile.ZIP_DEFLATED

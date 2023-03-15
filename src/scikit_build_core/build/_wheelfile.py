@@ -194,6 +194,6 @@ class WheelWriter:
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")
             writer.writerow((member.filename, f"sha256={sha}", member.file_size))
         writer.writerow((record, "", ""))
-        self.zipfile.writestr(record, data.getvalue().encode("utf-8"))
+        self.writestr(record, data.getvalue().encode("utf-8"))
         self.zipfile.close()
         self.zipfile = None
