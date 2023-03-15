@@ -106,7 +106,7 @@ def test_included_dir():
     assert codemodel.kind == "codemodel"
     assert codemodel.version.major == 2
     assert codemodel.version.minor == 4
-    assert codemodel.configurations[0].name == ""
+    assert codemodel.configurations[0].name == ""  # noqa: PLC1901
 
     cache = index.reply.cache_v2
     assert cache is not None
