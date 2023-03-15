@@ -4,7 +4,6 @@ import functools
 import os
 import sys
 from collections.abc import Mapping
-from pathlib import Path
 
 from packaging.tags import sys_tags
 from packaging.version import Version
@@ -42,7 +41,7 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
 def cmake_ninja_for_build_wheel(
     config_settings: Mapping[str, str | list[str]] | None = None
 ) -> list[str]:
-    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
+    settings = SettingsReader.from_file("pyproject.toml", config_settings).settings
 
     packages = []
     cmake_min = Version(settings.cmake.minimum_version)

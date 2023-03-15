@@ -69,7 +69,7 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
+    settings_reader = SettingsReader.from_file("pyproject.toml", config_settings)
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 

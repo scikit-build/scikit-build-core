@@ -18,7 +18,7 @@ def test_skbuild_settings_default(tmp_path):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
@@ -73,7 +73,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
@@ -129,7 +129,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "build-dir": "a/b/c",
     }
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
@@ -189,7 +189,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
@@ -231,7 +231,7 @@ def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
 
     config_settings: dict[str, list[str] | str] = {}
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     assert list(settings_reader.unrecognized_options()) == [
         "tool.scikit-build.cmake.minimum-verison",
         "tool.scikit-build.logger",
@@ -263,7 +263,7 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
         "logger.level": "INFO",
     }
 
-    settings_reader = SettingsReader(pyproject_toml, config_settings)
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     assert list(settings_reader.unrecognized_options()) == [
         "cmake.minimum-verison",
         "logger",
