@@ -10,7 +10,8 @@ def __dir__() -> list[str]:
 
 
 def dynamic_metadata(
-    pyproject_dict: dict[str, Any]
+    pyproject_dict: dict[str, Any],
+    _config_settings: dict[str, list[str] | str] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
     from hatch_fancy_pypi_readme._builder import build_text
     from hatch_fancy_pypi_readme._config import load_and_validate_config

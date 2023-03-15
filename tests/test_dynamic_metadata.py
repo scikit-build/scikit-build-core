@@ -25,13 +25,15 @@ DYNAMIC = DIR / "packages/dynamic_metadata"
 # it turns out to be easier to create EntryPoint objects pointing to real
 # functions than to mock them.
 def ep_version(
-    _pyproject_dict: dict[str, Any]
+    _pyproject_dict: dict[str, Any],
+    _config_settings: dict[str, list[str] | str] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
     return {"version": "0.0.2"}
 
 
 def ep_readme(
-    _pyproject_dict: dict[str, Any]
+    _pyproject_dict: dict[str, Any],
+    _config_settings: dict[str, list[str] | str] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
     return {
         "readme": {
@@ -42,12 +44,16 @@ def ep_readme(
 
 
 def ep_license(
-    _pyproject_dict: dict[str, Any]
+    _pyproject_dict: dict[str, Any],
+    _config_settings: dict[str, list[str] | str] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
     return {"license": {"text": "MIT License"}}
 
 
-def ep_dual(_pyproject_dict: dict[str, Any]) -> dict[str, str | dict[str, str | None]]:
+def ep_dual(
+    _pyproject_dict: dict[str, Any],
+    _config_settings: dict[str, list[str] | str] | None = None,
+) -> dict[str, str | dict[str, str | None]]:
     return {
         "version": "0.3",
         "license": {"text": "BSD License"},

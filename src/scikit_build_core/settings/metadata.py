@@ -14,13 +14,19 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _load(mod_name: str, pyproject_dict: dict[str, Any]) -> dict[str, Any]:
-    return importlib.import_module(mod_name).dynamic_metadata(pyproject_dict)  # type: ignore[no-any-return]
+def _load(
+    mod_name: str,
+    pyproject_dict: dict[str, Any],
+    config_settings: dict[str, list[str] | str] | None = None,
+) -> dict[str, Any]:
+    return importlib.import_module(mod_name).dynamic_metadata(pyproject_dict, config_settings)  # type: ignore[no-any-return]
 
 
 # If pyproject-metadata eventually supports updates, this can be simplified
 def get_standard_metadata(
-    pyproject_dict: dict[str, Any], settings: ScikitBuildSettings
+    pyproject_dict: dict[str, Any],
+    settings: ScikitBuildSettings,
+    config_settings: dict[str, list[str] | str] | None = None,
 ) -> StandardMetadata:
     # Handle any dynamic metadata
     for field in settings.metadata:
@@ -29,7 +35,9 @@ def get_standard_metadata(
             raise KeyError(msg)
 
     plugins = set(settings.metadata.values())
-    cached_plugins = {key: _load(key, pyproject_dict) for key in plugins}
+    cached_plugins = {
+        key: _load(key, pyproject_dict, config_settings) for key in plugins
+    }
 
     for field, mod_name in settings.metadata.items():
         if field not in cached_plugins[mod_name]:

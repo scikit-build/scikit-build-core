@@ -8,7 +8,8 @@ def __dir__() -> list[str]:
 
 
 def dynamic_metadata(
-    pyproject_dict: dict[str, object]  # noqa: ARG001
+    pyproject_dict: dict[str, object],  # noqa: ARG001
+    _config_settings: dict[str, list[str] | str] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
     # this is a classic implementation, waiting for the release of
     # vcs-versioning and an improved public interface
