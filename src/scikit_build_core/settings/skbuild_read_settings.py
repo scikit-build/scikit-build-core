@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import difflib
+import os
 import sys
 from collections.abc import Generator, Mapping
 from pathlib import Path
+from typing import Any
 
 from packaging.version import Version
 
@@ -24,13 +26,11 @@ def __dir__() -> list[str]:
 class SettingsReader:
     def __init__(
         self,
-        pyproject_toml: Path,
+        pyproject: dict[str, Any],
         config_settings: Mapping[str, str | list[str]],
+        *,
         verify_conf: bool = True,
     ) -> None:
-        with pyproject_toml.open("rb") as f:
-            pyproject = tomllib.load(f)
-
         self.sources = SourceChain(
             EnvSource("SKBUILD"),
             ConfSource(settings=config_settings, verify=verify_conf),
@@ -85,3 +85,16 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
+
+    @classmethod
+    def from_file(
+        cls,
+        pyproject_path: os.PathLike[str] | str,
+        config_settings: Mapping[str, str | list[str]] | None,
+        *,
+        verify_conf: bool = True,
+    ) -> SettingsReader:
+        with Path(pyproject_path).open("rb") as f:
+            pyproject = tomllib.load(f)
+
+        return cls(pyproject, config_settings or {}, verify_conf=verify_conf)

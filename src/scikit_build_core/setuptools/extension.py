@@ -57,7 +57,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         if build_temp.exists():
             shutil.rmtree(build_temp)
 
-        settings = SettingsReader(Path("pyproject.toml"), {}).settings
+        settings = SettingsReader.from_file("pyproject.toml", {}).settings
 
         cmake = CMake.default_search(
             minimum_version=Version(settings.cmake.minimum_version)
@@ -118,7 +118,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 def cmake_extensions(
     dist: Distribution, attr: Literal["cmake_extensions"], value: list[CMakeExtension]
 ) -> None:
-    settings = SettingsReader(Path("pyproject.toml"), {}).settings
+    settings = SettingsReader.from_file("pyproject.toml", {}).settings
 
     assert attr == "cmake_extensions"
     assert value

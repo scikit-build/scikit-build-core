@@ -64,7 +64,7 @@ def _build_wheel_impl(
     Build a wheel or just prepare metadata (if wheel dir is None).
     """
 
-    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
+    settings_reader = SettingsReader.from_file("pyproject.toml", config_settings)
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 
