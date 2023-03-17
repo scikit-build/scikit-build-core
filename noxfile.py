@@ -60,7 +60,7 @@ def coverage(session: nox.Session) -> None:
     session.run("pytest", "--cov=scikit_build_core", *session.posargs)
 
 
-@nox.session
+@nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """
     Build the docs. Pass "--serve" to serve.

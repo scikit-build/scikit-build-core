@@ -9,6 +9,14 @@ scikit\_build\_core.settings package
 Submodules
 ----------
 
+scikit\_build\_core.settings.metadata module
+--------------------------------------------
+
+.. automodule:: scikit_build_core.settings.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.settings.skbuild\_model module
 --------------------------------------------------
 
