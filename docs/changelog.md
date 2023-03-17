@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 0.2.2
+
+This release makes a small improvement to the wheel file permissions (in line
+with wheel 0.40). It also ensures the test suite will still pass in an
+environment with `SOURCE_DATE_EPOCH` already set. A few internal changes are
+paving the way to 0.3.0.
+
+Fixes:
+
+- zipinfo should report regular files by @henryiii in #220
+
+Tests:
+
+- Support running in environments with `SOURCE_DATE_EPOCH` set by @LecrisUT in
+  #221
+- Report self version too by @henryiii in #222
+
+Other things:
+
+- refactor: use `from_pyproject` by @henryiii and @bennyrowland in #224
+- chore: fix a mypy complaint on Windows by @henryiii in #217
+- docs: add quickstart by @henryiii in #226
+
 ## Version 0.2.1
 
 This release fixes the tag for Windows ARM wheels, and has some internal
@@ -16,9 +39,9 @@ Changes:
 
 Fixes:
 
-- fix: Windows ARM tag by @henryiii in #215
-- fix: include Windows ARM in known wheels by @henryiii in #203
-- fix: print out paths by @henryiii in #205
+- Windows ARM tag by @henryiii in #215
+- Include Windows ARM in known wheels by @henryiii in #203
+- Print out paths by @henryiii in #205
 
 Other things:
 
