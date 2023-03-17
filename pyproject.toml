@@ -78,6 +78,7 @@ docs = [
     "myst_parser >=0.13",
     "sphinx >=4.0",
     "sphinx_copybutton",
+    "sphinx_inline_tabs",
 ]
 
 [project.urls]

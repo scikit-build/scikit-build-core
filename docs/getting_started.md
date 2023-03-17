@@ -5,23 +5,39 @@ If you've never made a Python package before,
 is a great place to start. It walks you through creating a simple package in
 pure Python using modern tooling and configuration.
 
-## Simple C Extension
+## Writing an extension
 
 We will be writing these files:
 
+````{tab} C
+
 ```
 example-project
- - example.c
- - pyproject.toml
- - CMakeLists.txt
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
 ```
+
+````
+
+````{tab} pybind11
+
+```
+example-project
+├── example.cpp
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
 
 ### Source code
 
-For this tutorial, we'll assume a single C module. Don't worry! For real code,
-you should usually prefer a binding tool like pybind11 to handle memory, API
-changes every version, and boilerplate. We'll show a pybind11 example at the
-end, too, which will look much simpler.
+For this tutorial, you can either use write a C extension yourself, or you can
+use pybind11 and C++. Select your preferred version using the tabs - compare
+them!
+
+````{tab} C
 
 ```c
 #define PY_SSIZE_T_CLEAN
@@ -51,9 +67,45 @@ PyMODINIT_FUNC PyInit_example(void) {
 }
 ```
 
+````
+
+````{tab} pybind11
+
+```cpp
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
+
+float square(float x) { return x * x; }
+
+PYBIND11_MODULE(example, m) {
+    m.def("square", &square);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// end of file
+```
+
+````
+
 ### Python package configuration
 
 To create your first compiled package, start with a pyproject.toml like this:
+
+````{tab} C
 
 ```toml
 [build-system]
@@ -64,6 +116,23 @@ build-backend = "scikit_build_core.build"
 name = "example"
 version = "0.0.1"
 ```
+
+````
+
+````{tab} pybind11
+
+```toml
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "example"
+version = "0.0.1"
+```
+
+
+````
 
 Notice that you _do not_ include `cmake`, `ninja`, `setuptools`, or `wheel` in
 the requires list. Scikit-build-core will intelligently decide whether it needs
@@ -83,10 +152,12 @@ page covers what keys are available. Another example is available at
 
 Now, you'll need a CMake file. This one will do:
 
+````{tab} C
+
 ```cmake
 cmake_minimum_required(VERSION 3.15...3.26)
-
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
+
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
@@ -107,11 +178,48 @@ component instead of `Developement`; the latter breaks if the embedding
 components are missing, such as when you are building redistributable wheels on
 Linux.
 
-Finally, you add your library, and install it. You'll want `WITH_SOABI` to
-ensure the full extension is included on Unix systems (PyPy won't even be able
-to open the extension without it). The default install path will go directly to
+You'll want `WITH_SOABI` when you make the module to ensure the full extension
+is included on Unix systems (PyPy won't even be able to open the extension
+without it).
+
+````
+
+````{tab} pybind11
+
+```cmake
+cmake_minimum_required(VERSION 3.15...3.26)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
+
+set(PYBIND11_NEWPYTHON ON)
+find_package(pybind11 CONFIG REQUIRED)
+
+pybind11_add_module(example example.cpp)
+
+install(TARGETS example LIBRARY DESTINATION .)
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+If you place find Python first, pybind11 will resepct it instead of the classic
+FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
+Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
+ourselves. Pybind11 places it's config file such that CMake can find it from
+site-packages.
+
+You can either use `pybind11_add_module` or `python_add_library` and then link
+to `pybind11::module`, your choice.
+
+````
+
+Finally, you install your module. The default install path will go directly to
 `site-packages`, so if you are creating anything other than a single
-c-extension, you will want to install to `SKBUILD_PROJECT_NAME` instead.
+c-extension, you will want to install to the package directory (possibly
+`${SKBUILD_PROJECT_NAME}`) instead.
 
 That's it! You can try building it:
 
@@ -125,55 +233,4 @@ Or installing it (in a virtualenv, ideally):
 $ pip install .
 ```
 
-## Pybind11
-
-We can modify our above files to support pybind11 instead:
-
-```cpp
-#include <pybind11/pybind11.h>
-
-int add(int i, int j) {
-    return i + j;
-}
-
-namespace py = pybind11;
-
-PYBIND11_MODULE(example, m) {
-    m.def("add", &add);
-    m.def("subtract", [](int i, int j) { return i - j; });
-}
-```
-
-And `pypproject.toml`:
-
-```toml
-[build-system]
-requires = ["scikit-build-core", "pybind11"]
-build-backend = "scikit_build_core.build"
-
-[project]
-name = "example"
-version = "0.0.1"
-```
-
-Pybind11 places it's config file such that CMake can find it from site-packages.
-
-And CMake file:
-
-```cmake
-cmake_minimum_required(VERSION 3.15...3.26)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
-
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
-find_package(pybind11 CONFIG REQUIRED)
-
-pybind11_add_module(example example.cpp)
-
-install(TARGETS example LIBRARY DESTINATION .)
-```
-
-It is recommended to find Python first, so pybind11 can use FindPython, if you
-remove it, pybind11 defaults to the classic FindPythonInterp/FindPythonLibs
-mechanisms, which work, but are not as modern. You can eitehr use
-`pybind11_add_module` or `python_add_library` and then link to
-`pybind11::module`, your choice.
+That's it for a basic package!
