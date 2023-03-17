@@ -7,6 +7,8 @@ with wheel 0.40). It also ensures the test suite will still pass in an
 environment with `SOURCE_DATE_EPOCH` already set. A few internal changes are
 paving the way to 0.3.0.
 
+### What's Changed
+
 Fixes:
 
 - zipinfo should report regular files by @henryiii in #220
