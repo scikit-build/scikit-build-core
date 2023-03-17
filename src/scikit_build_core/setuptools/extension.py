@@ -5,6 +5,7 @@ import shutil
 import sys
 import sysconfig
 from pathlib import Path
+from typing import Any
 
 import setuptools
 import setuptools.command.build_ext
@@ -28,7 +29,7 @@ def __dir__() -> list[str]:
 # The name must be the _single_ output extension from the CMake build.
 # The sourcedir is relative to the setup.py directory, where the CMakeLists.txt lives
 class CMakeExtension(setuptools.Extension):
-    def __init__(self, name: str, sourcedir: str = "", **kwargs: object) -> None:
+    def __init__(self, name: str, sourcedir: str = "", **kwargs: Any) -> None:
         super().__init__(name, [], **kwargs)
         self.sourcedir = Path(sourcedir).resolve()
 
