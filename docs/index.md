@@ -19,6 +19,7 @@ system, allowing you to make Python modules with CMake.
 :glob:
 
 getting_started
+configuration
 changelog
 ```
 
