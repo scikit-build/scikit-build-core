@@ -1,0 +1,12 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "fancy"
+dynamic = ["version", "readme", "license"]
+
+[tool.scikit-build.metadata]
+version = "test_dual"
+license = "test_dual"
+readme = "test_dual"

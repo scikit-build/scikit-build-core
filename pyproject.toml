@@ -53,6 +53,7 @@ rich = [
 test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",
+    "gitpython",
     "importlib_metadata; python_version<'3.8'",
     "pathspec >=0.10.1",
     "pybind11",
@@ -129,7 +130,7 @@ module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["pathspec"]
+module = ["pathspec", "setuptools_scm", "hatch_fancy_pypi_readme"]
 ignore_missing_imports = true
 
 
@@ -197,6 +198,7 @@ extend-ignore = [
     "PLR2004",
     "PLE1205",  # Format check doesn't work with our custom logger
     "E501",  # Line too long
+    "PT004",
 ]
 target-version = "py37"
 typing-modules = ["scikit_build_core._compat.typing"]

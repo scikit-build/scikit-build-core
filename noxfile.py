@@ -27,7 +27,9 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev,test]", "pylint")
+    session.install(
+        "-e.[dev,test]", "pylint", "hatch-fancy-pypi-readme", "setuptools-scm"
+    )
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
@@ -37,7 +39,7 @@ def tests(session: nox.Session) -> None:
     Run the unit and regular tests.
     """
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-    extra = ["rich"]
+    extra = ["hatch-fancy-pypi-readme", "rich", "setuptools-scm"]
     # This will not work if system CMake is too old (<3.15)
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
         extra.append("cmake")

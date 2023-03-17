@@ -1,0 +1,11 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "fancy"
+version = "0.0.1"
+dynamic = ["readme"]
+
+[tool.scikit-build.metadata]
+readme = "non_existent"

@@ -18,10 +18,13 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_wheel(monkeypatch, isolated):
-    dist = HELLO_PEP518 / "dist"
-    shutil.rmtree(dist, ignore_errors=True)
-    monkeypatch.chdir(HELLO_PEP518)
+def test_pep518_wheel(tmp_path, monkeypatch, isolated):
+    # create a temporary copy of the package source so we don't contaminate the
+    # main source tree with build artefacts
+    src = tmp_path / "src"
+    dist = src / "dist"
+    shutil.copytree(HELLO_PEP518, src)
+    monkeypatch.chdir(src)
     isolated.install("build[virtualenv]")
     isolated.module("build", "--wheel")
     (wheel,) = dist.iterdir()
@@ -56,8 +59,12 @@ def test_pep518_wheel(monkeypatch, isolated):
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_pip(isolated):
-    isolated.install("-v", HELLO_PEP518)
+def test_pep518_pip(isolated, tmp_path):
+    # create a temporary copy of the package source so we don't contaminate the
+    # main source tree with build artefacts
+    src = tmp_path / "src"
+    shutil.copytree(HELLO_PEP518, src)
+    isolated.install("-v", src)
 
     version = isolated.execute(
         "import cmake_example; print(cmake_example.__version__)",

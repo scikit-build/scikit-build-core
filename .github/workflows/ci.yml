@@ -81,7 +81,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install .[test,cov] cmake ninja rich
+        run:
+          pip install .[test,cov] cmake ninja rich hatch-fancy-pypi-readme
+          setuptools-scm
 
       - name: Test package
         run: pytest -ra --showlocals --cov=scikit_build_core
@@ -91,9 +93,11 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ matrix.python-version }}
 
+      # the min requirements are not compatible with the metadata plugin
+      # packages so we remove those first (they then won't be tested)
       - name: Min requirements
         run: |
-          pip uninstall -y cmake
+          pip uninstall -y cmake hatch-fancy-pypi-readme setuptools-scm
           pip install --constraint tests/constraints.txt .[test]
 
       - name: Setup CMake ${{ matrix.cmake-version }}

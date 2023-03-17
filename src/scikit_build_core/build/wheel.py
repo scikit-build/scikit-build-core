@@ -9,7 +9,6 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from packaging.version import Version
-from pyproject_metadata import StandardMetadata
 
 from .. import __version__
 from .._compat import tomllib
@@ -17,6 +16,7 @@ from .._logging import logger, rich_print
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._init import setup_logging
 from ._pathutil import packages_to_file_mapping
@@ -63,16 +63,17 @@ def _build_wheel_impl(
     """
     Build a wheel or just prepare metadata (if wheel dir is None).
     """
+    pyproject_path = Path("pyproject.toml")
+    with pyproject_path.open("rb") as ft:
+        pyproject = tomllib.load(ft)
 
-    settings_reader = SettingsReader.from_file("pyproject.toml", config_settings)
+    settings_reader = SettingsReader(pyproject, config_settings or {})
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 
     settings_reader.validate_may_exit()
 
-    with Path("pyproject.toml").open("rb") as ft:
-        pyproject = tomllib.load(ft)
-    metadata = StandardMetadata.from_pyproject(pyproject)
+    metadata = get_standard_metadata(pyproject, settings, config_settings)
 
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
