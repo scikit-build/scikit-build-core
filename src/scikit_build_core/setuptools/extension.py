@@ -5,6 +5,7 @@ import shutil
 import sys
 import sysconfig
 from pathlib import Path
+from typing import Any
 
 import setuptools
 import setuptools.command.build_ext
@@ -28,7 +29,7 @@ def __dir__() -> list[str]:
 # The name must be the _single_ output extension from the CMake build.
 # The sourcedir is relative to the setup.py directory, where the CMakeLists.txt lives
 class CMakeExtension(setuptools.Extension):
-    def __init__(self, name: str, sourcedir: str = "", **kwargs: object) -> None:
+    def __init__(self, name: str, sourcedir: str = "", **kwargs: Any) -> None:
         super().__init__(name, [], **kwargs)
         self.sourcedir = Path(sourcedir).resolve()
 
@@ -42,15 +43,17 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
-        dist = self.distribution  # type: ignore[attr-defined]
+        dist = self.distribution
 
-        limited_api = dist.get_command_obj("bdist_wheel").py_limited_api
+        bdist_wheel = dist.get_command_obj("bdist_wheel")
+        assert bdist_wheel is not None
+        limited_api = bdist_wheel.py_limited_api  # type: ignore[attr-defined]
         if limited_api:
             ext.py_limited_api = True
 
         # This dir doesn't exist, so Path.cwd() is needed for Python < 3.10
         # due to a Windows bug in resolve https://github.com/python/cpython/issues/82852
-        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)  # type: ignore[no-untyped-call]
+        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
 
         # TODO: this is a hack due to moving temporary paths for isolation
@@ -94,7 +97,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         builder.configure(
             defines=defines,
             name=dist.get_name(),
-            version=dist.get_version(),
+            version=Version(dist.get_version()),
             limited_abi=ext.py_limited_api,
         )
 
@@ -145,7 +148,7 @@ def cmake_source_dir(
     assert attr == "cmake_source_dir"
     assert Path(value).is_dir()
     assert dist.cmake_extensions is None, "Combining cmake_source_dir= and cmake_extensions= is not allowed"  # type: ignore[attr-defined]
-    name = dist.get_name().replace("-", "_")  # type: ignore[attr-defined]
+    name = dist.get_name().replace("-", "_")
 
     extensions = [CMakeExtension(name, value)]
     dist.cmake_extensions = extensions  # type: ignore[attr-defined]
