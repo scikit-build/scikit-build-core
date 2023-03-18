@@ -53,7 +53,7 @@ $ pipx run build --wheel -Ccmake.verbose=true -Clogging.level=INFO
 
 `````
 
-````{tab} Environment variables
+````{tab} Environment
 
 
 ```yaml
@@ -71,7 +71,7 @@ workaround if the other methods don't work.
 
 :::
 
-## Min version
+## Minimum version & defaults
 
 Scikit-build-core, like CMake, has a special minimum required version setting.
 If you set this, you get two benefits. First, if the version is less than this
@@ -263,7 +263,7 @@ $ pipx run build --wheel -Ccmake.define.SOME_DEFINE=ON
 
 `````
 
-````{tab} Environment variables
+````{tab} Environment
 
 ```yaml
 SKBUILD_CMAKE_DEFINES: SOME_DEFINE=ON
