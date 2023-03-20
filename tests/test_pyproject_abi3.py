@@ -21,6 +21,7 @@ ABI_PKG = DIR / "packages/abi3_pyproject_ext"
     reason="abi3 FindPython on MSYS reports not found",
 )
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
+    print(sys.platform)
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(ABI_PKG)
