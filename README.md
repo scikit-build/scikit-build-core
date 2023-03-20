@@ -87,13 +87,11 @@ An example `CMakeLists.txt`:
 
 ```cmake
 cmake_minimum_required(VERSION 3.15...3.26)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C VERSION ${SKBUILD_PROJECT_VERSION})
-
-find_package(Python COMPONENTS Interpreter Development.Module)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 Python_add_library(_module MODULE src/module.c WITH_SOABI)
-
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
 ```
 
@@ -187,6 +185,9 @@ build-dir = ""
 
 [tool.scikit-build.cmake.define]
 # Put CMake defines in this table.
+
+[tool.scikit-build.dynamic-metadata]
+# List dynamic metadata fields in this table
 ```
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
