@@ -255,7 +255,7 @@ to `pybind11::module`, your choice.
 
 ````{tab} SWIG
 
-```{literalinclude} examples/getting_started/SWIG/CMakeLists.txt
+```{literalinclude} examples/getting_started/swig/CMakeLists.txt
 :language: cmake
 ```
 
