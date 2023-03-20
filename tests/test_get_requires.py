@@ -4,7 +4,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from scikit_build_core.builder.get_requires import cmake_ninja_for_build_wheel
+from scikit_build_core.builder.get_requires import GetRequires
 
 ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
 
@@ -24,7 +24,8 @@ def test_get_requires_for_build_wheel(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([cmake, "--version"], stdout="3.14.0")
-    assert cmake_ninja_for_build_wheel() == ["cmake>=3.15", *ninja]
+    assert GetRequires().cmake() == ["cmake>=3.15"]
+    assert GetRequires().ninja() == [*ninja]
 
 
 def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
@@ -33,7 +34,8 @@ def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([cmake, "--version"], stdout="3.18.0")
-    assert cmake_ninja_for_build_wheel() == [*ninja]
+    assert GetRequires().cmake() == []
+    assert GetRequires().ninja() == [*ninja]
 
 
 def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
@@ -43,10 +45,8 @@ def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([cmake, "--version"], stdout="3.18.0")
     config = {"cmake.minimum-version": "3.20"}
-    assert cmake_ninja_for_build_wheel(config) == [
-        "cmake>=3.20",
-        *ninja,
-    ]
+    assert GetRequires(config).cmake() == ["cmake>=3.20"]
+    assert GetRequires(config).ninja() == [*ninja]
 
 
 def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
@@ -62,4 +62,6 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     fp.register([cmake, "--version"], stdout="3.18.0")
-    assert cmake_ninja_for_build_wheel() == ["cmake>=3.21", *ninja]
+
+    assert GetRequires().cmake() == ["cmake>=3.21"]
+    assert GetRequires().ninja() == [*ninja]

@@ -54,18 +54,30 @@ def build_sdist(
 
 
 def get_requires_for_build_sdist(
-    config_settings: dict[str, str | list[str]] | None = None  # noqa: ARG001
+    config_settings: dict[str, str | list[str]] | None = None
 ) -> list[str]:
-    return ["pathspec", "pyproject_metadata"]
+    from ..builder.get_requires import GetRequires
+
+    requires = GetRequires(config_settings)
+
+    return [
+        "pathspec",
+        "pyproject_metadata",
+        *requires.dynamic_metadata(),
+    ]
 
 
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
-    from ..builder.get_requires import cmake_ninja_for_build_wheel
+    from ..builder.get_requires import GetRequires
+
+    requires = GetRequires(config_settings)
 
     return [
         "pathspec",
         "pyproject_metadata",
-        *cmake_ninja_for_build_wheel(config_settings),
+        *requires.cmake(),
+        *requires.ninja(),
+        *requires.dynamic_metadata(),
     ]

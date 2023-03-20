@@ -26,3 +26,9 @@ def dynamic_metadata(
             "text": build_text(config.fragments, config.substitutions),
         }
     }
+
+
+def get_requires_for_dynamic_metadata(
+    _config_settings: dict[str, list[str] | str] | None = None,
+) -> list[str]:
+    return ["hatch-fancy-pypi-readme"]

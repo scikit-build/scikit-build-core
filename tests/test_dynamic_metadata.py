@@ -14,6 +14,7 @@ import pytest
 
 from scikit_build_core._compat import tomllib
 from scikit_build_core.build import build_wheel
+from scikit_build_core.builder.get_requires import GetRequires
 from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
@@ -140,6 +141,11 @@ def test_plugin_metadata(tmp_path, monkeypatch):
     assert metadata.readme == pyproject_metadata.Readme(
         "Fragment #1Fragment #2", None, "text/x-rst"
     )
+
+    assert set(GetRequires().dynamic_metadata()) == {
+        "hatch-fancy-pypi-readme",
+        "setuptools-scm",
+    }
 
 
 def test_faulty_metadata(monkeypatch):
