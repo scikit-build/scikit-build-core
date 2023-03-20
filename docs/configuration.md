@@ -67,7 +67,7 @@ SKBUILD_LOGGING_LEVEL: "INFO"
 :::{warning}
 
 In general, the environment variable method is intended as an emergency
-workaround if the other methods don't work.
+workaround for legacy tooling.
 
 :::
 
@@ -215,12 +215,54 @@ wheel.expand-macos-universal-tags = false
 
 ## Configuring CMake arguments and defines
 
-You can select a different build type:
+You can select a different build type, such as `Debug`:
+
+````{tab} pyproject.toml
 
 ```toml
 [tool.scikit-build]
-cmake.build-type = "Release"
+cmake.build-type = "Debug"
 ```
+
+````
+
+`````{tab} config-settings
+
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings=cmake.build-type=Debug
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build --wheel -Ccmake.build-type=Debug
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+"cmake.build-type" = "Debug"
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```yaml
+SKBUILD_CMAKE_BUILD_TYPE: Debug
+```
+
+````
 
 You can specify CMake defines:
 
@@ -326,10 +368,52 @@ You can select a custom build dir; by default scikit-build-core will use a
 temporary dir. If you select a persistent one, you can get major rebuild
 speedups.
 
+````{tab} pyproject.toml
+
 ```toml
 [tool.cmake]
 build-dir = "build/{wheel_tag}"
 ```
+
+````
+
+`````{tab} config-settings
+
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings='build-dir=build/{wheel_tag}'
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build --wheel -Cbuild-dir='build/{wheel_tag}'
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+build-dir = "build/{wheel_tag}"
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```yaml
+SKBUILD_BUILD_DIR: "build/{wheel_tag}"
+```
+
+````
 
 Scikit-build-core also strictly validates configuration; if you need to disable
 this, you can:

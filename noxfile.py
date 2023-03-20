@@ -106,3 +106,11 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build", **session.posargs)
+
+
+@nox.session
+@nox.parametrize("example", ["c", "abi3", "pybind11"])
+def test_doc_examples(session: nox.Session, example: str) -> None:
+    session.chdir(f"docs/examples/getting_started/{example}")
+    session.install(".")
+    session.run("python", "../test.py")
