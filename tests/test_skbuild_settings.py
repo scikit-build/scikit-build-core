@@ -36,11 +36,12 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
-    assert settings.backport.find_python == "3.26"
+    assert settings.backport.find_python == "3.26.1"
     assert settings.strict_config
     assert not settings.experimental
     assert settings.minimum_version is None
     assert settings.build_dir == ""
+    assert settings.metadata == {}
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
@@ -67,6 +68,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
     monkeypatch.setenv("SKBUILD_CMAKE_VERBOSE", "TRUE")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
+    monkeypatch.setenv("SKBUILD_METADATA", "a=b;c=d")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -96,6 +98,7 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.experimental
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
+    assert settings.metadata == {"a": "b", "c": "d"}
 
 
 def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
@@ -127,6 +130,8 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "experimental": "1",
         "minimum-version": "0.1",
         "build-dir": "a/b/c",
+        "metadata.a": "b",
+        "metadata.c": "d",
     }
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
@@ -152,6 +157,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.experimental
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
+    assert settings.metadata == {"a": "b", "c": "d"}
 
 
 def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
@@ -182,6 +188,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             experimental = true
             minimum-version = "0.1"
             build-dir = "a/b/c"
+            metadata = {a="b", c="d"}
             """
         ),
         encoding="utf-8",
@@ -212,6 +219,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.experimental
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
+    assert settings.metadata == {"a": "b", "c": "d"}
 
 
 def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
