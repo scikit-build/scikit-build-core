@@ -1,5 +1,6 @@
 import shutil
 import sys
+import sysconfig
 import zipfile
 from pathlib import Path
 
@@ -11,6 +12,7 @@ pytestmark = pytest.mark.setuptools
 
 DIR = Path(__file__).parent.resolve()
 ABI_PKG = DIR / "packages/abi3_setuptools_ext"
+SYSCONFIGPLAT = sysconfig.get_platform()
 
 
 @pytest.mark.compile()
@@ -19,8 +21,8 @@ ABI_PKG = DIR / "packages/abi3_setuptools_ext"
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
 @pytest.mark.skipif(
-    sys.platform.startswith("win"),
-    reason="abi3 is hard to target with FindPython on Windows",
+    SYSCONFIGPLAT.startswith(("msys", "mingw")),
+    reason="abi3 FindPython on MSYS/MinGW reports not found",
 )
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
@@ -46,12 +48,12 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
             p = zipfile.Path(f)
             file_names = {p.name for p in p.iterdir()}
 
-        so_file = (
-            "abi3_example.abi3.dll"
-            if sys.platform.startswith("cygwin")
-            else "abi3_example.abi3.so"
-        )
-        assert so_file in file_names
+        if sys.platform.startswith("win"):
+            assert "abi3_example.pyd" in file_names
+        elif sys.platform.startswith("cygwin"):
+            assert "abi3_example.abi3.dll" in file_names
+        else:
+            assert "abi3_example.abi3.so" in file_names
 
     virtualenv.install(wheel)
 

@@ -1,5 +1,6 @@
 import shutil
 import sys
+import sysconfig
 import zipfile
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from scikit_build_core.build import build_wheel
 
 DIR = Path(__file__).parent.resolve()
 ABI_PKG = DIR / "packages/abi3_pyproject_ext"
+SYSCONFIGPLAT = sysconfig.get_platform()
 
 
 @pytest.mark.compile()
@@ -17,8 +19,8 @@ ABI_PKG = DIR / "packages/abi3_pyproject_ext"
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
 @pytest.mark.skipif(
-    sys.platform.startswith("win"),
-    reason="abi3 is hard to target with FindPython on Windows",
+    SYSCONFIGPLAT.startswith(("msys", "mingw")),
+    reason="abi3 FindPython on MSYS/MinGW reports not found",
 )
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"

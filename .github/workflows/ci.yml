@@ -52,7 +52,7 @@ jobs:
             cmake-version: "3.21.x"
           - python-version: "3.11"
             runs-on: windows-2022
-            cmake-version: "3.25.x"
+            cmake-version: "3.26.x"
           - python-version: "pypy-3.7"
             runs-on: ubuntu-latest
             cmake-version: "3.15.x"
