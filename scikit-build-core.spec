@@ -1,14 +1,11 @@
-%global forgeurl https://github.com/scikit-build/scikit-build-core
-
 Name:           python-scikit-build-core
 Version:        0.2.2
 Release:        %{autorelease}
 Summary:        Build backend for CMake based projects
-%forgemeta
 
 License:        Apache-2.0
-URL:            %{forgeurl}
-Source0:        %{forgesource}
+URL:            https://github.com/scikit-build/scikit-build-core
+Source0:        https://github.com/scikit-build/scikit-build-core/archive/refs/tags/v%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
