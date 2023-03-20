@@ -108,12 +108,12 @@ def build(session: nox.Session) -> None:
     session.run("python", "-m", "build", **session.posargs)
 
 
-EXAMPLES = ["c", "abi3", "pybind11", "swig"]
+EXAMPLES = ["c", "abi3", "pybind11", "swig", "cython"]
 
 
 @nox.session
 @nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
 def test_doc_examples(session: nox.Session, example: str) -> None:
     session.chdir(f"docs/examples/getting_started/{example}")
-    session.install(".")
+    session.install(".", "--config-settings=cmake.verbose=true")
     session.run("python", "../test.py")
