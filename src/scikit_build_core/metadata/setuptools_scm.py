@@ -19,3 +19,9 @@ def dynamic_metadata(
     version: str = _get_version(config)
 
     return {"version": version}
+
+
+def get_requires_for_dynamic_metadata(
+    _config_settings: dict[str, list[str] | str] | None = None,
+) -> list[str]:
+    return ["setuptools-scm"]

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
 import functools
+import importlib
 import os
 import sys
 from collections.abc import Mapping
@@ -20,7 +22,7 @@ from ..program_search import (
 from ..resources import resources
 from ..settings.skbuild_read_settings import SettingsReader
 
-__all__ = ["cmake_ninja_for_build_wheel"]
+__all__ = ["GetRequires"]
 
 
 def __dir__() -> list[str]:
@@ -38,40 +40,59 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
     return any(tag.platform in platforms for tag in sys_tags())
 
 
-def cmake_ninja_for_build_wheel(
-    config_settings: Mapping[str, str | list[str]] | None = None
+def _load_get_requires_hook(
+    mod_name: str,
+    config_settings: Mapping[str, list[str] | str] | None = None,
 ) -> list[str]:
-    settings = SettingsReader.from_file("pyproject.toml", config_settings).settings
+    module = importlib.import_module(mod_name)
+    hook = getattr(module, "get_requires_for_dynamic_metadata", None)
+    return [] if hook is None else hook(config_settings)  # type: ignore[no-any-return]
 
-    packages = []
-    cmake_min = Version(settings.cmake.minimum_version)
-    cmake = best_program(get_cmake_programs(module=False), minimum_version=cmake_min)
-    if cmake is None:
-        packages.append(f"cmake>={cmake_min}")
-    else:
-        logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
 
-    if (
-        not sys.platform.startswith("win")
-        and os.environ.get("CMAKE_GENERATOR", "Ninja") == "Ninja"
-        and not os.environ.get("CMAKE_MAKE_PROGRAM", "")
-    ):
-        ninja_min = Version(settings.ninja.minimum_version)
-        ninja = best_program(
-            get_ninja_programs(module=False), minimum_version=ninja_min
+@dataclasses.dataclass
+class GetRequires:
+    config_settings: Mapping[str, list[str] | str] | None = None
+
+    def __post_init__(self) -> None:
+        self._settings = SettingsReader.from_file(
+            "pyproject.toml", self.config_settings
+        ).settings
+
+    def cmake(self) -> list[str]:
+        cmake_min = Version(self._settings.cmake.minimum_version)
+        cmake = best_program(
+            get_cmake_programs(module=False), minimum_version=cmake_min
         )
-        if ninja is None:
-            if (
-                not settings.ninja.make_fallback
-                or is_known_platform(known_wheels("ninja"))
-                or not list(get_make_programs())
-            ):
-                packages.append(f"ninja>={ninja_min}")
-            else:
+        if cmake is None:
+            return [f"cmake>={cmake_min}"]
+        logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
+        return []
+
+    def ninja(self) -> list[str]:
+        if (
+            not sys.platform.startswith("win")
+            and os.environ.get("CMAKE_GENERATOR", "Ninja") == "Ninja"
+            and not os.environ.get("CMAKE_MAKE_PROGRAM", "")
+        ):
+            ninja_min = Version(self._settings.ninja.minimum_version)
+            ninja = best_program(
+                get_ninja_programs(module=False), minimum_version=ninja_min
+            )
+            if ninja is None:
+                if (
+                    not self._settings.ninja.make_fallback
+                    or is_known_platform(known_wheels("ninja"))
+                    or not list(get_make_programs())
+                ):
+                    return [f"ninja>={ninja_min}"]
                 logger.debug(
                     "Found system Make & not on known platform - not requiring PyPI package for Ninja"
                 )
-        else:
             logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
+        return []
 
-    return packages
+    def dynamic_metadata(self) -> list[str]:
+        retval = []
+        for plugins in self._settings.metadata.values():
+            retval += _load_get_requires_hook(plugins, self.config_settings)
+        return retval
