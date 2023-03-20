@@ -87,8 +87,8 @@ repos:
           - rich
           - setuptools-scm
           - tomli
-          - types-setuptools >=67.6.0.3
-          - typing_extensions >=4; python_version<'3.11'
+          - types-setuptools>=67.6.0.5
+          - typing_extensions>=4;python_version<'3.11'
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.4

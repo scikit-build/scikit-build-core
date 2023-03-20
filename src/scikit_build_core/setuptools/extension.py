@@ -136,7 +136,7 @@ def cmake_extensions(
         not settings.wheel.py_api
     ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
 
-    dist.has_ext_modules = lambda: True  # type: ignore[attr-defined]
+    dist.has_ext_modules = lambda: True  # type: ignore[method-assign]
     dist.ext_modules = (dist.ext_modules or []) + value
 
     dist.cmdclass["build_ext"] = CMakeBuild
