@@ -201,9 +201,34 @@ jobs:
 
       - uses: hynek/build-and-inspect-python-package@v1
 
+  docs:
+    name: Docs on ${{ matrix.runs-on }}
+    strategy:
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: wntrblm/nox@2022.8.7
+        with:
+          python-versions: "3.11"
+
+      - name: Build docs
+        run: nox -s docs
+
+      - name: Check examples
+        run: nox -s test_doc_examples
+
+      - name: Verify no changes required to API docs
+        run: |
+          nox -s build_api_docs
+          git diff --exit-code
+
   pass:
     if: always()
-    needs: [lint, checks, cygwin, dist]
+    needs: [lint, checks, cygwin, dist, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
