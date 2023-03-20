@@ -186,8 +186,8 @@ build-dir = ""
 [tool.scikit-build.cmake.define]
 # Put CMake defines in this table.
 
-[tool.scikit-build.dynamic-metadata]
-# List dynamic metadata fields in this table
+[tool.scikit-build.metadata]
+# List dynamic metadata fields and hook locations in this table
 ```
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
