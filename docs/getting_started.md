@@ -20,6 +20,17 @@ example-project
 
 ````
 
+````{tab} ABI3
+
+```
+example-project
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ````{tab} pybind11
 
 ```
@@ -69,6 +80,38 @@ PyMODINIT_FUNC PyInit_example(void) {
 
 ````
 
+````{tab} ABI3
+
+```c
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+float square(float x) { return x * x; }
+
+static PyObject *square_wrapper(PyObject *self, PyObject *args) {
+  float input, result;
+  if (!PyArg_ParseTuple(args, "f", &input)) {
+    return NULL;
+  }
+  result = square(input);
+  return PyFloat_FromDouble(result);
+}
+
+static PyMethodDef pysimple_methods[] = {
+    {"square", square_wrapper, METH_VARARGS, "Square function"},
+    {NULL, NULL, 0, NULL}};
+
+static struct PyModuleDef pysimple_module = {PyModuleDef_HEAD_INIT, "pysimple",
+                                             NULL, -1, pysimple_methods};
+
+/* name here must match extension name, with PyInit_ prefix */
+PyMODINIT_FUNC PyInit_example(void) {
+  return PyModule_Create(&pysimple_module);
+}
+```
+
+````
+
 ````{tab} pybind11
 
 ```cpp
@@ -81,22 +124,6 @@ float square(float x) { return x * x; }
 PYBIND11_MODULE(example, m) {
     m.def("square", &square);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// end of file
 ```
 
 ````
@@ -115,6 +142,23 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "example"
 version = "0.0.1"
+```
+
+````
+
+````{tab} ABI3
+
+```toml
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "example"
+version = "0.0.1"
+
+[tool.scikit-build-core]
+wheel.py-api = "cp37"
 ```
 
 ````
@@ -184,6 +228,40 @@ without it).
 
 ````
 
+````{tab} ABI3
+
+```cmake
+cmake_minimum_required(VERSION 3.15...3.26)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
+
+
+find_package(Python COMPONENTS Interpreter Development.SABIModule REQUIRED)
+
+Python_add_library(example MODULE example.c WITH_SOABI USE_SABI 3.7)
+
+install(TARGETS example DESTINATION .)
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+`find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
+
+You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
+argument to the minimum version to build with. This will also add a proper
+PRIVATE define of `Py_LIMITED_API` for you.
+
+```{note}
+This will not support pypy, so you'll want to provide an alternative if you
+support PyPy).
+```
+
+````
+
 ````{tab} pybind11
 
 ```cmake
@@ -220,6 +298,8 @@ Finally, you install your module. The default install path will go directly to
 `site-packages`, so if you are creating anything other than a single
 c-extension, you will want to install to the package directory (possibly
 `${SKBUILD_PROJECT_NAME}`) instead.
+
+### Building and installing
 
 That's it! You can try building it:
 
