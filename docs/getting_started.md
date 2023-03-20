@@ -50,80 +50,24 @@ them!
 
 ````{tab} C
 
-```c
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-float square(float x) { return x * x; }
-
-static PyObject *square_wrapper(PyObject *self, PyObject *args) {
-  float input, result;
-  if (!PyArg_ParseTuple(args, "f", &input)) {
-    return NULL;
-  }
-  result = square(input);
-  return PyFloat_FromDouble(result);
-}
-
-static PyMethodDef pysimple_methods[] = {
-    {"square", square_wrapper, METH_VARARGS, "Square function"},
-    {NULL, NULL, 0, NULL}};
-
-static struct PyModuleDef pysimple_module = {PyModuleDef_HEAD_INIT, "pysimple",
-                                             NULL, -1, pysimple_methods};
-
-/* name here must match extension name, with PyInit_ prefix */
-PyMODINIT_FUNC PyInit_example(void) {
-  return PyModule_Create(&pysimple_module);
-}
+```{literalinclude} examples/getting_started/c/example.c
+:language: c
 ```
 
 ````
 
 ````{tab} ABI3
 
-```c
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-
-float square(float x) { return x * x; }
-
-static PyObject *square_wrapper(PyObject *self, PyObject *args) {
-  float input, result;
-  if (!PyArg_ParseTuple(args, "f", &input)) {
-    return NULL;
-  }
-  result = square(input);
-  return PyFloat_FromDouble(result);
-}
-
-static PyMethodDef pysimple_methods[] = {
-    {"square", square_wrapper, METH_VARARGS, "Square function"},
-    {NULL, NULL, 0, NULL}};
-
-static struct PyModuleDef pysimple_module = {PyModuleDef_HEAD_INIT, "pysimple",
-                                             NULL, -1, pysimple_methods};
-
-/* name here must match extension name, with PyInit_ prefix */
-PyMODINIT_FUNC PyInit_example(void) {
-  return PyModule_Create(&pysimple_module);
-}
+```{literalinclude} examples/getting_started/abi3/example.c
+:language: c
 ```
 
 ````
 
 ````{tab} pybind11
 
-```cpp
-#include <pybind11/pybind11.h>
-
-namespace py = pybind11;
-
-float square(float x) { return x * x; }
-
-PYBIND11_MODULE(example, m) {
-    m.def("square", &square);
-}
+```{literalinclude} examples/getting_started/pybind11/example.cpp
+:language: cpp
 ```
 
 ````
@@ -134,45 +78,24 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} C
 
-```toml
-[build-system]
-requires = ["scikit-build-core"]
-build-backend = "scikit_build_core.build"
-
-[project]
-name = "example"
-version = "0.0.1"
+```{literalinclude} examples/getting_started/c/pyproject.toml
+:language: toml
 ```
 
 ````
 
 ````{tab} ABI3
 
-```toml
-[build-system]
-requires = ["scikit-build-core"]
-build-backend = "scikit_build_core.build"
-
-[project]
-name = "example"
-version = "0.0.1"
-
-[tool.scikit-build-core]
-wheel.py-api = "cp37"
+```{literalinclude} examples/getting_started/abi3/pyproject.toml
+:language: toml
 ```
 
 ````
 
 ````{tab} pybind11
 
-```toml
-[build-system]
-requires = ["scikit-build-core", "pybind11"]
-build-backend = "scikit_build_core.build"
-
-[project]
-name = "example"
-version = "0.0.1"
+```{literalinclude} examples/getting_started/pybind11/pyproject.toml
+:language: toml
 ```
 
 
@@ -198,16 +121,8 @@ Now, you'll need a CMake file. This one will do:
 
 ````{tab} C
 
-```cmake
-cmake_minimum_required(VERSION 3.15...3.26)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
-
-
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
-
-Python_add_library(example MODULE example.c WITH_SOABI)
-
-install(TARGETS example DESTINATION .)
+```{literalinclude} examples/getting_started/c/CMakeLists.txt
+:language: cmake
 ```
 
 Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
@@ -230,16 +145,8 @@ without it).
 
 ````{tab} ABI3
 
-```cmake
-cmake_minimum_required(VERSION 3.15...3.26)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
-
-
-find_package(Python COMPONENTS Interpreter Development.SABIModule REQUIRED)
-
-Python_add_library(example MODULE example.c WITH_SOABI USE_SABI 3.7)
-
-install(TARGETS example DESTINATION .)
+```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
+:language: cmake
 ```
 
 Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
@@ -264,16 +171,8 @@ support PyPy).
 
 ````{tab} pybind11
 
-```cmake
-cmake_minimum_required(VERSION 3.15...3.26)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
-
-set(PYBIND11_NEWPYTHON ON)
-find_package(pybind11 CONFIG REQUIRED)
-
-pybind11_add_module(example example.cpp)
-
-install(TARGETS example LIBRARY DESTINATION .)
+```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
+:language: cmake
 ```
 
 Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
