@@ -42,6 +42,29 @@ example-project
 
 ````
 
+````{tab} SWIG
+
+```
+example-project
+├── example.c
+├── example.i
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
+````{tab} Cython
+
+```
+example-project
+├── example.pyx
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ### Source code
 
 For this tutorial, you can either use write a C extension yourself, or you can
@@ -72,6 +95,26 @@ them!
 
 ````
 
+````{tab} SWIG
+
+```{literalinclude} examples/getting_started/swig/example.c
+:language: c
+```
+
+```{literalinclude} examples/getting_started/swig/example.i
+:language: swig
+```
+
+````
+
+````{tab} Cython
+
+```{literalinclude} examples/getting_started/cython/example.pyx
+:language: cython
+```
+
+````
+
 ### Python package configuration
 
 To create your first compiled package, start with a pyproject.toml like this:
@@ -95,6 +138,23 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} pybind11
 
 ```{literalinclude} examples/getting_started/pybind11/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} SWIG
+
+```{literalinclude} examples/getting_started/swig/pyproject.toml
+:language: toml
+```
+
+
+````
+
+````{tab} Cython
+
+```{literalinclude} examples/getting_started/cython/pyproject.toml
 :language: toml
 ```
 
@@ -190,6 +250,41 @@ site-packages.
 
 You can either use `pybind11_add_module` or `python_add_library` and then link
 to `pybind11::module`, your choice.
+
+````
+
+````{tab} SWIG
+
+```{literalinclude} examples/getting_started/SWIG/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+You'll need to handle the generation of files by SWIG directly.
+
+````
+
+````{tab} Cython
+
+```{literalinclude} examples/getting_started/cython/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+You'll need to handle the generation of files by Cython directly at the moment.
+A helper (similar to scikti-build classic) might be added in the future.
 
 ````
 
