@@ -282,6 +282,8 @@ SOME_DEFINE = "ON"
 
 ```console
 $ pip install . --config-settings=cmake.define.SOME_DEFINE=ON
+$ # NEXT VERSION OF PIP ONLY
+$ pip install . -Ccmake.define.SOME_DEFINE=ON
 ```
 
 ````
@@ -317,15 +319,61 @@ You can also manually specify the exact cmake args. Beyond the normal
 `SKBUILD_CMAKE_ARGS`, the `CMAKE_ARGS` environment variable is also supported
 (with some filtering for options scikit-build-core doesn't support overriding).
 
+````{tab} pyproject.toml
+
 ```toml
 [tool.cmake]
-cmake.args = ["-DSOME_DEFINE=ON"]
+cmake.args = ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
 ```
+
+````
+
+`````{tab} config-settings
+
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings=cmake.args="-DSOME_DEFINE=ON;-DOTHER=OFF"
+$ # NEXT VERSION OF PIP ONLY
+$ pip install . -Ccmake.args=-SOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build -Ccmake.args="-DSOME_DEFINE=ON;-DOTHER=OFF"
+$ pipx run build -Ccmake.args=-DSOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+"cmake.args" = ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```yaml
+SKBUILD_CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
+CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
+```
+
+````
 
 ## Dynamic metadata (WIP)
 
 Scikit-build-core 0.3.0 will support dynamic metadata. This is experimental
-until a release.
+until a release. The public interface for making a plugin is very experimental.
 
 There currently are two built-in plugins for dynamic metadata.
 
