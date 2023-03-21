@@ -150,3 +150,6 @@ tests/**/build/
 
 # VIM temp files
 *~
+
+# RPM spec file
+!/scikit-build-core.spec
