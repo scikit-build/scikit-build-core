@@ -343,6 +343,26 @@ dynamic = ["version"]
 metadata.version = "scikit_build_core.metadata.setuptools_scm"
 ```
 
+This sets the python project version according to
+[git tags](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
+or a
+[`.git_archival.txt`](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#git-archives)
+file, or equivalents for other VCS systems. With this, you may also to set the
+cmake project version equivalently, e.g. using
+[`DynamicVersion` module](https://github.com/LecrisUT/CMakeExtraUtils/blob/180604da50a3c3588f9d04e4ebc6abb4e5a0d234/cmake/DynamicVersion.md)
+from
+[github.com/LecrisUT/CMakeExtraUtils](https://github.com/LecrisUT/CMakeExtraUtils):
+
+```cmake
+# Import `CMakeExtraUtils` or bundle `DynamicVersion.cmake` from there
+include(DynamicVersion)
+
+# Set ${PROJECT_VERSION} according to git tag or `.git_archival.txt`
+dynamic_version()
+
+project(MyPackage VERSION ${PROJECT_VERSION})
+```
+
 :::
 
 :::{tab} Fancy-pypi-readme
