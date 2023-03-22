@@ -1,5 +1,7 @@
 # scikit-build-core
 
+[![Documentation Status][rtd-badge]][rtd-link]
+
 [![Actions Status][actions-badge]][actions-link]
 [![Code style: black][black-badge]][black-link]
 [![codecov][codecov-badge]][codecov-link]
@@ -10,7 +12,6 @@
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
 <!-- Not implemented yet
-[![Documentation Status][rtd-badge]][rtd-link]
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
@@ -21,17 +22,18 @@ Features over classic Scikit-build:
 - Better warnings, errors, and logging
 - No warning about unused variables
 - Automatically adds Ninja and/or CMake only as required
-- No dependency on setuptools, distutils, or wheel in build mode.
-- Powerful config system, including config options support in build mode.
+- No dependency on setuptools, distutils, or wheel.
+- Powerful config system, including config options support.
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.26.1 (configurable), supports
-  PyPY SOABI.
+  PyPY SOABI & Limited API / Stable ABI.
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
 - SDists are reproducible by default (UNIX, Python 3.9+)
 - Support for caching between builds (opt-in by setting `build-dir`)
 - Support for writing out to extra wheel folders (scripts, headers, data)
+- [WIP] Supports a couple of dynamic metadata plugins (proposing wider support)
 
 The following limitations are present compared to classic scikit-build:
 
@@ -41,11 +43,9 @@ The following limitations are present compared to classic scikit-build:
 Some known missing features that will be developed soon:
 
 - No editable mode support
-- The docs are not written
 - Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
-- Dynamic metadata support is being developed
 
 Other backends are also planned:
 
@@ -179,8 +179,8 @@ strict-config = true
 # scikit-build-core version.
 minimum-version = "0.2"  # current version
 
-# Build directory (empty will use a temporary directory). {cache_tag} is
-# available to provide a unique directory per interpreter.
+# Build directory (empty will use a temporary directory). {cache_tag} and
+# {wheel_tag} are available to provide a unique directory per interpreter.
 build-dir = ""
 
 [tool.scikit-build.cmake.define]
