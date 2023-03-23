@@ -65,6 +65,17 @@ example-project
 
 ````
 
+````{tab} Fortran
+
+```
+example-project
+├── example.f
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ### Source code
 
 For this tutorial, you can either use write a C extension yourself, or you can
@@ -115,6 +126,14 @@ them!
 
 ````
 
+````{tab} Fortran
+
+```{literalinclude} examples/getting_started/fortran/example.f
+:language: fortran
+```
+
+````
+
 ### Python package configuration
 
 To create your first compiled package, start with a pyproject.toml like this:
@@ -156,6 +175,23 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ```{literalinclude} examples/getting_started/cython/pyproject.toml
 :language: toml
+```
+
+
+````
+
+````{tab} Fortran
+
+```{literalinclude} examples/getting_started/fortran/pyproject.toml
+:language: toml
+```
+
+```{warning}
+The module you build will require an equal or newer version to the version of
+NumPy it built with. You should use `oldest-supported-numpy` or manually set
+the NumPy version, though you will then be stuck with older versions of f2py.
+Also it's hard to compile Fortran on Windows as it's not supported by MSVC and
+macOS as it's not supported by Clang.
 ```
 
 
@@ -284,6 +320,24 @@ your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by Cython directly at the moment.
+A helper (similar to scikti-build classic) might be added in the future.
+
+````
+
+````{tab} Cython
+
+```{literalinclude} examples/getting_started/fortran/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+You'll need to handle the generation of files by NumPy directly at the moment.
 A helper (similar to scikti-build classic) might be added in the future.
 
 ````

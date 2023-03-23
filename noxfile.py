@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
 
 import nox
@@ -109,6 +110,8 @@ def build(session: nox.Session) -> None:
 
 
 EXAMPLES = ["c", "abi3", "pybind11", "swig", "cython"]
+if not sys.platform.startswith("win") and shutil.which("gfortran"):
+    EXAMPLES.append("fortran")
 
 
 @nox.session

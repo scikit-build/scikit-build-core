@@ -1,0 +1,8 @@
+[build-system]
+requires = ["scikit-build-core", "numpy"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "example"
+version = "0.0.1"
+dependencies = ["numpy"]
