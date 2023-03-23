@@ -13,6 +13,10 @@ execute_process(
   OUTPUT_VARIABLE F2PY_INCLUDE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+add_library(fortranobject OBJECT "${F2PY_INCLUDE_DIR}/fortranobject.c")
+target_link_libraries(fortranobject PUBLIC Python::NumPy)
+target_include_directories(fortranobject PUBLIC "${F2PY_INCLUDE_DIR}")
+
 add_custom_command(
   OUTPUT examplemodule.c example-f2pywrappers.f
   DEPENDS example.f
@@ -20,11 +24,8 @@ add_custom_command(
   COMMAND "${Python_EXECUTABLE}" -m numpy.f2py
           "${CMAKE_CURRENT_SOURCE_DIR}/example.f" -m example --lower)
 
-python_add_library(
-  example MODULE "${CMAKE_CURRENT_BINARY_DIR}/examplemodule.c"
-  "${F2PY_INCLUDE_DIR}/fortranobject.c" "${CMAKE_CURRENT_SOURCE_DIR}/example.f"
-  WITH_SOABI)
-target_link_libraries(example PRIVATE Python::NumPy)
-target_include_directories(example PRIVATE "${F2PY_INCLUDE_DIR}")
+python_add_library(example MODULE "${CMAKE_CURRENT_BINARY_DIR}/examplemodule.c"
+                   "${CMAKE_CURRENT_SOURCE_DIR}/example.f" WITH_SOABI)
+target_link_libraries(example PRIVATE fortranobject)
 
 install(TARGETS example DESTINATION .)

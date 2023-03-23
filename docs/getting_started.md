@@ -190,8 +190,8 @@ To create your first compiled package, start with a pyproject.toml like this:
 The module you build will require an equal or newer version to the version of
 NumPy it built with. You should use `oldest-supported-numpy` or manually set
 the NumPy version, though you will then be stuck with older versions of f2py.
-Also it's hard to compile Fortran on Windows as it's not supported by MSVC (and
-sometimes macOS too, as it's not AppleClang either).
+Also it's hard to compile Fortran on Windows as it's not supported by MSVC and
+macOS as it's not supported by Clang.
 ```
 
 
