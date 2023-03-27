@@ -215,13 +215,12 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     assert wheel == dist / out
 
     virtualenv.install(wheel)
-    virtualenv.install("importlib-metadata==4.13.0")
-    license = virtualenv.execute(
-        "from importlib_metadata import metadata; print(metadata('dynamic')['License'])"
-    )
-    assert license == "MIT License"
-
     if sys.version_info >= (3, 8):
+        license = virtualenv.execute(
+            "from importlib.metadata import metadata; print(metadata('dynamic')['License'])"
+        )
+        assert license == "MIT License"
+
         with wheel.open("rb") as f:
             p = zipfile.Path(f)
             file_names = {x.name for x in p.iterdir()}
