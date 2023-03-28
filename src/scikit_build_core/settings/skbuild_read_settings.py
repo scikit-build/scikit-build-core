@@ -35,6 +35,7 @@ class SettingsReader:
             EnvSource("SKBUILD"),
             ConfSource(settings=config_settings, verify=verify_conf),
             TOMLSource("tool", "scikit-build", settings=pyproject),
+            prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
 
@@ -85,6 +86,23 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
+
+        for key, value in self.settings.metadata.items():
+            if "provider" not in value:
+                sys.stdout.flush()
+                rich_print(
+                    f"[red][bold]ERROR:[/bold] provider= must be provided in {key!r}:"
+                )
+                raise SystemExit(7)
+            if not self.settings.experimental and (
+                "provider-path" in value
+                or not value["provider"].startswith("scikit_build_core.")
+            ):
+                sys.stdout.flush()
+                rich_print(
+                    "[red][bold]ERROR:[/bold] experimental must be enabled currently to use plugins not provided by scikit-build-core"
+                )
+                raise SystemExit(7)
 
     @classmethod
     def from_file(

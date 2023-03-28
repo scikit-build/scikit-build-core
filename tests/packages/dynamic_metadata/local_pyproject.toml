@@ -3,10 +3,12 @@ requires = ["scikit-build-core"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "fancy"
-version = "0.0.1"
-dynamic = ["readme"]
+name = "dynamic"
+dynamic = ["version"]
 
 [tool.scikit-build]
 experimental = true
-metadata.readme.provider = "non_existent"
+
+[tool.scikit-build.metadata.version]
+provider = "version.nested"
+provider-path = "plugins/local"

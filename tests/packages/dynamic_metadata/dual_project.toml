@@ -6,6 +6,7 @@ build-backend = "scikit_build_core.build"
 name = "fancy"
 dynamic = ["version", "license"]
 
-[tool.scikit-build.metadata]
-version = "test_dual"
-license = "test_dual"
+[tool.scikit-build]
+experimental = true
+metadata.version.provider = "test_dual"
+metadata.license.provider = "test_dual"

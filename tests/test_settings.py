@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pytest
 
@@ -24,6 +24,8 @@ class SettingChecker:
     seven: Union[int, None] = None
     eight: Dict[str, str] = dataclasses.field(default_factory=dict)
     nine: Dict[str, int] = dataclasses.field(default_factory=dict)
+    # TOML only
+    ten: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 def test_empty(monkeypatch):
@@ -128,6 +130,7 @@ def test_toml():
         "seven": 7,
         "eight": {"one": "one", "two": "two"},
         "nine": {"thing": 8},
+        "ten": {"a": {"b": 3}},
     }
 
     sources = SourceChain(
@@ -147,6 +150,7 @@ def test_toml():
     assert settings.seven == 7
     assert settings.eight == {"one": "one", "two": "two"}
     assert settings.nine == {"thing": 8}
+    assert settings.ten == {"a": {"b": 3}}
 
 
 def test_all_names():
