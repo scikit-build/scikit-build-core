@@ -5,7 +5,7 @@ import functools
 import importlib
 import os
 import sys
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 
 from packaging.tags import sys_tags
 from packaging.version import Version
@@ -58,41 +58,50 @@ class GetRequires:
             "pyproject.toml", self.config_settings
         ).settings
 
-    def cmake(self) -> list[str]:
+    def cmake(self) -> Generator[str, None, None]:
         cmake_min = Version(self._settings.cmake.minimum_version)
         cmake = best_program(
             get_cmake_programs(module=False), minimum_version=cmake_min
         )
         if cmake is None:
-            return [f"cmake>={cmake_min}"]
+            yield f"cmake>={cmake_min}"
+            return
         logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
-        return []
 
-    def ninja(self) -> list[str]:
-        if (
-            not sys.platform.startswith("win")
-            and os.environ.get("CMAKE_GENERATOR", "Ninja") == "Ninja"
-            and not os.environ.get("CMAKE_MAKE_PROGRAM", "")
+    def ninja(self) -> Generator[str, None, None]:
+        # On Windows, Ninja is not default
+        if sys.platform.startswith("win") and "Ninja" not in os.environ.get(
+            "CMAKE_GENERATOR", ""
         ):
-            ninja_min = Version(self._settings.ninja.minimum_version)
-            ninja = best_program(
-                get_ninja_programs(module=False), minimum_version=ninja_min
-            )
-            if ninja is None:
-                if (
-                    not self._settings.ninja.make_fallback
-                    or is_known_platform(known_wheels("ninja"))
-                    or not list(get_make_programs())
-                ):
-                    return [f"ninja>={ninja_min}"]
-                logger.debug(
-                    "Found system Make & not on known platform - not requiring PyPI package for Ninja"
-                )
-            logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
-        return []
+            return
 
-    def dynamic_metadata(self) -> list[str]:
-        retval = []
+        # If something besides Windows is set, don't add ninja
+        if "Ninja" not in os.environ.get("CMAKE_GENERATOR", "Ninja"):
+            return
+
+        # If CMAKE_MAKE_PROGRAM is set, don't add anything, someone already knows what they want
+        if os.environ.get("CMAKE_MAKE_PROGRAM", ""):
+            return
+
+        ninja_min = Version(self._settings.ninja.minimum_version)
+        ninja = best_program(
+            get_ninja_programs(module=False), minimum_version=ninja_min
+        )
+        if ninja is not None:
+            logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
+            return
+
+        if (
+            self._settings.ninja.make_fallback
+            and not is_known_platform(known_wheels("ninja"))
+            and list(get_make_programs())
+        ):
+            logger.debug(
+                "Found system Make & not on known platform - not requiring PyPI package for Ninja"
+            )
+            return
+        yield f"ninja>={ninja_min}"
+
+    def dynamic_metadata(self) -> Generator[str, None, None]:
         for plugins in self._settings.metadata.values():
-            retval += _load_get_requires_hook(plugins, self.config_settings)
-        return retval
+            yield from _load_get_requires_hook(plugins, self.config_settings)
