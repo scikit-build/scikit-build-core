@@ -1,0 +1,1 @@
+addFilter("files-duplicate .*/__init__.py")

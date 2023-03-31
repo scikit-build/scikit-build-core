@@ -153,7 +153,9 @@ tests/**/build/
 *.swp
 
 # RPM spec file
-!/scikit-build-core.spec
+!/.distro/scikit-build-core.spec
+/.distro/*.tar.gz
+*.rpm
 
 # ruff
 .ruff_cache/
