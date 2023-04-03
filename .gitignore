@@ -148,8 +148,21 @@ _skbuild/
 tests/**/build/
 /src/scikit_build_core/_version.py
 
-# VIM temp files
+# Common editor files
 *~
+*.swp
 
 # RPM spec file
 !/scikit-build-core.spec
+
+# ruff
+.ruff_cache/
+
+# OS specific stuff
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
