@@ -3,11 +3,11 @@ from __future__ import annotations
 import sys
 
 if sys.version_info < (3, 9):
-    import importlib_resources as resources
+    from importlib_resources import files
 else:
-    from importlib import resources
+    from importlib.resources import files
 
-__all__ = ["resources"]
+__all__ = ["files"]
 
 
 def __dir__() -> list[str]:

@@ -1,0 +1,7 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "custom_modules"
+version = "0.0.1"

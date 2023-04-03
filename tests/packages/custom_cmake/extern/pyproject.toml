@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "custom_cmake_testing_stuff"
+version = "0.1.0"
+
+[project.entry-points."cmake.module"]
+any = "custom_cmake_testing_stuff.cmake_modules"
+
+[project.entry-points."cmake.prefix"]
+any = "custom_cmake_testing_stuff.cmake_prefix"
