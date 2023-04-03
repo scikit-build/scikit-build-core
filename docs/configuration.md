@@ -372,8 +372,11 @@ CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
 
 ## Dynamic metadata (WIP)
 
-Scikit-build-core 0.3.0 will support dynamic metadata. This is experimental
-until a release. The public interface for making a plugin is very experimental.
+Scikit-build-core 0.3.0 will support dynamic metadata. This is not ready for
+plugin development outside of scikit-build-core;
+`tool.scikit-build.expiremental=true` is required to use external plugins, since
+the interface is provisional. Nested arbitrary dicts (as seen here) are not
+supported in config-settings or environment variables.
 
 There currently are two built-in plugins for dynamic metadata.
 
@@ -388,7 +391,7 @@ name = "mypackage"
 dynamic = ["version"]
 
 [tool.scikit-build]
-metadata.version = "scikit_build_core.metadata.setuptools_scm"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 ```
 
 This sets the python project version according to
@@ -425,7 +428,7 @@ name = "mypackage"
 dynamic = ["readme"]
 
 [tool.scikit-build]
-metadata.readme = "scikit_build_core.metadata.fancy_pypi_readme"
+metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 ```
 
 :::

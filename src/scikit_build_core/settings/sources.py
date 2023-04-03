@@ -121,7 +121,7 @@ def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[
 class Source(Protocol):
     def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
-        Check if the source contains a chain of fields. For example, feilds =
+        Check if the source contains a chain of fields. For example, fields =
         [Field(name="a"), Field(name="b")] will check if the source contains the
         key "a.b".
         """
@@ -276,16 +276,18 @@ class ConfSource:
         if raw_target == list:
             if isinstance(item, list):
                 return [cls.convert(i, _get_inner_type(target)) for i in item]
-            assert not isinstance(item, dict)
+            if isinstance(item, dict):
+                msg = f"Expected {target}, got {type(item).__name__}"
+                raise TypeError(msg)
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target == dict:
             assert not isinstance(item, (str, list))
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
-        assert not isinstance(
-            item, (list, dict)
-        ), "Can't convert list or dict to non-list/dict"
+        if isinstance(item, (list, dict)):
+            msg = f"Expected {target}, got {type(item).__name__}"
+            raise TypeError(msg)
         if raw_target is bool:
             result = item.strip().lower() not in {"0", "false", "off", "no", ""}
             return result
@@ -347,9 +349,17 @@ class TOMLSource:
     def convert(cls, item: Any, target: type[Any]) -> object:
         raw_target = _get_target_raw_type(target)
         if raw_target == list:
+            if not isinstance(item, list):
+                msg = f"Expected {target}, got {type(item).__name__}"
+                raise TypeError(msg)
             return [cls.convert(it, _get_inner_type(target)) for it in item]
         if raw_target == dict:
+            if not isinstance(item, dict):
+                msg = f"Expected {target}, got {type(item).__name__}"
+                raise TypeError(msg)
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+        if raw_target == Any:
+            return item
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -365,8 +375,14 @@ class TOMLSource:
 
 
 class SourceChain:
-    def __init__(self, *sources: Source) -> None:
+    def __init__(self, *sources: Source, prefixes: Sequence[str] = ()) -> None:
+        """
+        Combine a collection of sources into a single object that can run
+        ``convert_target(dataclass)``.  An optional list of prefixes can be
+        given that will be prepended (dot separated) to error messages.
+        """
         self.sources = sources
+        self.prefixes = prefixes
 
     def __getitem__(self, index: int) -> Source:
         return self.sources[index]
@@ -387,6 +403,11 @@ class SourceChain:
         raise NotImplementedError(msg)
 
     def convert_target(self, target: type[T], *prefixes: str) -> T:
+        """
+        Given a dataclass type, create an object of that dataclass filled
+        with the values in the sources.
+        """
+
         errors = []
         prep: dict[str, Any] = {}
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
@@ -396,6 +417,8 @@ class SourceChain:
                         field.type, *prefixes, field.name
                     )
                 except Exception as e:
+                    name = ".".join([*self.prefixes, *prefixes, field.name])
+                    e.__notes__ = [*getattr(e, "__notes__", []), f"Field: {name}"]  # type: ignore[attr-defined]
                     errors.append(e)
                 continue
 
@@ -407,6 +430,8 @@ class SourceChain:
                     try:
                         tmp = source.convert(simple, field.type)
                     except Exception as e:
+                        name = ".".join([*self.prefixes, *prefixes, field.name])
+                        e.__notes__ = [*getattr(e, "__notes__", []), f"Field {name}"]  # type: ignore[attr-defined]
                         errors.append(e)
                         prep[field.name] = None
                         break
@@ -432,7 +457,7 @@ class SourceChain:
             errors.append(ValueError(f"Missing value for {field.name!r}"))
 
         if errors:
-            prefix_str = ".".join(prefixes)
+            prefix_str = ".".join([*self.prefixes, *prefixes])
             msg = f"Failed converting {prefix_str}"
             raise ExceptionGroup(msg, errors)
 

@@ -73,7 +73,7 @@ def _build_wheel_impl(
 
     settings_reader.validate_may_exit()
 
-    metadata = get_standard_metadata(pyproject, settings, config_settings)
+    metadata = get_standard_metadata(pyproject, settings)
 
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"

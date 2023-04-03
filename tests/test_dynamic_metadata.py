@@ -11,6 +11,7 @@ from typing import Any
 import git
 import pyproject_metadata
 import pytest
+from packaging.version import Version
 
 from scikit_build_core._compat import tomllib
 from scikit_build_core.build import build_wheel
@@ -26,16 +27,18 @@ DYNAMIC = DIR / "packages/dynamic_metadata"
 # it turns out to be easier to create EntryPoint objects pointing to real
 # functions than to mock them.
 def ep_version(
-    _pyproject_dict: dict[str, Any],
-    _config_settings: dict[str, list[str] | str] | None = None,
+    fields: frozenset[str],
+    _settings: dict[str, object] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
+    assert fields == {"version"}
     return {"version": "0.0.2"}
 
 
 def ep_readme(
-    _pyproject_dict: dict[str, Any],
-    _config_settings: dict[str, list[str] | str] | None = None,
+    fields: frozenset[str],
+    _settings: dict[str, object] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
+    assert fields == {"readme"}
     return {
         "readme": {
             "content-type": "text/x-rst",
@@ -45,16 +48,18 @@ def ep_readme(
 
 
 def ep_license(
-    _pyproject_dict: dict[str, Any],
-    _config_settings: dict[str, list[str] | str] | None = None,
+    fields: frozenset[str],
+    _settings: dict[str, object] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
+    assert fields == {"license"}
     return {"license": {"text": "MIT License"}}
 
 
 def ep_dual(
-    _pyproject_dict: dict[str, Any],
-    _config_settings: dict[str, list[str] | str] | None = None,
+    _fields: list[str],
+    _settings: dict[str, object] | None = None,
 ) -> dict[str, str | dict[str, str | None]]:
+    # Fields intentionally not checked to verify backend error thrown
     return {
         "version": "0.3",
         "license": {"text": "BSD License"},
@@ -162,6 +167,20 @@ def test_faulty_metadata(monkeypatch):
         get_standard_metadata(pyproject, settings)
 
 
+def test_local_plugin_metadata(monkeypatch):
+    monkeypatch.chdir(DYNAMIC)
+
+    with Path("local_pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {})
+    settings = settings_reader.settings
+
+    settings_reader.validate_may_exit()
+
+    metadata = get_standard_metadata(pyproject, settings)
+    assert metadata.version == Version("3.2.1")
+
+
 def test_warn_metadata(monkeypatch):
     monkeypatch.chdir(DYNAMIC)
     with Path("warn_project.toml").open("rb") as ft:
@@ -173,6 +192,18 @@ def test_warn_metadata(monkeypatch):
 
     with pytest.raises(ModuleNotFoundError):
         get_standard_metadata(pyproject, settings)
+
+
+def test_fail_experimental_metadata(monkeypatch):
+    monkeypatch.chdir(DYNAMIC)
+    with Path("warn_project.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings_reader = SettingsReader(pyproject, {"experimental": "false"})
+
+    with pytest.raises(SystemExit) as exc:
+        settings_reader.validate_may_exit()
+    (value,) = exc.value.args
+    assert value == 7
 
 
 @pytest.mark.usefixtures("mock_entry_points")

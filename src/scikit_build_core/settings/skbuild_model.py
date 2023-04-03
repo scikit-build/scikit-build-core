@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 __all__ = [
     "ScikitBuildSettings",
@@ -110,7 +110,7 @@ class ScikitBuildSettings:
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
-    metadata: Dict[str, str] = dataclasses.field(default_factory=dict)
+    metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
 
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.

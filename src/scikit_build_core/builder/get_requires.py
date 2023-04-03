@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import functools
-import importlib
 import os
 import sys
 from collections.abc import Generator, Mapping
@@ -20,6 +19,7 @@ from ..program_search import (
     get_ninja_programs,
 )
 from ..resources import resources
+from ..settings._load_provider import load_provider
 from ..settings.skbuild_read_settings import SettingsReader
 
 __all__ = ["GetRequires"]
@@ -38,15 +38,6 @@ def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:
 @functools.lru_cache(maxsize=2)
 def is_known_platform(platforms: frozenset[str]) -> bool:
     return any(tag.platform in platforms for tag in sys_tags())
-
-
-def _load_get_requires_hook(
-    mod_name: str,
-    config_settings: Mapping[str, list[str] | str] | None = None,
-) -> list[str]:
-    module = importlib.import_module(mod_name)
-    hook = getattr(module, "get_requires_for_dynamic_metadata", None)
-    return [] if hook is None else hook(config_settings)  # type: ignore[no-any-return]
 
 
 @dataclasses.dataclass
@@ -103,5 +94,12 @@ class GetRequires:
         yield f"ninja>={ninja_min}"
 
     def dynamic_metadata(self) -> Generator[str, None, None]:
-        for plugins in self._settings.metadata.values():
-            yield from _load_get_requires_hook(plugins, self.config_settings)
+        for dynamic_metadata in self._settings.metadata.values():
+            if "provider" in dynamic_metadata:
+                config = dynamic_metadata.copy()
+                provider = config.pop("provider")
+                provider_path = config.pop("provider-path", None)
+                module = load_provider(provider, provider_path)
+                yield from getattr(
+                    module, "get_requires_for_dynamic_metadata", lambda _: []
+                )(config)

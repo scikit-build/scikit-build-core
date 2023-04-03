@@ -6,7 +6,8 @@ build-backend = "scikit_build_core.build"
 name = "dynamic"
 dynamic = ["version", "readme", "license"]
 
-[tool.scikit-build.metadata]
-version = "test_version"
-readme = "test_readme"
-license = "test_license"
+[tool.scikit-build]
+experimental = true
+metadata.version.provider = "test_version"
+metadata.readme.provider = "test_readme"
+metadata.license.provider = "test_license"
