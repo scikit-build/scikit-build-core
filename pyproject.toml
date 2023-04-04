@@ -55,7 +55,6 @@ test = [
     "cattrs >=22.2.0",
     "gitpython",
     "importlib_metadata; python_version<'3.8'",
-    "numpy; python_version>='3.8' and python_version<'3.12'",
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
