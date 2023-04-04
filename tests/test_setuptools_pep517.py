@@ -75,6 +75,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
 @pytest.mark.compile()
 @pytest.mark.configure()
+@pytest.mark.broken_on_urct()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )

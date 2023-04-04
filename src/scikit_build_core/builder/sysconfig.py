@@ -65,6 +65,9 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
             libpath = libdir / ldlibrary
             if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
+            logger.warning("libdir/ldlibrary: {} is not a real file!", libpath)
+        else:
+            logger.warning("libdir: {} is not a directory", libdir)
 
     framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
     if framework_prefix and Path(framework_prefix).is_dir() and ldlibrary:

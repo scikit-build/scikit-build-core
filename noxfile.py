@@ -46,6 +46,8 @@ def tests(session: nox.Session) -> None:
         extra.append("cmake")
     if shutil.which("ninja") is None:
         extra.append("ninja")
+    if (3, 8) <= sys.version_info < (3, 12):
+        extra.append("numpy")
 
     session.install("-e.[test]", *extra)
     session.run("pytest", *session.posargs, env=env)

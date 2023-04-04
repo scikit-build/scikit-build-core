@@ -55,7 +55,6 @@ test = [
     "cattrs >=22.2.0",
     "gitpython",
     "importlib_metadata; python_version<'3.8'",
-    "numpy; python_version>='3.8' and python_version<'3.12'",
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
@@ -108,13 +107,14 @@ filterwarnings = [
 log_cli_level = "info"
 testpaths = ["tests"]
 markers = [
+    "broken_on_urct: Broken for now due to lib not found",
     "compile: Compiles code",
     "configure: Configures CMake code",
     "fortran: Fortran code",
     "integration: Full package build",
+    "isolated: Needs an isolated virtualenv",
     "setuptools: Tests setuptools integration",
     "virtualenv: Needs a virtualenv",
-    "isolated: Needs an isolated virtualenv",
 ]
 
 

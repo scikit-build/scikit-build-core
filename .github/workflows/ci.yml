@@ -85,6 +85,12 @@ jobs:
           pip install .[test,cov] cmake ninja rich hatch-fancy-pypi-readme
           setuptools-scm
 
+      - name: Add NumPy
+        if: >
+          (matrix.runs-on == 'ubuntu-latest' || matrix.python-version !=
+          'pypy-3.8') && matrix.python-version != '3.12-dev'
+        run: "pip install --only-binary=:all: numpy"
+
       - name: Test package
         run: pytest -ra --showlocals --cov=scikit_build_core
 
@@ -105,7 +111,9 @@ jobs:
         with:
           cmake-version: "${{ matrix.cmake-version }}"
 
+      # Skipped on pypy to keep the tests fast
       - name: Test min package
+        if: matrix.python-version != 'pypy-3.8'
         run: pytest -ra --showlocals
 
   cygwin:
@@ -121,8 +129,7 @@ jobs:
         with:
           platform: x86_64
           packages:
-            cmake ninja git make gcc-g++ gcc-fortran python39 python39-devel
-            python39-pip
+            cmake ninja git make gcc-g++ python39 python39-devel python39-pip
 
       - name: Install
         run: python3.9 -m pip install .[test]
@@ -131,7 +138,7 @@ jobs:
         run: python3.9 -m pytest -ra --showlocals -m "not virtualenv"
 
   msys:
-    name: Tests on 🐍 3 • msys
+    name: Tests on 🐍 3 • msys UCRT
     runs-on: windows-latest
 
     defaults:
@@ -141,13 +148,13 @@ jobs:
     steps:
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: msys
+          msystem: UCRT64
           path-type: minimal
           update: true
           install: >-
             base-devel git
           pacboy: >-
-            python python-pip gcc cmake
+            python:p python-pip:p gcc:p cmake:p
 
       - uses: actions/checkout@v3
         with:
@@ -157,7 +164,7 @@ jobs:
         run: python -m pip install .[test]
 
       - name: Test package
-        run: python -m pytest -ra --showlocals
+        run: python -m pytest -ra --showlocals -m "not broken_on_urct"
 
   mingw64:
     name: Tests on 🐍 3 • mingw64
