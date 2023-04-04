@@ -111,7 +111,9 @@ jobs:
         with:
           cmake-version: "${{ matrix.cmake-version }}"
 
+      # Skipped on pypy to keep the tests fast
       - name: Test min package
+        if: matrix.python-version != 'pypy-3.8'
         run: pytest -ra --showlocals
 
   cygwin:
