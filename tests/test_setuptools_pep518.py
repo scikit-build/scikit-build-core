@@ -15,6 +15,7 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.broken_on_urct()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
@@ -56,6 +57,7 @@ def test_pep518_wheel(tmp_path, monkeypatch, isolated):
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.broken_on_urct()
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )

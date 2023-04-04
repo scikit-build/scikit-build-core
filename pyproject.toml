@@ -107,13 +107,14 @@ filterwarnings = [
 log_cli_level = "info"
 testpaths = ["tests"]
 markers = [
+    "broken_on_urct: Broken for now due to lib not found",
     "compile: Compiles code",
     "configure: Configures CMake code",
     "fortran: Fortran code",
     "integration: Full package build",
+    "isolated: Needs an isolated virtualenv",
     "setuptools: Tests setuptools integration",
     "virtualenv: Needs a virtualenv",
-    "isolated: Needs an isolated virtualenv",
 ]
 
 

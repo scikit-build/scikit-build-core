@@ -4,7 +4,7 @@ import configparser
 import os
 import sys
 import sysconfig
-from collections.abc import Generator, Mapping
+from collections.abc import Mapping
 from pathlib import Path
 
 from .._logging import logger
@@ -29,15 +29,6 @@ PLAT_TO_CMAKE = {
 
 def __dir__() -> list[str]:
     return __all__
-
-
-def list_files(path: Path, level: int = 0) -> Generator[str, None, None]:
-    for entry in os.scandir(path):
-        if entry.is_dir():
-            yield "  " * level + entry.name + "/"
-            yield from list_files(path / entry.name, level + 1)
-        else:
-            yield "  " * level + entry.name
 
 
 def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | None:
@@ -75,7 +66,6 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
             if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
             logger.warning("libdir/ldlibrary: {} is not a real file!", libpath)
-            logger.warning("Contents:\n{}", "\n".join(list_files(libdir)))
         else:
             logger.warning("libdir: {} is not a directory", libdir)
 
