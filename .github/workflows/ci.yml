@@ -95,9 +95,13 @@ jobs:
         run: pytest -ra --showlocals --cov=scikit_build_core
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3
         with:
           name: ${{ runner.os }}-${{ matrix.python-version }}
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          verbose: true
+
 
       # the min requirements are not compatible with the metadata plugin
       # packages so we remove those first (they then won't be tested)
