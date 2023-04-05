@@ -1,4 +1,3 @@
-import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -6,9 +5,6 @@ from pathlib import Path
 import pytest
 
 pytestmark = pytest.mark.setuptools
-
-DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 
 
 # TODO: work out why this fails on Cygwin
@@ -19,13 +15,9 @@ HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_wheel(tmp_path, monkeypatch, isolated):
-    # create a temporary copy of the package source so we don't contaminate the
-    # main source tree with build artefacts
-    src = tmp_path / "src"
-    dist = src / "dist"
-    shutil.copytree(HELLO_PEP518, src)
-    monkeypatch.chdir(src)
+@pytest.mark.usefixtures("package_simple_setuptools_ext")
+def test_pep518_wheel(isolated):
+    dist = Path("dist")
     isolated.install("build[virtualenv]")
     isolated.module("build", "--wheel")
     (wheel,) = dist.iterdir()
@@ -61,12 +53,9 @@ def test_pep518_wheel(tmp_path, monkeypatch, isolated):
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep518_pip(isolated, tmp_path):
-    # create a temporary copy of the package source so we don't contaminate the
-    # main source tree with build artefacts
-    src = tmp_path / "src"
-    shutil.copytree(HELLO_PEP518, src)
-    isolated.install("-v", src)
+@pytest.mark.usefixtures("package_simple_setuptools_ext")
+def test_pep518_pip(isolated):
+    isolated.install("-v", ".")
 
     version = isolated.execute(
         "import cmake_example; print(cmake_example.__version__)",
