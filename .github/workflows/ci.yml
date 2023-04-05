@@ -102,7 +102,6 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
-
       # the min requirements are not compatible with the metadata plugin
       # packages so we remove those first (they then won't be tested)
       - name: Min requirements
