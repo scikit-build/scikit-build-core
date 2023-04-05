@@ -43,6 +43,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
     packages = [
         "build",
+        "hatchling",
         "pybind11",
         "rich",
         "setuptools",
@@ -151,8 +152,9 @@ class VEnv(EnvBuilder):
     def module(self, *args: str) -> None:
         return self.run(str(self.executable), "-m", *args)
 
-    def install(self, *args: str) -> None:
-        self.module("pip", "install", *args)
+    def install(self, *args: str, isolated: bool = True) -> None:
+        isolated_flags = "" if isolated else ["--no-build-isolation"]
+        self.module("pip", "install", *isolated_flags, *args)
 
 
 @pytest.fixture()

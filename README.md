@@ -33,7 +33,9 @@ Features over classic Scikit-build:
 - SDists are reproducible by default (UNIX, Python 3.9+)
 - Support for caching between builds (opt-in by setting `build-dir`)
 - Support for writing out to extra wheel folders (scripts, headers, data)
-- [WIP] Supports a couple of dynamic metadata plugins (proposing wider support)
+- Dedicated entrypoints for module and prefix directories
+- Several integrated dynamic metadata plugins (proposing standardized support
+  soon)
 
 The following limitations are present compared to classic scikit-build:
 
@@ -43,7 +45,6 @@ The following limitations are present compared to classic scikit-build:
 Some known missing features that will be developed soon:
 
 - No editable mode support
-- Dedicated entrypoints are planned for projects wanting to support discovery
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
 
@@ -53,7 +54,7 @@ Other backends are also planned:
 - The extensionlib integration is missing
 - No hatchling plugin yet
 
-The recommended interface is the PEP 517 interface. There is also a WIP
+The recommended interface is the native pyproject builder. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
 for classic scikit-build.
 

@@ -11,6 +11,7 @@ from typing import Mapping
 from packaging.version import Version
 
 from .. import __version__
+from .._compat.importlib import metadata, resources
 from .._logging import logger
 from ..cmake import CMaker
 from ..resources import find_python
@@ -85,6 +86,14 @@ class Builder:
         limited_abi: bool | None = None,
     ) -> None:
         cmake_defines = dict(defines)
+
+        # Add any extra CMake modules
+        eps = metadata.entry_points(group="cmake.module")
+        self.config.module_dirs.extend(resources.files(ep.load()) for ep in eps)
+
+        # Add any extra CMake prefixes
+        eps = metadata.entry_points(group="cmake.prefix")
+        self.config.prefix_dirs.extend(resources.files(ep.load()) for ep in eps)
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))

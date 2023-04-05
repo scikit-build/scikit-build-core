@@ -32,6 +32,12 @@ so packages can provide a find package config with a name matching the package
 name - such as the `pybind11` package. Later versions of scikit-build core will
 include a design for package to provide arbitrary CMake code.
 
+Third party packages can declare entry-points `cmake.module` and `cmake.prefix`,
+and the specified module will be added to `CMAKE_PREFIX_PATH` and
+`CMAKE_MODULE_PATH`, respectively. Currently, the key is not used, but
+eventually there might be a way to request or exclude certain entry-points by
+key.
+
 ## Install directories
 
 Scikit-build-core will install directly into platlib, which will end up in
@@ -51,9 +57,7 @@ configuration, with the variables:
 - `${SKBUILD_HEADERS_DIR}`: The header directory. Anything in here gets
   installed to Python's header directory.
 - `${SKBUILD_SCRIPTS_DIR}`: The scripts directory. Anything placed in here will
-  go to `bin` (Unix) or `Scripts` (Windows). Use a `#!python` shebang line at
-  the top of Python scripts (scikit-build-core does not rewrite traditional
-  `#!/usr/bin/env python` shabangs yet).
+  go to `bin` (Unix) or `Scripts` (Windows).
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
