@@ -287,3 +287,51 @@ cmake_extensions=[CMakeExtension("cmake_example")],
 ```
 
 Which should eventually support multiple extensions.
+
+# Downstream packaging
+
+## Fedora packaging
+
+We are using [`packit`](https://packit.dev/) to keep maintain the
+[Fedora package](https://src.fedoraproject.org/rpms/python-scikit-build-core/).
+There are two `packit` jobs one needs to keep in mind here:
+
+- `copr_build`: Submits copr builds to:
+  - `@scikit-build/nightly` if there is a commit to `main`. This is intended for
+    users to test the current development build
+  - `@scikit-build/scikit-build-core` if there is a PR request. This is for CI
+    purposes to confirm that the build is successful
+  - `@scikit-build/release` whenever a new release is published on GitHub. Users
+    can use this to get the latest release before they land on Fedora. This is
+    also used for other copr projects to check the future release
+- `propose_downstream`: Submits a PR to `src.fedoraproject.org` once a release
+  is published
+
+To interact with `packit`, you can use
+[`/packit command`](https://packit.dev/docs/guide/#how-to-re-trigger-packit-actions-in-your-pull-request)
+in PRs and commit messages or [`packit` CLI](https://packit.dev/docs/cli/).
+These interactions are primarily intended for controlling the CI managed on
+`scikit-build`.
+
+To debug and build locally or on your own copr project you may use
+`packit build` commands, e.g. to build locally using `mock` for fedora rawhide:
+
+```console
+$ packit build in-mock -r /etc/mock/fedora-rawhide-x86_64.cfg
+```
+
+or for copr project `copr_user/scikit-build-core`:
+
+```console
+$ copr-cli edit-permissions --builder=packit copr_user/scikit-build-core
+$ packit build in-copr --owner copr_user --project scikit-build-core
+```
+
+(Here we are making sure `packit` has the appropriate permission for
+`copr_user/scikit-build-core` via the `copr-cli` command. You may need to
+configure [`~/.config/copr`](https://packit.dev/docs/cli/build/copr/)) first
+
+Both of these methods automatically edit the `Version` in the
+[spec file](../.dist/scikit-build-core.spec), therefore it is intentionally
+marked as `0.0.0` there to avoid manually updating. Make sure to not push these
+changes in a PR.
