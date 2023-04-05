@@ -98,8 +98,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           name: ${{ runner.os }}-${{ matrix.python-version }}
-          env_vars: OS,PYTHON
-          fail_ci_if_error: true
           verbose: true
           token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 
