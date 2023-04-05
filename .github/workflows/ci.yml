@@ -101,6 +101,7 @@ jobs:
           env_vars: OS,PYTHON
           fail_ci_if_error: true
           verbose: true
+          token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 
       # the min requirements are not compatible with the metadata plugin
       # packages so we remove those first (they then won't be tested)
