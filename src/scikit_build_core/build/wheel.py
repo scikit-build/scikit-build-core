@@ -20,6 +20,7 @@ from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._init import setup_logging
 from ._pathutil import packages_to_file_mapping
+from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
 
 __all__: list[str] = ["_build_wheel_impl"]
@@ -199,14 +200,7 @@ def _build_wheel_impl(
             Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
             shutil.copyfile(filepath, package_dir)
 
-        for item in wheel_dirs["scripts"].iterdir():
-            with item.open("rb") as f:
-                content = f.read(len(b"#!python"))
-                if content.startswith(b"#!/") and content == b"#!python":
-                    logger.warning(
-                        "Files in scripts/ are not post-processed yet for shabang fixes"
-                    )
-                    break
+        process_script_dir(wheel_dirs["scripts"])
 
         with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
             wheel.build(wheel_dirs)
