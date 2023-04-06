@@ -42,9 +42,17 @@ def test_pep660_wheel():
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.parametrize("isolate", [True, False])
 @pytest.mark.usefixtures("package_simplest_c")
-def test_pep660_pip_isolated(isolated):
-    isolated.install("-v", "-e", ".")
+def test_pep660_pip_isolated(isolated, isolate):
+    isolate_args = ["--no-build-isolation"] if not isolate else []
+    isolated.install("pip>=23")
+    if not isolate:
+        isolated.install("scikit-build-core[pyproject]")
+
+    isolated.install(
+        "-v", "--config-settings=build-dir=build/{wheel_tag}", *isolate_args, "-e", "."
+    )
 
     value = isolated.execute("import simplest; print(simplest.square(2))")
     assert value == "4.0"
@@ -52,17 +60,5 @@ def test_pep660_pip_isolated(isolated):
     location = isolated.execute("import simplest; print(*simplest.__path__)")
     assert location == str(Path.cwd() / "src/simplest")
 
-
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
-@pytest.mark.usefixtures("package_simplest_c")
-def test_pep660_pip_unisolated(isolated):
-    isolated.install("scikit-build-core[pyproject]")
-    isolated.install("--no-build-isolation", "-v", "-e", ".")
-
-    value = isolated.execute("import simplest; print(simplest.square(2))")
-    assert value == "4.0"
-
-    location = isolated.execute("import simplest; print(*simplest.__path__)")
-    assert location == str(Path.cwd() / "src/simplest")
+    location = isolated.execute("import simplest; print(simplest.__file__)")
+    assert location == str(Path.cwd() / "src/simplest/__init__.py")

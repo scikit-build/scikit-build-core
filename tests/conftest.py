@@ -45,6 +45,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
     packages = [
         "build",
         "hatchling",
+        "pip>=23",
         "pybind11",
         "rich",
         "setuptools",

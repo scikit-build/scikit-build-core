@@ -36,6 +36,8 @@ Features over classic Scikit-build:
 - Dedicated entrypoints for module and prefix directories
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
+- Experimental editable mode support, with optional experimental auto rebuilds
+  on import.
 
 The following limitations are present compared to classic scikit-build:
 
@@ -44,7 +46,6 @@ The following limitations are present compared to classic scikit-build:
 
 Some known missing features that will be developed soon:
 
-- No editable mode support
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
 
@@ -169,6 +170,15 @@ wheel.install-dir = "."
 # value. Set to 0 or the empty string to disable. The default will be kept in
 # sync with the version of FindPython stored in scikit-build-core.
 backport.find-python = "3.26.1"
+
+# This is the only editable mode currently
+editable.mode = "redirect"
+
+# Enable auto rebuilds on import (experimental)
+editable.rebuild = false
+
+# Display output on stderr while rebuilding on import
+editable.verbose = false
 
 # Enable experimental features if any are available
 experimental = false

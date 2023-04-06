@@ -104,8 +104,15 @@ class BackportSettings:
 
 @dataclasses.dataclass
 class Editable:
-    #: Select the editable mode to use. Currently only "static" is supported.
-    mode: str = "static"
+    #: Select the editable mode to use. Currently only "redirect" is supported.
+    mode: str = "redirect"
+
+    #: Turn on verbose output for the editable mode.
+    verbose: bool = False
+
+    #: Rebuild the project when the package is imported.
+    #: This will do nothing if the build-directory is not set.
+    rebuild: Optional[bool] = None
 
 
 @dataclasses.dataclass

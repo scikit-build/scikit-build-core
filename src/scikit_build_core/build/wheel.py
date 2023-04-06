@@ -228,9 +228,10 @@ def _build_wheel_impl(
                     )
                     for v in scantree(wheel_dirs["platlib"])
                 }
-                editable_py = resources / "_editable.py"
+                editable_py = resources / "_editable_redirect.py"
                 editable_txt = editable_py.read_text(encoding="utf-8")
-                editable_txt += f"\n\ninstall({modules!r}, {installed!r})\n"
+                reload_dir = os.fspath(build_dir) if settings.build_dir else None
+                editable_txt += f"\n\ninstall({modules!r}, {installed!r}, {reload_dir!r}, {settings.editable.rebuild!r}, {settings.editable.verbose!r})\n"
 
                 wheel.writestr(
                     f"_{normalized_name}_editable.py",

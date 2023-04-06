@@ -42,7 +42,9 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.minimum_version is None
     assert settings.build_dir == ""
     assert settings.metadata == {}
-    assert settings.editable.mode == "static"
+    assert settings.editable.mode == "redirect"
+    assert settings.editable.rebuild is None
+    assert not settings.editable.verbose
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
@@ -69,6 +71,8 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
     monkeypatch.setenv("SKBUILD_CMAKE_VERBOSE", "TRUE")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
+    monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
+    monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "True")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -99,6 +103,9 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
+    assert settings.editable.mode == "redirect"
+    assert settings.editable.rebuild
+    assert settings.editable.verbose
 
 
 def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
@@ -130,6 +137,9 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "experimental": "1",
         "minimum-version": "0.1",
         "build-dir": "a/b/c",
+        "editable.mode": "redirect",
+        "editable.rebuild": "True",
+        "editable.verbose": "True",
     }
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
@@ -156,6 +166,9 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
+    assert settings.editable.mode == "redirect"
+    assert settings.editable.rebuild
+    assert settings.editable.verbose
 
 
 def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
@@ -187,6 +200,9 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             minimum-version = "0.1"
             build-dir = "a/b/c"
             metadata.version.provider = "a"
+            editable.mode = "redirect"
+            editable.rebuild = true
+            editable.verbose = true
             """
         ),
         encoding="utf-8",
@@ -218,6 +234,9 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.minimum_version == "0.1"
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {"version": {"provider": "a"}}
+    assert settings.editable.mode == "redirect"
+    assert settings.editable.rebuild
+    assert settings.editable.verbose
 
 
 def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
