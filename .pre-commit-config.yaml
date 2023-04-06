@@ -76,7 +76,6 @@ repos:
           - cattrs
           - cmake
           - exceptiongroup
-          - gitpython
           - hatch-fancy-pypi-readme
           - importlib-metadata
           - importlib_resources

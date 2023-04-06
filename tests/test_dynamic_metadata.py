@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import importlib
 import shutil
+import subprocess
 import sys
 import types
 import zipfile
 from pathlib import Path
 from typing import Any
 
-import git
 import pyproject_metadata
 import pytest
 from packaging.version import Version
@@ -116,15 +116,17 @@ def test_plugin_metadata():
     )
     pytest.importorskip("hatch_fancy_pypi_readme", reason=reason_msg)
     pytest.importorskip("setuptools_scm", reason=reason_msg)
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed")
 
     shutil.copy("plugin_project.toml", "pyproject.toml")
 
-    repo = git.repo.base.Repo.init(".", initial_branch="main")
-    repo.config_writer().set_value("user", "name", "bot").release()
-    repo.config_writer().set_value("user", "email", "bot@scikit-build.net").release()
-    repo.index.add(["pyproject.toml"])
-    repo.index.commit("first commit")
-    repo.create_tag("v0.1.0", message="initial commit")
+    subprocess.run(["git", "init", "--initial-branch=main"], check=True)
+    subprocess.run(["git", "config", "user.name", "bot"], check=True)
+    subprocess.run(["git", "config", "user.email", "bot@scikit-build.org"], check=True)
+    subprocess.run(["git", "add", "pyproject.toml"], check=True)
+    subprocess.run(["git", "commit", "-m", "initial commit"], check=True)
+    subprocess.run(["git", "tag", "v0.1.0", "-m", "initial commint"], check=True)
 
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
