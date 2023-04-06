@@ -12,14 +12,14 @@ static PyObject *square_wrapper(PyObject *self, PyObject *args) {
   return PyFloat_FromDouble(result);
 }
 
-static PyMethodDef pysimple_methods[] = {
+static PyMethodDef example_methods[] = {
     {"square", square_wrapper, METH_VARARGS, "Square function"},
     {NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef pysimple_module = {PyModuleDef_HEAD_INIT, "pysimple",
-                                             NULL, -1, pysimple_methods};
+static struct PyModuleDef example_module = {PyModuleDef_HEAD_INIT, "example",
+                                             NULL, -1, example_methods};
 
 /* name here must match extension name, with PyInit_ prefix */
 PyMODINIT_FUNC PyInit_example(void) {
-  return PyModule_Create(&pysimple_module);
+  return PyModule_Create(&example_module);
 }
