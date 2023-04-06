@@ -11,8 +11,6 @@ import pytest
 
 from scikit_build_core.build import _file_processor, build_sdist, build_wheel
 
-DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
 ENTRYPOINTS = """\
 [one.two]
 three = four
@@ -39,12 +37,10 @@ mark_hashes_different = pytest.mark.xfail(
 )
 
 
-def test_pep517_sdist(tmp_path, monkeypatch):
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-    out = build_sdist(str(dist))
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_pep517_sdist():
+    dist = Path("dist")
+    out = build_sdist("dist")
 
     (sdist,) = dist.iterdir()
     assert sdist.name == "cmake-example-0.0.1.tar.gz"
@@ -68,33 +64,21 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
 
 @mark_hashes_different
-def test_pep517_sdist_hash(tmp_path, monkeypatch):
+def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext):
     # Unset SOURCE_DATE_EPOCH in order to guarantee the hash match
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-    out = build_sdist(str(dist))
+    dist = Path("dist")
+    out = build_sdist("dist")
     sdist = dist / out
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
-    if sys.version_info < (3, 9):
-        assert (
-            hash == "f1b86c7fbcc70ed82786fd3446caf880091096b7d6c0085eab8fe64466b95c4f"
-        )
-    else:
-        assert (
-            hash == "463bdfcfad8b71a0f2b48b7b5abea191c9073170326183c04b7f23da19d6b61b"
-        )
+    assert hash == package_simple_pyproject_ext.sdist_hash
 
 
-def test_pep517_sdist_time_hash(tmp_path, monkeypatch):
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_pep517_sdist_time_hash():
+    dist = Path("dist")
 
-    out = build_sdist(str(dist))
+    out = build_sdist("dist")
     sdist = dist / out
     hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
 
@@ -112,13 +96,11 @@ def test_pep517_sdist_time_hash(tmp_path, monkeypatch):
     assert hash1 == hash2
 
 
-def test_pep517_sdist_time_hash_nonreproducable(tmp_path, monkeypatch):
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_pep517_sdist_time_hash_nonreproducable():
+    dist = Path("dist")
 
-    out = build_sdist(str(dist), {"sdist.reproducible": "false"})
+    out = build_sdist("dist", {"sdist.reproducible": "false"})
     sdist = dist / out
     hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
 
@@ -137,12 +119,13 @@ def test_pep517_sdist_time_hash_nonreproducable(tmp_path, monkeypatch):
 
 @mark_hashes_different
 @pytest.mark.parametrize("reverse_order", [False, True])
-def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
-    monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+def test_pep517_sdist_time_hash_set_epoch(
+    monkeypatch, reverse_order, package_simple_pyproject_ext
+):
+    dist = Path("dist")
+    monkeypatch.setenv(
+        "SOURCE_DATE_EPOCH", package_simple_pyproject_ext.source_date_epoch
+    )
 
     _each_unignored_file = _file_processor.each_unignored_file
 
@@ -156,25 +139,15 @@ def test_pep517_sdist_time_hash_set_epoch(tmp_path, monkeypatch, reverse_order):
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
     hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
-    if sys.version_info < (3, 9):
-        assert (
-            hash == "9e4713843829659b4862e73c8a9ae783178d620a78fed1f757efb82ea77ff82f"
-        )
-    else:
-        assert (
-            hash == "aa1f2cd959998cb58316f72526ad7b2d3078bf47d00c5c9f8903d9b5980c0e35"
-        )
+    assert hash == package_simple_pyproject_ext.sdist_dated_hash
 
 
 @pytest.mark.compile()
 @pytest.mark.configure()
-def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-    out = build_wheel(str(dist))
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_pep517_wheel(virtualenv):
+    dist = Path("dist")
+    out = build_wheel("dist")
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -219,14 +192,10 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
 @pytest.mark.skip(reason="Doesn't work yet")
 @pytest.mark.compile()
 @pytest.mark.configure()
-def test_pep517_wheel_time_hash(tmp_path, monkeypatch):
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
+def test_pep517_wheel_time_hash(monkeypatch):
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-    out = build_wheel(str(dist))
+    dist = Path("dist")
+    out = build_wheel("dist")
     wheel = dist / out
     hash1 = hashlib.sha256(wheel.read_bytes()).hexdigest()
 
@@ -244,8 +213,9 @@ def test_pep517_wheel_time_hash(tmp_path, monkeypatch):
     assert hash1 == hash2
 
 
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_prepare_metdata_for_build_wheel():
-    metadata = build.util.project_wheel_metadata(HELLO_PEP518, isolated=False)
+    metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
         "Metadata-Version": "2.1",
         "Name": "cmake-example",

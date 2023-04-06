@@ -9,13 +9,10 @@ from pathlib import Path
 
 import pytest
 
-DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "packages/simple_pyproject_ext"
-
 
 @pytest.mark.isolated()
 @pytest.mark.integration()
-def test_pep518_sdist():
+def test_pep518_sdist(package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -27,26 +24,13 @@ def test_pep518_sdist():
         """
     )
 
-    dist = HELLO_PEP518 / "dist"
-    shutil.rmtree(dist, ignore_errors=True)
-    subprocess.run(
-        [sys.executable, "-m", "build", "--sdist"], cwd=HELLO_PEP518, check=True
-    )
-    (sdist,) = dist.iterdir()
+    subprocess.run([sys.executable, "-m", "build", "--sdist"], check=True)
+    (sdist,) = Path("dist").iterdir()
     assert sdist.name == "cmake-example-0.0.1.tar.gz"
 
     if not (sys.platform.startswith("win32") or sys.platform.startswith("cygwin")):
         hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
-        if sys.version_info < (3, 9):
-            assert (
-                hash
-                == "f1b86c7fbcc70ed82786fd3446caf880091096b7d6c0085eab8fe64466b95c4f"
-            )
-        else:
-            assert (
-                hash
-                == "463bdfcfad8b71a0f2b48b7b5abea191c9073170326183c04b7f23da19d6b61b"
-            )
+        assert hash == package_simple_pyproject_ext.sdist_hash
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
@@ -68,20 +52,18 @@ def test_pep518_sdist():
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel(isolated, build_args, monkeypatch):
-    dist = HELLO_PEP518 / "dist"
-    shutil.rmtree(dist, ignore_errors=True)
-    monkeypatch.chdir(HELLO_PEP518)
+def test_pep518_wheel(isolated, build_args):
     isolated.install("build[virtualenv]")
     isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
         *build_args,
     )
-    (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    (wheel,) = Path("dist").glob("cmake_example-0.0.1-*.whl")
 
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
@@ -111,14 +93,15 @@ def test_pep518_wheel(isolated, build_args, monkeypatch):
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_rebuild_build_dir(isolated, monkeypatch, tmp_path, build_args):
-    dist = HELLO_PEP518 / "dist"
-    monkeypatch.chdir(HELLO_PEP518)
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
     isolated.install("build[virtualenv]")
 
     build_dir = tmp_path.joinpath("build")
     build_dir.mkdir()
     build_dir = build_dir.resolve()
+
+    dist = Path("dist")
 
     for _ in range(2):
         shutil.rmtree(dist, ignore_errors=True)
@@ -152,8 +135,9 @@ def test_pep518_rebuild_build_dir(isolated, monkeypatch, tmp_path, build_args):
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep518_pip(isolated):
-    isolated.install("-v", HELLO_PEP518)
+    isolated.install("-v", ".")
 
     version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"

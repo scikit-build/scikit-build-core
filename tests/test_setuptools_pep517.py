@@ -1,4 +1,3 @@
-import shutil
 import sys
 import tarfile
 import textwrap
@@ -11,11 +10,9 @@ from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
 pytestmark = pytest.mark.setuptools
 
-DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "packages/simple_setuptools_ext"
 
-
-def test_pep517_sdist(tmp_path, monkeypatch):
+@pytest.mark.usefixtures("package_simple_setuptools_ext")
+def test_pep517_sdist():
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -29,19 +26,8 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     )
     metadata_set = set(correct_metadata.strip().splitlines())
 
-    dist = tmp_path / "dist"
-    dist.mkdir()
-
-    # create a temporary copy of the package source so we don't contaminate the
-    # main source tree with build artefacts
-    src = tmp_path / "src"
-    shutil.copytree(HELLO_PEP518, src)
-    monkeypatch.chdir(src)
-
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-
-    out = build_sdist(str(dist))
+    dist = Path("dist")
+    out = build_sdist("dist")
 
     (sdist,) = dist.iterdir()
     assert sdist.name == "cmake-example-0.0.1.tar.gz"
@@ -76,22 +62,13 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.broken_on_urct()
+@pytest.mark.usefixtures("package_simple_setuptools_ext")
 @pytest.mark.skipif(
     sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
 )
-def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
-    dist = tmp_path / "dist"
-    dist.mkdir()
-
-    # create a temporary copy of the package source so we don't contaminate the
-    # main source tree with build artefacts
-    src = tmp_path / "src"
-    shutil.copytree(HELLO_PEP518, src)
-    monkeypatch.chdir(src)
-
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-    out = build_wheel(str(dist))
+def test_pep517_wheel(virtualenv):
+    dist = Path("dist")
+    out = build_wheel("dist")
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 

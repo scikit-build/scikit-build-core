@@ -19,9 +19,6 @@ from scikit_build_core.builder.get_requires import GetRequires
 from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
-DIR = Path(__file__).parent.resolve()
-DYNAMIC = DIR / "packages/dynamic_metadata"
-
 
 # these are mock plugins returning known results
 # it turns out to be easier to create EntryPoint objects pointing to real
@@ -95,10 +92,8 @@ def mock_entry_points(monkeypatch):
     monkeypatch.setattr(importlib, "import_module", special_loader)
 
 
-@pytest.mark.usefixtures("mock_entry_points")
-def test_dynamic_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
-
+@pytest.mark.usefixtures("mock_entry_points", "package_dynamic_metadata")
+def test_dynamic_metadata():
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {})
@@ -113,20 +108,18 @@ def test_dynamic_metadata(monkeypatch):
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 
 
-def test_plugin_metadata(tmp_path, monkeypatch):
+@pytest.mark.usefixtures("package_dynamic_metadata")
+def test_plugin_metadata():
     reason_msg = (
         "install hatch-fancy-pypi-readme and setuptools-scm to test the "
         "dynamic metadata plugins"
     )
     pytest.importorskip("hatch_fancy_pypi_readme", reason=reason_msg)
     pytest.importorskip("setuptools_scm", reason=reason_msg)
-    build_dir = tmp_path / "build"
-    build_dir.mkdir()
 
-    shutil.copy(DYNAMIC / "plugin_project.toml", build_dir / "pyproject.toml")
-    monkeypatch.chdir(build_dir)
+    shutil.copy("plugin_project.toml", "pyproject.toml")
 
-    repo = git.repo.base.Repo.init(build_dir, initial_branch="main")
+    repo = git.repo.base.Repo.init(".", initial_branch="main")
     repo.config_writer().set_value("user", "name", "bot").release()
     repo.config_writer().set_value("user", "email", "bot@scikit-build.net").release()
     repo.index.add(["pyproject.toml"])
@@ -153,9 +146,8 @@ def test_plugin_metadata(tmp_path, monkeypatch):
     }
 
 
-def test_faulty_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
-
+@pytest.mark.usefixtures("package_dynamic_metadata")
+def test_faulty_metadata():
     with Path("faulty_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {})
@@ -167,9 +159,8 @@ def test_faulty_metadata(monkeypatch):
         get_standard_metadata(pyproject, settings)
 
 
-def test_local_plugin_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
-
+@pytest.mark.usefixtures("package_dynamic_metadata")
+def test_local_plugin_metadata():
     with Path("local_pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {})
@@ -181,8 +172,8 @@ def test_local_plugin_metadata(monkeypatch):
     assert metadata.version == Version("3.2.1")
 
 
-def test_warn_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
+@pytest.mark.usefixtures("package_dynamic_metadata")
+def test_warn_metadata():
     with Path("warn_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {})
@@ -194,8 +185,8 @@ def test_warn_metadata(monkeypatch):
         get_standard_metadata(pyproject, settings)
 
 
-def test_fail_experimental_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
+@pytest.mark.usefixtures("package_dynamic_metadata")
+def test_fail_experimental_metadata():
     with Path("warn_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {"experimental": "false"})
@@ -206,10 +197,8 @@ def test_fail_experimental_metadata(monkeypatch):
     assert value == 7
 
 
-@pytest.mark.usefixtures("mock_entry_points")
-def test_dual_metadata(monkeypatch):
-    monkeypatch.chdir(DYNAMIC)
-
+@pytest.mark.usefixtures("mock_entry_points", "package_dynamic_metadata")
+def test_dual_metadata():
     with Path("dual_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {})
@@ -234,14 +223,10 @@ def test_dual_metadata(monkeypatch):
 
 @pytest.mark.compile()
 @pytest.mark.configure()
-@pytest.mark.usefixtures("mock_entry_points")
-def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
-    dist = tmp_path.resolve() / "dist"
-    monkeypatch.chdir(DYNAMIC)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-
-    out = build_wheel(str(dist))
+@pytest.mark.usefixtures("mock_entry_points", "package_dynamic_metadata")
+def test_pep517_wheel(virtualenv):
+    dist = Path("dist")
+    out = build_wheel("dist")
     (wheel,) = dist.glob("dynamic-0.0.2-*.whl")
     assert wheel == dist / out
 

@@ -1,4 +1,3 @@
-import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -8,9 +7,6 @@ import pytest
 from scikit_build_core.build import build_wheel
 from scikit_build_core.errors import CMakeConfigError
 
-DIR = Path(__file__).parent.resolve()
-HELLO_PEP518 = DIR / "packages/filepath_pure"
-
 
 @pytest.mark.compile()
 @pytest.mark.configure()
@@ -18,17 +14,14 @@ HELLO_PEP518 = DIR / "packages/filepath_pure"
     sys.version_info < (3, 8),
     reason="Python 3.7 doesn't have a nice Path zipfile interface",
 )
-def test_pep517_wheel_extra_dirs(tmp_path, monkeypatch):
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
+@pytest.mark.usefixtures("package_filepath_pure")
+def test_pep517_wheel_extra_dirs(monkeypatch):
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
     monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DSOME_ARGS1=baz")
 
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+    dist = Path("dist")
     out = build_wheel(
-        str(dist),
+        "dist",
         {"cmake.define.SOME_DEFINE2": "bar", "cmake.define.SOME_DEFINE3": "bar"},
     )
     (wheel,) = dist.glob("cmake_dirs-0.0.1-*.whl")
@@ -63,19 +56,14 @@ def test_pep517_wheel_extra_dirs(tmp_path, monkeypatch):
         assert scripts == {"in_scripts.py"}
 
 
-def test_pep517_wheel_too_old_core(tmp_path, monkeypatch):
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    monkeypatch.chdir(HELLO_PEP518)
+@pytest.mark.usefixtures("package_filepath_pure")
+def test_pep517_wheel_too_old_core(monkeypatch):
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
     monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DSOME_ARGS1=baz")
 
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
-
     with pytest.raises(CMakeConfigError):
         build_wheel(
-            str(dist),
+            "dist",
             {
                 "cmake.define.SOME_DEFINE2": "bar",
                 "cmake.define.SOME_DEFINE3": "bar",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import importlib.util
 import os
 import shutil
@@ -173,6 +174,84 @@ def virtualenv(tmp_path: Path) -> Generator[VEnv, None, None]:
         yield VEnv(path)
     finally:
         shutil.rmtree(path, ignore_errors=True)
+
+
+@dataclasses.dataclass(frozen=True)
+class PackageInfo:
+    name: str
+    sdist_hash38: str | None = None
+    sdist_hash39: str | None = None
+    sdist_dated_hash39: str | None = None
+    sdist_dated_hash38: str | None = None
+
+    @property
+    def sdist_hash(self) -> str | None:
+        return self.sdist_hash38 if sys.version_info < (3, 9) else self.sdist_hash39
+
+    @property
+    def sdist_dated_hash(self) -> str | None:
+        return (
+            self.sdist_dated_hash38
+            if sys.version_info < (3, 9)
+            else self.sdist_dated_hash39
+        )
+
+    @property
+    def source_date_epoch(self) -> str:
+        return "12345"
+
+
+def process_package(
+    package: PackageInfo, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    package_dir = tmp_path / "pkg"
+    shutil.copytree(DIR / "packages" / package.name, package_dir)
+    monkeypatch.chdir(package_dir)
+    # Just in case this gets littered into the source tree, clear it out
+    if Path("dist").is_dir():
+        shutil.rmtree("dist")
+
+
+@pytest.fixture()
+def package_simple_pyproject_ext(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo(
+        "simple_pyproject_ext",
+        "f1b86c7fbcc70ed82786fd3446caf880091096b7d6c0085eab8fe64466b95c4f",
+        "463bdfcfad8b71a0f2b48b7b5abea191c9073170326183c04b7f23da19d6b61b",
+        "aa1f2cd959998cb58316f72526ad7b2d3078bf47d00c5c9f8903d9b5980c0e35",
+        "9e4713843829659b4862e73c8a9ae783178d620a78fed1f757efb82ea77ff82f",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
+def package_simple_setuptools_ext(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("simple_setuptools_ext")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
+def package_filepath_pure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("filepath_pure")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
+def package_dynamic_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("dynamic_metadata")
+    process_package(package, tmp_path, monkeypatch)
+    return package
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
