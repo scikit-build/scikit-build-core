@@ -144,6 +144,8 @@ class Builder:
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
+            if python_library:
+                cache_config[f"{prefix}_LIBRARY"] = python_library
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (
