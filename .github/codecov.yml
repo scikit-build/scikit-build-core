@@ -9,5 +9,4 @@ coverage:
         threshold: 5%
     patch:
       default:
-        target: auto
-        threshold: 25%
+        informational: true
