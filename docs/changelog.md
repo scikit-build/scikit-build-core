@@ -1,5 +1,50 @@
 # Changelog
 
+## Version 0.3.0
+
+This version brings two new dynamic metadata plugins (wrappers for
+`setuptools_scm` & `hatch-pypi-fancy-readme`). Third-party packages can now add
+entry-points declaring `CMAKE_PREFIX_DIR` and `CMAKE_MODULE_DIR` entries.
+Support has been added for requesting metadata without building. And
+experimental support was added for editable installs, including an option for
+automatic rebuilds.
+
+Several fixes have been added as well, like SABI support, ARM cross-compiling
+support for FindPython, scripts entries now process shebang lines, and setting a
+`build-dir` with `{wheel_tag}` was not working before. The docs have been
+started, with a quickstart for common situations, a page on configuration, and
+some info on authoring a CMakeLists.
+
+### What's Changed
+
+Features:
+
+- Support dynamic metadata by @bennyrowland in #197 and rework by @henryiii in
+  #251
+- Support modules/prefix dirs by @henryiii in #255
+- Add `get_requires_for_dynamic_metadata` by @henryiii in #235
+- Make setuptools wrapper more generic by @henryiii in #225
+- Experimental support for editable installs by @henryiii in #212
+
+Fixes:
+
+- CMake 3.26.0 (exactly) needs the backport too by @henryiii in #238
+- Add python library artifact for better Windows cross compiling by @henryiii in
+  #263
+- Include 3.26.1 SABI fix by @henryiii in #227
+- Restructure get_requires & fix some ninja paths by @henryiii in #250
+- Support script rewriting by @henryiii in #254
+- Version not a string (typing updates) by @henryiii in #231
+- `{wheel_tag}` was not working by @henryiii in #262
+
+Other things:
+
+- Add fortran testing and CI by @henryiii in #86
+- Avoid interent usage in non-isolated testing by @henryiii in #247
+- Add an sdist checker & fix contents by @henryiii in #253
+- Add more setuptools types by @henryiii in #233
+- Add FedoraProject rpm spec file by @LecrisUT in #201 and #241
+
 ## Version 0.2.2
 
 This release makes a small improvement to the wheel file permissions (in line
