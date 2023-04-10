@@ -160,15 +160,13 @@ def _build_wheel_impl(
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
-            with WheelWriter(
-                metadata, Path(metadata_directory), tags.as_tags_set()
-            ) as wheel:
-                dist_info_contents = wheel.dist_info_contents()
-                dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
-                dist_info.mkdir(parents=True)
-                for key, data in dist_info_contents.items():
-                    path = dist_info / key
-                    path.write_bytes(data)
+            wheel = WheelWriter(metadata, Path(metadata_directory), tags.as_tags_set())
+            dist_info_contents = wheel.dist_info_contents()
+            dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+            dist_info.mkdir(parents=True)
+            for key, data in dist_info_contents.items():
+                path = dist_info / key
+                path.write_bytes(data)
             return WheelImplReturn(wheel_filename=dist_info.name)
 
         rich_print("[green]***[/green] [bold]Configurating CMake...")

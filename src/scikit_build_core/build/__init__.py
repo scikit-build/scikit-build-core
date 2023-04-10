@@ -67,22 +67,25 @@ def prepare_metadata_for_build_wheel(
     metadata_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
+    """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
     from .wheel import _build_wheel_impl
 
     return _build_wheel_impl(
         None, config_settings, metadata_directory, editable=False
-    ).wheel_filename
+    ).wheel_filename  # actually returns the dist-info directory
 
 
 def prepare_metadata_for_build_editable(
     metadata_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
+    """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
+
     from .wheel import _build_wheel_impl
 
     return _build_wheel_impl(
         None, config_settings, metadata_directory, editable=True
-    ).wheel_filename
+    ).wheel_filename  # actually returns the dist-info directory
 
 
 def build_sdist(
