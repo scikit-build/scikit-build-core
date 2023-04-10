@@ -105,7 +105,9 @@ _NO_COLORS = {color: "" for color in _COLORS}
 def colors() -> dict[str, str]:
     if "NO_COLOR" in os.environ:
         return _NO_COLORS
-    if "FORCE_COLOR" in os.environ or sys.stdout.isatty():
+    if os.environ.get("FORCE_COLOR", ""):
+        return _COLORS
+    if sys.stdout.isatty() and not sys.platform.startswith("win"):
         return _COLORS
     return _NO_COLORS
 
