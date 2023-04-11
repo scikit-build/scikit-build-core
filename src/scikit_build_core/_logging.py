@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sys
 import typing
@@ -78,19 +79,57 @@ class ScikitBuildLogger:
 logger = ScikitBuildLogger(raw_logger)
 
 
-def _strip_rich(msg: object) -> object:
-    if isinstance(msg, str):
-        return re.sub(r"\[.*?\]", "", msg)
-    return msg
+ANY_ESCAPE = re.compile(r"\[([\w\s/]*)\]")
+
+
+_COLORS = {
+    "red": "\33[91m",
+    "green": "\33[92m",
+    "yellow": "\33[93m",
+    "blue": "\33[94m",
+    "magenta": "\33[95m",
+    "cyan": "\33[96m",
+    "bold": "\33[1m",
+    "/red": "\33[0m",
+    "/green": "\33[0m",
+    "/blue": "\33[0m",
+    "/yellow": "\33[0m",
+    "/magenta": "\33[0m",
+    "/cyan": "\33[0m",
+    "/bold": "\33[22m",
+    "reset": "\33[0m",
+}
+_NO_COLORS = {color: "" for color in _COLORS}
+
+
+def colors() -> dict[str, str]:
+    if "NO_COLOR" in os.environ:
+        return _NO_COLORS
+    if os.environ.get("FORCE_COLOR", ""):
+        return _COLORS
+    if sys.stdout.isatty() and not sys.platform.startswith("win"):
+        return _COLORS
+    return _NO_COLORS
+
+
+def _process_rich(msg: object) -> str:
+    return ANY_ESCAPE.sub(
+        lambda m: "".join(colors()[x] for x in m.group(1).split()),
+        str(msg),
+    )
 
 
 def fake_rich_print(*args: object, **kwargs: object) -> None:
-    args_2 = (_strip_rich(arg) for arg in args)
+    args_2 = tuple(_process_rich(arg) for arg in args)
+    if args != args_2:
+        args_2 = (*args_2[:-1], args_2[-1] + colors()["reset"])
     print(*args_2, **kwargs)  # type: ignore[call-overload] # noqa: T201
 
 
-try:
-    from rich import print as rich_print
-except ModuleNotFoundError:
-    if not typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
+    rich_print = fake_rich_print
+else:
+    try:
+        from rich import print as rich_print
+    except ModuleNotFoundError:
         rich_print = fake_rich_print
