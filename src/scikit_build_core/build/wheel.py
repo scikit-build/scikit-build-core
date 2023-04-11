@@ -16,10 +16,11 @@ from .._logging import logger, rich_print
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..resources import resources
 from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._init import setup_logging
-from ._pathutil import packages_to_file_mapping
+from ._pathutil import packages_to_file_mapping, path_to_module, scantree
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
 
@@ -30,7 +31,11 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _get_packages(*, packages: Sequence[str] | None, name: str) -> list[str]:
+def _get_packages(
+    *,
+    packages: Sequence[str] | None,
+    name: str,
+) -> list[str]:
     if packages is not None:
         return list(packages)
 
@@ -60,9 +65,11 @@ def _build_wheel_impl(
     wheel_directory: str | None,
     config_settings: dict[str, list[str] | str] | None,
     metadata_directory: str | None,
+    *,
+    editable: bool,
 ) -> WheelImplReturn:
     """
-    Build a wheel or just prepare metadata (if wheel dir is None).
+    Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
     """
     pyproject_path = Path("pyproject.toml")
     with pyproject_path.open("rb") as ft:
@@ -153,15 +160,13 @@ def _build_wheel_impl(
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
-            with WheelWriter(
-                metadata, Path(metadata_directory), tags.as_tags_set()
-            ) as wheel:
-                dist_info_contents = wheel.dist_info_contents()
-                dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
-                dist_info.mkdir(parents=True)
-                for key, data in dist_info_contents.items():
-                    path = dist_info / key
-                    path.write_bytes(data)
+            wheel = WheelWriter(metadata, Path(metadata_directory), tags.as_tags_set())
+            dist_info_contents = wheel.dist_info_contents()
+            dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
+            dist_info.mkdir(parents=True)
+            for key, data in dist_info_contents.items():
+                path = dist_info / key
+                path.write_bytes(data)
             return WheelImplReturn(wheel_filename=dist_info.name)
 
         rich_print("[green]***[/green] [bold]Configurating CMake...")
@@ -198,14 +203,42 @@ def _build_wheel_impl(
             exclude=settings.sdist.exclude,
         )
 
-        for filepath, package_dir in mapping.items():
-            Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
-            shutil.copyfile(filepath, package_dir)
+        if not editable:
+            for filepath, package_dir in mapping.items():
+                Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
+                shutil.copyfile(filepath, package_dir)
 
-        process_script_dir(wheel_dirs["scripts"])
+            process_script_dir(wheel_dirs["scripts"])
 
         with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
             wheel.build(wheel_dirs)
+
+            if editable:
+                modules = {
+                    path_to_module(Path(v).relative_to(wheel_dirs["platlib"])): str(
+                        Path(k).resolve()
+                    )
+                    for k, v in mapping.items()
+                }
+                installed = {
+                    path_to_module(v.relative_to(wheel_dirs["platlib"])): str(
+                        v.relative_to(wheel_dirs["platlib"])
+                    )
+                    for v in scantree(wheel_dirs["platlib"])
+                }
+                editable_py = resources / "_editable_redirect.py"
+                editable_txt = editable_py.read_text(encoding="utf-8")
+                reload_dir = os.fspath(build_dir) if settings.build_dir else None
+                editable_txt += f"\n\ninstall({modules!r}, {installed!r}, {reload_dir!r}, {settings.editable.rebuild!r}, {settings.editable.verbose!r})\n"
+
+                wheel.writestr(
+                    f"_{normalized_name}_editable.py",
+                    editable_txt.encode("utf-8"),
+                )
+                wheel.writestr(
+                    f"_{normalized_name}_editable.pth",
+                    f"import _{normalized_name}_editable\n".encode(),
+                )
 
     if metadata_directory is not None:
         dist_info_contents = wheel.dist_info_contents()

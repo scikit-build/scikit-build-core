@@ -4,6 +4,13 @@ import shutil
 import sys
 from pathlib import Path
 
+import pytest
+
+from scikit_build_core.build import (
+    get_requires_for_build_editable,
+    get_requires_for_build_sdist,
+    get_requires_for_build_wheel,
+)
 from scikit_build_core.builder.get_requires import GetRequires
 
 ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
@@ -17,40 +24,37 @@ def which_mock(name: str) -> str | None:
     return None
 
 
-def test_get_requires_for_build_wheel(fp, monkeypatch):
+@pytest.fixture(autouse=True)
+def protect_get_requires(fp, monkeypatch):
+    """
+    Protect get_requires from actually calling anything variable during tests.
+    """
     # This needs to be passed due to packaging.tags 22 extra checks if macos 10.16 is reported
     fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path")
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
-    fp.register([cmake, "--version"], stdout="3.14.0")
+
+
+def test_get_requires_parts(fp):
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
     assert set(GetRequires().cmake()) == {"cmake>=3.15"}
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_for_build_wheel_uneeded(fp, monkeypatch):
-    fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path")
-    monkeypatch.setattr(shutil, "which", which_mock)
-    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
-    fp.register([cmake, "--version"], stdout="3.18.0")
+def test_get_requires_parts_uneeded(fp):
+    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
     assert set(GetRequires().cmake()) == set()
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_for_build_wheel_settings(fp, monkeypatch):
-    fp.pass_command([sys.executable, fp.any()])
-    cmake = Path("cmake/path")
-    monkeypatch.setattr(shutil, "which", which_mock)
-    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
-    fp.register([cmake, "--version"], stdout="3.18.0")
+def test_get_requires_parts_settings(fp):
+    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
     config = {"cmake.minimum-version": "3.20"}
     assert set(GetRequires(config).cmake()) == {"cmake>=3.20"}
     assert set(GetRequires(config).ninja()) == {*ninja}
 
 
-def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
-    fp.pass_command([sys.executable, fp.any()])
+def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
@@ -58,10 +62,24 @@ def test_get_requires_for_build_wheel_pyproject(fp, monkeypatch, tmp_path):
         minimum-version = "3.21"
         """
     )
-    cmake = Path("cmake/path")
-    monkeypatch.setattr(shutil, "which", which_mock)
-    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
-    fp.register([cmake, "--version"], stdout="3.18.0")
+    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
 
     assert set(GetRequires().cmake()) == {"cmake>=3.21"}
     assert set(GetRequires().ninja()) == {*ninja}
+
+
+def test_get_requires_for_build_sdist(fp):
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_sdist({})) == {"pathspec", "pyproject_metadata"}
+
+
+def test_get_requires_for_build_wheel(fp):
+    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_wheel({})) == expected
+
+
+def test_get_requires_for_build_editable(fp):
+    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_editable({})) == expected

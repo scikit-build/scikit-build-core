@@ -433,6 +433,36 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 
 :::
 
+## Editable installs
+
+Experimental support for editable installs is provided, with some caveats and
+configuration. Recommendations:
+
+- Use `--no-build-isolation` when doing an editable install is recommended; you
+  should preinstall your dependencies.
+- Automatic rebuilds do not have the original isolated build dir (pip deletes
+  it).
+- Select a `build-dir` when using editable installs, especially if you also
+  enable automatic rebuilds.
+- Resources (via `importlib.resources`) are not properly supported (yet).
+- You need to reinstall to pick up new files.
+
+```toml
+[tool.scikit-build]
+# Very expiremental rebuild on initial import feature
+editable.rebuild = true
+
+# Display stdout on stderr when rebuilding
+# (Also available as SKBUILD_EDITABLE_VERBOSE envvar when importing)
+editable.verbose = true
+```
+
+Currently one `editable.mode` is provided, `"redirect"`, which uses a custom
+redirecting finder to combine the static CMake install dir with the original
+source code. Python code added via scikit-build-core's package discovery will be
+found in the original location, so changes there are picked up on import,
+regardless of the `editable.rebuild` setting..
+
 ## Other options
 
 You can select a custom build dir; by default scikit-build-core will use a

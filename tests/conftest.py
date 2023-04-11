@@ -45,6 +45,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
     packages = [
         "build",
         "hatchling",
+        "pip>=23",
         "pybind11",
         "rich",
         "setuptools",
@@ -77,6 +78,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
 class VEnv(EnvBuilder):
     executable: Path
     env_dir: Path
+    wheelhouse: Path | None
 
     def __init__(self, env_dir: Path, *, wheelhouse: Path | None = None) -> None:
         super().__init__(with_pip=True)
@@ -90,6 +92,8 @@ class VEnv(EnvBuilder):
                     DeprecationWarning,
                 )
             self.create(env_dir)
+        self.wheelhouse = None
+        self.install("pip>=21.3.1")
         self.wheelhouse = wheelhouse
 
     def ensure_directories(
@@ -250,6 +254,15 @@ def package_dynamic_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
     package = PackageInfo("dynamic_metadata")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
+def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "simplest_c",
+    )
     process_package(package, tmp_path, monkeypatch)
     return package
 

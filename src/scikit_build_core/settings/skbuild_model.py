@@ -103,6 +103,19 @@ class BackportSettings:
 
 
 @dataclasses.dataclass
+class Editable:
+    #: Select the editable mode to use. Currently only "redirect" is supported.
+    mode: str = "redirect"
+
+    #: Turn on verbose output for the editable mode.
+    verbose: bool = False
+
+    #: Rebuild the project when the package is imported.
+    #: This will do nothing if the build-directory is not set.
+    rebuild: Optional[bool] = None
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -111,6 +124,7 @@ class ScikitBuildSettings:
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
+    editable: Editable = dataclasses.field(default_factory=Editable)
 
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.

@@ -1,15 +1,32 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+import os
+from collections.abc import Generator, Sequence
 from pathlib import Path
 
 from ._file_processor import each_unignored_file
 
-__all__ = ["packages_to_file_mapping"]
+__all__ = ["scantree", "path_to_module", "packages_to_file_mapping"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def scantree(path: Path) -> Generator[Path, None, None]:
+    """Recursively yield Path objects for given directory."""
+    for entry in os.scandir(path):
+        if entry.is_dir(follow_symlinks=False):
+            yield from scantree(Path(entry))
+        else:
+            yield Path(entry)
+
+
+def path_to_module(path: Path) -> str:
+    path = path.with_name(path.name.split(".", 1)[0])
+    if path.name == "__init__":
+        path = path.parent
+    return ".".join(path.parts)
 
 
 def packages_to_file_mapping(
