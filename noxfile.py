@@ -37,8 +37,9 @@ def pylint(session: nox.Session) -> None:
 @nox.session(reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """
-    Run the unit and regular tests.
+    Run the unit and regular tests. Includes coverage if --cov passed.
     """
+    posargs = list(session.posargs)
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
     extra = ["hatch-fancy-pypi-readme", "rich", "setuptools-scm"]
     # This will not work if system CMake is too old (<3.15)
@@ -49,18 +50,9 @@ def tests(session: nox.Session) -> None:
     if (3, 8) <= sys.version_info < (3, 12):
         extra.append("numpy")
 
-    session.install("-e.[test]", *extra)
+    install_arg = "-e.[test,cov]" if "--cov" in posargs else "-e.[test]"
+    session.install(install_arg, *extra)
     session.run("pytest", *session.posargs, env=env)
-
-
-@nox.session(reuse_venv=True)
-def coverage(session: nox.Session) -> None:
-    """
-    Run coverage and report.
-    """
-
-    session.install("-e.[test,cov]")
-    session.run("pytest", "--cov=scikit_build_core", *session.posargs)
 
 
 @nox.session(reuse_venv=True)

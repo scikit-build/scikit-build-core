@@ -83,18 +83,20 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run:
-          pip install .[test,cov] cmake ninja rich hatch-fancy-pypi-readme
+        run: >-
+          pip install -e.[test,cov] cmake ninja rich hatch-fancy-pypi-readme
           setuptools-scm
 
       - name: Add NumPy
-        if: >
+        if: >-
           (matrix.runs-on == 'ubuntu-latest' || matrix.python-version !=
           'pypy-3.8') && matrix.python-version != '3.12-dev'
         run: "pip install --only-binary=:all: numpy"
 
       - name: Test package
-        run: pytest -ra --showlocals --cov=scikit_build_core
+        run: >-
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
+          --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3
@@ -140,7 +142,9 @@ jobs:
         run: python3.9 -m pip install .[test]
 
       - name: Test package
-        run: python3.9 -m pytest -ra --showlocals -m "not virtualenv"
+        run:
+          python3.9 -m pytest -ra --showlocals -m "not virtualenv"
+          --durations=20
 
   msys:
     name: Tests on 🐍 3 • msys UCRT
@@ -170,7 +174,9 @@ jobs:
         run: python -m pip install .[test]
 
       - name: Test package
-        run: python -m pytest -ra --showlocals -m "not broken_on_urct"
+        run: >-
+          python -m pytest -ra --showlocals -m "not broken_on_urct"
+          --durations=20
 
   mingw64:
     name: Tests on 🐍 3 • mingw64
@@ -200,7 +206,8 @@ jobs:
         run: python -m pip install .[test]
 
       - name: Test package
-        run: python -m pytest -ra --showlocals -m "not setuptools"
+        run: >-
+          python -m pytest -ra --showlocals -m "not setuptools" --durations=20
         env:
           SETUPTOOLS_USE_DISTUTILS: "local"
 
