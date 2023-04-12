@@ -22,17 +22,7 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
         yield f"-C{cmake_init}"
 
     if config.single_config:
-        yield f"-DCMAKE_BUILD_TYPE={config.build_type}"
-
-    if config.module_dirs:
-        yield "-DCMAKE_MODULE_PATH:PATH={}".format(
-            ";".join(str(p).replace("\\", "/") for p in config.module_dirs)
-        )
-
-    if config.prefix_dirs:
-        yield "-DCMAKE_PREFIX_PATH:PATH={}".format(
-            ";".join(str(p).replace("\\", "/") for p in config.prefix_dirs)
-        )
+        yield f"-DCMAKE_BUILD_TYPE:STRING={config.build_type}"
 
 
 @pytest.mark.configure()
