@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
@@ -105,10 +106,15 @@ _NO_COLORS = {color: "" for color in _COLORS}
 def colors() -> dict[str, str]:
     if "NO_COLOR" in os.environ:
         return _NO_COLORS
+    # Pip reroutes sys.stdout, so FORCE_COLOR is required there
     if os.environ.get("FORCE_COLOR", ""):
         return _COLORS
-    if sys.stdout.isatty() and not sys.platform.startswith("win"):
-        return _COLORS
+    # Avoid ValueError: I/O operation on closed file
+    with contextlib.suppress(ValueError):
+        # Assume sys.stderr is similar to sys.stdout
+        isatty = sys.stdout.isatty()
+        if isatty and not sys.platform.startswith("win"):
+            return _COLORS
     return _NO_COLORS
 
 
