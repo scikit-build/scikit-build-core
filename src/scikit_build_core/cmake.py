@@ -131,6 +131,24 @@ class CMaker:
                     f.write(f'set({key} [===[{str_value}]===] CACHE PATH "" FORCE)\n')
                 else:
                     f.write(f'set({key} [===[{value}]===] CACHE STRING "" FORCE)\n')
+
+            if self.module_dirs:
+                # Convert to CMake's internal path format, otherwise this breaks try_compile on Windows
+                module_dirs_str = ";".join(map(str, self.module_dirs)).replace(
+                    "\\", "/"
+                )
+                f.write(
+                    f'set(CMAKE_MODULE_PATH [===[{module_dirs_str}]===] CACHE PATH "" FORCE)\n'
+                )
+
+            if self.prefix_dirs:
+                prefix_dirs_str = ";".join(map(str, self.prefix_dirs)).replace(
+                    "\\", "/"
+                )
+                f.write(
+                    f'set(CMAKE_PREFIX_PATH [===[{prefix_dirs_str}]===] CACHE PATH "" FORCE)\n'
+                )
+
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
             "{}:\n{}",
@@ -148,7 +166,7 @@ class CMaker:
             yield f"-C{self.init_cache_file}"
 
         if self.single_config and self.build_type:
-            yield f"-DCMAKE_BUILD_TYPE={self.build_type}"
+            yield f"-DCMAKE_BUILD_TYPE:STRING={self.build_type}"
 
         for key, value in defines.items():
             if isinstance(value, bool):
@@ -159,15 +177,6 @@ class CMaker:
                 yield f"-D{key}:PATH={str_value}"
             else:
                 yield f"-D{key}={value}"
-
-        if self.module_dirs:
-            # Convert to CMake's internal path format, otherwise this breaks try_compile on Windows
-            module_dirs_str = ";".join(map(str, self.module_dirs)).replace("\\", "/")
-            yield f"-DCMAKE_MODULE_PATH:PATH={module_dirs_str}"
-
-        if self.prefix_dirs:
-            prefix_dirs_str = ";".join(map(str, self.prefix_dirs)).replace("\\", "/")
-            yield f"-DCMAKE_PREFIX_PATH:PATH={prefix_dirs_str}"
 
     def configure(
         self,
