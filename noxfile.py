@@ -52,7 +52,7 @@ def tests(session: nox.Session) -> None:
 
     install_arg = "-e.[test,cov]" if "--cov" in posargs else "-e.[test]"
     session.install(install_arg, *extra)
-    session.run("pytest", *session.posargs, env=env)
+    session.run("pytest", *posargs, env=env)
 
 
 @nox.session(reuse_venv=True)
