@@ -107,12 +107,12 @@ class Editable:
     #: Select the editable mode to use. Currently only "redirect" is supported.
     mode: str = "redirect"
 
-    #: Turn on verbose output for the editable mode.
-    verbose: bool = False
+    #: Turn on verbose output for the editable mode rebuilds.
+    verbose: bool = True
 
     #: Rebuild the project when the package is imported.
-    #: This will do nothing if the build-directory is not set.
-    rebuild: Optional[bool] = None
+    #: The build-directory must be set.
+    rebuild: bool = False
 
 
 @dataclasses.dataclass
