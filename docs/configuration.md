@@ -447,21 +447,20 @@ configuration. Recommendations:
 - Resources (via `importlib.resources`) are not properly supported (yet).
 - You need to reinstall to pick up new files.
 
-```toml
-[tool.scikit-build]
+```console
 # Very expiremental rebuild on initial import feature
-editable.rebuild = true
-
-# Display stdout on stderr when rebuilding
-# (Also available as SKBUILD_EDITABLE_VERBOSE envvar when importing)
-editable.verbose = true
+$ pip install --no-build-isolation --config-settings=editiable.rebuild=true -ve.
 ```
+
+You can disable the verbose rebuild output with `editable.verbose=false` if you
+want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;
+this will override if non-empty, and `"0"` will disable verbose output).
 
 Currently one `editable.mode` is provided, `"redirect"`, which uses a custom
 redirecting finder to combine the static CMake install dir with the original
 source code. Python code added via scikit-build-core's package discovery will be
 found in the original location, so changes there are picked up on import,
-regardless of the `editable.rebuild` setting..
+regardless of the `editable.rebuild` setting.
 
 ## Other options
 

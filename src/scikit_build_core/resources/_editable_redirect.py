@@ -65,6 +65,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         env[MARKER] = os.pathsep.join((env.get(MARKER, ""), self.path))
 
         verbose = self.verbose or bool(env.get(VERBOSE, ""))
+        if env.get(VERBOSE, "") == "0":
+            verbose = False
         if verbose:
             print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
 
