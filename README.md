@@ -178,7 +178,7 @@ editable.mode = "redirect"
 editable.rebuild = false
 
 # Display output on stderr while rebuilding on import
-editable.verbose = false
+editable.verbose = true
 
 # Enable experimental features if any are available
 experimental = false
