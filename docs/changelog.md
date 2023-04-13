@@ -24,7 +24,8 @@ Features:
 - Support modules/prefix dirs by @henryiii in #255
 - Add `get_requires_for_dynamic_metadata` by @henryiii in #235
 - Make setuptools wrapper more generic by @henryiii in #225
-- Experimental support for editable installs by @henryiii in #212
+- Experimental support for editable installs by @henryiii in #212, #268, and
+  #271
 
 Fixes:
 
@@ -32,18 +33,23 @@ Fixes:
 - Add python library artifact for better Windows cross compiling by @henryiii in
   #263
 - Include 3.26.1 SABI fix by @henryiii in #227
-- Restructure get_requires & fix some ninja paths by @henryiii in #250
+- Restructure `get_requires` & fix some ninja paths by @henryiii in #250
 - Support script rewriting by @henryiii in #254
 - Version not a string (typing updates) by @henryiii in #231
 - `{wheel_tag}` was not working by @henryiii in #262
+- `CMAKE_PREFIX_DIR` and `CMAKE_MODULE_DIR` are passed in the init cache file to
+  remove a unused variable warning by @henryiii in #272
+- Support color printouts without Rich (pip requires `FORCE_COLOR`) by @henryiii
+  in #266
 
 Other things:
 
-- Add fortran testing and CI by @henryiii in #86
-- Avoid interent usage in non-isolated testing by @henryiii in #247
-- Add an sdist checker & fix contents by @henryiii in #253
+- Add Fortran testing and CI by @henryiii in #86
+- Avoid internet usage in non-isolated testing by @henryiii in #247
+- Add an SDist checker & fix contents by @henryiii in #253
 - Add more setuptools types by @henryiii in #233
 - Add FedoraProject rpm spec file by @LecrisUT in #201 and #241
+- Better coverage handling by @henryiii in #270
 
 ## Version 0.2.2
 

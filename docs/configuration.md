@@ -444,13 +444,20 @@ configuration. Recommendations:
   it).
 - Select a `build-dir` when using editable installs, especially if you also
   enable automatic rebuilds.
-- Resources (via `importlib.resources`) are not properly supported (yet).
 - You need to reinstall to pick up new files.
+
+Known limitations:
+
+- Resources (via `importlib.resources`) are not properly supported (yet).
 
 ```console
 # Very expiremental rebuild on initial import feature
 $ pip install --no-build-isolation --config-settings=editiable.rebuild=true -ve.
 ```
+
+Due to the length of this line already being long, you do not need to set the
+`experimental` setting to use editable installs, but please consider them
+experimental and subject to change.
 
 You can disable the verbose rebuild output with `editable.verbose=false` if you
 want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;

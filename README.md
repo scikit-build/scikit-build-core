@@ -48,6 +48,7 @@ Some known missing features that will be developed soon:
 
 - No support for other targets besides install
 - Wheels are not fully reproducible yet
+- Several editable mode caveats (mentioned in the docs)
 
 Other backends are also planned:
 
