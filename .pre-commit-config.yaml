@@ -116,3 +116,8 @@ repos:
         language: pygrep
         entry: PyBind|Numpy|Cmake|CCache|Github|PyTest
         exclude: .pre-commit-config.yaml
+      - id: disallow-expressions
+        name: Disallow expressions
+        language: pygrep
+        entry: tool\.cmake
+        exclude: .pre-commit-config.yaml

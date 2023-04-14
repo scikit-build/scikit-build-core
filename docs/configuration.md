@@ -322,7 +322,7 @@ You can also manually specify the exact cmake args. Beyond the normal
 ````{tab} pyproject.toml
 
 ```toml
-[tool.cmake]
+[tool.scikit-build]
 cmake.args = ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
 ```
 
@@ -478,7 +478,7 @@ speedups.
 ````{tab} pyproject.toml
 
 ```toml
-[tool.cmake]
+[tool.scikit-build]
 build-dir = "build/{wheel_tag}"
 ```
 
@@ -526,7 +526,7 @@ Scikit-build-core also strictly validates configuration; if you need to disable
 this, you can:
 
 ```toml
-[tool.cmake]
+[tool.scikit-build]
 strict-config = false
 ```
 
@@ -536,6 +536,6 @@ minimum-version) guarantee that other scikit-build-core features have. These can
 only be used if you enable them:
 
 ```toml
-[tool.cmake]
+[tool.scikit-build]
 experimental = true
 ```

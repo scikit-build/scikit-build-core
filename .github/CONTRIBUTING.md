@@ -179,7 +179,7 @@ PEP 517 config dictionaries:
 And TOML:
 
 ```toml
-[tool.cmake]
+[tool.scikit-build]
 nested.one = "TOML config"
 ```
 
