@@ -149,7 +149,7 @@ The wheel will automatically look for Python packages at `<package_name>` and
 
 ```toml
 [tool.scikit-build]
-packages = ["python/mypackage"]
+wheel.packages = ["python/mypackage"]
 ```
 
 Or you can disable Python file inclusion entirely, and rely only on CMake's
@@ -157,7 +157,7 @@ installs, you can:
 
 ```toml
 [tool.scikit-build]
-packages = []
+wheel.packages = []
 ```
 
 The install directory is normally site-packages; however, you can manually set
