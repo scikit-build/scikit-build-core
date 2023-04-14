@@ -324,7 +324,7 @@ A helper (similar to scikti-build classic) might be added in the future.
 
 ````
 
-````{tab} Cython
+````{tab} Fortran
 
 ```{literalinclude} examples/getting_started/fortran/CMakeLists.txt
 :language: cmake
