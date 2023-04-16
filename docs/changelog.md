@@ -6,6 +6,8 @@ This is a small release fixing a regression in some cases caused by adding
 `Python_LIBRARY`. This has been reverted on non-Windows platforms, since it is
 only needed on Windows.
 
+### What's Changed
+
 Fixes:
 
 - Support older setuptools-scm by @henryiii in #284
