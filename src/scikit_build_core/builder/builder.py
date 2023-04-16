@@ -144,7 +144,8 @@ class Builder:
             cache_config[f"{prefix}_ROOT_DIR"] = sys.prefix
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
-            if python_library:
+            # FindPython may break if this is set - only useful on Windows
+            if python_library and sys.platform.startswith("win"):
                 cache_config[f"{prefix}_LIBRARY"] = python_library
 
         if limited_abi:
