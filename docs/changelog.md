@@ -1,5 +1,26 @@
 # Changelog
 
+## Version 0.3.1
+
+This is a small release fixing a regression in some cases caused by adding
+`Python_LIBRARY`. This has been reverted on non-Windows platforms, since it is
+only needed on Windows.
+
+Fixes:
+
+- Support older setuptools-scm by @henryiii in #284
+- Only set the lib for FindPython on Windows by @henryiii in #285
+
+Docs:
+
+- Fix incorrect tool name by @henryiii in #276
+- Typo on tab Fortran (was Cython) by @zerothi in #279
+- Fix wheel.packages by @henryiii in #282
+
+Other:
+
+- Change Fedora PR targets by @LecrisUT in #273
+
 ## Version 0.3.0
 
 This version brings two new dynamic metadata plugins (wrappers for
