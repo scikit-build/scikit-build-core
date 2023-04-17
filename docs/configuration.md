@@ -392,6 +392,10 @@ dynamic = ["version"]
 
 [tool.scikit-build]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/package/_version.py"]
+
+[tool.setuptools_scm]
+write_to = "src/package/_version.py"
 ```
 
 This sets the python project version according to
@@ -429,6 +433,8 @@ dynamic = ["readme"]
 
 [tool.scikit-build]
 metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
+
+# tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
 :::
