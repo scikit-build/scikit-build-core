@@ -124,8 +124,8 @@ backport.find-python = "3.15"
 ## Configuring source file inclusion
 
 Scikit-build-core defaults to using your `.gitignore` to select what to exclude
-from the source distribution. You can list files to explicitly include and exclude if you
-want:
+from the source distribution. You can list files to explicitly include and
+exclude if you want:
 
 ```toml
 [tool.scikit-build]
