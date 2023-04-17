@@ -124,12 +124,12 @@ backport.find-python = "3.15"
 ## Configuring source file inclusion
 
 Scikit-build-core defaults to using your `.gitignore` to select what to exclude
-from the wheel. You can list files to explicitly include and exclude if you
-want:
+from the source distribution. You can list files to explicitly include and
+exclude if you want:
 
 ```toml
 [tool.scikit-build]
-sdist.include = ["src/some_geneerated_file.txt"]
+sdist.include = ["src/some_generated_file.txt"]
 sdist.exclude = [".github"]
 ```
 
@@ -139,7 +139,7 @@ reproducible builds if you prefer, however:
 
 ```toml
 [tool.scikit-build]
-sdist.reproducible = true
+sdist.reproducible = false
 ```
 
 ## Customizing the built wheel
