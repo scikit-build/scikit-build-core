@@ -139,7 +139,7 @@ reproducible builds if you prefer, however:
 
 ```toml
 [tool.scikit-build]
-sdist.reproducible = true
+sdist.reproducible = false
 ```
 
 ## Customizing the built wheel
