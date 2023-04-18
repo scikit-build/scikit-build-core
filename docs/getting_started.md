@@ -78,7 +78,7 @@ example-project
 
 ### Source code
 
-For this tutorial, you can either use write a C extension yourself, or you can
+For this tutorial, you can either write a C extension yourself, or you can
 use pybind11 and C++. Select your preferred version using the tabs - compare
 them!
 
