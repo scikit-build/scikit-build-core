@@ -374,7 +374,7 @@ CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
 
 Scikit-build-core 0.3.0 will support dynamic metadata. This is not ready for
 plugin development outside of scikit-build-core;
-`tool.scikit-build.expiremental=true` is required to use external plugins, since
+`tool.scikit-build.experimental=true` is required to use external plugins, since
 the interface is provisional. Nested arbitrary dicts (as seen here) are not
 supported in config-settings or environment variables.
 
@@ -457,7 +457,7 @@ Known limitations:
 - Resources (via `importlib.resources`) are not properly supported (yet).
 
 ```console
-# Very expiremental rebuild on initial import feature
+# Very experimental rebuild on initial import feature
 $ pip install --no-build-isolation --config-settings=editiable.rebuild=true -ve.
 ```
 
