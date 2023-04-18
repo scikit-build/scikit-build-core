@@ -90,7 +90,7 @@ repos:
           - typing_extensions>=4;python_version<'3.11'
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v0.1.0"
+    rev: "v0.1.1"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
