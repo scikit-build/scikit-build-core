@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import sysconfig
 import types
 import warnings
 from collections.abc import Generator
@@ -296,4 +297,8 @@ def pytest_report_header() -> str:
         with contextlib.suppress(ModuleNotFoundError):
             valid.append(f"{package}=={metadata.version(package)}")  # type: ignore[no-untyped-call]
     reqs = " ".join(valid)
-    return f"installed packages of interest: {reqs}"
+    lines = [
+        f"installed packages of interest: {reqs}",
+        f"sysconfig platform: {sysconfig.get_platform()}",
+    ]
+    return "\n".join(lines)

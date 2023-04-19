@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
+import sysconfig
 from pathlib import Path
 
 import pytest
@@ -24,7 +24,7 @@ has_ninja = shutil.which("ninja") is not None
 def prepare_env_or_skip() -> None:
     if (
         "CMAKE_GENERATOR" not in os.environ
-        and not sys.platform.startswith("win32")
+        and not sysconfig.get_platform().startswith("win")
         and not has_make
     ):
         if has_ninja:

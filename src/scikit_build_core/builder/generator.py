@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import sysconfig
 from collections.abc import Mapping, MutableMapping
 
 from packaging.version import Version
@@ -67,13 +68,19 @@ def set_environment_for_gen(
     if default:
         logger.debug("Default generator: {}", default)
 
-    if sys.platform.startswith("win32") and "Visual Studio" in env.get(
+    if sysconfig.get_platform().startswith("win") and "Visual Studio" in env.get(
         "CMAKE_GENERATOR", default
     ):
         # This must also be set when *_PLATFORM is set.
         env.setdefault("CMAKE_GENERATOR", default)
         env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
         return {}
+
+    if sys.platform.startswith("win") and not sysconfig.get_platform().startswith(
+        "win"
+    ):
+        # Non-MSVC Windows platforms require Ninja
+        env.setdefault("CMAKE_GENERATOR", "Ninja")
 
     if env.get("CMAKE_GENERATOR", default or "Ninja") == "Ninja":
         min_ninja = Version(ninja_settings.minimum_version)

@@ -19,7 +19,7 @@ SYSCONFIGPLAT = sysconfig.get_platform()
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
 @pytest.mark.skipif(
-    SYSCONFIGPLAT.startswith(("msys", "mingw")),
+    sysconfig.get_platform().startswith(("msys", "mingw")),
     reason="abi3 FindPython on MSYS/MinGW reports not found",
 )
 def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
@@ -46,7 +46,7 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         file_names.remove("abi3_example-0.0.1.dist-info")
         (so_file,) = file_names
 
-        if sys.platform.startswith("win"):
+        if sysconfig.get_platform().startswith("win"):
             assert so_file == "abi3_example.pyd"
         elif sys.platform.startswith("cygwin"):
             assert so_file == "abi3_example.abi3.dll"

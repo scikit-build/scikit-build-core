@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import sys
+import sysconfig
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from scikit_build_core.build import (
 )
 from scikit_build_core.builder.get_requires import GetRequires
 
-ninja = [] if sys.platform.startswith("win") else ["ninja>=1.5"]
+ninja = [] if sysconfig.get_platform().startswith("win") else ["ninja>=1.5"]
 
 
 def which_mock(name: str) -> str | None:

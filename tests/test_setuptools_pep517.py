@@ -63,8 +63,10 @@ def test_pep517_sdist():
 @pytest.mark.configure()
 @pytest.mark.broken_on_urct()
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
-@pytest.mark.skipif(
-    sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
 )
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")

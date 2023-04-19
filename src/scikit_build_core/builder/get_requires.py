@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import functools
 import os
-import sys
+import sysconfig
 from collections.abc import Generator, Mapping
 
 from packaging.tags import sys_tags
@@ -60,8 +60,8 @@ class GetRequires:
         logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
 
     def ninja(self) -> Generator[str, None, None]:
-        # On Windows, Ninja is not default
-        if sys.platform.startswith("win") and "Ninja" not in os.environ.get(
+        # On Windows MSVC, Ninja is not default
+        if sysconfig.get_platform().startswith("win") and "Ninja" not in os.environ.get(
             "CMAKE_GENERATOR", ""
         ):
             return

@@ -288,6 +288,28 @@ cmake_extensions=[CMakeExtension("cmake_example")],
 
 Which should eventually support multiple extensions.
 
+## Patterns
+
+### Backports
+
+All backported standard library code is in `scikit_build_core._compat`, in a
+module with the stdlib name.
+
+### Detecting the platform
+
+Here are some common platforms and the reported values:
+
+| OS      | Compiler   | `sys.platform` | `sysconfig.get_platform()`   |
+| ------- | ---------- | -------------- | ---------------------------- |
+| Windows | MSVC       | `win32`        | `win-amd64`                  |
+| Windows | MinGW      | `win32`        | `mingw_x86_64`               |
+| Windows | MinGW URCT | `win32`        | `mingw_x86_64_ucrt`          |
+| Windows | Cygwin     | `cygwin`       | `cygwin-3.4.6-x86_64`        |
+| macOS   | Clang      | `darwin`       | `macosx-10.15-x86_64`        |
+| Linux   | GCC        | `linux`        | `linux-x86_64`               |
+| Pyodide | Clang      | `emscripten`   | `emscripten-3.1.32-wasm32`   |
+| FreeBSD | GCC        | `freebsd13`    | `freebsd-13.2-RELEASE-amd64` |
+
 # Downstream packaging
 
 ## Fedora packaging

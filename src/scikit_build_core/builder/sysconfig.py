@@ -110,7 +110,7 @@ def get_platform(env: Mapping[str, str] | None = None) -> str:
     """
     if env is None:
         env = os.environ
-    if sys.platform.startswith("win"):
+    if sysconfig.get_platform().startswith("win"):
         if "VSCMD_ARG_TGT_ARCH" in env:
             logger.debug(
                 "Selecting {} or {} due to VSCMD_ARG_TARGET_ARCH",
