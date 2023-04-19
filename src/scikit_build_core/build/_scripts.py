@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import re
 from pathlib import Path
 
@@ -16,7 +17,7 @@ SHEBANG_PATTERN = re.compile(r"^#!.*(?:python|pythonw|pypy)[0-9.]*([ \t].*)?$")
 def process_script_dir(script_dir: Path) -> None:
     for item in script_dir.iterdir():
         content = []
-        with item.open(encoding="utf-8") as f:
+        with contextlib.supress(UnicodeDecodeError), item.open(encoding="utf-8") as f:
             file_iter = iter(f)
             try:
                 # TODO: handle empty files
