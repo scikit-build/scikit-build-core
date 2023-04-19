@@ -56,14 +56,14 @@ def test_get_python_library():
     pprint.pprint(sysconfig.get_config_vars())
 
     lib = get_python_library({})
-    if sys.platform.startswith("win"):
-        assert lib is None
-    else:
+    if sysconfig.get_platform().startswith("win"):
         assert lib
         assert lib.is_file()
+    else:
+        assert lib is None
 
 
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+@pytest.mark.skipif(not sysconfig.get_platform().startswith("win"), reason="MSVC only")
 def test_get_python_library_xcompile(tmp_path):
     config_path = tmp_path / "tmp.cfg"
     config_path.write_text(

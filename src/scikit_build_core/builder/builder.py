@@ -145,12 +145,12 @@ class Builder:
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
             # FindPython may break if this is set - only useful on Windows
-            if python_library and sys.platform.startswith("win"):
+            if python_library and sysconfig.get_platform().startswith("win"):
                 cache_config[f"{prefix}_LIBRARY"] = python_library
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (
-                "" if sys.platform.startswith("win") else "abi3"
+                "" if sysconfig.get_platform().startswith("win") else "abi3"
             )
         else:
             # Workaround for bug in PyPy and packaging that is not handled in CMake

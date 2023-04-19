@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import sysconfig
 import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -66,7 +67,7 @@ class CMaker:
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
-    single_config: bool = not sys.platform.startswith("win32")
+    single_config: bool = not sysconfig.get_platform().startswith("win")
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"

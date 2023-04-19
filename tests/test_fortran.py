@@ -19,12 +19,8 @@ FORTRAN_EXAMPLE = DIR / "packages/fortran_example"
 @pytest.mark.fortran()
 @pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortran not available")
 @pytest.mark.skipif(
-    sysconfig.get_platform().startswith("msys"),
-    reason="Fortran not working with MSYS yet",
-)
-@pytest.mark.skipif(
-    sys.platform.startswith("win"),
-    reason="No reasonable Fortran compiler available on Windows",
+    sysconfig.get_platform().startswith("win"),
+    reason="No reasonable Fortran compiler for MSVC",
 )
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"

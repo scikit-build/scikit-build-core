@@ -4,6 +4,7 @@ import dataclasses
 import os
 import shutil
 import sys
+import sysconfig
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
@@ -180,7 +181,8 @@ def _build_wheel_impl(
         )
 
         generator = builder.config.env.get(
-            "CMAKE_GENERATOR", "MSVC" if sys.platform.startswith("win32") else "Unknown"
+            "CMAKE_GENERATOR",
+            "MSVC" if sysconfig.get_platform().startswith("win") else "Unknown",
         )
         rich_print(
             f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."

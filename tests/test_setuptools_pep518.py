@@ -12,8 +12,10 @@ pytestmark = pytest.mark.setuptools
 @pytest.mark.configure()
 @pytest.mark.integration()
 @pytest.mark.broken_on_urct()
-@pytest.mark.skipif(
-    sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
 )
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
 def test_pep518_wheel(isolated):
@@ -50,8 +52,10 @@ def test_pep518_wheel(isolated):
 @pytest.mark.configure()
 @pytest.mark.integration()
 @pytest.mark.broken_on_urct()
-@pytest.mark.skipif(
-    sys.platform.startswith("cygwin"), reason="Cygwin fails here with ld errors"
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
 )
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
 def test_pep518_pip(isolated):
