@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.3.2
+
+Some small fixes for edge cases. Several docs improvements, too.
+
+Fixes:
+
+- Suppress Unicode errors in scripts dir and move on by @henryiii in #294
+- Specify platform properly for non-MSVC Windows by @henryiii in #295
+
+Docs:
+
+- Doc updates by @zerothi in #287
+- Add a bit to plugin instructions by @henryiii in #289
+- Typos fixed by @afh in #291 and #292
+
 ## Version 0.3.1
 
 This is a small release fixing a regression in some cases caused by adding
