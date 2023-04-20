@@ -3,7 +3,7 @@
 import builtins
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Type, TypeVar
+from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
 
 import cattr
 import cattr.preconf.json

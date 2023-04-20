@@ -4,9 +4,8 @@ import dataclasses
 import re
 import sys
 import sysconfig
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Mapping
 
 from packaging.version import Version
 

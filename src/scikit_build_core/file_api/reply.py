@@ -3,7 +3,7 @@ import dataclasses
 import json
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID251
 
 from .._compat.builtins import ExceptionGroup
 from .model.cache import Cache
