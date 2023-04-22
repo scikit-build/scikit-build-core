@@ -113,7 +113,7 @@ jobs:
           pip install --constraint tests/constraints.txt .[test]
 
       - name: Setup CMake ${{ matrix.cmake-version }}
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v1.14
         with:
           cmake-version: "${{ matrix.cmake-version }}"
 
