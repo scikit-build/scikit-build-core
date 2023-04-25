@@ -77,8 +77,8 @@ repos:
           - cmake
           - exceptiongroup
           - hatch-fancy-pypi-readme
-          - importlib-metadata
-          - importlib_resources
+          - importlib-metadata>=6.6.0
+          - importlib-resources
           - ninja
           - packaging
           - pyproject_metadata
@@ -87,7 +87,6 @@ repos:
           - setuptools-scm
           - tomli
           - types-setuptools>=67.6.0.5
-          - typing_extensions>=4;python_version<'3.11'
 
   - repo: https://github.com/henryiii/check-sdist
     rev: "v0.1.2"
