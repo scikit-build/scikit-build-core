@@ -22,11 +22,11 @@ Features over classic Scikit-build:
 - Better warnings, errors, and logging
 - No warning about unused variables
 - Automatically adds Ninja and/or CMake only as required
-- No dependency on setuptools, distutils, or wheel.
-- Powerful config system, including config options support.
+- No dependency on setuptools, distutils, or wheel
+- Powerful config system, including config options support
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.26.1 (configurable), supports
-  PyPY SOABI & Limited API / Stable ABI.
+  PyPY SOABI & Limited API / Stable ABI
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
@@ -37,7 +37,8 @@ Features over classic Scikit-build:
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
 - Experimental editable mode support, with optional experimental auto rebuilds
-  on import.
+  on import
+- Supports WebAssembly (Emscripten/Pyodide).
 
 The following limitations are present compared to classic scikit-build:
 

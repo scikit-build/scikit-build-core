@@ -149,6 +149,7 @@ class CMaker:
                 f.write(
                     f'set(CMAKE_PREFIX_PATH [===[{prefix_dirs_str}]===] CACHE PATH "" FORCE)\n'
                 )
+                f.write('set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE "BOTH" CACHE PATH "")\n')
 
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
