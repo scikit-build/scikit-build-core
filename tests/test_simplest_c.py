@@ -34,6 +34,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
                 ".gitignore",
                 "src/module.c",
                 "src/simplest/__init__.py",
+                "src/simplest/_module.pyi",
                 "src/simplest/data.txt",
                 "src/simplest/sdist_only.txt",
                 "src/not_a_package/simple.txt",
@@ -65,7 +66,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
 
         filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
 
-        assert len(filtered_pkg) == len(simplest_pkg) - 1
+        assert len(filtered_pkg) == len(simplest_pkg) - 2
         assert {"simplest-0.0.1.dist-info", "simplest"} == file_names
         assert {
             "__init__.py",
@@ -114,7 +115,7 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
 
         filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
 
-        assert len(filtered_pkg) == len(simplest_pkg) - 1
+        assert len(filtered_pkg) == len(simplest_pkg) - 2
         assert {"simplest-0.0.1.dist-info", "simplest", "not_a_package"} == file_names
         assert {
             "__init__.py",

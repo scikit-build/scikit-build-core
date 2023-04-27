@@ -39,9 +39,6 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         path: object = None,
         target: object = None,
     ) -> importlib.machinery.ModuleSpec | None:
-        if fullname in self.known_source_files:
-            redir = self.known_source_files[fullname]
-            return importlib.util.spec_from_file_location(fullname, redir)
         if fullname in self.known_wheel_files:
             redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
@@ -49,6 +46,9 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             return importlib.util.spec_from_file_location(
                 fullname, os.path.join(DIR, redir)
             )
+        if fullname in self.known_source_files:
+            redir = self.known_source_files[fullname]
+            return importlib.util.spec_from_file_location(fullname, redir)
 
         return None
 
