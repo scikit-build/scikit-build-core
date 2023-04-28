@@ -12,6 +12,9 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
+    environment: pypi
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -26,5 +29,3 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@v1.8.5
         if: github.event_name == 'release' && github.event.action == 'published'
-        with:
-          password: ${{ secrets.pypi_password }}
