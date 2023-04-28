@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.3.3
+
+This version improves WebAssembly support (Pyodide) and fixes a reported bug in
+the new editable mode.
+
+Fixes:
+
+- Support prefix dir if toolchain has `CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY`
+  by @henryiii in #303
+- Find wheel files before local files in editable installs by @henryiii in #305
+
+Other:
+
+- Use PyPI's new trusted publisher deployment by @henryiii in #306
+
 ## Version 0.3.2
 
 Some small fixes for edge cases. Several docs improvements, too.
