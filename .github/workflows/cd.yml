@@ -27,5 +27,5 @@ jobs:
         with:
           path: dist/*
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.5
+      - uses: pypa/gh-action-pypi-publish@v1.8.6
         if: github.event_name == 'release' && github.event.action == 'published'
