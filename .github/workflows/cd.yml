@@ -10,11 +10,8 @@ env:
   FORCE_COLOR: 3
 
 jobs:
-  deploy:
-    runs-on: ubuntu-22.04
-    environment: pypi
-    permissions:
-      id-token: write
+  dist:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -27,5 +24,18 @@ jobs:
         with:
           path: dist/*
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.5
-        if: github.event_name == 'release' && github.event.action == 'published'
+  deploy:
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    needs: [dist]
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
