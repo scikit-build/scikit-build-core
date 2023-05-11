@@ -6,3 +6,7 @@ build-backend = "scikit_build_core.build"
 name = "example"
 version = "0.0.1"
 dependencies = ["numpy"]
+
+[tool.scikit-build]
+ninja.minimum-version = "1.10"
+cmake.minimum-version = "3.17.2"

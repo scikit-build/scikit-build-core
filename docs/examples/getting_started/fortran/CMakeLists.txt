@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.26)
+cmake_minimum_required(VERSION 3.17.2...3.26)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
 
 find_package(
