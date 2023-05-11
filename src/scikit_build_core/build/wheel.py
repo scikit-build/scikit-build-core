@@ -182,7 +182,9 @@ def _build_wheel_impl(
 
         generator = builder.config.env.get(
             "CMAKE_GENERATOR",
-            "MSVC" if sysconfig.get_platform().startswith("win") else "Unknown",
+            "MSVC"
+            if sysconfig.get_platform().startswith("win")
+            else "Default generator",
         )
         rich_print(
             f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."

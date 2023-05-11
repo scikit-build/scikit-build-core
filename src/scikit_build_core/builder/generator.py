@@ -80,7 +80,11 @@ def set_environment_for_gen(
         "win"
     ):
         # Non-MSVC Windows platforms require Ninja
-        env.setdefault("CMAKE_GENERATOR", "Ninja")
+        default = "Ninja"
+
+    # Try Ninja if it is available, even if make is CMake default
+    if default == "Unix Makefiles":
+        default = "Ninja"
 
     if env.get("CMAKE_GENERATOR", default or "Ninja") == "Ninja":
         min_ninja = Version(ninja_settings.minimum_version)
