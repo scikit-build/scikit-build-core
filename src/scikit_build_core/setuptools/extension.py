@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import setuptools
-import setuptools.command.build_ext
 from packaging.version import Version
 from setuptools.dist import Distribution
 
@@ -34,13 +33,20 @@ class CMakeExtension(setuptools.Extension):
         self.sourcedir = Path(sourcedir).resolve()
 
 
-class CMakeBuild(setuptools.command.build_ext.build_ext):
-    def build_extension(self, ext: setuptools.Extension) -> None:
-        if not isinstance(ext, CMakeExtension):
-            super().build_extension(ext)
-            return
+class CMakeBuild(setuptools.Command):
+    build_lib: str | None = None
+    editable_mode: bool = False
+    source_dir: str
 
-        build_tmp_folder = Path(self.build_temp)
+    def initialize_options(self) -> None:
+        pass
+
+    def finalize_options(self) -> None:
+        self.set_undefined_options("build_ext", ("build_lib", "build_lib"))
+
+    def run(self) -> None:
+        assert self.build_lib is not None
+        build_tmp_folder = Path.cwd().resolve() / "build"
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
         dist = self.distribution
@@ -48,13 +54,6 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
         bdist_wheel = dist.get_command_obj("bdist_wheel")
         assert bdist_wheel is not None
         limited_api = bdist_wheel.py_limited_api  # type: ignore[attr-defined]
-        if limited_api:
-            ext.py_limited_api = True
-
-        # This dir doesn't exist, so Path.cwd() is needed for Python < 3.10
-        # due to a Windows bug in resolve https://github.com/python/cpython/issues/82852
-        ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
-        extdir = ext_fullpath.parent.resolve()
 
         # TODO: this is a hack due to moving temporary paths for isolation
         if build_temp.exists():
@@ -68,7 +67,7 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
 
         config = CMaker(
             cmake,
-            source_dir=ext.sourcedir,
+            source_dir=Path(self.source_dir),
             build_dir=build_temp,
             build_type=settings.cmake.build_type,
         )
@@ -85,20 +84,14 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             orig_macos = normalize_macos_version(orig_macos_str, arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        debug = int(os.environ.get("DEBUG", 0))
         builder.config.build_type = "Debug" if debug else "Release"
 
-        defines: dict[str, str] = {}
-
-        for key, value in ext.define_macros:
-            assert isinstance(value, str), "define_macros values must not be None"
-            defines[key] = value
-
         builder.configure(
-            defines=defines,
             name=dist.get_name(),
             version=Version(dist.get_version()),
-            limited_abi=ext.py_limited_api,
+            defines={},
+            limited_abi=limited_api,
         )
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
@@ -115,16 +108,25 @@ class CMakeBuild(setuptools.command.build_ext.build_ext):
             build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
-        builder.install(extdir)
+        builder.install(Path(self.build_lib))
+
+    # def get_source_files(self) -> list[str]:
+    #    return ["CMakeLists.txt"]
+
+    # def get_outputs(self) -> list[str]:
+    #    return []
+
+    # def get_output_mapping(self) -> dict[str, str]:
+    #    return {}
 
 
 def cmake_extensions(
-    dist: Distribution, attr: Literal["cmake_extensions"], value: list[CMakeExtension]
+    dist: Distribution, attr: Literal["cmake_extensions"], source_dir: str
 ) -> None:
     settings = SettingsReader.from_file("pyproject.toml", {}).settings
 
     assert attr == "cmake_extensions"
-    assert value
+    assert source_dir
 
     assert (
         not settings.wheel.expand_macos_universal_tags
@@ -137,9 +139,13 @@ def cmake_extensions(
     ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
 
     dist.has_ext_modules = lambda: True  # type: ignore[method-assign]
-    dist.ext_modules = (dist.ext_modules or []) + value
 
-    dist.cmdclass["build_ext"] = CMakeBuild
+    build = dist.get_command_obj("build")
+    assert build is not None
+    dist.cmdclass["build_cmake"] = CMakeBuild
+    dist.get_command_obj("build_cmake").source_dir = source_dir  # type: ignore[union-attr]
+    if "build_cmake" not in {x for x, _ in build.sub_commands}:
+        build.sub_commands.append(("build_cmake", None))
 
 
 def cmake_source_dir(
@@ -147,9 +153,5 @@ def cmake_source_dir(
 ) -> None:
     assert attr == "cmake_source_dir"
     assert Path(value).is_dir()
-    assert dist.cmake_extensions is None, "Combining cmake_source_dir= and cmake_extensions= is not allowed"  # type: ignore[attr-defined]
-    name = dist.get_name().replace("-", "_")
 
-    extensions = [CMakeExtension(name, value)]
-    dist.cmake_extensions = extensions  # type: ignore[attr-defined]
-    cmake_extensions(dist, "cmake_extensions", extensions)
+    cmake_extensions(dist, "cmake_extensions", value)
