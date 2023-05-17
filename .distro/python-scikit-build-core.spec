@@ -1,14 +1,11 @@
-%global pypi_name scikit_build_core
-
 Name:           python-scikit-build-core
 Version:        0.0.0
-Release:        %{autorelease}
+Release:        %autorelease
 Summary:        Build backend for CMake based projects
 
 License:        Apache-2.0
 URL:            https://github.com/scikit-build/scikit-build-core
-Source0:        %{pypi_source %{pypi_name}}
-Source1:        %{name}.rpmlintrc
+Source:         %{pypi_source scikit_build_core}
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
@@ -18,7 +15,8 @@ BuildRequires:  gcc
 BuildRequires:  gcc-c++
 
 %global _description %{expand:
-A next generation Python CMake adaptor and Python API for plugins}
+A next generation Python CMake adaptor and Python API for plugins
+}
 
 %description %_description
 
@@ -32,11 +30,14 @@ Suggests:       ninja-build
 Suggests:       gcc
 %description -n python3-scikit-build-core %_description
 
+
 %prep
-%autosetup -n %{pypi_name}-%{version}
+%autosetup -n scikit_build_core-%{version}
+
 
 %generate_buildrequires
 %pyproject_buildrequires -x test
+
 
 %build
 %pyproject_wheel
@@ -44,7 +45,7 @@ Suggests:       gcc
 
 %install
 %pyproject_install
-%pyproject_save_files %{pypi_name}
+%pyproject_save_files scikit_build_core
 
 
 %check
@@ -55,6 +56,7 @@ Suggests:       gcc
 %files -n python3-scikit-build-core -f %{pyproject_files}
 %license LICENSE
 %doc README.md
+
 
 %changelog
 %autochangelog
