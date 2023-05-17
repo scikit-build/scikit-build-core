@@ -22,6 +22,20 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _validate_settings() -> None:
+    settings = SettingsReader.from_file("pyproject.toml", {}).settings
+
+    assert (
+        not settings.wheel.expand_macos_universal_tags
+    ), "wheel.expand_macos_universal_tags is not supported in setuptools mode"
+    assert (
+        settings.logging.level == "WARNING"
+    ), "Logging is not adjustable in setuptools mode yet"
+    assert (
+        not settings.wheel.py_api
+    ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
+
+
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
 
@@ -59,12 +73,12 @@ class BuildCMake(setuptools.Command):
         )
 
     def run(self) -> None:
+        assert self.source_dir is not None
         assert self.build_lib is not None
         assert self.build_temp is not None
         assert self.plat_name is not None
 
-        if self.source_dir is None:
-            return
+        _validate_settings()
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
@@ -136,30 +150,23 @@ class BuildCMake(setuptools.Command):
     #    return {}
 
 
-def _prepare_settings() -> None:
-    settings = SettingsReader.from_file("pyproject.toml", {}).settings
-
-    assert (
-        not settings.wheel.expand_macos_universal_tags
-    ), "wheel.expand_macos_universal_tags is not supported in setuptools mode"
-    assert (
-        settings.logging.level == "WARNING"
-    ), "Logging is not adjustable in setuptools mode yet"
-    assert (
-        not settings.wheel.py_api
-    ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
+def _has_cmake(dist: Distribution) -> bool:
+    build_cmake = dist.get_command_obj("build_cmake")
+    assert isinstance(build_cmake, BuildCMake)
+    return build_cmake.source_dir is not None
 
 
 def _prepare_extension_detection(dist: Distribution) -> None:
     # Setuptools needs to know that it has extensions modules
 
-    dist.has_ext_modules = lambda: True  # type: ignore[method-assign]
+    dist.has_ext_modules = lambda: type(dist).has_ext_modules(dist) or _has_cmake(dist)  # type: ignore[method-assign]
+
     # Hack for stdlib distutils
     if not setuptools.distutils.__package__.startswith("setuptools"):  # type: ignore[attr-defined]
 
         class EvilList(list):  # type: ignore[type-arg]
             def __len__(self) -> int:
-                return super().__len__() or 1
+                return super().__len__() or int(_has_cmake(dist))
 
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
@@ -169,7 +176,9 @@ def _prepare_build_cmake_command(dist: Distribution) -> None:
     build = dist.get_command_obj("build")
     assert build is not None
     if "build_cmake" not in {x for x, _ in build.sub_commands}:
-        build.sub_commands.append(("build_cmake", None))
+        build.sub_commands.append(
+            ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))  # type: ignore[arg-type]
+        )
 
 
 def cmake_source_dir(
@@ -180,10 +189,10 @@ def cmake_source_dir(
 
     build_cmake = dist.get_command_obj("build_cmake")
     assert isinstance(build_cmake, BuildCMake)
+
     build_cmake.source_dir = value
 
 
 def finalize_distribution_options(dist: Distribution) -> None:
-    _prepare_settings()
     _prepare_extension_detection(dist)
     _prepare_build_cmake_command(dist)
