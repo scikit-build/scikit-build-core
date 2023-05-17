@@ -40,13 +40,14 @@ def test_pep517_sdist():
             for x in (
                 # TODO: "CMakeLists.txt",
                 "PKG-INFO",
-                "cmake_example.egg-info",
-                "cmake_example.egg-info/PKG-INFO",
-                "cmake_example.egg-info/SOURCES.txt",
-                "cmake_example.egg-info/dependency_links.txt",
-                "cmake_example.egg-info/not-zip-safe",
-                "cmake_example.egg-info/requires.txt",
-                "cmake_example.egg-info/top_level.txt",
+                "src",
+                "src/cmake_example.egg-info",
+                "src/cmake_example.egg-info/PKG-INFO",
+                "src/cmake_example.egg-info/SOURCES.txt",
+                "src/cmake_example.egg-info/dependency_links.txt",
+                "src/cmake_example.egg-info/not-zip-safe",
+                "src/cmake_example.egg-info/requires.txt",
+                "src/cmake_example.egg-info/top_level.txt",
                 "pyproject.toml",
                 "setup.cfg",
                 "setup.py",
@@ -95,4 +96,34 @@ def test_pep517_wheel(virtualenv):
     assert version.strip() == "0.0.1"
 
     add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.usefixtures("package_mixed_setuptools")
+def test_pep517_mixed_wheel(virtualenv):
+    dist = Path("dist")
+    out = build_wheel("dist")
+    (wheel,) = dist.glob("mixed_setuptools-3.1.4-*.whl")
+    assert wheel == dist / out
+
+    if sys.version_info >= (3, 8):
+        with wheel.open("rb") as f:
+            p = zipfile.Path(f)
+            file_names = [p.name for p in p.iterdir()]
+
+        assert len(file_names) == 2
+        assert "mixed_setuptools-3.1.4.dist-info" in file_names
+        file_names.remove("mixed_setuptools-3.1.4.dist-info")
+        (so_file,) = file_names
+
+        assert so_file.startswith("mixed_setuptools")
+        print("SOFILE:", so_file)
+
+    virtualenv.install(wheel)
+
+    add = virtualenv.execute(
+        "import mixed_setuptools; print(mixed_setuptools.add(1, 2))"
+    )
     assert add.strip() == "3"

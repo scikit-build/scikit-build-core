@@ -120,7 +120,7 @@ jobs:
       # Skipped on pypy to keep the tests fast
       - name: Test min package
         if: matrix.python-version != 'pypy-3.8'
-        run: pytest -ra --showlocals
+        run: pytest -ra --showlocals -Wdefault
 
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
