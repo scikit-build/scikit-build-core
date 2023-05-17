@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import sysconfig
 from pathlib import Path
 
 import setuptools
@@ -16,34 +15,59 @@ from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
-__all__: list[str] = ["CMakeBuild", "prepare", "cmake_source_dir"]
+__all__: list[str] = ["BuildCMake", "finalize_distribution_options", "cmake_source_dir"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-class CMakeBuild(setuptools.Command):
+class BuildCMake(setuptools.Command):
+    source_dir: str | None = None
+
     build_lib: str | None
     build_temp: str | None
+    debug: bool | None
     editable_mode: bool
-    source_dir: str
+    parallel: int | None
+    plat_name: str | None
+
+    user_options = [
+        ("build-lib=", "b", "directory for compiled extension modules"),
+        ("build-temp=", "t", "directory for temporary files (build by-products)"),
+        ("plat-name=", "p", "platform name to cross-compile for, if supported "),
+        ("debug", "g", "compile/link with debugging information"),
+        ("parallel=", "j", "number of parallel build jobs"),
+    ]
 
     def initialize_options(self) -> None:
         self.build_lib = None
         self.build_temp = None
+        self.debug = None
         self.editable_mode = False
+        self.parallel = None
+        self.plat_name = None
 
     def finalize_options(self) -> None:
         self.set_undefined_options(
-            "build",
+            "build_ext",
             ("build_lib", "build_lib"),
             ("build_temp", "build_temp"),
+            ("debug", "debug"),
+            ("parallel", "parallel"),
+            ("plat_name", "plat_name"),
         )
 
     def run(self) -> None:
         assert self.build_lib is not None
         assert self.build_temp is not None
+        assert self.plat_name is not None
+
+        if self.source_dir is None:
+            if Path("CMakeLists.txt").is_file():
+                self.source_dir = "."
+            else:
+                return
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
@@ -79,11 +103,11 @@ class CMakeBuild(setuptools.Command):
         # Setuptools requires this be specified if there's a mismatch.
         if sys.platform.startswith("darwin"):
             arm_only = get_archs(builder.config.env) == ["arm64"]
-            orig_macos_str = sysconfig.get_platform().rsplit("-", 1)[0].split("-", 1)[1]
+            orig_macos_str = self.plat_name.rsplit("-", 1)[0].split("-", 1)[1]
             orig_macos = normalize_macos_version(orig_macos_str, arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
-        debug = int(os.environ.get("DEBUG", 0))
+        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
         builder.config.build_type = "Debug" if debug else "Release"
 
         builder.configure(
@@ -97,13 +121,9 @@ class CMakeBuild(setuptools.Command):
         # across all generators.
         build_args = []
 
-        # self.parallel is a Python 3 only way to set parallel jobs by hand
-        # using -j in the build_ext call, not supported by pip or PyPA-build.
-        if (
-            "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env
-            and hasattr(self, "parallel")
-            and self.parallel
-        ):
+        # self.parallel is a way to set parallel jobs by hand using -j in the
+        # build_ext call, not supported by pip or PyPA-build.
+        if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env and self.parallel:
             build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
@@ -147,20 +167,13 @@ def _prepare_extension_detection(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
 
-def _prepare_build_cmake_command(dist: Distribution, source_dir: str) -> None:
+def _prepare_build_cmake_command(dist: Distribution) -> None:
     # Prepare new build_cmake command and make sure build calls it
     build = dist.get_command_obj("build")
     assert build is not None
-    dist.cmdclass["build_cmake"] = CMakeBuild
-    dist.get_command_obj("build_cmake").source_dir = source_dir  # type: ignore[union-attr]
+    dist.cmdclass["build_cmake"] = BuildCMake
     if "build_cmake" not in {x for x, _ in build.sub_commands}:
         build.sub_commands.append(("build_cmake", None))
-
-
-def prepare(dist: Distribution, *, source_dir: str) -> None:
-    _prepare_settings()
-    _prepare_extension_detection(dist)
-    _prepare_build_cmake_command(dist, source_dir)
 
 
 def cmake_source_dir(
@@ -169,4 +182,18 @@ def cmake_source_dir(
     assert attr == "cmake_source_dir"
     assert Path(value).is_dir()
 
-    prepare(dist, source_dir=value)
+    # finalize_distribution_options(dist)
+
+    build_cmake = dist.get_command_obj("build_cmake")
+    assert isinstance(build_cmake, BuildCMake)
+    build_cmake.source_dir = value
+
+
+def finalize_distribution_options(dist: Distribution) -> None:
+    if "build_cmake" not in dist.cmdclass:
+        _prepare_settings()
+        _prepare_extension_detection(dist)
+        _prepare_build_cmake_command(dist)
+
+
+finalize_distribution_options.order = -10  # type: ignore[attr-defined]
