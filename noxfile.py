@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import nox
@@ -34,14 +35,12 @@ def pylint(session: nox.Session) -> None:
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
-def tests(session: nox.Session) -> None:
-    """
-    Run the unit and regular tests. Includes coverage if --cov passed.
-    """
+def _run_tests(
+    session: nox.Session, *, install_args: Sequence[str], run_args: Sequence[str] = ()
+) -> None:
     posargs = list(session.posargs)
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-    extra = ["hatch-fancy-pypi-readme", "rich", "setuptools-scm"]
+    extra = []
     # This will not work if system CMake is too old (<3.15)
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
         extra.append("cmake")
@@ -51,8 +50,30 @@ def tests(session: nox.Session) -> None:
         extra.append("numpy")
 
     install_arg = "-e.[test,cov]" if "--cov" in posargs else "-e.[test]"
-    session.install(install_arg, *extra)
-    session.run("pytest", *posargs, env=env)
+    session.install(install_arg, *extra, *install_args)
+    session.run("pytest", *run_args, *posargs, env=env)
+
+
+@nox.session
+def tests(session: nox.Session) -> None:
+    """
+    Run the unit and regular tests. Includes coverage if --cov passed.
+    """
+    _run_tests(
+        session, install_args=["hatch-fancy-pypi-readme", "rich", "setuptools-scm"]
+    )
+
+
+@nox.session
+def minimums(session: nox.Session) -> None:
+    """
+    Test the minimum versions of dependencies.
+    """
+    _run_tests(
+        session,
+        install_args=["--constraint=tests/constraints.txt"],
+        run_args=["-Wdefault"],
+    )
 
 
 @nox.session(reuse_venv=True)

@@ -278,16 +278,6 @@ target_compile_definitions(cmake_example
 install(TARGETS cmake_example DESTINATION .)
 ```
 
-This is built on top of CMakeExtension, which looks like this:
-
-```
-from scikit_build_core.setuptoools.extension import CMakeExtension
-...
-cmake_extensions=[CMakeExtension("cmake_example")],
-```
-
-Which should eventually support multiple extensions.
-
 ## Patterns
 
 ### Backports

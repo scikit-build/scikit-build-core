@@ -5,7 +5,6 @@ import shutil
 import sys
 import sysconfig
 from pathlib import Path
-from typing import Any
 
 import setuptools
 from packaging.version import Version
@@ -17,20 +16,11 @@ from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
-__all__: list[str] = ["CMakeExtension", "cmake_extensions"]
+__all__: list[str] = ["CMakeBuild", "cmake_extensions"]
 
 
 def __dir__() -> list[str]:
     return __all__
-
-
-# A CMakeExtension needs a sourcedir instead of a file list.
-# The name must be the _single_ output extension from the CMake build.
-# The sourcedir is relative to the setup.py directory, where the CMakeLists.txt lives
-class CMakeExtension(setuptools.Extension):
-    def __init__(self, name: str, sourcedir: str = "", **kwargs: Any) -> None:
-        super().__init__(name, [], **kwargs)
-        self.sourcedir = Path(sourcedir).resolve()
 
 
 class CMakeBuild(setuptools.Command):
@@ -42,11 +32,11 @@ class CMakeBuild(setuptools.Command):
         pass
 
     def finalize_options(self) -> None:
-        self.get_finalized_command("build")
         self.set_undefined_options("build", ("build_lib", "build_lib"))
 
     def run(self) -> None:
         assert self.build_lib is not None
+
         build_tmp_folder = Path.cwd().resolve() / "build"
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
@@ -140,6 +130,14 @@ def cmake_extensions(
     ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
 
     dist.has_ext_modules = lambda: True  # type: ignore[method-assign]
+    # Hack for stdlib distutils
+    if not setuptools.distutils.__package__.startswith("setuptools"):  # type: ignore[attr-defined]
+
+        class EvilList(list):  # type: ignore[type-arg]
+            def __len__(self) -> int:
+                return super().__len__() or 1
+
+        dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
     build = dist.get_command_obj("build")
     assert build is not None
