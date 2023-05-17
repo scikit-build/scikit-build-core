@@ -42,7 +42,7 @@ class CMakeBuild(setuptools.Command):
         pass
 
     def finalize_options(self) -> None:
-        self.set_undefined_options("build_ext", ("build_platlib", "build_lib"))
+        self.set_undefined_options("build", ("build_platlib", "build_lib"))
 
     def run(self) -> None:
         assert self.build_lib is not None
