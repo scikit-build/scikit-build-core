@@ -25,6 +25,7 @@ def __dir__() -> list[str]:
 
 class CMakeBuild(setuptools.Command):
     build_lib: str | None = None
+    build_temp: str | None = None
     editable_mode: bool = False
     source_dir: str
 
@@ -32,12 +33,17 @@ class CMakeBuild(setuptools.Command):
         pass
 
     def finalize_options(self) -> None:
-        self.set_undefined_options("build", ("build_lib", "build_lib"))
+        self.set_undefined_options(
+            "build",
+            ("build_lib", "build_lib"),
+            ("build_temp", "build_temp"),
+        )
 
     def run(self) -> None:
         assert self.build_lib is not None
+        assert self.build_temp is not None
 
-        build_tmp_folder = Path.cwd().resolve() / "build"
+        build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
         dist = self.distribution
