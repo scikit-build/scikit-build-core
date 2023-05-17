@@ -9,18 +9,18 @@ scikit\_build\_core.setuptools package
 Submodules
 ----------
 
-scikit\_build\_core.setuptools.build\_meta module
--------------------------------------------------
+scikit\_build\_core.setuptools.build\_cmake module
+--------------------------------------------------
 
-.. automodule:: scikit_build_core.setuptools.build_meta
+.. automodule:: scikit_build_core.setuptools.build_cmake
    :members:
    :undoc-members:
    :show-inheritance:
 
-scikit\_build\_core.setuptools.extension module
------------------------------------------------
+scikit\_build\_core.setuptools.build\_meta module
+-------------------------------------------------
 
-.. automodule:: scikit_build_core.setuptools.extension
+.. automodule:: scikit_build_core.setuptools.build_meta
    :members:
    :undoc-members:
    :show-inheritance:
