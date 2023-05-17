@@ -24,13 +24,15 @@ def __dir__() -> list[str]:
 
 
 class CMakeBuild(setuptools.Command):
-    build_lib: str | None = None
-    build_temp: str | None = None
-    editable_mode: bool = False
+    build_lib: str | None
+    build_temp: str | None
+    editable_mode: bool
     source_dir: str
 
     def initialize_options(self) -> None:
-        pass
+        self.build_lib = None
+        self.build_temp = None
+        self.editable_mode = False
 
     def finalize_options(self) -> None:
         self.set_undefined_options(
