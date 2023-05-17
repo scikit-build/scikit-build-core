@@ -64,10 +64,7 @@ class BuildCMake(setuptools.Command):
         assert self.plat_name is not None
 
         if self.source_dir is None:
-            if Path("CMakeLists.txt").is_file():
-                self.source_dir = "."
-            else:
-                return
+            return
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
@@ -171,7 +168,6 @@ def _prepare_build_cmake_command(dist: Distribution) -> None:
     # Prepare new build_cmake command and make sure build calls it
     build = dist.get_command_obj("build")
     assert build is not None
-    dist.cmdclass["build_cmake"] = BuildCMake
     if "build_cmake" not in {x for x, _ in build.sub_commands}:
         build.sub_commands.append(("build_cmake", None))
 
@@ -182,18 +178,12 @@ def cmake_source_dir(
     assert attr == "cmake_source_dir"
     assert Path(value).is_dir()
 
-    # finalize_distribution_options(dist)
-
     build_cmake = dist.get_command_obj("build_cmake")
     assert isinstance(build_cmake, BuildCMake)
     build_cmake.source_dir = value
 
 
 def finalize_distribution_options(dist: Distribution) -> None:
-    if "build_cmake" not in dist.cmdclass:
-        _prepare_settings()
-        _prepare_extension_detection(dist)
-        _prepare_build_cmake_command(dist)
-
-
-finalize_distribution_options.order = -10  # type: ignore[attr-defined]
+    _prepare_settings()
+    _prepare_extension_detection(dist)
+    _prepare_build_cmake_command(dist)

@@ -242,6 +242,15 @@ def package_simple_setuptools_ext(
 
 
 @pytest.fixture()
+def package_mixed_setuptools(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("mixed_setuptools")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_filepath_pure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
