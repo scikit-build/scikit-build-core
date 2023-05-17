@@ -16,7 +16,7 @@ from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
-__all__: list[str] = ["CMakeBuild", "cmake_extensions"]
+__all__: list[str] = ["CMakeBuild", "prepare", "cmake_source_dir"]
 
 
 def __dir__() -> list[str]:
@@ -111,13 +111,8 @@ class CMakeBuild(setuptools.Command):
     #    return {}
 
 
-def cmake_extensions(
-    dist: Distribution, attr: Literal["cmake_extensions"], source_dir: str
-) -> None:
+def _prepare_settings() -> None:
     settings = SettingsReader.from_file("pyproject.toml", {}).settings
-
-    assert attr == "cmake_extensions"
-    assert source_dir
 
     assert (
         not settings.wheel.expand_macos_universal_tags
@@ -129,6 +124,10 @@ def cmake_extensions(
         not settings.wheel.py_api
     ), "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
 
+
+def _prepare_extension_detection(dist: Distribution) -> None:
+    # Setuptools needs to know that it has extensions modules
+
     dist.has_ext_modules = lambda: True  # type: ignore[method-assign]
     # Hack for stdlib distutils
     if not setuptools.distutils.__package__.startswith("setuptools"):  # type: ignore[attr-defined]
@@ -139,6 +138,9 @@ def cmake_extensions(
 
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
+
+def _prepare_build_cmake_command(dist: Distribution, source_dir: str) -> None:
+    # Prepare new build_cmake command and make sure build calls it
     build = dist.get_command_obj("build")
     assert build is not None
     dist.cmdclass["build_cmake"] = CMakeBuild
@@ -147,10 +149,16 @@ def cmake_extensions(
         build.sub_commands.append(("build_cmake", None))
 
 
+def prepare(dist: Distribution, *, source_dir: str) -> None:
+    _prepare_settings()
+    _prepare_extension_detection(dist)
+    _prepare_build_cmake_command(dist, source_dir)
+
+
 def cmake_source_dir(
     dist: Distribution, attr: Literal["cmake_source_dir"], value: str
 ) -> None:
     assert attr == "cmake_source_dir"
     assert Path(value).is_dir()
 
-    cmake_extensions(dist, "cmake_extensions", value)
+    prepare(dist, source_dir=value)
