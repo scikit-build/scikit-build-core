@@ -5,3 +5,9 @@ requires = [
     "pybind11",
 ]
 build-backend = "scikit_build_core.setuptools.build_meta"
+
+[tool.scikit-build]
+cmake.args = ["-DEXAMPLE_DEFINE3=3"]
+
+[tool.scikit-build.cmake.define]
+EXAMPLE_DEFINE4 = "4"
