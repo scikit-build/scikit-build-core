@@ -94,6 +94,11 @@ class WheelSettings:
     #: root, giving access to "/platlib", "/data", "/headers", and "/scripts".
     install_dir: str = ""
 
+    #: A list of license files to include in the wheel. Supports glob patterns.
+    license_files: List[str] = dataclasses.field(
+        default_factory=lambda: ["LICENSE*", "COPYING*", "COPYRIGHT*"]
+    )
+
 
 @dataclasses.dataclass
 class BackportSettings:

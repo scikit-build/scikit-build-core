@@ -51,6 +51,7 @@ def test_pep517_sdist():
                 "pyproject.toml",
                 "setup.cfg",
                 "setup.py",
+                "LICENSE",
                 # TODO: "src/main.cpp",
             )
         } | {"cmake-example-0.0.1"}

@@ -41,6 +41,7 @@ def test_pep518_sdist(package_simple_pyproject_ext):
                 "pyproject.toml",
                 "src/main.cpp",
                 "PKG-INFO",
+                "LICENSE",
             )
         }
         pkg_info = f.extractfile("cmake-example-0.0.1/PKG-INFO")
@@ -70,9 +71,10 @@ def test_pep518_wheel(isolated, build_args):
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
 
-        assert len(file_names) == 2
+        assert len(file_names) == 3
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
+        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")
@@ -118,9 +120,10 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
 
-        assert len(file_names) == 2
+        assert len(file_names) == 3
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
+        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")
