@@ -46,6 +46,10 @@ class CMakeSettings:
     #: "", etc.
     build_type: str = "Release"
 
+    #: The source directory to use when building the project. Currently only affects
+    #: the native builder (not the setuptools plugin).
+    source_dir: str = ""
+
 
 @dataclasses.dataclass
 class LoggingSettings:
