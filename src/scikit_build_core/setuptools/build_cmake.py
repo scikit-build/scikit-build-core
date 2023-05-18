@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import setuptools
+import setuptools.errors
 from packaging.version import Version
 from setuptools.dist import Distribution
 
@@ -38,6 +39,7 @@ def _validate_settings() -> None:
 
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
+    cmake_args: list[str] | str | None = None
 
     build_lib: str | None
     build_temp: str | None
@@ -52,6 +54,8 @@ class BuildCMake(setuptools.Command):
         ("plat-name=", "p", "platform name to cross-compile for, if supported "),
         ("debug", "g", "compile/link with debugging information"),
         ("parallel=", "j", "number of parallel build jobs"),
+        ("source-dir=", "j", "directory with CMakeLists.txt"),
+        ("cmake-args=", "a", "extra arguments for CMake"),
     ]
 
     def initialize_options(self) -> None:
@@ -61,6 +65,8 @@ class BuildCMake(setuptools.Command):
         self.editable_mode = False
         self.parallel = None
         self.plat_name = None
+        self.source_dir = None
+        self.cmake_args = None
 
     def finalize_options(self) -> None:
         self.set_undefined_options(
@@ -72,8 +78,12 @@ class BuildCMake(setuptools.Command):
             ("plat_name", "plat_name"),
         )
 
+        if isinstance(self.cmake_args, str):
+            self.cmake_args = [
+                b.strip() for a in self.cmake_args.split() for b in a.split(";")
+            ]
+
     def run(self) -> None:
-        assert self.source_dir is not None
         assert self.build_lib is not None
         assert self.build_temp is not None
         assert self.plat_name is not None
@@ -84,6 +94,14 @@ class BuildCMake(setuptools.Command):
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
 
         dist = self.distribution
+        dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
+        source_dir = self.source_dir if dist_source_dir is None else dist_source_dir
+        assert source_dir is not None, "This should not be reachable"
+
+        configure_args = self.cmake_args or []
+        assert isinstance(configure_args, list)
+        dist_cmake_args = getattr(self.distribution, "cmake_args", None)
+        configure_args.extend(dist_cmake_args or [])
 
         bdist_wheel = dist.get_command_obj("bdist_wheel")
         assert bdist_wheel is not None
@@ -101,7 +119,7 @@ class BuildCMake(setuptools.Command):
 
         config = CMaker(
             cmake,
-            source_dir=Path(self.source_dir),
+            source_dir=Path(source_dir),
             build_dir=build_temp,
             build_type=settings.cmake.build_type,
         )
@@ -126,6 +144,7 @@ class BuildCMake(setuptools.Command):
             version=Version(dist.get_version()),
             defines={},
             limited_abi=limited_api,
+            configure_args=configure_args,
         )
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
@@ -153,7 +172,10 @@ class BuildCMake(setuptools.Command):
 def _has_cmake(dist: Distribution) -> bool:
     build_cmake = dist.get_command_obj("build_cmake")
     assert isinstance(build_cmake, BuildCMake)
-    return build_cmake.source_dir is not None
+    return (
+        build_cmake.source_dir is not None
+        or getattr(dist, "cmake_source_dir", None) is not None
+    )
 
 
 def _prepare_extension_detection(dist: Distribution) -> None:
@@ -181,16 +203,22 @@ def _prepare_build_cmake_command(dist: Distribution) -> None:
         )
 
 
+def cmake_args(
+    _dist: Distribution, attr: Literal["cmake_args"], value: list[str]
+) -> None:
+    assert attr == "cmake_args"
+    if not isinstance(value, list):
+        msg = "cmake_args must be a list"
+        raise setuptools.errors.SetupError(msg)
+
+
 def cmake_source_dir(
-    dist: Distribution, attr: Literal["cmake_source_dir"], value: str
+    _dist: Distribution, attr: Literal["cmake_source_dir"], value: str
 ) -> None:
     assert attr == "cmake_source_dir"
-    assert Path(value).is_dir()
-
-    build_cmake = dist.get_command_obj("build_cmake")
-    assert isinstance(build_cmake, BuildCMake)
-
-    build_cmake.source_dir = value
+    if not Path(value).is_dir():
+        msg = "cmake_source_dir must be an existing directory"
+        raise setuptools.errors.SetupError(msg)
 
 
 def finalize_distribution_options(dist: Distribution) -> None:

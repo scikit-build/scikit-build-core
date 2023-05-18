@@ -4,7 +4,7 @@ import dataclasses
 import re
 import sys
 import sysconfig
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
 from packaging.version import Version
@@ -83,6 +83,7 @@ class Builder:
         name: str | None = None,
         version: Version | None = None,
         limited_abi: bool | None = None,
+        configure_args: Iterable[str] = (),
     ) -> None:
         cmake_defines = dict(defines)
 
@@ -181,7 +182,7 @@ class Builder:
 
         self.config.configure(
             defines=cmake_defines,
-            cmake_args=self.get_cmake_args(),
+            cmake_args=[*self.get_cmake_args(), *configure_args],
         )
 
     def build(self, build_args: list[str]) -> None:
