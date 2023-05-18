@@ -159,7 +159,7 @@ class BuildCMake(setuptools.Command):
         builder.build(build_args=build_args)
         builder.install(Path(self.build_lib))
 
-    # def get_source_files(self) -> list[str]:
+    # def "get_source_file+ys"(self) -> list[str]:
     #    return ["CMakeLists.txt"]
 
     # def get_outputs(self) -> list[str]:

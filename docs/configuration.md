@@ -380,15 +380,15 @@ CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
 
 ````
 
-## Dynamic metadata (WIP)
+## Dynamic metadata
 
-Scikit-build-core 0.3.0 will support dynamic metadata. This is not ready for
-plugin development outside of scikit-build-core;
-`tool.scikit-build.experimental=true` is required to use external plugins, since
-the interface is provisional. Nested arbitrary dicts (as seen here) are not
-supported in config-settings or environment variables.
+Scikit-build-core 0.3.0 supports dynamic metadata with two built-in plugins.
 
-There currently are two built-in plugins for dynamic metadata.
+:::{warning}
+
+This is not ready for plugin development outside of scikit-build-core;
+`tool.scikit-build.experimental=true` is required to use plugins that are not
+shipped with scikit-build-core, since the interface is provisional. :::
 
 :::{tab} Setuptools-scm
 
