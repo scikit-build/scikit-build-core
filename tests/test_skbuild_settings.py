@@ -197,7 +197,7 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             cmake.define = {a = "1", b = "2"}
             cmake.build-type = "Debug"
             cmake.verbose = true
-            cmake.source_dir = "a/b/c"
+            cmake.source-dir = "a/b/c"
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
