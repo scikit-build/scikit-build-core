@@ -101,7 +101,9 @@ jobs:
       - name: Upload coverage report
         uses: codecov/codecov-action@v3
         with:
-          name: ${{ runner.os }}-${{ matrix.python-version }}
+          name:
+            ${{ runner.os }}-${{ matrix.python-version }}-${{
+            matrix.cmake-version }}
           verbose: true
           token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 

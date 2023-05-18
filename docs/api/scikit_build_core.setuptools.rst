@@ -24,3 +24,11 @@ scikit\_build\_core.setuptools.build\_meta module
    :members:
    :undoc-members:
    :show-inheritance:
+
+scikit\_build\_core.setuptools.wrapper module
+---------------------------------------------
+
+.. automodule:: scikit_build_core.setuptools.wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:
