@@ -55,6 +55,7 @@ def test_pep517_sdist():
                 "pyproject.toml",
                 "src/main.cpp",
                 "PKG-INFO",
+                "LICENSE",
             )
         }
         pkg_info = f.extractfile("cmake-example-0.0.1/PKG-INFO")
@@ -160,9 +161,10 @@ def test_pep517_wheel(virtualenv):
                 "cmake_example-0.0.1.dist-info/entry_points.txt"
             ).read_text()
 
-        assert len(file_names) == 2
+        assert len(file_names) == 3
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
+        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")

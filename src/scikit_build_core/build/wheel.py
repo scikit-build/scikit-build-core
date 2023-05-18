@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import glob
 import os
 import shutil
 import sys
@@ -214,8 +215,20 @@ def _build_wheel_impl(
 
             process_script_dir(wheel_dirs["scripts"])
 
+        license_files = [
+            Path(x)
+            for y in settings.wheel.license_files
+            for x in glob.glob(y, recursive=True)
+        ]
+        if settings.wheel.license_files and not license_files:
+            logger.warning(
+                "No license files found, set wheel.license-files to [] to suppress this warning"
+            )
+
         with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
             wheel.build(wheel_dirs)
+            for license_file in license_files:
+                wheel.write(str(license_file), license_file.name)
 
             if editable:
                 modules = {
