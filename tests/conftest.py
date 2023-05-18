@@ -233,6 +233,17 @@ def package_simple_pyproject_ext(
 
 
 @pytest.fixture()
+def package_simple_pyproject_source_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo(
+        "simple_pyproject_source_dir",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_simple_setuptools_ext(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:

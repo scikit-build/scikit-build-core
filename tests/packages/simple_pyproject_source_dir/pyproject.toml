@@ -1,0 +1,26 @@
+[build-system]
+requires = [
+    "scikit_build_core[rich]",
+    "pybind11",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.source-dir = "src"
+
+[project]
+name = "cmake_example"
+version = "0.0.1"
+requires-python = ">=3.7"
+
+[project.optional-dependencies]
+test = ["pytest>=6.0"]
+
+[project.scripts]
+something = "other:callme"
+
+[project.gui-scripts]
+guithing = "a.b:c"
+
+[project.entry-points."one.two"]
+three = "four"

@@ -148,7 +148,7 @@ def _build_wheel_impl(
 
         config = CMaker(
             cmake,
-            source_dir=Path("."),
+            source_dir=Path(settings.cmake.source_dir or "."),
             build_dir=build_dir,
             build_type=settings.cmake.build_type,
         )

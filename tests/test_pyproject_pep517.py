@@ -191,6 +191,54 @@ def test_pep517_wheel(virtualenv):
     assert add.strip() == "3"
 
 
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.usefixtures("package_simple_pyproject_source_dir")
+def test_pep517_wheel_source_dir(virtualenv):
+    dist = Path("dist")
+    out = build_wheel("dist")
+    (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    assert wheel == dist / out
+
+    if sys.version_info >= (3, 8):
+        with wheel.open("rb") as f:
+            p = zipfile.Path(f)
+            file_names = [p.name for p in p.iterdir()]
+            metadata = p.joinpath("cmake_example-0.0.1.dist-info/METADATA").read_text()
+            entry_points = p.joinpath(
+                "cmake_example-0.0.1.dist-info/entry_points.txt"
+            ).read_text()
+
+        assert len(file_names) == 3
+        assert "cmake_example-0.0.1.dist-info" in file_names
+        file_names.remove("cmake_example-0.0.1.dist-info")
+        file_names.remove("LICENSE")
+        (so_file,) = file_names
+
+        assert so_file.startswith("cmake_example")
+        print("SOFILE:", so_file)
+
+        print(entry_points == ENTRYPOINTS)
+        assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
+        assert "Metadata-Version: 2.1" in metadata
+        assert "Name: cmake-example" in metadata
+        assert "Version: 0.0.1" in metadata
+        assert "Requires-Python: >=3.7" in metadata
+        assert "Provides-Extra: test" in metadata
+
+    virtualenv.install(wheel)
+
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)",
+    )
+    assert version.strip() == "0.0.1"
+
+    add = virtualenv.execute(
+        "import cmake_example; print(cmake_example.add(1, 2))",
+    )
+    assert add.strip() == "3"
+
+
 @pytest.mark.skip(reason="Doesn't work yet")
 @pytest.mark.compile()
 @pytest.mark.configure()
