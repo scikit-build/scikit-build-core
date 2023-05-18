@@ -1,5 +1,34 @@
 # Changelog
 
+## Version 0.4.0
+
+An important fix/feature: LICENSE files were not being included in the wheel's
+metadata folder. You can configure the license file selection via a new
+configuration option, and a reasonable default was added. You can now select a
+source directory for your CMakeLists.txt. A lot of work was done on the still
+experimental setuptools backend; it still should be seen as completely
+experimental while it is being finished.
+
+Features:
+
+- `cmake.source-dir` for CMakeLists in subdirectories by @henryiii in #323
+- Add `LICENSE` file option by @henryiii in #321
+
+Fixes:
+
+- Ninja wasn't being used if present by @henryiii in #310
+- Wheels were not including the `LICENSE` file by @henryiii in #321
+
+Setuptools plugin:
+
+- Refactor plugin as custom setuptools command by @henryiii in #312
+- Adding `cmake_args` by @henryiii in #314
+- Add wrapper for `skbuild.setup` compat by @henryiii in #315
+
+Other:
+
+- ci: add rpmlint and smoke tests by @LecrisUT in #313
+
 ## Version 0.3.3
 
 This version improves WebAssembly support (Pyodide) and fixes a reported bug in
