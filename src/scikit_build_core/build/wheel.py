@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import glob
 import os
 import shutil
 import sys
@@ -147,9 +146,9 @@ def _build_wheel_impl(
             install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
 
         license_files = {
-            Path(x): Path(x).read_bytes()
+            x: x.read_bytes()
             for y in settings.wheel.license_files
-            for x in glob.glob(y, recursive=True)
+            for x in Path().glob(y)
         }
         if settings.wheel.license_files and not license_files:
             logger.warning(

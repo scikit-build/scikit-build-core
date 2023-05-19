@@ -123,10 +123,10 @@ class WheelWriter:
         # https://github.com/FFY00/python-pyproject-metadata/pull/49
         rfc822 = copy.deepcopy(self.metadata).as_rfc822()
         for fp in self.license_files:
-            rfc822["License-File"] = f"licenses/{fp.name}"
+            rfc822["License-File"] = f"{fp}"
 
         license_entries = {
-            f"licenses/{fp.name}": data for fp, data in self.license_files.items()
+            f"licenses/{fp}": data for fp, data in self.license_files.items()
         }
 
         return {

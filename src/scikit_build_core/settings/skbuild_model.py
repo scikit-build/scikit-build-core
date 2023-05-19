@@ -100,7 +100,7 @@ class WheelSettings:
 
     #: A list of license files to include in the wheel. Supports glob patterns.
     license_files: List[str] = dataclasses.field(
-        default_factory=lambda: ["LICENSE*", "COPYING*", "COPYRIGHT*"]
+        default_factory=lambda: ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
     )
 
 
