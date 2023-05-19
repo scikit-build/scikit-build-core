@@ -3,7 +3,7 @@
 ## Version 0.4.1
 
 A fix for LICENCE files being placed in the wrong place in the wheel. Now we
-follow hatchling's structure of placing them in `*.dist-info/license`.
+follow hatchling's structure of placing them in `*.dist-info/licenses`.
 
 Fixes:
 
