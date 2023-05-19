@@ -10,7 +10,7 @@ import os
 import stat
 import time
 import zipfile
-from collections.abc import Set
+from collections.abc import Mapping, Set
 from email.message import Message
 from email.policy import EmailPolicy
 from pathlib import Path, PurePosixPath
@@ -73,6 +73,7 @@ class WheelWriter:
     wheel_metadata = WheelMetadata(root_is_purelib=False)
     buildver: str = ""
     zipfile: zipfile.ZipFile | None = None
+    license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
 
     @property
     def name_ver(self) -> str:
@@ -117,12 +118,22 @@ class WheelWriter:
                 entry_points.write("\n")
 
         self.wheel_metadata.tags = self.tags
+
         # Using deepcopy here because of a bug in pyproject-metadata
         # https://github.com/FFY00/python-pyproject-metadata/pull/49
+        rfc822 = copy.deepcopy(self.metadata).as_rfc822()
+        for fp in self.license_files:
+            rfc822["License-File"] = f"licenses/{fp.name}"
+
+        license_entries = {
+            f"licenses/{fp.name}": data for fp, data in self.license_files.items()
+        }
+
         return {
-            "METADATA": bytes(copy.deepcopy(self.metadata).as_rfc822()),
+            "METADATA": bytes(rfc822),
             "WHEEL": self.wheel_metadata.as_bytes(),
             "entry_points.txt": entry_points.getvalue().encode("utf-8"),
+            **license_entries,
         }
 
     def build(self, wheel_dirs: dict[str, Path]) -> None:

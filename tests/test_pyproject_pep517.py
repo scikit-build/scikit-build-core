@@ -273,6 +273,7 @@ def test_prepare_metdata_for_build_wheel():
         "Requires-Python": ">=3.7",
         "Provides-Extra": "test",
         "Requires-Dist": 'pytest>=6.0; extra == "test"',
+        "License-File": "licenses/LICENSE",
     }
 
     for k, b in answer.items():
