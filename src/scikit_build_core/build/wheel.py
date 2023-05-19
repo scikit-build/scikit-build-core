@@ -228,7 +228,9 @@ def _build_wheel_impl(
         with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
             wheel.build(wheel_dirs)
             for license_file in license_files:
-                wheel.write(str(license_file), license_file.name)
+                wheel.write(
+                    str(license_file), f"{wheel.dist_info}/licenses/{license_file.name}"
+                )
 
             if editable:
                 modules = {
