@@ -9,6 +9,10 @@ Fixes:
 
 - LICENCE files were placed in the wrong place by @henryiii in #325
 
+Other:
+
+- Fix rpm inspect test failures by @LecrisUT in #324
+
 ## Version 0.4.0
 
 An important fix/feature: LICENSE files were not being included in the wheel's
@@ -36,7 +40,7 @@ Setuptools plugin:
 
 Other:
 
-- ci: add rpmlint and smoke tests by @LecrisUT in #313
+- Add rpmlint and smoke tests by @LecrisUT in #313
 
 ## Version 0.3.3
 
