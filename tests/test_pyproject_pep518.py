@@ -70,11 +70,11 @@ def test_pep518_wheel(isolated, build_args):
         with wheel.open("rb") as f:
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
+            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
 
-        assert len(file_names) == 3
+        assert len(file_names) == 2
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
-        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")
@@ -119,11 +119,11 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
         with wheel.open("rb") as f:
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
+            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
 
-        assert len(file_names) == 3
+        assert len(file_names) == 2
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
-        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")

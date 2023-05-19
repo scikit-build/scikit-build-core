@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.4.1
+
+A fix for LICENCE files being placed in the wrong place in the wheel. Now we
+follow hatchling's structure of placing them in `*.dist-info/licenses`.
+
+Fixes:
+
+- LICENCE files were placed in the wrong place by @henryiii in #325
+
 ## Version 0.4.0
 
 An important fix/feature: LICENSE files were not being included in the wheel's

@@ -160,11 +160,11 @@ def test_pep517_wheel(virtualenv):
             entry_points = p.joinpath(
                 "cmake_example-0.0.1.dist-info/entry_points.txt"
             ).read_text()
+            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
 
-        assert len(file_names) == 3
+        assert len(file_names) == 2
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
-        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")
@@ -208,11 +208,11 @@ def test_pep517_wheel_source_dir(virtualenv):
             entry_points = p.joinpath(
                 "cmake_example-0.0.1.dist-info/entry_points.txt"
             ).read_text()
+            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
 
-        assert len(file_names) == 3
+        assert len(file_names) == 2
         assert "cmake_example-0.0.1.dist-info" in file_names
         file_names.remove("cmake_example-0.0.1.dist-info")
-        file_names.remove("LICENSE")
         (so_file,) = file_names
 
         assert so_file.startswith("cmake_example")
