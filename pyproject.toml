@@ -48,9 +48,6 @@ pyproject = [
     "pyproject-metadata >=0.5",
     "pathspec >=0.10.1",
 ]
-rich = [
-    "rich",
-]
 test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",

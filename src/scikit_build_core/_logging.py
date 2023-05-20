@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import sys
-import typing
 from typing import Any
 
 __all__ = ["logger", "raw_logger", "ScikitBuildLogger", "rich_print"]
@@ -125,17 +124,8 @@ def _process_rich(msg: object) -> str:
     )
 
 
-def fake_rich_print(*args: object, **kwargs: object) -> None:
+def rich_print(*args: object, **kwargs: object) -> None:
     args_2 = tuple(_process_rich(arg) for arg in args)
     if args != args_2:
         args_2 = (*args_2[:-1], args_2[-1] + colors()["reset"])
     print(*args_2, **kwargs)  # type: ignore[call-overload] # noqa: T201
-
-
-if typing.TYPE_CHECKING:
-    rich_print = fake_rich_print
-else:
-    try:
-        from rich import print as rich_print
-    except ModuleNotFoundError:
-        rich_print = fake_rich_print

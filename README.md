@@ -84,8 +84,9 @@ version = "0.0.1"
 ```
 
 You can (and should) specify the rest of the entries in `project`, but these are
-the minimum to get started. You can also add the `rich` (more colorful
-printouts) or `pyproject` (pre-load some dependencies) extras if you want.
+the minimum to get started. You can also `scikit-build-core[pyproject]` to
+pre-load some dependencies if you want; in some cases this might be marginally
+faster.
 
 An example `CMakeLists.txt`:
 
