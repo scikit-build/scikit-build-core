@@ -83,7 +83,10 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/scikit-build/scikit-build-core"
-Examples = "https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages"
+Documentation = "https://scikit-build-core.readthedocs.io"
+Discussions = "https://github.com/orgs/scikit-build/discussions"
+Issues = "https://github.com/scikit-build/scikit-build-core/issues"
+Changelog = "https://scikit-build-core.readthedocs.io/en/latest/changelog.html"
 
 [project.entry-points]
 "distutils.commands".build_cmake = "scikit_build_core.setuptools.build_cmake:BuildCMake"
