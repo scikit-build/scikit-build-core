@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.4.2
+
+This is a quick followup to LICENSE file handing to closer match the current
+draft of [PEP 639](https://peps.python.org/pep-0639). It also removes the
+automatic optional Rich logging, which doesn't work well with Pip's subprocess
+piping, being cropped to a very narrow width regardless of terminal size.
+
+Fixes:
+
+- Add `License-file` metadata entry & update default by @henryiii in #329
+- Drop optional Rich logging/error by @henryiii in #330
+
+Other:
+
+- Update PyPI links by @henryiii in #331
+
 ## Version 0.4.1
 
 A fix for LICENCE files being placed in the wrong place in the wheel. Now we
