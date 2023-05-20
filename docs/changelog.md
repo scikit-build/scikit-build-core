@@ -78,8 +78,6 @@ This is a small release fixing a regression in some cases caused by adding
 `Python_LIBRARY`. This has been reverted on non-Windows platforms, since it is
 only needed on Windows.
 
-### What's Changed
-
 Fixes:
 
 - Support older setuptools-scm by @henryiii in #284
@@ -109,8 +107,6 @@ support for FindPython, scripts entries now process shebang lines, and setting a
 `build-dir` with `{wheel_tag}` was not working before. The docs have been
 started, with a quickstart for common situations, a page on configuration, and
 some info on authoring a CMakeLists.
-
-### What's Changed
 
 Features:
 
@@ -153,8 +149,6 @@ with wheel 0.40). It also ensures the test suite will still pass in an
 environment with `SOURCE_DATE_EPOCH` already set. A few internal changes are
 paving the way to 0.3.0.
 
-### What's Changed
-
 Fixes:
 
 - zipinfo should report regular files by @henryiii in #220
@@ -177,8 +171,6 @@ This release fixes the tag for Windows ARM wheels, and has some internal
 refactoring to prepare for the next new features. A new `{wheel_tag}` value is
 available for `build-dir`. Some basic setup was done on the docs, as well. Debug
 logging and test output has been improved a little, as well.
-
-### What's Changed
 
 Changes:
 
@@ -210,8 +202,6 @@ writer implementation and support `prepare_metadata_for_build_wheel`.
 
 Scikit-build-core now also contains a backport of FindPython from CMake 3.26,
 which fixes SOABI on PyPy and supports the Stable ABI / Limited API.
-
-### What's Changed
 
 Features:
 
@@ -250,16 +240,12 @@ Other things:
 
 ## Version 0.1.5
 
-### What's Changed
-
 Fixes:
 
 - Ninja path not being set correctly by @henryiii in #166
 - Minor touchup to ninja / make by @henryiii in #167
 
 ## Version 0.1.4
-
-### What's Changed
 
 Fixes:
 
@@ -275,8 +261,6 @@ Other things:
 - Fix issues mocking in tests with packaging 22 by @henryiii in #155
 
 ## Version 0.1.3
-
-### What's Changed
 
 Fixes:
 
@@ -296,8 +280,6 @@ Fixes:
 - Fix issue with 32-bit Windows in 0.1.1 by @henryiii in #142
 
 ## Version 0.1.1
-
-### What's Changed
 
 Fixes:
 
@@ -321,8 +303,6 @@ released.
 
 Still preparing for release. One small addition to the error printout.
 
-### What's Changed
-
 Features:
 
 - Did you mean? for config-settings and pyproject.toml by @henryiii in #135
@@ -334,8 +314,6 @@ Testing:
 ## Version 0.1.0rc1
 
 Preparing for a non-beta release.
-
-### What's Changed
 
 Fixes:
 
@@ -360,8 +338,6 @@ Testing:
 
 A quick fix for macOS universal2 tags not expanding when enabled.
 
-### What's Changed
-
 Fixes:
 
 - Expand macos tags missing by @henryiii in #105
@@ -376,8 +352,6 @@ Other things:
 https://github.com/scikit-build/scikit-build-core/compare/v0.1.0b1...v0.1.0b2
 
 ## Version 0.1.0b1
-
-### What's Changed
 
 This release is focused on preparing for conda-forge and some macOS fixes.
 
@@ -406,8 +380,6 @@ Other things:
 This release adds a lot of configuration options, including `minimum-version`,
 which can be set to 0.0 to ensure defaults remain consistent (similar to
 `cmake_minimum_required`).
-
-### What's Changed
 
 Features:
 
@@ -441,8 +413,6 @@ Other things:
 This release brings a lot of further development. This is starting to be used by
 downstream projects; it is a good idea to be a little careful with versions
 still, configuration may change.
-
-### What's Changed
 
 Features:
 
