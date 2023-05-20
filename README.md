@@ -169,7 +169,7 @@ wheel.expand-macos-universal-tags = false
 wheel.install-dir = "."
 
 # The licence file(s) to include in the wheel metadata directory.
-wheel.license-files = ["LICENSE*", "COPYING*", "COPYRIGHT*"]
+wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 
 # This will backport an internal copy of FindPython if CMake is less than this
 # value. Set to 0 or the empty string to disable. The default will be kept in

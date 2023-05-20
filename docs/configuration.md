@@ -177,10 +177,10 @@ for now.
 
 :::
 
-By default, any `LICENSE*`, `COPYING*`, or `COPYRIGHT*` file in the root of the
-build directory will be picked up. You can specify an exact list of files if you
-prefer, or if you your license file is in a different directory. The files must
-have unique names. Globbing patterns are supported.
+By default, any `LICEN[CS]E*`, `COPYING*`, `NOTICE*`, or `AUTHORS*` file in the
+root of the build directory will be picked up. You can specify an exact list of
+files if you prefer, or if your license file is in a different directory.
+Globbing patterns are supported.
 
 ```toml
 [tool.scikit-build]

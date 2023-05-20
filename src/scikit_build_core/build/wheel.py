@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import glob
 import os
 import shutil
 import sys
@@ -146,6 +145,16 @@ def _build_wheel_impl(
         else:
             install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
 
+        license_files = {
+            x: x.read_bytes()
+            for y in settings.wheel.license_files
+            for x in Path().glob(y)
+        }
+        if settings.wheel.license_files and not license_files:
+            logger.warning(
+                "No license files found, set wheel.license-files to [] to suppress this warning"
+            )
+
         config = CMaker(
             cmake,
             source_dir=Path(settings.cmake.source_dir or "."),
@@ -162,12 +171,19 @@ def _build_wheel_impl(
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
-            wheel = WheelWriter(metadata, Path(metadata_directory), tags.as_tags_set())
+            wheel = WheelWriter(
+                metadata,
+                Path(metadata_directory),
+                tags.as_tags_set(),
+                license_files=license_files,
+            )
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
             dist_info.mkdir(parents=True)
             for key, data in dist_info_contents.items():
                 path = dist_info / key
+                if not path.parent.is_dir():
+                    path.parent.mkdir(exist_ok=True, parents=True)
                 path.write_bytes(data)
             return WheelImplReturn(wheel_filename=dist_info.name)
 
@@ -215,22 +231,13 @@ def _build_wheel_impl(
 
             process_script_dir(wheel_dirs["scripts"])
 
-        license_files = [
-            Path(x)
-            for y in settings.wheel.license_files
-            for x in glob.glob(y, recursive=True)
-        ]
-        if settings.wheel.license_files and not license_files:
-            logger.warning(
-                "No license files found, set wheel.license-files to [] to suppress this warning"
-            )
-
-        with WheelWriter(metadata, Path(wheel_directory), tags.as_tags_set()) as wheel:
+        with WheelWriter(
+            metadata,
+            Path(wheel_directory),
+            tags.as_tags_set(),
+            license_files=license_files,
+        ) as wheel:
             wheel.build(wheel_dirs)
-            for license_file in license_files:
-                wheel.write(
-                    str(license_file), f"{wheel.dist_info}/licenses/{license_file.name}"
-                )
 
             if editable:
                 modules = {
