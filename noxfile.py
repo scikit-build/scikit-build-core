@@ -59,9 +59,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(
-        session, install_args=["hatch-fancy-pypi-readme", "rich", "setuptools-scm"]
-    )
+    _run_tests(session, install_args=["hatch-fancy-pypi-readme", "setuptools-scm"])
 
 
 @nox.session

@@ -48,7 +48,6 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "hatchling",
         "pip>=23",
         "pybind11",
-        "rich",
         "setuptools",
         "virtualenv",
         "wheel",
@@ -223,10 +222,10 @@ def package_simple_pyproject_ext(
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
-        "920c8475bf53c67231dbe3a08c1b533306e89f79dfbd09c1fe2ec55ec6c8fe0c",
-        "617737581c2e6f42137539c46c0bf904ea43a7b653925dbbcf8dce88e4a835a8",
-        "b41badc7999eddd2f4a59aa244baa04b9498d699888c2ced33655396108616a4",
-        "2fb6482b83f624d1fe83e30579f9507167e1db9e5256bc0f47a907abb9ae98ec",
+        "cbf3102cf86f709dfd3f244b69e5ee3faff9e3c94c53ef85f146d9bad96660b3",
+        "538a8221e10c5029c78127e4169d2df622b9a88dfce12a8b63eeaaa98cda8a09",
+        "0dab37b48497f95c044781204b7d49c752739b32a0ef7a7a02ec987b5c4a210b",
+        "feeedcb0070a211d93b967fe083aa31e448842eb9b93d5e428807348e40e44e8",
     )
     process_package(package, tmp_path, monkeypatch)
     return package
@@ -306,7 +305,6 @@ def pytest_report_header() -> str:
         "pip",
         "pybind11",
         "pyproject_metadata",
-        "rich",
         "scikit_build_core",
         "setuptools",
         "virtualenv",
