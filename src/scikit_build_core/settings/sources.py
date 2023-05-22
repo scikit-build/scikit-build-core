@@ -3,11 +3,10 @@ This is the configuration tooling for scikit-build-core. This is build around
 the :class:`Source` Protocol. Sources are created with some input (like a toml
 file for the :class:`TOMLSource`). Sources also usually have some prefix (like
 ``tool.scikit-build``) as well. The :class:`SourceChain` holds a collection of
-Sources.
+Sources, and is the primary way to use them.
 
-While Sources are built around the ``.convert`` method, an end user interacts
-with :class:`SourceChain` via ``.convert_target``, which takes a Dataclass class
-and returns an instance with fields populated.
+An end user interacts with :class:`SourceChain` via ``.convert_target``, which
+takes a Dataclass class and returns an instance with fields populated.
 
 Example of usage::
 
@@ -15,6 +14,18 @@ Example of usage::
     settings = sources.convert_target(SomeSettingsModel)
 
     unrecognized_options = list(source.unrecognized_options(SomeSettingsModel)
+
+
+Naming conventions:
+
+- ``model`` is the complete Dataclass.
+- ``target`` is the type to convert a single item to.
+- ``settings`` is the input data source (unless it already has a name, like
+  ``env``).
+- ``options`` are the names of the items in the ``model``, formatted in the
+  style of the current Source.
+- ``fields`` are the tuple of strings describing a nested field in the
+  ``model``.
 """
 
 
@@ -22,6 +33,7 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import typing
 from collections.abc import Generator, Iterator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
@@ -37,16 +49,16 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _dig_strict(dict_: Mapping[str, Any], *names: str) -> Any:
+def _dig_strict(__dict: Mapping[str, Any], *names: str) -> Any:
     for name in names:
-        dict_ = dict_[name]
-    return dict_
+        __dict = __dict[name]
+    return __dict
 
 
-def _dig_not_strict(dict_: Mapping[str, Any], *names: str) -> Any:
+def _dig_not_strict(__dict: Mapping[str, Any], *names: str) -> Any:
     for name in names:
-        dict_ = dict_.get(name, {})
-    return dict_
+        __dict = __dict.get(name, {})
+    return __dict
 
 
 def _dig_fields(__opt: Any, *names: str) -> Any:
@@ -109,31 +121,31 @@ def _get_target_raw_type(target: type[Any]) -> type[Any]:
     return target
 
 
-def _get_inner_type(target: type[Any]) -> type[Any]:
+def _get_inner_type(__target: type[Any]) -> type[Any]:
     """
     Takes a types like ``List[str]`` and returns str,
     or ``Dict[str, int]`` and returns int.
     """
 
-    raw_target = _get_target_raw_type(target)
-    target = _process_union(target)
+    raw_target = _get_target_raw_type(__target)
+    target = _process_union(__target)
     if raw_target == list:
-        assert isinstance(target, TypeLike)
+        assert isinstance(__target, TypeLike)
         return target.__args__[0]
     if raw_target == dict:
-        assert isinstance(target, TypeLike)
+        assert isinstance(__target, TypeLike)
         return target.__args__[1]
     msg = f"Expected a list or dict, got {target!r}"
     raise AssertionError(msg)
 
 
-def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[str]]:
+def _nested_dataclass_to_names(__target: type[Any], *inner: str) -> Iterator[list[str]]:
     """
     Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
     """
 
-    if dataclasses.is_dataclass(target):
-        for field in dataclasses.fields(target):
+    if dataclasses.is_dataclass(__target):
+        for field in dataclasses.fields(__target):
             yield from _nested_dataclass_to_names(field.type, *inner, field.name)
     else:
         yield list(inner)
@@ -160,8 +172,6 @@ class Source(Protocol):
         """
         Convert an ``item`` from the base representation of the source's source
         into a ``target`` type. Raises TypeError if the conversion fails.
-        Currently, this can also raise NotImplementedError if this is a
-        composite source.
         """
         ...
 
@@ -437,11 +447,6 @@ class SourceChain:
         msg = f"{fields!r} not found in any source"
         raise KeyError(msg)
 
-    @classmethod
-    def convert(cls, item: Any, target: type[T]) -> T:  # noqa: ARG003
-        msg = "SourceChain cannot convert items, use the result from has_item"
-        raise NotImplementedError(msg)
-
     def convert_target(self, target: type[T], *prefixes: str) -> T:
         """
         Given a dataclass type, create an object of that dataclass filled
@@ -507,6 +512,8 @@ class SourceChain:
         for source in self.sources:
             yield from source.unrecognized_options(options)
 
-    def all_option_names(self, target: type[Any]) -> Iterator[str]:
-        for source in self.sources:
-            yield from source.all_option_names(target)
+
+if typing.TYPE_CHECKING:
+    _: Source = typing.cast(EnvSource, None)
+    _ = typing.cast(ConfSource, None)
+    _ = typing.cast(TOMLSource, None)
