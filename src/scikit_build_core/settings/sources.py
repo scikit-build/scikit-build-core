@@ -1,3 +1,23 @@
+"""
+This is the configuration tooling for scikit-build-core. This is build around
+the :class:`Source` Protocol. Sources are created with some input (like a toml
+file for the :class:`TOMLSource`). Sources also usually have some prefix (like
+``tool.scikit-build``) as well. The :class:`SourceChain` holds a collection of
+Sources.
+
+While Sources are built around the ``.convert`` method, an end user interacts
+with :class:`SourceChain` via ``.convert_target``, which takes a Dataclass class
+and returns an instance with fields populated.
+
+Example of usage::
+
+    sources = SourceChain(TOMLSource("tool", "mypackage", settings=pyproject_dict), ...)
+    settings = sources.convert_target(SomeSettingsModel)
+
+    unrecognized_options = list(source.unrecognized_options(SomeSettingsModel)
+"""
+
+
 from __future__ import annotations
 
 import dataclasses
@@ -53,7 +73,8 @@ class TypeLike(Protocol):
 
 def _process_union(target: type[Any]) -> Any:
     """
-    Selects the non-None item in an Optional or Optional-like Union. Passes through non-Unions.
+    Selects the non-None item in an Optional or Optional-like Union. Passes
+    through non-Unions.
     """
 
     if (
@@ -77,8 +98,8 @@ def _process_union(target: type[Any]) -> Any:
 
 def _get_target_raw_type(target: type[Any]) -> type[Any]:
     """
-    Takes a type like Optional[str] and returns str,
-    or Optional[Dict[str, int]] and returns dict.
+    Takes a type like ``Optional[str]`` and returns str,
+    or ``Optional[Dict[str, int]]`` and returns dict.
     """
 
     target = _process_union(target)
@@ -90,8 +111,8 @@ def _get_target_raw_type(target: type[Any]) -> type[Any]:
 
 def _get_inner_type(target: type[Any]) -> type[Any]:
     """
-    Takes a types like List[str] and returns str,
-    or Dict[str, int] and returns int.
+    Takes a types like ``List[str]`` and returns str,
+    or ``Dict[str, int]`` and returns int.
     """
 
     raw_target = _get_target_raw_type(target)
@@ -108,7 +129,7 @@ def _get_inner_type(target: type[Any]) -> type[Any]:
 
 def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[str]]:
     """
-    Yields each entry, like ("a", "b", "c") for a.b.c
+    Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
     """
 
     if dataclasses.is_dataclass(target):
@@ -121,23 +142,42 @@ def _nested_dataclass_to_names(target: type[Any], *inner: str) -> Iterator[list[
 class Source(Protocol):
     def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
-        Check if the source contains a chain of fields. For example, fields =
-        [Field(name="a"), Field(name="b")] will check if the source contains the
-        key "a.b".
+        Check if the source contains a chain of fields. For example, ``fields =
+        [Field(name="a"), Field(name="b")]`` will check if the source contains the
+        key "a.b". ``is_dict`` should be set if it can be nested.
         """
         ...
 
     def get_item(self, *fields: str, is_dict: bool) -> Any:
+        """
+        Select an item from a chain of fields. Raises KeyError if
+        the there is no item. ``is_dict`` should be set if it can be nested.
+        """
         ...
 
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
+        """
+        Convert an ``item`` from the base representation of the source's source
+        into a ``target`` type. Raises TypeError if the conversion fails.
+        Currently, this can also raise NotImplementedError if this is a
+        composite source.
+        """
         ...
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        """
+        Given a model, produce an iterator of all unrecognized option names.
+        Empty iterator if this can't be computed for the source (like for
+        environment variables).
+        """
         ...
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        """
+        Given a model, produce a list of all possible names (used for producing
+        suggestions).
+        """
         ...
 
 
@@ -185,7 +225,7 @@ class EnvSource:
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
-        raise AssertionError(msg)
+        raise TypeError(msg)
 
     def unrecognized_options(
         self, options: object  # noqa: ARG002
@@ -294,7 +334,7 @@ class ConfSource:
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
-        raise AssertionError(msg)
+        raise TypeError(msg)
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         if not self.verify:
@@ -363,7 +403,7 @@ class TOMLSource:
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
-        raise AssertionError(msg)
+        raise TypeError(msg)
 
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         yield from _unrecognized_dict(self.settings, options, self.prefixes)
