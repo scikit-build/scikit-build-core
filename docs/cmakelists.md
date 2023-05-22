@@ -23,14 +23,20 @@ as that include "Embed" component, which is not always present and is not
 related to making Python extension modules.
 
 If you are making a Limited ABI / Stable API package, you'll need the
-`Development.SABIModule` component instead.
+`Development.SABIModule` component instead. You can use the
+`SKBUILD_LIMITED_API` variable to check to see if it was requested.
+
+If you want to use the old, deprecated FindPythnoInterp and FindPythonLibs
+instead, you can. Though it should be noted that FindPythonLibs requires a trick
+to make it work properly if a Python library is not preset (like in manylinux):
+you have to set `PYTHON_LIBRARY` to something (doesn't matter what) to make it
+succeed.
 
 ## Finding other packages
 
 Scikit-build-core includes the site-packages directory in CMake's search path,
 so packages can provide a find package config with a name matching the package
-name - such as the `pybind11` package. Later versions of scikit-build core will
-include a design for package to provide arbitrary CMake code.
+name - such as the `pybind11` package.
 
 Third party packages can declare entry-points `cmake.module` and `cmake.prefix`,
 and the specified module will be added to `CMAKE_PREFIX_PATH` and
@@ -63,5 +69,5 @@ configuration, with the variables:
 
 ## Future additions
 
-Scikit-build-core does not include helpers for Fortran or Cython like
-scikit-build classic yet. These will be carefully reimagined soon.
+Scikit-build-core does not include helpers for F2Py or Cython like scikit-build
+classic yet. These will be carefully reimagined soon.
