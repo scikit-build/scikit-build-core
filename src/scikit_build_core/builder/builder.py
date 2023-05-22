@@ -165,7 +165,7 @@ class Builder:
                 ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
             assert isinstance(ext_suffix, str)
             cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
-            
+
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
         cache_config["SKBUILD_LIMITED_ABI"] = limited_abi
 
