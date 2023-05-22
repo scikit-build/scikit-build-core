@@ -71,7 +71,11 @@ class Builder:
         """
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
-        env_cmake_args = (b.strip() for a in self.config.env.get("CMAKE_ARGS", "").split() for b in a.split(";"))
+        env_cmake_args = (
+            b.strip()
+            for a in self.config.env.get("CMAKE_ARGS", "").split()
+            for b in a.split(";")
+        )
 
         return [*self.settings.cmake.args, *env_cmake_args]
 
