@@ -8,10 +8,10 @@ from setuptools.build_meta import (
 )
 
 if hasattr(setuptools.build_meta, "build_editable"):
-    from setuptools.build_meta import build_editable  # type: ignore[attr-defined]
+    from setuptools.build_meta import build_editable
 
 if hasattr(setuptools.build_meta, "prepare_metadata_for_build_editable"):
-    from setuptools.build_meta import (  # type: ignore[attr-defined]
+    from setuptools.build_meta import (
         prepare_metadata_for_build_editable,
     )
 
@@ -63,7 +63,7 @@ if hasattr(setuptools.build_meta, "get_requires_for_build_editable"):
         from ..builder.get_requires import GetRequires
 
         requires = GetRequires(config_settings)
-        setuptools_reqs = setuptools.build_meta.get_requires_for_build_editable(  # type: ignore[attr-defined]
+        setuptools_reqs = setuptools.build_meta.get_requires_for_build_editable(
             config_settings
         )
         return [*setuptools_reqs, *requires.cmake(), *requires.ninja()]
