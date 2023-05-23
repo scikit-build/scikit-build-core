@@ -326,8 +326,9 @@ SKBUILD_CMAKE_DEFINES: SOME_DEFINE=ON
 ````
 
 You can also manually specify the exact cmake args. Beyond the normal
-`SKBUILD_CMAKE_ARGS`, the `CMAKE_ARGS` environment variable is also supported
-(with some filtering for options scikit-build-core doesn't support overriding).
+`SKBUILD_CMAKE_ARGS`, the `CMAKE_ARGS` space-separated environment variable is
+also supported (with some filtering for options scikit-build-core doesn't
+support overriding).
 
 ````{tab} pyproject.toml
 
@@ -375,7 +376,7 @@ $ pipx run build -Ccmake.args=-DSOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
 
 ```yaml
 SKBUILD_CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
-CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
+CMAKE_ARGS: -DSOME_DEFINE=ON -DOTHER=OFF
 ```
 
 ````
