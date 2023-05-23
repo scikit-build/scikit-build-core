@@ -54,7 +54,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.267
+    rev: v0.0.269
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -86,7 +86,7 @@ repos:
           - rich
           - setuptools-scm
           - tomli
-          - types-setuptools>=67.6.0.5
+          - types-setuptools>=67.8
 
   - repo: https://github.com/henryiii/check-sdist
     rev: "v0.1.2"
