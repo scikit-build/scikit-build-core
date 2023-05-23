@@ -115,7 +115,7 @@ class Builder:
         )
         cmake_defines.update(local_def)
 
-        cache_config: dict[str, str | Path] = {
+        cache_config: dict[str, str | Path | bool] = {
             "SKBUILD": "2",
             "SKBUILD_CORE_VERSION": __version__,
         }
