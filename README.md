@@ -1,11 +1,10 @@
 # scikit-build-core
 
 [![Documentation Status][rtd-badge]][rtd-link]
+[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 
 [![Actions Status][actions-badge]][actions-link]
-[![Code style: black][black-badge]][black-link]
 [![codecov][codecov-badge]][codecov-link]
-[![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
@@ -211,6 +210,24 @@ Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
 used to set extra CMake args. `ARCHFLAGS` is used to specify macOS universal2 or
 cross-compiles, just like setuptools.
 
+## Other projects for building
+
+Scikit-build-core is a binary build backend. There are also other binary build
+backends:
+
+- [py-build-cmake][]: A different attempt at a standards compliant builder for
+  CMake. Strong focus on cross-compilation. Uses Flit internals.
+- [meson-python][]: A meson-based build backend; has some maintainer overlap
+  with scikit-build-core.
+- [maturin][]: A build backend for Rust projects, using Cargo.
+- [enscons][]: A SCons based backend, not very actively developed (it predates
+  all the others in modern standard support!)
+
+If you don't need a binary build, you don't need to use a binary build backend!
+There are some very good Python build backends; we recommend [hatchling][] as a
+good balance between good defaults for beginners and good support for advanced
+use cases. This is the tool scikit-build-core itself uses.
+
 ## Acknowledgements
 
 Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
@@ -234,4 +251,8 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [rtd-badge]:                https://readthedocs.org/projects/scikit-build-core/badge/?version=latest
 [rtd-link]:                 https://scikit-build-core.readthedocs.io/en/latest/?badge=latest
 [OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
+[hatchling]:                https://hatch.pypa.io/latest
+[maturin]:                  https://www.maturin.rs
+[enscons]:                  https://pypi.org/project/enscons
+[py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 <!-- prettier-ignore-end -->
