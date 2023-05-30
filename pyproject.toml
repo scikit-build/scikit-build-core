@@ -59,7 +59,6 @@ test = [
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     "setuptools",
-    "typing_extensions; python_version<'3.11'",  # Required but undeclared by cattrs 23.1.0
     "wheel",
 ]
 cov = [
