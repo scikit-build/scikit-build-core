@@ -106,6 +106,7 @@ filterwarnings = [
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",  # Caused by wheel in tests
     "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
     "ignore:onerror argument is deprecated, use onexc instead:DeprecationWarning",  # Caused by wheel and Python 3.12
+    "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",  # Python 3.12
 ]
 log_cli_level = "info"
 testpaths = ["tests"]

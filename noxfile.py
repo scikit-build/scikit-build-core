@@ -50,6 +50,9 @@ def _run_tests(
         extra.append("numpy")
 
     install_arg = "-e.[test,cov]" if "--cov" in posargs else "-e.[test]"
+    if "--cov" in posargs:
+        posargs.append("--cov-config=pyproject.toml")
+
     session.install(install_arg, *extra, *install_args)
     session.run("pytest", *run_args, *posargs, env=env)
 
