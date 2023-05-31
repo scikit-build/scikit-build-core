@@ -1,3 +1,20 @@
+# Testing a project with a branch / main
+
+If you are testing a downstream project, you can use a branch of
+scikit-build-core like this:
+
+```toml
+[build-system]
+requires = ["scikit-build-core @ git+https://github.com/scikit-build/scikit-build-core@main"]
+build-backend = "scikit_build_core.build"
+```
+
+Or you can build your project from the scikit-build-core source with nox:
+
+```bash
+nox -s downstream -- https://github.com/...
+```
+
 # Setting up for development
 
 See the [Scikit-HEP Developer introduction][skhep-dev-intro] for a detailed

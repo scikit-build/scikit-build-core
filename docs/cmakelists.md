@@ -26,7 +26,7 @@ If you are making a Limited ABI / Stable API package, you'll need the
 `Development.SABIModule` component instead. You can use the
 `SKBUILD_LIMITED_API` variable to check to see if it was requested.
 
-If you want to use the old, deprecated FindPythnoInterp and FindPythonLibs
+If you want to use the old, deprecated FindPythonInterp and FindPythonLibs
 instead, you can. Though it should be noted that FindPythonLibs requires a trick
 to make it work properly if a Python library is not preset (like in manylinux):
 you have to set `PYTHON_LIBRARY` to something (doesn't matter what) to make it

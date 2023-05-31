@@ -154,7 +154,7 @@ def downstream(session: nox.Session) -> None:
     else:
         import tomllib
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog=f"{Path(sys.argv[0]).name} -s downstream")
     parser.add_argument("project", help="A project to build")
     parser.add_argument("--subdir", help="A subdirectory to build")
     args, remaining = parser.parse_known_args(session.posargs)
