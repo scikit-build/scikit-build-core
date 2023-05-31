@@ -13,7 +13,7 @@ import zipfile
 from collections.abc import Mapping, Set
 from email.message import Message
 from email.policy import EmailPolicy
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from zipfile import ZipInfo
 
 import packaging.utils
@@ -72,8 +72,8 @@ class WheelWriter:
     tags: Set[Tag]
     wheel_metadata = WheelMetadata(root_is_purelib=False)
     buildver: str = ""
-    zipfile: zipfile.ZipFile | None = None
     license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
+    _zipfile: zipfile.ZipFile | None = None
 
     @property
     def name_ver(self) -> str:
@@ -155,20 +155,24 @@ class WheelWriter:
                 if filename.is_file() and not is_in_dist_info and not is_python_cache:
                     relpath = filename.relative_to(path)
                     target = Path(data_dir) / key / relpath if key else relpath
-                    # Zipfiles require Posix paths for the arcname
-                    self.write(str(filename), str(PurePosixPath(target)))
+                    self.write(str(filename), str(target))
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
             self.writestr(f"{self.dist_info}/{key}", data)
 
     def write(self, filename: str, arcname: str | None = None) -> None:
-        """Write a file to the archive."""
+        """Write a file to the archive. Paths are normalized to Posix paths."""
 
         with Path(filename).open("rb") as f:
             st = os.fstat(f.fileno())
             data = f.read()
-        zinfo = ZipInfo(arcname or str(filename), date_time=self.timestamp(st.st_mtime))
+
+        # Zipfiles require Posix paths for the arcname
+        zinfo = ZipInfo(
+            (arcname or filename).replace("\\", "/"),
+            date_time=self.timestamp(st.st_mtime),
+        )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
         zinfo.external_attr = (stat.S_IMODE(st.st_mode) | stat.S_IFMT(st.st_mode)) << 16
         self.writestr(zinfo, data)
@@ -176,35 +180,44 @@ class WheelWriter:
     def writestr(self, zinfo_or_arcname: str | ZipInfo, data: bytes) -> None:
         """Write bytes (not strings) to the archive."""
         assert isinstance(data, bytes)
-        assert self.zipfile is not None
+        assert self._zipfile is not None
         if isinstance(zinfo_or_arcname, zipfile.ZipInfo):
             zinfo = zinfo_or_arcname
         else:
-            zinfo = zipfile.ZipInfo(zinfo_or_arcname, date_time=self.timestamp())
+            zinfo = zipfile.ZipInfo(
+                zinfo_or_arcname.replace("\\", "/"),
+                date_time=self.timestamp(),
+            )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
-        self.zipfile.writestr(zinfo, data)
+        assert (
+            "\\" not in zinfo.filename
+        ), f"\\ not supported in zip; got {zinfo.filename!r}"
+        self._zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
         if not self.wheelpath.parent.exists():
             self.wheelpath.parent.mkdir(parents=True)
 
-        self.zipfile = zipfile.ZipFile(
+        self._zipfile = zipfile.ZipFile(
             self.wheelpath, "w", compression=zipfile.ZIP_DEFLATED
         )
         return self
 
     def __exit__(self, *args: object) -> None:
-        assert self.zipfile is not None
+        assert self._zipfile is not None
         record = f"{self.dist_info}/RECORD"
         data = io.StringIO()
         writer = csv.writer(data, delimiter=",", quotechar='"', lineterminator="\n")
-        for member in self.zipfile.infolist():
-            with self.zipfile.open(member) as f:
+        for member in self._zipfile.infolist():
+            assert (
+                "\\" not in member.filename
+            ), f"Invalid zip contents: {member.filename}"
+            with self._zipfile.open(member) as f:
                 member_data = f.read()
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")
             writer.writerow((member.filename, f"sha256={sha}", member.file_size))
         writer.writerow((record, "", ""))
         self.writestr(record, data.getvalue().encode("utf-8"))
-        self.zipfile.close()
-        self.zipfile = None
+        self._zipfile.close()
+        self._zipfile = None
