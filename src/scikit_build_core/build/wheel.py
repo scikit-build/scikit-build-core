@@ -254,7 +254,9 @@ def _build_wheel_impl(
                 }
                 editable_py = resources / "_editable_redirect.py"
                 editable_txt = editable_py.read_text(encoding="utf-8")
-                reload_dir = os.fspath(build_dir) if settings.build_dir else None
+                reload_dir = (
+                    os.fspath(build_dir.resolve()) if settings.build_dir else None
+                )
                 editable_txt += f"\n\ninstall({modules!r}, {installed!r}, {reload_dir!r}, {settings.editable.rebuild!r}, {settings.editable.verbose!r})\n"
 
                 wheel.writestr(
