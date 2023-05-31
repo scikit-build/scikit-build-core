@@ -7,13 +7,14 @@ import dataclasses
 import hashlib
 import io
 import os
+import os.path
 import stat
 import time
 import zipfile
 from collections.abc import Mapping, Set
 from email.message import Message
 from email.policy import EmailPolicy
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from zipfile import ZipInfo
 
 import packaging.utils
@@ -170,7 +171,7 @@ class WheelWriter:
 
         # Zipfiles require Posix paths for the arcname
         zinfo = ZipInfo(
-            str(PurePosixPath(Path(arcname or filename))),
+            os.path.normpath(arcname or filename),
             date_time=self.timestamp(st.st_mtime),
         )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
@@ -188,7 +189,7 @@ class WheelWriter:
             ), f"\\ not supported in zip; got {zinfo.filename!r}"
         else:
             zinfo = zipfile.ZipInfo(
-                str(PurePosixPath(Path(zinfo_or_arcname))), date_time=self.timestamp()
+                os.path.normpath(zinfo_or_arcname), date_time=self.timestamp()
             )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
