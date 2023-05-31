@@ -72,8 +72,8 @@ class WheelWriter:
     tags: Set[Tag]
     wheel_metadata = WheelMetadata(root_is_purelib=False)
     buildver: str = ""
-    zipfile: zipfile.ZipFile | None = None
     license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
+    _zipfile: zipfile.ZipFile | None = None
 
     @property
     def name_ver(self) -> str:
@@ -170,7 +170,7 @@ class WheelWriter:
 
         # Zipfiles require Posix paths for the arcname
         zinfo = ZipInfo(
-            str(PurePosixPath(arcname or filename)),
+            str(PurePosixPath(Path(arcname or filename))),
             date_time=self.timestamp(st.st_mtime),
         )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
@@ -180,37 +180,40 @@ class WheelWriter:
     def writestr(self, zinfo_or_arcname: str | ZipInfo, data: bytes) -> None:
         """Write bytes (not strings) to the archive."""
         assert isinstance(data, bytes)
-        assert self.zipfile is not None
+        assert self._zipfile is not None
         if isinstance(zinfo_or_arcname, zipfile.ZipInfo):
             zinfo = zinfo_or_arcname
+            assert (
+                "\\" not in zinfo.filename
+            ), f"\\ not supported in zip; got {zinfo.filename!r}"
         else:
-            zinfo = zipfile.ZipInfo(zinfo_or_arcname, date_time=self.timestamp())
+            zinfo = zipfile.ZipInfo(
+                str(PurePosixPath(Path(zinfo_or_arcname))), date_time=self.timestamp()
+            )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
-        msg = f"Zipfile paths must use / as the path separator, {zinfo.filename!r} invalid"
-        assert "\\" not in zinfo.filename, msg
-        self.zipfile.writestr(zinfo, data)
+        self._zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
         if not self.wheelpath.parent.exists():
             self.wheelpath.parent.mkdir(parents=True)
 
-        self.zipfile = zipfile.ZipFile(
+        self._zipfile = zipfile.ZipFile(
             self.wheelpath, "w", compression=zipfile.ZIP_DEFLATED
         )
         return self
 
     def __exit__(self, *args: object) -> None:
-        assert self.zipfile is not None
+        assert self._zipfile is not None
         record = f"{self.dist_info}/RECORD"
         data = io.StringIO()
         writer = csv.writer(data, delimiter=",", quotechar='"', lineterminator="\n")
-        for member in self.zipfile.infolist():
-            with self.zipfile.open(member) as f:
+        for member in self._zipfile.infolist():
+            with self._zipfile.open(member) as f:
                 member_data = f.read()
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")
             writer.writerow((member.filename, f"sha256={sha}", member.file_size))
         writer.writerow((record, "", ""))
         self.writestr(record, data.getvalue().encode("utf-8"))
-        self.zipfile.close()
-        self.zipfile = None
+        self._zipfile.close()
+        self._zipfile = None
