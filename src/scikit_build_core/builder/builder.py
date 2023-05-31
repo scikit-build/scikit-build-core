@@ -167,7 +167,7 @@ class Builder:
             cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
-        cache_config["SKBUILD_LIMITED_ABI"] = limited_abi
+        cache_config["SKBUILD_SABI_COMPONENT"] = "Development.SABIModule" if limited_abi else ""
 
         if cache_entries:
             cache_config.update(cache_entries)
