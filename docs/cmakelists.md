@@ -67,6 +67,21 @@ configuration, with the variables:
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
+## Limited API / Stable ABI
+
+You can activate the limited ABI by setting When you do that,
+`${SKBUILD_SABI_COMPONENT}` will be set to `Development.SABIModule` if you can
+target this (new enough CPython), and will remain an empty string otherwise
+(PyPy). This allows the following idiom:
+
+```cmake
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
+```
+
+This will add this only if scikit-build-core is driving the compilation and is
+targeting ABI3. If you want to support limited ABI from outside
+scikit-build-core, look into the `OPTIONAL_COMPONENTS` flag for `find_package`.
+
 ## Future additions
 
 Scikit-build-core does not include helpers for F2Py or Cython like scikit-build

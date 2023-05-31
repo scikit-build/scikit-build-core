@@ -127,7 +127,11 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION"] = str(version)
 
         if limited_abi is None:
-            limited_abi = self.settings.wheel.py_api.startswith("cp3")
+            if self.settings.wheel.py_api.startswith("cp3"):
+                target_minor_version = int(self.settings.wheel.py_api[3:])
+                limited_abi = target_minor_version >= sys.version_info.minor
+            else:
+                limited_abi = False
 
         python_library = get_python_library(self.config.env, abi3=limited_abi)
         python_include_dir = get_python_include_dir()
