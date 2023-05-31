@@ -155,20 +155,24 @@ class WheelWriter:
                 if filename.is_file() and not is_in_dist_info and not is_python_cache:
                     relpath = filename.relative_to(path)
                     target = Path(data_dir) / key / relpath if key else relpath
-                    # Zipfiles require Posix paths for the arcname
-                    self.write(str(PurePosixPath(filename)), str(PurePosixPath(target)))
+                    self.write(str(filename), str(target))
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
             self.writestr(f"{self.dist_info}/{key}", data)
 
     def write(self, filename: str, arcname: str | None = None) -> None:
-        """Write a file to the archive."""
+        """Write a file to the archive. Paths are normalized to Posix paths."""
 
         with Path(filename).open("rb") as f:
             st = os.fstat(f.fileno())
             data = f.read()
-        zinfo = ZipInfo(arcname or str(filename), date_time=self.timestamp(st.st_mtime))
+
+        # Zipfiles require Posix paths for the arcname
+        zinfo = ZipInfo(
+            str(PurePosixPath(arcname or filename)),
+            date_time=self.timestamp(st.st_mtime),
+        )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
         zinfo.external_attr = (stat.S_IMODE(st.st_mode) | stat.S_IFMT(st.st_mode)) << 16
         self.writestr(zinfo, data)
@@ -183,6 +187,9 @@ class WheelWriter:
             zinfo = zipfile.ZipInfo(zinfo_or_arcname, date_time=self.timestamp())
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
+        assert (
+            "\\" not in zinfo.filename
+        ), f"Zipfile paths must use / as the path separator, {zinfo.filename!r} invalid"
         self.zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
