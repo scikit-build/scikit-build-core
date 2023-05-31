@@ -13,7 +13,7 @@ import zipfile
 from collections.abc import Mapping, Set
 from email.message import Message
 from email.policy import EmailPolicy
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from zipfile import ZipInfo
 
 import packaging.utils
@@ -170,7 +170,7 @@ class WheelWriter:
 
         # Zipfiles require Posix paths for the arcname
         zinfo = ZipInfo(
-            str(PurePosixPath(Path(arcname or filename))),
+            (arcname or filename).replace("\\", "/"),
             date_time=self.timestamp(st.st_mtime),
         )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
@@ -185,7 +185,7 @@ class WheelWriter:
             zinfo = zinfo_or_arcname
         else:
             zinfo = zipfile.ZipInfo(
-                str(PurePosixPath(Path(zinfo_or_arcname))),
+                zinfo_or_arcname.replace("\\", "/"),
                 date_time=self.timestamp(),
             )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
@@ -210,6 +210,9 @@ class WheelWriter:
         data = io.StringIO()
         writer = csv.writer(data, delimiter=",", quotechar='"', lineterminator="\n")
         for member in self._zipfile.infolist():
+            assert (
+                "\\" not in member.filename
+            ), f"Invalid zip contents: {member.filename}"
             with self._zipfile.open(member) as f:
                 member_data = f.read()
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")
