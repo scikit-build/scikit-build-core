@@ -198,6 +198,10 @@ the wheel tags for the version you support:
 wheel.py-api = "cp37"
 ```
 
+Scikit-build-core will only target ABI3 if the version of Python is equal to or
+newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
+`Development.SABIModule` when targeting ABI3, and is an empty string otherwise.
+
 If you are not using CPython at all, you can specify any version of Python is
 fine:
 
