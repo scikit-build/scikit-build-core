@@ -187,9 +187,8 @@ class WheelWriter:
             zinfo = zipfile.ZipInfo(zinfo_or_arcname, date_time=self.timestamp())
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
-        assert (
-            "\\" not in zinfo.filename
-        ), f"Zipfile paths must use / as the path separator, {zinfo.filename!r} invalid"
+        msg = f"Zipfile paths must use / as the path separator, {zinfo.filename!r} invalid"
+        assert "\\" not in zinfo.filename, msg
         self.zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
