@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 0.4.3
+
+This adds support for CPython 3.12.0b1, and improves Stable ABI / Limited API
+support (supported by an upcoming nanobind for Python 3.12). An editable install
+fix allows running from any directory.
+
+Fixes:
+
+- Allow CMake to detect if limited API is targeted by @henryiii in #333 and #342
+- Make abi3 support conditional on Python version by @henryiii in #344
+- Windows path correction for 3.12.0b1 by @henryiii in #346
+- Editable path needs to be absolute by @henryiii in #345
+
+Other:
+
+- Add 3.12.0b1 by @henryiii in #341
+- Refactor settings by @henryiii in #338
+- Document that `CMAKE_ARGS` supports space separators by @henryiii in #339
+
 ## Version 0.4.2
 
 This is a quick followup to LICENSE file handing to closer match the current
