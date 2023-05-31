@@ -156,7 +156,7 @@ class WheelWriter:
                     relpath = filename.relative_to(path)
                     target = Path(data_dir) / key / relpath if key else relpath
                     # Zipfiles require Posix paths for the arcname
-                    self.write(str(filename), str(PurePosixPath(target)))
+                    self.write(str(PurePosixPath(filename)), str(PurePosixPath(target)))
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
