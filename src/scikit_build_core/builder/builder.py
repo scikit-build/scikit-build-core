@@ -134,7 +134,9 @@ class Builder:
                 limited_abi = False
 
         python_library = get_python_library(self.config.env, abi3=False)
-        python_sabi_library = get_python_library(self.config.env, abi3=False) if limited_abi else None
+        python_sabi_library = (
+            get_python_library(self.config.env, abi3=False) if limited_abi else None
+        )
         python_include_dir = get_python_include_dir()
 
         # Classic Find Python
