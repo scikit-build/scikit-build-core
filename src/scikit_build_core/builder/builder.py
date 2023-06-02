@@ -129,11 +129,14 @@ class Builder:
         if limited_abi is None:
             if self.settings.wheel.py_api.startswith("cp3"):
                 target_minor_version = int(self.settings.wheel.py_api[3:])
-                limited_abi = target_minor_version >= sys.version_info.minor
+                limited_abi = target_minor_version <= sys.version_info.minor
             else:
                 limited_abi = False
 
-        python_library = get_python_library(self.config.env, abi3=limited_abi)
+        python_library = get_python_library(self.config.env, abi3=False)
+        python_sabi_library = (
+            get_python_library(self.config.env, abi3=True) if limited_abi else None
+        )
         python_include_dir = get_python_include_dir()
 
         # Classic Find Python
@@ -151,6 +154,8 @@ class Builder:
             # FindPython may break if this is set - only useful on Windows
             if python_library and sysconfig.get_platform().startswith("win"):
                 cache_config[f"{prefix}_LIBRARY"] = python_library
+            if python_sabi_library and sysconfig.get_platform().startswith("win"):
+                cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
 
         if limited_abi:
             cache_config["SKBUILD_SOABI"] = (
