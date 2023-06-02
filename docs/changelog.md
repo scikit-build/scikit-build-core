@@ -6,12 +6,9 @@ This version fixes some issues cross-compiling to Windows ARM when making
 Limited API / Stable ABI extensions, and supports multiple config generators in
 editable mode.
 
-- Conditional ABI3 logic fixed by @henryiii in
-  https://github.com/scikit-build/scikit-build-core/pull/352
-- Set `Python_SABI_LIBRARY` by @henryiii in
-  https://github.com/scikit-build/scikit-build-core/pull/352
-- Editable installs now support multiconfig generators by @henryiii in
-  https://github.com/scikit-build/scikit-build-core/pull/353
+- Conditional ABI3 logic fixed by @henryiii in #352
+- Set `Python_SABI_LIBRARY` by @henryiii in #352
+- Editable installs now support multiconfig generators by @henryiii in #353
 
 ## Version 0.4.3
 
