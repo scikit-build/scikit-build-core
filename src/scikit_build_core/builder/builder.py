@@ -15,6 +15,7 @@ from .._logging import logger
 from ..cmake import CMaker
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
+from .cross_compile import auto_cross_compile_env
 from .generator import set_environment_for_gen
 from .sysconfig import (
     get_platform,
@@ -183,10 +184,11 @@ class Builder:
         # Add the pre-defined or passed CMake defines
         cmake_defines.update(self.settings.cmake.define)
 
-        self.config.configure(
-            defines=cmake_defines,
-            cmake_args=[*self.get_cmake_args(), *configure_args],
-        )
+        with auto_cross_compile_env(self.config.env):
+            self.config.configure(
+                defines=cmake_defines,
+                cmake_args=[*self.get_cmake_args(), *configure_args],
+            )
 
     def build(self, build_args: list[str]) -> None:
         self.config.build(build_args=build_args, verbose=self.settings.cmake.verbose)
