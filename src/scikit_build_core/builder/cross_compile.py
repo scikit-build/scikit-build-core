@@ -56,7 +56,9 @@ def set_cross_compile_env(
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_dir = Path(tmpdir).resolve()
-        cross_compile_file = tmp_dir / f"_cross_compile_{ext_suffix}.py"
+        cross_compile_file = (
+            tmp_dir / f"_cross_compile_{ext_suffix.replace('.', '_')}.py"
+        )
         input_txt = resources.joinpath("_cross_compile.py").read_text(encoding="utf-8")
         output_text = string.Template(input_txt).substitute(
             host_name=sysconf_name,
@@ -70,7 +72,7 @@ def set_cross_compile_env(
             if current_path
             else str(tmp_dir)
         )
-        env["_PYTHON_SYSCONFIGDATA_NAME"] = f"_cross_compile_{ext_suffix}.py"
+        env["_PYTHON_SYSCONFIGDATA_NAME"] = cross_compile_file.stem
         logger.info(f"Cross-compiling is enabled to {ext_suffix!r}.")
         logger.debug(
             f"Setting _PYTHON_SYSCONFIGDATA_NAME to {env['_PYTHON_SYSCONFIGDATA_NAME']!r}."

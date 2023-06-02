@@ -17,6 +17,14 @@ scikit\_build\_core.builder.builder module
    :undoc-members:
    :show-inheritance:
 
+scikit\_build\_core.builder.cross\_compile module
+-------------------------------------------------
+
+.. automodule:: scikit_build_core.builder.cross_compile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.builder.generator module
 --------------------------------------------
 
