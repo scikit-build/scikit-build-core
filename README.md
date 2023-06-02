@@ -220,8 +220,8 @@ backends:
 - [meson-python][]: A meson-based build backend; has some maintainer overlap
   with scikit-build-core.
 - [maturin][]: A build backend for Rust projects, using Cargo.
-- [enscons][]: A SCons based backend, not very actively developed (it predates
-  all the others in modern standard support!)
+- [enscons][]: A SCons based backend, not very actively developed (but it
+  predates all the others in modern standard support!)
 
 If you don't need a binary build, you don't need to use a binary build backend!
 There are some very good Python build backends; we recommend [hatchling][] as a
@@ -253,6 +253,7 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
 [hatchling]:                https://hatch.pypa.io/latest
 [maturin]:                  https://www.maturin.rs
+[meson-python]:             https://meson-python.readthedocs.io
 [enscons]:                  https://pypi.org/project/enscons
 [py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 <!-- prettier-ignore-end -->
