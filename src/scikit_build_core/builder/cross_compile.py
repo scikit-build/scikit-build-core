@@ -46,7 +46,8 @@ def set_cross_compile_env(
         yield
         return
 
-    if getattr(sysconfig, "_get_sysconfigdata_name", ""):
+    sysconf_name = getattr(sysconfig, "_get_sysconfigdata_name", "")
+    if not sysconf_name:
         logger.warning(
             "Cross-compiling is not supported due to sysconfig._get_sysconfigdata_name missing."
         )
@@ -58,7 +59,7 @@ def set_cross_compile_env(
         cross_compile_file = tmp_dir / f"_cross_compile_{ext_suffix}.py"
         input_txt = resources.read_text("_cross_compile.py")
         output_text = string.Template(input_txt).substitute(
-            host_name=sysconfig._get_sysconfigdata_name(),  # type: ignore[attr-defined]
+            host_name=sysconf_name,
             SOABI=ext_suffix.rsplit(maxsplit=1)[0],
             EXT_SUFFIX=ext_suffix,
         )
@@ -70,6 +71,11 @@ def set_cross_compile_env(
             else str(tmp_dir)
         )
         env["_PYTHON_SYSCONFIGDATA_NAME"] = f"_cross_compile_{ext_suffix}.py"
+        logger.info(f"Cross-compiling is enabled to {ext_suffix!r}.")
+        logger.debug(
+            f"Setting _PYTHON_SYSCONFIGDATA_NAME to {env['_PYTHON_SYSCONFIGDATA_NAME']!r}."
+        )
+        logger.debug(f"Setting PYTHONPATH to {env['PYTHONPATH']!r}.")
         try:
             yield
         finally:
