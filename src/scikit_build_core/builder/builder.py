@@ -129,7 +129,7 @@ class Builder:
         if limited_abi is None:
             if self.settings.wheel.py_api.startswith("cp3"):
                 target_minor_version = int(self.settings.wheel.py_api[3:])
-                limited_abi = target_minor_version >= sys.version_info.minor
+                limited_abi = target_minor_version <= sys.version_info.minor
             else:
                 limited_abi = False
 
