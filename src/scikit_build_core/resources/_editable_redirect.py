@@ -26,12 +26,16 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         path: str | None,
         rebuild: bool,
         verbose: bool,
+        build_options: list[str],
+        install_options: list[str],
     ):
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
         self.path = path
         self.rebuild_flag = rebuild
         self.verbose = verbose
+        self.build_options = build_options
+        self.install_options = install_options
 
     def find_spec(
         self,
@@ -71,7 +75,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
 
         result = subprocess.run(
-            ["cmake", "--build", "."],
+            ["cmake", "--build", ".", *self.build_options],
             cwd=self.path,
             stdout=sys.stderr if verbose else subprocess.PIPE,
             env=env,
@@ -86,7 +90,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         result.check_returncode()
 
         result = subprocess.run(
-            ["cmake", "--install", ".", "--prefix", DIR],
+            ["cmake", "--install", ".", "--prefix", DIR, *self.install_options],
             cwd=self.path,
             stdout=sys.stderr if verbose else subprocess.PIPE,
             env=env,
@@ -107,6 +111,8 @@ def install(
     path: str | None,
     rebuild: bool = False,
     verbose: bool = False,
+    build_options: list[str] | None = None,
+    install_options: list[str] | None = None,
 ) -> None:
     """
     Install a meta path finder that redirects imports to the source files, and
@@ -121,6 +127,12 @@ def install(
     sys.meta_path.insert(
         0,
         ScikitBuildRedirectingFinder(
-            known_source_files, known_wheel_files, path, rebuild, verbose
+            known_source_files,
+            known_wheel_files,
+            path,
+            rebuild,
+            verbose,
+            build_options or [],
+            install_options or [],
         ),
     )

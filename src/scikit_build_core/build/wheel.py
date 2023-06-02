@@ -257,7 +257,22 @@ def _build_wheel_impl(
                 reload_dir = (
                     os.fspath(build_dir.resolve()) if settings.build_dir else None
                 )
-                editable_txt += f"\n\ninstall({modules!r}, {installed!r}, {reload_dir!r}, {settings.editable.rebuild!r}, {settings.editable.verbose!r})\n"
+                options = []
+                if not builder.config.single_config and builder.config.build_type:
+                    options += ["--config", builder.config.build_type]
+                ext_build_opts = ["-v"] if builder.settings.cmake.verbose else []
+
+                arguments = (
+                    modules,
+                    installed,
+                    reload_dir,
+                    settings.editable.rebuild,
+                    settings.editable.verbose,
+                    options + ext_build_opts,
+                    options,
+                )
+                arguments_str = ", ".join(repr(x) for x in arguments)
+                editable_txt += f"\n\ninstall({arguments_str})\n"
 
                 wheel.writestr(
                     f"_{normalized_name}_editable.py",
