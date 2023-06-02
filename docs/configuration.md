@@ -227,6 +227,17 @@ historic compatibility if you'd like:
 wheel.expand-macos-universal-tags = false
 ```
 
+## Controlling the install step
+
+Scikit-build-core runs `--install` by default, and adds `--strip` if you are
+doing a release build. You can have it install any number of components for you
+instead:
+
+```toml
+[tool.scikit-build]
+install.components = ["python"]
+```
+
 ## Configuring CMake arguments and defines
 
 You can select a different build type, such as `Debug`:
