@@ -57,7 +57,7 @@ def set_cross_compile_env(
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_dir = Path(tmpdir).resolve()
         cross_compile_file = tmp_dir / f"_cross_compile_{ext_suffix}.py"
-        input_txt = resources.read_text("_cross_compile.py")
+        input_txt = resources.joinpath("_cross_compile.py").read_text(encoding="utf-8")
         output_text = string.Template(input_txt).substitute(
             host_name=sysconf_name,
             SOABI=ext_suffix.rsplit(maxsplit=1)[0],
