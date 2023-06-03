@@ -45,7 +45,6 @@ python_add_library(${LIBRARY} MODULE ${FILENAME})
   now, using `CMAKE_ARGS` is a suitable substitute.
 - The `SKBUILD_BUILD_OPTIONS` environment variable is not yet supported.
 
-
 ## Misc changes
 
 - MANIFEST.in files are not (yet?) supported.
