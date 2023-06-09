@@ -128,14 +128,19 @@ def build(session: nox.Session) -> None:
 EXAMPLES = ["c", "abi3", "pybind11", "swig", "cython"]
 if not sys.platform.startswith("win") and shutil.which("gfortran"):
     EXAMPLES.append("fortran")
+EXAMPLES = [f"getting_started/{n}" for n in EXAMPLES]
+EXAMPLES += ["downstream/pybind11_example", "downstream/nanobind_example"]
 
 
 @nox.session
 @nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
 def test_doc_examples(session: nox.Session, example: str) -> None:
-    session.chdir(f"docs/examples/getting_started/{example}")
-    session.install(".", "--config-settings=cmake.verbose=true")
-    session.run("python", "../test.py")
+    session.chdir(f"docs/examples/{example}")
+    session.install(".", "--config-settings=cmake.verbose=true", "pytest")
+    if Path("../test.py").is_file():
+        session.run("python", "../test.py")
+    else:
+        session.run("pytest")
 
 
 @nox.session(reuse_venv=True)
