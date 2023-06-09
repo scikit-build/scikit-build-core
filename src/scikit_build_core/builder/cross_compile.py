@@ -32,7 +32,8 @@ def auto_cross_compile_env(
 
 @contextlib.contextmanager
 def set_cross_compile_env(
-    ext_suffix: str, env: MutableMapping[str, str]
+    ext_suffix: str,
+    env: MutableMapping[str, str],
 ) -> Generator[None, None, None]:
     """
     Generate python file and set environment variables to cross-compile Python
