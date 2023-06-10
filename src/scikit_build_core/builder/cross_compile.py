@@ -74,11 +74,13 @@ def set_cross_compile_env(
             else str(tmp_dir)
         )
         env["_PYTHON_SYSCONFIGDATA_NAME"] = cross_compile_file.stem
-        logger.info(f"Cross-compiling is enabled to {ext_suffix!r}.")
+        logger.info("Cross-compiling is enabled to {!r}.", ext_suffix)
         logger.debug(
-            f"Setting _PYTHON_SYSCONFIGDATA_NAME to {env['_PYTHON_SYSCONFIGDATA_NAME']!r}."
+            "Setting _PYTHON_SYSCONFIGDATA_NAME to {!r}.",
+            env["_PYTHON_SYSCONFIGDATA_NAME"],
         )
-        logger.debug(f"Setting PYTHONPATH to {env['PYTHONPATH']!r}.")
+        logger.debug("Setting PYTHONPATH to {!r}.", env["PYTHONPATH"])
+        logger.debug("Cross compile output file contents: {}", output_text)
         try:
             yield
         finally:
