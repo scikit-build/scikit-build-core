@@ -16,7 +16,12 @@ from ..cmake import CMaker
 from ..resources import find_python
 from ..settings.skbuild_model import ScikitBuildSettings
 from .generator import set_environment_for_gen
-from .sysconfig import get_platform, get_python_include_dir, get_python_library
+from .sysconfig import (
+    get_platform,
+    get_python_include_dir,
+    get_python_library,
+    get_soabi,
+)
 
 __all__: list[str] = ["Builder", "get_archs", "archs_to_tags"]
 
@@ -157,23 +162,7 @@ class Builder:
             if python_sabi_library and sysconfig.get_platform().startswith("win"):
                 cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
 
-        if limited_abi:
-            cache_config["SKBUILD_SOABI"] = (
-                "" if sysconfig.get_platform().startswith("win") else "abi3"
-            )
-        else:
-            # Workaround for bug in PyPy and packaging that is not handled in CMake
-            # According to PEP 3149, SOABI and EXT_SUFFIX are interchangeable (and
-            # the latter is much more likely to be correct as it is used elsewhere)
-            if sys.version_info < (3, 8, 7):
-                # See https://github.com/python/cpython/issues/84006
-                import distutils.sysconfig  # pylint: disable=deprecated-module
-
-                ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
-            else:
-                ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
-            assert isinstance(ext_suffix, str)
-            cache_config["SKBUILD_SOABI"] = ext_suffix.rsplit(".", 1)[0].lstrip(".")
+        cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_abi)
 
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
         cache_config["SKBUILD_SABI_COMPONENT"] = (
