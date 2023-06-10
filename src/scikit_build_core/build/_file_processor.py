@@ -41,7 +41,7 @@ def each_unignored_file(
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
 
-    for dirpath, _, filenames in os.walk(str(starting_path)):
+    for dirpath, _, filenames in os.walk(str(starting_path), followlinks=True):
         all_paths = (Path(dirpath) / fn for fn in filenames)
         paths = (
             p
