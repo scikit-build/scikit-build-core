@@ -47,7 +47,7 @@ def set_cross_compile_env(
         yield
         return
 
-    sysconf_name = getattr(sysconfig, "_get_sysconfigdata_name", "")
+    sysconf_name = getattr(sysconfig, "_get_sysconfigdata_name", lambda: None)()
     if not sysconf_name:
         logger.warning(
             "Cross-compiling is not supported due to sysconfig._get_sysconfigdata_name missing."
