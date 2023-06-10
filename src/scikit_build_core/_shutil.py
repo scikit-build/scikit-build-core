@@ -4,6 +4,7 @@ import dataclasses
 import os
 import subprocess
 from collections.abc import Iterable
+from typing import ClassVar
 
 from ._logging import logger
 
@@ -18,6 +19,9 @@ def __dir__() -> list[str]:
 class Run:
     env: dict[str, str] | None = None
     cwd: os.PathLike[str] | None = None
+
+    # Stores last printout, for cleaner debug logging
+    _prev_env: ClassVar[str] = ""
 
     def live(self, *args: str | os.PathLike[str]) -> None:
         """
@@ -43,10 +47,12 @@ class Run:
         ]
 
         if self.env:
-            logger.debug(
-                "RUNENV:\n  {}",
-                "\n  ".join(f"{k}={v}" for k, v in sorted(self.env.items())),
-            )
+            msg = "\n  ".join(f"{k}={v}" for k, v in sorted(self.env.items()))
+            if msg != self._prev_env:
+                logger.debug("RUNENV:\n  {}", msg)
+            else:
+                logger.debug("RUNENV: same as last run")
+                type(self)._prev_env = msg
         logger.debug("RUN: {}", " ".join(options))
 
         return subprocess.run(
