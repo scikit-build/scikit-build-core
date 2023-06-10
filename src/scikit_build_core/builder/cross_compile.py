@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import contextlib
 import os
-import string
 import sysconfig
 import tempfile
 from collections.abc import Generator, MutableMapping
 from pathlib import Path
 
 from .._logging import logger
-from ..resources import resources
 
 __all__ = ["set_cross_compile_env"]
 
@@ -47,25 +45,15 @@ def set_cross_compile_env(
         yield
         return
 
-    sysconf_name = getattr(sysconfig, "_get_sysconfigdata_name", lambda: None)()
-    if not sysconf_name:
-        logger.warning(
-            "Cross-compiling is not supported due to sysconfig._get_sysconfigdata_name missing."
-        )
-        yield
-        return
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_dir = Path(tmpdir).resolve()
         cross_compile_file = (
             tmp_dir / f"_cross_compile_{ext_suffix.replace('.', '_')}.py"
         )
-        input_txt = resources.joinpath("_cross_compile.py").read_text(encoding="utf-8")
-        output_text = string.Template(input_txt).substitute(
-            host_name=sysconf_name,
-            SOABI=ext_suffix.rsplit(maxsplit=1)[0],
-            EXT_SUFFIX=ext_suffix,
-        )
+        build_time_vars = sysconfig.get_config_vars()
+        build_time_vars["EXT_SUFFIX"] = ext_suffix
+        build_time_vars["SOABI"] = ext_suffix.rsplit(maxsplit=1)[0]
+        output_text = f"build_time_vars = {build_time_vars!r}\n"
         cross_compile_file.write_text(output_text)
         current_path = env.get("PYTHONPATH", "")
         env["PYTHONPATH"] = (
