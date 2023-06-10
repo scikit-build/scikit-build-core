@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .._logging import logger
 
-__all__ = ["set_cross_compile_env"]
+__all__ = ["set_cross_compile_env", "auto_cross_compile_env"]
 
 
 def __dir__() -> list[str]:
