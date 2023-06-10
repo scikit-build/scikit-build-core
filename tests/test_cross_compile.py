@@ -12,7 +12,7 @@ from scikit_build_core.builder.cross_compile import set_cross_compile_env
 
 @pytest.mark.skipif(
     sysconfig.get_config_var("SOABI") != "cp311-win_amd64",
-    reason="Only tests 'cp311-win_amd64', got {sysconfig.get_config_var('SOABI')!r}",
+    reason=f"Only tests 'cp311-win_amd64', got {sysconfig.get_config_var('SOABI')!r}",
 )
 def test_environment():
     env = os.environ.copy()
