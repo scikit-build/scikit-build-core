@@ -41,21 +41,8 @@ def each_unignored_file(
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
 
-    # Keep track of visited directories to avoid recursive loops
-    visited_dirs = set()
-
-    for dirpath, dirnames, filenames in os.walk(
-        str(starting_path), topdown=True, followlinks=True
-    ):
-        dir_path = Path(dirpath)
-        visited_dirs.add(str(dir_path.resolve()))
-        for d in dirnames:
-            dp = str(dir_path.joinpath(d).resolve())
-            if dp in visited_dirs:
-                # Mutating dirnames in place is supported if topdown=True
-                dirnames.remove(dp)
-
-        all_paths = (dir_path / fn for fn in filenames)
+    for dirpath, _, filenames in os.walk(str(starting_path), followlinks=True):
+        all_paths = (Path(dirpath) / fn for fn in filenames)
         paths = (
             p
             for p in all_paths
