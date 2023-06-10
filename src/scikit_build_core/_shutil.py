@@ -21,7 +21,7 @@ class Run:
     cwd: os.PathLike[str] | None = None
 
     # Stores last printout, for cleaner debug logging
-    _prev_env: ClassVar[str] = ""
+    _prev_env: ClassVar[dict[str, str]] = {}
 
     def live(self, *args: str | os.PathLike[str]) -> None:
         """
@@ -47,12 +47,19 @@ class Run:
         ]
 
         if self.env:
-            msg = "\n  ".join(f"{k}={v}" for k, v in sorted(self.env.items()))
-            if msg != self._prev_env:
+            if not self._prev_env:
+                type(self)._prev_env = self.env.copy()
+                msg = "\n  ".join(f"{k}={v}" for k, v in sorted(self.env.items()))
                 logger.debug("RUNENV:\n  {}", msg)
             else:
-                logger.debug("RUNENV: same as last run")
-                type(self)._prev_env = msg
+                msg = "\n  ".join(
+                    f"{self._key_diff(k)} {k}={self.env.get(k, '<unset>')}"
+                    for k in sorted(self.env.keys() | self._prev_env.keys())
+                    if self._prev_env.get(k, None) != self.env.get(k, None)
+                )
+                logger.debug("RUNENV - changes since last run only:\n  {}", msg)
+                type(self)._prev_env = self.env.copy()
+
         logger.debug("RUN: {}", " ".join(options))
 
         return subprocess.run(
@@ -63,3 +70,11 @@ class Run:
             env=self.env,
             cwd=self.cwd,
         )
+
+    def _key_diff(self, k: str) -> str:
+        assert self.env
+        if k in self.env and k not in self._prev_env:
+            return "+"
+        if k in self._prev_env and k not in self.env:
+            return "-"
+        return " "
