@@ -9,10 +9,12 @@ import pytest
 
 from scikit_build_core.builder.cross_compile import set_cross_compile_env
 
+ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+
 
 @pytest.mark.skipif(
-    sysconfig.get_config_var("SOABI") != "cp311-win_amd64",
-    reason=f"Only tests 'cp311-win_amd64', got {sysconfig.get_config_var('SOABI')!r}",
+    ext_suffix != ".cp311-win_amd64.pyd",
+    reason=f"Only tests '.cp311-win_amd64.pyd', got {ext_suffix!r}",
 )
 def test_environment():
     env = os.environ.copy()
