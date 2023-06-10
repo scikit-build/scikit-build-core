@@ -29,6 +29,7 @@ def test_environment():
             cmd, check=True, capture_output=True, text=True, env=env
         )
         soabi, ext_suffix = result.stdout.strip().split()
+        print(soabi, ext_suffix)
         assert soabi == "cp311-win_arm64"
         assert ext_suffix == ".cp311-win_arm64.pyd"
 
