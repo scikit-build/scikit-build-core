@@ -14,4 +14,4 @@ if(NOT EXAMPLE_INCLUDE_FOUND)
 endif()
 
 # Testing scripts
-install(FILES scripts/script1 DESTINATION "${SKBUILD_SCRIPTS_DIR}")
+install(PROGRAMS scripts/script1 DESTINATION "${SKBUILD_SCRIPTS_DIR}")
