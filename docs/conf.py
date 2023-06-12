@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
+    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -45,9 +46,28 @@ exclude_patterns = [
     ".DS_Store",
     ".env",
     ".venv",
+    "examples/downstream",
 ]
 
 
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "packaging": ("https://packaging.pypa.io/en/stable", None),
+    "setuptools": ("https://setuptools.pypa.io/en/latest", None),
+    "pyproject_metadata": ("https://pep621.readthedocs.io/en/latest", None),
+}
+
+nitpick_ignore = [
+    ("py:class", "setuptools.dist.Distribution"),
+    ("py:class", "T"),
+    ("py:class", "scikit_build_core.settings.sources.T"),
+]
+
+linkcheck_anchors_ignore = [
+    # This seems to be broken on GitHub readmes
+    "default-versioning-scheme",
+    "git-archives",
+]
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

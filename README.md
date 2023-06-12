@@ -253,7 +253,7 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
 [hatchling]:                https://hatch.pypa.io/latest
 [maturin]:                  https://www.maturin.rs
-[meson-python]:             https://meson-python.readthedocs.io
+[meson-python]:             https://meson-python.readthedocs.io/en/latest
 [enscons]:                  https://pypi.org/project/enscons
 [py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 <!-- prettier-ignore-end -->

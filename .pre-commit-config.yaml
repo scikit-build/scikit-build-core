@@ -79,6 +79,7 @@ repos:
           - hatch-fancy-pypi-readme
           - importlib-metadata>=6.6.0
           - importlib-resources
+          - markdown-it-py<3 # Python 3.7 compat needed for mypy check
           - ninja
           - packaging
           - pyproject_metadata
