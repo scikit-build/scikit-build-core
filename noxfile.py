@@ -110,6 +110,7 @@ def docs(session: nox.Session) -> None:
         args.builder,
         ".",
         "_build",
+        *posargs,
     )
 
     if args.serve:
