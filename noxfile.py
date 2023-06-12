@@ -109,7 +109,7 @@ def docs(session: nox.Session) -> None:
         "-b",
         args.builder,
         ".",
-        "_build",
+        f"_build/{args.builder}",
         *posargs,
     )
 
