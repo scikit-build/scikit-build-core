@@ -6,6 +6,14 @@
 
 from __future__ import annotations
 
+import sys
+
+if sys.version_info < (3, 8):
+    import importlib_metadata
+else:
+    import importlib.metadata as importlib_metadata
+
+
 # Warning: do not change the path here. To use autodoc, you need to install the
 # package first.
 
@@ -14,6 +22,8 @@ from __future__ import annotations
 project = "scikit-build-core"
 copyright = "2022, The Scikit-Build admins"
 author = "Henry Schreiner"
+version = importlib_metadata.version("scikit-build-core")
+release = ".".join(version.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -81,3 +91,8 @@ myst_enable_extensions = [
     "colon_fence",
     "deflist",
 ]
+
+# One entry per manual page. List of tuples
+# (source start file, name, description, authors, manual section)
+
+man_pages = [("man", "scikit-build-core", f"{project} {release}", [author], 1)]
