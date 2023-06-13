@@ -74,6 +74,8 @@ dev = [
 docs = [
     "furo",
     "myst_parser >=0.13",
+    "pathspec >=0.10.1",
+    "pyproject-metadata >=0.5",
     "sphinx >=4.0",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
@@ -244,6 +246,7 @@ exclude = []
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
 "tests/conftest.py" = ["TID251"]
+"docs/conf.py" = ["TID251"]
 
 
 [tool.check-sdist]

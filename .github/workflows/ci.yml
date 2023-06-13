@@ -243,6 +243,9 @@ jobs:
       - name: Linkcheck
         run: nox -s docs -- -b linkcheck
 
+      - name: Manpage
+        run: nox -s docs -- -b man -W
+
       - name: Build docs with warnings as errors
         run: nox -s docs -- -W
 
