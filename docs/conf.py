@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -19,17 +20,23 @@ ROOT = Path(__file__).parent.parent.resolve()
 
 
 try:
-    version = importlib_metadata.version("scikit-build-core")
+    from scikit_build_core import __version__ as vcs_version
 except ModuleNotFoundError:
-    msg = (
-        "Package should be installed to produce documentation! "
-        "Assuming a modern git archive was used for version discovery."
-    )
-    warnings.warn(msg, stacklevel=1)
+    try:
+        vcs_version = importlib_metadata.version("scikit-build-core")
+    except ModuleNotFoundError:
+        msg = (
+            "Package should be installed to produce documentation! "
+            "Assuming a modern git archive was used for version discovery."
+        )
+        warnings.warn(msg, stacklevel=1)
 
-    from setuptools_scm import get_version
+        from setuptools_scm import get_version
 
-    version = get_version(root=ROOT, fallback_root=ROOT)
+        vcs_version = get_version(root=ROOT, fallback_root=ROOT)
+
+# Filter git details from version
+version = vcs_version.split("+")[0]
 
 
 # -- Project information -----------------------------------------------------
@@ -37,8 +44,7 @@ except ModuleNotFoundError:
 project = "scikit-build-core"
 copyright = "2022, The Scikit-Build admins"
 author = "Henry Schreiner"
-release = ".".join(version.split(".")[:2])
-
+release = re.match("(\\d+\\.\\d+\\.\\d+)(.*)", version).group(1)
 
 # -- General configuration ---------------------------------------------------
 
@@ -103,10 +109,24 @@ html_theme = "furo"
 # -- Extension configuration -------------------------------------------------
 myst_enable_extensions = [
     "colon_fence",
+    "substitution",
     "deflist",
 ]
+
+
+myst_substitutions = {
+    "version": version,
+}
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section)
 
-man_pages = [("man", "scikit-build-core", f"{project} {release}", [author], 1)]
+man_pages = [
+    (
+        "man",
+        project,
+        f"{version} - A Python module build backend for CMake",
+        [author],
+        7,
+    )
+]

@@ -37,3 +37,5 @@ api/scikit_build_core
 - {ref}`genindex`
 - {ref}`modindex`
 - {ref}`search`
+
+Generated using scikit-build-core {{ version }}.
