@@ -14,3 +14,5 @@ system, allowing you to make Python modules with CMake.
 ```{include} ../README.md
 :start-after: <!-- SPHINX-START -->
 ```
+
+Generated using scikit-build-core {{ version }}.

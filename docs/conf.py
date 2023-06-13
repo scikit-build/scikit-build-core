@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import re
 import sys
 import warnings
 from pathlib import Path
@@ -20,10 +19,10 @@ ROOT = Path(__file__).parent.parent.resolve()
 
 
 try:
-    from scikit_build_core import __version__ as vcs_version
+    from scikit_build_core import __version__ as version
 except ModuleNotFoundError:
     try:
-        vcs_version = importlib_metadata.version("scikit-build-core")
+        version = importlib_metadata.version("scikit-build-core")
     except ModuleNotFoundError:
         msg = (
             "Package should be installed to produce documentation! "
@@ -33,10 +32,10 @@ except ModuleNotFoundError:
 
         from setuptools_scm import get_version
 
-        vcs_version = get_version(root=ROOT, fallback_root=ROOT)
+        version = get_version(root=ROOT, fallback_root=ROOT)
 
 # Filter git details from version
-version = vcs_version.split("+")[0]
+release = version.split("+")[0]
 
 
 # -- Project information -----------------------------------------------------
@@ -44,7 +43,6 @@ version = vcs_version.split("+")[0]
 project = "scikit-build-core"
 copyright = "2022, The Scikit-Build admins"
 author = "Henry Schreiner"
-release = re.match("(\\d+\\.\\d+\\.\\d+)(.*)", version).group(1)
 
 # -- General configuration ---------------------------------------------------
 
@@ -125,7 +123,7 @@ man_pages = [
     (
         "man",
         project,
-        f"{version} - A Python module build backend for CMake",
+        "A Python module build backend for CMake",
         [author],
         7,
     )
