@@ -7,22 +7,36 @@
 from __future__ import annotations
 
 import sys
+import warnings
+from pathlib import Path
 
 if sys.version_info < (3, 8):
     import importlib_metadata
 else:
     import importlib.metadata as importlib_metadata
 
+ROOT = Path(__file__).parent.parent.resolve()
 
-# Warning: do not change the path here. To use autodoc, you need to install the
-# package first.
+
+try:
+    version = importlib_metadata.version("scikit-build-core")
+except ModuleNotFoundError:
+    msg = (
+        "Package should be installed to produce documentation! "
+        "Assuming a modern git archive was used for version discovery."
+    )
+    warnings.warn(msg, stacklevel=1)
+
+    from setuptools_scm import get_version
+
+    version = get_version(root=ROOT, fallback_root=ROOT)
+
 
 # -- Project information -----------------------------------------------------
 
 project = "scikit-build-core"
 copyright = "2022, The Scikit-Build admins"
 author = "Henry Schreiner"
-version = importlib_metadata.version("scikit-build-core")
 release = ".".join(version.split(".")[:2])
 
 
