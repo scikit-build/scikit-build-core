@@ -147,7 +147,7 @@ def build(session: nox.Session) -> None:
     session.run("python", "-m", "build", **session.posargs)
 
 
-EXAMPLES = ["c", "abi3", "pybind11", "swig", "cython"]
+EXAMPLES = ["c", "abi3", "pybind11", "nanobind", "swig", "cython"]
 if not sys.platform.startswith("win") and shutil.which("gfortran"):
     EXAMPLES.append("fortran")
 EXAMPLES = [f"getting_started/{n}" for n in EXAMPLES]

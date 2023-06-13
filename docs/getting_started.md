@@ -42,6 +42,17 @@ example-project
 
 ````
 
+````{tab} nanobind
+
+```
+example-project
+├── example.cpp
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ````{tab} SWIG
 
 ```
@@ -105,6 +116,14 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````
 
+````{tab} nanobind
+
+```{literalinclude} examples/getting_started/nanobind/example.cpp
+:language: cpp
+```
+
+````
+
 ````{tab} SWIG
 
 ```{literalinclude} examples/getting_started/swig/example.c
@@ -156,6 +175,14 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} pybind11
 
 ```{literalinclude} examples/getting_started/pybind11/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} nanobind
+
+```{literalinclude} examples/getting_started/nanobind/pyproject.toml
 :language: toml
 ```
 
@@ -280,12 +307,29 @@ CMake from searching for both `C` and `CXX` compilers (the default).
 If you place find Python first, pybind11 will resepct it instead of the classic
 FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
 Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
-ourselves. Pybind11 places it's config file such that CMake can find it from
+ourselves. Pybind11 places its config file such that CMake can find it from
 site-packages.
 
 You can either use `pybind11_add_module` or `python_add_library` and then link
 to `pybind11::module`, your choice.
 
+````
+
+````{tab} nanobind
+
+```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build and nanobind require CMake 3.15, so there's no need to set it
+lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+Nanobind places its config file such that CMake can find it from site-packages.
 ````
 
 ````{tab} SWIG
@@ -361,3 +405,16 @@ $ pip install .
 ```
 
 That's it for a basic package!
+
+## Other examples
+
+You can find other examples here:
+
+- [pybind11's scikit_build_core example](https://github.com/pybind/scikit_build_example):
+  An example project using pybind11.
+- [nanobind example](https://github.com/wjakob/nanobind_example): An example
+  project using nanobind and the Stable ABI on Python 3.12+!
+- [scikit-build-example-projects](https://github.com/scikit-build/scikit-build-sample-projects):
+  Some example projects for both scikit-build and scikit-build-core.
+- [Scientific-Python Cookie](https://github.com/scientific-python/cookie): A
+  cookiecutter with 12 backends, including scikit-build-core.
