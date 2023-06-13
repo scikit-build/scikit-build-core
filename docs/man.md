@@ -1,5 +1,6 @@
 ---
 orphan:
+nosearch:
 ---
 
 # Scikit-build-core
