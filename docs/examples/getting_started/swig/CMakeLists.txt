@@ -11,14 +11,18 @@ find_package(
   COMPONENTS python
   REQUIRED)
 
-add_custom_command(
-  OUTPUT example.py example_wrap.c
-  COMMAND ${SWIG_EXECUTABLE} -python -outcurrentdir
-          "${CMAKE_CURRENT_SOURCE_DIR}/example.i"
-  DEPENDS example.i)
+include(UseSWIG)
 
-python_add_library(_example MODULE example.c
-                   "${CMAKE_CURRENT_BINARY_DIR}/example_wrap.c" WITH_SOABI)
+swig_add_library(
+  example
+  LANGUAGE python OUTPUT_DIR "${SKBUILD_PLATLIB_DIR}"
+  SOURCES example.i example.c)
+if(WIN32)
+  set_property(TARGET example PROPERTY SUFFIX ".${Python_SOABI}.pyd")
+else()
+  set_property(TARGET example
+               PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+endif()
+target_link_libraries(example PRIVATE Python::Module)
 
-install(TARGETS _example DESTINATION .)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/example.py" DESTINATION .)
+install(TARGETS example DESTINATION .)
