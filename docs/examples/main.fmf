@@ -1,0 +1,11 @@
+tag: examples
+require:
+  - python3-devel
+  - python3-pip
+  - cmake
+  - gcc
+  - rsync
+  - tree
+framework: beakerlib
+path: /docs/examples
+test: ./test.sh
