@@ -18,8 +18,7 @@ swig_add_library(
   LANGUAGE python OUTPUT_DIR "${SKBUILD_PLATLIB_DIR}"
   SOURCES example.i example.c)
 if(WIN32)
-  set_property(TARGET example
-               PROPERTY SUFFIX ".${Python_SOABI}.pyd")
+  set_property(TARGET example PROPERTY SUFFIX ".${Python_SOABI}.pyd")
 else()
   set_property(TARGET example
                PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
