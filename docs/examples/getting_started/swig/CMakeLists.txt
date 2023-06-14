@@ -11,7 +11,7 @@ find_package(
   COMPONENTS python
   REQUIRED)
 
-include(USESwig)
+include(UseSWIG)
 
 swig_add_library(
   example
