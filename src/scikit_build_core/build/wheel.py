@@ -93,8 +93,13 @@ def _build_wheel_impl(
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
     )
+    action = (
+        "metadata" if wheel_directory is None else "editable" if editable else "wheel"
+    )
     rich_print(
-        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green] using [blue]CMake {cmake.version}[/blue]"
+        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
+        f"using [blue]CMake {cmake.version}[/blue]",
+        f"[red]({action})[/red]",
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -187,7 +192,7 @@ def _build_wheel_impl(
                 path.write_bytes(data)
             return WheelImplReturn(wheel_filename=dist_info.name)
 
-        rich_print("[green]***[/green] [bold]Configurating CMake...")
+        rich_print("[green]***[/green] [bold]Configuring CMake...")
         defines: dict[str, str] = {}
         cache_entries = {f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()}
         builder.configure(
@@ -212,7 +217,7 @@ def _build_wheel_impl(
         rich_print("[green]***[/green] [bold]Installing project into wheel...")
         builder.install(install_dir)
 
-        rich_print("[green]***[/green] [bold]Making wheel...")
+        rich_print(f"[green]***[/green] [bold]Making {action}...")
         packages = _get_packages(
             packages=settings.wheel.packages,
             name=normalized_name,
@@ -295,4 +300,5 @@ def _build_wheel_impl(
                 raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name
+    rich_print(f"[green]***[/green] [bold]Created[/bold] {wheel_filename}...")
     return WheelImplReturn(wheel_filename=wheel_filename, mapping=mapping)

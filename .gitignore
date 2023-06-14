@@ -174,3 +174,5 @@ Thumbs.db
 /.distro/main.fmf
 /.distro/plans/main.fmf
 /.distro/tests/main.fmf
+
+/docs/**/build

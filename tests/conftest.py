@@ -103,6 +103,7 @@ class VEnv(EnvBuilder):
         # Store the path to the venv Python interpreter.
         # See https://github.com/mesonbuild/meson-python/blob/8a180be7b4abd7e1939a63d5d59f63197ee27cc7/tests/conftest.py#LL79
         self.executable = Path(context.env_exe)
+        self.bin_path = Path(context.bin_path)
         self.env_dir = Path(context.env_dir)
         return context
 
@@ -117,7 +118,8 @@ class VEnv(EnvBuilder):
     def run(self, *args: str, capture: bool = False) -> str | None:
         __tracebackhide__ = True
         env = os.environ.copy()
-        env["PATH"] = f"{self.executable.parent}{os.pathsep}{env['PATH']}"
+        paths = {str(self.executable.parent), str(self.bin_path)}
+        env["PATH"] = os.pathsep.join([*paths, env["PATH"]])
         env["VIRTUAL_ENV"] = str(self.env_dir)
         env["PIP_DISABLE_PIP_VERSION_CHECK"] = "ON"
         if self.wheelhouse is not None:

@@ -130,3 +130,24 @@ def get_cmake_platform(env: Mapping[str, str] | None) -> str:
     """
     plat = get_platform(env)
     return PLAT_TO_CMAKE.get(plat, plat)
+
+
+def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
+    if abi3:
+        return "" if sysconfig.get_platform().startswith("win") else "abi3"
+
+    # Cross-compile support
+    setuptools_ext_suffix = env.get("SETUPTOOLS_EXT_SUFFIX", "")
+    if setuptools_ext_suffix:
+        return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
+
+    if sys.version_info < (3, 8, 7):
+        # See https://github.com/python/cpython/issues/84006
+        import distutils.sysconfig  # pylint: disable=deprecated-module
+
+        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    else:
+        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+
+    assert isinstance(ext_suffix, str)
+    return ext_suffix.rsplit(".", 1)[0].lstrip(".")

@@ -2,12 +2,13 @@ import dataclasses
 from typing import Any, Dict, List, Optional
 
 __all__ = [
-    "ScikitBuildSettings",
-    "NinjaSettings",
-    "CMakeSettings",
-    "LoggingSettings",
-    "SDistSettings",
     "BackportSettings",
+    "CMakeSettings",
+    "EditableSettings",
+    "LoggingSettings",
+    "NinjaSettings",
+    "SDistSettings",
+    "ScikitBuildSettings",
     "WheelSettings",
 ]
 
@@ -112,7 +113,7 @@ class BackportSettings:
 
 
 @dataclasses.dataclass
-class Editable:
+class EditableSettings:
     #: Select the editable mode to use. Currently only "redirect" is supported.
     mode: str = "redirect"
 
@@ -133,7 +134,7 @@ class ScikitBuildSettings:
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
-    editable: Editable = dataclasses.field(default_factory=Editable)
+    editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
 
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.

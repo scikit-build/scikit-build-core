@@ -128,4 +128,4 @@ def rich_print(*args: object, **kwargs: object) -> None:
     args_2 = tuple(_process_rich(arg) for arg in args)
     if args != args_2:
         args_2 = (*args_2[:-1], args_2[-1] + colors()["reset"])
-    print(*args_2, **kwargs)  # type: ignore[call-overload] # noqa: T201
+    print(*args_2, **kwargs, flush=True)  # type: ignore[call-overload] # noqa: T201

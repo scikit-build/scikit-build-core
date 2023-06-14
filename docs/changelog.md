@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 0.4.5
+
+This version fixes issues with output being incorrectly interleaved with logging
+messages. Symlinks are now followed when making SDists. And finally,
+`SKBUILD_SOABI` is now correctly set when cross-compiling on Windows (Warning!
+FindPython still does not report the correct SOABI when cross-compiling to ARM).
+
+Fixes:
+
+- Proper printout ordering and more displayed details by @henryiii in #365
+- Sort `RUNENV` debugging log output by @jameslamb in #357
+- Follow symlinks when making SDists by @henryiii in #362
+- Report correct ABI when cross-compiling by @henryiii in #366
+
+Tests:
+
+- Fedora downstream CI by @LecrisUT in #358
+- Add downstream examples by @henryiii in #363
+- Add testing for scripts processing by @henryiii in #364
+
 ## Version 0.4.4
 
 This version fixes some issues cross-compiling to Windows ARM when making
