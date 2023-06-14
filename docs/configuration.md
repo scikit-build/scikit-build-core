@@ -57,7 +57,7 @@ $ pipx run build --wheel -Ccmake.verbose=true -Clogging.level=INFO
 
 
 ```yaml
-SKBUILD_CMAKE_VERSBOSE: true
+SKBUILD_CMAKE_VERBOSE: true
 SKBUILD_LOGGING_LEVEL: "INFO"
 ```
 
