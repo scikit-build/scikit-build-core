@@ -1,23 +1,23 @@
 # See the documentation for more information:
 # https://packit.dev/docs/configuration/
 
-specfile_path: .distro/python-scikit-build-core.spec
+specfile_path: distro/python-scikit-build-core.spec
 
 files_to_sync:
-  - src: .distro/python-scikit-build-core.spec
+  - src: distro/python-scikit-build-core.spec
     dest: python-scikit-build-core.spec
   - .packit.yaml
-  - src: .distro/python-scikit-build-core.rpmlintrc
+  - src: distro/python-scikit-build-core.rpmlintrc
     dest: python-scikit-build-core.rpmlintrc
   # tmt setup
   - src: .fmf/
     dest: .fmf/
-  - src: .distro/plans/
+  - src: distro/plans/
     dest: plans/
     filters:
-      - "- .distro/plans/main.fmf.dist-git"
-      - "- .distro/plans/rpmlint.fmf"
-  - src: .distro/plans/main.fmf.dist-git
+      - "- distro/plans/main.fmf.dist-git"
+      - "- distro/plans/rpmlint.fmf"
+  - src: distro/plans/main.fmf.dist-git
     dest: plans/main.fmf
 upstream_package_name: scikit_build_core
 downstream_package_name: python-scikit-build-core
