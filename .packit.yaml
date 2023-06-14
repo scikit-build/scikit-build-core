@@ -10,7 +10,7 @@ files_to_sync:
   - src: .distro/python-scikit-build-core.rpmlintrc
     dest: python-scikit-build-core.rpmlintrc
   # tmt setup
-  - src: .distro/.fmf/
+  - src: .fmf/
     dest: .fmf/
   - src: .distro/plans/
     dest: plans/
@@ -37,7 +37,6 @@ jobs:
     trigger: pull_request
     targets:
       - fedora-development
-    fmf_path: .distro
   - job: copr_build
     trigger: commit
     branch: main
@@ -54,7 +53,6 @@ jobs:
     targets:
       - fedora-development
       - fedora-latest
-    fmf_path: .distro
   - job: copr_build
     trigger: release
     owner: "@scikit-build"
