@@ -1,0 +1,4 @@
+summary:
+  F2PY example project
+require+:
+  - gcc-gfortran
