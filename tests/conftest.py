@@ -297,6 +297,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         if "isolated" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.virtualenv)
             item.add_marker(pytest.mark.isolated)
+            item.add_marker(pytest.mark.network)
 
 
 def pytest_report_header() -> str:

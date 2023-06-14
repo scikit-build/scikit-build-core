@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.isolated()
+@pytest.mark.network()
 @pytest.mark.integration()
 def test_pep518_sdist(package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
