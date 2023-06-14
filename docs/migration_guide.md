@@ -10,11 +10,27 @@ This guidance will be updated on a best-effort basis, but if you are working at 
 - The `build-system.build-backend` key in pyproject.toml must be changed to
   `scikit_build_core.build`.
 - Replace `scikit-build` with `scikit-build-core` in `build-system.requires`.
-- You may remove `cmake` and `ninja` from `build-system.requires` (IS THIS
-  REQUIRED? CAN THESE BE LEFT IN PLACE IF DESIRED? WHAT IF STRICTER VERSIONS
-  REQUIREMENTS ARE NEEDED THAN WHAT SCIKIT-BUILD-CORE'S CONFIG SUPPORTS?)
+- You should remove `cmake` and `ninja` from `build-system.requires`.
+  `scikit-build-core` will add these if necessary, but will respect existing
+  installations of the tools by default, which allows compatibility with
+  systems where binaries are not available on PyPI but can be installed from
+  elsewhere. Instead, set the minimum required versions in the
+  `[tool.scikit-build]` table: `cmake.minimum-required` and
+  `ninja.minimum-required`.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](./getting_started.md) for more information.
+- If your project is primarily configured using setup.py or setup.cfg, you
+  will need to move the configuration to pyproject.toml. The [project metadata
+  spec](https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata)
+  shows the information that can be placed directly in the project table. For
+  additional metadata, see [our configuration guide](./configuration.md). A
+  useful trick for performing this migration is to change the `build-backend`
+  from `skbuild` to `setuptools`, install `hatch`, and run `hatch init --new`.
+  This should automatically migrate the configuration to pyproject.toml, after
+  which you can change the `build-backend` to `scikit-build-core`.
+- If you specify files to include in sdists via MANIFEST.in, with
+  `scikit-build-core` you should now instead use the `sdist.include` and
+  `sdist.exclude` fields in the `tool.scikit-build` table
 
 ## CMake changes
 
@@ -47,5 +63,4 @@ python_add_library(${LIBRARY} MODULE ${FILENAME})
 
 ## Misc changes
 
-- MANIFEST.in files are not (yet?) supported.
 - sdist builds will not follow symlinks
