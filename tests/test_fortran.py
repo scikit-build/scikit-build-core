@@ -27,6 +27,7 @@ ninja_info = best_program(get_ninja_programs(), minimum_version=Version("1.10"))
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.fortran()
+@pytest.mark.network()
 @pytest.mark.skipif(shutil.which("gfortran") is None, reason="gfortran not available")
 @pytest.mark.skipif(
     sysconfig.get_platform().startswith("win"),
