@@ -12,16 +12,15 @@ This guidance will be updated on a best-effort basis, but if you are working at 
 - Replace `scikit-build` with `scikit-build-core` in `build-system.requires`.
 - You should remove `cmake` and `ninja` from `build-system.requires`.
   `scikit-build-core` will add these if necessary, but will respect existing
-  installations of the tools by default, which allows compatibility with
-  systems where binaries are not available on PyPI but can be installed from
-  elsewhere. Instead, set the minimum required versions in the
-  `[tool.scikit-build]` table: `cmake.minimum-required` and
-  `ninja.minimum-required`.
+  installations of the tools by default, which allows compatibility with systems
+  where binaries are not available on PyPI but can be installed from elsewhere.
+  Instead, set the minimum required versions in the `[tool.scikit-build]` table:
+  `cmake.minimum-required` and `ninja.minimum-required`.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](./getting_started.md) for more information.
-- If your project is primarily configured using setup.py or setup.cfg, you
-  will need to move the configuration to pyproject.toml. The [project metadata
-  spec](https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata)
+- If your project is primarily configured using setup.py or setup.cfg, you will
+  need to move the configuration to pyproject.toml. The
+  [project metadata spec](https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata)
   shows the information that can be placed directly in the project table. For
   additional metadata, see [our configuration guide](./configuration.md). A
   useful trick for performing this migration is to change the `build-backend`
