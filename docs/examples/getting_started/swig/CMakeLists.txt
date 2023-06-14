@@ -17,8 +17,10 @@ swig_add_library(
   example
   LANGUAGE python OUTPUT_DIR "${SKBUILD_PLATLIB_DIR}"
   SOURCES example.i example.c)
-set_property(TARGET example
-             PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+if(NOT Python_SOABI STREQUAL "")
+  set_property(TARGET example
+               PROPERTY SUFFIX ".${Python_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+endif()
 target_link_libraries(example PRIVATE Python::Module)
 
 install(TARGETS example DESTINATION .)
