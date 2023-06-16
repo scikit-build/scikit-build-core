@@ -50,7 +50,7 @@ Suggests:       gcc
 
 %check
 %pytest \
-    -m "not isolated"
+    -m "not network"
 
 
 %files -n python3-scikit-build-core -f %{pyproject_files}
