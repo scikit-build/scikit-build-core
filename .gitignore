@@ -153,8 +153,8 @@ tests/**/build/
 *.swp
 
 # RPM spec file
-!/.distro/*.spec
-/.distro/*.tar.gz
+!/distro/*.spec
+/distro/*.tar.gz
 *.rpm
 
 # ruff
@@ -171,8 +171,8 @@ Thumbs.db
 
 .idea/
 # tmt setup
-/.distro/main.fmf
-/.distro/plans/main.fmf
-/.distro/tests/main.fmf
+/distro/main.fmf
+/distro/plans/main.fmf
+/distro/tests/main.fmf
 
 /docs/**/build

@@ -1,0 +1,4 @@
+summary:
+  Swig example project
+require+:
+  - swig
