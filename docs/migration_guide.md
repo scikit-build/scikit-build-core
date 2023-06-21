@@ -13,11 +13,10 @@ may be out of date.
 - Replace `scikit-build` with `scikit-build-core` in `build-system.requires`.
 - You should remove `cmake` and `ninja` from `build-system.requires`.
   `scikit-build-core` will add these if necessary, but will respect existing
-  installations of the tools by default, which allows compatibility with
-  systems where binaries are not available on PyPI but can be installed from
-  elsewhere.  Instead, set the minimum required versions in the
-  `[tool.scikit-build]` table: `cmake.minimum-required` and
-  `ninja.minimum-required`.
+  installations of the tools by default, which allows compatibility with systems
+  where binaries are not available on PyPI but can be installed from elsewhere.
+  Instead, set the minimum required versions in the `[tool.scikit-build]` table:
+  `cmake.minimum-required` and `ninja.minimum-required`.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](./getting_started.md) for more information.
 - If your project is primarily configured using setup.py or setup.cfg, you will
@@ -37,13 +36,13 @@ may be out of date.
 
 ## CMake changes
 
-scikit-build users wishing to switch to scikit-build-core should be aware of
-the following changes that must be made to their CMake files:
+scikit-build users wishing to switch to scikit-build-core should be aware of the
+following changes that must be made to their CMake files:
 
-- The PythonExtensions CMake module distributed with scikit-build is not part
-  of scikit-build-core. Due to improvements in CMake's built-in support for
-  building Python extension modules, most of this module is no longer
-  necessary. Change
+- The PythonExtensions CMake module distributed with scikit-build is not part of
+  scikit-build-core. Due to improvements in CMake's built-in support for
+  building Python extension modules, most of this module is no longer necessary.
+  Change
 
 ```cmake
 find_package(PythonExtensions REQUIRED)
