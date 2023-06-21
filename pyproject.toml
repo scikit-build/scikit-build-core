@@ -61,11 +61,11 @@ test = [
     "setuptools",
     "wheel",
 ]
-test_meta = [
+test-meta = [
     "hatch-fancy-pypi-readme",
     "setuptools-scm",
 ]
-test_numpy = [
+test-numpy = [
     "numpy; python_version<'3.12' and platform_python_implementation!='PyPy'",
     "numpy~=1.21.0; python_version=='3.7' and platform_python_implementation=='PyPy' and sys_platform == 'linux'",
     "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",

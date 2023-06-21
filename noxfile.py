@@ -29,7 +29,7 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev,test,test_meta]", "pylint")
+    session.install("-e.[dev,test,test-meta]", "pylint")
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
@@ -65,7 +65,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(session, extras=["test_meta,test_numpy"])
+    _run_tests(session, extras=["test-meta,test-numpy"])
 
 
 @nox.session
