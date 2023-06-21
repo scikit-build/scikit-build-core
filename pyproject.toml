@@ -61,19 +61,25 @@ test = [
     "setuptools",
     "wheel",
 ]
-cov = [
-    "pytest-cov[toml]",
-]
-dev = [
-    "cmake",
+test-meta = [
     "hatch-fancy-pypi-readme",
-    "ninja",
+    "setuptools-scm",
+]
+test-numpy = [
     "numpy; python_version<'3.12' and platform_python_implementation!='PyPy'",
     "numpy~=1.21.0; python_version=='3.7' and platform_python_implementation=='PyPy' and sys_platform == 'linux'",
     "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
     "numpy~=1.25.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
+]
+cov = [
+    "pytest-cov[toml]",
+]
+wheels = [
+    "cmake",
+    "ninja; sys_platform!='win32'",
+]
+dev = [
     "rich",
-    "setuptools-scm",
 ]
 docs = [
     "furo",

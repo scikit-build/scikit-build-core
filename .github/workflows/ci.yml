@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "pypy-3.8", "3.11"]
+        python-version: ["3.7", "pypy-3.9", "3.12"]
         runs-on: [ubuntu-latest, macos-latest]
         cmake-version: ["3.15.x"]
 
@@ -58,6 +58,9 @@ jobs:
           - python-version: "pypy-3.7"
             runs-on: ubuntu-latest
             cmake-version: "3.15.x"
+          - python-version: "pypy-3.10"
+            runs-on: ubuntu-latest
+            cmake-version: "3.15.x"
           - python-version: "3.8"
             runs-on: ubuntu-latest
             cmake-version: "3.21.x"
@@ -67,13 +70,15 @@ jobs:
           - python-version: "3.10"
             runs-on: ubuntu-latest
             cmake-version: "3.22.x"
+          - python-version: "3.11"
+            runs-on: ubuntu-latest
+            cmake-version: "3.26.x"
           - python-version: "3.8"
             runs-on: windows-2019
             cmake-version: "3.24.x"
-          - python-version: "3.12-dev"
-            runs-on: ubuntu-latest
-            cmake-version: "3.15.x"
-    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
+          - python-version: "3.12"
+            runs-on: windows-latest
+            cmake-version: "3.26.x"
 
     steps:
       - uses: actions/checkout@v3
@@ -81,9 +86,10 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Install package
-        run: pip install -e.[test,dev,cov]
+        run: pip install -e.[test,test-meta,test-numpy,wheels,cov]
 
       - name: Test package
         run: >-
@@ -99,21 +105,32 @@ jobs:
           verbose: true
           token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 
-      # the min requirements are not compatible with the metadata plugin
-      # packages so we remove those first (they then won't be tested)
+  min:
+    name: Min 🐍 ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.11"]
+        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # The min requirements are not compatible with some of the extra test
+      # deps, so limit to just built-in deps.
       - name: Min requirements
-        run: |
-          pip uninstall -y cmake hatch-fancy-pypi-readme setuptools-scm
-          pip install --constraint tests/constraints.txt .[test]
+        run: pip install --constraint tests/constraints.txt .[test] ninja
 
       - name: Setup CMake ${{ matrix.cmake-version }}
         uses: jwlawson/actions-setup-cmake@v1.14
-        with:
-          cmake-version: "${{ matrix.cmake-version }}"
 
-      # Skipped on pypy to keep the tests fast
       - name: Test min package
-        if: matrix.python-version != 'pypy-3.8'
         run: pytest -ra --showlocals -Wdefault
 
   cygwin:
@@ -251,7 +268,7 @@ jobs:
 
   pass:
     if: always()
-    needs: [lint, checks, cygwin, dist, docs]
+    needs: [lint, checks, min, cygwin, dist, docs]
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
