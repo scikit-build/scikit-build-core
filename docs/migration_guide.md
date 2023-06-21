@@ -62,7 +62,7 @@ python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
   [our getting started guide](./getting_started.md) for now.
 - The `SKBUILD_CONFIGURE_OPTIONS` environment variable is now named
   `SKBUILD_CMAKE_ARGS` for consistency.
-- The `SKBUILD_BUILD_OPTIONS` environment variable is not yet supported. Some
+- The `SKBUILD_BUILD_OPTIONS` environment variable is not supported. Some
   specific features are accessible using alternative variables. In particular,
   use `CMAKE_BUILD_PARALLEL_LEVEL` or `SKBUILD_CMAKE_VERBOSE` to control build
   parallelism or CMake verbosity directly.
