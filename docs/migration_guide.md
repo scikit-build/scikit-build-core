@@ -54,7 +54,7 @@ to
 
 ```cmake
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
-python_add_library(${LIBRARY} MODULE ${FILENAME})
+python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 ```
 
 - The UseCython CMake module distributed with scikit-build is not currently
