@@ -29,31 +29,34 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install(
-        "-e.[dev,test]", "pylint", "hatch-fancy-pypi-readme", "setuptools-scm"
-    )
+    session.install("-e.[dev,test,test_meta]", "pylint")
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
 def _run_tests(
-    session: nox.Session, *, install_args: Sequence[str], run_args: Sequence[str] = ()
+    session: nox.Session,
+    *,
+    install_args: Sequence[str],
+    run_args: Sequence[str] = (),
+    extras: Sequence[str] = (),
 ) -> None:
     posargs = list(session.posargs)
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
-    extra = []
+
+    _install_args = list(install_args)
     # This will not work if system CMake is too old (<3.15)
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
-        extra.append("cmake")
+        _install_args.append("cmake")
     if shutil.which("ninja") is None:
-        extra.append("ninja")
-    if (3, 8) <= sys.version_info < (3, 12):
-        extra.append("numpy")
+        _install_args.append("ninja")
 
-    install_arg = "-e.[test,cov]" if "--cov" in posargs else "-e.[test]"
+    _extras = ["test", *extras]
     if "--cov" in posargs:
+        _extras.append("cov")
         posargs.append("--cov-config=pyproject.toml")
 
-    session.install(install_arg, *extra, *install_args)
+    install_arg = f"-e.[{','.join(_extras)}]"
+    session.install(install_arg, *install_args)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -62,7 +65,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(session, install_args=["hatch-fancy-pypi-readme", "setuptools-scm"])
+    _run_tests(session, extras=["test_meta,test_numpy"])
 
 
 @nox.session

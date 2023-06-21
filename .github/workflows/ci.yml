@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "pypy-3.8", "3.11"]
+        python-version: ["3.7", "pypy-3.9", "3.11"]
         runs-on: [ubuntu-latest, macos-latest]
         cmake-version: ["3.15.x"]
 
@@ -58,6 +58,9 @@ jobs:
           - python-version: "pypy-3.7"
             runs-on: ubuntu-latest
             cmake-version: "3.15.x"
+          - python-version: "pypy-3.10"
+            runs-on: ubuntu-latest
+            cmake-version: "3.15.x"
           - python-version: "3.8"
             runs-on: ubuntu-latest
             cmake-version: "3.21.x"
@@ -70,10 +73,9 @@ jobs:
           - python-version: "3.8"
             runs-on: windows-2019
             cmake-version: "3.24.x"
-          - python-version: "3.12-dev"
+          - python-version: "3.12"
             runs-on: ubuntu-latest
             cmake-version: "3.15.x"
-    continue-on-error: ${{ endsWith(matrix.python-version, '-dev') }}
 
     steps:
       - uses: actions/checkout@v3
@@ -81,9 +83,10 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Install package
-        run: pip install -e.[test,dev,cov]
+        run: pip install -e.[test,test_meta,test_numpy,wheels,cov]
 
       - name: Test package
         run: >-
@@ -99,22 +102,24 @@ jobs:
           verbose: true
           token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 
-      # the min requirements are not compatible with the metadata plugin
-      # packages so we remove those first (they then won't be tested)
+      # The min requirements are not compatible with some of the extra test
+      # deps, so limit to just built-in deps. Skipped on pypy to keep the tests
+      # fast & pypy users should not be using old requirements.
       - name: Min requirements
+        if: "!startsWith(matrix.python-version, 'pypy')"
         run: |
-          pip uninstall -y cmake hatch-fancy-pypi-readme setuptools-scm
-          pip install --constraint tests/constraints.txt .[test]
+          python -m venv .venv-min
+          ./.venv-min/bin/pip install --constraint tests/constraints.txt .[test]
 
       - name: Setup CMake ${{ matrix.cmake-version }}
         uses: jwlawson/actions-setup-cmake@v1.14
+        if: "!startsWith(matrix.python-version, 'pypy')"
         with:
           cmake-version: "${{ matrix.cmake-version }}"
 
-      # Skipped on pypy to keep the tests fast
       - name: Test min package
-        if: matrix.python-version != 'pypy-3.8'
-        run: pytest -ra --showlocals -Wdefault
+        if: "!startsWith(matrix.python-version, 'pypy')"
+        run: ./.venv-min/bin/pytest -ra --showlocals -Wdefault
 
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
