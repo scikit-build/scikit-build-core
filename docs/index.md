@@ -21,6 +21,7 @@ system, allowing you to make Python modules with CMake.
 getting_started
 configuration
 cmakelists
+migration_guide
 changelog
 ```
 
