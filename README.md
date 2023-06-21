@@ -24,7 +24,7 @@ Features over classic Scikit-build:
 - No dependency on setuptools, distutils, or wheel
 - Powerful config system, including config options support
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
-- FindPython is backported if running on CMake < 3.26.1 (configurable), supports
+- FindPython is backported if running on CMake < 3.27.0 (configurable), supports
   PyPY SOABI & Limited API / Stable ABI
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
@@ -99,7 +99,7 @@ Python_add_library(_module MODULE src/module.c WITH_SOABI)
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
 ```
 
-Scikit-build-core will backport FindPython from CMake 3.26.1 to older versions
+Scikit-build-core will backport FindPython from CMake 3.27.0 to older versions
 of Python, and will handle PyPy for you if you are building from PyPy. You will
 need to install everything you want into the full final path inside site-modules
 (so you will usually prefix everything by the package name).
@@ -174,7 +174,7 @@ wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 # This will backport an internal copy of FindPython if CMake is less than this
 # value. Set to 0 or the empty string to disable. The default will be kept in
 # sync with the version of FindPython stored in scikit-build-core.
-backport.find-python = "3.26.1"
+backport.find-python = "3.27.0"
 
 # This is the only editable mode currently
 editable.mode = "redirect"

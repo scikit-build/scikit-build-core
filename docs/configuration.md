@@ -100,7 +100,7 @@ For example, to require a recent CMake and Ninja:
 
 ```toml
 [tool.scikit-build]
-cmake.minimum-version = "3.26.1"
+cmake.minimum-version = "3.27.0"
 ninja.minimum-version = "1.11"
 ```
 
@@ -112,7 +112,7 @@ ninja.make-fallback = false
 ```
 
 You can also control the FindPython backport; by default, a backport of CMake
-3.26.1's FindPython will be used if the CMake version is less than 3.26.1; you
+3.27.0's FindPython will be used if the CMake version is less than 3.27.0; you
 can turn this down if you'd like ("3.15", scikit-build-core's minimum version,
 would turn it off).
 

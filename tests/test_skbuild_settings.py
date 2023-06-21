@@ -43,7 +43,7 @@ def test_skbuild_settings_default(tmp_path):
         "NOTICE*",
         "AUTHORS*",
     ]
-    assert settings.backport.find_python == "3.26.1"
+    assert settings.backport.find_python == "3.27.0"
     assert settings.strict_config
     assert not settings.experimental
     assert settings.minimum_version is None

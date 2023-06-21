@@ -109,7 +109,7 @@ class WheelSettings:
 class BackportSettings:
     #: If CMake is less than this value, backport a copy of FindPython. Set
     #: to 0 disable this, or the empty string.
-    find_python: str = "3.26.1"
+    find_python: str = "3.27.0"
 
 
 @dataclasses.dataclass
