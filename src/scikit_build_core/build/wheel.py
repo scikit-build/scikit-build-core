@@ -14,6 +14,7 @@ from packaging.version import Version
 from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
+from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
@@ -102,7 +103,7 @@ def _build_wheel_impl(
         f"[red]({action})[/red]",
     )
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory() as tmpdir, fix_win_37_all_permissions(tmpdir):
         build_tmp_folder = Path(tmpdir)
         wheel_dir = build_tmp_folder / "wheel"
 

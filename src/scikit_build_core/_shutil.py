@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import os
+import stat
 import subprocess
-from collections.abc import Iterable
+import sys
+from collections.abc import Generator, Iterable
 from typing import ClassVar
 
 from ._logging import logger
@@ -78,3 +81,26 @@ class Run:
         if k in self._prev_env and k not in self.env:
             return "-"
         return " "
+
+
+def _fix_all_permissions(directory: str) -> None:
+    """
+    Makes sure the write permission is set. Only run this on Windows.
+    """
+    with os.scandir(directory) as it:
+        for entry in it:
+            if entry.is_dir():
+                _fix_all_permissions(entry.path)
+                continue
+            mode = stat.S_IMODE(entry.stat().st_mode)
+            if not mode & stat.S_IWRITE:
+                os.chmod(entry.path, mode | stat.S_IWRITE)  # noqa: PTH101
+
+
+@contextlib.contextmanager
+def fix_win_37_all_permissions(tmpdir: str) -> Generator[None, None, None]:
+    try:
+        yield
+    finally:
+        if sys.version_info < (3, 8) and sys.platform.startswith("win"):
+            _fix_all_permissions(tmpdir)
