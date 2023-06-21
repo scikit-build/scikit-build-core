@@ -92,9 +92,9 @@ def _fix_all_permissions(directory: str) -> None:
             if entry.is_dir():
                 _fix_all_permissions(entry.path)
                 continue
-            mode = stat.S_IMODE(entry.stat().st_mode) & stat.S_IWRITE
+            mode = stat.S_IMODE(entry.stat().st_mode)
             if not mode & stat.S_IWRITE:
-                os.chmod(entry.path, mode & stat.S_IWRITE)  # noqa: PTH101
+                os.chmod(entry.path, mode | stat.S_IWRITE)  # noqa: PTH101
 
 
 @contextlib.contextmanager
