@@ -22,7 +22,7 @@ from packaging.utils import BuildTag
 from pyproject_metadata import StandardMetadata
 
 from .._compat.typing import Self
-from .._version import __version__
+from .. import __version__
 
 EMAIL_POLICY = EmailPolicy(max_line_length=0, mangle_from_=False, utf8=True)
 
