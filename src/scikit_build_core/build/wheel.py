@@ -91,12 +91,14 @@ def _build_wheel_impl(
 
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
+    action = "editable" if editable else "wheel"
+    if wheel_directory is None:
+        action = f"metadata_{action}"
+
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
     )
-    action = (
-        "metadata" if wheel_directory is None else "editable" if editable else "wheel"
-    )
+
     rich_print(
         f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
         f"using [blue]CMake {cmake.version}[/blue]",
@@ -196,6 +198,7 @@ def _build_wheel_impl(
         rich_print("[green]***[/green] [bold]Configuring CMake...")
         defines: dict[str, str] = {}
         cache_entries = {f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()}
+        defines["SKBUILD_STATE"] = action
         builder.configure(
             defines=defines,
             cache_entries=cache_entries,
