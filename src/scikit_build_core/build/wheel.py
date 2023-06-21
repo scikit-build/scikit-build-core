@@ -91,11 +91,9 @@ def _build_wheel_impl(
 
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
-    action = (
-        ("editable_metadata" if wheel_directory is None else "editable")
-        if editable
-        else ("metadata" if wheel_directory else "wheel")
-    )
+    action = "editable" if editable else "wheel"
+    if wheel_directory is None:
+        action = f"metadata_{action}"
 
     cmake = CMake.default_search(
         minimum_version=Version(settings.cmake.minimum_version)
