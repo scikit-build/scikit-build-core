@@ -15,10 +15,10 @@ from typing import Generator
 
 from packaging.version import Version
 
+from . import __version__
 from ._compat.typing import Self
 from ._logging import logger
 from ._shutil import Run
-from . import __version__
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
 
