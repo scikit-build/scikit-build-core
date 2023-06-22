@@ -1,5 +1,38 @@
 # Changelog
 
+## Version 0.4.6
+
+This release has one small new feature (access to `${SKBUILD_STATE}` from
+CMake), and fixes an issue when adding read-only files on Windows with Python
+3.7. Some testing and docs infrastructure updates should make it easier for
+downstream packagers to ship scikit-build-core.
+
+Fixes:
+
+- Provide access to current state in CMake by @henryiii in #394
+- Support building older versions of `setuptools_scm` by @henryiii in #390
+- Workaround for Windows Python 3.7 `TemporaryDirectory` bug by @henryiii in
+  #391
+
+Tests:
+
+- Rework testing extras by @henryiii in #395 and #393
+- Add `network` marker by @henryiii in #379
+
+CI:
+
+- Add example tests to Fedora packaging by @LecrisUT in #378
+- Fedora: Correct rsync rule by @LecrisUT in #389
+- Use `not network` for spec by @henryiii in #383
+
+Docs:
+
+- Add migration guide by @vyasr in #356
+- Support building the documentation as a man page by @henryiii in #372
+- Add nanobind example by @henryiii in #375
+- Use `UseSWIG` for swig by @henryiii in #377
+- Fix or hide nitpicks by @henryiii in #370
+
 ## Version 0.4.5
 
 This version fixes issues with output being incorrectly interleaved with logging
