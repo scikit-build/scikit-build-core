@@ -9,10 +9,12 @@ Source:         %{pypi_source scikit_build_core}
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
+# Testing dependences
 BuildRequires:  cmake
 BuildRequires:  ninja-build
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
+BuildRequires:  git
 
 %global _description %{expand:
 A next generation Python CMake adaptor and Python API for plugins
