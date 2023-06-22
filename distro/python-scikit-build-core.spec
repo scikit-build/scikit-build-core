@@ -36,7 +36,7 @@ Suggests:       gcc
 
 
 %generate_buildrequires
-%pyproject_buildrequires -x test
+%pyproject_buildrequires -x test,test-meta,test-numpy
 
 
 %build
