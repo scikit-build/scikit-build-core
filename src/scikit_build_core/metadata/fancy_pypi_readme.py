@@ -39,6 +39,7 @@ def dynamic_metadata(
             "content-type": config.content_type,
             "text": build_text(config.fragments, config.substitutions)
             if hasattr(config, "substitutions")
+            # pylint: disable-next=no-value-for-parameter
             else build_text(config.fragments),  # type: ignore[call-arg]
         }
     }
