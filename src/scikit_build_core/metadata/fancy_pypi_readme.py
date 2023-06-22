@@ -33,10 +33,13 @@ def dynamic_metadata(
         pyproject_dict["tool"]["hatch"]["metadata"]["hooks"]["fancy-pypi-readme"]
     )
 
+    # Version 22.3 does not have fragment support
     return {
         "readme": {
             "content-type": config.content_type,
-            "text": build_text(config.fragments, config.substitutions),
+            "text": build_text(config.fragments, config.substitutions)
+            if hasattr(config, "substitutions")
+            else build_text(config.fragments),  # type: ignore[call-arg]
         }
     }
 
@@ -44,4 +47,4 @@ def dynamic_metadata(
 def get_requires_for_dynamic_metadata(
     _settings: dict[str, object] | None = None,
 ) -> list[str]:
-    return ["hatch-fancy-pypi-readme"]
+    return ["hatch-fancy-pypi-readme>=22.3"]
