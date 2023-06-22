@@ -197,8 +197,10 @@ def _build_wheel_impl(
 
         rich_print("[green]***[/green] [bold]Configuring CMake...")
         defines: dict[str, str] = {}
-        cache_entries = {f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()}
-        defines["SKBUILD_STATE"] = action
+        cache_entries: dict[str, str | Path] = {
+            f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
+        }
+        cache_entries["SKBUILD_STATE"] = action
         builder.configure(
             defines=defines,
             cache_entries=cache_entries,
