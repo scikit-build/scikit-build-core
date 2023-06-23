@@ -52,11 +52,11 @@ class Run:
         if self.env:
             if not self._prev_env:
                 type(self)._prev_env = self.env.copy()
-                msg = "\n  ".join(f"{k}={v}" for k, v in sorted(self.env.items()))
+                msg = "\n  ".join(f"{k}={v!r}" for k, v in sorted(self.env.items()))
                 logger.debug("RUNENV:\n  {}", msg)
             else:
                 msg = "\n  ".join(
-                    f"{self._key_diff(k)} {k}={self.env.get(k, '<unset>')}"
+                    f"{self._key_diff(k)} {k}={self.env.get(k, '<unset>')!r}"
                     for k in sorted(self.env.keys() | self._prev_env.keys())
                     if self._prev_env.get(k, None) != self.env.get(k, None)
                 )
