@@ -136,7 +136,7 @@ markers = [
 
 
 [tool.mypy]
-files = ["src", "tests"]
+files = ["src", "tests", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
 python_version = "3.7"
 warn_unused_configs = true
