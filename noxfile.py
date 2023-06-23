@@ -36,7 +36,7 @@ def pylint(session: nox.Session) -> None:
 def _run_tests(
     session: nox.Session,
     *,
-    install_args: Sequence[str],
+    install_args: Sequence[str] = (),
     run_args: Sequence[str] = (),
     extras: Sequence[str] = (),
 ) -> None:
@@ -147,7 +147,7 @@ def build(session: nox.Session) -> None:
     """
 
     session.install("build")
-    session.run("python", "-m", "build", **session.posargs)
+    session.run("python", "-m", "build", *session.posargs)
 
 
 EXAMPLES = ["c", "abi3", "pybind11", "nanobind", "swig", "cython"]
@@ -204,7 +204,7 @@ def downstream(session: nox.Session) -> None:
             "clone",
             args.project,
             *remaining,
-            proj_dir,
+            str(proj_dir),
             "--recurse-submodules",
             external=True,
         )

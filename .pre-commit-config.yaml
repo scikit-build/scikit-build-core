@@ -69,7 +69,7 @@ repos:
             tests/packages/dynamic_metadata/src/dynamic/__init__.py|
             tests/packages/.*/setup.py
           )
-        files: ^(src|tests)
+        files: ^(src|tests|noxfile.py)
         args: []
         additional_dependencies:
           - build
@@ -81,6 +81,7 @@ repos:
           - importlib-resources
           - markdown-it-py<3 # Python 3.7 compat needed for mypy check
           - ninja
+          - nox
           - packaging
           - pyproject_metadata
           - pytest
