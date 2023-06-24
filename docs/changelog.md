@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.4.7
+
+This version fixes a unused variable message in 0.4.6, along with a debug
+logging improvement, and a few test fixes, including a regression in the recent
+noxfile reworking.
+
+- fix: remove `SKBUILD_STATE` unused message when building by @henryiii in #401
+- fix: logging environment should use reprs by @henryiii in #409
+
+Tests and CI:
+
+- Support running tests with `NO_COLOR` by @henryiii in #407
+- `noxfile.py` added to mypy, two fixes by @henryiii in #408
+- Get packages of interest from `pyproject.toml` by @henryiii in #402
+- Enable more tests in the spec file by @LecrisUT in #400
+
 ## Version 0.4.6
 
 This release has one small new feature (access to `${SKBUILD_STATE}` from
