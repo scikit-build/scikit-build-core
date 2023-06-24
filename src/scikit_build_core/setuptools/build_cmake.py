@@ -182,7 +182,8 @@ def _has_cmake(dist: Distribution) -> bool:
 def _prepare_extension_detection(dist: Distribution) -> None:
     # Setuptools needs to know that it has extensions modules
 
-    dist.has_ext_modules = lambda: type(dist).has_ext_modules(dist) or _has_cmake(dist)  # type: ignore[method-assign]
+    orig_has_ext_modules = dist.has_ext_modules
+    dist.has_ext_modules = lambda: orig_has_ext_modules() or _has_cmake(dist)  # type: ignore[method-assign]
 
     # Hack for stdlib distutils
     if not setuptools.distutils.__package__.startswith("setuptools"):  # type: ignore[attr-defined]
