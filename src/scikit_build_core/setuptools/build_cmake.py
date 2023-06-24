@@ -184,7 +184,7 @@ def _prepare_extension_detection(dist: Distribution) -> None:
 
     orig_has_ext_modules = dist.has_ext_modules
     dist.has_ext_modules = lambda: orig_has_ext_modules() or _has_cmake(dist)  # type: ignore[method-assign]
-    
+
     # Hack for stdlib distutils
     if not setuptools.distutils.__package__.startswith("setuptools"):  # type: ignore[attr-defined]
 
