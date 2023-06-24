@@ -34,8 +34,8 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup; python_version<'3.11'",
-    "importlib-resources >=1.3; python_version<'3.9'",
     "importlib-metadata; python_version<'3.8'",
+    "importlib-resources >=1.3; python_version<'3.9'",
     "packaging >=20.9",
     "tomli >=1.1; python_version<'3.11'",
     "typing-extensions >=3.10.0; python_version<'3.8'",
@@ -46,13 +46,12 @@ dependencies = [
 
 [project.optional-dependencies]
 pyproject = [
-    "pyproject-metadata >=0.5",
     "pathspec >=0.10.1",
+    "pyproject-metadata >=0.5",
 ]
 test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",
-    "importlib-metadata; python_version<'3.8'",
     "pathspec >=0.10.1",
     "pybind11",
     "pyproject-metadata >=0.5",
@@ -92,11 +91,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/scikit-build/scikit-build-core"
-Documentation = "https://scikit-build-core.readthedocs.io"
-Discussions = "https://github.com/orgs/scikit-build/discussions"
-Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 Changelog = "https://scikit-build-core.readthedocs.io/en/latest/changelog.html"
+Discussions = "https://github.com/orgs/scikit-build/discussions"
+Documentation = "https://scikit-build-core.readthedocs.io"
+Homepage = "https://github.com/scikit-build/scikit-build-core"
+Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 
 [project.entry-points]
 "distutils.commands".build_cmake = "scikit_build_core.setuptools.build_cmake:BuildCMake"
@@ -115,10 +114,9 @@ addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
     "error",
-    "ignore:pkg_resources is deprecated as an API:DeprecationWarning",  # Caused by wheel in tests
+    "ignore:pkg_resources is deprecated as an API:DeprecationWarning:wheel",  # Caused by wheel in tests
     "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
-    "ignore:onerror argument is deprecated, use onexc instead:DeprecationWarning",  # Caused by wheel and Python 3.12
-    "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",  # Python 3.12
+    "ignore:onerror argument is deprecated, use onexc instead:DeprecationWarning:wheel",  # Caused by wheel and Python 3.12
 ]
 log_cli_level = "info"
 testpaths = ["tests"]

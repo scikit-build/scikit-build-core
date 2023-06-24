@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from typing import ClassVar
 
 import setuptools
 import setuptools.errors
@@ -48,7 +49,7 @@ class BuildCMake(setuptools.Command):
     parallel: int | None
     plat_name: str | None
 
-    user_options = [
+    user_options: ClassVar[list[tuple[str, str, str]]] = [
         ("build-lib=", "b", "directory for compiled extension modules"),
         ("build-temp=", "t", "directory for temporary files (build by-products)"),
         ("plat-name=", "p", "platform name to cross-compile for, if supported "),

@@ -229,8 +229,7 @@ class EnvSource:
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
 
         if raw_target is bool:
-            result = item.strip().lower() not in {"0", "false", "off", "no", ""}
-            return result
+            return item.strip().lower() not in {"0", "false", "off", "no", ""}
 
         if callable(raw_target):
             return raw_target(item)
@@ -339,8 +338,7 @@ class ConfSource:
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is bool:
-            result = item.strip().lower() not in {"0", "false", "off", "no", ""}
-            return result
+            return item.strip().lower() not in {"0", "false", "off", "no", ""}
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"

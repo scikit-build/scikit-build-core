@@ -48,8 +48,7 @@ def get_archs(env: Mapping[str, str], cmake_args: Sequence[str] = ()) -> list[st
         for cmake_arg in cmake_args:
             if "CMAKE_SYSTEM_PROCESSOR" in cmake_arg:
                 return [cmake_arg.split("=")[1]]
-        archs = re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
-        return archs
+        return re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
     if sys.platform.startswith("win") and get_platform(env) == "win-arm64":
         return ["win_arm64"]
 
