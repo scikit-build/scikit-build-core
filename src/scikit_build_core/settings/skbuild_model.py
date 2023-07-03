@@ -148,3 +148,6 @@ class ScikitBuildSettings:
 
     #: The build directory. Defaults to a temporary directory, but can be set.
     build_dir: str = ""
+
+    #: Whether to cache build environments. Experimental feature.
+    cache_build_env: bool = False
