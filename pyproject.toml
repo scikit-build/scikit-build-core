@@ -219,7 +219,6 @@ extend-ignore = [
     "PT004",   # Incorrect, just usefixtures instead.
     "RUF009",  # Too easy to get a false positive
 ]
-target-version = "py37"
 typing-modules = ["scikit_build_core._compat.typing"]
 src = ["src"]
 unfixable = ["T20", "F841"]
