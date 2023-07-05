@@ -105,7 +105,7 @@ class Builder:
         logger.debug("SITE_PACKAGES: {}", site_packages)
         if site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
-            logger.debug("Extra SITE_PACKAGES: {}", site_packages)
+            logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
 
         # Add the FindPython backport if needed
         fp_backport = self.settings.backport.find_python
