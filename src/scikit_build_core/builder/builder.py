@@ -91,19 +91,33 @@ class Builder:
     ) -> None:
         cmake_defines = dict(defines)
 
-        # Add any extra CMake modules
-        eps = metadata.entry_points(group="cmake.module")
-        self.config.module_dirs.extend(resources.files(ep.load()) for ep in eps)
+        # NOTE: Instead of manipulating sys.path, we could also build a
+        # DistributionFinder.Context object specifying just the relevant paths
+        # possibly containing entry points, and then pass that to
+        # Distribution.discover() (all part of importlib.metadata)
 
-        # Add any extra CMake prefixes
-        eps = metadata.entry_points(group="cmake.prefix")
-        self.config.prefix_dirs.extend(resources.files(ep.load()) for ep in eps)
+        site_packages = sysconfig.get_path("purelib")
+        old_sys_path = sys.path
+
+        try:
+            sys.path.append(site_packages)
+
+            # Add any extra CMake modules
+            eps = metadata.entry_points(group="cmake.module")
+            self.config.module_dirs.extend(resources.files(ep.load()) for ep in eps)
+
+            # Add any extra CMake prefixes
+            eps = metadata.entry_points(group="cmake.prefix")
+            self.config.prefix_dirs.extend(resources.files(ep.load()) for ep in eps)
+
+        finally:
+            sys.path = old_sys_path
 
         # Add site-packages to the prefix path for CMake
-        site_packages = Path(sysconfig.get_path("purelib"))
-        self.config.prefix_dirs.append(site_packages)
-        logger.debug("SITE_PACKAGES: {}", site_packages)
-        if site_packages != DIR.parent.parent:
+        site_packages_path = Path(site_packages)
+        self.config.prefix_dirs.append(site_packages_path)
+        logger.debug("SITE_PACKAGES: {}", site_packages_path)
+        if site_packages_path != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
             logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
 
