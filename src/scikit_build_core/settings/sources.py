@@ -38,7 +38,7 @@ from collections.abc import Generator, Iterator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Protocol, runtime_checkable
+from .._compat.typing import Protocol, get_args, get_origin
 
 T = TypeVar("T")
 
@@ -72,32 +72,20 @@ def _dig_fields(__opt: Any, *names: str) -> Any:
     return __opt
 
 
-@runtime_checkable
-class TypeLike(Protocol):
-    @property
-    def __origin__(self) -> Any:
-        ...
-
-    @property
-    def __args__(self) -> list[Any]:
-        ...
-
-
 def _process_union(target: type[Any]) -> Any:
     """
     Selects the non-None item in an Optional or Optional-like Union. Passes
     through non-Unions.
     """
 
-    if (
-        not isinstance(target, TypeLike)
-        or not hasattr(target, "__origin__")
-        or target.__origin__ is not Union
-    ):
+    origin = get_origin(target)
+
+    if origin is None or origin is not Union:
         return target
 
-    if len(target.__args__) == 2:
-        items = list(target.__args__)
+    args = get_args(target)
+    if len(args) == 2:
+        items = list(args)
         if type(None) not in items:
             msg = f"None must be in union, got {items}"
             raise AssertionError(msg)
@@ -115,10 +103,8 @@ def _get_target_raw_type(target: type[Any]) -> type[Any]:
     """
 
     target = _process_union(target)
-    # The hasattr is required for Python 3.7, though not quite sure why
-    if isinstance(target, TypeLike) and hasattr(target, "__origin__"):
-        return target.__origin__
-    return target
+    origin = get_origin(target)
+    return origin or target
 
 
 def _get_inner_type(__target: type[Any]) -> type[Any]:
@@ -130,11 +116,9 @@ def _get_inner_type(__target: type[Any]) -> type[Any]:
     raw_target = _get_target_raw_type(__target)
     target = _process_union(__target)
     if raw_target == list:
-        assert isinstance(__target, TypeLike)
-        return target.__args__[0]
+        return get_args(target)[0]  # type: ignore[no-any-return]
     if raw_target == dict:
-        assert isinstance(__target, TypeLike)
-        return target.__args__[1]
+        return get_args(target)[1]  # type: ignore[no-any-return]
     msg = f"Expected a list or dict, got {target!r}"
     raise AssertionError(msg)
 
