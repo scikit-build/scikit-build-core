@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID251
 
 from .._compat.builtins import ExceptionGroup
+from .._compat.typing import get_args, get_origin
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
@@ -88,11 +89,12 @@ class Converter:
         if dataclasses.is_dataclass(target):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)  # type: ignore[return-value]
-        if hasattr(target, "__origin__"):
-            if target.__origin__ == list:  # type: ignore[attr-defined]
-                return [self._convert_any(i, target.__args__[0]) for i in item]  # type: ignore[return-value,attr-defined]
-            if target.__origin__ == Union:  # type: ignore[attr-defined]
-                return self._convert_any(item, target.__args__[0])  # type: ignore[no-any-return,attr-defined]
+        origin = get_origin(target)
+        if origin is not None:
+            if origin == list:
+                return [self._convert_any(i, get_args(target)[0]) for i in item]  # type: ignore[return-value]
+            if origin == Union:
+                return self._convert_any(item, get_args(target)[0])  # type: ignore[no-any-return]
 
         return target(item)  # type: ignore[call-arg]
 
