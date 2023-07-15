@@ -20,28 +20,6 @@ example-project
 
 ````
 
-````{tab} C
-
-```
-example-project
-├── example.c
-├── pyproject.toml
-└── CMakeLists.txt
-```
-
-````
-
-````{tab} ABI3
-
-```
-example-project
-├── example.c
-├── pyproject.toml
-└── CMakeLists.txt
-```
-
-````
-
 ````{tab} nanobind
 
 ```
@@ -76,6 +54,28 @@ example-project
 
 ````
 
+````{tab} C
+
+```
+example-project
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
+````{tab} ABI3
+
+```
+example-project
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ````{tab} Fortran
 
 ```
@@ -96,22 +96,6 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ```{literalinclude} examples/getting_started/pybind11/example.cpp
 :language: cpp
-```
-
-````
-
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/example.c
-:language: c
-```
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/example.c
-:language: c
 ```
 
 ````
@@ -144,6 +128,22 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````
 
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/example.c
+:language: c
+```
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/example.c
+:language: c
+```
+
+````
+
 ````{tab} Fortran
 
 ```{literalinclude} examples/getting_started/fortran/example.f
@@ -159,22 +159,6 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} pybind11
 
 ```{literalinclude} examples/getting_started/pybind11/pyproject.toml
-:language: toml
-```
-
-````
-
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/pyproject.toml
-:language: toml
-```
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/pyproject.toml
 :language: toml
 ```
 
@@ -199,6 +183,22 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} Cython
 
 ```{literalinclude} examples/getting_started/cython/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/pyproject.toml
 :language: toml
 ```
 
@@ -263,56 +263,6 @@ to `pybind11::module`, your choice.
 
 ````
 
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/CMakeLists.txt
-:language: cmake
-```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
-`find_package(Python ...)` should always include the `Development.Module`
-component instead of `Developement`; the latter breaks if the embedding
-components are missing, such as when you are building redistributable wheels on
-Linux.
-
-You'll want `WITH_SOABI` when you make the module to ensure the full extension
-is included on Unix systems (PyPy won't even be able to open the extension
-without it).
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
-:language: cmake
-```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
-`find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
-
-You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
-argument to the minimum version to build with. This will also add a proper
-PRIVATE define of `Py_LIMITED_API` for you.
-
-```{note}
-This will not support pypy, so you'll want to provide an alternative if you
-support PyPy).
-```
-
-````
-
 ````{tab} nanobind
 
 ```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
@@ -362,6 +312,56 @@ CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by Cython directly at the moment.
 A helper (similar to scikti-build classic) might be added in the future.
+
+````
+
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+`find_package(Python ...)` should always include the `Development.Module`
+component instead of `Developement`; the latter breaks if the embedding
+components are missing, such as when you are building redistributable wheels on
+Linux.
+
+You'll want `WITH_SOABI` when you make the module to ensure the full extension
+is included on Unix systems (PyPy won't even be able to open the extension
+without it).
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+`find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
+
+You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
+argument to the minimum version to build with. This will also add a proper
+PRIVATE define of `Py_LIMITED_API` for you.
+
+```{note}
+This will not support pypy, so you'll want to provide an alternative if you
+support PyPy).
+```
 
 ````
 
