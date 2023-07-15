@@ -9,28 +9,6 @@ pure Python using modern tooling and configuration.
 
 We will be writing these files:
 
-````{tab} C
-
-```
-example-project
-├── example.c
-├── pyproject.toml
-└── CMakeLists.txt
-```
-
-````
-
-````{tab} ABI3
-
-```
-example-project
-├── example.c
-├── pyproject.toml
-└── CMakeLists.txt
-```
-
-````
-
 ````{tab} pybind11
 
 ```
@@ -76,6 +54,28 @@ example-project
 
 ````
 
+````{tab} C
+
+```
+example-project
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
+````{tab} ABI3
+
+```
+example-project
+├── example.c
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ````{tab} Fortran
 
 ```
@@ -91,22 +91,6 @@ example-project
 
 For this tutorial, you can either write a C extension yourself, or you can use
 pybind11 and C++. Select your preferred version using the tabs - compare them!
-
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/example.c
-:language: c
-```
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/example.c
-:language: c
-```
-
-````
 
 ````{tab} pybind11
 
@@ -144,6 +128,22 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````
 
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/example.c
+:language: c
+```
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/example.c
+:language: c
+```
+
+````
+
 ````{tab} Fortran
 
 ```{literalinclude} examples/getting_started/fortran/example.f
@@ -155,22 +155,6 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 ### Python package configuration
 
 To create your first compiled package, start with a pyproject.toml like this:
-
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/pyproject.toml
-:language: toml
-```
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/pyproject.toml
-:language: toml
-```
-
-````
 
 ````{tab} pybind11
 
@@ -194,7 +178,6 @@ To create your first compiled package, start with a pyproject.toml like this:
 :language: toml
 ```
 
-
 ````
 
 ````{tab} Cython
@@ -203,6 +186,21 @@ To create your first compiled package, start with a pyproject.toml like this:
 :language: toml
 ```
 
+````
+
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/pyproject.toml
+:language: toml
+```
 
 ````
 
@@ -235,61 +233,11 @@ There are other keys you should include under `[project]` if you plan to publish
 a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/declaring-project-metadata)
 page covers what keys are available. Another example is available at
-[the Scikit-HEP Developer Pages](https://scikit-hep.org/developer/pep621).
+[the Scientific Python Library Development Guide](https://scikit-hep.org/developer/pep621).
 
 ### CMake file
 
-Now, you'll need a CMake file. This one will do:
-
-````{tab} C
-
-```{literalinclude} examples/getting_started/c/CMakeLists.txt
-:language: cmake
-```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
-`find_package(Python ...)` should always include the `Development.Module`
-component instead of `Developement`; the latter breaks if the embedding
-components are missing, such as when you are building redistributable wheels on
-Linux.
-
-You'll want `WITH_SOABI` when you make the module to ensure the full extension
-is included on Unix systems (PyPy won't even be able to open the extension
-without it).
-
-````
-
-````{tab} ABI3
-
-```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
-:language: cmake
-```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
-`find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
-
-You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
-argument to the minimum version to build with. This will also add a proper
-PRIVATE define of `Py_LIMITED_API` for you.
-
-```{note}
-This will not support pypy, so you'll want to provide an alternative if you
-support PyPy).
-```
-
-````
+Now, you'll need a file called `CMakeLists.txt`. This one will do:
 
 ````{tab} pybind11
 
@@ -363,7 +311,57 @@ your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by Cython directly at the moment.
-A helper (similar to scikti-build classic) might be added in the future.
+A helper (similar to scikit-build classic) might be added in the future.
+
+````
+
+````{tab} C
+
+```{literalinclude} examples/getting_started/c/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+`find_package(Python ...)` should always include the `Development.Module`
+component instead of `Developement`; the latter breaks if the embedding
+components are missing, such as when you are building redistributable wheels on
+Linux.
+
+You'll want `WITH_SOABI` when you make the module to ensure the full extension
+is included on Unix systems (PyPy won't even be able to open the extension
+without it).
+
+````
+
+````{tab} ABI3
+
+```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+`find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
+
+You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
+argument to the minimum version to build with. This will also add a proper
+PRIVATE define of `Py_LIMITED_API` for you.
+
+```{note}
+This will not support pypy, so you'll want to provide an alternative if you
+support PyPy).
+```
 
 ````
 
@@ -397,6 +395,9 @@ That's it! You can try building it:
 ```console
 $ pipx run build
 ```
+
+[pipx](https://pypa.github.io/pipx/) allows you to install and run Python
+applications in isolated environments.
 
 Or installing it (in a virtualenv, ideally):
 
