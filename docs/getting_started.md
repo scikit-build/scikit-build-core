@@ -235,7 +235,7 @@ There are other keys you should include under `[project]` if you plan to publish
 a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/declaring-project-metadata)
 page covers what keys are available. Another example is available at
-[the Scikit-HEP Developer Pages](https://scikit-hep.org/developer/pep621).
+[the Scientific Python Library Development Guide](https://scikit-hep.org/developer/pep621).
 
 ### CMake file
 
