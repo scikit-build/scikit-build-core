@@ -311,7 +311,7 @@ your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by Cython directly at the moment.
-A helper (similar to scikti-build classic) might be added in the future.
+A helper (similar to scikit-build classic) might be added in the future.
 
 ````
 
