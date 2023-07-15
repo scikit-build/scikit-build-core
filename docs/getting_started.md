@@ -3,7 +3,9 @@
 If you've never made a Python package before,
 [packaging.python.org's tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
 is a great place to start. It walks you through creating a simple package in
-pure Python using modern tooling and configuration.
+pure Python using modern tooling and configuration. Another great resource is
+the
+[Scientific Python Developer Guide](https://learn.scientific-python.org/development).
 
 ## Writing an extension
 
@@ -232,8 +234,9 @@ and wheel should never be in this list.
 There are other keys you should include under `[project]` if you plan to publish
 a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/declaring-project-metadata)
-page covers what keys are available. Another example is available at
-[the Scientific Python Library Development Guide](https://scikit-hep.org/developer/pep621).
+page covers what keys are available. Another example is available at [the
+Scientific Python Library Development
+Guide](https://learn.scientific-python.org/development/guides/.
 
 ### CMake file
 
@@ -265,7 +268,7 @@ to `pybind11::module`, your choice.
 
 ````{tab} nanobind
 
-```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
+```{literalinclude} examples/getting_started/nanobind/CMakeLists.txt
 :language: cmake
 ```
 
