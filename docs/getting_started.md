@@ -9,6 +9,17 @@ pure Python using modern tooling and configuration.
 
 We will be writing these files:
 
+````{tab} pybind11
+
+```
+example-project
+├── example.cpp
+├── pyproject.toml
+└── CMakeLists.txt
+```
+
+````
+
 ````{tab} C
 
 ```
@@ -25,17 +36,6 @@ example-project
 ```
 example-project
 ├── example.c
-├── pyproject.toml
-└── CMakeLists.txt
-```
-
-````
-
-````{tab} pybind11
-
-```
-example-project
-├── example.cpp
 ├── pyproject.toml
 └── CMakeLists.txt
 ```
@@ -92,6 +92,14 @@ example-project
 For this tutorial, you can either write a C extension yourself, or you can use
 pybind11 and C++. Select your preferred version using the tabs - compare them!
 
+````{tab} pybind11
+
+```{literalinclude} examples/getting_started/pybind11/example.cpp
+:language: cpp
+```
+
+````
+
 ````{tab} C
 
 ```{literalinclude} examples/getting_started/c/example.c
@@ -104,14 +112,6 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ```{literalinclude} examples/getting_started/abi3/example.c
 :language: c
-```
-
-````
-
-````{tab} pybind11
-
-```{literalinclude} examples/getting_started/pybind11/example.cpp
-:language: cpp
 ```
 
 ````
@@ -156,6 +156,14 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 To create your first compiled package, start with a pyproject.toml like this:
 
+````{tab} pybind11
+
+```{literalinclude} examples/getting_started/pybind11/pyproject.toml
+:language: toml
+```
+
+````
+
 ````{tab} C
 
 ```{literalinclude} examples/getting_started/c/pyproject.toml
@@ -167,14 +175,6 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} ABI3
 
 ```{literalinclude} examples/getting_started/abi3/pyproject.toml
-:language: toml
-```
-
-````
-
-````{tab} pybind11
-
-```{literalinclude} examples/getting_started/pybind11/pyproject.toml
 :language: toml
 ```
 
@@ -194,7 +194,6 @@ To create your first compiled package, start with a pyproject.toml like this:
 :language: toml
 ```
 
-
 ````
 
 ````{tab} Cython
@@ -202,7 +201,6 @@ To create your first compiled package, start with a pyproject.toml like this:
 ```{literalinclude} examples/getting_started/cython/pyproject.toml
 :language: toml
 ```
-
 
 ````
 
@@ -240,6 +238,30 @@ page covers what keys are available. Another example is available at
 ### CMake file
 
 Now, you'll need a file called `CMakeLists.txt`. This one will do:
+
+````{tab} pybind11
+
+```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
+:language: cmake
+```
+
+Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
+
+The project line can optionally use `SKBUILD_PROJECT_NAME` and
+`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
+your `pyproject.toml`. You should specify exactly what language you use to keep
+CMake from searching for both `C` and `CXX` compilers (the default).
+
+If you place find Python first, pybind11 will resepct it instead of the classic
+FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
+Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
+ourselves. Pybind11 places its config file such that CMake can find it from
+site-packages.
+
+You can either use `pybind11_add_module` or `python_add_library` and then link
+to `pybind11::module`, your choice.
+
+````
 
 ````{tab} C
 
@@ -288,30 +310,6 @@ PRIVATE define of `Py_LIMITED_API` for you.
 This will not support pypy, so you'll want to provide an alternative if you
 support PyPy).
 ```
-
-````
-
-````{tab} pybind11
-
-```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
-:language: cmake
-```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
-If you place find Python first, pybind11 will resepct it instead of the classic
-FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
-Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
-ourselves. Pybind11 places its config file such that CMake can find it from
-site-packages.
-
-You can either use `pybind11_add_module` or `python_add_library` and then link
-to `pybind11::module`, your choice.
 
 ````
 
