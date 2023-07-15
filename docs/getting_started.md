@@ -239,7 +239,7 @@ page covers what keys are available. Another example is available at
 
 ### CMake file
 
-Now, you'll need a CMake file. This one will do:
+Now, you'll need a file called `CMakeLists.txt`. This one will do:
 
 ````{tab} C
 
