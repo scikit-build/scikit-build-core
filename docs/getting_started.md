@@ -397,7 +397,9 @@ That's it! You can try building it:
 ```console
 $ pipx run build
 ```
-[pipx](https://pypa.github.io/pipx/) allows you to install and run Python applications in isolated environments.
+
+[pipx](https://pypa.github.io/pipx/) allows you to install and run Python
+applications in isolated environments.
 
 Or installing it (in a virtualenv, ideally):
 
