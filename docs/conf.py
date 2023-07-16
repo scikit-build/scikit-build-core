@@ -6,6 +6,9 @@
 
 from __future__ import annotations
 
+import importlib
+import inspect
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -14,6 +17,11 @@ if sys.version_info < (3, 8):
     import importlib_metadata
 else:
     import importlib.metadata as importlib_metadata
+
+try:
+    import scikit_build_core
+except ModuleNotFoundError:
+    scikit_build_core = None
 
 ROOT = Path(__file__).parent.parent.resolve()
 
@@ -52,11 +60,12 @@ author = "Henry Schreiner"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.linkcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
-    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -128,3 +137,43 @@ man_pages = [
         7,
     )
 ]
+
+
+commit = os.environ.get("READTHEDOCS_GIT_COMMIT_HASH", "main")
+code_url = "https://github.com/scikit-build/scikit-build-core/blob"
+
+
+def linkcode_resolve(domain: str, info: dict[str, str]) -> str | None:
+    if scikit_build_core is None:
+        return None
+
+    if domain != "py":
+        return None
+
+    mod = importlib.import_module(info["module"])
+    if "." in info["fullname"]:
+        objname, attrname = info["fullname"].split(".")
+        obj = getattr(mod, objname)
+        try:
+            # object is a method of a class
+            obj = getattr(obj, attrname)
+        except AttributeError:
+            # object is an attribute of a class
+            return None
+    else:
+        obj = getattr(mod, info["fullname"])
+
+    try:
+        file = Path(inspect.getsourcefile(obj))
+        lines = inspect.getsourcelines(obj)
+    except TypeError:
+        # e.g. object is a typing.Union
+        return None
+    try:
+        mod = Path(inspect.getsourcefile(scikit_build_core)).parent
+        file = file.relative_to(mod)
+    except ValueError:
+        return None
+    start, end = lines[1], lines[1] + len(lines[0]) - 1
+
+    return f"{code_url}/{commit}/src/scikit_build_core/{file}#L{start}-L{end}"
