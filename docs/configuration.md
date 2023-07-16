@@ -227,6 +227,20 @@ historic compatibility if you'd like:
 wheel.expand-macos-universal-tags = false
 ```
 
+You can select only specific components to install:
+
+```toml
+[tool.scikit-build]
+install.components = ["python"]
+```
+
+And you can turn off binary stripping:
+
+```toml
+[tool.scikit-build]
+install.strip = false
+```
+
 ## Configuring CMake arguments and defines
 
 You can select a different build type, such as `Debug`:

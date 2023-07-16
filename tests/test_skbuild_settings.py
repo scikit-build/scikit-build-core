@@ -52,6 +52,8 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.editable.mode == "redirect"
     assert not settings.editable.rebuild
     assert settings.editable.verbose
+    assert settings.install.components == []
+    assert settings.install.strip
 
 
 def test_skbuild_settings_envvar(tmp_path, monkeypatch):
@@ -82,6 +84,8 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
     monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "False")
+    monkeypatch.setenv("SKBUILD_INSTALL_COMPONENTS", "a;b;c")
+    monkeypatch.setenv("SKBUILD_INSTALL_STRIP", "False")
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -117,6 +121,8 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.install.components == ["a", "b", "c"]
+    assert not settings.install.strip
 
 
 def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
@@ -153,6 +159,8 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "editable.mode": "redirect",
         "editable.rebuild": "True",
         "editable.verbose": "False",
+        "install.components": ["a", "b", "c"],
+        "install.strip": "True",
     }
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
@@ -184,6 +192,8 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.install.components == ["a", "b", "c"]
+    assert settings.install.strip
 
 
 def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
@@ -220,6 +230,8 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
             editable.mode = "redirect"
             editable.rebuild = true
             editable.verbose = false
+            install.components = ["a", "b", "c"]
+            install.strip = true
             """
         ),
         encoding="utf-8",
@@ -256,6 +268,8 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.install.components == ["a", "b", "c"]
+    assert settings.install.strip
 
 
 def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
@@ -327,3 +341,24 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
         logger -> Did you mean: logging?
       """.split()
     )
+
+
+def test_skbuild_settings_min_version_defaults(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.5.0"
+    )
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, {"minimum-version": "0.4"}
+    )
+    settings = settings_reader.settings
+    assert not settings.install.strip
+
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, {"minimum-version": "0.5"}
+    )
+    settings = settings_reader.settings
+    assert settings.install.strip

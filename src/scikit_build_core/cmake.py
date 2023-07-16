@@ -220,17 +220,30 @@ class CMaker:
             msg = "CMake build failed"
             raise FailedLiveProcessError(msg) from None
 
-    def install(self, prefix: Path) -> None:
-        opts: list[str] = []
+    def install(
+        self, prefix: Path, *, strip: bool = False, components: Sequence[str] = ()
+    ) -> None:
+        opts: list[str] = ["--prefix", str(prefix)]
         if not self.single_config and self.build_type:
             opts += ["--config", self.build_type]
+        if strip:
+            opts.append("--strip")
+
+        if not components:
+            self._install(opts)
+            return
+
+        for comp in components:
+            opts_with_comp = [*opts, "--component", comp]
+            logger.info("Installing component {}", comp)
+            self._install(opts_with_comp)
+
+    def _install(self, opts: Sequence[str]) -> None:
         try:
             Run(env=self.env).live(
                 self.cmake,
                 "--install",
                 self.build_dir,
-                "--prefix",
-                prefix,
                 *opts,
             )
         except subprocess.CalledProcessError:

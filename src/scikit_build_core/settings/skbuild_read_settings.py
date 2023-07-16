@@ -61,6 +61,12 @@ class SettingsReader:
             )
             raise SystemExit(7)
 
+        install_policy = self.settings.minimum_version is None or Version(
+            self.settings.minimum_version
+        ) >= Version("0.5")
+        if self.settings.install.strip is None:
+            self.settings.install.strip = install_policy
+
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 

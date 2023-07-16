@@ -46,13 +46,16 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 
 @pytest.mark.compile()
 @pytest.mark.configure()
-def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
+@pytest.mark.parametrize(
+    "component", [[], ["PythonModule"], ["PythonModule", "Generated"]]
+)
+def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(SIMPLEST)
     if Path("dist").is_dir():
         shutil.rmtree("dist")
-    out = build_wheel(str(dist))
+    out = build_wheel(str(dist), config_settings={"install.components": component})
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -65,17 +68,27 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
             simplest_pkg = {x.name for x in p.joinpath("simplest").iterdir()}
 
         filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
+        if not component or "PythonModule" in component:
+            assert filtered_pkg != simplest_pkg
+        else:
+            assert filtered_pkg == simplest_pkg
 
-        assert len(filtered_pkg) == len(simplest_pkg) - 2
-        assert {"simplest-0.0.1.dist-info", "simplest"} == file_names
-        assert {
+        expected_wheel_files = {
             "__init__.py",
             "data.txt",
             "excluded.txt",
-            "generated.txt",
             "sdist_only.txt",
-            "generated_ignored.txt",
-        } == filtered_pkg
+        }
+
+        if not component:
+            expected_wheel_files.add("generated_ignored.txt")
+
+        if not component or "Generated" in component:
+            expected_wheel_files.add("generated.txt")
+
+        assert len(filtered_pkg) == len(simplest_pkg) - 2
+        assert {"simplest-0.0.1.dist-info", "simplest"} == file_names
+        assert expected_wheel_files == filtered_pkg
         # Note that generated_ignored.txt is here because all CMake installed files are
         # present, CMake has the final say.
 
