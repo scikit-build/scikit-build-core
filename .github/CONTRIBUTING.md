@@ -17,10 +17,10 @@ nox -s downstream -- https://github.com/...
 
 # Setting up for development
 
-See the [Scikit-HEP Developer introduction][skhep-dev-intro] for a detailed
-description of best practices for developing packages.
+See the [Scientific-Python Development Guide][skdev] for a detailed description
+of best practices for developing packages.
 
-[skhep-dev-intro]: https://scikit-hep.org/developer/intro
+[skdev]: https://learn.scientific-python.org/development
 
 ## Quick development
 
