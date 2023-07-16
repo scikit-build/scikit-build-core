@@ -148,7 +148,7 @@ def test_pep517_sdist_time_hash_set_epoch(
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")
-    out = build_wheel("dist")
+    out = build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 

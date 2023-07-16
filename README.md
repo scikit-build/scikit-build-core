@@ -137,6 +137,9 @@ cmake.verbose = false
 # This controls the CMake build type
 cmake.build-type = "Release"
 
+# The targets to build - empty builds all default targets.
+cmake.targets = []
+
 # Display logs at or above this level.
 logging.level = "WARNING"
 

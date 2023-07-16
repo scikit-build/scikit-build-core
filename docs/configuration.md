@@ -229,10 +229,52 @@ wheel.expand-macos-universal-tags = false
 
 You can select only specific components to install:
 
+````{tab} pyproject.toml
+
 ```toml
 [tool.scikit-build]
 install.components = ["python"]
 ```
+
+````
+
+`````{tab} config-settings
+
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings=install.components=python
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build --wheel -Cinstall.components=python
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+"install.components" = "python"
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```yaml
+SKBUILD_INSTALL_COMPONENTS: python
+```
+
+````
 
 And you can turn off binary stripping:
 
@@ -343,7 +385,7 @@ SKBUILD_CMAKE_DEFINES: SOME_DEFINE=ON
 
 ````
 
-You can also manually specify the exact cmake args. Beyond the normal
+You can also manually specify the exact CMake args. Beyond the normal
 `SKBUILD_CMAKE_ARGS`, the `CMAKE_ARGS` space-separated environment variable is
 also supported (with some filtering for options scikit-build-core doesn't
 support overriding).
@@ -395,6 +437,56 @@ $ pipx run build -Ccmake.args=-DSOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
 ```yaml
 SKBUILD_CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
 CMAKE_ARGS: -DSOME_DEFINE=ON -DOTHER=OFF
+```
+
+````
+
+You can also specify only specific targets to build (leaving this off builds the
+default targets):
+
+````{tab} pyproject.toml
+
+```toml
+[tool.scikit-build]
+cmake.targets = ["python"]
+```
+
+````
+
+`````{tab} config-settings
+
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings=cmake.targets=python
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build --wheel -Ccmake.targets=python
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+"cmake.targets" = "python"
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```yaml
+SKBUILD_CMAKE_TARGETS: python
 ```
 
 ````

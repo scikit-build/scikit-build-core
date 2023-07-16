@@ -209,13 +209,24 @@ class CMaker:
             yield "--config"
             yield self.build_type
 
-    def build(self, build_args: Sequence[str] = (), *, verbose: bool = False) -> None:
+    def build(
+        self,
+        build_args: Sequence[str] = (),
+        *,
+        targets: Sequence[str] = (),
+        verbose: bool = False,
+    ) -> None:
         local_args = self._compute_build_args(verbose=verbose)
+        if not targets:
+            self._build(*local_args, *build_args)
+            return
 
+        for target in targets:
+            self._build(*local_args, "--target", target, *build_args)
+
+    def _build(self, *args: str) -> None:
         try:
-            Run(env=self.env).live(
-                self.cmake, "--build", self.build_dir, *build_args, *local_args
-            )
+            Run(env=self.env).live(self.cmake, "--build", self.build_dir, *args)
         except subprocess.CalledProcessError:
             msg = "CMake build failed"
             raise FailedLiveProcessError(msg) from None
@@ -223,7 +234,7 @@ class CMaker:
     def install(
         self, prefix: Path, *, strip: bool = False, components: Sequence[str] = ()
     ) -> None:
-        opts: list[str] = ["--prefix", str(prefix)]
+        opts = ["--prefix", str(prefix)]
         if not self.single_config and self.build_type:
             opts += ["--config", self.build_type]
         if strip:
