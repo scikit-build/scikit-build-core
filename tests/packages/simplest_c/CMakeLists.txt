@@ -9,12 +9,17 @@ find_package(Python COMPONENTS Interpreter Development.Module)
 
 python_add_library(_module MODULE src/module.c WITH_SOABI)
 
-install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
+install(
+  TARGETS _module
+  DESTINATION ${SKBUILD_PROJECT_NAME}
+  COMPONENT PythonModule)
 
 # Testing artifacts
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated.txt "Testing")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated.txt
-        DESTINATION ${SKBUILD_PROJECT_NAME})
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/generated.txt
+  DESTINATION ${SKBUILD_PROJECT_NAME}
+  COMPONENT Generated)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated_ignored.txt "Testing")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated_ignored.txt

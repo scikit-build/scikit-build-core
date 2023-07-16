@@ -5,6 +5,7 @@ __all__ = [
     "BackportSettings",
     "CMakeSettings",
     "EditableSettings",
+    "InstallSettings",
     "LoggingSettings",
     "NinjaSettings",
     "SDistSettings",
@@ -126,6 +127,15 @@ class EditableSettings:
 
 
 @dataclasses.dataclass
+class InstallSettings:
+    #: The components to install. If empty, the default is used.
+    components: List[str] = dataclasses.field(default_factory=list)
+
+    #: Whether to strip the binaries. True for scikit-build-core 0.5+.
+    strip: Optional[bool] = None
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -135,6 +145,7 @@ class ScikitBuildSettings:
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
+    install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
 
     #: Strictly check all config options. If False, warnings will be
     #: printed for unknown options. If True, an error will be raised.

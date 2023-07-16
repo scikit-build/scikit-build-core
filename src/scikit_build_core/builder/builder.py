@@ -191,4 +191,7 @@ class Builder:
         self.config.build(build_args=build_args, verbose=self.settings.cmake.verbose)
 
     def install(self, install_dir: Path) -> None:
-        self.config.install(install_dir)
+        components = self.settings.install.components
+        strip = self.settings.install.strip
+        assert strip is not None
+        self.config.install(install_dir, strip=strip, components=components)

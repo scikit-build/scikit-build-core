@@ -109,11 +109,11 @@ More examples are in the
 
 ## Configuration
 
-All configuration options can be placed in `pyproject.toml`, passed via `-C` or
-`--config-setting` in build or `--config-settings` in `pip` (warning: pip
-doesn't support list options), or set as environment variables.
-`tool.scikit-build` is used in toml, `skbuild.` for `-C` options, or `SKBUILD_*`
-for environment variables. The defaults are listed below:
+All configuration options can be placed in `pyproject.toml`, passed via
+`-C`/`--config-setting` in build or `-C`/`--config-settings` in `pip` , or set
+as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
+`-C` options, or `SKBUILD_*` for environment variables. The defaults are listed
+below:
 
 ```toml
 [tool.scikit-build]
@@ -170,6 +170,12 @@ wheel.install-dir = "."
 
 # The licence file(s) to include in the wheel metadata directory.
 wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
+
+# Strip the binaries. Defaults to True for scikit-build-core 0.5+.
+install.strip = true
+
+# Components to install. Leave empty to install all components.
+install.components = []
 
 # This will backport an internal copy of FindPython if CMake is less than this
 # value. Set to 0 or the empty string to disable. The default will be kept in
