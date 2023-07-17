@@ -48,9 +48,13 @@ class CMakeSettings:
     #: "", etc.
     build_type: str = "Release"
 
-    #: The source directory to use when building the project. Currently only affects
-    #: the native builder (not the setuptools plugin).
+    #: The source directory to use when building the project. Currently only
+    #: affects the native builder (not the setuptools plugin).
     source_dir: str = ""
+
+    #: The build targets to use when building the project. Empty builds the
+    #: default target.
+    targets: List[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass

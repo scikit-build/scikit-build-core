@@ -188,7 +188,11 @@ class Builder:
         )
 
     def build(self, build_args: list[str]) -> None:
-        self.config.build(build_args=build_args, verbose=self.settings.cmake.verbose)
+        self.config.build(
+            build_args=build_args,
+            targets=self.settings.cmake.targets,
+            verbose=self.settings.cmake.verbose,
+        )
 
     def install(self, install_dir: Path) -> None:
         components = self.settings.install.components
