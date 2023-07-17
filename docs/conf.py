@@ -25,6 +25,8 @@ except ModuleNotFoundError:
 
 ROOT = Path(__file__).parent.parent.resolve()
 
+# Custom extension
+sys.path.append(str(ROOT / "docs/ext"))
 
 try:
     from scikit_build_core import __version__ as version
@@ -66,6 +68,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
+    "conftabs",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
