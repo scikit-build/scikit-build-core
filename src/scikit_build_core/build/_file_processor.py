@@ -11,6 +11,7 @@ __all__: list[str] = ["each_unignored_file"]
 
 EXCLUDE_LINES = [
     ".git/",
+    ".gitignore",
     ".tox/",
     ".nox/",
     ".egg-info/",
