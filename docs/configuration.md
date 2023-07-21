@@ -229,110 +229,23 @@ wheel.expand-macos-universal-tags = false
 
 You can select only specific components to install:
 
-````{tab} pyproject.toml
+```{conftabs} install.components ["python"]
 
-```toml
-[tool.scikit-build]
-install.components = ["python"]
 ```
-
-````
-
-`````{tab} config-settings
-
-
-````{tab} pip
-
-```console
-$ pip install . --config-settings=install.components=python
-```
-
-````
-
-````{tab} build
-
-```console
-$ pipx run build --wheel -Cinstall.components=python
-```
-
-````
-
-````{tab} cibuildwheel
-
-```toml
-[tool.cibuildwheel.config-settings]
-"install.components" = "python"
-```
-
-````
-
-`````
-
-````{tab} Environment
-
-```yaml
-SKBUILD_INSTALL_COMPONENTS: python
-```
-
-````
 
 And you can turn off binary stripping:
 
-```toml
-[tool.scikit-build]
-install.strip = false
+```{conftabs} install.strip False
+
 ```
 
 ## Configuring CMake arguments and defines
 
 You can select a different build type, such as `Debug`:
 
-````{tab} pyproject.toml
+```{conftabs} cmake.build-type "Debug"
 
-```toml
-[tool.scikit-build]
-cmake.build-type = "Debug"
 ```
-
-````
-
-`````{tab} config-settings
-
-
-````{tab} pip
-
-```console
-$ pip install . --config-settings=cmake.build-type=Debug
-```
-
-````
-
-````{tab} build
-
-```console
-$ pipx run build --wheel -Ccmake.build-type=Debug
-```
-
-````
-
-````{tab} cibuildwheel
-
-```toml
-[tool.cibuildwheel.config-settings]
-"cmake.build-type" = "Debug"
-```
-
-````
-
-`````
-
-````{tab} Environment
-
-```yaml
-SKBUILD_CMAKE_BUILD_TYPE: Debug
-```
-
-````
 
 You can specify CMake defines:
 
@@ -352,8 +265,6 @@ SOME_DEFINE = "ON"
 
 ```console
 $ pip install . --config-settings=cmake.define.SOME_DEFINE=ON
-$ # NEXT VERSION OF PIP ONLY
-$ pip install . -Ccmake.define.SOME_DEFINE=ON
 ```
 
 ````
@@ -390,106 +301,22 @@ You can also manually specify the exact CMake args. Beyond the normal
 also supported (with some filtering for options scikit-build-core doesn't
 support overriding).
 
-````{tab} pyproject.toml
+```{conftabs} cmake.args ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
 
-```toml
-[tool.scikit-build]
-cmake.args = ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
 ```
 
-````
-
-`````{tab} config-settings
-
-
-````{tab} pip
-
-```console
-$ pip install . --config-settings=cmake.args="-DSOME_DEFINE=ON;-DOTHER=OFF"
-$ # NEXT VERSION OF PIP ONLY
-$ pip install . -Ccmake.args=-SOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
-```
-
-````
-
-````{tab} build
-
-```console
-$ pipx run build -Ccmake.args="-DSOME_DEFINE=ON;-DOTHER=OFF"
-$ pipx run build -Ccmake.args=-DSOME_DEFINE=ON -Ccmake.args=-DOTHER=OFF
-```
-
-````
-
-````{tab} cibuildwheel
-
-```toml
-[tool.cibuildwheel.config-settings]
-"cmake.args" = ["-DSOME_DEFINE=ON", "-DOTHER=OFF"]
-```
-
-````
-
-`````
-
-````{tab} Environment
+You can also specify this using CMAKE_ARGS, spae separated:
 
 ```yaml
-SKBUILD_CMAKE_ARGS: -DSOME_DEFINE=ON;-DOTHER=OFF
 CMAKE_ARGS: -DSOME_DEFINE=ON -DOTHER=OFF
 ```
-
-````
 
 You can also specify only specific targets to build (leaving this off builds the
 default targets):
 
-````{tab} pyproject.toml
+```{conftabs} cmake.targets ["python"]
 
-```toml
-[tool.scikit-build]
-cmake.targets = ["python"]
 ```
-
-````
-
-`````{tab} config-settings
-
-
-````{tab} pip
-
-```console
-$ pip install . --config-settings=cmake.targets=python
-```
-
-````
-
-````{tab} build
-
-```console
-$ pipx run build --wheel -Ccmake.targets=python
-```
-
-````
-
-````{tab} cibuildwheel
-
-```toml
-[tool.cibuildwheel.config-settings]
-"cmake.targets" = "python"
-```
-
-````
-
-`````
-
-````{tab} Environment
-
-```yaml
-SKBUILD_CMAKE_TARGETS: python
-```
-
-````
 
 ## Dynamic metadata
 
@@ -499,7 +326,9 @@ Scikit-build-core 0.3.0 supports dynamic metadata with two built-in plugins.
 
 This is not ready for plugin development outside of scikit-build-core;
 `tool.scikit-build.experimental=true` is required to use plugins that are not
-shipped with scikit-build-core, since the interface is provisional. :::
+shipped with scikit-build-core, since the interface is provisional.
+
+:::
 
 :::{tab} Setuptools-scm
 
@@ -602,52 +431,9 @@ You can select a custom build dir; by default scikit-build-core will use a
 temporary dir. If you select a persistent one, you can get major rebuild
 speedups.
 
-````{tab} pyproject.toml
+```{conftabs} build-dir "build/{wheel_tag}"
 
-```toml
-[tool.scikit-build]
-build-dir = "build/{wheel_tag}"
 ```
-
-````
-
-`````{tab} config-settings
-
-
-````{tab} pip
-
-```console
-$ pip install . --config-settings='build-dir=build/{wheel_tag}'
-```
-
-````
-
-````{tab} build
-
-```console
-$ pipx run build --wheel -Cbuild-dir='build/{wheel_tag}'
-```
-
-````
-
-````{tab} cibuildwheel
-
-```toml
-[tool.cibuildwheel.config-settings]
-build-dir = "build/{wheel_tag}"
-```
-
-````
-
-`````
-
-````{tab} Environment
-
-```yaml
-SKBUILD_BUILD_DIR: "build/{wheel_tag}"
-```
-
-````
 
 Scikit-build-core also strictly validates configuration; if you need to disable
 this, you can:
