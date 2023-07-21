@@ -234,9 +234,8 @@ and wheel should never be in this list.
 There are other keys you should include under `[project]` if you plan to publish
 a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/declaring-project-metadata)
-page covers what keys are available. Another example is available at [the
-Scientific Python Library Development
-Guide](https://learn.scientific-python.org/development/guides/).
+page covers what keys are available. Another example is available at
+[the Scientific Python Library Development Guide](https://learn.scientific-python.org/development/guides/).
 
 ### CMake file
 
