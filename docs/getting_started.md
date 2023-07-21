@@ -236,7 +236,7 @@ a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/declaring-project-metadata)
 page covers what keys are available. Another example is available at [the
 Scientific Python Library Development
-Guide](https://learn.scientific-python.org/development/guides/.
+Guide](https://learn.scientific-python.org/development/guides/).
 
 ### CMake file
 
@@ -255,7 +255,7 @@ The project line can optionally use `SKBUILD_PROJECT_NAME` and
 your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
-If you place find Python first, pybind11 will resepct it instead of the classic
+If you place find Python first, pybind11 will respect it instead of the classic
 FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
 Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
 ourselves. Pybind11 places its config file such that CMake can find it from
