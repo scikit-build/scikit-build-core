@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
+import os
 import re
 import sys
 import sysconfig
+import tarfile
+import tempfile
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
+from typing import BinaryIO
 
 from packaging.version import Version
 
@@ -22,6 +27,7 @@ from .sysconfig import (
     get_python_library,
     get_soabi,
 )
+from .wheel_tag import WheelTag
 
 __all__: list[str] = ["Builder", "get_archs", "archs_to_tags"]
 
@@ -64,6 +70,83 @@ def archs_to_tags(archs: list[str]) -> list[str]:
     return archs
 
 
+@dataclasses.dataclass(init=False)
+class BuildEnvArchive:
+    _archive_file: BinaryIO
+    hash: hashlib._Hash
+
+    def __init__(self, env_dir: Path) -> None:
+        self._archive_file = tempfile.TemporaryFile(prefix="build-env-archive-", suffix=".tar")  # type: ignore[assignment]
+
+        # Rewrite environment path to be relative to root
+        # Example:
+        #       /tmp/pip-build-env-pklovjqz/overlay/lib/python3.11/site-packages
+        #   is rewritten into
+        #       tmp/pip-build-env-pklovjqz/overlay/lib/python3.11/site-packages
+        prefix = Path(env_dir)
+        prefix = prefix.relative_to(prefix.root)
+
+        def ext_filter(ti: tarfile.TarInfo) -> tarfile.TarInfo | None:
+            pname = Path(ti.name)
+
+            if ti.type is tarfile.LNKTYPE:
+                logger.warning(
+                    "Unexpected link inside build environment archive (path={})", pname
+                )
+            elif (
+                ti.type is not tarfile.REGTYPE
+                and ti.type is not tarfile.AREGTYPE
+                and ti.type is not tarfile.DIRTYPE
+            ):
+                logger.warning(
+                    "Unexpected file type inside build environment archive (path={})",
+                    pname,
+                )
+
+            # Rewrite name to be relative to site-packages inside the build environment
+            ti.name = str(pname.relative_to(prefix))
+
+            # FIXME: __pycache__ files don't have consistent hashes - why?
+            if "__pycache__" in ti.name:
+                return None
+
+            # Reset mtime to zero
+            # This is safe (regarding build tool out-of-date detection)
+            # since the resulting archive is content-addressed through its hash
+            ti.mtime = 0
+
+            return ti
+
+        with tarfile.open(
+            fileobj=self._archive_file, mode="x", dereference=True
+        ) as dir_tar:
+            dir_tar.add(env_dir, filter=ext_filter)
+
+        self._archive_file.flush()
+
+        archive_len = self._archive_file.tell()
+        self._archive_file.seek(0)
+
+        self.hash = hashlib.file_digest(self._archive_file, hashlib.sha256)  # type: ignore[attr-defined]
+        self._archive_file.seek(0)
+
+        logger.debug(
+            "created build env archive len={} sha256={}",
+            archive_len,
+            self.hash.hexdigest(),
+        )
+
+    def extract(self, destination: Path) -> None:
+        self._archive_file.seek(0)
+        with tarfile.open(fileobj=self._archive_file, mode="r") as dir_tar:
+            dir_tar.extractall(path=destination)
+
+        # Reset atime/mtime of the destination directory
+        # Otherwise CMake would consider the directory out of date
+        # FIXME: Apparently not necessary?
+        # os.utime(destination, times=(0,0))
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
@@ -78,6 +161,31 @@ class Builder:
         env_cmake_args = filter(None, self.config.env.get("CMAKE_ARGS", "").split(" "))
 
         return [*self.settings.cmake.args, *env_cmake_args]
+
+    # FIXME: Proper setting for build env dir
+    def _build_dir(self) -> Path:
+        tags = WheelTag.compute_best(
+            archs_to_tags(get_archs(os.environ)),
+            self.settings.wheel.py_api,
+            expand_macos=self.settings.wheel.expand_macos_universal_tags,
+        )
+
+        assert self.settings.build_dir is not None
+        # A build dir can be specified, otherwise use a temporary directory
+        build_dir = Path(
+            self.settings.build_dir.format(
+                cache_tag=sys.implementation.cache_tag,
+                wheel_tag=str(tags),
+            )
+        )
+        logger.info("Build directory: {}", build_dir.resolve())
+
+        return build_dir.resolve()
+
+    def _build_env_cache_dir(self, hash: hashlib._Hash) -> Path:
+        base_dir = self._build_dir()
+        base_dir = base_dir.with_name(base_dir.name + "-build-env-cache")
+        return base_dir / hash.hexdigest()
 
     def configure(
         self,
@@ -103,9 +211,20 @@ class Builder:
         site_packages = Path(sysconfig.get_path("purelib"))
         self.config.prefix_dirs.append(site_packages)
         logger.debug("SITE_PACKAGES: {}", site_packages)
-        if site_packages != DIR.parent.parent:
+
+        if self.settings.cache_build_env:
+            if not self.settings.experimental:
+                msg = "Experimental features must be enabled to use build environment caching"
+                raise AssertionError(msg)
+
+            archive = BuildEnvArchive(DIR.parent.parent)
+            targettree = self._build_env_cache_dir(archive.hash)
+            archive.extract(targettree)
+            self.config.prefix_dirs.append(targettree)
+
+        elif site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
-            logger.debug("Extra SITE_PACKAGES: {}", site_packages)
+            logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
 
         # Add the FindPython backport if needed
         fp_backport = self.settings.backport.find_python
