@@ -45,7 +45,7 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         pytest.skip("Windows symlink support not available")
 
     # Test that each_unignored_file() follows the symlink
-    assert sorted(each_unignored_file(Path("."))) == [
+    assert sorted(each_unignored_file(Path())) == [
         gitignore,
         exposed_symlink / "file2",
         file1,

@@ -100,7 +100,7 @@ def build_sdist(
         )
         paths = sorted(
             each_unignored_file(
-                Path("."),
+                Path(),
                 include=settings.sdist.include,
                 exclude=settings.sdist.exclude,
             )

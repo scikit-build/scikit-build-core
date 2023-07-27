@@ -43,7 +43,7 @@ def _get_packages(
 
     # Auto package discovery
     packages = []
-    for base_path in (Path("src"), Path(".")):
+    for base_path in (Path("src"), Path()):
         path = base_path / name
         if path.is_dir() and (
             (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
