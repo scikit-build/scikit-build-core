@@ -197,7 +197,7 @@ def _prepare_extension_detection(dist: Distribution) -> None:
 
 def _prepare_build_cmake_command(dist: Distribution) -> None:
     # Prepare new build_cmake command and make sure build calls it
-    build = dist.get_command_obj("build")
+    build = dist.get_command_class("build")
     assert build is not None
     if "build_cmake" not in {x for x, _ in build.sub_commands}:
         build.sub_commands.append(
