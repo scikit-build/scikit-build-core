@@ -22,7 +22,12 @@ from ..resources import resources
 from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._init import setup_logging
-from ._pathutil import packages_to_file_mapping, path_to_module, scantree
+from ._pathutil import (
+    is_valid_module,
+    packages_to_file_mapping,
+    path_to_module,
+    scantree,
+)
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
 
@@ -256,6 +261,7 @@ def _build_wheel_impl(
                         Path(k).resolve()
                     )
                     for k, v in mapping.items()
+                    if is_valid_module(Path(v).relative_to(wheel_dirs["platlib"]))
                 }
                 installed = {
                     path_to_module(v.relative_to(wheel_dirs["platlib"])): str(
