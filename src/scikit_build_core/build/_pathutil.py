@@ -6,7 +6,7 @@ from pathlib import Path
 
 from ._file_processor import each_unignored_file
 
-__all__ = ["scantree", "path_to_module", "packages_to_file_mapping"]
+__all__ = ["scantree", "path_to_module", "packages_to_file_mapping", "is_valid_module"]
 
 
 def __dir__() -> list[str]:
@@ -50,3 +50,11 @@ def packages_to_file_mapping(
                 mapping[str(filepath)] = str(package_dir)
 
     return mapping
+
+
+def is_valid_module(path: Path) -> bool:
+    parts = path.parts
+    return (
+        all(p.isidentifier() for p in parts[:-1])
+        and parts[-1].split(".", 1)[0].isidentifier()
+    )
