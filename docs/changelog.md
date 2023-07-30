@@ -1,5 +1,38 @@
 # Changelog
 
+## Version 0.4.8
+
+This release focus on two fixes that correct some interference issues with other
+setuptools plugins. A few new features were added (opt-in only): the ability to
+select build targets, install components, and opt-in `--strip` (will be opt-out
+in 0.5 if the minimum-version is set to 0.5+ or unset).
+
+- feat: add build target support by @henryiii in #432
+- feat: add component support and strip support by @henryiii in #430
+
+Fixes:
+
+- (setuptools) Avoid instantiating build too soon by @henryiii in #443
+- (setuptools) Avoid interfering with other setuptools plugins by @henryiii in
+  #414
+- Only link to valid module paths (not things like gitignore) in editable
+  installs by @henryiii in #444
+
+Docs:
+
+- Fix typo and invalid Markdown in `getting_started.md` by @0xTowel in #439
+- Conf tabs as extension by @henryiii in #433
+- Fix `nanobind`/`pybind11` `src` & sp-dev by @henryiii in #429
+- Link to source by @henryiii in #431
+- Small suggestions for docs by @rebecca-burwei in #428
+
+Tests and other:
+
+- Fix fedora downstream tests by @LecrisUT in #416
+- Ruff moved to astral-sh by @henryiii in #418
+- `target-version` no longer needed by Black or Ruff by @henryiii in #419
+- Use `get_origin`/`get_args` by @henryiii in #423
+
 ## Version 0.4.7
 
 This version fixes a unused variable message in 0.4.6, along with a debug
