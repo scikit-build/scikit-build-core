@@ -7,8 +7,10 @@ setuptools plugins. A few new features were added (opt-in only): the ability to
 select build targets, install components, and opt-in `--strip` (will be opt-out
 in 0.5 if the minimum-version is set to 0.5+ or unset).
 
-- feat: add build target support by @henryiii in #432
-- feat: add component support and strip support by @henryiii in #430
+Features:
+
+- Add build target support by @henryiii in #432
+- Add component support and strip support by @henryiii in #430
 
 Fixes:
 
