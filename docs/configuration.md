@@ -452,3 +452,11 @@ only be used if you enable them:
 [tool.scikit-build]
 experimental = true
 ```
+
+## Full schema
+
+The full schema for the `tool.scikit-build` table is below:
+
+```{jsonschema} ../src/scikit_build_core/resources/toml_schema.json
+
+```
