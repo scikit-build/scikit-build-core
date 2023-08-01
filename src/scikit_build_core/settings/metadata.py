@@ -44,4 +44,7 @@ def get_standard_metadata(
         for field in fields:
             pyproject_dict["project"]["dynamic"].remove(field)
 
-    return StandardMetadata.from_pyproject(pyproject_dict)
+    metadata = StandardMetadata.from_pyproject(pyproject_dict)
+    # pyproject-metadata normalizes the name - see https://github.com/FFY00/python-pyproject-metadata/pull/65
+    metadata.name = pyproject_dict["project"]["name"]
+    return metadata

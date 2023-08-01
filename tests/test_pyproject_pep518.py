@@ -16,7 +16,7 @@ def test_pep518_sdist(package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
-        Name: cmake-example
+        Name: cmake_example
         Version: 0.0.1
         Requires-Python: >=3.7
         Provides-Extra: test
@@ -26,7 +26,7 @@ def test_pep518_sdist(package_simple_pyproject_ext):
 
     subprocess.run([sys.executable, "-m", "build", "--sdist"], check=True)
     (sdist,) = Path("dist").iterdir()
-    assert sdist.name == "cmake-example-0.0.1.tar.gz"
+    assert sdist.name == "cmake_example-0.0.1.tar.gz"
 
     if not sys.platform.startswith(("win", "cygwin")):
         hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
@@ -35,7 +35,7 @@ def test_pep518_sdist(package_simple_pyproject_ext):
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
         assert file_names == {
-            f"cmake-example-0.0.1/{x}"
+            f"cmake_example-0.0.1/{x}"
             for x in (
                 "CMakeLists.txt",
                 "pyproject.toml",
@@ -44,7 +44,7 @@ def test_pep518_sdist(package_simple_pyproject_ext):
                 "LICENSE",
             )
         }
-        pkg_info = f.extractfile("cmake-example-0.0.1/PKG-INFO")
+        pkg_info = f.extractfile("cmake_example-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
         assert correct_metadata == pkg_info_contents
