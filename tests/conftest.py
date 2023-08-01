@@ -231,10 +231,10 @@ def package_simple_pyproject_ext(
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
-        "cbf3102cf86f709dfd3f244b69e5ee3faff9e3c94c53ef85f146d9bad96660b3",
-        "538a8221e10c5029c78127e4169d2df622b9a88dfce12a8b63eeaaa98cda8a09",
-        "0dab37b48497f95c044781204b7d49c752739b32a0ef7a7a02ec987b5c4a210b",
-        "feeedcb0070a211d93b967fe083aa31e448842eb9b93d5e428807348e40e44e8",
+        "4e7316a1cc4784bd55673f80a35f89e4914636e0a217c35c7061b085675945cb",
+        "445bd84053106ea41fd822cb57b571a23b2bfaba5d8c5b4176aba9e07776103f",
+        "8e4699df8afa812d7c022a3840dfbdce5b4f0e9aac5700dbc5eeb522482f135d",
+        "676cca918aef5b9b4a3db1499a39e61b0cbacf5edf3379bf8e3d90fe75f01a8c",
     )
     process_package(package, tmp_path, monkeypatch)
     return package
