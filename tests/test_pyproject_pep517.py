@@ -23,7 +23,7 @@ guithing = a.b:c
 """
 METADATA = """\
 Metadata-Version: 2.1
-Name: cmake-example
+Name: CMake.Example
 Version: 0.0.1
 Requires-Python: >=3.7
 Provides-Extra: test
@@ -43,13 +43,13 @@ def test_pep517_sdist():
     out = build_sdist("dist")
 
     (sdist,) = dist.iterdir()
-    assert sdist.name == "cmake-example-0.0.1.tar.gz"
+    assert sdist.name == "cmake_example-0.0.1.tar.gz"
     assert sdist == dist / out
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
         assert file_names == {
-            f"cmake-example-0.0.1/{x}"
+            f"cmake_example-0.0.1/{x}"
             for x in (
                 "CMakeLists.txt",
                 "pyproject.toml",
@@ -58,7 +58,7 @@ def test_pep517_sdist():
                 "LICENSE",
             )
         }
-        pkg_info = f.extractfile("cmake-example-0.0.1/PKG-INFO")
+        pkg_info = f.extractfile("cmake_example-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
         assert pkg_info_contents == METADATA
@@ -173,7 +173,7 @@ def test_pep517_wheel(virtualenv):
         print(entry_points == ENTRYPOINTS)
         assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
         assert "Metadata-Version: 2.1" in metadata
-        assert "Name: cmake-example" in metadata
+        assert "Name: CMake.Example" in metadata
         assert "Version: 0.0.1" in metadata
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
@@ -221,7 +221,7 @@ def test_pep517_wheel_source_dir(virtualenv):
         print(entry_points == ENTRYPOINTS)
         assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
         assert "Metadata-Version: 2.1" in metadata
-        assert "Name: cmake-example" in metadata
+        assert "Name: CMake.Example" in metadata
         assert "Version: 0.0.1" in metadata
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
@@ -268,7 +268,7 @@ def test_prepare_metdata_for_build_wheel():
     metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
         "Metadata-Version": "2.1",
-        "Name": "cmake-example",
+        "Name": "CMake.Example",
         "Version": "0.0.1",
         "Requires-Python": ">=3.7",
         "Provides-Extra": "test",

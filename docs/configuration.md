@@ -90,6 +90,16 @@ probably keep in sync with your build-system requirements.
 minimum-version = "0.2"
 ```
 
+:::{warning}
+
+The following behaviors are affected by `minimum-version`:
+
+- `minimum-version` 0.5+ (or unset) provides the original name in metadata and
+  properly normalized SDist names.
+- `minimum-version` 0.5+ (or unset) strips binaries by default.
+
+:::
+
 ## CMake and Ninja minimum versions
 
 You can select a different minimum version for CMake and Ninja.

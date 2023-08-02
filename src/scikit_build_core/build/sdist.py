@@ -8,7 +8,12 @@ import os
 import tarfile
 from pathlib import Path
 
+from packaging.utils import canonicalize_name
+from packaging.version import Version
+
+from .. import __version__
 from .._compat import tomllib
+from .._logging import rich_print
 from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
@@ -68,6 +73,11 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
+    rich_print(
+        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
+        "[red](sdist)[/red]",
+    )
+
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
@@ -87,7 +97,17 @@ def build_sdist(
     # https://github.com/FFY00/python-pyproject-metadata/pull/49
     pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
 
-    srcdirname = f"{metadata.name}-{metadata.version}"
+    # Only normalize SDist name if 0.5+ is requested for backwards compat
+    should_normalize_name = settings.minimum_version is None or Version(
+        settings.minimum_version
+    ) >= Version("0.5")
+
+    sdist_name = (
+        canonicalize_name(metadata.name).replace("-", "_")
+        if should_normalize_name
+        else metadata.name
+    )
+    srcdirname = f"{sdist_name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
 
     sdist_dir.mkdir(parents=True, exist_ok=True)
