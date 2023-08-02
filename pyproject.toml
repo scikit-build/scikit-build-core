@@ -118,6 +118,7 @@ filterwarnings = [
     "error",
     "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
     "default:pkg_resources is deprecated as an API:DeprecationWarning:wheel",  # Caused by wheel<0.41 in tests
+    "default:onerror argument is deprecated, use onexc instead:DeprecationWarning:wheel", # Caused by wheel<0.41 & Python 3.12
     "default:The distutils package is deprecated and slated for removal:DeprecationWarning",  # Caused by setuptools sometimes
     "default:The distutils.sysconfig module is deprecated, use sysconfig instead:DeprecationWarning",  # Caused by setuptools sometimes
     "default:check_home argument is deprecated and ignored.:DeprecationWarning",  # Caused by setuptools sometimes
