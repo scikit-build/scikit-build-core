@@ -457,6 +457,6 @@ experimental = true
 
 The full schema for the `tool.scikit-build` table is below:
 
-```{jsonschema} ../src/scikit_build_core/resources/toml_schema.json
+```{jsonschema} ../src/scikit_build_core/resources/scikit-build.schema.json
 
 ```

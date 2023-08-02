@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/scikit-build/scikit-build/blob/main/src/scikit_build_core/resources/toml_schema.json",
+  "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
   "description": "Scikit-build-core's settings.",
   "type": "object",
   "additionalProperties": false,

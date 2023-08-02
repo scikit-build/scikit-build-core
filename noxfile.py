@@ -66,7 +66,7 @@ def generate_schema(session: nox.Session) -> None:
     schema = session.run(
         "python", "-m", "scikit_build_core.settings.skbuild_schema", silent=True
     )
-    DIR.joinpath("src/scikit_build_core/resources/toml_schema.json").write_text(schema)  # type: ignore[arg-type]
+    DIR.joinpath("src/scikit_build_core/resources/scikit-build.schema.json").write_text(schema)  # type: ignore[arg-type]
 
 
 @nox.session
@@ -76,7 +76,7 @@ def validate_schemas(session: nox.Session) -> None:
     docs_examples = Path("docs/examples").glob("**/pyproject.toml")
     tests_packages = Path("tests/packages").glob("**/pyproject.toml")
     paths = [*docs_examples, *tests_packages]
-    # mop currently required to make mypy happy, future nox version should fix
+    # map currently required to make mypy happy, future nox version should fix
     session.run("validate-pyproject", *map(str, paths))
 
 

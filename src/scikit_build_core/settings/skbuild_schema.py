@@ -21,7 +21,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
 
     return {
         "$schema": "http://json-schema.org/draft-07/schema",
-        "$id": "https://github.com/scikit-build/scikit-build/blob/main/src/scikit_build_core/resources/toml_schema.json",
+        "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
         "description": "Scikit-build-core's settings.",
         **to_json_schema(ScikitBuildSettings, normalize_keys=True),
     }
@@ -31,7 +31,7 @@ def get_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     "Get the stored complete schema for scikit-build settings."
     assert tool_name == "scikit-build", "Only scikit-build is supported."
 
-    with resources.joinpath("toml_schema.json").open(encoding="utf-8") as f:
+    with resources.joinpath("scikit-build.schema.json").open(encoding="utf-8") as f:
         return json.load(f)  # type: ignore[no-any-return]
 
 
