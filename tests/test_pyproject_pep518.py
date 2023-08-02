@@ -1,6 +1,5 @@
 import hashlib
 import shutil
-import subprocess
 import sys
 import tarfile
 import textwrap
@@ -12,7 +11,7 @@ import pytest
 
 @pytest.mark.network()
 @pytest.mark.integration()
-def test_pep518_sdist(package_simple_pyproject_ext):
+def test_pep518_sdist(isolated, package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -24,7 +23,8 @@ def test_pep518_sdist(package_simple_pyproject_ext):
         """
     )
 
-    subprocess.run([sys.executable, "-m", "build", "--sdist"], check=True)
+    isolated.install("build[virtualenv]")
+    isolated.module("build", "--sdist")
     (sdist,) = Path("dist").iterdir()
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
 

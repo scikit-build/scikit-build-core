@@ -23,7 +23,7 @@ guithing = a.b:c
 """
 METADATA = """\
 Metadata-Version: 2.1
-Name: cmake_example
+Name: CMake.Example
 Version: 0.0.1
 Requires-Python: >=3.7
 Provides-Extra: test
@@ -173,7 +173,7 @@ def test_pep517_wheel(virtualenv):
         print(entry_points == ENTRYPOINTS)
         assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
         assert "Metadata-Version: 2.1" in metadata
-        assert "Name: cmake_example" in metadata
+        assert "Name: CMake.Example" in metadata
         assert "Version: 0.0.1" in metadata
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
@@ -221,7 +221,7 @@ def test_pep517_wheel_source_dir(virtualenv):
         print(entry_points == ENTRYPOINTS)
         assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
         assert "Metadata-Version: 2.1" in metadata
-        assert "Name: cmake_example" in metadata
+        assert "Name: CMake.Example" in metadata
         assert "Version: 0.0.1" in metadata
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
@@ -268,7 +268,7 @@ def test_prepare_metdata_for_build_wheel():
     metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
         "Metadata-Version": "2.1",
-        "Name": "cmake_example",
+        "Name": "CMake.Example",
         "Version": "0.0.1",
         "Requires-Python": ">=3.7",
         "Provides-Extra": "test",
