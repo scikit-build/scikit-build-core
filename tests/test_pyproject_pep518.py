@@ -15,7 +15,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
-        Name: cmake_example
+        Name: CMake.Example
         Version: 0.0.1
         Requires-Python: >=3.7
         Provides-Extra: test
