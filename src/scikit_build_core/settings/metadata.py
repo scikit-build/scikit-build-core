@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
 from ..settings.skbuild_model import ScikitBuildSettings
@@ -46,5 +47,9 @@ def get_standard_metadata(
 
     metadata = StandardMetadata.from_pyproject(pyproject_dict)
     # pyproject-metadata normalizes the name - see https://github.com/FFY00/python-pyproject-metadata/pull/65
-    metadata.name = pyproject_dict["project"]["name"]
+    # For scikit-build-core 0.5+, we keep the un-normalized name, and normalize it when using it for filenames
+    if settings.minimum_version is None or Version(settings.minimum_version) >= Version(
+        "0.5"
+    ):
+        metadata.name = pyproject_dict["project"]["name"]
     return metadata

@@ -60,7 +60,7 @@ def _run_tests(
     session.run("pytest", *run_args, *posargs, env=env)
 
 
-@nox.session(python="3.7")
+@nox.session
 def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
