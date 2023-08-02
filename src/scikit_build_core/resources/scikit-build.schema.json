@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
+  "description": "Scikit-build-core's settings.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "cmake": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minimum-version": {
+          "type": "string",
+          "default": "3.15",
+          "description": "The minimum version of CMake to use. If CMake is older than this, it will be upgraded via PyPI if possible. An empty string will disable this check."
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of args to pass to CMake when configuring the project."
+        },
+        "define": {
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          },
+          "description": "A table of defines to pass to CMake when configuring the project. Additive."
+        },
+        "verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Verbose printout when building"
+        },
+        "build-type": {
+          "type": "string",
+          "default": "Release",
+          "description": "The build type to use when building the project. Valid options are: \"Debug\", \"Release\", \"RelWithDebInfo\", \"MinSizeRel\", \"\", etc."
+        },
+        "source-dir": {
+          "type": "string",
+          "default": "",
+          "description": "The source directory to use when building the project. Currently only affects the native builder (not the setuptools plugin)."
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The build targets to use when building the project. Empty builds the default target."
+        }
+      }
+    },
+    "ninja": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minimum-version": {
+          "type": "string",
+          "default": "1.5",
+          "description": "The minimum version of Ninja to use. If Ninja is older than this, it will be upgraded via PyPI if possible. An empty string will disable this check."
+        },
+        "make-fallback": {
+          "type": "boolean",
+          "default": true,
+          "description": "If make is present, do not add ninja if missing."
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "default": "WARNING",
+          "description": "The logging level to display."
+        }
+      }
+    },
+    "sdist": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files to include in the SDist even if they are skipped by default."
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files to exclude from the SDist even if they are included by default."
+        },
+        "reproducible": {
+          "type": "boolean",
+          "default": true,
+          "description": "If set to True, try to build a reproducible distribution. ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set."
+        }
+      }
+    },
+    "wheel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of packages to auto-copy into the wheel. If this is None, it will default to the first of ``src/<package>`` or ``<package>`` if they exist. The prefix(s) will be stripped from the package name inside the wheel."
+        },
+        "py-api": {
+          "type": "string",
+          "default": "",
+          "description": "The Python tags. The default (empty string) will use the default Python version. You can also set this to \"cp37\" to enable the CPython 3.7+ Stable ABI / Limited API (only on CPython and if the version is sufficient, otherwise this has no effect). Or you can set it to \"py3\" or \"py2.py3\" to ignore Python ABI compatibility. For the stable ABI, the CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems (empty on Windows). FindPython doesn't have a way to target python3.dll instead of python3N.dll, so this is harder to use on Windows. The ABI tag is inferred from this tag."
+        },
+        "expand-macos-universal-tags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fill out extra tags that are not required. This adds \"x86_64\" and \"arm64\" to the list of platforms when \"universal2\" is used, which helps older Pip's (before 21.0.1) find the correct wheel."
+        },
+        "install-dir": {
+          "type": "string",
+          "default": "",
+          "description": "The install directory for the wheel. This is relative to the platlib root. EXPERIMENTAL: An absolute path will be one level higher than the platlib root, giving access to \"/platlib\", \"/data\", \"/headers\", and \"/scripts\"."
+        },
+        "license-files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of license files to include in the wheel. Supports glob patterns."
+        }
+      }
+    },
+    "backport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "find-python": {
+          "type": "string",
+          "default": "3.26.1",
+          "description": "If CMake is less than this value, backport a copy of FindPython. Set to 0 disable this, or the empty string."
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "patternProperties": {
+        ".+": {
+          "type": "object"
+        }
+      }
+    },
+    "editable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "default": "redirect",
+          "description": "Select the editable mode to use. Currently only \"redirect\" is supported."
+        },
+        "verbose": {
+          "type": "boolean",
+          "default": true,
+          "description": "Turn on verbose output for the editable mode rebuilds."
+        },
+        "rebuild": {
+          "type": "boolean",
+          "default": false,
+          "description": "Rebuild the project when the package is imported. The build-directory must be set."
+        }
+      }
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The components to install. If empty, the default is used."
+        },
+        "strip": {
+          "type": "boolean",
+          "description": "Whether to strip the binaries. True for scikit-build-core 0.5+."
+        }
+      }
+    },
+    "strict-config": {
+      "type": "boolean",
+      "default": true,
+      "description": "Strictly check all config options. If False, warnings will be printed for unknown options. If True, an error will be raised."
+    },
+    "experimental": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable early previews of features not finalized yet."
+    },
+    "minimum-version": {
+      "type": "string",
+      "description": "If set, this will provide a method for backward compatibility."
+    },
+    "build-dir": {
+      "type": "string",
+      "default": "",
+      "description": "The build directory. Defaults to a temporary directory, but can be set."
+    }
+  }
+}

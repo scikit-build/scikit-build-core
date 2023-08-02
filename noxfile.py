@@ -60,6 +60,26 @@ def _run_tests(
     session.run("pytest", *run_args, *posargs, env=env)
 
 
+@nox.session(reuse_venv=True)
+def generate_schema(session: nox.Session) -> None:
+    session.install("-e.")
+    schema = session.run(
+        "python", "-m", "scikit_build_core.settings.skbuild_schema", silent=True
+    )
+    DIR.joinpath("src/scikit_build_core/resources/scikit-build.schema.json").write_text(schema)  # type: ignore[arg-type]
+
+
+@nox.session
+def validate_schemas(session: nox.Session) -> None:
+    session.install("-e.", "validate-pyproject")
+
+    docs_examples = Path("docs/examples").glob("**/pyproject.toml")
+    tests_packages = Path("tests/packages").glob("**/pyproject.toml")
+    paths = [*docs_examples, *tests_packages]
+    # map currently required to make mypy happy, future nox version should fix
+    session.run("validate-pyproject", *map(str, paths))
+
+
 @nox.session
 def tests(session: nox.Session) -> None:
     """
