@@ -11,7 +11,9 @@ from pathlib import Path
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 
+from .. import __version__
 from .._compat import tomllib
+from .._logging import rich_print
 from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
@@ -71,6 +73,11 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
+    rich_print(
+        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
+        "[red](sdist)[/red]",
+    )
+
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
