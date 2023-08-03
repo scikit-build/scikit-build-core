@@ -70,6 +70,10 @@ test-numpy = [
     "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
     "numpy~=1.25.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
 ]
+test-schema = [
+    "fastjsonschema",
+    "validate-pyproject",
+]
 cov = [
     "pytest-cov[toml]",
 ]

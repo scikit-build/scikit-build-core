@@ -70,22 +70,11 @@ def generate_schema(session: nox.Session) -> None:
 
 
 @nox.session
-def validate_schemas(session: nox.Session) -> None:
-    session.install("-e.", "validate-pyproject")
-
-    docs_examples = Path("docs/examples").glob("**/pyproject.toml")
-    tests_packages = Path("tests/packages").glob("**/pyproject.toml")
-    paths = [*docs_examples, *tests_packages]
-    # map currently required to make mypy happy, future nox version should fix
-    session.run("validate-pyproject", *map(str, paths))
-
-
-@nox.session
 def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(session, extras=["test-meta,test-numpy"])
+    _run_tests(session, extras=["test-meta,test-numpy,test-schema"])
 
 
 @nox.session

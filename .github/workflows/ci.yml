@@ -89,7 +89,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install package
-        run: pip install -e.[test,test-meta,test-numpy,wheels,cov]
+        run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
 
       - name: Test package
         run: >-
