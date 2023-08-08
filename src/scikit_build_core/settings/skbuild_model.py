@@ -19,30 +19,18 @@ def __dir__() -> List[str]:
 
 
 @dataclasses.dataclass
-class NinjaSettings:
-    minimum_version: str = "1.5"
-    """
-    The minimum version of Ninja to use. If Ninja is older than this, it will
-    be upgraded via PyPI if possible. An empty string will disable this check.
-    """
-
-    make_fallback: bool = True
-    """
-    If make is present, do not add ninja if missing.
-    """
-
-
-@dataclasses.dataclass
 class CMakeSettings:
     minimum_version: str = "3.15"
     """
-    The minimum version of CMake to use. If CMake is older than this, it will
-    be upgraded via PyPI if possible. An empty string will disable this check.
+    The minimum version of CMake to use. If CMake is not present on the system
+    or is older than this, it will be downloaded via PyPI if possible. An empty
+    string will disable this check.
     """
 
     args: List[str] = dataclasses.field(default_factory=list)
     """
-    A list of args to pass to CMake when configuring the project.
+    A list of args to pass to CMake when configuring the project. Setting this
+    in config or envvar will override toml. See also ``cmake.define``.
     """
 
     define: Dict[str, str] = dataclasses.field(default_factory=dict)
@@ -52,7 +40,7 @@ class CMakeSettings:
 
     verbose: bool = False
     """
-    Verbose printout when building
+    Verbose printout when building.
     """
 
     build_type: str = "Release"
@@ -76,10 +64,27 @@ class CMakeSettings:
 
 
 @dataclasses.dataclass
+class NinjaSettings:
+    minimum_version: str = "1.5"
+    """
+    The minimum version of Ninja to use. If Ninja is not present on the system
+    or is older than this, it will be downloaded via PyPI if possible. An empty
+    string will disable this check.
+    """
+
+    make_fallback: bool = True
+    """
+    If CMake is not present on the system or is older required, it will be
+    downloaded via PyPI if possible. An empty string will disable this check.
+    """
+
+
+@dataclasses.dataclass
 class LoggingSettings:
     level: str = "WARNING"
     """
-    The logging level to display.
+    The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
+    possible options.
     """
 
 
@@ -88,17 +93,26 @@ class SDistSettings:
     include: List[str] = dataclasses.field(default_factory=list)
     """
     Files to include in the SDist even if they are skipped by default.
+    Supports gitignore syntax.
+
     """
 
     exclude: List[str] = dataclasses.field(default_factory=list)
     """
     Files to exclude from the SDist even if they are included by default.
+    Supports gitignore syntax.
     """
 
     reproducible: bool = True
     """
-    If set to True, try to build a reproducible distribution.
-    ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set.
+    If set to True, try to build a reproducible distribution (Unix and Python
+    3.9+ recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a
+    fixed value if not set.
+    """
+
+    cmake: bool = False
+    """
+    If set to True, CMake will be run before building the SDist.
     """
 
 
@@ -106,22 +120,18 @@ class SDistSettings:
 class WheelSettings:
     packages: Optional[List[str]] = None
     """
-    A list of packages to auto-copy into the wheel. If this is None, it will
+    A list of packages to auto-copy into the wheel. If this is not set, it will
     default to the first of ``src/<package>`` or ``<package>`` if they exist.
     The prefix(s) will be stripped from the package name inside the wheel.
     """
 
     py_api: str = ""
     """
-    The Python tags. The default (empty string) will use the default
-    Python version. You can also set this to "cp37" to enable the CPython
-    3.7+ Stable ABI / Limited API (only on CPython and if the version is
-    sufficient, otherwise this has no effect). Or you can set it to "py3"
-    or "py2.py3" to ignore Python ABI compatibility. For the stable ABI,
-    the CMake variable SKBUILD_SOABI will be set to abi3 on Unix-like systems
-    (empty on Windows). FindPython doesn't have a way to target python3.dll
-    instead of python3N.dll, so this is harder to use on Windows.
-    The ABI tag is inferred from this tag.
+    The Python tags. The default (empty string) will use the default Python
+    version. You can also set this to "cp37" to enable the CPython 3.7+ Stable
+    ABI / Limited API (only on CPython and if the version is sufficient,
+    otherwise this has no effect). Or you can set it to "py3" or "py2.py3" to
+    ignore Python ABI compatibility. The ABI tag is inferred from this tag.
     """
 
     expand_macos_universal_tags: bool = False
@@ -150,8 +160,8 @@ class WheelSettings:
 class BackportSettings:
     find_python: str = "3.26.1"
     """
-    If CMake is less than this value, backport a copy of FindPython. Set
-    to 0 disable this, or the empty string.
+    If CMake is less than this value, backport a copy of FindPython. Set to 0
+    disable this, or the empty string.
     """
 
 
@@ -169,8 +179,8 @@ class EditableSettings:
 
     rebuild: bool = False
     """
-    Rebuild the project when the package is imported.
-    The build-directory must be set.
+    Rebuild the project when the package is imported. The build-directory must
+    be set.
     """
 
 
@@ -178,7 +188,7 @@ class EditableSettings:
 class InstallSettings:
     components: List[str] = dataclasses.field(default_factory=list)
     """
-    The components to install. If empty, the default is used.
+    The components to install. If empty, all default components are installed.
     """
 
     strip: Optional[bool] = None
@@ -195,9 +205,12 @@ class ScikitBuildSettings:
     sdist: SDistSettings = dataclasses.field(default_factory=SDistSettings)
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
-    metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
+    metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
+    """
+    List dynamic metadata fields and hook locations in this table.
+    """
 
     strict_config: bool = True
     """
