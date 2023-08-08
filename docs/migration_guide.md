@@ -16,7 +16,7 @@ may be out of date.
   installations of the tools by default, which allows compatibility with systems
   where binaries are not available on PyPI but can be installed from elsewhere.
   Instead, set the minimum required versions in the `[tool.scikit-build]` table:
-  `cmake.minimum-required` and `ninja.minimum-required`.
+  `cmake.minimum-version` and `ninja.minimum-version`.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](./getting_started.md) for more information.
 - If your project is primarily configured using setup.py or setup.cfg, you will
