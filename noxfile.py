@@ -77,6 +77,18 @@ def tests(session: nox.Session) -> None:
     _run_tests(session, extras=["test-meta,test-numpy,test-schema"])
 
 
+@nox.session(reuse_venv=True)
+def readme(session: nox.Session) -> None:
+    """
+    Update the readme with cog. Pass --check to check instead.
+    """
+
+    args = session.posargs or ["-r"]
+
+    session.install("-e.", "cogapp")
+    session.run("cog", "-P", *args, "README.md")
+
+
 @nox.session
 def minimums(session: nox.Session) -> None:
     """

@@ -115,105 +115,135 @@ as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
 `-C` options, or `SKBUILD_*` for environment variables. The defaults are listed
 below:
 
+<!-- [[[cog
+from scikit_build_core.settings.skbuild_docs import mk_skbuild_docs
+
+print("\n```toml\n[tool.scikit-build]")
+print(mk_skbuild_docs())
+print("```\n")
+]]] -->
+
 ```toml
 [tool.scikit-build]
-# The PEP 517 build hooks will add ninja and/or cmake if the versions on the
-# system are not at least these versions. Disabled by an empty string.
+# The minimum version of CMake to use. If CMake is not present on the system or
+# is older than this, it will be downloaded via PyPI if possible. An empty
+# string will disable this check.
 cmake.minimum-version = "3.15"
-ninja.minimum-version = "1.5"
 
-# Fallback on gmake/make if available and ninja is missing (Unix). Will only
-# fallback on platforms without a known ninja wheel.
-ninja.make-fallback = true
-
-# Extra args for CMake. Pip, unlike build, does not support lists, so semicolon
-# can be used to separate. Setting this in config or envvar will override the
-# entire list. See also cmake.define.
+# A list of args to pass to CMake when configuring the project. Setting this in
+# config or envvar will override toml. See also ``cmake.define``.
 cmake.args = []
 
-# This activates verbose builds
+# A table of defines to pass to CMake when configuring the project. Additive.
+cmake.define = {}
+
+# Verbose printout when building.
 cmake.verbose = false
 
-# This controls the CMake build type
+# The build type to use when building the project. Valid options are: "Debug",
+# "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
 cmake.build-type = "Release"
 
-# The targets to build - empty builds all default targets.
+# The source directory to use when building the project. Currently only affects
+# the native builder (not the setuptools plugin).
+cmake.source-dir = ""
+
+# The build targets to use when building the project. Empty builds the default
+# target.
 cmake.targets = []
 
-# Display logs at or above this level.
+# The minimum version of Ninja to use. If Ninja is not present on the system or
+# is older than this, it will be downloaded via PyPI if possible. An empty
+# string will disable this check.
+ninja.minimum-version = "1.5"
+
+# If CMake is not present on the system or is older required, it will be
+# downloaded via PyPI if possible. An empty string will disable this check.
+ninja.make-fallback = true
+
+# The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
+# possible options.
 logging.level = "WARNING"
 
-# Include and exclude patterns, in gitignore syntax. Include overrides exclude.
-# Wheels include packages included in the sdist; CMake has the final say.
+# Files to include in the SDist even if they are skipped by default. Supports
+# gitignore syntax.
 sdist.include = []
+
+# Files to exclude from the SDist even if they are included by default. Supports
+# gitignore syntax.
 sdist.exclude = []
 
-# Make reproducible SDists (Python 3.9+ and UNIX recommended). Respects
-# SOURCE_DATE_EPOCH when true (the default).
+# If set to True, try to build a reproducible distribution (Unix and Python 3.9+
+# recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed
+# value if not set.
 sdist.reproducible = true
 
-# The root-level packages to include. Special default: if not given, the package
-# is auto-discovered if it's name matches the main name.
+# A list of packages to auto-copy into the wheel. If this is not set, it will
+# default to the first of ``src/<package>`` or ``<package>`` if they exist. The
+# prefix(s) will be stripped from the package name inside the wheel.
 wheel.packages = ["src/<package>", "<package>"]
 
-# Setting py-api to "cp37" would build ABI3 wheels for Python 3.7+.  If CPython
-# is less than this value, or on PyPy, this will be ignored.  Setting the api to
-# "py3" or "py2.py3" would build wheels that don't depend on Python (ctypes,
-# etc).
+# The Python tags. The default (empty string) will use the default Python
+# version. You can also set this to "cp37" to enable the CPython 3.7+ Stable ABI
+# / Limited API (only on CPython and if the version is sufficient, otherwise
+# this has no effect). Or you can set it to "py3" or "py2.py3" to ignore Python
+# ABI compatibility. The ABI tag is inferred from this tag.
 wheel.py-api = ""
 
-# Setting this to true will expand tags (universal2 will add Intel and Apple
-# Silicon tags, for pip <21.0.1 compatibility).
+# Fill out extra tags that are not required. This adds "x86_64" and "arm64" to
+# the list of platforms when "universal2" is used, which helps older Pip's
+# (before 21.0.1) find the correct wheel.
 wheel.expand-macos-universal-tags = false
 
-# This allows you to change the install dir, such as to the package name. The
-# original dir is still at SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are
-# available)
-wheel.install-dir = "."
+# The install directory for the wheel. This is relative to the platlib root. You
+# might set this to the package name. The original dir is still at
+# SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL:
+# An absolute path will be one level higher than the platlib root, giving access
+# to "/platlib", "/data", "/headers", and "/scripts".
+wheel.install-dir = ""
 
-# The licence file(s) to include in the wheel metadata directory.
+# A list of license files to include in the wheel. Supports glob patterns.
 wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 
-# Strip the binaries. Defaults to True for scikit-build-core 0.5+.
-install.strip = true
-
-# Components to install. Leave empty to install all components.
-install.components = []
-
-# This will backport an internal copy of FindPython if CMake is less than this
-# value. Set to 0 or the empty string to disable. The default will be kept in
-# sync with the version of FindPython stored in scikit-build-core.
+# If CMake is less than this value, backport a copy of FindPython. Set to 0
+# disable this, or the empty string.
 backport.find-python = "3.26.1"
 
-# This is the only editable mode currently
+# Select the editable mode to use. Currently only "redirect" is supported.
 editable.mode = "redirect"
 
-# Enable auto rebuilds on import (experimental)
-editable.rebuild = false
-
-# Display output on stderr while rebuilding on import
+# Turn on verbose output for the editable mode rebuilds.
 editable.verbose = true
 
-# Enable experimental features if any are available
-experimental = false
+# Rebuild the project when the package is imported. The build-directory must be
+# set.
+editable.rebuild = false
 
-# Strictly validate config options
+# The components to install. If empty, all default components are installed.
+install.components = []
+
+# Whether to strip the binaries. True for scikit-build-core 0.5+.
+install.strip = false
+
+# List dynamic metadata fields and hook locations in this table.
+metadata = {}
+
+# Strictly check all config options. If False, warnings will be printed for
+# unknown options. If True, an error will be raised.
 strict-config = true
 
-# This provides some backward compatibility if set. Defaults to the latest
-# scikit-build-core version.
-minimum-version = "0.2"  # current version
+# Enable early previews of features not finalized yet.
+experimental = false
 
-# Build directory (empty will use a temporary directory). {cache_tag} and
-# {wheel_tag} are available to provide a unique directory per interpreter.
+# If set, this will provide a method for backward compatibility.
+minimum-version = "0.4"  # current version
+
+# The build directory. Defaults to a temporary directory, but can be set.
 build-dir = ""
 
-[tool.scikit-build.cmake.define]
-# Put CMake defines in this table.
-
-[tool.scikit-build.metadata]
-# List dynamic metadata fields and hook locations in this table
 ```
+
+<!-- [[[end]]] -->
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
 used to set extra CMake args. `ARCHFLAGS` is used to specify macOS universal2 or

@@ -33,6 +33,14 @@ scikit\_build\_core.settings.metadata module
    :undoc-members:
    :show-inheritance:
 
+scikit\_build\_core.settings.skbuild\_docs module
+-------------------------------------------------
+
+.. automodule:: scikit_build_core.settings.skbuild_docs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.settings.skbuild\_model module
 --------------------------------------------------
 
