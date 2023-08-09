@@ -71,6 +71,7 @@ def _build_wheel_impl(
     config_settings: dict[str, list[str] | str] | None,
     metadata_directory: str | None,
     *,
+    exit_after_config: bool = False,
     editable: bool,
 ) -> WheelImplReturn:
     """
@@ -97,6 +98,8 @@ def _build_wheel_impl(
     action = "editable" if editable else "wheel"
     if wheel_directory is None:
         action = f"metadata_{action}"
+    if exit_after_config:
+        action = "sdist"
 
     cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
 
@@ -176,7 +179,7 @@ def _build_wheel_impl(
             config=config,
         )
 
-        if wheel_directory is None:
+        if wheel_directory is None and not exit_after_config:
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
@@ -208,6 +211,11 @@ def _build_wheel_impl(
             name=metadata.name,
             version=metadata.version,
         )
+
+        if exit_after_config:
+            return WheelImplReturn("")
+
+        assert wheel_directory is not None
 
         generator = builder.config.env.get(
             "CMAKE_GENERATOR",

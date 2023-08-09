@@ -110,6 +110,11 @@
           "type": "boolean",
           "default": true,
           "description": "If set to True, try to build a reproducible distribution (Unix and Python 3.9+ recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set."
+        },
+        "cmake": {
+          "type": "boolean",
+          "default": false,
+          "description": "If set to True, CMake will be run before building the SDist."
         }
       }
     },
@@ -137,7 +142,7 @@
         "install-dir": {
           "type": "string",
           "default": "",
-          "description": "The install directory for the wheel. This is relative to the platlib root. EXPERIMENTAL: An absolute path will be one level higher than the platlib root, giving access to \"/platlib\", \"/data\", \"/headers\", and \"/scripts\"."
+          "description": "The install directory for the wheel. This is relative to the platlib root. You might set this to the package name. The original dir is still at SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL: An absolute path will be one level higher than the platlib root, giving access to \"/platlib\", \"/data\", \"/headers\", and \"/scripts\"."
         },
         "license-files": {
           "type": "array",

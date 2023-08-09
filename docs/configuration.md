@@ -152,6 +152,52 @@ reproducible builds if you prefer, however:
 sdist.reproducible = false
 ```
 
+You can also request CMake to run during this step:
+
+```toml
+[tool.scikit-build]
+sdist.cmake = true
+```
+
+:::{note}
+
+If you do this, you'll want to have some artifact from the configure in your
+source directory; for example:
+
+```cmake
+include(FetchContent)
+
+if(NOT SKBUILD_STATE STREQUAL "sdist"
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pybind11/CMakeLists.txt")
+  message(STATUS "Using integrated pybind11")
+  set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+endif()
+
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v2.11.1
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pybind11)
+
+set(PYBIND11_FINDPYTHON ON)
+FetchContent_MakeAvailable(pybind11)
+```
+
+The `/pybind11` directory is in the `.gitignore` and important parts are in
+`sdist.include`:
+
+```toml
+[tool.scikit-build]
+sdist.cmake = true
+sdist.include = [
+  "pybind11/tools",
+  "pybind11/include",
+  "pybind11/CMakeLists.txt",
+]
+```
+
+:::
+
 ## Customizing the built wheel
 
 The wheel will automatically look for Python packages at `<package_name>` and

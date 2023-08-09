@@ -113,6 +113,11 @@ class SDistSettings:
     fixed value if not set.
     """
 
+    cmake: bool = False
+    """
+    If set to True, CMake will be run before building the SDist.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
@@ -142,6 +147,8 @@ class WheelSettings:
     install_dir: str = ""
     """
     The install directory for the wheel. This is relative to the platlib root.
+    You might set this to the package name. The original dir is still at
+    SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available).
     EXPERIMENTAL: An absolute path will be one level higher than the platlib
     root, giving access to "/platlib", "/data", "/headers", and "/scripts".
     """

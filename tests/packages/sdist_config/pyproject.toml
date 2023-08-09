@@ -1,0 +1,18 @@
+[build-system]
+requires = ["scikit-build-core[pyproject]"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "sdist_config"
+version = "0.1.0"
+
+[tool.scikit-build]
+sdist.cmake = true
+sdist.include = [
+    "pybind11/tools",
+    "pybind11/include",
+    "pybind11/CMakeLists.txt",
+]
+wheel.license-files = []
+wheel.packages = []
+cmake.define.FETCHCONTENT_QUIET = false
