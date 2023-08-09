@@ -48,8 +48,6 @@ def get_standard_metadata(
     metadata = StandardMetadata.from_pyproject(pyproject_dict)
     # pyproject-metadata normalizes the name - see https://github.com/FFY00/python-pyproject-metadata/pull/65
     # For scikit-build-core 0.5+, we keep the un-normalized name, and normalize it when using it for filenames
-    if settings.minimum_version is None or Version(settings.minimum_version) >= Version(
-        "0.5"
-    ):
+    if settings.minimum_version is None or settings.minimum_version >= Version("0.5"):
         metadata.name = pyproject_dict["project"]["name"]
     return metadata

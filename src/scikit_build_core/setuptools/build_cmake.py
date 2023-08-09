@@ -114,9 +114,7 @@ class BuildCMake(setuptools.Command):
 
         settings = SettingsReader.from_file("pyproject.toml", {}).settings
 
-        cmake = CMake.default_search(
-            minimum_version=Version(settings.cmake.minimum_version)
-        )
+        cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
 
         config = CMaker(
             cmake,

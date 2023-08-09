@@ -26,6 +26,20 @@ Naming conventions:
   style of the current Source.
 - ``fields`` are the tuple of strings describing a nested field in the
   ``model``.
+
+When setting up your dataclasses, these types are handled:
+
+- ``str``: A string type, nothing special.
+- ``bool``: Supports bool in TOML, not handled in envvar/config (so only useful in a Union)
+- Any callable (`Path`, `Version`): Passed the string input.
+- ``Optional[T]``: Treated like T. Default should be None, since no input format supports None's.
+- ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
+- ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms.
+- ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
+
+These are supported for JSON schema generation for the TOML, as well.
+
+Integers/floats would be easy to add, but haven't been needed yet.
 """
 
 
@@ -74,32 +88,25 @@ def _dig_fields(__opt: Any, *names: str) -> Any:
 
 def _process_union(target: type[Any]) -> Any:
     """
-    Selects the non-None item in an Optional or Optional-like Union. Passes
-    through non-Unions.
+    Filters None out of Unions. If a Union only has one item, return that item.
     """
 
     origin = get_origin(target)
 
-    if origin is None or origin is not Union:
-        return target
+    if origin is Union:
+        non_none_args = [a for a in get_args(target) if a is not type(None)]
+        if len(non_none_args) == 1:
+            return non_none_args[0]
+        return Union[tuple(non_none_args)]
 
-    args = get_args(target)
-    if len(args) == 2:
-        items = list(args)
-        if type(None) not in items:
-            msg = f"None must be in union, got {items}"
-            raise AssertionError(msg)
-        items.remove(type(None))
-        return items[0]
-
-    msg = "Only Unions with None supported"
-    raise AssertionError(msg)
+    return target
 
 
-def _get_target_raw_type(target: type[Any]) -> type[Any]:
+def _get_target_raw_type(target: type[Any]) -> Any:
     """
     Takes a type like ``Optional[str]`` and returns str,
-    or ``Optional[Dict[str, int]]`` and returns dict.
+    or ``Optional[Dict[str, int]]`` and returns dict. Returns
+    Union for a Union with more than one non-none type.
     """
 
     target = _process_union(target)
@@ -215,6 +222,9 @@ class EnvSource:
         if raw_target is bool:
             return item.strip().lower() not in {"0", "false", "off", "no", ""}
 
+        if raw_target is Union and str in get_args(target):
+            return item
+
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -323,6 +333,8 @@ class ConfSource:
             raise TypeError(msg)
         if raw_target is bool:
             return item.strip().lower() not in {"0", "false", "off", "no", ""}
+        if raw_target is Union and str in get_args(target):
+            return item
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -380,17 +392,19 @@ class TOMLSource:
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
         raw_target = _get_target_raw_type(target)
-        if raw_target == list:
+        if raw_target is list:
             if not isinstance(item, list):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             return [cls.convert(it, _get_inner_type(target)) for it in item]
-        if raw_target == dict:
+        if raw_target is dict:
             if not isinstance(item, dict):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
-        if raw_target == Any:
+        if raw_target is Any:
+            return item
+        if raw_target is Union and type(item) in get_args(target):
             return item
         if callable(raw_target):
             return raw_target(item)

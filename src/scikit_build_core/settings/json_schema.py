@@ -1,72 +1,59 @@
 from __future__ import annotations
 
 import dataclasses
-import typing
-from typing import Any
+import sys
+from pathlib import Path
+from typing import Any, Union
 
+from packaging.version import Version
+
+from .._compat.builtins import ExceptionGroup
 from .._compat.typing import get_args, get_origin
 from .documentation import pull_docs
 
-__all__ = ["to_json_schema"]
+__all__ = ["to_json_schema", "convert_type", "FailedConversion"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
+class FailedConversion(TypeError):
+    pass
+
+
 def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]:
     assert dataclasses.is_dataclass(dclass)
     props = {}
-    unknown = []
+    errs = []
     for field in dataclasses.fields(dclass):
         if dataclasses.is_dataclass(field.type):
             props[field.name] = to_json_schema(
                 field.type, normalize_keys=normalize_keys
             )
             continue
-        current_type = field.type
-        origin = get_origin(current_type)
-        args = get_args(current_type)
-        if (
-            origin is typing.Union
-            and len(args) == 2
-            and any(a is type(None) for a in args)
-        ):
-            current_type = next(iter(a for a in args if a is not type(None)))
-            origin = get_origin(current_type)
-            args = get_args(current_type)
 
-        if origin is list and args[0] is str:
-            props[field.name] = {"type": "array", "items": {"type": "string"}}
-        elif origin is dict and args[0] is str and args[1] is str:
-            props[field.name] = {
-                "type": "object",
-                "patternProperties": {".+": {"type": "string"}},
-            }
-        elif origin is dict and args[0] is str and get_origin(args[1]) is dict:
-            props[field.name] = {
-                "type": "object",
-                "patternProperties": {".+": {"type": "object"}},
-            }
-        elif current_type == str:
-            props[field.name] = {"type": "string"}
-        elif current_type == bool:
-            props[field.name] = {"type": "boolean"}
-        else:
-            unknown.append(
-                (
-                    field.name,
-                    field.type,
-                    get_origin(field.type),
-                    get_args(field.type),
-                )
-            )
-            continue
+        try:
+            props[field.name] = convert_type(field.type)
+        except FailedConversion as err:
+            if sys.version_info < (3, 11):
+                notes = "__notes__"  # set so linter's won't try to be clever
+                setattr(err, notes, [*getattr(err, notes, []), f"Field: {field.name}"])
+            else:
+                # pylint: disable-next=no-member
+                err.add_note(f"Field: {field.name}")
+            errs.append(err)
 
         if field.default is not dataclasses.MISSING and field.default is not None:
-            props[field.name]["default"] = field.default
+            props[field.name]["default"] = (
+                str(field.default)
+                if isinstance(field.default, (Version, Path))
+                else field.default
+            )
 
-    assert not unknown, f"{unknown} left over!"
+    if errs:
+        msg = f"Failed Conversion to JSON Schema on {dclass.__name__}"
+        raise ExceptionGroup(msg, errs)
 
     docs = pull_docs(dclass)
     for k, v in docs.items():
@@ -76,3 +63,29 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         props = {k.replace("_", "-"): v for k, v in props.items()}
 
     return {"type": "object", "additionalProperties": False, "properties": props}
+
+
+def convert_type(t: Any) -> dict[str, Any]:
+    if t is str or t is Path or t is Version:
+        return {"type": "string"}
+    if t is bool:
+        return {"type": "boolean"}
+    origin = get_origin(t)
+    args = get_args(t)
+    if origin is list:
+        assert len(args) == 1
+        return {"type": "array", "items": convert_type(args[0])}
+    if origin is dict:
+        assert len(args) == 2
+        assert args[0] is str
+        if args[1] is Any:
+            return {"type": "object"}
+        return {"type": "object", "patternProperties": {".+": convert_type(args[1])}}
+    if origin is Union:
+        # Ignore optional
+        if len(args) == 2 and any(a is type(None) for a in args):
+            return convert_type(next(iter(a for a in args if a is not type(None))))
+        return {"oneOf": [convert_type(a) for a in args]}
+
+    msg = f"Cannot convert type {t} to JSON Schema"
+    raise FailedConversion(msg)

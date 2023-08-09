@@ -7,7 +7,6 @@ import sysconfig
 from collections.abc import Generator, Mapping
 
 from packaging.tags import sys_tags
-from packaging.version import Version
 
 from .._compat import tomllib
 from .._compat.typing import Literal
@@ -50,7 +49,7 @@ class GetRequires:
         ).settings
 
     def cmake(self) -> Generator[str, None, None]:
-        cmake_min = Version(self._settings.cmake.minimum_version)
+        cmake_min = self._settings.cmake.minimum_version
         cmake = best_program(
             get_cmake_programs(module=False), minimum_version=cmake_min
         )
@@ -74,7 +73,7 @@ class GetRequires:
         if os.environ.get("CMAKE_MAKE_PROGRAM", ""):
             return
 
-        ninja_min = Version(self._settings.ninja.minimum_version)
+        ninja_min = self._settings.ninja.minimum_version
         ninja = best_program(
             get_ninja_programs(module=False), minimum_version=ninja_min
         )

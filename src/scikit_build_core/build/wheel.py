@@ -9,8 +9,6 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from packaging.version import Version
-
 from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
@@ -100,9 +98,7 @@ def _build_wheel_impl(
     if wheel_directory is None:
         action = f"metadata_{action}"
 
-    cmake = CMake.default_search(
-        minimum_version=Version(settings.cmake.minimum_version)
-    )
+    cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
 
     rich_print(
         f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
@@ -170,7 +166,7 @@ def _build_wheel_impl(
 
         config = CMaker(
             cmake,
-            source_dir=Path(settings.cmake.source_dir or "."),
+            source_dir=settings.cmake.source_dir,
             build_dir=build_dir,
             build_type=settings.cmake.build_type,
         )

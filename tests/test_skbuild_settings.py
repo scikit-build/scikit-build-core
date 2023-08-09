@@ -5,14 +5,16 @@ from __future__ import annotations
 
 import re
 import textwrap
+from pathlib import Path
 
 import pytest
+from packaging.version import Version
 
 import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
-def test_skbuild_settings_default(tmp_path):
+def test_skbuild_settings_default(tmp_path: Path):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
@@ -22,14 +24,14 @@ def test_skbuild_settings_default(tmp_path):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == "1.5"
+    assert settings.ninja.minimum_version == Version("1.5")
     assert settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == "3.15"
+    assert settings.cmake.minimum_version == Version("3.15")
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
     assert not settings.cmake.verbose
     assert settings.cmake.build_type == "Release"
-    assert not settings.cmake.source_dir
+    assert settings.cmake.source_dir == Path()
     assert settings.cmake.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
@@ -44,7 +46,7 @@ def test_skbuild_settings_default(tmp_path):
         "NOTICE*",
         "AUTHORS*",
     ]
-    assert settings.backport.find_python == "3.26.1"
+    assert settings.backport.find_python == Version("3.26.1")
     assert settings.strict_config
     assert not settings.experimental
     assert settings.minimum_version is None
@@ -57,7 +59,7 @@ def test_skbuild_settings_default(tmp_path):
     assert settings.install.strip
 
 
-def test_skbuild_settings_envvar(tmp_path, monkeypatch):
+def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
     )
@@ -98,13 +100,13 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == "1.1"
-    assert settings.cmake.minimum_version == "3.16"
+    assert settings.ninja.minimum_version == Version("1.1")
+    assert settings.cmake.minimum_version == Version("3.16")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
-    assert settings.cmake.source_dir == "a/b/c"
+    assert settings.cmake.source_dir == Path("a/b/c")
     assert settings.cmake.targets == ["a", "b", "c"]
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
@@ -115,10 +117,10 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
-    assert settings.backport.find_python == "0"
+    assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == "0.1"
+    assert settings.minimum_version == Version("0.1")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"
@@ -128,7 +130,9 @@ def test_skbuild_settings_envvar(tmp_path, monkeypatch):
     assert not settings.install.strip
 
 
-def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
+def test_skbuild_settings_config_settings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
     )
@@ -155,7 +159,7 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
         "wheel.py-api": "cp39",
         "wheel.expand-macos-universal-tags": "True",
         "wheel.license-files": ["a", "b", "c"],
-        "backport.find-python": "",
+        "backport.find-python": "0",
         "strict-config": "false",
         "experimental": "1",
         "minimum-version": "0.1",
@@ -171,14 +175,14 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == "1.2"
+    assert settings.ninja.minimum_version == Version("1.2")
     assert not settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == "3.17"
+    assert settings.cmake.minimum_version == Version("3.17")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
-    assert settings.cmake.source_dir == "a/b/c"
+    assert settings.cmake.source_dir == Path("a/b/c")
     assert settings.cmake.targets == ["a", "b", "c"]
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -188,10 +192,10 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
-    assert settings.backport.find_python == ""
+    assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == "0.1"
+    assert settings.minimum_version == Version("0.1")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"
@@ -201,7 +205,9 @@ def test_skbuild_settings_config_settings(tmp_path, monkeypatch):
     assert settings.install.strip
 
 
-def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
+def test_skbuild_settings_pyproject_toml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
     )
@@ -249,14 +255,14 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == "1.3"
+    assert settings.ninja.minimum_version == Version("1.3")
     assert not settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == "3.18"
+    assert settings.cmake.minimum_version == Version("3.18")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
-    assert settings.cmake.source_dir == "a/b/c"
+    assert settings.cmake.source_dir == Path("a/b/c")
     assert settings.cmake.targets == ["a", "b", "c"]
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -266,10 +272,10 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
-    assert settings.backport.find_python == "3.18"
+    assert settings.backport.find_python == Version("3.18")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == "0.1"
+    assert settings.minimum_version == Version("0.1")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {"version": {"provider": "a"}}
     assert settings.editable.mode == "redirect"
@@ -279,7 +285,9 @@ def test_skbuild_settings_pyproject_toml(tmp_path, monkeypatch):
     assert settings.install.strip
 
 
-def test_skbuild_settings_pyproject_toml_broken(tmp_path, capsys):
+def test_skbuild_settings_pyproject_toml_broken(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
@@ -350,7 +358,9 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
     )
 
 
-def test_skbuild_settings_min_version_defaults(tmp_path, monkeypatch):
+def test_skbuild_settings_min_version_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.5.0"
     )
