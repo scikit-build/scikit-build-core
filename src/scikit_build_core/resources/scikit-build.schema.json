@@ -25,7 +25,14 @@
           "type": "object",
           "patternProperties": {
             ".+": {
-              "type": "string"
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             }
           },
           "description": "A table of defines to pass to CMake when configuring the project. Additive."
@@ -42,7 +49,7 @@
         },
         "source-dir": {
           "type": "string",
-          "default": "",
+          "default": ".",
           "description": "The source directory to use when building the project. Currently only affects the native builder (not the setuptools plugin)."
         },
         "targets": {
@@ -103,11 +110,6 @@
           "type": "boolean",
           "default": true,
           "description": "If set to True, try to build a reproducible distribution (Unix and Python 3.9+ recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set."
-        },
-        "cmake": {
-          "type": "boolean",
-          "default": false,
-          "description": "If set to True, CMake will be run before building the SDist."
         }
       }
     },

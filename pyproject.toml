@@ -151,10 +151,12 @@ show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
 module = ["scikit_build_core.*"]
 disallow_untyped_defs = true
+disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
 module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme"]

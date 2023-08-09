@@ -1,5 +1,8 @@
 import dataclasses
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from packaging.version import Version
 
 __all__ = [
     "BackportSettings",
@@ -20,7 +23,7 @@ def __dir__() -> List[str]:
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: str = "3.15"
+    minimum_version: Version = Version("3.15")
     """
     The minimum version of CMake to use. If CMake is not present on the system
     or is older than this, it will be downloaded via PyPI if possible. An empty
@@ -33,7 +36,7 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Dict[str, str] = dataclasses.field(default_factory=dict)
+    define: Dict[str, Union[str, bool]] = dataclasses.field(default_factory=dict)
     """
     A table of defines to pass to CMake when configuring the project. Additive.
     """
@@ -50,7 +53,7 @@ class CMakeSettings:
     "", etc.
     """
 
-    source_dir: str = ""
+    source_dir: Path = Path()
     """
     The source directory to use when building the project. Currently only
     affects the native builder (not the setuptools plugin).
@@ -65,7 +68,7 @@ class CMakeSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: str = "1.5"
+    minimum_version: Version = Version("1.5")
     """
     The minimum version of Ninja to use. If Ninja is not present on the system
     or is older than this, it will be downloaded via PyPI if possible. An empty
@@ -108,11 +111,6 @@ class SDistSettings:
     If set to True, try to build a reproducible distribution (Unix and Python
     3.9+ recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a
     fixed value if not set.
-    """
-
-    cmake: bool = False
-    """
-    If set to True, CMake will be run before building the SDist.
     """
 
 
@@ -158,7 +156,7 @@ class WheelSettings:
 
 @dataclasses.dataclass
 class BackportSettings:
-    find_python: str = "3.26.1"
+    find_python: Version = Version("3.26.1")
     """
     If CMake is less than this value, backport a copy of FindPython. Set to 0
     disable this, or the empty string.
@@ -223,7 +221,7 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
-    minimum_version: Optional[str] = None
+    minimum_version: Optional[Version] = None
     """
     If set, this will provide a method for backward compatibility.
     """

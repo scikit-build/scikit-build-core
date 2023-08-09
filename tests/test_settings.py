@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pytest
+from packaging.version import Version
 
 from scikit_build_core.settings.sources import (
     ConfSource,
@@ -22,7 +23,7 @@ class SettingChecker:
     five: str = "empty"
     six: Path = Path("empty")
     seven: Union[int, None] = None
-    eight: Dict[str, str] = dataclasses.field(default_factory=dict)
+    eight: Dict[str, Union[str, bool]] = dataclasses.field(default_factory=dict)
     nine: Dict[str, int] = dataclasses.field(default_factory=dict)
     # TOML only
     ten: Dict[str, Any] = dataclasses.field(default_factory=dict)
@@ -128,7 +129,7 @@ def test_toml():
         "five": "five",
         "six": "six",
         "seven": 7,
-        "eight": {"one": "one", "two": "two"},
+        "eight": {"one": "one", "two": "two", "bool": False},
         "nine": {"thing": 8},
         "ten": {"a": {"b": 3}},
     }
@@ -148,7 +149,7 @@ def test_toml():
     assert settings.five == "five"
     assert settings.six == Path("six")
     assert settings.seven == 7
-    assert settings.eight == {"one": "one", "two": "two"}
+    assert settings.eight == {"one": "one", "two": "two", "bool": False}
     assert settings.nine == {"thing": 8}
     assert settings.ten == {"a": {"b": 3}}
 
@@ -478,3 +479,36 @@ def test_override():
     assert settings.dict0 == {"one": "one", "two": "two", "three": "THREE"}
     assert settings.dict1 == {"other": 2}
     assert settings.dict2 == {}
+
+
+@dataclasses.dataclass
+class SettingVersion:
+    first_req: Version = Version("1.2")
+    first_opt: Optional[Version] = None
+    second_req: Version = Version("1.2")
+    second_opt: Optional[Version] = None
+    third_req: Version = Version("1.2")
+    third_opt: Optional[Version] = None
+    fourth_req: Version = Version("1.2")
+    fourth_opt: Optional[Version] = None
+
+
+def test_versions(monkeypatch):
+    monkeypatch.setenv("SKBUILD_SECOND_REQ", "2.3")
+    monkeypatch.setenv("SKBUILD_SECOND_OPT", "2.4")
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={"third-req": "3.4", "third-opt": "3.5"}),
+        TOMLSource(settings={"fourth-req": "4.5", "fourth-opt": "4.6"}),
+    )
+
+    settings = sources.convert_target(SettingVersion)
+
+    assert settings.first_req == Version("1.2")
+    assert settings.first_opt is None
+    assert settings.second_req == Version("2.3")
+    assert settings.second_opt == Version("2.4")
+    assert settings.third_req == Version("3.4")
+    assert settings.third_opt == Version("3.5")
+    assert settings.fourth_req == Version("4.5")
+    assert settings.fourth_opt == Version("4.6")

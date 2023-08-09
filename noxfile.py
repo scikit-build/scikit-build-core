@@ -62,6 +62,9 @@ def _run_tests(
 
 @nox.session(reuse_venv=True)
 def generate_schema(session: nox.Session) -> None:
+    """
+    (Re)generate src/scikit_build_core/resources/scikit-build.schema.json from model.
+    """
     session.install("-e.")
     schema = session.run(
         "python", "-m", "scikit_build_core.settings.skbuild_schema", silent=True

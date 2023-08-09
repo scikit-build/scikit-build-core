@@ -146,7 +146,7 @@ cmake.build-type = "Release"
 
 # The source directory to use when building the project. Currently only affects
 # the native builder (not the setuptools plugin).
-cmake.source-dir = ""
+cmake.source-dir = "."
 
 # The build targets to use when building the project. Empty builds the default
 # target.
@@ -195,11 +195,9 @@ wheel.py-api = ""
 # (before 21.0.1) find the correct wheel.
 wheel.expand-macos-universal-tags = false
 
-# The install directory for the wheel. This is relative to the platlib root. You
-# might set this to the package name. The original dir is still at
-# SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL:
-# An absolute path will be one level higher than the platlib root, giving access
-# to "/platlib", "/data", "/headers", and "/scripts".
+# The install directory for the wheel. This is relative to the platlib root.
+# EXPERIMENTAL: An absolute path will be one level higher than the platlib root,
+# giving access to "/platlib", "/data", "/headers", and "/scripts".
 wheel.install-dir = ""
 
 # A list of license files to include in the wheel. Supports glob patterns.

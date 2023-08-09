@@ -6,6 +6,9 @@ import inspect
 import sys
 import textwrap
 from collections.abc import Generator
+from pathlib import Path
+
+from packaging.version import Version
 
 __all__ = ["pull_docs"]
 
@@ -62,7 +65,11 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             continue
 
         if field.default is not dataclasses.MISSING:
-            default = repr(field.default)
+            default = repr(
+                str(field.default)
+                if isinstance(field.default, (Path, Version))
+                else field.default
+            )
         elif field.default_factory is not dataclasses.MISSING:
             default = repr(field.default_factory())
         else:

@@ -98,9 +98,9 @@ def build_sdist(
     pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
 
     # Only normalize SDist name if 0.5+ is requested for backwards compat
-    should_normalize_name = settings.minimum_version is None or Version(
-        settings.minimum_version
-    ) >= Version("0.5")
+    should_normalize_name = (
+        settings.minimum_version is None or settings.minimum_version >= Version("0.5")
+    )
 
     sdist_name = (
         canonicalize_name(metadata.name).replace("-", "_")

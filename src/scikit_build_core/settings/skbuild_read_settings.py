@@ -41,7 +41,7 @@ class SettingsReader:
 
         if self.settings.minimum_version:
             current_version = Version(__version__)
-            minimum_version = Version(self.settings.minimum_version)
+            minimum_version = self.settings.minimum_version
             if current_version < minimum_version:
                 msg = (
                     f"scikit-build-core version {__version__} is too old. "
@@ -61,9 +61,10 @@ class SettingsReader:
             )
             raise SystemExit(7)
 
-        install_policy = self.settings.minimum_version is None or Version(
-            self.settings.minimum_version
-        ) >= Version("0.5")
+        install_policy = (
+            self.settings.minimum_version is None
+            or self.settings.minimum_version >= Version("0.5")
+        )
         if self.settings.install.strip is None:
             self.settings.install.strip = install_policy
 

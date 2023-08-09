@@ -6,8 +6,6 @@ import sys
 import sysconfig
 from collections.abc import Mapping, MutableMapping
 
-from packaging.version import Version
-
 from .._logging import logger
 from ..cmake import CMake
 from ..errors import NinjaNotFoundError
@@ -87,8 +85,9 @@ def set_environment_for_gen(
         default = "Ninja"
 
     if env.get("CMAKE_GENERATOR", default or "Ninja") == "Ninja":
-        min_ninja = Version(ninja_settings.minimum_version)
-        ninja = best_program(get_ninja_programs(), minimum_version=min_ninja)
+        ninja = best_program(
+            get_ninja_programs(), minimum_version=ninja_settings.minimum_version
+        )
 
         if ninja is not None:
             env.setdefault("CMAKE_GENERATOR", "Ninja")

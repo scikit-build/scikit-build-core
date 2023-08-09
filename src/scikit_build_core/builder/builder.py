@@ -82,14 +82,17 @@ class Builder:
     def configure(
         self,
         *,
-        defines: Mapping[str, str],
+        defines: Mapping[str, str | bool],
         cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
         limited_abi: bool | None = None,
         configure_args: Iterable[str] = (),
     ) -> None:
-        cmake_defines = dict(defines)
+        cmake_defines = {
+            k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else v
+            for k, v in defines.items()
+        }
 
         # Add any extra CMake modules
         eps = metadata.entry_points(group="cmake.module")
@@ -108,8 +111,7 @@ class Builder:
             logger.debug("Extra SITE_PACKAGES: {}", site_packages)
 
         # Add the FindPython backport if needed
-        fp_backport = self.settings.backport.find_python
-        if fp_backport and self.config.cmake.version < Version(fp_backport):
+        if self.config.cmake.version < self.settings.backport.find_python:
             fp_dir = Path(find_python.__file__).parent.resolve()
             self.config.module_dirs.append(fp_dir)
             logger.debug("FindPython backport activated at {}", fp_dir)
@@ -180,7 +182,12 @@ class Builder:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
 
         # Add the pre-defined or passed CMake defines
-        cmake_defines.update(self.settings.cmake.define)
+        cmake_defines.update(
+            {
+                k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else v
+                for k, v in self.settings.cmake.define.items()
+            }
+        )
 
         self.config.configure(
             defines=cmake_defines,
