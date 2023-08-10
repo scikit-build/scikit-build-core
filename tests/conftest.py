@@ -296,6 +296,17 @@ def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Packa
     return package
 
 
+@pytest.fixture()
+def package_sdist_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo(
+        "sdist_config",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         # Ensure all tests using virtualenv are marked as such

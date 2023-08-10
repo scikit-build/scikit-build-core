@@ -178,6 +178,9 @@ sdist.exclude = []
 # value if not set.
 sdist.reproducible = true
 
+# If set to True, CMake will be run before building the SDist.
+sdist.cmake = false
+
 # A list of packages to auto-copy into the wheel. If this is not set, it will
 # default to the first of ``src/<package>`` or ``<package>`` if they exist. The
 # prefix(s) will be stripped from the package name inside the wheel.
@@ -195,9 +198,11 @@ wheel.py-api = ""
 # (before 21.0.1) find the correct wheel.
 wheel.expand-macos-universal-tags = false
 
-# The install directory for the wheel. This is relative to the platlib root.
-# EXPERIMENTAL: An absolute path will be one level higher than the platlib root,
-# giving access to "/platlib", "/data", "/headers", and "/scripts".
+# The install directory for the wheel. This is relative to the platlib root. You
+# might set this to the package name. The original dir is still at
+# SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL:
+# An absolute path will be one level higher than the platlib root, giving access
+# to "/platlib", "/data", "/headers", and "/scripts".
 wheel.install-dir = ""
 
 # A list of license files to include in the wheel. Supports glob patterns.

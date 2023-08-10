@@ -10,7 +10,15 @@ import nox
 
 DIR = Path(__file__).parent.resolve()
 
-nox.options.sessions = ["lint", "pylint", "tests"]
+nox.options.sessions = [
+    "lint",
+    "pylint",
+    "generate_schema",
+    "readme",
+    "build_api_docs",
+    "tests",
+    "test_doc_examples",
+]
 
 
 @nox.session(reuse_venv=True)

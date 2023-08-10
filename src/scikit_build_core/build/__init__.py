@@ -104,9 +104,15 @@ def get_requires_for_build_sdist(
 
     requires = GetRequires(config_settings)
 
+    # These are only injected if cmake is required for the SDist step
+    cmake_requires = (
+        [*requires.cmake(), *requires.ninja()] if requires.settings.sdist.cmake else []
+    )
+
     return [
         "pathspec",
         "pyproject_metadata",
+        *cmake_requires,
         *requires.dynamic_metadata(),
     ]
 

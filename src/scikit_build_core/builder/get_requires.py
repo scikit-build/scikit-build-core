@@ -19,6 +19,7 @@ from ..program_search import (
 )
 from ..resources import resources
 from ..settings._load_provider import load_provider
+from ..settings.skbuild_model import ScikitBuildSettings
 from ..settings.skbuild_read_settings import SettingsReader
 
 __all__ = ["GetRequires"]
@@ -48,8 +49,12 @@ class GetRequires:
             "pyproject.toml", self.config_settings
         ).settings
 
+    @property
+    def settings(self) -> ScikitBuildSettings:
+        return self._settings
+
     def cmake(self) -> Generator[str, None, None]:
-        cmake_min = self._settings.cmake.minimum_version
+        cmake_min = self.settings.cmake.minimum_version
         cmake = best_program(
             get_cmake_programs(module=False), minimum_version=cmake_min
         )
@@ -73,7 +78,7 @@ class GetRequires:
         if os.environ.get("CMAKE_MAKE_PROGRAM", ""):
             return
 
-        ninja_min = self._settings.ninja.minimum_version
+        ninja_min = self.settings.ninja.minimum_version
         ninja = best_program(
             get_ninja_programs(module=False), minimum_version=ninja_min
         )
@@ -82,7 +87,7 @@ class GetRequires:
             return
 
         if (
-            self._settings.ninja.make_fallback
+            self.settings.ninja.make_fallback
             and not is_known_platform(known_wheels("ninja"))
             and list(get_make_programs())
         ):
@@ -93,7 +98,7 @@ class GetRequires:
         yield f"ninja>={ninja_min}"
 
     def dynamic_metadata(self) -> Generator[str, None, None]:
-        for dynamic_metadata in self._settings.metadata.values():
+        for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:
                 config = dynamic_metadata.copy()
                 provider = config.pop("provider")

@@ -18,6 +18,7 @@ from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
+from .wheel import _build_wheel_impl
 
 __all__: list[str] = ["build_sdist"]
 
@@ -109,6 +110,11 @@ def build_sdist(
     )
     srcdirname = f"{sdist_name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
+
+    if settings.sdist.cmake:
+        _build_wheel_impl(
+            None, config_settings, None, exit_after_config=True, editable=False
+        )
 
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:

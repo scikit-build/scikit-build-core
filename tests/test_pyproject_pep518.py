@@ -50,6 +50,86 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
         assert correct_metadata == pkg_info_contents
 
 
+@pytest.mark.network()
+@pytest.mark.configure()
+@pytest.mark.integration()
+@pytest.mark.usefixtures("package_sdist_config")
+def test_pep518_sdist_with_cmake_config(isolated):
+    correct_metadata = textwrap.dedent(
+        """\
+        Metadata-Version: 2.1
+        Name: sdist_config
+        Version: 0.1.0
+        """
+    )
+
+    isolated.install("build[virtualenv]")
+    isolated.module("build", "--sdist")
+    (sdist,) = Path("dist").iterdir()
+    assert sdist.name == "sdist_config-0.1.0.tar.gz"
+
+    with tarfile.open(sdist) as f:
+        file_names = set(f.getnames())
+        assert file_names > {
+            f"sdist_config-0.1.0/{x}"
+            for x in (
+                "CMakeLists.txt",
+                "pyproject.toml",
+                "main.cpp",
+                "PKG-INFO",
+            )
+        }
+        assert sum("pybind11" in x for x in file_names) >= 10
+        pkg_info = f.extractfile("sdist_config-0.1.0/PKG-INFO")
+        assert pkg_info
+        pkg_info_contents = pkg_info.read().decode()
+        assert correct_metadata == pkg_info_contents
+
+
+@pytest.mark.network()
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
+@pytest.mark.usefixtures("package_sdist_config")
+@pytest.mark.parametrize(
+    "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
+)
+def test_pep518_wheel_sdist_with_cmake_config(isolated, build_args, capfd):
+    isolated.install("build[virtualenv]")
+    isolated.module(
+        "build",
+        "--config-setting=logging.level=DEBUG",
+        *build_args,
+    )
+    out, err = capfd.readouterr()
+    if not sys.platform.startswith("win32"):
+        assert "Cloning into 'pybind11'..." in err
+        if build_args:
+            assert "Using integrated pybind11" not in out
+        else:
+            assert "Using integrated pybind11" in out
+
+    (wheel,) = Path("dist").glob("sdist_config-0.1.0-*.whl")
+
+    if sys.version_info >= (3, 8):
+        with wheel.open("rb") as f:
+            p = zipfile.Path(f)
+            file_names = [p.name for p in p.iterdir()]
+
+        assert len(file_names) == 2
+        assert "sdist_config-0.1.0.dist-info" in file_names
+        file_names.remove("sdist_config-0.1.0.dist-info")
+        (so_file,) = file_names
+
+        assert so_file.startswith("sdist_config")
+        print("SOFILE:", so_file)
+
+    isolated.install(wheel)
+
+    life = isolated.execute("import sdist_config; print(sdist_config.life())")
+    assert life == "42"
+
+
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()

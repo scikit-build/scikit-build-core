@@ -37,6 +37,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
     assert settings.sdist.reproducible
+    assert not settings.sdist.cmake
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
@@ -76,6 +77,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
     monkeypatch.setenv("SKBUILD_SDIST_REPRODUCIBLE", "OFF")
+    monkeypatch.setenv("SKBUILD_SDIST_CMAKE", "ON")
     monkeypatch.setenv("SKBUILD_WHEEL_PACKAGES", "j; k; l")
     monkeypatch.setenv("SKBUILD_WHEEL_PY_API", "cp39")
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
@@ -113,6 +115,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert not settings.sdist.reproducible
+    assert settings.sdist.cmake
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
@@ -155,6 +158,7 @@ def test_skbuild_settings_config_settings(
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
         "sdist.reproducible": "false",
+        "sdist.cmake": "true",
         "wheel.packages": ["j", "k", "l"],
         "wheel.py-api": "cp39",
         "wheel.expand-macos-universal-tags": "True",
@@ -188,6 +192,7 @@ def test_skbuild_settings_config_settings(
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert not settings.sdist.reproducible
+    assert settings.sdist.cmake
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
@@ -229,6 +234,7 @@ def test_skbuild_settings_pyproject_toml(
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
             sdist.reproducible = false
+            sdist.cmake = true
             wheel.packages = ["j", "k", "l"]
             wheel.py-api = "cp39"
             wheel.expand-macos-universal-tags = true
@@ -268,6 +274,7 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert not settings.sdist.reproducible
+    assert settings.sdist.cmake
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags

@@ -74,6 +74,12 @@ def test_get_requires_for_build_sdist(fp):
     assert set(get_requires_for_build_sdist({})) == {"pathspec", "pyproject_metadata"}
 
 
+def test_get_requires_for_build_sdist_cmake(fp):
+    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_sdist({"sdist.cmake": "True"})) == expected
+
+
 def test_get_requires_for_build_wheel(fp):
     expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
     fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
