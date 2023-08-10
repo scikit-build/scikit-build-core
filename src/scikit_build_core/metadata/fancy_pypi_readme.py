@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .._compat import tomllib
 
-__all__ = ["dynamic_metadata"]
+__all__ = ["dynamic_metadata", "get_requires_for_dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -12,13 +12,13 @@ def __dir__() -> list[str]:
 
 
 def dynamic_metadata(
-    fields: frozenset[str],
+    field: str,
     settings: dict[str, list[str] | str] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
+) -> str | dict[str, str]:
     from hatch_fancy_pypi_readme._builder import build_text
     from hatch_fancy_pypi_readme._config import load_and_validate_config
 
-    if fields != {"readme"}:
+    if field != "readme":
         msg = "Only the 'readme' field is supported"
         raise ValueError(msg)
 
@@ -35,13 +35,11 @@ def dynamic_metadata(
 
     # Version 22.3 does not have fragment support
     return {
-        "readme": {
-            "content-type": config.content_type,
-            "text": build_text(config.fragments, config.substitutions)
-            if hasattr(config, "substitutions")
-            # pylint: disable-next=no-value-for-parameter
-            else build_text(config.fragments),  # type: ignore[call-arg]
-        }
+        "content-type": config.content_type,
+        "text": build_text(config.fragments, config.substitutions)
+        if hasattr(config, "substitutions")
+        # pylint: disable-next=no-value-for-parameter
+        else build_text(config.fragments),  # type: ignore[call-arg]
     }
 
 

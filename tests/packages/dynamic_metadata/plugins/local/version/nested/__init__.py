@@ -8,10 +8,10 @@ def __dir__() -> list[str]:
 
 
 def dynamic_metadata(
-    fields: frozenset[str],
+    field: str,
     settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
-    if fields != {"version"}:
+) -> str:
+    if field != "version":
         msg = "Only the 'version' field is supported"
         raise ValueError(msg)
 
@@ -19,4 +19,4 @@ def dynamic_metadata(
         msg = "No inline configuration is supported"
         raise ValueError(msg)
 
-    return {"version": "3.2.1"}
+    return "3.2.1"

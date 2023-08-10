@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ["dynamic_metadata"]
+__all__ = ["dynamic_metadata", "get_requires_for_dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -8,13 +8,13 @@ def __dir__() -> list[str]:
 
 
 def dynamic_metadata(
-    fields: frozenset[str],
+    field: str,
     settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
+) -> str:
     # this is a classic implementation, waiting for the release of
     # vcs-versioning and an improved public interface
 
-    if fields != {"version"}:
+    if field != "version":
         msg = "Only the 'version' field is supported"
         raise ValueError(msg)
 
@@ -27,7 +27,7 @@ def dynamic_metadata(
     config = Configuration.from_file("pyproject.toml")
     version: str = _get_version(config)
 
-    return {"version": version}
+    return version
 
 
 def get_requires_for_dynamic_metadata(

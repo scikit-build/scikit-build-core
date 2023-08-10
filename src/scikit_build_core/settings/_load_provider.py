@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 from .._compat.typing import Protocol
 
-__all__ = ["load_provider"]
+__all__ = ["load_provider", "load_dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -27,10 +27,31 @@ class DynamicMetadataRequirementsProtocol(DynamicMetadataProtocol, Protocol):
         ...
 
 
+class DynamicMetadataWheelProtocol(DynamicMetadataProtocol, Protocol):
+    def dynamic_wheel(
+        self, field: str, settings: Mapping[str, Any] | None = None
+    ) -> bool:
+        ...
+
+
+class DynamicMetadataRequirementsWheelProtocol(
+    DynamicMetadataRequirementsProtocol, DynamicMetadataWheelProtocol, Protocol
+):
+    ...
+
+
+DMProtocols = Union[
+    DynamicMetadataProtocol,
+    DynamicMetadataRequirementsProtocol,
+    DynamicMetadataWheelProtocol,
+    DynamicMetadataRequirementsWheelProtocol,
+]
+
+
 def load_provider(
     provider: str,
     provider_path: str | None = None,
-) -> DynamicMetadataProtocol | DynamicMetadataRequirementsProtocol:
+) -> DMProtocols:
     if provider_path is None:
         return importlib.import_module(provider)
 
@@ -43,3 +64,16 @@ def load_provider(
         return importlib.import_module(provider)
     finally:
         sys.path.pop(0)
+
+
+def load_dynamic_metadata(
+    metadata: Mapping[str, Mapping[str, str]]
+) -> Generator[tuple[str, DMProtocols | None, dict[str, str]], None, None]:
+    for field, orig_config in metadata.items():
+        if "provider" in orig_config:
+            config = dict(orig_config)
+            provider = config.pop("provider")
+            provider_path = config.pop("provider-path", None)
+            yield field, load_provider(provider, provider_path), config
+        else:
+            yield field, None, dict(orig_config)

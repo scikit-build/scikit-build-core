@@ -16,6 +16,7 @@ from packaging.version import Version
 from scikit_build_core._compat import tomllib
 from scikit_build_core.build import build_wheel
 from scikit_build_core.builder.get_requires import GetRequires
+from scikit_build_core.metadata import regex
 from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
@@ -24,43 +25,43 @@ from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 # it turns out to be easier to create EntryPoint objects pointing to real
 # functions than to mock them.
 def ep_version(
-    fields: frozenset[str],
+    field: str,
     _settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
-    assert fields == {"version"}
-    return {"version": "0.0.2"}
+) -> str:
+    assert field == "version"
+    return "0.0.2"
 
 
 def ep_readme(
-    fields: frozenset[str],
+    field: str,
     _settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
-    assert fields == {"readme"}
+) -> str | dict[str, str | None]:
+    assert field == "readme"
     return {
-        "readme": {
-            "content-type": "text/x-rst",
-            "text": "Some text",
-        }
+        "content-type": "text/x-rst",
+        "text": "Some text",
     }
 
 
 def ep_license(
-    fields: frozenset[str],
+    field: str,
     _settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
-    assert fields == {"license"}
-    return {"license": {"text": "MIT License"}}
+) -> dict[str, str | None]:
+    assert field == "license"
+    return {"text": "MIT License"}
 
 
 def ep_dual(
-    _fields: list[str],
+    _field: str,
     _settings: dict[str, object] | None = None,
-) -> dict[str, str | dict[str, str | None]]:
+) -> str | dict[str, str | None]:
     # Fields intentionally not checked to verify backend error thrown
-    return {
-        "version": "0.3",
-        "license": {"text": "BSD License"},
-    }
+    if _field == "version":
+        return "0.3"
+    if _field == "license":
+        return {"text": "BSD License"}
+    msg = f"Invalid field {_field}"
+    raise KeyError(msg)
 
 
 original_loader = importlib.import_module
@@ -254,3 +255,21 @@ def test_pep517_wheel(virtualenv):
 
     version = virtualenv.execute("from dynamic import square; print(square(2))")
     assert version == "4.0"
+
+
+def test_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    d = tmp_path / "test_regex"
+    d.mkdir()
+    monkeypatch.chdir(d)
+
+    with Path("__init__.py").open("w") as f:
+        f.write("__version__ = '0.1.0'")
+
+    regex.dynamic_metadata("version", {"input": "__init__.py"})
+
+
+def test_regex_errors() -> None:
+    with pytest.raises(RuntimeError):
+        regex.dynamic_metadata("version", {})
+    with pytest.raises(RuntimeError, match="Only string fields supported"):
+        regex.dynamic_metadata("author", {"input": "x", "regex": "x"})
