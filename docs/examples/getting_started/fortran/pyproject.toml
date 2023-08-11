@@ -1,11 +1,18 @@
 [build-system]
-requires = ["scikit-build-core", "numpy"]
+requires = [
+  "scikit-build-core",
+  'numpy; python_version<"3.12"',
+  'numpy>=1.26.0b1; python_version>="3.12"',
+]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "example"
 version = "0.0.1"
-dependencies = ["numpy"]
+dependencies = [
+  'numpy; python_version<"3.12"',
+  'numpy>=1.26.0b1; python_version>="3.12"',
+]
 
 [tool.scikit-build]
 ninja.minimum-version = "1.10"

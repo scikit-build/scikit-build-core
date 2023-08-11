@@ -1,5 +1,8 @@
 [build-system]
-requires = ["scikit-build-core", "numpy"]
+requires = ["scikit-build-core",
+    "numpy; python_version<'3.12'",
+    "numpy>=1.26.0b1; python_version>='3.12'",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -10,4 +13,7 @@ requires-python = ">=3.7"
 classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
-dependencies = ["numpy"]
+dependencies = [
+    "numpy; python_version<'3.12'",
+    "numpy>=1.26.0b1; python_version>='3.12'",
+]
