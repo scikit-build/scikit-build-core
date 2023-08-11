@@ -1,10 +1,13 @@
 import dataclasses
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pytest
 from packaging.version import Version
 
+from scikit_build_core._compat.builtins import ExceptionGroup
+from scikit_build_core._compat.typing import Literal
 from scikit_build_core.settings.sources import (
     ConfSource,
     EnvSource,
@@ -25,6 +28,7 @@ class SettingChecker:
     seven: Union[int, None] = None
     eight: Dict[str, Union[str, bool]] = dataclasses.field(default_factory=dict)
     nine: Dict[str, int] = dataclasses.field(default_factory=dict)
+    literal: Literal["one", "two", "three"] = "one"
     # TOML only
     ten: Dict[str, Any] = dataclasses.field(default_factory=dict)
 
@@ -52,6 +56,7 @@ def test_empty(monkeypatch):
     assert settings.seven is None
     assert settings.eight == {}
     assert settings.nine == {}
+    assert settings.literal == "one"
 
 
 def test_env(monkeypatch):
@@ -65,6 +70,7 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_SEVEN", "7")
     monkeypatch.setenv("SKBUILD_EIGHT", "thing=8;thought=9")
     monkeypatch.setenv("SKBUILD_NINE", "thing=8")
+    monkeypatch.setenv("SKBUILD_LITERAL", "two")
 
     sources = SourceChain(
         EnvSource("SKBUILD"),
@@ -83,6 +89,7 @@ def test_env(monkeypatch):
     assert settings.seven == 7
     assert settings.eight == {"thing": "8", "thought": "9"}
     assert settings.nine == {"thing": 8}
+    assert settings.literal == "two"
 
 
 def test_conf():
@@ -98,6 +105,7 @@ def test_conf():
         "eight.foo": "one",
         "eight.bar": "two",
         "nine.thing": "8",
+        "literal": "three",
     }
 
     sources = SourceChain(
@@ -117,6 +125,7 @@ def test_conf():
     assert settings.seven == 7
     assert settings.eight == {"foo": "one", "bar": "two"}
     assert settings.nine == {"thing": 8}
+    assert settings.literal == "three"
 
 
 def test_toml():
@@ -132,6 +141,7 @@ def test_toml():
         "eight": {"one": "one", "two": "two", "bool": False},
         "nine": {"thing": 8},
         "ten": {"a": {"b": 3}},
+        "literal": "three",
     }
 
     sources = SourceChain(
@@ -152,6 +162,7 @@ def test_toml():
     assert settings.eight == {"one": "one", "two": "two", "bool": False}
     assert settings.nine == {"thing": 8}
     assert settings.ten == {"a": {"b": 3}}
+    assert settings.literal == "three"
 
 
 def test_all_names():
@@ -512,3 +523,58 @@ def test_versions(monkeypatch):
     assert settings.third_opt == Version("3.5")
     assert settings.fourth_req == Version("4.5")
     assert settings.fourth_opt == Version("4.6")
+
+
+@dataclasses.dataclass
+class SettingLiteral:
+    literal: Literal["one", "two", "three"]
+    optional: Optional[Literal["foo", "bar"]] = None
+
+
+def test_literal_failure_empty():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+
+    with pytest.raises(ValueError, match="Missing value for 'literal'"):  # noqa: PT012
+        try:
+            sources.convert_target(SettingLiteral)
+        except ExceptionGroup as e:
+            assert len(e.exceptions) == 1  # noqa: PT017
+            raise e.exceptions[0] from None
+
+
+def test_literal_failure_not_contained():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={"literal": "four"}),
+        TOMLSource(settings={}),
+    )
+
+    with pytest.raises(  # noqa: PT012
+        TypeError, match=re.escape("'four' not in ('one', 'two', 'three')")
+    ):
+        try:
+            sources.convert_target(SettingLiteral)
+        except ExceptionGroup as e:
+            assert len(e.exceptions) == 1  # noqa: PT017
+            raise e.exceptions[0] from None
+
+
+def test_literal_failure_not_contained_optional():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={"literal": "three"}),
+        TOMLSource(settings={"optional": "five"}),
+    )
+
+    with pytest.raises(  # noqa: PT012
+        TypeError, match=re.escape("'five' not in ('foo', 'bar')")
+    ):
+        try:
+            sources.convert_target(SettingLiteral)
+        except ExceptionGroup as e:
+            assert len(e.exceptions) == 1  # noqa: PT017
+            raise e.exceptions[0] from None
