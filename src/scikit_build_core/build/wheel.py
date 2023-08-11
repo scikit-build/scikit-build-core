@@ -29,7 +29,7 @@ from ._pathutil import (
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
 
-__all__: list[str] = ["_build_wheel_impl"]
+__all__ = ["_build_wheel_impl"]
 
 
 def __dir__() -> list[str]:

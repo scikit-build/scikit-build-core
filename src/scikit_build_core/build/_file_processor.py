@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pathspec
 
-__all__: list[str] = ["each_unignored_file"]
+__all__ = ["each_unignored_file"]
 
 EXCLUDE_LINES = [
     ".git/",
