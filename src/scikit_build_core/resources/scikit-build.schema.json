@@ -202,6 +202,65 @@
         }
       }
     },
+    "generate": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "template"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path (relative to platlib) for the file to generate.",
+                "minLength": 1
+              },
+              "template": {
+                "type": "string",
+                "description": "The template to use for the file. This includes string.Template style placeholders for all the metadata. If empty, a template-path must be set.",
+                "minLength": 1
+              },
+              "location": {
+                "type": "string",
+                "default": "install",
+                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file.",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "template-path"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The path (relative to platlib) for the file to generate.",
+                "minLength": 1
+              },
+              "template-path": {
+                "type": "string",
+                "description": "The path to the template file. If empty, a template must be set.",
+                "minLength": 1
+              },
+              "location": {
+                "type": "string",
+                "default": "install",
+                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file.",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
     "metadata": {
       "type": "object",
       "patternProperties": {

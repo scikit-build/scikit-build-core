@@ -376,7 +376,7 @@ default targets):
 
 ## Dynamic metadata
 
-Scikit-build-core 0.3.0 supports dynamic metadata with two built-in plugins.
+Scikit-build-core 0.3.0+ supports dynamic metadata with two built-in plugins.
 
 :::{warning}
 
@@ -469,6 +469,30 @@ regex for python files,
 ```
 
 :::
+
+### Writing metadata
+
+You can write out metadata to file(s) as well. Other info might become available
+here in the future, but currently it supports anything available as strings in
+metadata. (Note that arrays like this are only supported in TOML configuration.)
+
+```toml
+[[tool.scikit-build.generate]]
+path = "package/_version.py"
+template = '''
+version = "${version}"
+'''
+```
+
+`template` or `template-file` is required; this uses {class}`string.Template`
+formatting. There are three options for output location; `location = "install"`
+(the default) will go to the wheel, `location = "build"` will go to the CMake
+build directory, and `location = "source"` will write out to the source
+directory (be sure to .gitignore this file. It will automatically be added to
+your SDist includes. It will overwrite existing files).
+
+The path is generally relative to the base of the wheel / build dir / source
+dir, depending on which location you pick.
 
 ## Editable installs
 

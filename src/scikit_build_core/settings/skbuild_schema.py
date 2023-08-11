@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from typing import Any
 
@@ -19,12 +20,33 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     from .json_schema import to_json_schema
     from .skbuild_model import ScikitBuildSettings
 
-    return {
+    schema = {
         "$schema": "http://json-schema.org/draft-07/schema",
         "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
         "description": "Scikit-build-core's settings.",
         **to_json_schema(ScikitBuildSettings, normalize_keys=True),
     }
+
+    # Manipulate a bit to get better validation
+    # This is making the generate's template or template-path required
+    generate = schema["properties"]["generate"]["items"]
+    for prop in generate["properties"].values():
+        prop["minLength"] = 1
+    generate_tmpl = copy.deepcopy(generate)
+    generate_path = copy.deepcopy(generate)
+
+    generate_tmpl["required"] = ["path", "template"]
+    del generate_tmpl["properties"]["template-path"]
+    del generate_tmpl["properties"]["template"]["default"]
+
+    generate_path["required"] = ["path", "template-path"]
+    del generate_path["properties"]["template"]
+
+    schema["properties"]["generate"]["items"] = {
+        "oneOf": [generate_tmpl, generate_path]
+    }
+
+    return schema
 
 
 def get_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:

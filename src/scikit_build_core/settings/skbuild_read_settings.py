@@ -117,6 +117,20 @@ class SettingsReader:
                 )
                 raise SystemExit(7)
 
+        for gen in self.settings.generate:
+            if not gen.template and not gen.template_path:
+                sys.stdout.flush()
+                rich_print(
+                    "[red][bold]ERROR:[/bold] template= or template-path= must be provided in generate"
+                )
+                raise SystemExit(7)
+            if gen.location not in {"install", "build", "source"}:
+                sys.stdout.flush()
+                rich_print(
+                    f"[red][bold]ERROR:[/bold] location={gen.location!r} must be 'install', 'build', or 'source'"
+                )
+                raise SystemExit(7)
+
     @classmethod
     def from_file(
         cls,

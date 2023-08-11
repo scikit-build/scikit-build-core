@@ -578,3 +578,80 @@ def test_literal_failure_not_contained_optional():
         except ExceptionGroup as e:
             assert len(e.exceptions) == 1  # noqa: PT017
             raise e.exceptions[0] from None
+
+
+@dataclasses.dataclass
+class ArraySetting:
+    required: str
+    optional: Optional[str] = None
+
+
+@dataclasses.dataclass
+class ArraySettings:
+    array: List[ArraySetting] = dataclasses.field(default_factory=list)
+
+
+def test_empty_array():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+
+    settings = sources.convert_target(ArraySettings)
+
+    assert settings.array == []
+
+
+def test_toml_required():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={"array": [{"optional": "2"}]}),
+    )
+
+    with pytest.raises(ExceptionGroup):
+        sources.convert_target(ArraySettings)
+
+
+def test_toml_array():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(
+            settings={
+                "array": [{"required": "one"}, {"required": "two", "optional": "2"}]
+            }
+        ),
+    )
+
+    settings = sources.convert_target(ArraySettings)
+
+    assert settings.array == [ArraySetting("one"), ArraySetting("two", "2")]
+
+
+def test_env_array_error(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("SKBUILD_ARRAY", "one")
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+
+    with pytest.raises(ExceptionGroup):
+        sources.convert_target(ArraySettings)
+
+
+def test_config_array_error():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={
+                "array": [{"required": "one"}, {"required": "two", "optional": "2"}]  # type: ignore[list-item]
+            }
+        ),
+        TOMLSource(settings={}),
+    )
+
+    with pytest.raises(ExceptionGroup):
+        sources.convert_target(ArraySettings)

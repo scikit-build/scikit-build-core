@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.15...3.27)
-project(sdist_config LANGUAGES CXX)
+project(
+  sdist_config
+  LANGUAGES CXX
+  VERSION ${SKBUILD_PROJECT_VERSION})
 
 include(FetchContent)
 
@@ -20,3 +23,14 @@ FetchContent_MakeAvailable(pybind11)
 
 pybind11_add_module(sdist_config main.cpp)
 install(TARGETS sdist_config DESTINATION .)
+
+# Generation test
+include("${CMAKE_CURRENT_BINARY_DIR}/output.cmake")
+if(NOT "${MY_VERSION}" STREQUAL "${PROJECT_VERSION}")
+  message(FATAL_ERROR "Version mismatch: ${MY_VERSION} != ${PROJECT_VERSION}")
+endif()
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/overwrite.cmake")
+if(NOT "${MY_NAME}" STREQUAL "${SKBUILD_PROJECT_NAME}")
+  message(FATAL_ERROR "Name mismatch: ${MY_NAME} != ${SKBUILD_PROJECT_NAME}")
+endif()

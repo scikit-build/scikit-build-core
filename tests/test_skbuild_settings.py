@@ -11,6 +11,7 @@ import pytest
 from packaging.version import Version
 
 import scikit_build_core.settings.skbuild_read_settings
+from scikit_build_core.settings.skbuild_model import GenerateSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
@@ -58,6 +59,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.editable.verbose
     assert settings.install.components == []
     assert settings.install.strip
+    assert settings.generate == []
 
 
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -250,6 +252,13 @@ def test_skbuild_settings_pyproject_toml(
             editable.verbose = false
             install.components = ["a", "b", "c"]
             install.strip = true
+            [[tool.scikit-build.generate]]
+            path = "a/b/c"
+            template = "hello"
+            [[tool.scikit-build.generate]]
+            path = "d/e/f"
+            template-path = "g/h/i"
+            location = "build"
             """
         ),
         encoding="utf-8",
@@ -290,6 +299,12 @@ def test_skbuild_settings_pyproject_toml(
     assert not settings.editable.verbose
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
+    assert settings.generate == [
+        GenerateSettings(path=Path("a/b/c"), template="hello", location="install"),
+        GenerateSettings(
+            path=Path("d/e/f"), template_path=Path("g/h/i"), location="build"
+        ),
+    ]
 
 
 def test_skbuild_settings_pyproject_toml_broken(
@@ -327,7 +342,7 @@ def test_skbuild_settings_pyproject_toml_broken(
         == """\
       ERROR: Unrecognized options in pyproject.toml:
         tool.scikit-build.cmake.minimum-verison -> Did you mean: tool.scikit-build.cmake.minimum-version, tool.scikit-build.minimum-version, tool.scikit-build.ninja.minimum-version?
-        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.wheel, tool.scikit-build.cmake?
+        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.wheel?
       """.split()
     )
 
