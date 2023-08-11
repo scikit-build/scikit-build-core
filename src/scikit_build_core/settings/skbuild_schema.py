@@ -31,7 +31,8 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     # This is making the generate's template or template-path required
     generate = schema["properties"]["generate"]["items"]
     for prop in generate["properties"].values():
-        prop["minLength"] = 1
+        if prop.get("type", "") == "string":
+            prop["minLength"] = 1
     generate_tmpl = copy.deepcopy(generate)
     generate_path = copy.deepcopy(generate)
 

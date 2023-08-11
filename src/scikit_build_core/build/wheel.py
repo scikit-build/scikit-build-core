@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .. import __version__
 from .._compat import tomllib
+from .._compat.typing import assert_never
 from .._logging import logger, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
@@ -215,8 +216,7 @@ def _build_wheel_impl(
             elif gen.location == "install":
                 path = install_dir / gen.path
             else:
-                msg = f"Invalid location {gen.location!r}, must be 'build' or 'install'"
-                raise AssertionError(msg)
+                assert_never(gen.location)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(contents, encoding="utf-8")
 

@@ -82,7 +82,14 @@
       "additionalProperties": false,
       "properties": {
         "level": {
-          "enum": ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+          "enum": [
+            "NOTSET",
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL"
+          ],
           "default": "WARNING",
           "description": "The logging level to display, \"DEBUG\", \"INFO\", \"WARNING\", and \"ERROR\" are possible options."
         }
@@ -169,7 +176,9 @@
       "additionalProperties": false,
       "properties": {
         "mode": {
-          "enum": ["redirect"],
+          "enum": [
+            "redirect"
+          ],
           "default": "redirect",
           "description": "Select the editable mode to use. Currently only \"redirect\" is supported."
         },
@@ -225,10 +234,13 @@
                 "minLength": 1
               },
               "location": {
-                "type": "string",
+                "enum": [
+                  "install",
+                  "build",
+                  "source"
+                ],
                 "default": "install",
-                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file.",
-                "minLength": 1
+                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file."
               }
             }
           },
@@ -251,10 +263,13 @@
                 "minLength": 1
               },
               "location": {
-                "type": "string",
+                "enum": [
+                  "install",
+                  "build",
+                  "source"
+                ],
                 "default": "install",
-                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file.",
-                "minLength": 1
+                "description": "The place to put the generated file. The \"build\" directory is useful for CMake files, and the \"install\" directory is useful for Python files, usually. You can also write directly to the \"source\" directory, will overwrite existing files & remember to gitignore the file."
               }
             }
           }

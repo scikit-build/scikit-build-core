@@ -225,7 +225,7 @@ class GenerateSettings:
     The path to the template file. If empty, a template must be set.
     """
 
-    location: str = "install"
+    location: Literal["install", "build", "source"] = "install"
     """
     The place to put the generated file. The "build" directory is useful for
     CMake files, and the "install" directory is useful for Python files,

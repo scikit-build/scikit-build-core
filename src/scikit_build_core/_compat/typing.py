@@ -15,13 +15,18 @@ else:
 
 if sys.version_info < (3, 11):
     if typing.TYPE_CHECKING:
-        from typing_extensions import Self
+        from typing_extensions import Self, assert_never
     else:
         Self = object
-else:
-    from typing import Self
 
-__all__ = ["Protocol", "Literal", "Self", "get_origin", "get_args"]
+        def assert_never(_: typing.Any) -> None:
+            msg = "Expected code to be unreachable"
+            raise AssertionError(msg)
+
+else:
+    from typing import Self, assert_never
+
+__all__ = ["Protocol", "Literal", "Self", "get_origin", "get_args", "assert_never"]
 
 
 def __dir__() -> list[str]:
