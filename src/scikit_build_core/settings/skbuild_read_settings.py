@@ -49,12 +49,6 @@ class SettingsReader:
                 )
                 raise CMakeConfigError(msg)
 
-        if self.settings.editable.mode != "redirect":
-            if self.settings.strict_config:
-                rich_print("[red][bold]ERROR:[/bold] editable mode must be 'redirect'")
-                raise SystemExit(7)
-            logger.warning("editable mode must be 'redirect', ignoring")
-
         if self.settings.editable.rebuild and not self.settings.build_dir:
             rich_print(
                 "[red][bold]ERROR:[/bold] editable mode with rebuild requires build_dir"

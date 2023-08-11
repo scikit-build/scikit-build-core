@@ -36,6 +36,7 @@ When setting up your dataclasses, these types are handled:
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
 - ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms.
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
+- ``Literal[...]``: A list of strings, the result must be in the list.
 
 These are supported for JSON schema generation for the TOML, as well.
 
@@ -52,7 +53,7 @@ from collections.abc import Generator, Iterator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Protocol, get_args, get_origin
+from .._compat.typing import Literal, Protocol, get_args, get_origin
 
 T = TypeVar("T")
 
@@ -104,9 +105,9 @@ def _process_union(target: type[Any]) -> Any:
 
 def _get_target_raw_type(target: type[Any]) -> Any:
     """
-    Takes a type like ``Optional[str]`` and returns str,
-    or ``Optional[Dict[str, int]]`` and returns dict. Returns
-    Union for a Union with more than one non-none type.
+    Takes a type like ``Optional[str]`` and returns str, or ``Optional[Dict[str,
+    int]]`` and returns dict. Returns Union for a Union with more than one
+    non-none type. Literal is also a valid return.
     """
 
     target = _process_union(target)
@@ -225,6 +226,12 @@ class EnvSource:
         if raw_target is Union and str in get_args(target):
             return item
 
+        if raw_target is Literal:
+            if item not in get_args(_process_union(target)):
+                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+                raise TypeError(msg)
+            return item
+
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -335,6 +342,11 @@ class ConfSource:
             return item.strip().lower() not in {"0", "false", "off", "no", ""}
         if raw_target is Union and str in get_args(target):
             return item
+        if raw_target is Literal:
+            if item not in get_args(_process_union(target)):
+                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+                raise TypeError(msg)
+            return item
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -405,6 +417,11 @@ class TOMLSource:
         if raw_target is Any:
             return item
         if raw_target is Union and type(item) in get_args(target):
+            return item
+        if raw_target is Literal:
+            if item not in get_args(_process_union(target)):
+                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+                raise TypeError(msg)
             return item
         if callable(raw_target):
             return raw_target(item)

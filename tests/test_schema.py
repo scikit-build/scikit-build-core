@@ -40,7 +40,12 @@ def test_valid_schemas_files(filepath: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "addition", [{"minimum-version": 0.3}, {"random": "not valid"}]
+    "addition",
+    [
+        {"minimum-version": 0.3},
+        {"random": "not valid"},
+        {"logging": {"level": "POODLE"}},
+    ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
     fastjsonschema = pytest.importorskip("fastjsonschema")

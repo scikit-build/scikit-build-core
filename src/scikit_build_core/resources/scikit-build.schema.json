@@ -82,7 +82,7 @@
       "additionalProperties": false,
       "properties": {
         "level": {
-          "type": "string",
+          "enum": ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
           "default": "WARNING",
           "description": "The logging level to display, \"DEBUG\", \"INFO\", \"WARNING\", and \"ERROR\" are possible options."
         }
@@ -169,7 +169,7 @@
       "additionalProperties": false,
       "properties": {
         "mode": {
-          "type": "string",
+          "enum": ["redirect"],
           "default": "redirect",
           "description": "Select the editable mode to use. Currently only \"redirect\" is supported."
         },

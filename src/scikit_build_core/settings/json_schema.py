@@ -8,7 +8,7 @@ from typing import Any, Union
 from packaging.version import Version
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import get_args, get_origin
+from .._compat.typing import Literal, get_args, get_origin
 from .documentation import pull_docs
 
 __all__ = ["to_json_schema", "convert_type", "FailedConversion"]
@@ -43,6 +43,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
                 # pylint: disable-next=no-member
                 err.add_note(f"Field: {field.name}")
             errs.append(err)
+            continue
 
         if field.default is not dataclasses.MISSING and field.default is not None:
             props[field.name]["default"] = (
@@ -86,6 +87,8 @@ def convert_type(t: Any) -> dict[str, Any]:
         if len(args) == 2 and any(a is type(None) for a in args):
             return convert_type(next(iter(a for a in args if a is not type(None))))
         return {"oneOf": [convert_type(a) for a in args]}
+    if origin is Literal:
+        return {"enum": list(args)}
 
     msg = f"Cannot convert type {t} to JSON Schema"
     raise FailedConversion(msg)

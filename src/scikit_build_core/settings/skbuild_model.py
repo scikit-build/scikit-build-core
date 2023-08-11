@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Union
 
 from packaging.version import Version
 
+from .._compat.typing import Literal
+
 __all__ = [
     "BackportSettings",
     "CMakeSettings",
@@ -84,7 +86,9 @@ class NinjaSettings:
 
 @dataclasses.dataclass
 class LoggingSettings:
-    level: str = "WARNING"
+    level: Literal[
+        "NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+    ] = "WARNING"
     """
     The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
     possible options.
@@ -172,7 +176,7 @@ class BackportSettings:
 
 @dataclasses.dataclass
 class EditableSettings:
-    mode: str = "redirect"
+    mode: Literal["redirect"] = "redirect"
     """
     Select the editable mode to use. Currently only "redirect" is supported.
     """
