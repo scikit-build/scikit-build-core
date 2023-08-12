@@ -17,7 +17,7 @@ from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
-__all__: list[str] = ["BuildCMake", "finalize_distribution_options", "cmake_source_dir"]
+__all__ = ["BuildCMake", "finalize_distribution_options", "cmake_source_dir"]
 
 
 def __dir__() -> list[str]:

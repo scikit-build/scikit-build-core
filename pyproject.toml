@@ -270,3 +270,9 @@ exclude = []
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+
+[tool.repo-review]
+ignore = [
+    "MY103",  # We don't set mypy's warn-unreachable due to issues with platform-specific checks
+]

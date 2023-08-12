@@ -23,7 +23,7 @@ from .sysconfig import (
     get_soabi,
 )
 
-__all__: list[str] = ["Builder", "get_archs", "archs_to_tags"]
+__all__ = ["Builder", "get_archs", "archs_to_tags"]
 
 DIR = Path(__file__).parent.resolve()
 

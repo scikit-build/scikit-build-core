@@ -20,7 +20,7 @@ from ._file_processor import each_unignored_file
 from ._init import setup_logging
 from .wheel import _build_wheel_impl
 
-__all__: list[str] = ["build_sdist"]
+__all__ = ["build_sdist"]
 
 
 def __dir__() -> list[str]:
