@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import importlib.util
 import shutil
 import sys
 import sysconfig
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -34,6 +36,15 @@ def protect_get_requires(fp, monkeypatch):
     fp.pass_command([sys.executable, fp.any()])
     monkeypatch.setattr(shutil, "which", which_mock)
     monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
+
+    orig_find_spec = importlib.util.find_spec
+
+    def find_spec(name: str, package: str | None = None) -> Any:
+        if name in {"cmake", "ninja"}:
+            return None
+        return orig_find_spec(name, package)
+
+    monkeypatch.setattr(importlib.util, "find_spec", find_spec)
 
 
 def test_get_requires_parts(fp):

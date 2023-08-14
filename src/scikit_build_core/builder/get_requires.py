@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import importlib.util
 import os
 import sysconfig
 from collections.abc import Generator, Mapping
@@ -55,6 +56,13 @@ class GetRequires:
 
     def cmake(self) -> Generator[str, None, None]:
         cmake_min = self.settings.cmake.minimum_version
+
+        # If the module is already installed (via caching the build
+        # environment, for example), we will use that
+        if importlib.util.find_spec("cmake") is not None:
+            yield f"cmake>={cmake_min}"
+            return
+
         cmake = best_program(
             get_cmake_programs(module=False), minimum_version=cmake_min
         )
@@ -79,6 +87,13 @@ class GetRequires:
             return
 
         ninja_min = self.settings.ninja.minimum_version
+
+        # If the module is already installed (via caching the build
+        # environment, for example), we will use that
+        if importlib.util.find_spec("ninja") is not None:
+            yield f"ninja>={ninja_min}"
+            return
+
         ninja = best_program(
             get_ninja_programs(module=False), minimum_version=ninja_min
         )
