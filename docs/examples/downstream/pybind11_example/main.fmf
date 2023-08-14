@@ -1,5 +1,5 @@
 summary:
-  Pybind example project
+  Pybind downstream example
 require+:
   - gcc-c++
   - pybind11-devel

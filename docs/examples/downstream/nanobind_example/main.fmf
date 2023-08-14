@@ -1,0 +1,7 @@
+summary:
+  Nanobind downstream example
+adjust:
+  enabled: false
+  because: Nanobind is not yet packaged on Fedora
+#require+:
+#  - python3-nanobind

@@ -1,0 +1,4 @@
+environment:
+  HAS_PYTEST: true
+require+:
+  - python3-pytest
