@@ -445,6 +445,31 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 
 :::
 
+:::{tab} Regex
+
+If you want to pull a string-valued expression (usually version) from an
+existing file, you can the integrated `regex` plugin to pull the information.
+
+```toml
+name = "mypackage"
+dynamic = ["version"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/mypackage/__init__.py"
+```
+
+You can set a custom regex with `regex=`; use `(?p<value>...)` to capture the
+value you want to use. By default when targeting version, you get a reasonable
+regex for python files,
+`'(?i)^(__version__|VERSION) *= *([\'"])v?(?P<value>.+?)\2'`.
+
+```{versionadded} 0.5
+
+```
+
+:::
+
 ## Editable installs
 
 Experimental support for editable installs is provided, with some caveats and

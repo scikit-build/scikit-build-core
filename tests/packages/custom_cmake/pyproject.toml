@@ -4,4 +4,13 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "custom_modules"
-version = "0.0.1"
+dynamic = ["version"]
+
+[tool.scikit-build]
+wheel.packages = []
+wheel.license-files = []
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "CMakeLists.txt"
+regex = 'project\([^)]+ VERSION (?P<value>[0-9.]+)'

@@ -17,6 +17,14 @@ scikit\_build\_core.metadata.fancy\_pypi\_readme module
    :undoc-members:
    :show-inheritance:
 
+scikit\_build\_core.metadata.regex module
+-----------------------------------------
+
+.. automodule:: scikit_build_core.metadata.regex
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.metadata.setuptools\_scm module
 ---------------------------------------------------
 
