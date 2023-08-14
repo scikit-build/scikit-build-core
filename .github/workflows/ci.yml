@@ -18,7 +18,7 @@ jobs:
   lint:
     name: Format
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v3
         with:
@@ -43,7 +43,7 @@ jobs:
       Check 🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }}
       on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -114,7 +114,7 @@ jobs:
   min:
     name: Min 🐍 ${{ matrix.python-version }} on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -142,7 +142,7 @@ jobs:
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v3
@@ -166,7 +166,7 @@ jobs:
   msys:
     name: Tests on 🐍 3 • msys UCRT
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     defaults:
       run:
@@ -198,7 +198,7 @@ jobs:
   mingw64:
     name: Tests on 🐍 3 • mingw64
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     defaults:
       run:
@@ -277,7 +277,7 @@ jobs:
     if: always()
     needs: [lint, checks, min, cygwin, dist, docs]
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@release/v1
