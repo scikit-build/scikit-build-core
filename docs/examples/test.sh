@@ -21,7 +21,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "pip install . --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
+        rlRun "pip install --user . --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
         if [ "${HAS_PYTEST}" == True ]; then
           rlRun "pytest" 0 "Run built-in pytest"
         else
