@@ -6,8 +6,13 @@ source /usr/share/beakerlib/beakerlib.sh || exit 1
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
-		    rlRun "rsync -r ${TMT_SOURCE_DIR:-$TMT_TREE}$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
-		    rlRun "rsync -r ${TMT_SOURCE_DIR:-$TMT_TREE}$TMT_TEST_NAME/../test.py $tmp" 0 "Copy test.py file"
+        if [ -z ${TMT_SOURCE_DIR} ]; then
+          tmt_root=${TMT_TREE}
+        else
+          tmt_root=${TMT_SOURCE_DIR}/scikit_build_core-*
+        fi
+		    rlRun "rsync -r ${tmt_root}$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
+		    rlRun "rsync -r ${tmt_root}/docs/examples/getting_started/test.py $tmp" 0 "Copy test.py file"
         rlRun "pushd $tmp"
         rlRun "tree" 0 "Show directory tree"
         rlRun "set -o pipefail"
