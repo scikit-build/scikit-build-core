@@ -32,15 +32,22 @@ jobs:
     update_release: true
     release_suffix: "{PACKIT_RPMSPEC_RELEASE}"
     targets:
-      - fedora-development
-      - fedora-latest
+      # TODO: Switch to fedora-all once F37 support is dropped
+      - fedora-development-x86_64
+      - fedora-latest-x86_64
+      - fedora-latest-stable-x86_64
+      - fedora-development-aarch64
+      - fedora-latest-aarch64
+      - fedora-latest-stable-aarch64
   - job: tests
     trigger: pull_request
     targets:
       - fedora-development-x86_64
       - fedora-latest-x86_64
+      - fedora-latest-stable-x86_64
       - fedora-development-aarch64
       - fedora-latest-aarch64
+      - fedora-latest-stable-aarch64
   - job: copr_build
     trigger: commit
     branch: main
@@ -49,14 +56,20 @@ jobs:
     targets:
       - fedora-development-x86_64
       - fedora-latest-x86_64
+      - fedora-latest-stable-x86_64
       - fedora-development-aarch64
       - fedora-latest-aarch64
+      - fedora-latest-stable-aarch64
   - job: tests
     trigger: commit
     branch: main
     targets:
-      - fedora-development
-      - fedora-latest
+      - fedora-development-x86_64
+      - fedora-latest-x86_64
+      - fedora-latest-stable-x86_64
+      - fedora-development-aarch64
+      - fedora-latest-aarch64
+      - fedora-latest-stable-aarch64
   - job: copr_build
     trigger: release
     owner: "@scikit-build"
@@ -64,8 +77,10 @@ jobs:
     targets:
       - fedora-development-x86_64
       - fedora-latest-x86_64
+      - fedora-latest-stable-x86_64
       - fedora-development-aarch64
       - fedora-latest-aarch64
+      - fedora-latest-stable-aarch64
   - job: propose_downstream
     trigger: release
     dist_git_branches:
