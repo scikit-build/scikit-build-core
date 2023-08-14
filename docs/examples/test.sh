@@ -12,7 +12,9 @@ rlJournalStart
           tmt_root=${TMT_SOURCE_DIR}/scikit_build_core-*
         fi
 		    rlRun "rsync -r ${tmt_root}$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
-		    rlRun "rsync -r ${tmt_root}/docs/examples/getting_started/test.py $tmp" 0 "Copy test.py file"
+        if [ "${HAS_PYTEST}" != True ]; then
+		      rlRun "rsync -r ${tmt_root}/docs/examples/getting_started/test.py $tmp" 0 "Copy test.py file"
+        fi
         rlRun "pushd $tmp"
         rlRun "tree" 0 "Show directory tree"
         rlRun "set -o pipefail"
@@ -20,7 +22,11 @@ rlJournalStart
 
     rlPhaseStartTest
         rlRun "pip install . --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
-        rlRun "python3 test.py" 0 "Test project is installed correctly"
+        if [ "${HAS_PYTEST}" == True ]; then
+          rlRun "pytest" 0 "Run built-in pytest"
+        else
+          rlRun "python3 test.py" 0 "Test project is installed correctly"
+        fi
     rlPhaseEnd
 
     rlPhaseStartCleanup
