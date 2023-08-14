@@ -14,7 +14,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "pip install . --config-settings=cmake.verbose=true" 0 "Build the python project"
+        rlRun "pip install . --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
         rlRun "python3 test.py" 0 "Test project is installed correctly"
     rlPhaseEnd
 

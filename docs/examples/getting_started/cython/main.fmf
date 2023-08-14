@@ -1,2 +1,4 @@
 summary:
   Cython example project
+require+:
+  - python3-cython

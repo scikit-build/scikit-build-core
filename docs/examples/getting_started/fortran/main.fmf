@@ -2,3 +2,5 @@ summary:
   F2PY example project
 require+:
   - gcc-gfortran
+  - python3-numpy
+  - python3-numpy-f2py

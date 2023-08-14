@@ -2,3 +2,4 @@ summary:
   Pybind example project
 require+:
   - gcc-c++
+  - pybind11-devel
