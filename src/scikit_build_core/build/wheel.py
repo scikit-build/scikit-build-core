@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .. import __version__
 from .._compat import tomllib
+from .._compat.typing import assert_never
 from .._logging import logger, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
@@ -28,6 +29,7 @@ from ._pathutil import (
 )
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
+from .generate import generate_file_contents
 
 __all__ = ["_build_wheel_impl"]
 
@@ -167,6 +169,12 @@ def _build_wheel_impl(
                 "No license files found, set wheel.license-files to [] to suppress this warning"
             )
 
+        for gen in settings.generate:
+            if gen.location == "source":
+                contents = generate_file_contents(gen, metadata)
+                gen.path.write_text(contents)
+                settings.sdist.include.append(str(gen.path))
+
         config = CMaker(
             cmake,
             source_dir=settings.cmake.source_dir,
@@ -198,6 +206,19 @@ def _build_wheel_impl(
                     path.parent.mkdir(exist_ok=True, parents=True)
                 path.write_bytes(data)
             return WheelImplReturn(wheel_filename=dist_info.name)
+
+        for gen in settings.generate:
+            contents = generate_file_contents(gen, metadata)
+            if gen.location == "source":
+                continue
+            if gen.location == "build":
+                path = build_dir / gen.path
+            elif gen.location == "install":
+                path = install_dir / gen.path
+            else:
+                assert_never(gen.location)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
 
         rich_print("[green]***[/green] [bold]Configuring CMake...")
         defines: dict[str, str] = {}

@@ -45,6 +45,9 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {"minimum-version": 0.3},
         {"random": "not valid"},
         {"logging": {"level": "POODLE"}},
+        {"generate": [{"path": "CMakeLists.txt"}]},
+        {"generate": [{"path": "me.py", "template": "hi", "template-path": "hello"}]},
+        {"generate": [{"path": "me.py", "template": ""}]},
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -66,3 +69,29 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
     validator = api.Validator()
     with pytest.raises(fastjsonschema.JsonSchemaValueException):
         validator(example)
+
+
+@pytest.mark.parametrize(
+    "addition",
+    [
+        {"generate": [{"path": "CMakeLists.txt", "template": "hi"}]},
+        {"generate": [{"path": "me.py", "template-path": "hello"}]},
+    ],
+)
+def test_valid_schemas(addition: dict[str, Any]) -> None:
+    api = pytest.importorskip("validate_pyproject.api")
+
+    example_toml = """\
+    [project]
+    name = "myproj"
+    version = "0"
+
+    [tool.scikit-build]
+    minimum-version = "0.3"
+    """
+
+    example = tomllib.loads(example_toml)
+    example["tool"]["scikit-build"].update(**addition)
+
+    validator = api.Validator()
+    validator(example)

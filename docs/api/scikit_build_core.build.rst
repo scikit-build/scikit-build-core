@@ -9,6 +9,14 @@ scikit\_build\_core.build package
 Submodules
 ----------
 
+scikit\_build\_core.build.generate module
+-----------------------------------------
+
+.. automodule:: scikit_build_core.build.generate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.build.sdist module
 --------------------------------------
 

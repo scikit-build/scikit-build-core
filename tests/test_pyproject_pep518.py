@@ -9,6 +9,14 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture()
+def cleanup_overwrite():
+    overwrite = Path("overwrite.cmake")
+    yield overwrite
+    if overwrite.exists():
+        overwrite.unlink()
+
+
 @pytest.mark.network()
 @pytest.mark.integration()
 def test_pep518_sdist(isolated, package_simple_pyproject_ext):
@@ -54,7 +62,9 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
 @pytest.mark.configure()
 @pytest.mark.integration()
 @pytest.mark.usefixtures("package_sdist_config")
-def test_pep518_sdist_with_cmake_config(isolated):
+def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
+    cleanup_overwrite.write_text("set(MY_VERSION fiddlesticks)")
+
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.1
@@ -77,6 +87,8 @@ def test_pep518_sdist_with_cmake_config(isolated):
                 "pyproject.toml",
                 "main.cpp",
                 "PKG-INFO",
+                "overwrite.cmake",
+                ".gitignore",
             )
         }
         assert sum("pybind11" in x for x in file_names) >= 10
@@ -84,6 +96,8 @@ def test_pep518_sdist_with_cmake_config(isolated):
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
         assert correct_metadata == pkg_info_contents
+
+    assert cleanup_overwrite.is_file()
 
 
 @pytest.mark.network()
@@ -94,7 +108,9 @@ def test_pep518_sdist_with_cmake_config(isolated):
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel_sdist_with_cmake_config(isolated, build_args, capfd):
+def test_pep518_wheel_sdist_with_cmake_config(
+    isolated, build_args, capfd, cleanup_overwrite
+):
     isolated.install("build[virtualenv]")
     isolated.module(
         "build",
@@ -116,9 +132,9 @@ def test_pep518_wheel_sdist_with_cmake_config(isolated, build_args, capfd):
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
 
-        assert len(file_names) == 2
-        assert "sdist_config-0.1.0.dist-info" in file_names
+        assert len(file_names) == 3
         file_names.remove("sdist_config-0.1.0.dist-info")
+        file_names.remove("output.py")
         (so_file,) = file_names
 
         assert so_file.startswith("sdist_config")
@@ -128,6 +144,11 @@ def test_pep518_wheel_sdist_with_cmake_config(isolated, build_args, capfd):
 
     life = isolated.execute("import sdist_config; print(sdist_config.life())")
     assert life == "42"
+
+    version = isolated.execute("import output; print(output.version)")
+    assert version == "0.1.0"
+
+    assert cleanup_overwrite.is_file()
 
 
 @pytest.mark.compile()

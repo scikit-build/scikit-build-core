@@ -18,6 +18,7 @@ from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
+from .generate import generate_file_contents
 from .wheel import _build_wheel_impl
 
 __all__ = ["build_sdist"]
@@ -70,6 +71,22 @@ def normalize_tar_info(tar_info: tarfile.TarInfo) -> tarfile.TarInfo:
     return tar_info
 
 
+def add_bytes_to_tar(
+    tar: tarfile.TarFile, data: bytes, name: str, normalize: bool
+) -> None:
+    """
+    Write ``data`` bytes to ``name`` in a tarfile ``tar``. Normalize the info if
+    ``normalize`` is true.
+    """
+
+    tarinfo = tarfile.TarInfo(name)
+    if normalize:
+        tarinfo = normalize_tar_info(tarinfo)
+    with io.BytesIO(data) as bio:
+        tarinfo.size = bio.getbuffer().nbytes
+        tar.addfile(tarinfo, bio)
+
+
 def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
@@ -116,6 +133,12 @@ def build_sdist(
             None, config_settings, None, exit_after_config=True, editable=False
         )
 
+    for gen in settings.generate:
+        if gen.location == "source":
+            contents = generate_file_contents(gen, metadata)
+            gen.path.write_text(contents)
+            settings.sdist.include.append(str(gen.path))
+
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
         gzip_container = stack.enter_context(
@@ -138,11 +161,6 @@ def build_sdist(
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        tarinfo = tarfile.TarInfo(name=f"{srcdirname}/PKG-INFO")
-        tarinfo.size = len(pkg_info)
-        if reproducible:
-            tarinfo = normalize_tar_info(tarinfo)
-        with io.BytesIO(pkg_info) as fileobj:
-            tar.addfile(tarinfo, fileobj)
+        add_bytes_to_tar(tar, pkg_info, f"{srcdirname}/PKG-INFO", reproducible)
 
     return filename

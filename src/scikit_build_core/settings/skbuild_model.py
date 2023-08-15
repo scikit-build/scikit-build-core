@@ -15,6 +15,7 @@ __all__ = [
     "NinjaSettings",
     "SDistSettings",
     "ScikitBuildSettings",
+    "GenerateSettings",
     "WheelSettings",
 ]
 
@@ -207,6 +208,33 @@ class InstallSettings:
 
 
 @dataclasses.dataclass
+class GenerateSettings:
+    path: Path
+    """
+    The path (relative to platlib) for the file to generate.
+    """
+
+    template: str = ""
+    """
+    The template to use for the file. This includes string.Template style
+    placeholders for all the metadata. If empty, a template-path must be set.
+    """
+
+    template_path: Optional[Path] = None
+    """
+    The path to the template file. If empty, a template must be set.
+    """
+
+    location: Literal["install", "build", "source"] = "install"
+    """
+    The place to put the generated file. The "build" directory is useful for
+    CMake files, and the "install" directory is useful for Python files,
+    usually. You can also write directly to the "source" directory, will
+    overwrite existing files & remember to gitignore the file.
+    """
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -216,6 +244,8 @@ class ScikitBuildSettings:
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
+    generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
+
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.

@@ -34,7 +34,7 @@ When setting up your dataclasses, these types are handled:
 - Any callable (`Path`, `Version`): Passed the string input.
 - ``Optional[T]``: Treated like T. Default should be None, since no input format supports None's.
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
-- ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms.
+- ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms. T can be a dataclass (TOML only).
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
 - ``Literal[...]``: A list of strings, the result must be in the list.
 
@@ -212,6 +212,9 @@ class EnvSource:
     @classmethod
     def convert(cls, item: str, target: type[Any]) -> object:
         raw_target = _get_target_raw_type(target)
+        if dataclasses.is_dataclass(raw_target):
+            msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
+            raise TypeError(msg)
         if raw_target == list:
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
@@ -323,6 +326,9 @@ class ConfSource:
         cls, item: str | list[str] | dict[str, str], target: type[Any]
     ) -> object:
         raw_target = _get_target_raw_type(target)
+        if dataclasses.is_dataclass(raw_target):
+            msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
+            raise TypeError(msg)
         if raw_target == list:
             if isinstance(item, list):
                 return [cls.convert(i, _get_inner_type(target)) for i in item]
@@ -404,6 +410,15 @@ class TOMLSource:
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
         raw_target = _get_target_raw_type(target)
+        if dataclasses.is_dataclass(raw_target):
+            fields = dataclasses.fields(raw_target)
+            values = ((k.replace("-", "_"), v) for k, v in item.items())
+            return raw_target(
+                **{
+                    k: cls.convert(v, *[f.type for f in fields if f.name == k])
+                    for k, v in values
+                }
+            )
         if raw_target is list:
             if not isinstance(item, list):
                 msg = f"Expected {target}, got {type(item).__name__}"

@@ -228,6 +228,22 @@ install.components = []
 # Whether to strip the binaries. True for scikit-build-core 0.5+.
 install.strip = false
 
+# The path (relative to platlib) for the file to generate.
+generate[].path = ""
+
+# The template to use for the file. This includes string.Template style
+# placeholders for all the metadata. If empty, a template-path must be set.
+generate[].template = ""
+
+# The path to the template file. If empty, a template must be set.
+generate[].template-path = ""
+
+# The place to put the generated file. The "build" directory is useful for CMake
+# files, and the "install" directory is useful for Python files, usually. You
+# can also write directly to the "source" directory, will overwrite existing
+# files & remember to gitignore the file.
+generate[].location = "install"
+
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 

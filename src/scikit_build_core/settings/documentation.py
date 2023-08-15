@@ -10,6 +10,8 @@ from pathlib import Path
 
 from packaging.version import Version
 
+from .._compat.typing import get_args, get_origin
+
 __all__ = ["pull_docs"]
 
 
@@ -64,7 +66,13 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             yield from mk_docs(field.type, prefix=f"{prefix}{field.name}.")
             continue
 
-        if field.default is not dataclasses.MISSING:
+        if get_origin(field.type) is list:
+            field_type = get_args(field.type)[0]
+            if dataclasses.is_dataclass(field_type):
+                yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
+                continue
+
+        if field.default is not dataclasses.MISSING and field.default is not None:
             default = repr(
                 str(field.default)
                 if isinstance(field.default, (Path, Version))
@@ -73,7 +81,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
         elif field.default_factory is not dataclasses.MISSING:
             default = repr(field.default_factory())
         else:
-            default = ""
+            default = '""'
 
         yield DCDoc(
             f"{prefix}{field.name}".replace("_", "-"),

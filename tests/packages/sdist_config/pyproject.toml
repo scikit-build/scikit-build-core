@@ -16,3 +16,21 @@ sdist.include = [
 wheel.license-files = []
 wheel.packages = []
 cmake.define.FETCHCONTENT_QUIET = false
+
+[[tool.scikit-build.generate]]
+path = "output.cmake"
+location = "build"
+template-path = "input.cmake"
+
+[[tool.scikit-build.generate]]
+path = "output.py"
+template = """
+version = "${version}"
+"""
+
+[[tool.scikit-build.generate]]
+path = "overwrite.cmake"
+location = "source"
+template = """
+set(MY_NAME "${name}")
+"""
