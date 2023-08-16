@@ -7,7 +7,7 @@ path: /distro
 # Define tests
 /rpmlint:
   summary: Rpmlint spec and rpmfiles
-  test: rpmlint -c packit.toml -r python-scikit-build-core.rpmlintrc ./*.spec $TMT_PLAN_DATA/*.rpm
+  test: rpmlint -c packit.toml -r python-scikit-build-core.rpmlintrc ./*.spec /var/share/test-artifacts/*.rpm
 /rpminspect-rpms:
   summary: Rpminspect the rpms
-  test: ls $TMT_PLAN_DATA/*.rpm | xargs -L1 rpminspect-fedora -E metadata,disttag
+  test: ls /var/share/test-artifacts/*.rpm | xargs -L1 rpminspect-fedora -E metadata,disttag
