@@ -5,7 +5,7 @@
 Features:
 
 - Add option to run CMake during SDist creation by @henryiii in #454
-- Add a schema for validate-pyproject by @henryiii in #447, #455
+- Add a schema for validate-pyproject by @henryiii in #447, #450, #455
 - Added regex plugin and dynamic-metadata rewrite by @henryiii in #457
 - Add configuration option to write metadata to file by @henryiii in #459
 
@@ -17,11 +17,9 @@ Fixes:
 Tests and internal:
 
 - Support Literals in settings by @henryiii in #460
-- Validate schemas in regular testing by @henryiii in #450
 - Clean up some extraneous types by @henryiii in #461
 - Use 2x faster black mirror by @henryiii in #456
-- Fix Fedora CI by @LecrisUT in #464
-- fix fedora tests by @henryiii in #449
+- Fix Fedora CI by @LecrisUT and @henryiii in #449, #464, #469
 - Increase timeout (PyPy slow) by @henryiii in #465
 
 Docs:
