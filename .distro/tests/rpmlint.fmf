@@ -2,7 +2,7 @@
 tag:
   - rpmlint
 tier: 0
-path: /distro
+path: /
 
 # Define tests
 /rpmlint:
