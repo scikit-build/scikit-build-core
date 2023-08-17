@@ -7,5 +7,5 @@ require:
   - rsync
   - tree
 framework: beakerlib
-path: /examples
-test: ./test.sh
+path: /
+test: ./examples/test.sh
