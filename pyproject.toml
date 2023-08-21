@@ -89,7 +89,7 @@ docs = [
     "myst-parser >=0.13",
     "pathspec >=0.10.1",
     "pyproject-metadata >=0.5",
-    "sphinx >=4.0",
+    "sphinx >=7.0,<=7.1.2",  # workaround bug in setuptools, fix in pypa/setuptools#4023
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
