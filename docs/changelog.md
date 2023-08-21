@@ -1,5 +1,36 @@
 # Changelog
 
+## Version 0.5.0
+
+Features:
+
+- Add option to run CMake during SDist creation by @henryiii in #454
+- Add a schema for validate-pyproject by @henryiii in #447, #450, #455
+- Added regex plugin and dynamic-metadata rewrite by @henryiii in #457
+- Add configuration option to write metadata to file by @henryiii in #459
+
+Fixes:
+
+- Normalize sdist names by @henryiii in #434
+- Report cmake/ninja required if already present by @henryiii in #462
+
+Tests and internal:
+
+- Support Literals in settings by @henryiii in #460
+- Clean up some extraneous types by @henryiii in #461
+- Use 2x faster black mirror by @henryiii in #456
+- Fix Fedora CI by @LecrisUT and @henryiii in #449, #464, #469
+- Increase timeout (PyPy slow) by @henryiii in #465
+- Cleaner Fedora testing by @LecrisUT in #470
+
+Docs:
+
+- Fix error in config names by @jpn-- in #453
+- More generation of docs by @henryiii in #452
+- Require Sphinx >= 7 while waiting on Furo by @henryiii in #473
+- Require Sphinx < 7.2 while waiting on Setuptools by @henryii in #473
+- Fix an import check issue by @LecrisUT in #471
+
 ## Version 0.4.8
 
 This release focus on two fixes that correct some interference issues with other

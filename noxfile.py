@@ -200,7 +200,7 @@ def test_doc_examples(session: nox.Session, example: str) -> None:
         session.run("pytest")
 
 
-@nox.session(reuse_venv=True)
+@nox.session
 def downstream(session: nox.Session) -> None:
     """
     Build a downstream project.
