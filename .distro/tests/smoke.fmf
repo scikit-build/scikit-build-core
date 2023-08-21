@@ -1,6 +1,5 @@
 # Common test variables
-tag:
-  - smoke
+tag: [ smoke ]
 tier: 0
 path: /
 

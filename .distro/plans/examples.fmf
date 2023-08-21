@@ -3,5 +3,6 @@ summary:
 discover+:
   how: fmf
   filter: "tag: examples"
+  path: docs
 execute:
-    how: tmt
+  how: tmt

@@ -1,6 +1,6 @@
 summary:
   Basic smoke tests
-discover+:
+discover:
   how: fmf
   filter: "tag: smoke"
 execute:
