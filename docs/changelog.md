@@ -21,11 +21,15 @@ Tests and internal:
 - Use 2x faster black mirror by @henryiii in #456
 - Fix Fedora CI by @LecrisUT and @henryiii in #449, #464, #469
 - Increase timeout (PyPy slow) by @henryiii in #465
+- Cleaner Fedora testing by @LecrisUT in #470
 
 Docs:
 
 - Fix error in config names by @jpn-- in #453
 - More generation of docs by @henryiii in #452
+- Require Sphinx >= 7 while waiting on Furo by @henryiii in #473
+- Require Sphinx < 7.2 while waiting on Setuptools by @henryii in #473
+- Fix an import check issue by @LecrisUT in #471 
 
 ## Version 0.4.8
 
