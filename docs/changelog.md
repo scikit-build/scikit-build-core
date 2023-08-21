@@ -29,7 +29,7 @@ Docs:
 - More generation of docs by @henryiii in #452
 - Require Sphinx >= 7 while waiting on Furo by @henryiii in #473
 - Require Sphinx < 7.2 while waiting on Setuptools by @henryii in #473
-- Fix an import check issue by @LecrisUT in #471 
+- Fix an import check issue by @LecrisUT in #471
 
 ## Version 0.4.8
 
