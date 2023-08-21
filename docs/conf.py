@@ -32,7 +32,7 @@ try:
     from scikit_build_core import __version__ as version
 except ModuleNotFoundError:
     try:
-        version = importlib_metadata.version("scikit-build-core")
+        version = importlib_metadata.version("scikit_build_core")
     except ModuleNotFoundError:
         msg = (
             "Package should be installed to produce documentation! "
