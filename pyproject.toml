@@ -225,6 +225,9 @@ select = [
     "ANN204",      # Add -> None to __init__
     "S307",        # eval -> literal_eval
     "TCH",         # flake8-type-checking
+    "PERF",        # perflint
+    "FLY",         # flynt
+    "TRY",         # tryceratops
 ]
 extend-ignore = [
     "PLR",     # Design rules for pylint
