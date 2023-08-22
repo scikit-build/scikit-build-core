@@ -2,6 +2,7 @@
 
 [![Documentation Status][rtd-badge]][rtd-link]
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+[![Discord][discord-badge]][discord-link]
 
 [![Actions Status][actions-badge]][actions-link]
 [![codecov][codecov-badge]][codecov-link]
@@ -9,12 +10,6 @@
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
-
-[![Discord][discord-badge]][discord-link]
-
-<!-- Not implemented yet
-[![Gitter][gitter-badge]][gitter-link]
--->
 
 <!-- SPHINX-START -->
 
