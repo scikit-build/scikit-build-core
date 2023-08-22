@@ -10,12 +10,16 @@ files_to_sync:
   - src: .distro/python-scikit-build-core.rpmlintrc
     dest: python-scikit-build-core.rpmlintrc
   # tmt setup
-  - src: .fmf/
+  - src: .distro/.fmf/
     dest: .fmf/
   - src: .distro/plans/
     dest: plans/
     filters:
       - "- main.fmf.dist-git"
+      - "- rpmlint.fmf"
+  - src: .distro/tests/
+    dest: tests/
+    filters:
       - "- rpmlint.fmf"
   - src: .distro/plans/main.fmf.dist-git
     dest: plans/main.fmf
