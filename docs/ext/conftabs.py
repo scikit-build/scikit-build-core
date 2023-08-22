@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import textwrap
 
 from docutils import nodes
@@ -14,7 +15,7 @@ class ConfTabs(SphinxDirective):
     def run(self):
         name, result = self.arguments
         env_name = f"SKBUILD_{name.replace('.', '_').upper()}"
-        value_result = eval(result, {}, {})  # noqa: PGH001
+        value_result = ast.literal_eval(result)
         if isinstance(value_result, list):
             joined_result = ";".join(value_result)
         elif isinstance(value_result, bool):

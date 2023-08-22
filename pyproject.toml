@@ -223,6 +223,7 @@ select = [
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
     "ANN204",      # Add -> None to __init__
+    "S307",        # eval -> literal_eval
 ]
 extend-ignore = [
     "PLR",     # Design rules for pylint
