@@ -10,13 +10,29 @@
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
+[![Discord][discord-badge]][discord-link]
+
 <!-- Not implemented yet
 [![Gitter][gitter-badge]][gitter-link]
 -->
 
 <!-- SPHINX-START -->
 
-Features over classic Scikit-build:
+Scikit-build-core is a ground-up rewrite of the classic Scikit-build, a bridge
+between Python package build systems and CMake, the most popular compiled
+language build system. The key features of scikit-build classic (which is
+setuptools based) are also present here:
+
+- Great support for or by most OSs, compilers, IDEs, and libraries
+- Support for C++ features and other languages like Fortran
+- Support for multithreaded builds
+- Simple CMakeFiles.txt instead of up to thousands of lines of fragile
+  setuptools/distutils code
+- Cross-compile support for Apple Silicon and Windows ARM
+
+Scikit-build-core was built using Python packaging standards developed after
+scikit-build (classic) was written. Using it directly provides the following
+features over classic Scikit-build:
 
 - Better warnings, errors, and logging
 - No warning about unused variables
@@ -32,6 +48,7 @@ Features over classic Scikit-build:
 - SDists are reproducible by default (UNIX, Python 3.9+)
 - Support for caching between builds (opt-in by setting `build-dir`)
 - Support for writing out to extra wheel folders (scripts, headers, data)
+- Support for selecting install components and build targets
 - Dedicated entrypoints for module and prefix directories
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
@@ -46,15 +63,15 @@ The following limitations are present compared to classic scikit-build:
 
 Some known missing features that will be developed soon:
 
-- No support for other targets besides install
-- Wheels are not fully reproducible yet
-- Several editable mode caveats (mentioned in the docs)
+- Wheels are not fully reproducible yet (nor are they in most others systems,
+  including setuptools)
+- Several editable mode caveats (mentioned in the docs).
 
 Other backends are also planned:
 
 - Setuptools integration highly experimental
 - The extensionlib integration is missing
-- No hatchling plugin yet
+- No hatchling plugin yet.
 
 The recommended interface is the native pyproject builder. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
@@ -90,7 +107,7 @@ faster.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.26)
+cmake_minimum_required(VERSION 3.15...3.27)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
@@ -255,7 +272,7 @@ strict-config = true
 experimental = false
 
 # If set, this will provide a method for backward compatibility.
-minimum-version = "0.4"  # current version
+minimum-version = "0.5"  # current version
 
 # The build directory. Defaults to a temporary directory, but can be set.
 build-dir = ""
@@ -299,8 +316,8 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
 [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
 [github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
-[gitter-badge]:             https://badges.gitter.im/https://github.com/scikit-build/scikit-build-core/community.svg
-[gitter-link]:              https://gitter.im/https://github.com/scikit-build/scikit-build-core/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+[discord-badge]:            https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23scikit-build
+[discord-link]:             https://discord.gg/pypa
 [codecov-badge]:            https://codecov.io/gh/scikit-build/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
 [codecov-link]:             https://codecov.io/gh/scikit-build/scikit-build-core
 [pypi-link]:                https://pypi.org/project/scikit-build-core/
