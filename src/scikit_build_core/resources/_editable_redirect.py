@@ -28,7 +28,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         verbose: bool,
         build_options: list[str],
         install_options: list[str],
-    ):
+    ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
         self.path = path

@@ -222,6 +222,7 @@ select = [
     "T20",         # flake8-print
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
+    "ANN204",      # Add -> None to __init__
 ]
 extend-ignore = [
     "PLR",     # Design rules for pylint
