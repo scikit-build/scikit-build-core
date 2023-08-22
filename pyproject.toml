@@ -93,6 +93,7 @@ docs = [
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
+    "sphinx-autodoc-typehints",
 ]
 
 [project.urls]
