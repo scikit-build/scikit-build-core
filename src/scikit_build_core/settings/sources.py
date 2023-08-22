@@ -284,7 +284,7 @@ class ConfSource:
         *prefixes: str,
         settings: Mapping[str, str | list[str]],
         verify: bool = True,
-    ):
+    ) -> None:
         self.prefixes = prefixes
         self.settings = settings
         self.verify = verify
@@ -384,7 +384,7 @@ class ConfSource:
 
 
 class TOMLSource:
-    def __init__(self, *prefixes: str, settings: Mapping[str, Any]):
+    def __init__(self, *prefixes: str, settings: Mapping[str, Any]) -> None:
         self.prefixes = prefixes
         self.settings = _dig_not_strict(settings, *prefixes)
 
