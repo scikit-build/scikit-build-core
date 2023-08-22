@@ -68,6 +68,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
+    "sphinx_autodoc_typehints",
     "conftabs",
     "sphinx-jsonschema",
 ]
