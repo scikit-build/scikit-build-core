@@ -118,7 +118,7 @@ def minimums(session: nox.Session) -> None:
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """
-    Build the docs. Pass "--serve" to serve.
+    Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links.
     """
 
     parser = argparse.ArgumentParser()
@@ -131,7 +131,9 @@ def docs(session: nox.Session) -> None:
     if args.builder != "html" and args.serve:
         session.error("Must not specify non-HTML builder with --serve")
 
-    session.install(".[docs,pyproject]")
+    extra_installs = ["sphinx-autobuild"] if args.serve else []
+
+    session.install("-e.[docs,pyproject]", *extra_installs)
     session.chdir("docs")
 
     if args.builder == "linkcheck":
@@ -140,20 +142,19 @@ def docs(session: nox.Session) -> None:
         )
         return
 
-    session.run(
-        "sphinx-build",
+    shared_args = (
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
-        "-b",
-        args.builder,
+        f"-b={args.builder}",
         ".",
         f"_build/{args.builder}",
         *posargs,
     )
 
     if args.serve:
-        print("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
-        session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
+        session.run("sphinx-autobuild", *shared_args)
+    else:
+        session.run("sphinx-build", "--keep-going", *shared_args)
 
 
 @nox.session
