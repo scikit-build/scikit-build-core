@@ -72,7 +72,7 @@ def normalize_tar_info(tar_info: tarfile.TarInfo) -> tarfile.TarInfo:
 
 
 def add_bytes_to_tar(
-    tar: tarfile.TarFile, data: bytes, name: str, normalize: bool
+    tar: tarfile.TarFile, data: bytes, name: str, *, normalize: bool
 ) -> None:
     """
     Write ``data`` bytes to ``name`` in a tarfile ``tar``. Normalize the info if
@@ -161,6 +161,8 @@ def build_sdist(
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        add_bytes_to_tar(tar, pkg_info, f"{srcdirname}/PKG-INFO", reproducible)
+        add_bytes_to_tar(
+            tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible
+        )
 
     return filename
