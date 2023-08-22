@@ -6,8 +6,8 @@ import shutil
 import sys
 import sysconfig
 import tempfile
-from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._compat import tomllib
@@ -30,6 +30,9 @@ from ._pathutil import (
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
 from .generate import generate_file_contents
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = ["_build_wheel_impl"]
 

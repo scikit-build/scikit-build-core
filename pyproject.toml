@@ -224,6 +224,7 @@ select = [
     "YTT",         # flake8-2020
     "ANN204",      # Add -> None to __init__
     "S307",        # eval -> literal_eval
+    "TCH",         # flake8-type-checking
 ]
 extend-ignore = [
     "PLR",     # Design rules for pylint

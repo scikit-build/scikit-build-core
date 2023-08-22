@@ -3,14 +3,16 @@ from __future__ import annotations
 import contextlib
 import shutil
 import subprocess
-from collections.abc import Generator, Iterable
 from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from packaging.version import InvalidVersion, Version
 
 from ._logging import logger
 from ._shutil import Run
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
 
 __all__ = ["get_cmake_programs", "get_ninja_programs", "best_program", "Program"]
 

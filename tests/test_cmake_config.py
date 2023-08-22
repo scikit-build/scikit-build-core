@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import shutil
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from packaging.version import Version
 
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 DIR = Path(__file__).parent.resolve()
 

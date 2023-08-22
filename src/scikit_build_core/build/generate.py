@@ -4,10 +4,12 @@ __all__ = ["generate_file_contents"]
 
 import dataclasses
 import string
+from typing import TYPE_CHECKING
 
-from pyproject_metadata import StandardMetadata
+if TYPE_CHECKING:
+    from pyproject_metadata import StandardMetadata
 
-from ..settings.skbuild_model import GenerateSettings
+    from ..settings.skbuild_model import GenerateSettings
 
 
 def __dir__() -> list[str]:

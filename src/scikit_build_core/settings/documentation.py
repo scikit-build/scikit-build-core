@@ -5,12 +5,15 @@ import dataclasses
 import inspect
 import sys
 import textwrap
-from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from packaging.version import Version
 
 from .._compat.typing import get_args, get_origin
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 __all__ = ["pull_docs"]
 

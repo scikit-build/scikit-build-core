@@ -4,17 +4,13 @@ import dataclasses
 import re
 import sys
 import sysconfig
-from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-
-from packaging.version import Version
+from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._compat.importlib import metadata, resources
 from .._logging import logger
-from ..cmake import CMaker
 from ..resources import find_python
-from ..settings.skbuild_model import ScikitBuildSettings
 from .generator import set_environment_for_gen
 from .sysconfig import (
     get_platform,
@@ -22,6 +18,14 @@ from .sysconfig import (
     get_python_library,
     get_soabi,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping, Sequence
+
+    from packaging.version import Version
+
+    from ..cmake import CMaker
+    from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["Builder", "get_archs", "archs_to_tags"]
 

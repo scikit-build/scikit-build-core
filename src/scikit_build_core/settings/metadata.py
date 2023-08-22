@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
-from ..settings.skbuild_model import ScikitBuildSettings
 from ._load_provider import load_dynamic_metadata
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["get_standard_metadata"]
 

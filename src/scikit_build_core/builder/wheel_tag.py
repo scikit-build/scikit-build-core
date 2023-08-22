@@ -3,13 +3,17 @@ from __future__ import annotations
 import dataclasses
 import itertools
 import sys
-from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING
 
 import packaging.tags
 
-from .._compat.typing import Self
 from .._logging import logger
 from .macos import get_macosx_deployment_target
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from .._compat.typing import Self
 
 __all__ = ["WheelTag"]
 

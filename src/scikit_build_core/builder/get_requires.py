@@ -5,12 +5,11 @@ import functools
 import importlib.util
 import os
 import sysconfig
-from collections.abc import Generator, Mapping
+from typing import TYPE_CHECKING
 
 from packaging.tags import sys_tags
 
 from .._compat import tomllib
-from .._compat.typing import Literal
 from .._logging import logger
 from ..program_search import (
     best_program,
@@ -20,8 +19,13 @@ from ..program_search import (
 )
 from ..resources import resources
 from ..settings._load_provider import load_provider
-from ..settings.skbuild_model import ScikitBuildSettings
 from ..settings.skbuild_read_settings import SettingsReader
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Mapping
+
+    from .._compat.typing import Literal
+    from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["GetRequires"]
 

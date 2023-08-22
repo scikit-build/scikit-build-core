@@ -9,18 +9,21 @@ import subprocess
 import sys
 import sysconfig
 import textwrap
-from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Generator
-
-from packaging.version import Version
+from typing import TYPE_CHECKING, Generator
 
 from . import __version__
-from ._compat.typing import Self
 from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .program_search import best_program, get_cmake_programs
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from packaging.version import Version
+
+    from ._compat.typing import Self
 
 __all__ = ["CMake", "CMaker"]
 

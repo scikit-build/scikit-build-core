@@ -4,14 +4,18 @@ import re
 import subprocess
 import sys
 import sysconfig
-from collections.abc import Mapping, MutableMapping
+from typing import TYPE_CHECKING
 
 from .._logging import logger
-from ..cmake import CMake
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_make_programs, get_ninja_programs
-from ..settings.skbuild_model import NinjaSettings
 from .sysconfig import get_cmake_platform
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping
+
+    from ..cmake import CMake
+    from ..settings.skbuild_model import NinjaSettings
 
 __all__ = ["set_environment_for_gen"]
 

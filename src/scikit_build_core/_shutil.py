@@ -6,10 +6,12 @@ import os
 import stat
 import subprocess
 import sys
-from collections.abc import Generator, Iterable
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from ._logging import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
 
 __all__ = ["Run"]
 

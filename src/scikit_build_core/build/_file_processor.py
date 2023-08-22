@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import contextlib
 import os
-from collections.abc import Generator, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pathspec
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 __all__ = ["each_unignored_file"]
 
