@@ -45,6 +45,7 @@ class Run:
     def _run(
         self,
         args: Iterable[str | os.PathLike[str]],
+        *,
         capture: bool,
     ) -> subprocess.CompletedProcess[str]:
         options = [

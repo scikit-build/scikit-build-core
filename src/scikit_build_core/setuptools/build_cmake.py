@@ -135,7 +135,7 @@ class BuildCMake(setuptools.Command):
         if sys.platform.startswith("darwin"):
             arm_only = get_archs(builder.config.env) == ["arm64"]
             orig_macos_str = self.plat_name.rsplit("-", 1)[0].split("-", 1)[1]
-            orig_macos = normalize_macos_version(orig_macos_str, arm_only)
+            orig_macos = normalize_macos_version(orig_macos_str, arm=arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug

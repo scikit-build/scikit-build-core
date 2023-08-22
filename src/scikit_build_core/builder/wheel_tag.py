@@ -34,6 +34,7 @@ class WheelTag:
         cls,
         archs: Sequence[str],
         py_api: str = "",
+        *,
         expand_macos: bool = False,
     ) -> Self:
         best_tag = next(packaging.tags.sys_tags())
@@ -58,7 +59,7 @@ class WheelTag:
             plats = [
                 next(
                     packaging.tags.mac_platforms(
-                        get_macosx_deployment_target(arm), arch
+                        get_macosx_deployment_target(arm=arm), arch
                     )
                 )
                 for arch, arm in pairs
