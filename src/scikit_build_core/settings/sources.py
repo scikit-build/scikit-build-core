@@ -397,9 +397,9 @@ class TOMLSource:
         names = self._get_name(*fields)
         try:
             _dig_strict(self.settings, *names)
-            return True
         except KeyError:
             return False
+        return True
 
     def get_item(self, *fields: str, is_dict: bool) -> Any:  # noqa: ARG002
         names = self._get_name(*fields)
