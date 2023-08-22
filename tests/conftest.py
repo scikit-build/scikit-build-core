@@ -8,9 +8,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
-import types
 import warnings
-from collections.abc import Generator
 from pathlib import Path
 from venv import EnvBuilder
 
@@ -27,8 +25,14 @@ else:
     import tomllib
 
 
+from typing import TYPE_CHECKING
+
 import pytest
 from packaging.requirements import Requirement
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Generator
 
 DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent

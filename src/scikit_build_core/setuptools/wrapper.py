@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Callable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import setuptools
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 __all__ = ["setup"]
 

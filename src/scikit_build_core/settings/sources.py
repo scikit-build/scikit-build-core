@@ -49,11 +49,13 @@ from __future__ import annotations
 import dataclasses
 import os
 import typing
-from collections.abc import Generator, Iterator, Mapping, Sequence
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import Literal, Protocol, get_args, get_origin
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator, Iterator, Mapping, Sequence
 
 T = TypeVar("T")
 

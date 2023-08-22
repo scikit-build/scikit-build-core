@@ -4,10 +4,13 @@ import configparser
 import os
 import sys
 import sysconfig
-from collections.abc import Mapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .._logging import logger
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 __all__ = ["get_python_include_dir", "get_python_library", "get_cmake_platform"]
 

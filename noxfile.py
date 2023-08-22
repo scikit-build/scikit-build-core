@@ -3,10 +3,13 @@ from __future__ import annotations
 import argparse
 import shutil
 import sys
-from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import nox
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 DIR = Path(__file__).parent.resolve()
 

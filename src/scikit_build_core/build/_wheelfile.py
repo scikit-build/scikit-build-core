@@ -10,19 +10,24 @@ import os
 import stat
 import time
 import zipfile
-from collections.abc import Mapping, Set
 from email.message import Message
 from email.policy import EmailPolicy
 from pathlib import Path
+from typing import TYPE_CHECKING
 from zipfile import ZipInfo
 
 import packaging.utils
-from packaging.tags import Tag
-from packaging.utils import BuildTag
-from pyproject_metadata import StandardMetadata
 
 from .. import __version__
-from .._compat.typing import Self
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Set
+
+    from packaging.tags import Tag
+    from packaging.utils import BuildTag
+    from pyproject_metadata import StandardMetadata
+
+    from .._compat.typing import Self
 
 EMAIL_POLICY = EmailPolicy(max_line_length=0, mangle_from_=False, utf8=True)
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Generator, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ._file_processor import each_unignored_file
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 __all__ = ["scantree", "path_to_module", "packages_to_file_mapping", "is_valid_module"]
 

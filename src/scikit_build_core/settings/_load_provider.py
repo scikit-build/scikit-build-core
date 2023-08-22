@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Generator, Iterable, Mapping
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from .._compat.typing import Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Mapping
 
 __all__ = ["load_provider", "load_dynamic_metadata"]
 

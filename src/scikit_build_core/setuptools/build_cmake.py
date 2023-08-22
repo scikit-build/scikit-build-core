@@ -4,18 +4,21 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import setuptools
 import setuptools.errors
 from packaging.version import Version
-from setuptools.dist import Distribution
 
-from .._compat.typing import Literal
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
+
+if TYPE_CHECKING:
+    from setuptools.dist import Distribution
+
+    from .._compat.typing import Literal
 
 __all__ = ["BuildCMake", "finalize_distribution_options", "cmake_source_dir"]
 

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import difflib
-import os
 import sys
-from collections.abc import Generator, Mapping
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
 
@@ -15,6 +13,10 @@ from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
 from .skbuild_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
+
+if TYPE_CHECKING:
+    import os
+    from collections.abc import Generator, Mapping
 
 __all__ = ["SettingsReader"]
 

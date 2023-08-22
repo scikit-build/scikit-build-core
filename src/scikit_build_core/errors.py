@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-import subprocess
 import textwrap
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import subprocess
 
 __all__ = [
     "CMakeAccessError",
