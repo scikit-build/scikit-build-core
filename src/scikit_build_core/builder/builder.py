@@ -84,6 +84,9 @@ class Builder:
 
         return [*self.settings.cmake.args, *env_cmake_args]
 
+    def get_generator(self, *args: str) -> str | None:
+        return self.config.get_generator(*self.get_cmake_args(*args))
+
     def configure(
         self,
         *,
@@ -121,10 +124,12 @@ class Builder:
             self.config.module_dirs.append(fp_dir)
             logger.debug("FindPython backport activated at {}", fp_dir)
 
-        local_def = set_environment_for_gen(
-            self.config.cmake, self.config.env, self.settings.ninja
-        )
-        cmake_defines.update(local_def)
+        current_gen = self.get_generator(*configure_args)
+        if current_gen is None:
+            local_def = set_environment_for_gen(
+                self.config.cmake, self.config.env, self.settings.ninja
+            )
+            cmake_defines.update(local_def)
 
         cache_config: dict[str, str | Path | bool] = {
             "SKBUILD": "2",

@@ -183,17 +183,27 @@ class CMaker:
             else:
                 yield f"-D{key}={value}"
 
+    def get_generator(self, *args: str) -> str | None:
+        """
+        Try to get the generator that will be used to build the project. If it's
+        not set, return None (default generator will be used).
+        """
+        generators = [g for g in args if g.startswith("-G")]
+        if generators:
+            return generators[-1][2:]
+        return self.env.get("CMAKE_GENERATOR", None)
+
     def configure(
         self,
         *,
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
     ) -> None:
-        if "CMAKE_GENERATOR" in self.env:
-            gen = self.env["CMAKE_GENERATOR"]
-            self.single_config = gen == "Ninja" or "Makefiles" in gen
-
         _cmake_args = self._compute_cmake_args(defines or {})
+
+        gen = self.get_generator(*_cmake_args, *cmake_args)
+        if gen:
+            self.single_config = gen == "Ninja" or "Makefiles" in gen
 
         try:
             Run(env=self.env).live(self.cmake, *_cmake_args, *cmake_args)
