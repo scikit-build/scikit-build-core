@@ -13,6 +13,7 @@ from .._logging import logger
 from ..resources import find_python
 from .generator import set_environment_for_gen
 from .sysconfig import (
+    get_numpy_include_dir,
     get_platform,
     get_python_include_dir,
     get_python_library,
@@ -148,6 +149,7 @@ class Builder:
             get_python_library(self.config.env, abi3=True) if limited_abi else None
         )
         python_include_dir = get_python_include_dir()
+        numpy_include_dir = get_numpy_include_dir()
 
         # Classic Find Python
         cache_config["PYTHON_EXECUTABLE"] = sys.executable
@@ -166,6 +168,8 @@ class Builder:
                 cache_config[f"{prefix}_LIBRARY"] = python_library
             if python_sabi_library and sysconfig.get_platform().startswith("win"):
                 cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
+            if numpy_include_dir:
+                cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 
         cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_abi)
 

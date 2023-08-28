@@ -12,7 +12,13 @@ from .._logging import logger
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-__all__ = ["get_python_include_dir", "get_python_library", "get_cmake_platform"]
+__all__ = [
+    "get_python_include_dir",
+    "get_python_library",
+    "get_cmake_platform",
+    "get_soabi",
+    "get_numpy_include_dir",
+]
 
 
 TARGET_TO_PLAT = {
@@ -154,3 +160,12 @@ def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
 
     assert isinstance(ext_suffix, str)
     return ext_suffix.rsplit(".", 1)[0].lstrip(".")
+
+
+def get_numpy_include_dir() -> Path | None:
+    try:
+        import numpy as np
+    except ImportError:
+        return None
+
+    return Path(np.get_include())
