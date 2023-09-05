@@ -484,7 +484,7 @@ version = "${version}"
 '''
 ```
 
-`template` or `template-file` is required; this uses {class}`string.Template`
+`template` or `template-path` is required; this uses {class}`string.Template`
 formatting. There are three options for output location; `location = "install"`
 (the default) will go to the wheel, `location = "build"` will go to the CMake
 build directory, and `location = "source"` will write out to the source
