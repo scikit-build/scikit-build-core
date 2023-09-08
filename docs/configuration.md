@@ -263,7 +263,7 @@ fine:
 
 ```toml
 [tool.scikit-build]
-wheel.py.api = "py3"
+wheel.py-api = "py3"
 ```
 
 Or even Python 2 + 3 (you still will need a version of Python scikit-build-core
