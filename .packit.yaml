@@ -49,25 +49,15 @@ jobs:
     update_release: true
     release_suffix: "{PACKIT_RPMSPEC_RELEASE}"
     targets:
-      # TODO: Switch to fedora-all once F37 support is dropped
-      - fedora-development-x86_64
-      - fedora-latest-x86_64
-      - fedora-latest-stable-x86_64
-      - fedora-development-aarch64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-aarch64
-      - fedora-latest-stable-x86_64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
       - epel-9-x86_64
       - epel-9-aarch64
   - job: tests
     trigger: pull_request
     targets:
-      - fedora-development-x86_64
-      - fedora-latest-x86_64
-      - fedora-latest-stable-x86_64
-      - fedora-development-aarch64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-aarch64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
       - epel-9-x86_64
       - epel-9-aarch64
     fmf_path: .distro
@@ -77,24 +67,16 @@ jobs:
     owner: "@scikit-build"
     project: nightly
     targets:
-      - fedora-development-x86_64
-      - fedora-latest-x86_64
-      - fedora-latest-stable-x86_64
-      - fedora-development-aarch64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-aarch64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
       - epel-9-x86_64
       - epel-9-aarch64
   - job: tests
     trigger: commit
     branch: main
     targets:
-      - fedora-development-x86_64
-      - fedora-latest-x86_64
-      - fedora-latest-stable-x86_64
-      - fedora-development-aarch64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-aarch64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
       - epel-9-x86_64
       - epel-9-aarch64
     fmf_path: .distro
@@ -103,12 +85,8 @@ jobs:
     owner: "@scikit-build"
     project: release
     targets:
-      - fedora-development-x86_64
-      - fedora-latest-x86_64
-      - fedora-latest-stable-x86_64
-      - fedora-development-aarch64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-aarch64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
       - epel-9-x86_64
       - epel-9-aarch64
   - job: propose_downstream
