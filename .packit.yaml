@@ -43,6 +43,9 @@ jobs:
       - fedora-development-aarch64
       - fedora-latest-aarch64
       - fedora-latest-stable-aarch64
+      - fedora-latest-stable-x86_64
+      - epel-9-x86_64
+      - epel-9-aarch64
   - job: tests
     trigger: pull_request
     targets:
@@ -52,6 +55,8 @@ jobs:
       - fedora-development-aarch64
       - fedora-latest-aarch64
       - fedora-latest-stable-aarch64
+      - epel-9-x86_64
+      - epel-9-aarch64
     fmf_path: .distro
   - job: copr_build
     trigger: commit
@@ -65,6 +70,8 @@ jobs:
       - fedora-development-aarch64
       - fedora-latest-aarch64
       - fedora-latest-stable-aarch64
+      - epel-9-x86_64
+      - epel-9-aarch64
   - job: tests
     trigger: commit
     branch: main
@@ -75,6 +82,8 @@ jobs:
       - fedora-development-aarch64
       - fedora-latest-aarch64
       - fedora-latest-stable-aarch64
+      - epel-9-x86_64
+      - epel-9-aarch64
     fmf_path: .distro
   - job: copr_build
     trigger: release
@@ -87,6 +96,8 @@ jobs:
       - fedora-development-aarch64
       - fedora-latest-aarch64
       - fedora-latest-stable-aarch64
+      - epel-9-x86_64
+      - epel-9-aarch64
   - job: propose_downstream
     trigger: release
     dist_git_branches:
