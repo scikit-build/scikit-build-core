@@ -28,6 +28,19 @@ downstream_package_name: python-scikit-build-core
 update_release: false
 upstream_tag_template: v{version}
 
+# Epel9 fails to build with dynamic version. Need to create archive with PKG-INFO
+# F37 works with setuptools_scm 7.0
+srpm_build_deps:
+  - python3-build
+  - hatch
+  - python3-hatch-vcs
+actions:
+  create-archive:
+    - "python3 -m build --sdist --outdir ."
+    - "sh -c 'echo scikit_build_core-$(hatch version).tar.gz'"
+  get-current-version:
+    - "hatch version"
+
 jobs:
   - job: copr_build
     trigger: pull_request
