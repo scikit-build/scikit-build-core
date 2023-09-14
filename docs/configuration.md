@@ -513,7 +513,7 @@ Known limitations:
 
 ```console
 # Very experimental rebuild on initial import feature
-$ pip install --no-build-isolation --config-settings=editiable.rebuild=true -ve.
+$ pip install --no-build-isolation --config-settings=editable.rebuild=true -ve.
 ```
 
 Due to the length of this line already being long, you do not need to set the
