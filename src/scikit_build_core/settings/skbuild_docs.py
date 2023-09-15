@@ -25,7 +25,7 @@ def mk_skbuild_docs() -> str:
         if item.name == "install.strip":
             item.default = "false"
         if item.name == "wheel.packages":
-            item.default = '["src/<package>", "<package>"]'
+            item.default = '["src/<package>", "python/<package>", "<package>"]'
     return "\n".join(str(item) for item in items)
 
 

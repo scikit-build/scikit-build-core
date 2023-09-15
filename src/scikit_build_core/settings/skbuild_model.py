@@ -129,8 +129,9 @@ class WheelSettings:
     packages: Optional[List[str]] = None
     """
     A list of packages to auto-copy into the wheel. If this is not set, it will
-    default to the first of ``src/<package>`` or ``<package>`` if they exist.
-    The prefix(s) will be stripped from the package name inside the wheel.
+    default to the first of ``src/<package>``, ``python/<package>``, or
+    ``<package>`` if they exist.  The prefix(s) will be stripped from the
+    package name inside the wheel.
     """
 
     py_api: str = ""
