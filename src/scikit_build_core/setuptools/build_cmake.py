@@ -139,7 +139,7 @@ class BuildCMake(setuptools.Command):
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
-        builder.config.build_type = "Debug" if debug else "Release"
+        builder.config.build_type = "Debug" if debug else settings.cmake.build_type
 
         builder.configure(
             name=dist.get_name(),
