@@ -14,7 +14,7 @@ class ConfTabs(SphinxDirective):
 
     def run(self):
         name, result = self.arguments
-        env_name = f"SKBUILD_{name.replace('.', '_').upper()}"
+        env_name = f"SKBUILD_{name.replace('.', '_').replace('-', '_').upper()}"
         value_result = ast.literal_eval(result)
         if isinstance(value_result, list):
             joined_result = ";".join(value_result)
