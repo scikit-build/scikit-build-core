@@ -361,7 +361,7 @@ support overriding).
 
 ```
 
-You can also specify this using CMAKE_ARGS, spae separated:
+You can also specify this using `CMAKE_ARGS`, space separated:
 
 ```yaml
 CMAKE_ARGS: -DSOME_DEFINE=ON -DOTHER=OFF
@@ -382,7 +382,8 @@ Scikit-build-core 0.3.0+ supports dynamic metadata with two built-in plugins.
 
 This is not ready for plugin development outside of scikit-build-core;
 `tool.scikit-build.experimental=true` is required to use plugins that are not
-shipped with scikit-build-core, since the interface is provisional.
+shipped with scikit-build-core, since the interface is provisional and may
+change between _minor_ versions.
 
 :::
 
