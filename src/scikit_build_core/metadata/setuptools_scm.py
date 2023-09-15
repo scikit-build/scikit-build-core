@@ -22,7 +22,13 @@ def dynamic_metadata(
         msg = "No inline configuration is supported"
         raise ValueError(msg)
 
-    from setuptools_scm import Configuration, _get_version
+    from setuptools_scm import Configuration
+
+    try:
+        from setuptools_scm import _get_version
+    except ImportError:
+        # Support setuptools_scm 8
+        from setuptools_scm._get_version import _get_version
 
     config = Configuration.from_file("pyproject.toml")
     version: str = _get_version(config)
