@@ -38,10 +38,10 @@ def parse_help_default(txt: str) -> str | None:
     return lines[0]
 
 
-def get_default(cmake: CMake) -> str | None:
+def get_default_from_cmake(cmake: CMake) -> str | None:
     """
-    Returns the default generator for the current platform. None if it cannot be
-    determined.
+    Returns the default generator for the current platform from CMake's output.
+    None if it cannot be determined.
     """
 
     result = subprocess.run(
@@ -56,39 +56,57 @@ def get_default(cmake: CMake) -> str | None:
     return parse_help_default(result.stdout)
 
 
+def get_default(cmake: CMake) -> str | None:
+    """
+    Returns the computed default for the current platform.
+    """
+    generator = get_default_from_cmake(cmake)
+
+    # Non-MSVC Windows platforms require Ninja
+    is_msvc_platform = sysconfig.get_platform().startswith("win")
+    if sys.platform.startswith("win") and not is_msvc_platform:
+        return "Ninja"
+
+    # Try Ninja if it is available, even if make is CMake default
+    if generator == "Unix Makefiles":
+        return "Ninja"
+
+    return generator
+
+
 def set_environment_for_gen(
-    cmake: CMake, env: MutableMapping[str, str], ninja_settings: NinjaSettings
+    generator: str | None,
+    cmake: CMake,
+    env: MutableMapping[str, str],
+    ninja_settings: NinjaSettings,
 ) -> Mapping[str, str]:
     """
     This function modifies the environment as needed to safely set a generator.
+    You should have used CMAKE_GENERATOR already to get the input generator
+    string.
 
     A reasonable default generator is set if the environment does not already
     have one set; if ninja is present, ninja will be used over make on Unix.
+
+    If gen is not None, then that will be the target generator.
     """
+    allow_make_fallback = ninja_settings.make_fallback
 
-    default = get_default(cmake) or ""
-    if default:
-        logger.debug("Default generator: {}", default)
+    if generator:
+        logger.debug("Set generator: {}", generator)
+        allow_make_fallback = False
+    else:
+        generator = get_default(cmake) or ""
+        if generator:
+            logger.debug("Default generator: {}", generator)
 
-    if sysconfig.get_platform().startswith("win") and "Visual Studio" in env.get(
-        "CMAKE_GENERATOR", default
-    ):
+    if sysconfig.get_platform().startswith("win") and "Visual Studio" in generator:
         # This must also be set when *_PLATFORM is set.
-        env.setdefault("CMAKE_GENERATOR", default)
+        env.setdefault("CMAKE_GENERATOR", generator)
         env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
         return {}
 
-    if sys.platform.startswith("win") and not sysconfig.get_platform().startswith(
-        "win"
-    ):
-        # Non-MSVC Windows platforms require Ninja
-        default = "Ninja"
-
-    # Try Ninja if it is available, even if make is CMake default
-    if default == "Unix Makefiles":
-        default = "Ninja"
-
-    if env.get("CMAKE_GENERATOR", default or "Ninja") == "Ninja":
+    if (generator or "Ninja") == "Ninja":
         ninja = best_program(
             get_ninja_programs(), minimum_version=ninja_settings.minimum_version
         )
@@ -99,7 +117,7 @@ def set_environment_for_gen(
             return {"CMAKE_MAKE_PROGRAM": str(ninja.path)}
 
         msg = "Ninja is required to build"
-        if not ninja_settings.make_fallback:
+        if not allow_make_fallback:
             raise NinjaNotFoundError(msg)
 
         msg = "Ninja or make is required to build"
