@@ -347,7 +347,7 @@ $ pipx run build --wheel -Ccmake.define.SOME_DEFINE=ON
 ````{tab} Environment
 
 ```yaml
-SKBUILD_CMAKE_DEFINES: SOME_DEFINE=ON
+SKBUILD_CMAKE_DEFINE: SOME_DEFINE=ON
 ```
 
 ````
