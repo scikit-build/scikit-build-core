@@ -1,5 +1,35 @@
 # Changelog
 
+## Version 0.5.1
+
+Features:
+
+- Add `{build_type}` and `{state}` to `build-dir` by @henryiii in #504
+- Include 'python' dir as an auto search path by @henryiii in #499
+
+Fixes:
+
+- Parse CMake version strings containing '-' by @jllllll in #508
+- Set NumPy include directory if known by @henryiii in #482
+- Adapt for `setuptools_scm` 8 writing change by @henryiii in #509
+- (setuptools) Support `build_type` set in toml by @henryiii in #498
+
+Tests and internal:
+
+- Nicer nox for docs by @henryiii in #479
+- Some extra Ruff checks by @henryiii in #478
+- Packit sync by @LecrisUT in #476
+
+Docs:
+
+- Fix template-file with template-path by @Freed-Wu in #485
+- `wheel.py.api` -> `wheel.py-api` by @njzjz in #488
+- A single-letter change in Configuration by @wojdyr in #490
+- Fix typo in `SKBUILD_CMAKE_DEFINE` env var by @aloisklink in #501
+- Typo in Configuration by @elazarcoh in #493
+- Update and add discord link by @henryiii in #477
+- Add page on cross-compiling by @henryiii in #510
+
 ## Version 0.5.0
 
 Features:

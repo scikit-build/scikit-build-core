@@ -9,6 +9,15 @@ scikit-build-core using the `${SKBUILD}` variable. This will be defined to "2"
 for scikit-build-core (and "1" for classic scikit-build). You can also detect
 the version of scikit-build-core with `${SKBUILD_CORE_VERSION}`.
 
+## Accessing information
+
+Scikit-build-core provides several useful variables:
+
+- `${SKBUILD_PROJECT_NAME}`: The name of the project.
+- `${SKBUILD_PROJECT_VERSION}`: The version of the project.
+- `${SKBUILD_STATE}`: The run state, one of `sdist`, `wheel`, `metadata_wheel`,
+  `editable`, or `metadata_editable`.
+
 ## Finding Python
 
 You can directly use FindPython:
@@ -25,6 +34,14 @@ related to making Python extension modules.
 If you are making a Limited ABI / Stable API package, you'll need the
 `Development.SABIModule` component instead. You can use the
 `SKBUILD_LIMITED_API` variable to check to see if it was requested.
+
+:::{warning}
+
+If you want to cross-compile to Windows ARM, you'll need to use
+`${SKBUILD_SOABI}`, which is always correct, instead of trusting FindPython's
+`Python_SOABI` value.
+
+:::
 
 If you want to use the old, deprecated FindPythonInterp and FindPythonLibs
 instead, you can. Though it should be noted that FindPythonLibs requires a trick
