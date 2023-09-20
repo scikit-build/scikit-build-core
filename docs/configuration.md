@@ -402,7 +402,7 @@ dynamic = ["version"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = ["src/package/_version.py"]
 
-[tool.setuptools_scm]
+[tool.setuptools_scm]  # Section required
 write_to = "src/package/_version.py"
 ```
 
@@ -410,8 +410,10 @@ This sets the python project version according to
 [git tags](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
 or a
 [`.git_archival.txt`](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#git-archives)
-file, or equivalents for other VCS systems. With this, you may also to set the
-cmake project version equivalently, e.g. using
+file, or equivalents for other VCS systems.
+
+If you need to set the CMake project version without scikit-build-core (which
+provides `${SKBUILD_PROJECT_VERSION}`), you can use something like
 [`DynamicVersion` module](https://github.com/LecrisUT/CMakeExtraUtils/blob/180604da50a3c3588f9d04e4ebc6abb4e5a0d234/cmake/DynamicVersion.md)
 from
 [github.com/LecrisUT/CMakeExtraUtils](https://github.com/LecrisUT/CMakeExtraUtils):
