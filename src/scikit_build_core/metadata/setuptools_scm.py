@@ -25,7 +25,11 @@ def dynamic_metadata(
     from setuptools_scm import Configuration, _get_version
 
     config = Configuration.from_file("pyproject.toml")
-    version: str = _get_version(config)
+    version: str
+    try:
+        version = _get_version(config, force_write_version_files=True)
+    except TypeError:  # setuptools_scm < 8
+        version = _get_version(config)
 
     return version
 
