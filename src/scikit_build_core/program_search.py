@@ -77,7 +77,7 @@ def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]
             continue
 
         try:
-            version = Version(result.stdout.splitlines()[0].split()[-1])
+            version = Version(result.stdout.splitlines()[0].split()[-1].split('-msvc')[0])
         except (IndexError, InvalidVersion):
             logger.warning(f"Could not determine CMake version, got {result.stdout!r}")
             yield Program(cmake_path, None)
