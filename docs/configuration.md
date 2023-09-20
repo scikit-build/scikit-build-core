@@ -200,16 +200,17 @@ sdist.include = [
 
 ## Customizing the built wheel
 
-The wheel will automatically look for Python packages at `<package_name>` and
-`src/<package_name>`. If you want to list packages explicitly, you can:
+The wheel will automatically look for Python packages at `src/<package_name>`,
+`python/<package_name>`, and `<package_name>`, in that order. If you want to
+list packages explicitly, you can. The final path element is the package.
 
 ```toml
 [tool.scikit-build]
-wheel.packages = ["python/mypackage"]
+wheel.packages = ["python/src/mypackage"]
 ```
 
 Or you can disable Python file inclusion entirely, and rely only on CMake's
-installs, you can:
+install mechanism, you can do that instead:
 
 ```toml
 [tool.scikit-build]

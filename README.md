@@ -194,9 +194,10 @@ sdist.reproducible = true
 sdist.cmake = false
 
 # A list of packages to auto-copy into the wheel. If this is not set, it will
-# default to the first of ``src/<package>`` or ``<package>`` if they exist. The
-# prefix(s) will be stripped from the package name inside the wheel.
-wheel.packages = ["src/<package>", "<package>"]
+# default to the first of ``src/<package>``, ``python/<package>``, or
+# ``<package>`` if they exist.  The prefix(s) will be stripped from the package
+# name inside the wheel.
+wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 
 # The Python tags. The default (empty string) will use the default Python
 # version. You can also set this to "cp37" to enable the CPython 3.7+ Stable ABI
