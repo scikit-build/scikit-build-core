@@ -280,7 +280,7 @@ historic compatibility if you'd like:
 
 ```toml
 [tool.scikit-build]
-wheel.expand-macos-universal-tags = false
+wheel.expand-macos-universal-tags = true
 ```
 
 You can select only specific components to install:
@@ -540,6 +540,14 @@ speedups.
 ```{conftabs} build-dir "build/{wheel_tag}"
 
 ```
+
+There are several values you can access through Python's formatting syntax:
+
+- `cache_tag`: `sys.implementation.cache_tag`
+- `wheel_tag`: The tags as computed for the wheel
+- `build_type`: The current build type (`Release` by default)
+- `state`: The current run state, `sdist`, `wheel`, `editable`,
+  `metadata_wheel`, and `metadata_editable`
 
 Scikit-build-core also strictly validates configuration; if you need to disable
 this, you can:

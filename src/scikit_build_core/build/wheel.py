@@ -100,18 +100,18 @@ def _build_wheel_impl(
 
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
-    action = "editable" if editable else "wheel"
+    state = "editable" if editable else "wheel"
     if wheel_directory is None:
-        action = f"metadata_{action}"
+        state = f"metadata_{state}"
     if exit_after_config:
-        action = "sdist"
+        state = "sdist"
 
     cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
 
     rich_print(
         f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
         f"using [blue]CMake {cmake.version}[/blue]",
-        f"[red]({action})[/red]",
+        f"[red]({state})[/red]",
     )
 
     with tempfile.TemporaryDirectory() as tmpdir, fix_win_37_all_permissions(tmpdir):
@@ -130,6 +130,8 @@ def _build_wheel_impl(
                 settings.build_dir.format(
                     cache_tag=sys.implementation.cache_tag,
                     wheel_tag=str(tags),
+                    build_type=settings.cmake.build_type,
+                    state=state,
                 )
             )
             if settings.build_dir
@@ -228,7 +230,7 @@ def _build_wheel_impl(
         cache_entries: dict[str, str | Path] = {
             f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
         }
-        cache_entries["SKBUILD_STATE"] = action
+        cache_entries["SKBUILD_STATE"] = state
         builder.configure(
             defines=defines,
             cache_entries=cache_entries,
@@ -256,7 +258,7 @@ def _build_wheel_impl(
         rich_print("[green]***[/green] [bold]Installing project into wheel...")
         builder.install(install_dir)
 
-        rich_print(f"[green]***[/green] [bold]Making {action}...")
+        rich_print(f"[green]***[/green] [bold]Making {state}...")
         packages = _get_packages(
             packages=settings.wheel.packages,
             name=normalized_name,
