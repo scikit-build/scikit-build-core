@@ -280,6 +280,15 @@ def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Packa
 
 
 @pytest.fixture()
+def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "navigate_editable",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_sdist_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
