@@ -21,3 +21,9 @@ def test_navigate_editable(isolated, isolate):
 
     value = isolated.execute("import shared_pkg; shared_pkg.call_py_method()")
     assert value == "py_method"
+
+    value = isolated.execute("import shared_pkg; shared_pkg.read_py_data_txt()")
+    assert value == "Some_value_Py"
+
+    value = isolated.execute("import shared_pkg; shared_pkg.read_c_generated_txt()")
+    assert value == "Some_value_C"
