@@ -28,7 +28,7 @@ logging.level = "INFO"
 ````{tab} pip
 
 ```console
-$ pip install . --config-settings=cmake.verbose=true --config-settings=logging.level=INFO
+$ pip install . -v --config-settings=cmake.verbose=true --config-settings=logging.level=INFO
 ```
 
 ````
@@ -63,6 +63,13 @@ SKBUILD_LOGGING_LEVEL: "INFO"
 
 
 ````
+
+:::{note}
+
+When using `pip`, make sure you include at least a `-v` argument so that the
+verbosity settings above are displayed.
+
+:::
 
 :::{warning}
 
