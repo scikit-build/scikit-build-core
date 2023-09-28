@@ -23,7 +23,12 @@ static PyObject *py_method_wrapper(PyObject *self, PyObject *args) {
     exit(1);
   }
 
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION > 8
   PyObject *res = PyObject_CallNoArgs(py_method);
+#else
+  PyObject *res = PyObject_CallObject(py_method, NULL);
+#endif
+
   if (res == NULL) {
     PyErr_Print();
     fprintf(stderr, "Failed to execute shared_pkg.py_module.py_method\n");
