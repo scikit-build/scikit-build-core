@@ -36,6 +36,35 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.verbose = verbose
         self.build_options = build_options
         self.install_options = install_options
+        # Construct the __path__ of all resource files
+        # I.e. the paths of all package-like objects
+        submodule_search_locations: dict[str, set[str]] = {}
+        pkgs: list[str] = []
+        # Loop over both python native source files and cmake installed ones
+        for tree in (known_source_files, known_wheel_files):
+            for module, file in tree.items():
+                # Strip the last element of the module
+                parent = ".".join(module.split(".")[:-1])
+                # Check if it is a package
+                if "__init__.py" in file:
+                    parent = module
+                    pkgs.append(parent)
+                # Skip if it's a root module (there are no search paths for these)
+                if not parent:
+                    continue
+                # Initialize the tree element if needed
+                submodule_search_locations.setdefault(parent, set())
+                # Add the parent path to the dictionary values
+                parent_path, _ = os.path.split(file)
+                if not parent_path:
+                    # root modules are skipped so all files should be in a parent package
+                    msg = f"Unexpected path to source file: {file} [{module}]"
+                    raise ImportError(msg)
+                if not os.path.isabs(parent_path):
+                    parent_path = os.path.join(str(DIR), parent_path)
+                submodule_search_locations[parent].add(parent_path)
+        self.submodule_search_locations = submodule_search_locations
+        self.pkgs = pkgs
 
     def find_spec(
         self,
@@ -43,17 +72,32 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         path: object = None,
         target: object = None,
     ) -> importlib.machinery.ModuleSpec | None:
+        # If current item is a know package use its search locations, otherwise if it's a module use the parent's
+        parent = (
+            fullname if fullname in self.pkgs else ".".join(fullname.split(".")[:-1])
+        )
+        # If no known submodule_search_locations is found, it means it is a root module. Do not populate its kwargs
+        # in that case
+        kwargs = {}
+        if parent in self.submodule_search_locations:
+            kwargs["submodule_search_locations"] = list(
+                self.submodule_search_locations[parent]
+            )
         if fullname in self.known_wheel_files:
             redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
                 self.rebuild()
+            # Note: MyPy reports wrong type for `submodule_search_locations`
             return importlib.util.spec_from_file_location(
-                fullname, os.path.join(DIR, redir)
+                fullname,
+                os.path.join(DIR, redir),
+                **kwargs,  # type: ignore[arg-type]
             )
         if fullname in self.known_source_files:
             redir = self.known_source_files[fullname]
-            return importlib.util.spec_from_file_location(fullname, redir)
-
+            return importlib.util.spec_from_file_location(
+                fullname, redir, **kwargs  # type: ignore[arg-type]
+            )
         return None
 
     def rebuild(self) -> None:
