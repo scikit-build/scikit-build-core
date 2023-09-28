@@ -92,6 +92,12 @@ class VEnv:
         self.wheelhouse = wheelhouse
         self.executable = Path(result.creator.exe)
         self.env_dir = env_dir.resolve()
+        self.platlib = Path(
+            self.execute("import sysconfig; print(sysconfig.get_path('platlib'))")
+        )
+        self.purelib = Path(
+            self.execute("import sysconfig; print(sysconfig.get_path('purelib'))")
+        )
 
     @overload
     def run(self, *args: str, capture: Literal[True]) -> str:
