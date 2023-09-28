@@ -47,7 +47,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         "oneOf": [generate_tmpl, generate_path]
     }
 
-    props = schema["properties"].copy()
+    props = {k: {"$ref": f"#/properties/{k}"} for k in schema["properties"]}
     schema["properties"]["overrides"] = {
         "type": "array",
         "items": {
