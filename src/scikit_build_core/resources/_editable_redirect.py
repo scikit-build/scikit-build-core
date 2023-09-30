@@ -1,11 +1,26 @@
 from __future__ import annotations
 
 import importlib.abc
-import importlib.machinery
 import importlib.util
 import os
 import subprocess
 import sys
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    import importlib.machinery
+
+    if sys.version_info < (3, 8):
+        from typing_extensions import TypedDict
+    else:
+        from typing import TypedDict
+
+    class KWDict_1(TypedDict, total=False):
+        submodule_search_locations: list[str]
+
+else:
+    KWDict_1 = dict
+
 
 DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
@@ -78,7 +93,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         )
         # If no known submodule_search_locations is found, it means it is a root module. Do not populate its kwargs
         # in that case
-        kwargs = {}
+        kwargs = KWDict_1()
         if parent in self.submodule_search_locations:
             kwargs["submodule_search_locations"] = list(
                 self.submodule_search_locations[parent]
@@ -87,17 +102,14 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
                 self.rebuild()
-            # Note: MyPy reports wrong type for `submodule_search_locations`
             return importlib.util.spec_from_file_location(
                 fullname,
                 os.path.join(DIR, redir),
-                **kwargs,  # type: ignore[arg-type]
+                **kwargs,
             )
         if fullname in self.known_source_files:
             redir = self.known_source_files[fullname]
-            return importlib.util.spec_from_file_location(
-                fullname, redir, **kwargs  # type: ignore[arg-type]
-            )
+            return importlib.util.spec_from_file_location(fullname, redir, **kwargs)
         return None
 
     def rebuild(self) -> None:
