@@ -274,6 +274,7 @@ exclude = []
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
 "tests/conftest.py" = ["TID251"]
+"tests/packages/**.py" = ["TID251"]
 "docs/conf.py" = ["TID251"]
 
 

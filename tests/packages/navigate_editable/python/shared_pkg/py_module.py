@@ -1,9 +1,9 @@
 import sys
 
 if sys.version_info < (3, 9):
-    from importlib_resources import files  # noqa: TID251
+    from importlib_resources import files
 else:
-    from importlib.resources import files  # noqa: TID251
+    from importlib.resources import files
 
 from .c_module import c_method
 
