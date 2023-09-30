@@ -53,7 +53,7 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {
             "overrides": [
                 {
-                    "select": {"python-version": ">=3.10"},
+                    "if": {"python-version": ">=3.10"},
                     "cmake.nonexist": ["-DFOO=BAR"],
                 }
             ]
@@ -89,7 +89,7 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
         {
             "overrides": [
                 {
-                    "select": {"python-version": ">=3.10"},
+                    "if": {"python-version": ">=3.10"},
                     "cmake": {"args": ["-DFOO=BAR"]},
                 }
             ]

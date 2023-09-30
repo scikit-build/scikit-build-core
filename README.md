@@ -281,6 +281,9 @@ Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
 used to set extra CMake args. `ARCHFLAGS` is used to specify macOS universal2 or
 cross-compiles, just like setuptools.
 
+You can also specify `[[tool.scikit-build.overrides]]`` to customize values for
+different systems. See the docs for details.
+
 ## Other projects for building
 
 Scikit-build-core is a binary build backend. There are also other binary build

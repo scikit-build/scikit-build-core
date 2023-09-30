@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import difflib
+import platform
 import re
 import sys
 from pathlib import Path
@@ -65,13 +66,13 @@ def override_match(
         matches.append(match_msg)
 
     if implementation_version is not None:
-        current_implementation_version = ".".join(
-            str(x) for x in sys.implementation.version
-        )
+        info = sys.implementation.version
+        version = f"{info.major}.{info.minor}.{info.micro}"
+        kind = info.releaselevel
+        if kind != "final":
+            version += f"{kind[0]}{info.serial}"
         match_msg = version_match(
-            current_implementation_version,
-            implementation_version,
-            "Python implementation",
+            version, implementation_version, "Python implementation"
         )
         matches.append(match_msg)
 
@@ -81,7 +82,7 @@ def override_match(
         matches.append(match_msg)
 
     if platform_machine is not None:
-        current_platform_machine = sys.platform
+        current_platform_machine = platform.machine()
         match_msg = regex_match(current_platform_machine, platform_machine)
         matches.append(match_msg)
 
@@ -108,7 +109,7 @@ class SettingsReader:
         # Process overrides into the main dictionary if they match
         tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
         for override in tool_skb.pop("overrides", []):
-            select = {k.replace("-", "_"): v for k, v in override.pop("select").items()}
+            select = {k.replace("-", "_"): v for k, v in override.pop("if").items()}
             if override_match(**select):
                 for key, value in override.items():
                     if isinstance(value, dict):

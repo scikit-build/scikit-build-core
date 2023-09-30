@@ -52,11 +52,11 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         "type": "array",
         "items": {
             "type: ": "object",
-            "required": ["select"],
+            "required": ["if"],
             "minProperties": 2,
             "additionalProperties": False,
             "properties": {
-                "select": {
+                "if": {
                     "type": "object",
                     "minProperties": 1,
                     "additionalProperties": False,

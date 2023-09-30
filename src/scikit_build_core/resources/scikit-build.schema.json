@@ -309,12 +309,12 @@
       "items": {
         "type: ": "object",
         "required": [
-          "select"
+          "if"
         ],
         "minProperties": 2,
         "additionalProperties": false,
         "properties": {
-          "select": {
+          "if": {
             "type": "object",
             "minProperties": 1,
             "additionalProperties": false,

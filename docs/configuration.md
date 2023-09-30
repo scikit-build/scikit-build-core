@@ -577,6 +577,29 @@ only be used if you enable them:
 experimental = true
 ```
 
+## Overrides
+
+Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
+specify a `tool.scikit-build.overrides` array with an `if` key. That if key can
+take several values, based on [PEP 508][]:
+
+- `python_version`: The two-digit Python version. Takes a specifier set.
+- `sys_platform`: The value of `sys.platform`. Takes a regex.
+- `platform_machine`: The value of `platform.machine()`. Takes a regex.
+- `implementation_name`: The value of `sys.implementation.name`. Takes a regex.
+- `implementation_version`: Derived from `sys.implementation.version`, following
+  PEP 508. Takes a specifier set.
+
+At least one must be provided. Then you can specify any collection of valid
+options, and those will override if all the items in the `if` are true. They
+will match top to bottom, overriding previous matches. For example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.sys_platform = "darwin"
+cmake.minimum-version = "3.18"
+```
+
 ## Full schema
 
 The full schema for the `tool.scikit-build` table is below:
@@ -584,3 +607,5 @@ The full schema for the `tool.scikit-build` table is below:
 ```{jsonschema} ../src/scikit_build_core/resources/scikit-build.schema.json
 
 ```
+
+[pep 508]: https://peps.python.org/pep-0508/#environment-markers
