@@ -57,15 +57,22 @@ def test_pep660_pip_isolated(isolated, isolate):
     value = isolated.execute("import simplest; print(simplest.square(2))")
     assert value == "4.0"
 
-    location = isolated.execute("import simplest; print(*simplest.__path__)")
+    location_str = isolated.execute(
+        "import simplest; print(*simplest.__path__, sep=';')"
+    )
+    locations = [Path(s).resolve() for s in location_str.split(";")]
+
     # First path is from the python source
-    assert str(Path.cwd() / "src" / "simplest") in location
+    python_source = Path("src/simplest").resolve()
+    assert any(x.samefile(python_source) for x in locations)
+
     # Second path is from the CMake install
-    assert str(isolated.platlib / "simplest") in location
+    cmake_install = isolated.platlib.joinpath("simplest").resolve()
+    assert any(x.samefile(cmake_install) for x in locations)
 
     location = isolated.execute("import simplest; print(simplest.__file__)")
     # The package file is defined in the python source and __file__ must point to it
-    assert location == str(Path.cwd() / "src" / "simplest" / "__init__.py")
+    assert Path("src/simplest/__init__.py").resolve().samefile(Path(location).resolve())
 
     location = isolated.execute(
         "import simplest._module; print(simplest._module.__file__)"
