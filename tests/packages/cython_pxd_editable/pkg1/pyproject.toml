@@ -8,3 +8,6 @@ requires = [
 [project]
 name = "pkg1"
 version = "1.0.0"
+
+[tool.scikit-build]
+wheel.packages = ["src/pkg1"]
