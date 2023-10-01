@@ -94,10 +94,6 @@ def test_cython_pxd(monkeypatch, tmp_path, editable):
         # tmp_path2.mkdir()
         # process_package(package2, tmp_path2, monkeypatch)
         #
-        # env.install("pip>=23")
-        # env.install("cython")
-        # env.install("scikit-build-core[pyproject]")
-        #
         # env.install(
         #     "-v", "--config-settings=build-dir=build/{wheel_tag}", "--no-build-isolation", *editable_flag, "."
         # )
