@@ -72,13 +72,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable):
         env.install("pip>=23")
         env.install("cython")
         env.install("scikit-build-core[pyproject]")
+        env.install("ninja")
 
-        # This succeeds
-        env.install(
-            "-v", "--config-settings=build-dir=build/{wheel_tag}", *editable_flag, "."
-        )
-
-        # This fails
         env.install(
             "-v",
             "--config-settings=build-dir=build/{wheel_tag}",
@@ -87,15 +82,19 @@ def test_cython_pxd(monkeypatch, tmp_path, editable):
             ".",
         )
 
-        # package2 = PackageInfo(
-        #     "cython_pxd_editable/pkg2",
-        # )
-        # tmp_path2 = tmp_path / "pkg2"
-        # tmp_path2.mkdir()
-        # process_package(package2, tmp_path2, monkeypatch)
-        #
-        # env.install(
-        #     "-v", "--config-settings=build-dir=build/{wheel_tag}", "--no-build-isolation", *editable_flag, "."
-        # )
+        package2 = PackageInfo(
+            "cython_pxd_editable/pkg2",
+        )
+        tmp_path2 = tmp_path / "pkg2"
+        tmp_path2.mkdir()
+        process_package(package2, tmp_path2, monkeypatch)
+
+        env.install(
+            "-v",
+            "--config-settings=build-dir=build/{wheel_tag}",
+            "--no-build-isolation",
+            *editable_flag,
+            ".",
+        )
     finally:
         shutil.rmtree(env_path, ignore_errors=True)
