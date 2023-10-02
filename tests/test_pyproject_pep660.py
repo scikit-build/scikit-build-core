@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import zipfile
 from pathlib import Path
 
@@ -77,6 +78,20 @@ def test_pep660_pip_isolated(isolated, isolate):
     location = isolated.execute(
         "import simplest._module; print(simplest._module.__file__)"
     )
-    # The compiled module should point to the cmake install location
-    # The suffix path depends on compiler, only checking the installation location and base name
-    assert location.startswith(str(isolated.platlib / "simplest" / "_module."))
+    if sys.version_info < (3, 8, 7):
+        import distutils.sysconfig  # pylint: disable=deprecated-module
+
+        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    else:
+        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+
+    module_file = cmake_install / f"_module{ext_suffix}"
+    # Windows FindPython may produce the wrong extension
+    if (
+        sys.version_info < (3, 8, 7)
+        and sys.platform.startswith("win")
+        and not module_file.is_file()
+    ):
+        module_file = cmake_install / "_module.pyd"
+
+    assert module_file.samefile(Path(location).resolve())
