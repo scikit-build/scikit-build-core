@@ -16,11 +16,10 @@ files_to_sync:
     dest: plans/
     filters:
       - "- main.fmf.dist-git"
+      - "- rpminspect.fmf"
       - "- rpmlint.fmf"
   - src: .distro/tests/
     dest: tests/
-    filters:
-      - "- rpmlint.fmf"
   - src: .distro/plans/main.fmf.dist-git
     dest: plans/main.fmf
 upstream_package_name: scikit_build_core
