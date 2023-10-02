@@ -2,4 +2,4 @@ plan:
   import:
     url: https://github.com/packit/tmt-plans
     ref: main
-    name: /plans/rpmlint
+    name: /plans/rpminspect
