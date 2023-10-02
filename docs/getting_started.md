@@ -331,7 +331,7 @@ your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
 `find_package(Python ...)` should always include the `Development.Module`
-component instead of `Developement`; the latter breaks if the embedding
+component instead of `Development`; the latter breaks if the embedding
 components are missing, such as when you are building redistributable wheels on
 Linux.
 
