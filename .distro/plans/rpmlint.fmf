@@ -1,5 +1,5 @@
 plan:
   import:
-    url: https://github.com/packit/tmt-plans
-    ref: main
+    url: https://github.com/LecrisUT/tmt-plans
+    ref: plans/rpmlint
     name: /plans/rpmlint
