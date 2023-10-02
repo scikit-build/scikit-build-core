@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import copy
 import difflib
+import platform
+import re
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .. import __version__
@@ -25,6 +29,73 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def version_match(value: str, match: str, name: str) -> str:
+    """
+    Returns a non-empty string if a version matches a specifier.
+    """
+    matcher = SpecifierSet(match)
+    did_match = matcher.contains(value)
+    return f"{match!r} matched {name} {value}" if did_match else ""
+
+
+def regex_match(value: str, match: str) -> str:
+    """
+    Returns a non-empty string if a value matches a regex.
+    """
+    did_match = re.compile(match).match(value) is not None
+    return f"{match!r} matched {value}" if did_match else ""
+
+
+def override_match(
+    python_version: str | None = None,
+    implementation_name: str | None = None,
+    implementation_version: str | None = None,
+    platform_system: str | None = None,
+    platform_machine: str | None = None,
+) -> bool:
+    matches = []
+
+    if python_version is not None:
+        current_python_version = ".".join(str(x) for x in sys.version_info[:2])
+        match_msg = version_match(current_python_version, python_version, "Python")
+        matches.append(match_msg)
+
+    if implementation_name is not None:
+        current_impementation_name = sys.implementation.name
+        match_msg = regex_match(current_impementation_name, implementation_name)
+        matches.append(match_msg)
+
+    if implementation_version is not None:
+        info = sys.implementation.version
+        version = f"{info.major}.{info.minor}.{info.micro}"
+        kind = info.releaselevel
+        if kind != "final":
+            version += f"{kind[0]}{info.serial}"
+        match_msg = version_match(
+            version, implementation_version, "Python implementation"
+        )
+        matches.append(match_msg)
+
+    if platform_system is not None:
+        current_platform_system = sys.platform
+        match_msg = regex_match(current_platform_system, platform_system)
+        matches.append(match_msg)
+
+    if platform_machine is not None:
+        current_platform_machine = platform.machine()
+        match_msg = regex_match(current_platform_machine, platform_machine)
+        matches.append(match_msg)
+
+    if not matches:
+        msg = "At least one override must be provided"
+        raise ValueError(msg)
+
+    matched = all(matches)
+    if matched:
+        logger.info("Overrides {}", " and ".join(matches))
+    return matched
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -33,6 +104,22 @@ class SettingsReader:
         *,
         verify_conf: bool = True,
     ) -> None:
+        pyproject = copy.deepcopy(pyproject)
+
+        # Process overrides into the main dictionary if they match
+        tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
+        for override in tool_skb.pop("overrides", []):
+            select = {k.replace("-", "_"): v for k, v in override.pop("if").items()}
+            if override_match(**select):
+                for key, value in override.items():
+                    if isinstance(value, dict):
+                        for key2, value2 in value.items():
+                            inner = tool_skb.get(key, {})
+                            inner[key2] = value2
+                            tool_skb[key] = inner
+                    else:
+                        tool_skb[key] = value
+
         self.sources = SourceChain(
             EnvSource("SKBUILD"),
             ConfSource(settings=config_settings, verify=verify_conf),

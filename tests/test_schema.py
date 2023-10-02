@@ -48,6 +48,16 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {"generate": [{"path": "CMakeLists.txt"}]},
         {"generate": [{"path": "me.py", "template": "hi", "template-path": "hello"}]},
         {"generate": [{"path": "me.py", "template": ""}]},
+        {"overrides": [{"cmake": {"args": ["-DFOO=BAR"]}}]},
+        {"overrides": [{"select": {"python-version": ">=3.10"}}]},
+        {
+            "overrides": [
+                {
+                    "if": {"python-version": ">=3.10"},
+                    "cmake.nonexist": ["-DFOO=BAR"],
+                }
+            ]
+        },
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -76,6 +86,14 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
     [
         {"generate": [{"path": "CMakeLists.txt", "template": "hi"}]},
         {"generate": [{"path": "me.py", "template-path": "hello"}]},
+        {
+            "overrides": [
+                {
+                    "if": {"python-version": ">=3.10"},
+                    "cmake": {"args": ["-DFOO=BAR"]},
+                }
+            ]
+        },
     ],
 )
 def test_valid_schemas(addition: dict[str, Any]) -> None:

@@ -303,6 +303,83 @@
       "type": "string",
       "default": "",
       "description": "The build directory. Defaults to a temporary directory, but can be set."
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type: ": "object",
+        "required": [
+          "if"
+        ],
+        "minProperties": 2,
+        "additionalProperties": false,
+        "properties": {
+          "if": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "python-version": {
+                "type": "string"
+              },
+              "implementation-name": {
+                "type": "string"
+              },
+              "implementation-version": {
+                "type": "string"
+              },
+              "platform-system": {
+                "type": "string"
+              },
+              "platform-machine": {
+                "type": "string"
+              }
+            }
+          },
+          "cmake": {
+            "$ref": "#/properties/cmake"
+          },
+          "ninja": {
+            "$ref": "#/properties/ninja"
+          },
+          "logging": {
+            "$ref": "#/properties/logging"
+          },
+          "sdist": {
+            "$ref": "#/properties/sdist"
+          },
+          "wheel": {
+            "$ref": "#/properties/wheel"
+          },
+          "backport": {
+            "$ref": "#/properties/backport"
+          },
+          "editable": {
+            "$ref": "#/properties/editable"
+          },
+          "install": {
+            "$ref": "#/properties/install"
+          },
+          "generate": {
+            "$ref": "#/properties/generate"
+          },
+          "metadata": {
+            "$ref": "#/properties/metadata"
+          },
+          "strict-config": {
+            "$ref": "#/properties/strict-config"
+          },
+          "experimental": {
+            "$ref": "#/properties/experimental"
+          },
+          "minimum-version": {
+            "$ref": "#/properties/minimum-version"
+          },
+          "build-dir": {
+            "$ref": "#/properties/build-dir"
+          }
+        }
+      }
     }
   }
 }
