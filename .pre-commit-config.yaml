@@ -54,7 +54,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.291
+    rev: v0.0.292
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -100,13 +100,13 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.2.6
     hooks:
       - id: codespell
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.5
+    rev: v0.9.0.6
     hooks:
       - id: shellcheck
 
