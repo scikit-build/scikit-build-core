@@ -58,6 +58,7 @@ test = [
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     "setuptools",
+    "virtualenv",
     "wheel",
 ]
 test-meta = [
@@ -160,7 +161,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme"]
+module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
 ignore_missing_imports = true
 
 
