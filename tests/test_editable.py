@@ -1,16 +1,37 @@
+import sys
+from pathlib import Path
+
 import pytest
 
 
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
-@pytest.mark.parametrize("isolate", [True, False])
+@pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "notisolated"])
+@pytest.mark.parametrize(
+    "package",
+    [
+        pytest.param(
+            True,
+            id="package",
+            marks=[pytest.mark.xfail(reason="Only data folders supported currently")],
+        ),
+        pytest.param(False, id="datafolder"),
+    ],
+)
 @pytest.mark.usefixtures("navigate_editable")
-def test_navigate_editable(isolated, isolate):
+@pytest.mark.xfail(
+    sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
+)
+def test_navigate_editable(isolated, isolate, package):
     isolate_args = ["--no-build-isolation"] if not isolate else []
     isolated.install("pip>=23")
     if not isolate:
         isolated.install("scikit-build-core[pyproject]")
+
+    if package:
+        init_py = Path("python/shared_pkg/data/__init__.py")
+        init_py.touch()
 
     isolated.install(
         "-v", "--config-settings=build-dir=build/{wheel_tag}", *isolate_args, "-e", "."
