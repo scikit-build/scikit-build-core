@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import zipfile
 from pathlib import Path
 
@@ -57,8 +58,40 @@ def test_pep660_pip_isolated(isolated, isolate):
     value = isolated.execute("import simplest; print(simplest.square(2))")
     assert value == "4.0"
 
-    location = isolated.execute("import simplest; print(*simplest.__path__)")
-    assert location == str(Path.cwd() / "src/simplest")
+    location_str = isolated.execute(
+        "import simplest; print(*simplest.__path__, sep=';')"
+    )
+    locations = [Path(s).resolve() for s in location_str.split(";")]
+
+    # First path is from the python source
+    python_source = Path("src/simplest").resolve()
+    assert any(x.samefile(python_source) for x in locations)
+
+    # Second path is from the CMake install
+    cmake_install = isolated.platlib.joinpath("simplest").resolve()
+    assert any(x.samefile(cmake_install) for x in locations)
 
     location = isolated.execute("import simplest; print(simplest.__file__)")
-    assert location == str(Path.cwd() / "src/simplest/__init__.py")
+    # The package file is defined in the python source and __file__ must point to it
+    assert Path("src/simplest/__init__.py").resolve().samefile(Path(location).resolve())
+
+    location = isolated.execute(
+        "import simplest._module; print(simplest._module.__file__)"
+    )
+    if sys.version_info < (3, 8, 7):
+        import distutils.sysconfig  # pylint: disable=deprecated-module
+
+        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    else:
+        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+
+    module_file = cmake_install / f"_module{ext_suffix}"
+    # Windows FindPython may produce the wrong extension
+    if (
+        sys.version_info < (3, 8, 7)
+        and sys.platform.startswith("win")
+        and not module_file.is_file()
+    ):
+        module_file = cmake_install / "_module.pyd"
+
+    assert module_file.samefile(Path(location).resolve())

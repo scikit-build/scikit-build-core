@@ -92,6 +92,12 @@ class VEnv:
         self.wheelhouse = wheelhouse
         self.executable = Path(result.creator.exe)
         self.env_dir = env_dir.resolve()
+        self.platlib = Path(
+            self.execute("import sysconfig; print(sysconfig.get_path('platlib'))")
+        )
+        self.purelib = Path(
+            self.execute("import sysconfig; print(sysconfig.get_path('purelib'))")
+        )
 
     @overload
     def run(self, *args: str, capture: Literal[True]) -> str:
@@ -274,6 +280,15 @@ def package_dynamic_metadata(
 def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "simplest_c",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
+def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "navigate_editable",
     )
     process_package(package, tmp_path, monkeypatch)
     return package
