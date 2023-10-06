@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
   "description": "Scikit-build-core's settings.",
   "type": "object",
@@ -278,12 +278,55 @@
     },
     "metadata": {
       "type": "object",
-      "patternProperties": {
-        ".+": {
-          "type": "object"
+      "description": "List dynamic metadata fields and hook locations in this table.",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/metadata"
+        },
+        "description": {
+          "$ref": "#/$defs/metadata"
+        },
+        "license": {
+          "$ref": "#/$defs/metadata"
+        },
+        "readme": {
+          "$ref": "#/$defs/metadata"
+        },
+        "requires-python": {
+          "$ref": "#/$defs/metadata"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/metadata"
+        },
+        "optional-dependencies": {
+          "$ref": "#/$defs/metadata"
+        },
+        "entrypoints": {
+          "$ref": "#/$defs/metadata"
+        },
+        "authors": {
+          "$ref": "#/$defs/metadata"
+        },
+        "maintainers": {
+          "$ref": "#/$defs/metadata"
+        },
+        "urls": {
+          "$ref": "#/$defs/metadata"
+        },
+        "classifiers": {
+          "$ref": "#/$defs/metadata"
+        },
+        "keywords": {
+          "$ref": "#/$defs/metadata"
+        },
+        "scripts": {
+          "$ref": "#/$defs/metadata"
+        },
+        "gui-scripts": {
+          "$ref": "#/$defs/metadata"
         }
-      },
-      "description": "List dynamic metadata fields and hook locations in this table."
+      }
     },
     "strict-config": {
       "type": "boolean",
@@ -378,6 +421,19 @@
           "build-dir": {
             "$ref": "#/properties/build-dir"
           }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "provider-path": {
+          "type": "string"
         }
       }
     }
