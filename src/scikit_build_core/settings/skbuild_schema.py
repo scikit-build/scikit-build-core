@@ -21,7 +21,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     from .skbuild_model import ScikitBuildSettings
 
     schema = {
-        "$schema": "http://json-schema.org/draft-07/schema",
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": "https://github.com/scikit-build/scikit-build-core/blob/main/src/scikit_build_core/resources/scikit-build.schema.json",
         "description": "Scikit-build-core's settings.",
         **to_json_schema(ScikitBuildSettings, normalize_keys=True),
@@ -51,7 +51,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     schema["properties"]["overrides"] = {
         "type": "array",
         "items": {
-            "type: ": "object",
+            "type": "object",
             "required": ["if"],
             "minProperties": 2,
             "additionalProperties": False,
