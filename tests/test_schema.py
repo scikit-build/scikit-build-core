@@ -58,6 +58,9 @@ def test_valid_schemas_files(filepath: Path) -> None:
                 }
             ]
         },
+        {"metadata": {"version": {"provider-path": True}}},
+        {"metadata": {"version": {"provider": 2}}},
+        {"metadata": {"invalid": {"provider": "correct"}}},
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -77,6 +80,7 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
     example["tool"]["scikit-build"].update(**addition)
 
     validator = api.Validator()
+    print(example)
     with pytest.raises(fastjsonschema.JsonSchemaValueException):
         validator(example)
 
@@ -94,6 +98,8 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
                 }
             ]
         },
+        {"metadata": {"version": {"provider-path": "string"}}},
+        {"metadata": {"description": {"anything": True}}},
     ],
 )
 def test_valid_schemas(addition: dict[str, Any]) -> None:

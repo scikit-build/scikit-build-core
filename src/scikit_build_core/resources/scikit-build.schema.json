@@ -278,12 +278,55 @@
     },
     "metadata": {
       "type": "object",
-      "patternProperties": {
-        ".+": {
-          "type": "object"
+      "description": "List dynamic metadata fields and hook locations in this table.",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/metadata"
+        },
+        "description": {
+          "$ref": "#/$defs/metadata"
+        },
+        "license": {
+          "$ref": "#/$defs/metadata"
+        },
+        "readme": {
+          "$ref": "#/$defs/metadata"
+        },
+        "requires-python": {
+          "$ref": "#/$defs/metadata"
+        },
+        "dependencies": {
+          "$ref": "#/$defs/metadata"
+        },
+        "optional-dependencies": {
+          "$ref": "#/$defs/metadata"
+        },
+        "entrypoints": {
+          "$ref": "#/$defs/metadata"
+        },
+        "authors": {
+          "$ref": "#/$defs/metadata"
+        },
+        "maintainers": {
+          "$ref": "#/$defs/metadata"
+        },
+        "urls": {
+          "$ref": "#/$defs/metadata"
+        },
+        "classifiers": {
+          "$ref": "#/$defs/metadata"
+        },
+        "keywords": {
+          "$ref": "#/$defs/metadata"
+        },
+        "scripts": {
+          "$ref": "#/$defs/metadata"
+        },
+        "gui-scripts": {
+          "$ref": "#/$defs/metadata"
         }
-      },
-      "description": "List dynamic metadata fields and hook locations in this table."
+      }
     },
     "strict-config": {
       "type": "boolean",
@@ -307,7 +350,7 @@
     "overrides": {
       "type": "array",
       "items": {
-        "type: ": "object",
+        "type": "object",
         "required": [
           "if"
         ],
@@ -378,6 +421,19 @@
           "build-dir": {
             "$ref": "#/properties/build-dir"
           }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "provider-path": {
+          "type": "string"
         }
       }
     }
