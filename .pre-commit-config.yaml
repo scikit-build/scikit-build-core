@@ -74,6 +74,7 @@ repos:
         additional_dependencies:
           - build
           - cattrs
+          - click
           - cmake
           - exceptiongroup
           - hatch-fancy-pypi-readme

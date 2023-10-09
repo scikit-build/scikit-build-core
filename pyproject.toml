@@ -49,7 +49,11 @@ pyproject = [
     "pathspec >=0.10.1",
     "pyproject-metadata >=0.5",
 ]
+cli = [
+    "click",
+]
 test = [
+    "scikit-build-core[cli]",
     "build[virtualenv]",
     "cattrs >=22.2.0",
     "pathspec >=0.10.1",
@@ -110,6 +114,9 @@ Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 "distutils.setup_keywords".cmake_args = "scikit_build_core.setuptools.build_cmake:cmake_args"
 "setuptools.finalize_distribution_options".scikit_build_entry = "scikit_build_core.setuptools.build_cmake:finalize_distribution_options"
 "validate_pyproject.tool_schema".scikit-build = "scikit_build_core.settings.skbuild_schema:get_skbuild_schema"
+
+[project.scripts]
+skbuild = "scikit_build_core.__main__:run_cli"
 
 [tool.hatch]
 version.source = "vcs"
