@@ -99,6 +99,7 @@ docs = [
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
     "sphinx-autodoc-typehints",
+    "sphinx-click",
 ]
 
 [project.urls]

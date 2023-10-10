@@ -15,6 +15,8 @@ BuildRequires:  ninja-build
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 BuildRequires:  git
+# Documentation dependencies
+BuildRequires:  python3dist(click-man)
 
 %global _description %{expand:
 A next generation Python CMake adaptor and Python API for plugins
@@ -51,6 +53,7 @@ Suggests:       gcc
 %install
 %pyproject_install
 %pyproject_save_files scikit_build_core
+PYTHONPATH="%{buildroot}%{python3_sitelib}" click-man skbuild --target %{buildroot}%{_mandir}/man1
 
 
 %check
@@ -62,6 +65,7 @@ Suggests:       gcc
 %license LICENSE
 %doc README.md
 %exclude %{python3_sitelib}/scikit_build_core/__main__.py
+%{_mandir}/man1/skbuild*.1*
 
 %files -n python3-scikit-build-core+cli -f %{_pyproject_ghost_distinfo}
 %{python3_sitelib}/scikit_build_core/__main__.py

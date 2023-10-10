@@ -32,6 +32,7 @@ changelog
 :caption: API docs
 
 api/scikit_build_core
+cli/index
 ```
 
 ## Indices and tables
