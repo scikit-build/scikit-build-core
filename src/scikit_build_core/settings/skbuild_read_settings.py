@@ -42,7 +42,7 @@ def regex_match(value: str, match: str) -> str:
     """
     Returns a non-empty string if a value matches a regex.
     """
-    did_match = re.compile(match).match(value) is not None
+    did_match = re.compile(match).search(value) is not None
     return f"{match!r} matched {value}" if did_match else ""
 
 
@@ -52,6 +52,7 @@ def override_match(
     implementation_version: str | None = None,
     platform_system: str | None = None,
     platform_machine: str | None = None,
+    platform_node: str | None = None,
 ) -> bool:
     matches = []
 
@@ -84,6 +85,11 @@ def override_match(
     if platform_machine is not None:
         current_platform_machine = platform.machine()
         match_msg = regex_match(current_platform_machine, platform_machine)
+        matches.append(match_msg)
+
+    if platform_node is not None:
+        current_platform_node = platform.node()
+        match_msg = regex_match(current_platform_node, platform_node)
         matches.append(match_msg)
 
     if not matches:
