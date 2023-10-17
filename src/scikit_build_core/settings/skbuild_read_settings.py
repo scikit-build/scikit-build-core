@@ -42,7 +42,7 @@ def regex_match(value: str, match: str) -> str:
     """
     Returns a non-empty string if a value matches a regex.
     """
-    did_match = re.compile(match).match(value) is not None
+    did_match = re.compile(match).search(value) is not None
     return f"{match!r} matched {value}" if did_match else ""
 
 

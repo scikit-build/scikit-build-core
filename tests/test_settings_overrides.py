@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from scikit_build_core.settings.skbuild_read_settings import SettingsReader
+from scikit_build_core.settings.skbuild_read_settings import SettingsReader, regex_match
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
@@ -106,7 +106,7 @@ def test_skbuild_overrides_platnode(
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
     settings = settings_reader.settings
 
-    if platform_node == "matchthis":
+    if platform_node == "matchthat":
         assert settings.experimental
     else:
         assert not settings.experimental
@@ -205,3 +205,13 @@ def test_skbuild_overrides_invalid_key(
     settings = SettingsReader.from_file(pyproject_toml, {})
     with pytest.raises(SystemExit):
         settings.validate_may_exit()
+
+
+@pytest.mark.parametrize("regex", ["is", "this", "^this", "string$"])
+def test_regex_match(regex: str):
+    assert regex_match("this_is_a_string", regex)
+
+
+@pytest.mark.parametrize("regex", ["^string", "this$", "other"])
+def test_not_regex_match(regex: str):
+    assert not regex_match("this_is_a_string", regex)
