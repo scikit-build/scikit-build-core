@@ -87,7 +87,7 @@ def test_skbuild_overrides_dual(
 
 
 @pytest.mark.parametrize("platform_node", ["thismatch", "matchthat"])
-def test_skbuild_overrides_pyver(
+def test_skbuild_overrides_platnode(
     platform_node: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setattr("platform.node", lambda: platform_node)
