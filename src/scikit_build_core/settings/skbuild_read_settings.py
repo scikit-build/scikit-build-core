@@ -52,6 +52,7 @@ def override_match(
     implementation_version: str | None = None,
     platform_system: str | None = None,
     platform_machine: str | None = None,
+    platform_node: str | None = None,
 ) -> bool:
     matches = []
 
@@ -84,6 +85,11 @@ def override_match(
     if platform_machine is not None:
         current_platform_machine = platform.machine()
         match_msg = regex_match(current_platform_machine, platform_machine)
+        matches.append(match_msg)
+
+    if platform_node is not None:
+        current_platform_node = platform.node()
+        match_msg = regex_match(current_platform_node, platform_node)
         matches.append(match_msg)
 
     if not matches:

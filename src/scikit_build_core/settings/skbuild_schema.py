@@ -101,6 +101,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                         "implementation-version": {"type": "string"},
                         "platform-system": {"type": "string"},
                         "platform-machine": {"type": "string"},
+                        "platform-node": {"type": "string"},
                     },
                 },
                 **props,
