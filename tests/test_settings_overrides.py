@@ -86,6 +86,32 @@ def test_skbuild_overrides_dual(
         assert not settings.install.components
 
 
+@pytest.mark.parametrize("platform_node", ["thismatch", "matchthat"])
+def test_skbuild_overrides_pyver(
+    platform_node: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("platform.node", lambda: platform_node)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.platform-node = "^match"
+            experimental = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if platform_node == "matchthis":
+        assert settings.experimental
+    else:
+        assert not settings.experimental
+
+
 @pytest.mark.parametrize("platform_machine", ["x86_64", "x86_32", "other"])
 def test_skbuild_overrides_regex(
     platform_machine: str,
