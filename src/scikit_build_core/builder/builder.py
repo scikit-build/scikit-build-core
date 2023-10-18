@@ -85,7 +85,7 @@ class Builder:
         return [*self.settings.cmake.args, *env_cmake_args]
 
     def get_generator(self, *args: str) -> str | None:
-        return self.config.get_generator(*self.get_cmake_args(*args))
+        return self.config.get_generator(*self.get_cmake_args(), *args)
 
     def configure(
         self,
