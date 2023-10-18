@@ -200,13 +200,14 @@ class CMaker:
         cmake_args: Sequence[str] = (),
     ) -> None:
         _cmake_args = self._compute_cmake_args(defines or {})
+        all_args = [*_cmake_args, *cmake_args]
 
-        gen = self.get_generator(*_cmake_args, *cmake_args)
+        gen = self.get_generator(*all_args)
         if gen:
             self.single_config = gen == "Ninja" or "Makefiles" in gen
 
         try:
-            Run(env=self.env).live(self.cmake, *_cmake_args, *cmake_args)
+            Run(env=self.env).live(self.cmake, *all_args)
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
