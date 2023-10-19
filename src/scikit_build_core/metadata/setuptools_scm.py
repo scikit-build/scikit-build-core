@@ -25,11 +25,25 @@ def dynamic_metadata(
     from setuptools_scm import Configuration, _get_version
 
     config = Configuration.from_file("pyproject.toml")
-    version: str
+    version: str | None
     try:
         version = _get_version(config, force_write_version_files=True)
     except TypeError:  # setuptools_scm < 8
         version = _get_version(config)
+
+    if version is None:
+        msg = (
+            f"setuptools-scm was unable to detect version for {config.absolute_root}.\n\n"
+            "Make sure you're either building from a fully intact git repository "
+            "or PyPI tarballs. Most other sources (such as GitHub's tarballs, a "
+            "git checkout without the .git folder) don't contain the necessary "
+            "metadata and will not work.\n\n"
+            "For example, if you're using pip, instead of "
+            "https://github.com/user/proj/archive/master.zip "
+            "use git+https://github.com/user/proj.git#egg=proj"
+        )
+
+        raise ValueError(msg)
 
     return version
 
