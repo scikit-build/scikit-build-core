@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -138,8 +137,7 @@ class BuildCMake(setuptools.Command):
             orig_macos = normalize_macos_version(orig_macos_str, arm=arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
-        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
-        builder.config.build_type = "Debug" if debug else settings.cmake.build_type
+        builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
 
         builder.configure(
             name=dist.get_name(),
