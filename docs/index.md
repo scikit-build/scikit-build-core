@@ -23,6 +23,8 @@ configuration
 cmakelists
 crosscompile
 migration_guide
+build
+faqs
 changelog
 ```
 
