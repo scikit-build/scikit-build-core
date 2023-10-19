@@ -243,12 +243,12 @@ def _build_wheel_impl(
 
         assert wheel_directory is not None
 
-        generator = builder.config.env.get(
-            "CMAKE_GENERATOR",
+        default_gen = (
             "MSVC"
             if sysconfig.get_platform().startswith("win")
-            else "Default generator",
+            else "Default Generator"
         )
+        generator = builder.get_generator() or default_gen
         rich_print(
             f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
         )
