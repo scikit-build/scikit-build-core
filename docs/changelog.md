@@ -1,5 +1,30 @@
 # Changelog
 
+## Version 0.6.0
+
+Features:
+
+- Adding overrides by @henryiii in #514
+- Overrides platform node by @0xTowel in #526
+- Support `importlib.resources` in editable installs by @LecrisUT in #399
+
+Fixes:
+
+- Better handling for -G by @henryiii in #483
+- Nicer error message when SCm version missing by @henryiii in #528
+- (schema) Fix a typo and better metadata support by @henryiii in #522
+- (setuptools) Remove `DEBUG` envvar by @henryiii in #527
+
+Tests and internal:
+
+- Use virtualenv instead by @henryiii in #371
+- Pre-commit update & a couple of touchups by @henryiii in #519
+
+Docs:
+
+- Clarify verbosity when using `pip` by @LecrisUT in #513
+- Build process and faq by @henryiii in #529
+
 ## Version 0.5.1
 
 Features:
