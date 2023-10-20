@@ -584,7 +584,7 @@ specify a `tool.scikit-build.overrides` array with an `if` key. That if key can
 take several values, based on [PEP 508][]:
 
 - `python_version`: The two-digit Python version. Takes a specifier set.
-- `sys_platform`: The value of `sys.platform`. Takes a regex.
+- `platform_system`: The value of `sys.platform`. Takes a regex.
 - `platform_machine`: The value of `platform.machine()`. Takes a regex.
 - `platform_node`: The value of `platform.node()`. Takes a regex.
 - `implementation_name`: The value of `sys.implementation.name`. Takes a regex.
