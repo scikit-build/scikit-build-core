@@ -29,7 +29,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
+    rev: 23.10.0
     hooks:
       - id: black-jupyter
 
@@ -54,13 +54,13 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.6.0
+    rev: v1.6.1
     hooks:
       - id: mypy
         exclude: |
