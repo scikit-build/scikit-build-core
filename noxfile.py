@@ -223,6 +223,10 @@ def downstream(session: nox.Session) -> None:
     parser = argparse.ArgumentParser(prog=f"{Path(sys.argv[0]).name} -s downstream")
     parser.add_argument("project", help="A project to build")
     parser.add_argument("--subdir", help="A subdirectory to build")
+    parser.add_argument(
+        "--editable", action="store_true", help="Install as editable wheel"
+    )
+    parser.add_argument("-c", dest="code", help="Run some Python code")
     args, remaining = parser.parse_known_args(session.posargs)
 
     tmp_dir = Path(session.create_tmp())
@@ -265,12 +269,20 @@ def downstream(session: nox.Session) -> None:
     if args.subdir:
         session.chdir(args.subdir)
 
-    session.run(
-        "python",
-        "-m",
-        "build",
-        "--no-isolation",
-        "--skip-dependency-check",
-        "--wheel",
-        ".",
-    )
+    if args.editable:
+        session.install("-e.")
+    else:
+        session.run(
+            "python",
+            "-m",
+            "build",
+            "--no-isolation",
+            "--skip-dependency-check",
+            "--wheel",
+            ".",
+        )
+        if args.code:
+            session.error("Must use editable install for code at the moment")
+
+    if args.code:
+        session.run("python", "-c", args.code)
