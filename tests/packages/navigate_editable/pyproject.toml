@@ -10,4 +10,4 @@ dependencies = [
 ]
 
 [tool.scikit-build]
-wheel.packages = ["python/shared_pkg"]
+wheel.packages = ["python/shared_pkg", "python/py_pkg"]
