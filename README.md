@@ -268,7 +268,7 @@ strict-config = true
 experimental = false
 
 # If set, this will provide a method for backward compatibility.
-minimum-version = "0.5"  # current version
+minimum-version = "0.6"  # current version
 
 # The build directory. Defaults to a temporary directory, but can be set.
 build-dir = ""
