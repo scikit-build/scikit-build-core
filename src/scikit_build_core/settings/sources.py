@@ -203,7 +203,9 @@ class EnvSource:
         return bool(self.env.get(name, ""))
 
     def get_item(
-        self, *fields: str, is_dict: bool  # noqa: ARG002
+        self,
+        *fields: str,
+        is_dict: bool,  # noqa: ARG002
     ) -> str | dict[str, str]:
         name = self._get_name(*fields)
         if name in self.env:
@@ -243,7 +245,8 @@ class EnvSource:
         raise TypeError(msg)
 
     def unrecognized_options(
-        self, options: object  # noqa: ARG002
+        self,
+        options: object,  # noqa: ARG002
     ) -> Generator[str, None, None]:
         yield from ()
 
