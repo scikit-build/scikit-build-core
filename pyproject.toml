@@ -202,7 +202,6 @@ report.exclude_lines = [
 ignore = ["W002"]  # Triggers on __init__.py's
 
 [tool.ruff]
-typing-modules = ["scikit_build_core._compat.typing"]
 src = ["src"]
 exclude = []
 
@@ -237,7 +236,7 @@ select = [
     "FBT",         # flake8-boolean-trap
     "PYI",         # flake8-pyi
 ]
-extend-ignore = [
+ignore = [
     "PLR",     # Design rules for pylint
     "PLE1205", # Format check doesn't work with our custom logger
     "E501",    # Line too long
@@ -246,6 +245,7 @@ extend-ignore = [
     "PYI025",  # Wants Set to be renamed AbstractSet
 ]
 unfixable = ["T20", "F841"]
+typing-modules = ["scikit_build_core._compat.typing"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.Callable".msg = "Use collections.abc.Callable instead."
