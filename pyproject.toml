@@ -201,8 +201,12 @@ report.exclude_lines = [
 [tool.check-wheel-contents]
 ignore = ["W002"]  # Triggers on __init__.py's
 
-
 [tool.ruff]
+typing-modules = ["scikit_build_core._compat.typing"]
+src = ["src"]
+exclude = []
+
+[tool.ruff.lint]
 select = [
     "E", "F", "W", # flake8
     "B",           # flake8-bugbear
@@ -231,6 +235,7 @@ select = [
     "FLY",         # flynt
     "TRY",         # tryceratops
     "FBT",         # flake8-boolean-trap
+    "PYI",         # flake8-pyi
 ]
 extend-ignore = [
     "PLR",     # Design rules for pylint
@@ -238,13 +243,11 @@ extend-ignore = [
     "E501",    # Line too long
     "PT004",   # Incorrect, just usefixtures instead.
     "RUF009",  # Too easy to get a false positive
+    "PYI025",  # Wants Set to be renamed AbstractSet
 ]
-typing-modules = ["scikit_build_core._compat.typing"]
-src = ["src"]
 unfixable = ["T20", "F841"]
-exclude = []
 
-[tool.ruff.flake8-tidy-imports.banned-api]
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.Callable".msg = "Use collections.abc.Callable instead."
 "typing.Iterator".msg = "Use collections.abc.Iterator instead."
 "typing.Mapping".msg = "Use collections.abc.Mapping instead."
@@ -268,7 +271,7 @@ exclude = []
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
