@@ -77,10 +77,12 @@ def generate_schema(session: nox.Session) -> None:
     (Re)generate src/scikit_build_core/resources/scikit-build.schema.json from model.
     """
     session.install("-e.")
-    schema = session.run(
+    schema_txt = session.run(
         "python", "-m", "scikit_build_core.settings.skbuild_schema", silent=True
     )
-    DIR.joinpath("src/scikit_build_core/resources/scikit-build.schema.json").write_text(schema)  # type: ignore[arg-type]
+    assert isinstance(schema_txt, str)
+    schema_file = DIR / "src/scikit_build_core/resources/scikit-build.schema.json"
+    schema_file.write_text(schema_txt)
 
 
 @nox.session
