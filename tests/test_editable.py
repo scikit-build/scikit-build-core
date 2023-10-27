@@ -1,6 +1,6 @@
+import shutil
 import sys
 from pathlib import Path
-import shutil
 
 import pytest
 from conftest import PackageInfo, VEnv, process_package
