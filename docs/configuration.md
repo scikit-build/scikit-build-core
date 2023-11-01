@@ -583,12 +583,12 @@ Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
 specify a `tool.scikit-build.overrides` array with an `if` key. That if key can
 take several values, based on [PEP 508][]:
 
-- `python_version`: The two-digit Python version. Takes a specifier set.
-- `sys_platform`: The value of `sys.platform`. Takes a regex.
-- `platform_machine`: The value of `platform.machine()`. Takes a regex.
-- `platform_node`: The value of `platform.node()`. Takes a regex.
-- `implementation_name`: The value of `sys.implementation.name`. Takes a regex.
-- `implementation_version`: Derived from `sys.implementation.version`, following
+- `python-version`: The two-digit Python version. Takes a specifier set.
+- `platform-system`: The value of `sys.platform`. Takes a regex.
+- `platform-machine`: The value of `platform.machine()`. Takes a regex.
+- `platform-node`: The value of `platform.node()`. Takes a regex.
+- `implementation-name`: The value of `sys.implementation.name`. Takes a regex.
+- `implementation-version`: Derived from `sys.implementation.version`, following
   PEP 508. Takes a specifier set.
 
 At least one must be provided. Then you can specify any collection of valid
@@ -597,7 +597,7 @@ will match top to bottom, overriding previous matches. For example:
 
 ```toml
 [[tool.scikit-build.overrides]]
-if.sys_platform = "darwin"
+if.sys-platform = "darwin"
 cmake.minimum-version = "3.18"
 ```
 
