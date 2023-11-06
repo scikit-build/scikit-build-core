@@ -116,7 +116,7 @@ class WheelTag:
 
     def as_tags_set(self) -> frozenset[packaging.tags.Tag]:
         vals = itertools.product(self.pyvers, self.abis, self.archs)
-        return frozenset(packaging.tags.Tag(*v) for v in vals)
+        return frozenset(itertools.starmap(packaging.tags.Tag, vals))
 
 
 if __name__ == "__main__":

@@ -69,10 +69,10 @@ class ScikitBuildLogger:
     def log(self, level: int, msg: str, *args: object, **kwargs: object) -> None:
         self.logger.log(level, FStringMessage(msg, *args, **kwargs), **opts)
 
-    def setLevel(self, level: int) -> None:
+    def setLevel(self, level: int) -> None:  # noqa: N802
         self.logger.setLevel(level)
 
-    def addHandler(self, handler: logging.Handler) -> None:
+    def addHandler(self, handler: logging.Handler) -> None:  # noqa: N802
         self.logger.addHandler(handler)
 
 

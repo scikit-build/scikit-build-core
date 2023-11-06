@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 import pytest
 from packaging.version import Version
 
-from scikit_build_core.settings.json_schema import FailedConversion, convert_type
+from scikit_build_core.settings.json_schema import FailedConversionError, convert_type
 
 
 def test_convert_str():
@@ -57,5 +57,5 @@ def test_convert_dict():
 
 
 def test_convert_invalid():
-    with pytest.raises(FailedConversion):
+    with pytest.raises(FailedConversionError):
         convert_type(object, normalize_keys=False)
