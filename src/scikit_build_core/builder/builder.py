@@ -21,7 +21,7 @@ from .sysconfig import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, Sequence
+    from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.version import Version
 
@@ -69,6 +69,20 @@ def archs_to_tags(archs: list[str]) -> list[str]:
     return archs
 
 
+def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, None]:
+    """
+    Filter out CMake arguments that are not supported from CMAKE_ARGS.
+    """
+
+    unsupported_args = ("-DCMAKE_BUILD_TYPE", "-DCMAKE_INSTALL_PREFIX")
+
+    for arg in env_cmake_args:
+        if arg.startswith(unsupported_args):
+            logger.warning("Unsupported CMAKE_ARGS ignored: {}", arg)
+        else:
+            yield arg
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
@@ -80,9 +94,13 @@ class Builder:
         """
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
-        env_cmake_args = filter(None, self.config.env.get("CMAKE_ARGS", "").split(" "))
+        env_cmake_args = list(
+            filter(None, self.config.env.get("CMAKE_ARGS", "").split(" "))
+        )
+        if env_cmake_args:
+            logger.debug("Env CMAKE_ARGS: {}", env_cmake_args)
 
-        return [*self.settings.cmake.args, *env_cmake_args]
+        return [*self.settings.cmake.args, *_filter_env_cmake_args(env_cmake_args)]
 
     def get_generator(self, *args: str) -> str | None:
         return self.config.get_generator(*self.get_cmake_args(), *args)
