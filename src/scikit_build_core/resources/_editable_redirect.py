@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     else:
         from typing import TypedDict
 
-    class KWDict_1(TypedDict, total=False):
+    class KWDict_1(TypedDict, total=False):  # noqa: N801
         submodule_search_locations: list[str]
 
 else:

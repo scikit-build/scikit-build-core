@@ -203,48 +203,59 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 [tool.ruff]
 src = ["src"]
-exclude = []
+exclude = []  # Required due to "build" module
 
 [tool.ruff.lint]
-select = [
-    "E", "F", "W", # flake8
-    "B",           # flake8-bugbear
-    "I",           # isort
+extend-select = [
+    "ANN",         # flake8-annotations
     "ARG",         # flake8-unused-arguments
+    "B",           # flake8-bugbear
     "C4",          # flake8-comprehensions
     "EM",          # flake8-errmsg
+    "FBT",         # flake8-boolean-trap
+    "FLY",         # flynt
+    "I",           # isort
     "ICN",         # flake8-import-conventions
     "ISC",         # flake8-implicit-str-concat
+    "N",           # flake8-naming
+    "PERF",        # perflint
     "PGH",         # pygrep-hooks
     "PIE",         # flake8-pie
     "PL",          # pylint
     "PT",          # flake8-pytest-style
     "PTH",         # flake8-use-pathlib
+    "PYI",         # flake8-pyi
     "RET",         # flake8-return
     "RUF",         # Ruff-specific
+    "S",        # eval -> literal_eval
     "SIM",         # flake8-simplify
-    "TID251",      # flake8-tidy-imports.banned-api
     "T20",         # flake8-print
+    "TCH",         # flake8-type-checking
+    "TID251",      # flake8-tidy-imports.banned-api
+    "TRY",         # tryceratops
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
-    "ANN204",      # Add -> None to __init__
-    "S307",        # eval -> literal_eval
-    "TCH",         # flake8-type-checking
-    "PERF",        # perflint
-    "FLY",         # flynt
-    "TRY",         # tryceratops
-    "FBT",         # flake8-boolean-trap
-    "PYI",         # flake8-pyi
+    # (in preview till 0.2.0) "FURB",        # refurb
 ]
 ignore = [
-    "PLR",     # Design rules for pylint
     "PLE1205", # Format check doesn't work with our custom logger
-    "E501",    # Line too long
     "PT004",   # Incorrect, just usefixtures instead.
     "RUF009",  # Too easy to get a false positive
     "PYI025",  # Wants Set to be renamed AbstractSet
+    "ISC001",  # Conflicts with formatter
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments
+    "PLR0915", # Too many local statements
+    "PLR2004", # Magic value used in comparison
+    "PLC0415", # Import should be at top of file
+    "ANN101",  # Missing type annotation for `self` in method
+    "ANN102",  # Missing type annotation for `cls` in classmethod
+    "ANN401",  # Disallow dynamically typed expressions
+    "S101",    # Use of assert detected
+    "S603",    # subprocess untrusted input
+    "S607",    # subprocess call
 ]
-unfixable = ["T20", "F841"]
 typing-modules = ["scikit_build_core._compat.typing"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
@@ -272,13 +283,15 @@ typing-modules = ["scikit_build_core._compat.typing"]
 
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20"]
+"tests/**" = ["T20", "ANN"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
 "tests/conftest.py" = ["TID251"]
 "tests/packages/**.py" = ["TID251"]
 "docs/conf.py" = ["TID251"]
+"docs/examples/**" = ["ANN"]
+"src/scikit_build_core/file_api/model/*.py" = ["N"]
 
 
 [tool.check-sdist]

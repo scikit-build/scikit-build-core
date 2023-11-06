@@ -11,14 +11,14 @@ from .._compat.builtins import ExceptionGroup
 from .._compat.typing import Literal, get_args, get_origin
 from .documentation import pull_docs
 
-__all__ = ["to_json_schema", "convert_type", "FailedConversion"]
+__all__ = ["to_json_schema", "convert_type", "FailedConversionError"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-class FailedConversion(TypeError):
+class FailedConversionError(TypeError):
     pass
 
 
@@ -36,7 +36,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
 
         try:
             props[field.name] = convert_type(field.type, normalize_keys=normalize_keys)
-        except FailedConversion as err:
+        except FailedConversionError as err:
             if sys.version_info < (3, 11):
                 notes = "__notes__"  # set so linter's won't try to be clever
                 setattr(err, notes, [*getattr(err, notes, []), f"Field: {field.name}"])
@@ -119,4 +119,4 @@ def convert_type(t: Any, *, normalize_keys: bool) -> dict[str, Any]:
         return {"enum": list(args)}
 
     msg = f"Cannot convert type {t} to JSON Schema"
-    raise FailedConversion(msg)
+    raise FailedConversionError(msg)

@@ -19,7 +19,7 @@ if sys.version_info < (3, 11):
     else:
         Self = object
 
-        def assert_never(_: typing.Any) -> None:
+        def assert_never(_: object) -> None:
             msg = "Expected code to be unreachable"
             raise AssertionError(msg)
 

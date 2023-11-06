@@ -50,7 +50,7 @@ class Converter:
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
         if (
-            target in (CodeModel, Target, Cache, CMakeFiles, Directory)
+            target in {CodeModel, Target, Cache, CMakeFiles, Directory}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
@@ -91,9 +91,9 @@ class Converter:
             return self.make_class(item, target)  # type: ignore[return-value]
         origin = get_origin(target)
         if origin is not None:
-            if origin == list:
+            if origin is list:
                 return [self._convert_any(i, get_args(target)[0]) for i in item]  # type: ignore[return-value]
-            if origin == Union:
+            if origin is Union:
                 return self._convert_any(item, get_args(target)[0])  # type: ignore[no-any-return]
 
         return target(item)  # type: ignore[call-arg]

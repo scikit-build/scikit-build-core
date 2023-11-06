@@ -2,7 +2,6 @@
 This is the entry point for the build backend. Items in this module are designed for the build backend API.
 """
 
-
 from __future__ import annotations
 
 import sys

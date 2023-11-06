@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import textwrap
+from typing import Any
 
 from docutils import nodes
 from docutils.statemachine import StringList
@@ -12,7 +13,7 @@ class ConfTabs(SphinxDirective):
     required_arguments = 2
     final_argument_whitespace = True
 
-    def run(self):
+    def run(self) -> list[nodes.Node]:
         name, result = self.arguments
         env_name = f"SKBUILD_{name.replace('.', '_').replace('-', '_').upper()}"
         value_result = ast.literal_eval(result)
@@ -82,7 +83,7 @@ class ConfTabs(SphinxDirective):
         return [content]
 
 
-def setup(app):
+def setup(app: Any) -> dict[str, Any]:
     app.add_directive("conftabs", ConfTabs)
 
     return {

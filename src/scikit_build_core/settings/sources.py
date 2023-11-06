@@ -43,7 +43,6 @@ These are supported for JSON schema generation for the TOML, as well.
 Integers/floats would be easy to add, but haven't been needed yet.
 """
 
-
 from __future__ import annotations
 
 import dataclasses
@@ -125,9 +124,9 @@ def _get_inner_type(__target: type[Any]) -> type[Any]:
 
     raw_target = _get_target_raw_type(__target)
     target = _process_union(__target)
-    if raw_target == list:
+    if raw_target is list:
         return get_args(target)[0]  # type: ignore[no-any-return]
-    if raw_target == dict:
+    if raw_target is dict:
         return get_args(target)[1]  # type: ignore[no-any-return]
     msg = f"Expected a list or dict, got {target!r}"
     raise AssertionError(msg)
@@ -219,11 +218,11 @@ class EnvSource:
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
-        if raw_target == list:
+        if raw_target is list:
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
             ]
-        if raw_target == dict:
+        if raw_target is dict:
             items = (i.strip().split("=") for i in item.split(";"))
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
 
@@ -334,7 +333,7 @@ class ConfSource:
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
-        if raw_target == list:
+        if raw_target is list:
             if isinstance(item, list):
                 return [cls.convert(i, _get_inner_type(target)) for i in item]
             if isinstance(item, dict):
@@ -343,7 +342,7 @@ class ConfSource:
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
             ]
-        if raw_target == dict:
+        if raw_target is dict:
             assert not isinstance(item, (str, list))
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if isinstance(item, (list, dict)):
@@ -379,7 +378,7 @@ class ConfSource:
                 except KeyError:
                     yield keystr
                     continue
-            if _get_target_raw_type(outer_option) == dict:
+            if _get_target_raw_type(outer_option) is dict:
                 continue
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
@@ -393,7 +392,8 @@ class TOMLSource:
         self.prefixes = prefixes
         self.settings = _dig_not_strict(settings, *prefixes)
 
-    def _get_name(self, *fields: str) -> list[str]:
+    @staticmethod
+    def _get_name(*fields: str) -> list[str]:
         return [field.replace("_", "-") for field in fields]
 
     def has_item(self, *fields: str, is_dict: bool) -> bool:  # noqa: ARG002
@@ -500,7 +500,7 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            is_dict = _get_target_raw_type(field.type) == dict
+            is_dict = _get_target_raw_type(field.type) is dict
 
             for source in self.sources:
                 if source.has_item(*prefixes, field.name, is_dict=is_dict):
