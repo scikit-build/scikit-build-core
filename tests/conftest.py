@@ -25,13 +25,8 @@ else:
     import tomllib
 
 
-from typing import TYPE_CHECKING
-
 import pytest
 from packaging.requirements import Requirement
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent
@@ -161,21 +156,15 @@ class VEnv:
 
 
 @pytest.fixture()
-def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> Generator[VEnv, None, None]:
+def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
     path = tmp_path / "venv"
-    try:
-        yield VEnv(path, wheelhouse=pep518_wheelhouse)
-    finally:
-        shutil.rmtree(path, ignore_errors=True)
+    return VEnv(path, wheelhouse=pep518_wheelhouse)
 
 
 @pytest.fixture()
-def virtualenv(tmp_path: Path) -> Generator[VEnv, None, None]:
+def virtualenv(tmp_path: Path) -> VEnv:
     path = tmp_path / "venv"
-    try:
-        yield VEnv(path)
-    finally:
-        shutil.rmtree(path, ignore_errors=True)
+    return VEnv(path)
 
 
 @dataclasses.dataclass(frozen=True)

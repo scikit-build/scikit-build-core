@@ -17,15 +17,12 @@ from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
-from ..resources import resources
 from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
+from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
 from ._pathutil import (
-    is_valid_module,
     packages_to_file_mapping,
-    path_to_module,
-    scantree,
 )
 from ._scripts import process_script_dir
 from ._wheelfile import WheelWriter
@@ -34,11 +31,51 @@ from .generate import generate_file_contents
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from ..settings.skbuild_model import ScikitBuildSettings
+
 __all__ = ["_build_wheel_impl"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def _make_editable(
+    *,
+    builder: Builder,
+    libdir: Path,
+    mapping: dict[str, str],
+    name: str,
+    reload_dir: Path | None,
+    settings: ScikitBuildSettings,
+    wheel: WheelWriter,
+) -> None:
+    modules = mapping_to_modules(mapping, libdir)
+    installed = libdir_to_installed(libdir)
+
+    options = []
+    if not builder.config.single_config and builder.config.build_type:
+        options += ["--config", builder.config.build_type]
+    ext_build_opts = ["-v"] if builder.settings.cmake.verbose else []
+
+    editable_txt = editable_redirect(
+        modules=modules,
+        installed=installed,
+        reload_dir=reload_dir,
+        rebuild=settings.editable.rebuild,
+        verbose=settings.editable.verbose,
+        build_options=options + ext_build_opts,
+        install_options=options,
+    )
+
+    wheel.writestr(
+        f"_{name}_editable.py",
+        editable_txt.encode(),
+    )
+    wheel.writestr(
+        f"_{name}_editable.pth",
+        f"import _{name}_editable\n".encode(),
+    )
 
 
 def _get_packages(
@@ -286,48 +323,16 @@ def _build_wheel_impl(
             wheel.build(wheel_dirs)
 
             if editable:
-                modules = {
-                    path_to_module(Path(v).relative_to(wheel_dirs["platlib"])): str(
-                        Path(k).resolve()
-                    )
-                    for k, v in mapping.items()
-                    if is_valid_module(Path(v).relative_to(wheel_dirs["platlib"]))
-                }
-                installed = {
-                    path_to_module(v.relative_to(wheel_dirs["platlib"])): str(
-                        v.relative_to(wheel_dirs["platlib"])
-                    )
-                    for v in scantree(wheel_dirs["platlib"])
-                }
-                editable_py = resources / "_editable_redirect.py"
-                editable_txt = editable_py.read_text(encoding="utf-8")
-                reload_dir = (
-                    os.fspath(build_dir.resolve()) if settings.build_dir else None
-                )
-                options = []
-                if not builder.config.single_config and builder.config.build_type:
-                    options += ["--config", builder.config.build_type]
-                ext_build_opts = ["-v"] if builder.settings.cmake.verbose else []
+                reload_dir = build_dir.resolve() if settings.build_dir else None
 
-                arguments = (
-                    modules,
-                    installed,
-                    reload_dir,
-                    settings.editable.rebuild,
-                    settings.editable.verbose,
-                    options + ext_build_opts,
-                    options,
-                )
-                arguments_str = ", ".join(repr(x) for x in arguments)
-                editable_txt += f"\n\ninstall({arguments_str})\n"
-
-                wheel.writestr(
-                    f"_{normalized_name}_editable.py",
-                    editable_txt.encode("utf-8"),
-                )
-                wheel.writestr(
-                    f"_{normalized_name}_editable.pth",
-                    f"import _{normalized_name}_editable\n".encode(),
+                _make_editable(
+                    libdir=wheel_dirs["platlib"],
+                    mapping=mapping,
+                    reload_dir=reload_dir,
+                    builder=builder,
+                    settings=settings,
+                    wheel=wheel,
+                    name=normalized_name,
                 )
 
     if metadata_directory is not None:
