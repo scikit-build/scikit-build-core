@@ -70,7 +70,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 # Initialize the tree element if needed
                 submodule_search_locations.setdefault(parent, set())
                 # Add the parent path to the dictionary values
-                parent_path, _ = os.path.split(file)
+                parent_path = os.path.dirname(file)
                 if not parent_path:
                     # root modules are skipped so all files should be in a parent package
                     msg = f"Unexpected path to source file: {file} [{module}]"
