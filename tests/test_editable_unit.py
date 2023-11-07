@@ -27,11 +27,7 @@ class EditablePackage(NamedTuple):
 @pytest.fixture(
     params=[
         pytest.param(False, id="abs"),
-        pytest.param(
-            True,
-            marks=pytest.mark.xfail(strict=True, reason="Rel imports broken"),
-            id="rel",
-        ),
+        pytest.param(True, id="rel"),
     ]
 )
 def editable_package(
