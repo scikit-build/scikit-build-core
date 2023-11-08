@@ -42,7 +42,8 @@ def __dir__() -> list[str]:
 
 def _make_editable(
     *,
-    builder: Builder,
+    build_options: Sequence[str] = (),
+    install_options: Sequence[str] = (),
     libdir: Path,
     mapping: dict[str, str],
     name: str,
@@ -53,19 +54,14 @@ def _make_editable(
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
 
-    options = []
-    if not builder.config.single_config and builder.config.build_type:
-        options += ["--config", builder.config.build_type]
-    ext_build_opts = ["-v"] if builder.settings.cmake.verbose else []
-
     editable_txt = editable_redirect(
         modules=modules,
         installed=installed,
         reload_dir=reload_dir,
         rebuild=settings.editable.rebuild,
         verbose=settings.editable.verbose,
-        build_options=options + ext_build_opts,
-        install_options=options,
+        build_options=build_options,
+        install_options=install_options,
     )
 
     wheel.writestr(
@@ -143,11 +139,21 @@ def _build_wheel_impl(
     if exit_after_config:
         state = "sdist"
 
-    cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
+    if settings.wheel.cmake:
+        cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
+        cmake_msg = [f"using [blue]CMake {cmake.version}[/blue]"]
+    else:
+        cmake = None
+        cmake_msg = []
+
+    if settings.wheel.platlib is None:
+        targetlib = "platlib" if settings.wheel.cmake else "purelib"
+    else:
+        targetlib = "platlib" if settings.wheel.platlib else "purelib"
 
     rich_print(
         f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
-        f"using [blue]CMake {cmake.version}[/blue]",
+        *cmake_msg,
         f"[red]({state})[/red]",
     )
 
@@ -177,7 +183,7 @@ def _build_wheel_impl(
         logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {
-            "platlib": wheel_dir / "platlib",
+            targetlib: wheel_dir / targetlib,
             "data": wheel_dir / "data",
             "headers": wheel_dir / "headers",
             "scripts": wheel_dir / "scripts",
@@ -199,7 +205,7 @@ def _build_wheel_impl(
                 raise AssertionError(msg)
             install_dir = wheel_dir / settings.wheel.install_dir[1:]
         else:
-            install_dir = wheel_dirs["platlib"] / settings.wheel.install_dir
+            install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
 
         license_files = {
             x: x.read_bytes()
@@ -216,18 +222,6 @@ def _build_wheel_impl(
                 contents = generate_file_contents(gen, metadata)
                 gen.path.write_text(contents)
                 settings.sdist.include.append(str(gen.path))
-
-        config = CMaker(
-            cmake,
-            source_dir=settings.cmake.source_dir,
-            build_dir=build_dir,
-            build_type=settings.cmake.build_type,
-        )
-
-        builder = Builder(
-            settings=settings,
-            config=config,
-        )
 
         if wheel_directory is None and not exit_after_config:
             if metadata_directory is None:
@@ -262,38 +256,60 @@ def _build_wheel_impl(
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(contents, encoding="utf-8")
 
-        rich_print("[green]***[/green] [bold]Configuring CMake...")
-        defines: dict[str, str] = {}
-        cache_entries: dict[str, str | Path] = {
-            f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
-        }
-        cache_entries["SKBUILD_STATE"] = state
-        builder.configure(
-            defines=defines,
-            cache_entries=cache_entries,
-            name=metadata.name,
-            version=metadata.version,
-        )
+        build_options = []
+        install_options = []
 
-        if exit_after_config:
-            return WheelImplReturn("")
+        if cmake is not None:
+            config = CMaker(
+                cmake,
+                source_dir=settings.cmake.source_dir,
+                build_dir=build_dir,
+                build_type=settings.cmake.build_type,
+            )
+
+            builder = Builder(
+                settings=settings,
+                config=config,
+            )
+
+            rich_print("[green]***[/green] [bold]Configuring CMake...")
+            defines: dict[str, str] = {}
+            cache_entries: dict[str, str | Path] = {
+                f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
+            }
+            cache_entries["SKBUILD_STATE"] = state
+            builder.configure(
+                defines=defines,
+                cache_entries=cache_entries,
+                name=metadata.name,
+                version=metadata.version,
+            )
+
+            if exit_after_config:
+                return WheelImplReturn("")
+
+            default_gen = (
+                "MSVC"
+                if sysconfig.get_platform().startswith("win")
+                else "Default Generator"
+            )
+            generator = builder.get_generator() or default_gen
+            rich_print(
+                f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
+            )
+            build_args: list[str] = []
+            builder.build(build_args=build_args)
+
+            rich_print("[green]***[/green] [bold]Installing project into wheel...")
+            builder.install(install_dir)
+
+            if not builder.config.single_config and builder.config.build_type:
+                build_options += ["--config", builder.config.build_type]
+                install_options += ["--config", builder.config.build_type]
+            if builder.settings.cmake.verbose:
+                build_options.append("-v")
 
         assert wheel_directory is not None
-
-        default_gen = (
-            "MSVC"
-            if sysconfig.get_platform().startswith("win")
-            else "Default Generator"
-        )
-        generator = builder.get_generator() or default_gen
-        rich_print(
-            f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
-        )
-        build_args: list[str] = []
-        builder.build(build_args=build_args)
-
-        rich_print("[green]***[/green] [bold]Installing project into wheel...")
-        builder.install(install_dir)
 
         rich_print(f"[green]***[/green] [bold]Making {state}...")
         packages = _get_packages(
@@ -302,7 +318,7 @@ def _build_wheel_impl(
         )
         mapping = packages_to_file_mapping(
             packages=packages,
-            platlib_dir=wheel_dirs["platlib"],
+            platlib_dir=wheel_dirs[targetlib],
             include=settings.sdist.include,
             exclude=settings.sdist.exclude,
         )
@@ -326,10 +342,11 @@ def _build_wheel_impl(
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 
                 _make_editable(
-                    libdir=wheel_dirs["platlib"],
+                    build_options=build_options,
+                    install_options=install_options,
+                    libdir=wheel_dirs[targetlib],
                     mapping=mapping,
                     reload_dir=reload_dir,
-                    builder=builder,
                     settings=settings,
                     wheel=wheel,
                     name=normalized_name,

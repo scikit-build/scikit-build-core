@@ -294,6 +294,17 @@ def package_sdist_config(
     return package
 
 
+@pytest.fixture()
+def package_simple_purelib_package(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo(
+        "simple_purelib_package",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         # Ensure all tests using virtualenv are marked as such

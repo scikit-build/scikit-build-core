@@ -166,6 +166,17 @@ class WheelSettings:
     A list of license files to include in the wheel. Supports glob patterns.
     """
 
+    cmake: bool = True
+    """
+    If set to True (the default), CMake will be run before building the wheel.
+    """
+
+    platlib: Optional[bool] = None
+    """
+    Target the platlib or the purelib. If not set, the default is to target the
+    platlib if wheel.cmake is true, and the purelib otherwise.
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:

@@ -251,6 +251,16 @@ Globbing patterns are supported.
 wheel.license-files = ["LICENSE"]
 ```
 
+:::{note}
+
+There are two more settings that are primarily intended for `overrides` (see
+below). `wheel.cmake` defaults to `true`, and this enables/disables building
+with CMake. It also changes the default of `wheel.platlib` unless it's set
+explicitly; CMake builds assume `wheel.platlib = true`, and CMake-less builds
+assume `wheel.platlib = false` (purelib targeted instead).
+
+:::
+
 ## Customizing the output wheel
 
 The python API tags for your wheel will be correct assuming you are building a

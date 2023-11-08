@@ -123,11 +123,15 @@ def get_requires_for_build_wheel(
 
     requires = GetRequires(config_settings)
 
+    # These are only injected if cmake is required for the wheel step
+    cmake_requires = (
+        [*requires.cmake(), *requires.ninja()] if requires.settings.wheel.cmake else []
+    )
+
     return [
         "pathspec",
         "pyproject_metadata",
-        *requires.cmake(),
-        *requires.ninja(),
+        *cmake_requires,
         *requires.dynamic_metadata(),
     ]
 
@@ -139,10 +143,14 @@ def get_requires_for_build_editable(
 
     requires = GetRequires(config_settings)
 
+    # These are only injected if cmake is required for the wheel step
+    cmake_requires = (
+        [*requires.cmake(), *requires.ninja()] if requires.settings.wheel.cmake else []
+    )
+
     return [
         "pathspec",
         "pyproject_metadata",
-        *requires.cmake(),
-        *requires.ninja(),
+        *cmake_requires,
         *requires.dynamic_metadata(),
     ]
