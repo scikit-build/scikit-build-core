@@ -10,17 +10,6 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     import importlib.machinery
 
-    if sys.version_info < (3, 8):
-        from typing_extensions import TypedDict
-    else:
-        from typing import TypedDict
-
-    class KWDict_1(TypedDict, total=False):  # noqa: N801
-        submodule_search_locations: list[str]
-
-else:
-    KWDict_1 = dict
-
 
 DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
@@ -87,17 +76,12 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         path: object = None,
         target: object = None,
     ) -> importlib.machinery.ModuleSpec | None:
-        # If current item is a know package use its search locations, otherwise if it's a module use the parent's
-        parent = (
-            fullname if fullname in self.pkgs else ".".join(fullname.split(".")[:-1])
-        )
-        # If no known submodule_search_locations is found, it means it is a root module. Do not populate its kwargs
-        # in that case
-        kwargs = KWDict_1()
-        if parent in self.submodule_search_locations:
-            kwargs["submodule_search_locations"] = list(
-                self.submodule_search_locations[parent]
-            )
+        # If no known submodule_search_locations is found, it means it is a root
+        # module.
+        if fullname in self.submodule_search_locations:
+            submodule_search_locations = list(self.submodule_search_locations[fullname])
+        else:
+            submodule_search_locations = None
         if fullname in self.known_wheel_files:
             redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
@@ -105,11 +89,15 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             return importlib.util.spec_from_file_location(
                 fullname,
                 os.path.join(DIR, redir),
-                **kwargs,
+                submodule_search_locations=submodule_search_locations,
             )
         if fullname in self.known_source_files:
             redir = self.known_source_files[fullname]
-            return importlib.util.spec_from_file_location(fullname, redir, **kwargs)
+            return importlib.util.spec_from_file_location(
+                fullname,
+                redir,
+                submodule_search_locations=submodule_search_locations,
+            )
         return None
 
     def rebuild(self) -> None:
