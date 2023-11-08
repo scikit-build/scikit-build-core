@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import difflib
+import os
 import platform
 import re
 import sys
@@ -19,7 +20,6 @@ from .skbuild_model import ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
 if TYPE_CHECKING:
-    import os
     from collections.abc import Generator, Mapping
 
 __all__ = ["SettingsReader"]
@@ -27,6 +27,16 @@ __all__ = ["SettingsReader"]
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def strtobool(value: str) -> bool:
+    """
+    Converts a environment variable string into a boolean value.
+    """
+    value = value.lower()
+    if value.isdigit():
+        return bool(int(value))
+    return value in {"y", "yes", "on", "true", "t"}
 
 
 def version_match(value: str, match: str, name: str) -> str:
@@ -43,20 +53,24 @@ def regex_match(value: str, match: str) -> str:
     Returns a non-empty string if a value matches a regex.
     """
     did_match = re.compile(match).search(value) is not None
-    return f"{match!r} matched {value}" if did_match else ""
+    return f"{match!r} matched {value!r}" if did_match else ""
 
 
 def override_match(
     *,
     match_all: bool,
+    current_env: Mapping[str, str] | None,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
     platform_system: str | None = None,
     platform_machine: str | None = None,
     platform_node: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> bool:
     matches = []
+    if current_env is None:
+        current_env = os.environ
 
     if python_version is not None:
         current_python_version = ".".join(str(x) for x in sys.version_info[:2])
@@ -94,6 +108,21 @@ def override_match(
         match_msg = regex_match(current_platform_node, platform_node)
         matches.append(match_msg)
 
+    if env:
+        for key, value in env.items():
+            if isinstance(value, bool):
+                matches.append(
+                    f"env {key} is {value}"
+                    if strtobool(current_env.get(key, "")) == value
+                    else ""
+                )
+            elif key not in current_env:
+                matches.append("")
+            else:
+                current_value = current_env.get(key, "")
+                match_msg = regex_match(current_value, value)
+                matches.append(match_msg and f"env {key}: {match_msg}")
+
     if not matches:
         msg = "At least one override must be provided"
         raise ValueError(msg)
@@ -116,6 +145,7 @@ class SettingsReader:
         config_settings: Mapping[str, str | list[str]],
         *,
         verify_conf: bool = True,
+        env: Mapping[str, str] | None = None,
     ) -> None:
         pyproject = copy.deepcopy(pyproject)
 
@@ -133,10 +163,12 @@ class SettingsReader:
             if "any" in if_override:
                 any_override = if_override.pop("any")
                 select = {k.replace("-", "_"): v for k, v in any_override.items()}
-                matched = override_match(match_all=False, **select)
+                matched = override_match(match_all=False, current_env=env, **select)
             select = {k.replace("-", "_"): v for k, v in if_override.items()}
             if select:
-                matched = matched and override_match(match_all=True, **select)
+                matched = matched and override_match(
+                    match_all=True, current_env=env, **select
+                )
             if matched:
                 for key, value in override.items():
                     if isinstance(value, dict):

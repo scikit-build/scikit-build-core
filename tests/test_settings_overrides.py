@@ -1,9 +1,14 @@
-from pathlib import Path
+from __future__ import annotations
+
+import typing
 from textwrap import dedent
 
 import pytest
 
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader, regex_match
+
+if typing.TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
@@ -305,3 +310,95 @@ def test_regex_match(regex: str):
 @pytest.mark.parametrize("regex", ["^string", "this$", "other"])
 def test_not_regex_match(regex: str):
     assert not regex_match("this_is_a_string", regex)
+
+
+@pytest.mark.parametrize("envvar", ["BAR", "", None])
+def test_skbuild_env(
+    envvar: str | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    if envvar is None:
+        monkeypatch.delenv("FOO", raising=False)
+    else:
+        monkeypatch.setenv("FOO", envvar)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.env.FOO = "BAR"
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if envvar == "BAR":
+        assert settings.sdist.cmake
+    else:
+        assert not settings.sdist.cmake
+
+
+@pytest.mark.parametrize("envvar", ["tRUE", "3", "0", "", None])
+def test_skbuild_env_bool(
+    envvar: str | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    if envvar is None:
+        monkeypatch.delenv("FOO", raising=False)
+    else:
+        monkeypatch.setenv("FOO", envvar)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.env.FOO = true
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if envvar in {"tRUE", "3"}:
+        assert settings.sdist.cmake
+    else:
+        assert not settings.sdist.cmake
+
+
+@pytest.mark.parametrize("foo", ["true", "false"])
+@pytest.mark.parametrize("bar", ["true", "false"])
+@pytest.mark.parametrize("any", [True, False])
+def test_skbuild_env_bool_all_any(
+    foo: str, bar: str, any: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setenv("FOO", foo)
+    monkeypatch.setenv("BAR", bar)
+
+    any_str = ".any" if any else ""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            f"""\
+            [[tool.scikit-build.overrides]]
+            if{any_str}.env.FOO = true
+            if{any_str}.env.BAR = true
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if (foo == "true" and bar == "true") or any and (foo == "true" or bar == "true"):
+        assert settings.sdist.cmake
+    else:
+        assert not settings.sdist.cmake

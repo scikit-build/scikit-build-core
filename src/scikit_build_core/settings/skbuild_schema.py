@@ -94,6 +94,14 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
             "platform-system": {"type": "string"},
             "platform-machine": {"type": "string"},
             "platform-node": {"type": "string"},
+            "env": {
+                "type": "object",
+                "patternProperties": {
+                    ".*": {"oneOf": [{"type": "string"}, {"type": "boolean"}]}
+                },
+                "additionalProperties": False,
+                "minProperties": 1,
+            },
         },
     }
     schema["properties"]["overrides"] = {
