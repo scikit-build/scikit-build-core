@@ -601,6 +601,9 @@ if.sys-platform = "darwin"
 cmake.minimum-version = "3.18"
 ```
 
+If you use `if.any` instead of `if`, then the override is true if any one of the
+items in it are true.
+
 ## Full schema
 
 The full schema for the `tool.scikit-build` table is below:

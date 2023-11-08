@@ -86,6 +86,96 @@ def test_skbuild_overrides_dual(
         assert not settings.install.components
 
 
+@pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
+@pytest.mark.parametrize("platform_system", ["darwin", "linux"])
+def test_skbuild_overrides_any(
+    implementation_name: str,
+    platform_system: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        "sys.implementation", type("Mock", (), {"name": implementation_name})
+    )
+    monkeypatch.setattr("sys.platform", platform_system)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.any = {implementation-name = "pypy", platform-system = "darwin"}
+            editable.verbose = false
+            install.components = ["headers"]
+
+            [[tool.scikit-build.overrides]]
+            if.any.implementation-name = "cpython"
+            if.any.platform-system = "darwin"
+            install.components = ["bindings"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if implementation_name == "cpython" or platform_system == "darwin":
+        assert settings.editable.verbose == (
+            platform_system == "linux" and implementation_name == "cpython"
+        )
+        assert settings.install.components == ["bindings"]
+    elif implementation_name == "pypy" or platform_system == "darwin":
+        assert not settings.editable.verbose
+        assert settings.install.components == ["headers"]
+    else:
+        assert settings.editable.verbose
+        assert not settings.install.components
+
+
+@pytest.mark.parametrize("python_version", ["3.9", "3.10"])
+@pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
+@pytest.mark.parametrize("platform_system", ["darwin", "linux"])
+def test_skbuild_overrides_any_mixed(
+    implementation_name: str,
+    platform_system: str,
+    python_version: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        "sys.implementation", type("Mock", (), {"name": implementation_name})
+    )
+    monkeypatch.setattr("sys.platform", platform_system)
+    monkeypatch.setattr("sys.version_info", (*map(int, python_version.split(".")), 0))
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.any = {implementation-name = "pypy", platform-system = "darwin"}
+            if.python-version = ">=3.10"
+            editable.verbose = false
+            install.components = ["headers"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+
+    if python_version == "3.10" and (
+        implementation_name == "pypy" or platform_system == "darwin"
+    ):
+        assert not settings.editable.verbose
+        assert settings.install.components == ["headers"]
+    else:
+        assert settings.editable.verbose
+        assert not settings.install.components
+
+
 @pytest.mark.parametrize("platform_node", ["thismatch", "matchthat"])
 def test_skbuild_overrides_platnode(
     platform_node: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -164,7 +254,7 @@ def test_skbuild_overrides_no_if(
         encoding="utf-8",
     )
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError, match="At least one 'if' override must be provided"):
         SettingsReader.from_file(pyproject_toml, {})
 
 
@@ -183,7 +273,7 @@ def test_skbuild_overrides_empty_if(
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="At least one override must be provided"):
+    with pytest.raises(KeyError, match="At least one 'if' override must be provided"):
         SettingsReader.from_file(pyproject_toml, {})
 
 

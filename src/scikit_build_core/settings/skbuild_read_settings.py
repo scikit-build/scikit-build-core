@@ -47,6 +47,8 @@ def regex_match(value: str, match: str) -> str:
 
 
 def override_match(
+    *,
+    match_all: bool,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -96,9 +98,14 @@ def override_match(
         msg = "At least one override must be provided"
         raise ValueError(msg)
 
-    matched = all(matches)
-    if matched:
-        logger.info("Overrides {}", " and ".join(matches))
+    if match_all:
+        matched = all(matches)
+        if matched:
+            logger.info("Overrides {}", " and ".join(matches))
+    else:
+        matched = any(matches)
+        if matched:
+            logger.info("Overrides {}", " or ".join([m for m in matches if m]))
     return matched
 
 
@@ -115,8 +122,22 @@ class SettingsReader:
         # Process overrides into the main dictionary if they match
         tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
         for override in tool_skb.pop("overrides", []):
-            select = {k.replace("-", "_"): v for k, v in override.pop("if").items()}
-            if override_match(**select):
+            matched = True
+            if_override = override.pop("if", None)
+            if not if_override:
+                msg = "At least one 'if' override must be provided"
+                raise KeyError(msg)
+            if not isinstance(if_override, dict):
+                msg = "'if' override must be a table"
+                raise TypeError(msg)
+            if "any" in if_override:
+                any_override = if_override.pop("any")
+                select = {k.replace("-", "_"): v for k, v in any_override.items()}
+                matched = override_match(match_all=False, **select)
+            select = {k.replace("-", "_"): v for k, v in if_override.items()}
+            if select:
+                matched = matched and override_match(match_all=True, **select)
+            if matched:
                 for key, value in override.items():
                     if isinstance(value, dict):
                         for key2, value2 in value.items():
