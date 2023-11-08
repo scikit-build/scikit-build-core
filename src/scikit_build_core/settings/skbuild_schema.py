@@ -83,6 +83,19 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     }
 
     props = {k: {"$ref": f"#/properties/{k}"} for k in schema["properties"]}
+    schema["$defs"]["if_overrides"] = {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": False,
+        "properties": {
+            "python-version": {"type": "string"},
+            "implementation-name": {"type": "string"},
+            "implementation-version": {"type": "string"},
+            "platform-system": {"type": "string"},
+            "platform-machine": {"type": "string"},
+            "platform-node": {"type": "string"},
+        },
+    }
     schema["properties"]["overrides"] = {
         "type": "array",
         "items": {
@@ -92,17 +105,15 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
             "additionalProperties": False,
             "properties": {
                 "if": {
-                    "type": "object",
-                    "minProperties": 1,
-                    "additionalProperties": False,
-                    "properties": {
-                        "python-version": {"type": "string"},
-                        "implementation-name": {"type": "string"},
-                        "implementation-version": {"type": "string"},
-                        "platform-system": {"type": "string"},
-                        "platform-machine": {"type": "string"},
-                        "platform-node": {"type": "string"},
-                    },
+                    "anyOf": [
+                        {"$ref": "#/$defs/if_overrides"},
+                        {
+                            "type": "object",
+                            "properties": {"any": {"$ref": "#/$defs/if_overrides"}},
+                            "required": ["any"],
+                            "additionalProperties": False,
+                        },
+                    ]
                 },
                 **props,
             },
