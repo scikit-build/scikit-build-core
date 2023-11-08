@@ -283,7 +283,7 @@ typing-modules = ["scikit_build_core._compat.typing"]
 
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20", "ANN"]
+"tests/**" = ["T20", "ANN", "FBT001"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]

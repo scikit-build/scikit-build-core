@@ -590,6 +590,9 @@ take several values, based on [PEP 508][]:
 - `implementation-name`: The value of `sys.implementation.name`. Takes a regex.
 - `implementation-version`: Derived from `sys.implementation.version`, following
   PEP 508. Takes a specifier set.
+- `env`: A table of environment variables mapped to either string regexs, or
+  booleans. Valid "truthy" environment variables are case insensitive `true`,
+  `on`, `yes`, `y`, `t`, or a number more than 0.
 
 At least one must be provided. Then you can specify any collection of valid
 options, and those will override if all the items in the `if` are true. They

@@ -456,6 +456,23 @@
         },
         "platform-node": {
           "type": "string"
+        },
+        "env": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
         }
       }
     }
