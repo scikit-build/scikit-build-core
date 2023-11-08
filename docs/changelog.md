@@ -1,5 +1,24 @@
 # Changelog
 
+## Version 0.6.1
+
+Fixes:
+
+- Editable package imports fix (regression in 0.6.0) by @henryiii in #546
+- Filter `CMAKE_ARGS` and debug printout by @henryiii in #543
+
+Docs:
+
+- Fix bad config option name in `configuration.md` by @0xTowel in #530
+
+Tests and internal:
+
+- Add a bit to Ruff config by @henryiii in #544
+- Support editable installs in downstream nox check by @henryiii in #533
+- Use ruff-format by @henryiii in #536
+- Small updates from repo-review by @henryiii in #537
+- Refactor and unit test editable install by @henryiii in #545
+
 ## Version 0.6.0
 
 Features:
