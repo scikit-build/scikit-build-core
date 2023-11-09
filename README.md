@@ -13,10 +13,15 @@
 
 <!-- SPHINX-START -->
 
-Scikit-build-core is a ground-up rewrite of the classic Scikit-build, a bridge
-between Python package build systems and CMake, the most popular compiled
-language build system. The key features of scikit-build classic (which is
-setuptools based) are also present here:
+Scikit-build-core is a build backend for Python that uses CMake to build
+extension modules. It has a simple yet powerful static configuration system in
+pyproject.toml, and supports almost unlimited flexibility via CMake. It was
+initially developed to support the demanding needs of scientific users, but can
+build any sort of package that uses CMake.
+
+Scikit-build-core is a ground-up rewrite of the classic Scikit-build. The key
+features of scikit-build classic (which is setuptools based) are also present
+here:
 
 - Great support for or by most OSs, compilers, IDEs, and libraries
 - Support for C++ features and other languages like Fortran
@@ -291,6 +296,10 @@ backends:
 
 - [py-build-cmake][]: A different attempt at a standards compliant builder for
   CMake. Strong focus on cross-compilation. Uses Flit internals.
+- [cmeel][]: A different attempt at a standards compliant builder for CMake.
+  Focus on building an ecosystem around a special unimportable folder in
+  site-packages (similar to scikit-build's usage of `cmake.*` entrypoints, but
+  folder-based).
 - [meson-python][]: A meson-based build backend; has some maintainer overlap
   with scikit-build-core.
 - [maturin][]: A build backend for Rust projects, using Cargo.
@@ -311,6 +320,7 @@ Support for this work was provided by NSF cooperative agreement [OAC-2209877][].
 [actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
 [conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
+[cmeel]:                    https://github.com/cmake-wheel/cmeel
 [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
 [github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
 [discord-badge]:            https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23scikit-build
