@@ -47,7 +47,7 @@ def editable_redirect(
         build_options,
         install_options,
     )
-    arguments_str = ", ".join(repr(x) for x in arguments if x is not None)
+    arguments_str = ", ".join(repr(x) for x in arguments)
     editable_txt += f"\n\ninstall({arguments_str})\n"
     return editable_txt
 
