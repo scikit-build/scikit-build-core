@@ -142,12 +142,11 @@ class WheelWriter:
         }
 
     def build(self, wheel_dirs: dict[str, Path]) -> None:
-        assert "platlib" in wheel_dirs
-        assert "purelib" not in wheel_dirs
-        assert {"platlib", "data", "headers", "scripts", "null"} >= wheel_dirs.keys()
+        (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
+        assert {targetlib, "data", "headers", "scripts", "null"} >= wheel_dirs.keys()
 
-        # The "main" directory (platlib for us) will be handled specially below
-        plans = {"": wheel_dirs["platlib"]}
+        # The "main" directory (platlib usually for us) will be handled specially below
+        plans = {"": wheel_dirs[targetlib]}
         data_dir = f"{self.name_ver}.data"
 
         for key in sorted({"data", "headers", "scripts"} & wheel_dirs.keys()):

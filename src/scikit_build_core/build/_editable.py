@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import typing
 from pathlib import Path
 
 from ..resources import resources
@@ -9,6 +10,9 @@ from ._pathutil import (
     path_to_module,
     scantree,
 )
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = ["editable_redirect", "libdir_to_installed", "mapping_to_modules"]
 
@@ -24,8 +28,8 @@ def editable_redirect(
     reload_dir: Path | None,
     rebuild: bool,
     verbose: bool,
-    build_options: list[str],
-    install_options: list[str],
+    build_options: Sequence[str],
+    install_options: Sequence[str],
 ) -> str:
     """
     Prepare the contents of the _editable_redirect.py file.

@@ -226,6 +226,13 @@ wheel.install-dir = ""
 # A list of license files to include in the wheel. Supports glob patterns.
 wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
 
+# If set to True (the default), CMake will be run before building the wheel.
+wheel.cmake = true
+
+# Target the platlib or the purelib. If not set, the default is to target the
+# platlib if wheel.cmake is true, and the purelib otherwise.
+wheel.platlib = ""
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"

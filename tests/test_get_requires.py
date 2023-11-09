@@ -97,7 +97,19 @@ def test_get_requires_for_build_wheel(fp):
     assert set(get_requires_for_build_wheel({})) == expected
 
 
+def test_get_requires_for_build_wheel_pure(fp):
+    expected = {"pathspec", "pyproject_metadata"}
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == expected
+
+
 def test_get_requires_for_build_editable(fp):
     expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
     fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
     assert set(get_requires_for_build_editable({})) == expected
+
+
+def test_get_requires_for_build_editable_pure(fp):
+    expected = {"pathspec", "pyproject_metadata"}
+    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == expected
