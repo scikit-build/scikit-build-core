@@ -85,28 +85,25 @@ class CMaker:
             raise CMakeConfigError(msg)
 
         # If these were the same, the following check could wipe the source directory!
-        if self.build_dir.resolve() == self.source_dir.resolve():
-            msg = "build directory must be different from source directory"
-            raise CMakeConfigError(msg)
+        if self.build_dir.resolve() != self.source_dir.resolve():
+            skbuild_info = self.build_dir / ".skbuild-info.json"
+            # If building via SDist, this could be pre-filled, so delete it if it exists
+            with contextlib.suppress(FileNotFoundError):
+                with skbuild_info.open("r", encoding="utf-8") as f:
+                    info = json.load(f)
 
-        skbuild_info = self.build_dir / ".skbuild-info.json"
-        # If building via SDist, this could be pre-filled, so delete it if it exists
-        with contextlib.suppress(FileNotFoundError):
-            with skbuild_info.open("r", encoding="utf-8") as f:
-                info = json.load(f)
+                cached_source_dir = Path(info["source_dir"])
+                if cached_source_dir.resolve() != self.source_dir.resolve():
+                    logger.warning(
+                        "Original src {} != {}, wiping build directory",
+                        cached_source_dir,
+                        self.source_dir,
+                    )
+                    shutil.rmtree(self.build_dir)
+                    self.build_dir.mkdir()
 
-            cached_source_dir = Path(info["source_dir"])
-            if cached_source_dir.resolve() != self.source_dir.resolve():
-                logger.warning(
-                    "Original src {} != {}, wiping build directory",
-                    cached_source_dir,
-                    self.source_dir,
-                )
-                shutil.rmtree(self.build_dir)
-                self.build_dir.mkdir()
-
-        with skbuild_info.open("w", encoding="utf-8") as f:
-            json.dump(self._info_dict(), f, indent=2)
+            with skbuild_info.open("w", encoding="utf-8") as f:
+                json.dump(self._info_dict(), f, indent=2)
 
     def _info_dict(self) -> dict[str, str]:
         """

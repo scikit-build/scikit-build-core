@@ -136,6 +136,7 @@ def docs(session: nox.Session) -> None:
     extra_installs = ["sphinx-autobuild"] if args.serve else []
 
     session.install("-e.[docs,pyproject]", *extra_installs)
+    session.run("pip", "list")
     session.chdir("docs")
 
     if args.builder == "linkcheck":

@@ -186,10 +186,11 @@
       "properties": {
         "mode": {
           "enum": [
-            "redirect"
+            "redirect",
+            "inplace"
           ],
           "default": "redirect",
-          "description": "Select the editable mode to use. Currently only \"redirect\" is supported."
+          "description": "Select the editable mode to use. Can be \"redirect\" (default) or \"inplace\"."
         },
         "verbose": {
           "type": "boolean",

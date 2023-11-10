@@ -237,7 +237,7 @@ wheel.platlib = ""
 # disable this, or the empty string.
 backport.find-python = "3.26.1"
 
-# Select the editable mode to use. Currently only "redirect" is supported.
+# Select the editable mode to use. Can be "redirect" (default) or "inplace".
 editable.mode = "redirect"
 
 # Turn on verbose output for the editable mode rebuilds.

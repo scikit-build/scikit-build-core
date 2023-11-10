@@ -523,14 +523,15 @@ configuration. Recommendations:
 - Use `--no-build-isolation` when doing an editable install is recommended; you
   should preinstall your dependencies.
 - Automatic rebuilds do not have the original isolated build dir (pip deletes
-  it).
-- Select a `build-dir` when using editable installs, especially if you also
-  enable automatic rebuilds.
+  it), so select a `build-dir` when using editable installs, especially if you
+  also enable automatic rebuilds.
 - You need to reinstall to pick up new files.
 
 Known limitations:
 
 - Resources (via `importlib.resources`) are not properly supported (yet).
+  Currently experimentally supported except on Python 3.9 (3.7, 3.8, 3.10, 3.11,
+  and 3.12 work).
 
 ```console
 # Very experimental rebuild on initial import feature
@@ -545,11 +546,34 @@ You can disable the verbose rebuild output with `editable.verbose=false` if you
 want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;
 this will override if non-empty, and `"0"` will disable verbose output).
 
-Currently one `editable.mode` is provided, `"redirect"`, which uses a custom
-redirecting finder to combine the static CMake install dir with the original
-source code. Python code added via scikit-build-core's package discovery will be
-found in the original location, so changes there are picked up on import,
-regardless of the `editable.rebuild` setting.
+The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
+combine the static CMake install dir with the original source code. Python code
+added via scikit-build-core's package discovery will be found in the original
+location, so changes there are picked up on import, regardless of the
+`editable.rebuild` setting.
+
+:::{note}
+
+A second experimental mode, `"inplace"`, is also available. This does an
+in-place CMake build, so all the caveats there apply too -- only one build per
+source directory, you can't change to an out-of-source builds without removing
+the build artifacts, your source directory will be littered with build
+artifacts, etc. Also, to make your binaries importable, you should set
+`LIBRARY_OUTPUT_DIRECTORY` (and `RUNTIME_OUTPUT_DIRECTORY_<CONFIG>` for
+multi-config generator support, like MSVC) to make sure they are placed inside
+your source directory inside the Python packages; this will be run from the
+build directory, rather than installed. This will also not support automatic
+rebuilds. The build directory setting must be empty/unset to use this.
+
+With all the caveats, this is very logically simple (one directory) and a near
+identical replacement for `python setup.py build_ext --inplace`. Some third
+party tooling might work better with this mode. Scikit-build-core will simply
+install a `.pth` file that points at your source package(s) and do an inplace
+CMake build.
+
+On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
+
+:::
 
 ## Other options
 
