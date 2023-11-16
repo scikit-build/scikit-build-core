@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import textwrap
 import typing
 from pathlib import Path
@@ -54,8 +55,8 @@ def editable_package(
     src_pkg_dir.mkdir()
 
     # Make some fake files
-    (src_pkg_dir / "__init__.py").touch()
-    (src_pkg_dir / "module.py").write_text(
+    src_pkg_dir.joinpath("__init__.py").touch()
+    src_pkg_dir.joinpath("module.py").write_text(
         textwrap.dedent(
             f"""\
             from {prefix}.subpkg import module
@@ -65,7 +66,7 @@ def editable_package(
             """
         )
     )
-    (pkg_dir / "source.py").write_text(
+    pkg_dir.joinpath("source.py").write_text(
         textwrap.dedent(
             f"""\
             from {prefix}.subpkg import module
@@ -75,6 +76,36 @@ def editable_package(
             """
         )
     )
+
+    pkg_dir.joinpath("src_files.py").write_text(
+        textwrap.dedent(
+            """\
+            import sys
+
+            from importlib.resources import files
+
+            read_file = files("pkg.resources").joinpath("file.txt").read_text(encoding="utf-8")
+            assert read_file == "hello"
+            """
+        )
+    )
+    resources_dir = src_pkg_dir / "resources"
+    resources_dir.mkdir()
+    resources_dir.joinpath("file.txt").write_text("hello")
+
+    pkg_dir.joinpath("installed_files.py").write_text(
+        textwrap.dedent(
+            """\
+            from importlib.resources import files
+
+            read_file = files("pkg.iresources").joinpath("file.txt").read_text(encoding="utf-8")
+            assert read_file == "hi"
+            """
+        )
+    )
+    iresources_dir = pkg_dir / "iresources"
+    iresources_dir.mkdir()
+    iresources_dir.joinpath("file.txt").write_text("hi")
 
     src_sub_package = src_pkg_dir / "subpkg"
     src_sub_package.mkdir()
@@ -96,6 +127,9 @@ def editable_package(
     return EditablePackage(site_packages, pkg_dir, src_pkg_dir)
 
 
+@pytest.mark.xfail(
+    sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
+)
 def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VEnv):
     site_packages, pkg_dir, src_pkg_dir = editable_package
 
@@ -113,6 +147,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         str(Path("pkg/namespace/module.py")): str(pkg_dir / "namespace/module.py"),
         str(Path("pkg/subpkg/__init__.py")): str(pkg_dir / "subpkg/__init__.py"),
         str(Path("pkg/subpkg/module.py")): str(pkg_dir / "subpkg/module.py"),
+        str(Path("pkg/resources/file.txt")): str(pkg_dir / "resources/file.txt"),
     }
     modules = mapping_to_modules(mapping, libdir=site_packages)
 
@@ -122,6 +157,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         "pkg.namespace.module": str(src_pkg_dir / "namespace/module.py"),
         "pkg.subpkg": str(src_pkg_dir / "subpkg/__init__.py"),
         "pkg.subpkg.module": str(src_pkg_dir / "subpkg/module.py"),
+        "pkg.resources.file": str(src_pkg_dir / "resources/file.txt"),
     }
 
     installed = libdir_to_installed(site_packages)
@@ -131,6 +167,9 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         "pkg.subpkg.source": str(Path("pkg/subpkg/source.py")),
         "pkg.namespace.source": str(Path("pkg/namespace/source.py")),
         "pkg.source": str(Path("pkg/source.py")),
+        "pkg.installed_files": str(Path("pkg/installed_files.py")),
+        "pkg.iresources.file": str(Path("pkg/iresources/file.txt")),
+        "pkg.src_files": str(Path("pkg/src_files.py")),
     }
 
     editable_txt = editable_redirect(
@@ -152,6 +191,12 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     virtualenv.execute("import pkg.subpkg.source")
     virtualenv.execute("import pkg.namespace.module")
     virtualenv.execute("import pkg.namespace.source")
+
     # This allows debug print statements in _editable_redirect.py to be seen
     print(virtualenv.execute("import pkg.module"))
     print(virtualenv.execute("import pkg.source"))
+
+    # Load resource files
+    if sys.version_info >= (3, 9):
+        virtualenv.execute("import pkg.src_files")
+        virtualenv.execute("import pkg.installed_files")

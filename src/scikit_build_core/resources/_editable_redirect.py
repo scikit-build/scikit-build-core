@@ -32,6 +32,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         verbose: bool,
         build_options: list[str],
         install_options: list[str],
+        dir: str = DIR,
     ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
@@ -40,6 +41,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.verbose = verbose
         self.build_options = build_options
         self.install_options = install_options
+        self.dir = dir
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
         submodule_search_locations: dict[str, set[str]] = {}
@@ -65,7 +67,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     msg = f"Unexpected path to source file: {file} [{module}]"
                     raise ImportError(msg)
                 if not os.path.isabs(parent_path):
-                    parent_path = os.path.join(str(DIR), parent_path)
+                    parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = pkgs
@@ -88,7 +90,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 self.rebuild()
             return importlib.util.spec_from_file_location(
                 fullname,
-                os.path.join(DIR, redir),
+                os.path.join(self.dir, redir),
                 submodule_search_locations=submodule_search_locations,
             )
         if fullname in self.known_source_files:
