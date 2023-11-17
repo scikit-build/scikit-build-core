@@ -11,6 +11,14 @@
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 
+> [!NOTE]
+>
+> We have a public Scikit-build community meeting every month!
+> [Join us on Google Meet](https://meet.google.com/dvx-jkai-xhq) on the third
+> Friday of every month. We also have a developer's meeting on the first Friday
+> of every month. Our past meeting minutes are
+> [available here](https://github.com/orgs/scikit-build/discussions/categories/community-meeting-notes).
+
 <!-- SPHINX-START -->
 
 Scikit-build-core is a build backend for Python that uses CMake to build
