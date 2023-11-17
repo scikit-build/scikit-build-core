@@ -189,9 +189,9 @@ class BackportSettings:
 
 @dataclasses.dataclass
 class EditableSettings:
-    mode: Literal["redirect"] = "redirect"
+    mode: Literal["redirect", "inplace"] = "redirect"
     """
-    Select the editable mode to use. Currently only "redirect" is supported.
+    Select the editable mode to use. Can be "redirect" (default) or "inplace".
     """
 
     verbose: bool = True

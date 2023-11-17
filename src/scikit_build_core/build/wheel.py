@@ -260,6 +260,8 @@ def _build_wheel_impl(
         install_options = []
 
         if cmake is not None:
+            if editable and settings.editable.mode == "inplace":
+                build_dir = settings.cmake.source_dir
             config = CMaker(
                 cmake,
                 source_dir=settings.cmake.source_dir,
@@ -300,8 +302,9 @@ def _build_wheel_impl(
             build_args: list[str] = []
             builder.build(build_args=build_args)
 
-            rich_print("[green]***[/green] [bold]Installing project into wheel...")
-            builder.install(install_dir)
+            if not (editable and settings.editable.mode == "inplace"):
+                rich_print("[green]***[/green] [bold]Installing project into wheel...")
+                builder.install(install_dir)
 
             if not builder.config.single_config and builder.config.build_type:
                 build_options += ["--config", builder.config.build_type]
@@ -338,7 +341,7 @@ def _build_wheel_impl(
         ) as wheel:
             wheel.build(wheel_dirs)
 
-            if editable:
+            if editable and settings.editable.mode == "redirect":
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 
                 _make_editable(
@@ -350,6 +353,18 @@ def _build_wheel_impl(
                     settings=settings,
                     wheel=wheel,
                     name=normalized_name,
+                )
+            elif editable and settings.editable.mode == "inplace":
+                if not packages:
+                    msg = "Editable inplace mode requires at least one package"
+                    raise AssertionError(msg)
+
+                str_pkgs = (
+                    str(Path.cwd().joinpath(p).parent.resolve()) for p in packages
+                )
+                wheel.writestr(
+                    f"_{normalized_name}_editable.pth",
+                    "\n".join(str_pkgs).encode(),
                 )
 
     if metadata_directory is not None:
