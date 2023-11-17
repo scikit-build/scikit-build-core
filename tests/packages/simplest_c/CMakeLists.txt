@@ -14,9 +14,13 @@ install(
   DESTINATION ${SKBUILD_PROJECT_NAME}
   COMPONENT PythonModule)
 
-set_target_properties(
-  _module PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-                     "${CMAKE_BINARY_DIR}/src/${SKBUILD_PROJECT_NAME}$<0:>")
+if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}" AND DEFINED SKBUILD)
+  # Editable in-place builds. THe empty generator expression ensures multi-config
+  # enerators keeps us from having to set LIBRARY_OUTPUT_DIRECTORY_<CONFIG> too.
+  set_target_properties(
+    _module PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+                       "${CMAKE_BINARY_DIR}/src/${SKBUILD_PROJECT_NAME}$<0:>")
+endif()
 
 # Testing artifacts
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated.txt "Testing")
