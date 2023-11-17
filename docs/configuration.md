@@ -531,7 +531,7 @@ Known limitations:
 
 - Resources (via `importlib.resources`) are not properly supported (yet).
   Currently experimentally supported except on Python 3.9 (3.7, 3.8, 3.10, 3.11,
-  and 3.12 work).
+  and 3.12 work). `importlib_resources` may work on Python 3.9.
 
 ```console
 # Very experimental rebuild on initial import feature
@@ -559,11 +559,13 @@ in-place CMake build, so all the caveats there apply too -- only one build per
 source directory, you can't change to an out-of-source builds without removing
 the build artifacts, your source directory will be littered with build
 artifacts, etc. Also, to make your binaries importable, you should set
-`LIBRARY_OUTPUT_DIRECTORY` (and `RUNTIME_OUTPUT_DIRECTORY_<CONFIG>` for
-multi-config generator support, like MSVC) to make sure they are placed inside
-your source directory inside the Python packages; this will be run from the
-build directory, rather than installed. This will also not support automatic
-rebuilds. The build directory setting must be empty/unset to use this.
+`LIBRARY_OUTPUT_DIRECTORY` (include a generator expression, like the empty one
+`$<0:>` for multi-config generator support, like MSVC, so you don't have to set
+all possible `*_<CONFIG>` variations) to make sure they are placed inside your
+source directory inside the Python packages; this will be run from the build
+directory, rather than installed. This will also not support automatic rebuilds.
+The build directory setting must be empty/unset to use this. You can detect this
+mode by checking for an in-place build and checking `SKBUILD` being set.
 
 With all the caveats, this is very logically simple (one directory) and a near
 identical replacement for `python setup.py build_ext --inplace`. Some third
