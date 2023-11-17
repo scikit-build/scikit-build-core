@@ -16,7 +16,7 @@ install(
 
 set_target_properties(
   _module PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-                     "${CMAKE_BINARY_DIR}/src/${SKBUILD_PROJECT_NAME}")
+                     "${CMAKE_BINARY_DIR}/src/${SKBUILD_PROJECT_NAME}$<0:>")
 
 # Testing artifacts
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated.txt "Testing")
