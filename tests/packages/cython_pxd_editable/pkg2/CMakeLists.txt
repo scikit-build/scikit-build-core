@@ -18,4 +18,4 @@ add_custom_command(
 python_add_library(two MODULE "${CMAKE_CURRENT_BINARY_DIR}/src/pkg2/two.c"
                    WITH_SOABI)
 
-install(TARGETS two DESTINATION src/pkg2/)
+install(TARGETS two DESTINATION pkg2/)
