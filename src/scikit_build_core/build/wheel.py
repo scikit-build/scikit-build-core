@@ -50,6 +50,7 @@ def _make_editable(
     reload_dir: Path | None,
     settings: ScikitBuildSettings,
     wheel: WheelWriter,
+    packages: Sequence[str],
 ) -> None:
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
@@ -68,9 +69,17 @@ def _make_editable(
         f"_{name}_editable.py",
         editable_txt.encode(),
     )
+    # Support Cython by adding the source directory directly to the path.
+    # This is necessary because Cython does not support sys.meta_path for
+    # cimports (as of 3.0.5).
+    pth_import_paths = (
+        f"import _{name}_editable\n"
+        + "\n".join(os.fspath(Path(pkg).parent.resolve()) for pkg in packages)
+        + "\n"
+    )
     wheel.writestr(
         f"_{name}_editable.pth",
-        f"import _{name}_editable\n".encode(),
+        pth_import_paths.encode(),
     )
 
 
@@ -353,6 +362,7 @@ def _build_wheel_impl(
                     settings=settings,
                     wheel=wheel,
                     name=normalized_name,
+                    packages=packages,
                 )
             elif editable and settings.editable.mode == "inplace":
                 if not packages:
