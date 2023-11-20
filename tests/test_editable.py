@@ -62,9 +62,12 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
     env_path = tmp_path / "env"
     env = VEnv(env_path)
     editable_flag = ["-e"] if editable else []
-    editable_mode_flag = (
-        [f"--config-settings=editable.mode={editable_mode}"] if editable else []
-    )
+
+    config_mode_flags = []
+    if editable:
+        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
+    if editable_mode != "inplace":
+        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
 
     try:
         package1 = PackageInfo(
@@ -81,9 +84,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
 
         env.install(
             "-v",
-            "--config-settings=build-dir=build/{wheel_tag}",
+            *config_mode_flags,
             "--no-build-isolation",
-            *editable_mode_flag,
             *editable_flag,
             ".",
         )
@@ -97,9 +99,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
 
         env.install(
             "-v",
-            "--config-settings=build-dir=build/{wheel_tag}",
+            *config_mode_flags,
             "--no-build-isolation",
-            *editable_mode_flag,
             *editable_flag,
             ".",
         )
