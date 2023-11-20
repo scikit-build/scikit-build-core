@@ -60,5 +60,4 @@ def is_valid_module(path: Path) -> bool:
     return (
         all(p.isidentifier() for p in parts[:-1])
         and parts[-1].split(".", 1)[0].isidentifier()
-        and path.suffix == ".py"
     )
