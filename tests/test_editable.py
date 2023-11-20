@@ -83,8 +83,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
             "-v",
             "--config-settings=build-dir=build/{wheel_tag}",
             "--no-build-isolation",
-            *editable_flag,
             *editable_mode_flag,
+            *editable_flag,
             ".",
         )
 
@@ -99,8 +99,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
             "-v",
             "--config-settings=build-dir=build/{wheel_tag}",
             "--no-build-isolation",
-            *editable_flag,
             *editable_mode_flag,
+            *editable_flag,
             ".",
         )
     finally:
