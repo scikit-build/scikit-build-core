@@ -55,11 +55,16 @@ def test_navigate_editable(isolated, isolate, package):
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
-@pytest.mark.parametrize("editable", [True, False])
-def test_cython_pxd(monkeypatch, tmp_path, editable):
+@pytest.mark.parametrize(
+    ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
+)
+def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
     env_path = tmp_path / "env"
     env = VEnv(env_path)
     editable_flag = ["-e"] if editable else []
+    editable_mode_flag = (
+        [f"--config-settings=editable.mode={editable_mode}"] if editable else []
+    )
 
     try:
         package1 = PackageInfo(
@@ -79,6 +84,7 @@ def test_cython_pxd(monkeypatch, tmp_path, editable):
             "--config-settings=build-dir=build/{wheel_tag}",
             "--no-build-isolation",
             *editable_flag,
+            *editable_mode_flag,
             ".",
         )
 
@@ -94,6 +100,7 @@ def test_cython_pxd(monkeypatch, tmp_path, editable):
             "--config-settings=build-dir=build/{wheel_tag}",
             "--no-build-isolation",
             *editable_flag,
+            *editable_mode_flag,
             ".",
         )
     finally:
