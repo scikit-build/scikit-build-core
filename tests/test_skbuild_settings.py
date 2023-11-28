@@ -137,7 +137,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
 @pytest.mark.parametrize("prefix", [True, False], ids=["skbuild", "noprefix"])
 def test_skbuild_settings_config_settings(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefix: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefix: bool
 ):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
@@ -179,7 +179,7 @@ def test_skbuild_settings_config_settings(
     }
 
     if prefix:
-        config_settings = {f"{prefix}.{k}": v for k, v in config_settings.items()}
+        config_settings = {f"skbuild.{k}": v for k, v in config_settings.items()}
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     settings = settings_reader.settings
