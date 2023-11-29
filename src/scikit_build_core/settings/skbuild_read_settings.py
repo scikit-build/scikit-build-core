@@ -179,9 +179,16 @@ class SettingsReader:
                     else:
                         tool_skb[key] = value
 
+        prefixed = {
+            k: v for k, v in config_settings.items() if k.startswith("skbuild.")
+        }
+        remaining = {
+            k: v for k, v in config_settings.items() if not k.startswith("skbuild.")
+        }
         self.sources = SourceChain(
             EnvSource("SKBUILD"),
-            ConfSource(settings=config_settings, verify=verify_conf),
+            ConfSource("skbuild", settings=prefixed, verify=verify_conf),
+            ConfSource(settings=remaining, verify=verify_conf),
             TOMLSource("tool", "scikit-build", settings=pyproject),
             prefixes=["tool", "scikit-build"],
         )
@@ -240,8 +247,10 @@ class SettingsReader:
         return result
 
     def print_suggestions(self) -> None:
-        for index in (1, 2):
-            name = {1: "config-settings", 2: "pyproject.toml"}[index]
+        for index in (1, 2, 3):
+            name = {1: "config-settings", 2: "config-settings", 3: "pyproject.toml"}[
+                index
+            ]
             suggestions_dict = self.suggestions(index)
             if suggestions_dict:
                 rich_print(f"[red][bold]ERROR:[/bold] Unrecognized options in {name}:")
