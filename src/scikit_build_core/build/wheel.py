@@ -72,7 +72,7 @@ def _make_editable(
     # Support Cython by adding the source directory directly to the path.
     # This is necessary because Cython does not support sys.meta_path for
     # cimports (as of 3.0.5).
-    import_strings = ["import _{name}_editable", *packages, ""]
+    import_strings = [f"import _{name}_editable", *packages, ""]
     pth_import_paths = "\n".join(import_strings)
     wheel.writestr(
         f"_{name}_editable.pth",
