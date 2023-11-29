@@ -17,7 +17,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  git
 
 %global _description %{expand:
-A next generation Python CMake adaptor and Python API for plugins
+A next generation Python CMake adapter and Python API for plugins
 }
 
 %description %_description
