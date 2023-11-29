@@ -251,6 +251,14 @@ Globbing patterns are supported.
 wheel.license-files = ["LICENSE"]
 ```
 
+You can exclude files from the built wheel (on top of the `sdist.exclude` list)
+as well:
+
+```toml
+[tool.scikit-build]
+wheel.exclude = ["**.pyx"]
+```
+
 :::{note}
 
 There are two more settings that are primarily intended for `overrides` (see

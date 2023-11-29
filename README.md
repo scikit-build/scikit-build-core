@@ -241,6 +241,10 @@ wheel.cmake = true
 # platlib if wheel.cmake is true, and the purelib otherwise.
 wheel.platlib = ""
 
+# A set of patterns to exclude from the wheel. This is additive to the SDist
+# exclude patterns. This applies to the source files, not the final paths.
+wheel.exclude = []
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"

@@ -329,7 +329,7 @@ def _build_wheel_impl(
             packages=packages,
             platlib_dir=wheel_dirs[targetlib],
             include=settings.sdist.include,
-            exclude=settings.sdist.exclude,
+            exclude=[*settings.sdist.exclude, *settings.wheel.exclude],
         )
 
         if not editable:
