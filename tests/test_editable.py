@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from conftest import PackageInfo, process_package
 
 
 @pytest.mark.compile()
@@ -48,3 +49,51 @@ def test_navigate_editable(isolated, isolate, package):
 
     value = isolated.execute("import shared_pkg; shared_pkg.read_c_generated_txt()")
     assert value == "Some_value_C"
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
+@pytest.mark.parametrize(
+    ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
+)
+def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
+    editable_flag = ["-e"] if editable else []
+
+    config_mode_flags = []
+    if editable:
+        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
+    if editable_mode != "inplace":
+        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
+
+    package1 = PackageInfo(
+        "cython_pxd_editable/pkg1",
+    )
+    tmp_path1 = tmp_path / "pkg1"
+    tmp_path1.mkdir()
+    process_package(package1, tmp_path1, monkeypatch)
+
+    isolated.install("pip>23", "cython", "scikit-build-core[pyproject]")
+
+    isolated.install(
+        "-v",
+        *config_mode_flags,
+        "--no-build-isolation",
+        *editable_flag,
+        ".",
+    )
+
+    package2 = PackageInfo(
+        "cython_pxd_editable/pkg2",
+    )
+    tmp_path2 = tmp_path / "pkg2"
+    tmp_path2.mkdir()
+    process_package(package2, tmp_path2, monkeypatch)
+
+    isolated.install(
+        "-v",
+        *config_mode_flags,
+        "--no-build-isolation",
+        *editable_flag,
+        ".",
+    )

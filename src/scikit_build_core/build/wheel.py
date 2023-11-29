@@ -29,7 +29,7 @@ from ._wheelfile import WheelWriter
 from .generate import generate_file_contents
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
 
     from ..settings.skbuild_model import ScikitBuildSettings
 
@@ -50,6 +50,7 @@ def _make_editable(
     reload_dir: Path | None,
     settings: ScikitBuildSettings,
     wheel: WheelWriter,
+    packages: Iterable[str],
 ) -> None:
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
@@ -68,9 +69,14 @@ def _make_editable(
         f"_{name}_editable.py",
         editable_txt.encode(),
     )
+    # Support Cython by adding the source directory directly to the path.
+    # This is necessary because Cython does not support sys.meta_path for
+    # cimports (as of 3.0.5).
+    import_strings = [f"import _{name}_editable", *packages, ""]
+    pth_import_paths = "\n".join(import_strings)
     wheel.writestr(
         f"_{name}_editable.pth",
-        f"import _{name}_editable\n".encode(),
+        pth_import_paths.encode(),
     )
 
 
@@ -341,6 +347,7 @@ def _build_wheel_impl(
         ) as wheel:
             wheel.build(wheel_dirs)
 
+            str_pkgs = (str(Path.cwd().joinpath(p).parent.resolve()) for p in packages)
             if editable and settings.editable.mode == "redirect":
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 
@@ -353,15 +360,13 @@ def _build_wheel_impl(
                     settings=settings,
                     wheel=wheel,
                     name=normalized_name,
+                    packages=str_pkgs,
                 )
             elif editable and settings.editable.mode == "inplace":
                 if not packages:
                     msg = "Editable inplace mode requires at least one package"
                     raise AssertionError(msg)
 
-                str_pkgs = (
-                    str(Path.cwd().joinpath(p).parent.resolve()) for p in packages
-                )
                 wheel.writestr(
                     f"_{normalized_name}_editable.pth",
                     "\n".join(str_pkgs).encode(),

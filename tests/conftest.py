@@ -50,6 +50,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
     )
     packages = [
         "build",
+        "cython",
         "hatchling",
         "pip>=23",
         "pybind11",
