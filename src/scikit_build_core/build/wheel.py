@@ -29,8 +29,7 @@ from ._wheelfile import WheelWriter
 from .generate import generate_file_contents
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from typing import Iterable
+    from collections.abc import Iterable, Sequence
 
     from ..settings.skbuild_model import ScikitBuildSettings
 
@@ -73,9 +72,8 @@ def _make_editable(
     # Support Cython by adding the source directory directly to the path.
     # This is necessary because Cython does not support sys.meta_path for
     # cimports (as of 3.0.5).
-    pth_import_paths = (
-        f"import _{name}_editable\n" + "\n".join(pkg for pkg in packages) + "\n"
-    )
+    import_strings = ["import _{name}_editable", *packages, ""]
+    pth_import_paths = "\n".join(import_strings)
     wheel.writestr(
         f"_{name}_editable.pth",
         pth_import_paths.encode(),
