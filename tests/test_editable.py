@@ -1,9 +1,8 @@
-import shutil
 import sys
 from pathlib import Path
 
 import pytest
-from conftest import PackageInfo, VEnv, process_package
+from conftest import PackageInfo, process_package
 
 
 @pytest.mark.compile()
@@ -58,9 +57,7 @@ def test_navigate_editable(isolated, isolate, package):
 @pytest.mark.parametrize(
     ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
 )
-def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
-    env_path = tmp_path / "env"
-    env = VEnv(env_path)
+def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
     editable_flag = ["-e"] if editable else []
 
     config_mode_flags = []
@@ -69,40 +66,34 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode):
     if editable_mode != "inplace":
         config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
 
-    try:
-        package1 = PackageInfo(
-            "cython_pxd_editable/pkg1",
-        )
-        tmp_path1 = tmp_path / "pkg1"
-        tmp_path1.mkdir()
-        process_package(package1, tmp_path1, monkeypatch)
+    package1 = PackageInfo(
+        "cython_pxd_editable/pkg1",
+    )
+    tmp_path1 = tmp_path / "pkg1"
+    tmp_path1.mkdir()
+    process_package(package1, tmp_path1, monkeypatch)
 
-        env.install("pip>=23")
-        env.install("cython")
-        env.install("scikit-build-core[pyproject]")
-        env.install("ninja")
+    isolated.install("pip>23", "cython", "scikit-build-core[pyproject]")
 
-        env.install(
-            "-v",
-            *config_mode_flags,
-            "--no-build-isolation",
-            *editable_flag,
-            ".",
-        )
+    isolated.install(
+        "-v",
+        *config_mode_flags,
+        "--no-build-isolation",
+        *editable_flag,
+        ".",
+    )
 
-        package2 = PackageInfo(
-            "cython_pxd_editable/pkg2",
-        )
-        tmp_path2 = tmp_path / "pkg2"
-        tmp_path2.mkdir()
-        process_package(package2, tmp_path2, monkeypatch)
+    package2 = PackageInfo(
+        "cython_pxd_editable/pkg2",
+    )
+    tmp_path2 = tmp_path / "pkg2"
+    tmp_path2.mkdir()
+    process_package(package2, tmp_path2, monkeypatch)
 
-        env.install(
-            "-v",
-            *config_mode_flags,
-            "--no-build-isolation",
-            *editable_flag,
-            ".",
-        )
-    finally:
-        shutil.rmtree(env_path, ignore_errors=True)
+    isolated.install(
+        "-v",
+        *config_mode_flags,
+        "--no-build-isolation",
+        *editable_flag,
+        ".",
+    )
