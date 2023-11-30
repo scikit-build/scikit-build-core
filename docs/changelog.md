@@ -1,5 +1,44 @@
 # Changelog
 
+## Version 0.7.0
+
+This release features several large improvements to overrides: a new `if.any`
+group to allow selections based on any item being true, and a new `if.env`
+option for selecting an override based on environment variables. You can now
+build pure Python packages with `wheel.cmake = false`, perfect for providing a
+slower pure Python version of a package on unsupported systems via overrides.
+
+There's also a new `inplace` mode for editable installs, which has drawbacks but
+feels like the classic `"--inplace"` setting in setuptools and can enable some
+tooling that would otherwise not support modern editable installs to work. If
+you are using Cython to access `.pxd` files, modern ("redirect") editable
+installs now support that. And to help avoid collisions with a future user
+feature, config settings can now be passed with an optional namespace,
+`skbuild.`, as well.
+
+Features:
+
+- Add inplace mode for editable installs by @henryiii in #553
+- Add `wheel.exclude` by @henryiii in #560
+- Support cmake-less runs (for overrides) by @henryiii in #550
+- Support `if.any` by @henryiii in #548
+- Support `if.env` by @henryiii in #549
+- Support namespaced config settings (`skbuild.`) by @henryiii in #556
+
+Fixes:
+
+- Correct issue with editable template & add more tests by @henryiii in #552
+- Support editable installs of Cython `.pxd` files by @vyasr in #516
+
+CI:
+
+- Fix spelling for Fedora by @henryiii in #559
+
+Docs:
+
+- Add meeting information by @henryiii in #555
+- Update intro and mention cmeel by @henryiii in #551
+
 ## Version 0.6.1
 
 Fixes:
@@ -21,6 +60,11 @@ Tests and internal:
 
 ## Version 0.6.0
 
+This release features overrides, a system similar to mypy and cibuildwheel's
+overrides, allowing static configuration of special cases, like different
+settings per operating system or Python version ranges. It also features
+preliminary support for `importlib.resources` in editable mode.
+
 Features:
 
 - Adding overrides by @henryiii in #514
@@ -30,7 +74,7 @@ Features:
 Fixes:
 
 - Better handling for -G by @henryiii in #483
-- Nicer error message when SCm version missing by @henryiii in #528
+- Nicer error message when SCM version missing by @henryiii in #528
 - (schema) Fix a typo and better metadata support by @henryiii in #522
 - (setuptools) Remove `DEBUG` envvar by @henryiii in #527
 
@@ -75,6 +119,12 @@ Docs:
 - Add page on cross-compiling by @henryiii in #510
 
 ## Version 0.5.0
+
+This release sees the addition of a generated schema, which has also been
+contributed to SchemaStore, enabling `tool.scikit-build` to be understood by
+most editors. There's also now a way to enable CMake during the SDist step, a
+new regex plugin, and a mechanism to write metadata to a file without having to
+depend on the plugin.
 
 Features:
 
