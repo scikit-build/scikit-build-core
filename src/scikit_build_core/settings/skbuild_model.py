@@ -177,6 +177,13 @@ class WheelSettings:
     platlib if wheel.cmake is true, and the purelib otherwise.
     """
 
+    exclude: List[str] = dataclasses.field(default_factory=list)
+    """
+    A set of patterns to exclude from the wheel. This is additive to the SDist
+    exclude patterns. This applies to the source files, not the final paths.
+    Editable installs may not respect this exclusion.
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:

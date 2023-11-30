@@ -110,6 +110,7 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
         {
             "sdist.include": "src/simplest/*included*.txt",
             "sdist.exclude": "src/simplest/*excluded*.txt",
+            "wheel.exclude": "src/simplest/sdist_only.txt",
             "wheel.packages": ["src/simplest", "src/not_a_package"],
         },
     )
@@ -135,7 +136,6 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
             "data.txt",
             "ignored_included.txt",
             "generated.txt",
-            "sdist_only.txt",
             "generated_ignored.txt",
         } == filtered_pkg
         assert {"simple.txt"} == not_a_pkg

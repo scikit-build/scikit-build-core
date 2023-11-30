@@ -166,6 +166,13 @@
         "platlib": {
           "type": "boolean",
           "description": "Target the platlib or the purelib. If not set, the default is to target the platlib if wheel.cmake is true, and the purelib otherwise."
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A set of patterns to exclude from the wheel. This is additive to the SDist exclude patterns. This applies to the source files, not the final paths. Editable installs may not respect this exclusion."
         }
       }
     },
