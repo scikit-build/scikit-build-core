@@ -243,6 +243,7 @@ wheel.platlib = ""
 
 # A set of patterns to exclude from the wheel. This is additive to the SDist
 # exclude patterns. This applies to the source files, not the final paths.
+# Editable installs may not respect this exclusion.
 wheel.exclude = []
 
 # If CMake is less than this value, backport a copy of FindPython. Set to 0

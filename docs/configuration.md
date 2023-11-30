@@ -252,7 +252,7 @@ wheel.license-files = ["LICENSE"]
 ```
 
 You can exclude files from the built wheel (on top of the `sdist.exclude` list)
-as well:
+as well (not guaranteed to be respected by editable installs):
 
 ```toml
 [tool.scikit-build]
