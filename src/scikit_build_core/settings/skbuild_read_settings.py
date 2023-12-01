@@ -232,7 +232,11 @@ class SettingsReader:
                     if isinstance(value, dict):
                         for key2, value2 in value.items():
                             inner = tool_skb.get(key, {})
-                            inner[key2] = value2
+                            if key == "cmake" and key2 == "define":
+                                inner.setdefault("define", {})
+                                inner["define"].update(value2)
+                            else:
+                                inner[key2] = value2
                             tool_skb[key] = inner
                     else:
                         tool_skb[key] = value
