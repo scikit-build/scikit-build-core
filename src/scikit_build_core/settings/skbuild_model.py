@@ -1,4 +1,5 @@
 import dataclasses
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -73,6 +74,18 @@ class CMakeSettings:
     The build targets to use when building the project. Empty builds the
     default target.
     """
+
+    def __post_init__(self) -> None:
+        # read define values from environment
+        for key, value in self.define.items():
+            if (
+                isinstance(value, str)
+                and value.startswith("{env.")
+                and value.endswith("}")
+            ):
+                env_name = value[5:-1]
+                env_value = os.environ.get(env_name, "")
+                self.define[key] = env_value
 
 
 @dataclasses.dataclass
