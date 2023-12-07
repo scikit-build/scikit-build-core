@@ -245,7 +245,9 @@ class SettingsReader:
                                 define = cmake.setdefault("define", {})
                                 define[levels[2]] = value
                         else:
-                            raise RuntimeError("Only `cmake.args` and `cmake.define` support additive changes.")
+                            raise RuntimeError(
+                                "Only `cmake.args` and `cmake.define` support additive changes."
+                            )
                     else:
                         tool_skb[key] = value
 
