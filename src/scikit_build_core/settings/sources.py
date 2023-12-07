@@ -436,7 +436,9 @@ class TOMLSource:
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
             return item
-        if raw_target is Union and type(item) in get_args(target):
+        if raw_target is Union and type(item) in tuple(
+            _get_target_raw_type(arg) for arg in get_args(target)
+        ):
             return item
         if raw_target is Literal:
             if item not in get_args(_process_union(target)):

@@ -46,7 +46,9 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Dict[str, Union[str, bool]] = dataclasses.field(default_factory=dict)
+    define: Dict[
+        str, Union[str, bool, Dict[str, Union[str, bool]]]
+    ] = dataclasses.field(default_factory=dict)
     """
     A table of defines to pass to CMake when configuring the project. Additive.
     """
@@ -78,14 +80,16 @@ class CMakeSettings:
     def __post_init__(self) -> None:
         # read define values from environment
         for key, value in self.define.items():
-            if (
-                isinstance(value, str)
-                and value.startswith("{env.")
-                and value.endswith("}")
-            ):
-                env_name = value[5:-1]
-                env_value = os.environ.get(env_name, "")
-                self.define[key] = env_value
+            if isinstance(value, dict):
+                env = value.get("env", "")
+                if env == "":
+                    error_msg = (
+                        f"Dictionary for `cmake.define.{key}` must include the key `env`, "
+                        f"whose value must be a non-empty string."
+                    )
+                    raise KeyError(error_msg)
+                default = value.get("default", "")
+                self.define[key] = os.environ.get(env, default)  # type: ignore[arg-type]
 
 
 @dataclasses.dataclass
