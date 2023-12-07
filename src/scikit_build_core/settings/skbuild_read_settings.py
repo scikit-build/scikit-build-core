@@ -232,12 +232,20 @@ class SettingsReader:
                     if isinstance(value, dict):
                         for key2, value2 in value.items():
                             inner = tool_skb.get(key, {})
-                            if key == "cmake" and key2 == "define":
-                                inner.setdefault("define", {})
-                                inner["define"].update(value2)
-                            else:
-                                inner[key2] = value2
+                            inner[key2] = value2
                             tool_skb[key] = inner
+                    elif key.startswith("+"):
+                        levels = key[1:].split(".")
+                        if levels[0] == "cmake":
+                            cmake = tool_skb.setdefault("cmake", {})
+                            if levels[1] == "args":
+                                args = cmake.setdefault("args", [])
+                                args += value
+                            elif levels[1] == "define":
+                                define = cmake.setdefault("define", {})
+                                define[levels[2]] = value
+                        else:
+                            raise RuntimeError("Only `cmake.args` and `cmake.define` support additive changes.")
                     else:
                         tool_skb[key] = value
 
