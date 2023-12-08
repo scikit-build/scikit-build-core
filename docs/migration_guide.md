@@ -21,7 +21,7 @@ may be out of date.
   [getting started](./getting_started.md) for more information.
 - If your project is primarily configured using setup.py or setup.cfg, you will
   need to move the configuration to pyproject.toml. The
-  [project metadata spec](https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#declaring-project-metadata)
+  [project metadata spec](https://packaging.python.org/en/latest/specifications/pyproject-toml)
   shows the information that can be placed directly in the project table. For
   additional metadata, see [our configuration guide](./configuration.md). A
   useful trick for performing this migration is to change the `build-backend`

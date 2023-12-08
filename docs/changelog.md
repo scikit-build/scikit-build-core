@@ -529,8 +529,6 @@ Other things:
 
 ## Version 0.1.6
 
-### What's changed
-
 Fixes:
 
 - Handle local cmake dir for search by @henryiii in #179
@@ -572,8 +570,6 @@ Fixes:
 - Sort SDist filepaths for reproducibility by @agoose77 in #153
 
 ## Version 0.1.2
-
-### What's changed
 
 Features:
 
