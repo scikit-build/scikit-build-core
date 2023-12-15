@@ -69,7 +69,7 @@ def load_provider(
 
 
 def load_dynamic_metadata(
-    metadata: Mapping[str, Mapping[str, str]]
+    metadata: Mapping[str, Mapping[str, str]],
 ) -> Generator[tuple[str, DMProtocols | None, dict[str, str]], None, None]:
     for field, orig_config in metadata.items():
         if "provider" in orig_config:
