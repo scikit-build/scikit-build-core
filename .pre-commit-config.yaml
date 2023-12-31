@@ -72,7 +72,7 @@ repos:
           - cattrs
           - cmake
           - exceptiongroup
-          - hatch-fancy-pypi-readme
+          - hatch-fancy-pypi-readme>=23.2.0
           - importlib-metadata>=6.6.0
           - importlib-resources
           - markdown-it-py<3 # Python 3.7 compat needed for mypy check

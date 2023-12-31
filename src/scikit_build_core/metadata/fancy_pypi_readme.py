@@ -33,13 +33,22 @@ def dynamic_metadata(
         pyproject_dict["tool"]["hatch"]["metadata"]["hooks"]["fancy-pypi-readme"]
     )
 
-    # Version 22.3 does not have fragment support
+    if hasattr(config, "substitutions"):
+        try:
+            # We don't have access to the version at this point
+            text = build_text(config.fragments, config.substitutions, "")
+        except TypeError:
+            # Version 23.2.0 and before don't have a version field
+            # pylint: disable-next=no-value-for-parameter
+            text = build_text(config.fragments, config.substitutions)  # type: ignore[call-arg]
+    else:
+        # Version 22.3 does not have fragment support
+        # pylint: disable-next=no-value-for-parameter
+        text = build_text(config.fragments)  # type: ignore[call-arg]
+
     return {
         "content-type": config.content_type,
-        "text": build_text(config.fragments, config.substitutions)
-        if hasattr(config, "substitutions")
-        # pylint: disable-next=no-value-for-parameter
-        else build_text(config.fragments),  # type: ignore[call-arg]
+        "text": text,
     }
 
 
