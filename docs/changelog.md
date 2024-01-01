@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 0.7.1
+
+This is a quick fix for a downstream change in hatch-fancy-pypi-readme that
+broke our plugin wrapper.
+
+Fixes:
+
+- Patch for change in hatch-fancy-pypi-readme by @henryiii in #593
+
+CI and tests:
+
+- Remove deprecated mypy setting (now defaults on) by @henryiii in #589
+- Group dependabot updates by @henryiii in #584
+- Use downstream tmt plans by @LecrisUT in #518
+
+Docs:
+
+- Fix a link by @henryiii in #568
+
+**Full Changelog**:
+https://github.com/scikit-build/scikit-build-core/compare/v0.7.0...v0.7.1
+
 ## Version 0.7.0
 
 This release features several large improvements to overrides: a new `if.any`
