@@ -625,7 +625,7 @@ experimental = true
 
 Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
 specify a `tool.scikit-build.overrides` array with an `if` key. That if key can
-take several values, based on [PEP 508][]:
+take several values, including several based on [PEP 508][]:
 
 - `python-version`: The two-digit Python version. Takes a specifier set.
 - `platform-system`: The value of `sys.platform`. Takes a regex.
@@ -637,6 +637,8 @@ take several values, based on [PEP 508][]:
 - `env`: A table of environment variables mapped to either string regexs, or
   booleans. Valid "truthy" environment variables are case insensitive `true`,
   `on`, `yes`, `y`, `t`, or a number more than 0.
+- `state`: The state of the build, one of `sdist`, `wheel`, `editable`,
+  `metadata_wheel`, and `metadata_editable`. Takes a regex.
 
 At least one must be provided. Then you can specify any collection of valid
 options, and those will override if all the items in the `if` are true. They

@@ -97,7 +97,7 @@ def mock_entry_points(monkeypatch):
 def test_dynamic_metadata():
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -131,7 +131,7 @@ def test_plugin_metadata():
 
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -153,7 +153,7 @@ def test_plugin_metadata():
 def test_faulty_metadata():
     with Path("faulty_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -166,7 +166,7 @@ def test_faulty_metadata():
 def test_local_plugin_metadata():
     with Path("local_pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -179,7 +179,7 @@ def test_local_plugin_metadata():
 def test_warn_metadata():
     with Path("warn_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -192,7 +192,9 @@ def test_warn_metadata():
 def test_fail_experimental_metadata():
     with Path("warn_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {"experimental": "false"})
+    settings_reader = SettingsReader(
+        pyproject, {"experimental": "false"}, state="metadata_wheel"
+    )
 
     with pytest.raises(SystemExit) as exc:
         settings_reader.validate_may_exit()
@@ -204,7 +206,7 @@ def test_fail_experimental_metadata():
 def test_dual_metadata():
     with Path("dual_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
@@ -215,7 +217,7 @@ def test_dual_metadata():
 
     with Path("faulty_dual_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    settings_reader = SettingsReader(pyproject, {})
+    settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     settings = settings_reader.settings
 
     settings_reader.validate_may_exit()
