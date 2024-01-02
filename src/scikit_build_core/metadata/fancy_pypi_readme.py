@@ -40,7 +40,7 @@ def dynamic_metadata(
         except TypeError:
             # Version 23.2.0 and before don't have a version field
             # pylint: disable-next=no-value-for-parameter
-            text = build_text(config.fragments, config.substitutions)  # type: ignore[call-arg]
+            text = build_text(config.fragments, config.substitutions)
     else:
         # Version 22.3 does not have fragment support
         # pylint: disable-next=no-value-for-parameter

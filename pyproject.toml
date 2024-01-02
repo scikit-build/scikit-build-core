@@ -142,6 +142,7 @@ markers = [
     "setuptools: Tests setuptools integration",
     "virtualenv: Needs a virtualenv",
 ]
+norecursedirs = ["tests/packages/**"]
 
 
 [tool.mypy]
