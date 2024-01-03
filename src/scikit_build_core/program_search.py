@@ -16,7 +16,13 @@ if TYPE_CHECKING:
 
     from packaging.specifiers import SpecifierSet
 
-__all__ = ["get_cmake_programs", "get_ninja_programs", "best_program", "Program"]
+__all__ = [
+    "get_cmake_programs",
+    "get_ninja_programs",
+    "get_cmake_program",
+    "best_program",
+    "Program",
+]
 
 
 def __dir__() -> list[str]:
@@ -65,6 +71,26 @@ def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
             yield Path(ninja_path)
 
 
+def get_cmake_program(cmake_path: Path) -> Program:
+    """
+    Get the Program (with version) for CMake given a path. The version will be
+    None if it cannot be determined.
+    """
+    try:
+        result = Run().capture(cmake_path, "--version")
+    except subprocess.CalledProcessError:
+        return Program(cmake_path, None)
+
+    try:
+        version = Version(result.stdout.splitlines()[0].split()[-1].split("-")[0])
+    except (IndexError, InvalidVersion):
+        logger.warning(f"Could not determine CMake version, got {result.stdout!r}")
+        return Program(cmake_path, None)
+
+    logger.info("CMake version: {}", version)
+    return Program(cmake_path, version)
+
+
 def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]:
     """
     Get the path and version for CMake. If the version cannot be determined,
@@ -72,21 +98,7 @@ def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]
     yielded first.
     """
     for cmake_path in _get_cmake_path(module=module):
-        try:
-            result = Run().capture(cmake_path, "--version")
-        except subprocess.CalledProcessError:
-            yield Program(cmake_path, None)
-            continue
-
-        try:
-            version = Version(result.stdout.splitlines()[0].split()[-1].split("-")[0])
-        except (IndexError, InvalidVersion):
-            logger.warning(f"Could not determine CMake version, got {result.stdout!r}")
-            yield Program(cmake_path, None)
-            continue
-
-        logger.info("CMake version: {}", version)
-        yield Program(cmake_path, version)
+        yield get_cmake_program(cmake_path)
 
 
 def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]:
