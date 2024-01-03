@@ -213,10 +213,16 @@ def _build_wheel_impl(
         else:
             install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
 
+        # Include the metadata license.file entry if provided
+        license_file_globs = list(settings.wheel.license_files)
+        if metadata.license and metadata.license.file:
+            license_file_globs.append(str(metadata.license.file))
+
         license_files = {
             x: x.read_bytes()
-            for y in settings.wheel.license_files
+            for y in license_file_globs
             for x in Path().glob(y)
+            if x.is_file()
         }
         if settings.wheel.license_files and not license_files:
             logger.warning(
