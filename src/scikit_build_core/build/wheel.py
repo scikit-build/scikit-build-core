@@ -219,7 +219,10 @@ def _build_wheel_impl(
             license_file_globs.append(str(metadata.license.file))
 
         license_files = {
-            x: x.read_bytes() for y in license_file_globs for x in Path().glob(y) if x.is_file()
+            x: x.read_bytes()
+            for y in license_file_globs
+            for x in Path().glob(y)
+            if x.is_file()
         }
         if settings.wheel.license_files and not license_files:
             logger.warning(
