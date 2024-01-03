@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._compat import tomllib
-from .._compat.typing import assert_never
+from .._compat.typing import Literal, assert_never
 from .._logging import logger, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
@@ -121,11 +121,19 @@ def _build_wheel_impl(
     """
     Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
     """
+    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
+    if exit_after_config:
+        state = "sdist"
+    elif wheel_directory is None:
+        state = "metadata_editable" if editable else "metadata_wheel"
+    else:
+        state = "editable" if editable else "wheel"
+
     pyproject_path = Path("pyproject.toml")
     with pyproject_path.open("rb") as ft:
         pyproject = tomllib.load(ft)
 
-    settings_reader = SettingsReader(pyproject, config_settings or {})
+    settings_reader = SettingsReader(pyproject, config_settings or {}, state=state)
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 
@@ -138,12 +146,6 @@ def _build_wheel_impl(
         raise AssertionError(msg)
 
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
-
-    state = "editable" if editable else "wheel"
-    if wheel_directory is None:
-        state = f"metadata_{state}"
-    if exit_after_config:
-        state = "sdist"
 
     if settings.wheel.cmake:
         cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)

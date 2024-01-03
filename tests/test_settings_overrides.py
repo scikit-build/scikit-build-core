@@ -402,3 +402,26 @@ def test_skbuild_env_bool_all_any(
         assert settings.sdist.cmake
     else:
         assert not settings.sdist.cmake
+
+
+@pytest.mark.parametrize("state", ["wheel", "sdist"])
+def test_skbuild_overrides_state(state: str, tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            f"""\
+            [[tool.scikit-build.overrides]]
+            if.state = "{state}"
+            experimental = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {}, state="wheel")
+    settings = settings_reader.settings
+
+    if state == "wheel":
+        assert settings.experimental
+    else:
+        assert not settings.experimental

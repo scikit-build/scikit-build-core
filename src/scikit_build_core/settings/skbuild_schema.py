@@ -88,12 +88,34 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         "minProperties": 1,
         "additionalProperties": False,
         "properties": {
-            "python-version": {"type": "string"},
-            "implementation-name": {"type": "string"},
-            "implementation-version": {"type": "string"},
-            "platform-system": {"type": "string"},
-            "platform-machine": {"type": "string"},
-            "platform-node": {"type": "string"},
+            "python-version": {
+                "type": "string",
+                "description": "The two-digit Python version. Takes a specifier set.",
+            },
+            "implementation-name": {
+                "type": "string",
+                "description": "The value of `sys.implementation.name`. Takes a regex",
+            },
+            "implementation-version": {
+                "type": "string",
+                "description": "Derived from `sys.implementation.version`, following PEP 508. Takes a specifier set.",
+            },
+            "platform-system": {
+                "type": "string",
+                "description": "The value of `sys.platform`. Takes a regex.",
+            },
+            "platform-machine": {
+                "type": "string",
+                "description": "The value of `platform.machine()`. Takes a regex.",
+            },
+            "platform-node": {
+                "type": "string",
+                "description": "The value of `platform.node()`. Takes a regex.",
+            },
+            "state": {
+                "type": "string",
+                "description": "The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`, and `metadata_editable`. Takes a regex.",
+            },
             "env": {
                 "type": "object",
                 "patternProperties": {
@@ -101,11 +123,13 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 },
                 "additionalProperties": False,
                 "minProperties": 1,
+                "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0.",
             },
         },
     }
     schema["properties"]["overrides"] = {
         "type": "array",
+        "description": "A list of overrides to apply to the settings, based on the `if` selector.",
         "items": {
             "type": "object",
             "required": ["if"],

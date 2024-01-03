@@ -22,6 +22,8 @@ from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 
+    from .._compat.typing import Literal
+
 __all__ = ["SettingsReader"]
 
 
@@ -60,6 +62,9 @@ def override_match(
     *,
     match_all: bool,
     current_env: Mapping[str, str] | None,
+    current_state: Literal[
+        "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
+    ],
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -67,6 +72,7 @@ def override_match(
     platform_machine: str | None = None,
     platform_node: str | None = None,
     env: dict[str, str] | None = None,
+    state: str | None = None,
 ) -> bool:
     matches = []
     if current_env is None:
@@ -108,6 +114,10 @@ def override_match(
         match_msg = regex_match(current_platform_node, platform_node)
         matches.append(match_msg)
 
+    if state is not None:
+        match_msg = regex_match(current_state, state)
+        matches.append(match_msg)
+
     if env:
         for key, value in env.items():
             if isinstance(value, bool):
@@ -144,6 +154,9 @@ class SettingsReader:
         pyproject: dict[str, Any],
         config_settings: Mapping[str, str | list[str]],
         *,
+        state: Literal[
+            "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
+        ],
         verify_conf: bool = True,
         env: Mapping[str, str] | None = None,
     ) -> None:
@@ -163,11 +176,13 @@ class SettingsReader:
             if "any" in if_override:
                 any_override = if_override.pop("any")
                 select = {k.replace("-", "_"): v for k, v in any_override.items()}
-                matched = override_match(match_all=False, current_env=env, **select)
+                matched = override_match(
+                    match_all=False, current_env=env, current_state=state, **select
+                )
             select = {k.replace("-", "_"): v for k, v in if_override.items()}
             if select:
                 matched = matched and override_match(
-                    match_all=True, current_env=env, **select
+                    match_all=True, current_env=env, current_state=state, **select
                 )
             if matched:
                 for key, value in override.items():
@@ -301,9 +316,14 @@ class SettingsReader:
         pyproject_path: os.PathLike[str] | str,
         config_settings: Mapping[str, str | list[str]] | None,
         *,
+        state: Literal[
+            "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
+        ] = "sdist",
         verify_conf: bool = True,
     ) -> SettingsReader:
         with Path(pyproject_path).open("rb") as f:
             pyproject = tomllib.load(f)
 
-        return cls(pyproject, config_settings or {}, verify_conf=verify_conf)
+        return cls(
+            pyproject, config_settings or {}, verify_conf=verify_conf, state=state
+        )
