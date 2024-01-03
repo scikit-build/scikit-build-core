@@ -6,7 +6,7 @@ import sysconfig
 from pathlib import Path
 
 import pytest
-from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.file_api._cattrs_converter import (
@@ -37,7 +37,7 @@ def prepare_env_or_skip() -> None:
 def test_cattrs_comparison(tmp_path):
     build_dir = tmp_path / "build"
 
-    cmake = CMake.default_search(minimum_version=Version("3.15"))
+    cmake = CMake.default_search(version=SpecifierSet(">=3.15"))
     config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",
@@ -67,7 +67,7 @@ def test_no_index(tmp_path):
 def test_simple_pure(tmp_path):
     build_dir = tmp_path / "build"
 
-    cmake = CMake.default_search(minimum_version=Version("3.15"))
+    cmake = CMake.default_search(version=SpecifierSet(">=3.15"))
     config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",

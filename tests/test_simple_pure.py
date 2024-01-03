@@ -8,7 +8,7 @@ import sysconfig
 from pathlib import Path
 
 import pytest
-from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from scikit_build_core.cmake import CMake, CMaker
 
@@ -39,7 +39,7 @@ def config(tmp_path_factory):
 
     build_dir = tmp_path / "build"
 
-    cmake = CMake.default_search(minimum_version=Version("3.15"))
+    cmake = CMake.default_search(version=SpecifierSet(">=3.15"))
     config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",
@@ -107,7 +107,7 @@ def test_variable_defined(tmp_path, capfd):
 
     build_dir = tmp_path / "build"
 
-    cmake = CMake.default_search(minimum_version=Version("3.15"))
+    cmake = CMake.default_search(version=SpecifierSet(">=3.15"))
     config = CMaker(
         cmake,
         source_dir=DIR / "packages/simple_pure",

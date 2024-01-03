@@ -21,6 +21,7 @@ from .program_search import best_program, get_cmake_programs
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+    from packaging.specifiers import SpecifierSet
     from packaging.version import Version
 
     from ._compat.typing import Self
@@ -42,13 +43,13 @@ class CMake:
 
     @classmethod
     def default_search(
-        cls, *, minimum_version: Version | None = None, module: bool = True
+        cls, *, version: SpecifierSet | None = None, module: bool = True
     ) -> Self:
         candidates = get_cmake_programs(module=module)
-        cmake_program = best_program(candidates, minimum_version=minimum_version)
+        cmake_program = best_program(candidates, version=version)
 
         if cmake_program is None:
-            msg = f"Could not find CMake with version >= {minimum_version}"
+            msg = f"Could not find CMake with version {version}"
             raise CMakeNotFoundError(msg)
         if cmake_program.version is None:
             msg = "CMake version undetermined @ {program.path}"

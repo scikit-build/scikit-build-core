@@ -2,6 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.typing import Literal
@@ -26,10 +27,15 @@ def __dir__() -> List[str]:
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: Version = Version("3.15")
+    minimum_version: Optional[Version] = None
     """
-    The minimum version of CMake to use. If CMake is not present on the system
-    or is older than this, it will be downloaded via PyPI if possible. An empty
+    DEPRECATED in 0.8; use version instead.
+    """
+
+    version: SpecifierSet = SpecifierSet(">=3.15")
+    """
+    The versions of CMake to allow. If CMake is not present on the system or does
+    not pass this specifier, it will be downloaded via PyPI if possible. An empty
     string will disable this check.
     """
 
@@ -71,10 +77,15 @@ class CMakeSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: Version = Version("1.5")
+    minimum_version: Optional[Version] = None
     """
-    The minimum version of Ninja to use. If Ninja is not present on the system
-    or is older than this, it will be downloaded via PyPI if possible. An empty
+    DEPRECATED in 0.8; use version instead.
+    """
+
+    version: SpecifierSet = SpecifierSet(">=1.5")
+    """
+    The versions of Ninja to allow. If Ninja is not present on the system or does
+    not pass this specifier, it will be downloaded via PyPI if possible. An empty
     string will disable this check.
     """
 

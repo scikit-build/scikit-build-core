@@ -148,7 +148,7 @@ def _build_wheel_impl(
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
     if settings.wheel.cmake:
-        cmake = CMake.default_search(minimum_version=settings.cmake.minimum_version)
+        cmake = CMake.default_search(version=settings.cmake.version)
         cmake_msg = [f"using [blue]CMake {cmake.version}[/blue]"]
     else:
         cmake = None

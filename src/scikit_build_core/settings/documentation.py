@@ -8,6 +8,7 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.typing import get_args, get_origin
@@ -80,7 +81,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
         if field.default is not dataclasses.MISSING and field.default is not None:
             default = repr(
                 str(field.default)
-                if isinstance(field.default, (Path, Version))
+                if isinstance(field.default, (Path, Version, SpecifierSet))
                 else field.default
             )
         elif field.default_factory is not dataclasses.MISSING:

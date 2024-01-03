@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from typing import Any, Union
 
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.builtins import ExceptionGroup
@@ -49,7 +50,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         if field.default is not dataclasses.MISSING and field.default is not None:
             props[field.name]["default"] = (
                 str(field.default)
-                if isinstance(field.default, (Version, Path))
+                if isinstance(field.default, (Version, Path, SpecifierSet))
                 else field.default
             )
 
@@ -66,6 +67,8 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
     docs = pull_docs(dclass)
     for k, v in docs.items():
         props[k]["description"] = v
+        if "DEPRECATED" in v:
+            props[k]["deprecated"] = True
 
     if normalize_keys:
         props = {k.replace("_", "-"): v for k, v in props.items()}
@@ -84,7 +87,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
 def convert_type(t: Any, *, normalize_keys: bool) -> dict[str, Any]:
     if dataclasses.is_dataclass(t):
         return to_json_schema(t, normalize_keys=normalize_keys)
-    if t is str or t is Path or t is Version:
+    if t is str or t is Path or t is Version or t is SpecifierSet:
         return {"type": "string"}
     if t is bool:
         return {"type": "boolean"}

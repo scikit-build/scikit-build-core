@@ -104,6 +104,8 @@ The following behaviors are affected by `minimum-version`:
 - `minimum-version` 0.5+ (or unset) provides the original name in metadata and
   properly normalized SDist names.
 - `minimum-version` 0.5+ (or unset) strips binaries by default.
+- `minimum-version` 0.8+ (or unset) `cmake.minimum-version` and
+  `ninja.minimum-version` are replaced with `cmake.version` and `ninja.version`.
 
 :::
 
@@ -117,8 +119,8 @@ For example, to require a recent CMake and Ninja:
 
 ```toml
 [tool.scikit-build]
-cmake.minimum-version = "3.26.1"
-ninja.minimum-version = "1.11"
+cmake.version = ">=3.26.1"
+ninja.version = ">=1.11"
 ```
 
 You can also enforce ninja to be required even if make is present on Unix:
@@ -136,6 +138,12 @@ would turn it off).
 ```toml
 [tool.scikit-build]
 backport.find-python = "3.15"
+```
+
+```{versionadded} 0.8
+These used to be called `cmake.minimum-version` and `ninja.minimum-version`, and
+only took a single value. Now they are full specifier sets, allowing for more
+complex version requirements, like `>=3.15,!=3.18.0`.
 ```
 
 ## Configuring source file inclusion
@@ -647,7 +655,7 @@ will match top to bottom, overriding previous matches. For example:
 ```toml
 [[tool.scikit-build.overrides]]
 if.sys-platform = "darwin"
-cmake.minimum-version = "3.18"
+cmake.version = ">=3.18"
 ```
 
 If you use `if.any` instead of `if`, then the override is true if any one of the

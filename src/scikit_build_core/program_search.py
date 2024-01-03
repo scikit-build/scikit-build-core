@@ -14,6 +14,8 @@ from ._shutil import Run
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
+    from packaging.specifiers import SpecifierSet
+
 __all__ = ["get_cmake_programs", "get_ninja_programs", "best_program", "Program"]
 
 
@@ -122,16 +124,16 @@ def get_make_programs() -> Generator[Path, None, None]:
 
 
 def best_program(
-    programs: Iterable[Program], *, minimum_version: Version | None
+    programs: Iterable[Program], *, version: SpecifierSet | None
 ) -> Program | None:
     """
     Select the first program entry that is of a supported version, or None if not found.
     """
 
     for program in programs:
-        if minimum_version is None:
+        if version is None:
             return program
-        if program.version is not None and program.version >= minimum_version:
+        if program.version is not None and version.contains(program.version):
             return program
 
     return None

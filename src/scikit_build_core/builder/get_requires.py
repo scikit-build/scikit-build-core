@@ -59,19 +59,17 @@ class GetRequires:
         return self._settings
 
     def cmake(self) -> Generator[str, None, None]:
-        cmake_min = self.settings.cmake.minimum_version
+        cmake_verset = self.settings.cmake.version
 
         # If the module is already installed (via caching the build
         # environment, for example), we will use that
         if importlib.util.find_spec("cmake") is not None:
-            yield f"cmake>={cmake_min}"
+            yield f"cmake{cmake_verset}"
             return
 
-        cmake = best_program(
-            get_cmake_programs(module=False), minimum_version=cmake_min
-        )
+        cmake = best_program(get_cmake_programs(module=False), version=cmake_verset)
         if cmake is None:
-            yield f"cmake>={cmake_min}"
+            yield f"cmake{cmake_verset}"
             return
         logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
 
@@ -90,17 +88,15 @@ class GetRequires:
         if os.environ.get("CMAKE_MAKE_PROGRAM", ""):
             return
 
-        ninja_min = self.settings.ninja.minimum_version
+        ninja_verset = self.settings.ninja.version
 
         # If the module is already installed (via caching the build
         # environment, for example), we will use that
         if importlib.util.find_spec("ninja") is not None:
-            yield f"ninja>={ninja_min}"
+            yield f"ninja{ninja_verset}"
             return
 
-        ninja = best_program(
-            get_ninja_programs(module=False), minimum_version=ninja_min
-        )
+        ninja = best_program(get_ninja_programs(module=False), version=ninja_verset)
         if ninja is not None:
             logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
             return
@@ -114,7 +110,7 @@ class GetRequires:
                 "Found system Make & not on known platform - not requiring PyPI package for Ninja"
             )
             return
-        yield f"ninja>={ninja_min}"
+        yield f"ninja{ninja_verset}"
 
     def dynamic_metadata(self) -> Generator[str, None, None]:
         for dynamic_metadata in self.settings.metadata.values():

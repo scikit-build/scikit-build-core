@@ -150,10 +150,13 @@ print("```\n")
 
 ```toml
 [tool.scikit-build]
-# The minimum version of CMake to use. If CMake is not present on the system or
-# is older than this, it will be downloaded via PyPI if possible. An empty
+# DEPRECATED in 0.8; use version instead.
+cmake.minimum-version = ""
+
+# The versions of CMake to allow. If CMake is not present on the system or does
+# not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.
-cmake.minimum-version = "3.15"
+cmake.version = ">=3.15"
 
 # A list of args to pass to CMake when configuring the project. Setting this in
 # config or envvar will override toml. See also ``cmake.define``.
@@ -177,10 +180,13 @@ cmake.source-dir = "."
 # target.
 cmake.targets = []
 
-# The minimum version of Ninja to use. If Ninja is not present on the system or
-# is older than this, it will be downloaded via PyPI if possible. An empty
+# DEPRECATED in 0.8; use version instead.
+ninja.minimum-version = ""
+
+# The versions of Ninja to allow. If Ninja is not present on the system or does
+# not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.
-ninja.minimum-version = "1.5"
+ninja.version = ">=1.5"
 
 # If CMake is not present on the system or is older required, it will be
 # downloaded via PyPI if possible. An empty string will disable this check.

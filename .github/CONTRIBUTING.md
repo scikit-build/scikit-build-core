@@ -138,7 +138,7 @@ Included modules:
 ## Basic CMake usage
 
 ```python
-cmake = CMake.default_search(minimum_version="3.15")
+cmake = CMake.default_search(version=">=3.15")
 config = CMaker(
     cmake,
     source_dir=source_dir,
@@ -208,8 +208,8 @@ from scikit_build_core.settings.skbuild_settings import SettingsReader
 
 settings_reader = SettingsReader.from_file("pyproject.toml", config_settings)
 setting = settings_reader.settings
-assert settings.cmake.minimum_version == "3.15"
-assert settings.ninja.minimum_version == "1.5"
+assert str(settings.cmake.version) == ">=3.15"
+assert str(settings.ninja.version) == ">=1.5"
 ```
 
 ## Builders
