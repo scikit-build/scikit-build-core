@@ -61,7 +61,7 @@ def test_get_requires_parts_uneeded(fp):
 
 def test_get_requires_parts_settings(fp):
     fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
-    config = {"cmake.minimum-version": "3.20"}
+    config = {"cmake.version": ">=3.20"}
     assert set(GetRequires(config).cmake()) == {"cmake>=3.20"}
     assert set(GetRequires(config).ninja()) == {*ninja}
 
@@ -71,7 +71,23 @@ def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):
     tmp_path.joinpath("pyproject.toml").write_text(
         """
         [tool.scikit-build.cmake]
-        minimum-version = "3.21"
+        version = ">=3.21"
+        """
+    )
+    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
+
+    assert set(GetRequires().cmake()) == {"cmake>=3.21"}
+    assert set(GetRequires().ninja()) == {*ninja}
+
+
+def test_get_requires_parts_pyproject_old(fp, monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    tmp_path.joinpath("pyproject.toml").write_text(
+        """
+        
+        [tool.scikit-build]
+        minimum-version = "0.0"
+        cmake.minimum-version = "3.21"
         """
     )
     fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")

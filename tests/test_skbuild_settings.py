@@ -8,6 +8,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 import scikit_build_core.settings.skbuild_read_settings
@@ -25,9 +26,11 @@ def test_skbuild_settings_default(tmp_path: Path):
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == Version("1.5")
+    assert settings.ninja.minimum_version is None
+    assert settings.ninja.version == SpecifierSet(">=1.5")
     assert settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == Version("3.15")
+    assert settings.cmake.minimum_version is None
+    assert settings.cmake.version == SpecifierSet(">=3.15")
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
     assert not settings.cmake.verbose
@@ -326,8 +329,8 @@ def test_skbuild_settings_pyproject_toml_broken(
         textwrap.dedent(
             """\
             [tool.scikit-build]
-            cmake.minimum-verison = "3.18"
-            ninja.minimum-version = "1.3"
+            cmake.verison = ">=3.18"
+            ninja.version = ">=1.3"
             ninja.make-fallback = false
             logger.level = "ERROR"
             """
@@ -339,7 +342,7 @@ def test_skbuild_settings_pyproject_toml_broken(
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     assert list(settings_reader.unrecognized_options()) == [
-        "tool.scikit-build.cmake.minimum-verison",
+        "tool.scikit-build.cmake.verison",
         "tool.scikit-build.logger",
     ]
 
@@ -352,7 +355,7 @@ def test_skbuild_settings_pyproject_toml_broken(
         ex.split()
         == """\
       ERROR: Unrecognized options in pyproject.toml:
-        tool.scikit-build.cmake.minimum-verison -> Did you mean: tool.scikit-build.cmake.minimum-version, tool.scikit-build.minimum-version, tool.scikit-build.ninja.minimum-version?
+        tool.scikit-build.cmake.verison -> Did you mean: tool.scikit-build.cmake.version, tool.scikit-build.cmake.verbose, tool.scikit-build.cmake.define?
         tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.wheel?
       """.split()
     )
@@ -363,15 +366,15 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, str | list[str]] = {
-        "cmake.minimum-verison": "3.17",
-        "ninja.minimum-version": "1.2",
+        "cmake.verison": ">=3.17",
+        "ninja.version": ">=1.2",
         "ninja.make-fallback": "False",
         "logger.level": "INFO",
     }
 
     settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
     assert list(settings_reader.unrecognized_options()) == [
-        "cmake.minimum-verison",
+        "cmake.verison",
         "logger",
     ]
 
@@ -385,13 +388,13 @@ def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
         ex.split()
         == """\
       ERROR: Unrecognized options in config-settings:
-        cmake.minimum-verison -> Did you mean: cmake.minimum-version, minimum-version, ninja.minimum-version?
+        cmake.verison -> Did you mean: cmake.version, cmake.verbose, cmake.define?
         logger -> Did you mean: logging?
       """.split()
     )
 
 
-def test_skbuild_settings_min_version_defaults(
+def test_skbuild_settings_min_version_defaults_strip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setattr(
@@ -412,3 +415,43 @@ def test_skbuild_settings_min_version_defaults(
     )
     settings = settings_reader.settings
     assert settings.install.strip
+
+
+def test_skbuild_settings_min_version_versions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.8.0"
+    )
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        "tool.scikit-build.cmake.minimum-version = '3.21'", encoding="utf-8"
+    )
+
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, {"minimum-version": "0.7"}
+    )
+    settings = settings_reader.settings
+    assert settings.cmake.version == SpecifierSet(">=3.21")
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {"minimum-version": "0.8"})
+
+
+def test_skbuild_settings_version_too_old(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.8.0"
+    )
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        "tool.scikit-build.cmake.version = '>=3.21'", encoding="utf-8"
+    )
+
+    SettingsReader.from_file(pyproject_toml, {})
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {"minimum-version": "0.7"})

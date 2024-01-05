@@ -11,8 +11,13 @@
       "properties": {
         "minimum-version": {
           "type": "string",
-          "default": "3.15",
-          "description": "The minimum version of CMake to use. If CMake is not present on the system or is older than this, it will be downloaded via PyPI if possible. An empty string will disable this check."
+          "description": "DEPRECATED in 0.8; use version instead.",
+          "deprecated": true
+        },
+        "version": {
+          "type": "string",
+          "default": ">=3.15",
+          "description": "The versions of CMake to allow. If CMake is not present on the system or does not pass this specifier, it will be downloaded via PyPI if possible. An empty string will disable this check."
         },
         "args": {
           "type": "array",
@@ -67,8 +72,13 @@
       "properties": {
         "minimum-version": {
           "type": "string",
-          "default": "1.5",
-          "description": "The minimum version of Ninja to use. If Ninja is not present on the system or is older than this, it will be downloaded via PyPI if possible. An empty string will disable this check."
+          "description": "DEPRECATED in 0.8; use version instead.",
+          "deprecated": true
+        },
+        "version": {
+          "type": "string",
+          "default": ">=1.5",
+          "description": "The versions of Ninja to allow. If Ninja is not present on the system or does not pass this specifier, it will be downloaded via PyPI if possible. An empty string will disable this check."
         },
         "make-fallback": {
           "type": "boolean",

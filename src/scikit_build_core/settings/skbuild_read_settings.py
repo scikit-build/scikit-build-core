@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 import difflib
 import os
 import platform
@@ -16,7 +17,7 @@ from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
-from .skbuild_model import ScikitBuildSettings
+from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
 if TYPE_CHECKING:
@@ -148,6 +149,48 @@ def override_match(
     return matched
 
 
+def _handle_minimum_version(
+    dc: CMakeSettings | NinjaSettings, minimum_version: Version | None
+) -> None:
+    """
+    Handle the minimum version option. Supports scikit-build-core < 0.8 style
+    minimum_version. Prints an error message and exits.
+    """
+    name = "cmake" if isinstance(dc, CMakeSettings) else "ninja"
+
+    version_default = next(
+        iter(f for f in dataclasses.fields(dc) if f.name == "version")
+    ).default
+
+    # Check for minimum_version < 0.8 and the modern version setting
+    if (
+        dc.version != version_default
+        and minimum_version is not None
+        and minimum_version < Version("0.8")
+    ):
+        rich_print(
+            f"[red][bold]ERROR:[/bold] Cannot set {name}.version if minimum-version is set to less than 0.8 (which is where it was introduced)"
+        )
+        raise SystemExit(7)
+
+    # Backwards compatibility for minimum_version
+    if dc.minimum_version is not None:
+        msg = f"Use {name}.version instead of {name}.minimum-version with scikit-build-core >= 0.8"
+        if minimum_version is None:
+            rich_print(f"[yellow][bold]WARNING:[/bold] {msg}")
+        elif minimum_version >= Version("0.8"):
+            rich_print(f"[red][bold]ERROR:[/bold] {msg}")
+            raise SystemExit(7)
+
+        if dc.version != version_default:
+            rich_print(
+                f"[red][bold]ERROR:[/bold] Cannot set both {name}.minimum_version and {name}.version; use version only for scikit-build-core >= 0.8."
+            )
+            raise SystemExit(7)
+
+        dc.version = SpecifierSet(f">={dc.minimum_version}")
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -244,6 +287,9 @@ class SettingsReader:
         )
         if self.settings.install.strip is None:
             self.settings.install.strip = install_policy
+
+        _handle_minimum_version(self.settings.cmake, self.settings.minimum_version)
+        _handle_minimum_version(self.settings.ninja, self.settings.minimum_version)
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from scikit_build_core.build import build_wheel
 from scikit_build_core.program_search import (
@@ -20,8 +20,8 @@ DIR = Path(__file__).parent.resolve()
 FORTRAN_EXAMPLE = DIR / "packages/fortran_example"
 
 
-cmake_info = best_program(get_cmake_programs(), minimum_version=Version("3.17.2"))
-ninja_info = best_program(get_ninja_programs(), minimum_version=Version("1.10"))
+cmake_info = best_program(get_cmake_programs(), version=SpecifierSet(">=3.17.2"))
+ninja_info = best_program(get_ninja_programs(), version=SpecifierSet(">=1.10"))
 
 
 @pytest.mark.compile()

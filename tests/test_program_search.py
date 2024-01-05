@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import pytest
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from scikit_build_core.program_search import (
@@ -55,11 +56,11 @@ def test_get_cmake_programs_all(monkeypatch, fp):
     assert programs[1].path.name == "cmake"
     assert programs[1].version == Version("3.20.0")
 
-    best1 = best_program(programs, minimum_version=None)
+    best1 = best_program(programs, version=None)
     assert best1
     assert best1.path.name == "cmake3"
 
-    best2 = best_program(programs, minimum_version=Version("3.20.0"))
+    best2 = best_program(programs, version=SpecifierSet(">=3.20.0"))
     assert best2
     assert best2.path.name == "cmake"
 
@@ -77,11 +78,11 @@ def test_get_ninja_programs_all(monkeypatch, fp):
     assert programs[1].path.name == "ninja"
     assert programs[1].version == Version("1.10.1")
 
-    best1 = best_program(programs, minimum_version=None)
+    best1 = best_program(programs, version=None)
     assert best1
     assert best1.path.name == "ninja-build"
 
-    best2 = best_program(programs, minimum_version=Version("1.9"))
+    best2 = best_program(programs, version=SpecifierSet(">=1.9"))
     assert best2
     assert best2.path.name == "ninja"
 
@@ -98,13 +99,13 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     assert "Could not determine CMake version" in str(caplog.records[0].msg)
     assert len(programs) == 2
 
-    best_none = best_program(programs, minimum_version=None)
+    best_none = best_program(programs, version=None)
     assert best_none
     assert best_none.path.name == "cmake3"
 
-    best_3_15 = best_program(programs, minimum_version=Version("3.15"))
+    best_3_15 = best_program(programs, version=SpecifierSet(">=3.15"))
     assert best_3_15
     assert best_3_15.path.name == "cmake3"
 
-    best_3_20 = best_program(programs, minimum_version=Version("3.20"))
+    best_3_20 = best_program(programs, version=SpecifierSet(">=3.20"))
     assert best_3_20 is None

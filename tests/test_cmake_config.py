@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from packaging.version import Version
+from packaging.specifiers import SpecifierSet
 
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
@@ -68,8 +68,8 @@ def test_too_old(fp, monkeypatch):
     fp.register([fp.program("cmake3"), "--version"], stdout="3.14.0")
 
     with pytest.raises(CMakeNotFoundError) as excinfo:
-        CMake.default_search(minimum_version=Version("3.15"))
-    assert "Could not find CMake with version >= 3.15" in excinfo.value.args[0]
+        CMake.default_search(version=SpecifierSet(">=3.15"))
+    assert "Could not find CMake with version >=3.15" in excinfo.value.args[0]
 
 
 @pytest.mark.configure()
