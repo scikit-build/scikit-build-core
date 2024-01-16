@@ -1,0 +1,30 @@
+From ef34d34c94127a47cb5f34acbc680473d197e684 Mon Sep 17 00:00:00 2001
+From: Cristian Le <cristian.le@mpsd.mpg.de>
+Date: Tue, 16 Jan 2024 11:42:36 +0100
+Subject: [PATCH] Patch sdist hash for F40
+
+Issue seems to be with a system package rather than python environment
+https://github.com/scikit-build/scikit-build-core/issues/596
+
+Signed-off-by: Cristian Le <cristian.le@mpsd.mpg.de>
+---
+ tests/conftest.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/tests/conftest.py b/tests/conftest.py
+index d46e7f8..14620ea 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -211,8 +211,8 @@ def package_simple_pyproject_ext(
+     package = PackageInfo(
+         "simple_pyproject_ext",
+         "c75641407303f3f3a0fd76d24e3d12447b31286fa5d0f687c0f8f8eb804d839f",
+-        "dc4921bdf694b1b88cb27c8e6128513e174689625447d18c1dd3353348824946",
+-        "2a135ce826265c5c1c73ebcb603989d8e2f4bca4605ad04c6c82871b5f75840e",
++        "9dc70f1bdc99bd477439ec31681eb2eae8cd591412054f168d8ff821ed069435",
++        "ea22e3a447b146790b30ebd4bf5abb80f21e8c24b6ce716798514eb364e992eb",
+         "7558e1db89e62b0941671796e1a35983a0b50a0701736566ca3ae5dd9ba09846",
+     )
+     process_package(package, tmp_path, monkeypatch)
+--
+2.43.0

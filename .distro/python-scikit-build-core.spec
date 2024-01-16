@@ -7,6 +7,8 @@ License:        Apache-2.0
 URL:            https://github.com/scikit-build/scikit-build-core
 Source:         %{pypi_source scikit_build_core}
 
+Patch:          F40_sdist_hash.patch
+
 BuildArch:      noarch
 BuildRequires:  python3-devel
 # Testing dependences
@@ -34,7 +36,10 @@ Suggests:       gcc
 
 
 %prep
-%autosetup -n scikit_build_core-%{version}
+%setup -n scikit_build_core-%{version}
+%if 0%{?fedora} >= 40
+%autopatch -p 1 -m 0
+%endif
 
 
 %generate_buildrequires
