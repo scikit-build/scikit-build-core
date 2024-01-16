@@ -1,3 +1,4 @@
+import gzip
 import hashlib
 import shutil
 import sys
@@ -37,6 +38,11 @@ mark_hashes_different = pytest.mark.xfail(
 )
 
 
+def compute_uncompressed_hash(inp: Path):
+    with gzip.open(inp, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_sdist():
     dist = Path("dist")
@@ -71,7 +77,7 @@ def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext):
     dist = Path("dist")
     out = build_sdist("dist")
     sdist = dist / out
-    hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+    hash = compute_uncompressed_hash(sdist)
     assert hash == package_simple_pyproject_ext.sdist_hash
 
 
@@ -139,7 +145,7 @@ def test_pep517_sdist_time_hash_set_epoch(
 
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
-    hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+    hash = compute_uncompressed_hash(sdist)
     assert hash == package_simple_pyproject_ext.sdist_dated_hash
 
 
