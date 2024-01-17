@@ -173,6 +173,7 @@ def _build_wheel_impl(
             archs_to_tags(get_archs(os.environ)),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
+            build_tag=settings.wheel.build_tag,
         )
 
         # A build dir can be specified, otherwise use a temporary directory

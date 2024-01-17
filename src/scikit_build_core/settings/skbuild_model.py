@@ -195,6 +195,11 @@ class WheelSettings:
     Editable installs may not respect this exclusion.
     """
 
+    build_tag: str = ""
+    """
+    The build tag to use for the wheel. If empty, no build tag is used.
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:
