@@ -143,7 +143,9 @@ def build_sdist(
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
         gzip_container = stack.enter_context(
-            gzip.GzipFile(sdist_dir / filename, mode="wb", mtime=timestamp)
+            gzip.GzipFile(
+                sdist_dir / filename, mode="wb", compresslevel=9, mtime=timestamp
+            )
         )
         tar = stack.enter_context(
             tarfile.TarFile(fileobj=gzip_container, mode="w", format=tarfile.PAX_FORMAT)

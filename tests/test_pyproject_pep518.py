@@ -1,3 +1,4 @@
+import gzip
 import hashlib
 import shutil
 import sys
@@ -15,6 +16,11 @@ def cleanup_overwrite():
     yield overwrite
     if overwrite.exists():
         overwrite.unlink()
+
+
+def compute_uncompressed_hash(inp: Path):
+    with gzip.open(inp, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
 
 
 @pytest.mark.network()
@@ -37,7 +43,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
 
     if not sys.platform.startswith(("win", "cygwin")):
-        hash = hashlib.sha256(sdist.read_bytes()).hexdigest()
+        hash = compute_uncompressed_hash(sdist)
         assert hash == package_simple_pyproject_ext.sdist_hash
 
     with tarfile.open(sdist) as f:
