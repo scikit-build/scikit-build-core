@@ -38,7 +38,7 @@ mark_hashes_different = pytest.mark.xfail(
 )
 
 
-def compute_uncompressed_hash(inp: Path):
+def compute_uncompressed_hash(inp: Path) -> str:
     with gzip.open(inp, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
 
@@ -79,6 +79,11 @@ def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext):
     sdist = dist / out
     hash = compute_uncompressed_hash(sdist)
     assert hash == package_simple_pyproject_ext.sdist_hash
+    mode = sdist.stat().st_mode
+    assert mode == 33188
+    with gzip.open(sdist, "rb") as f:
+        f.read()
+        assert f.mtime == 1667997441
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
