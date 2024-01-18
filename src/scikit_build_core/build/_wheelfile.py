@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Set
 
     from packaging.tags import Tag
-    from packaging.utils import BuildTag
     from pyproject_metadata import StandardMetadata
 
     from .._compat.typing import Self
@@ -50,8 +49,8 @@ class WheelMetadata:
     root_is_purelib: bool = False
     metadata_version: str = "1.0"
     generator: str = f"scikit-build-core {__version__}"
-    build_tag: BuildTag = ()
     tags: Set[Tag] = dataclasses.field(default_factory=frozenset)
+    build_tag: str = ""
 
     def as_bytes(self) -> bytes:
         msg = Message(policy=EMAIL_POLICY)
@@ -59,11 +58,11 @@ class WheelMetadata:
         msg["Wheel-Version"] = self.metadata_version
         msg["Generator"] = self.generator
         msg["Root-Is-Purelib"] = str(self.root_is_purelib).lower()
-        if self.build_tag:
-            msg["Build"] = str(self.build_tag[0]) + self.build_tag[1]
 
         for tag in sorted(self.tags, key=lambda t: (t.interpreter, t.abi, t.platform)):
             msg["Tag"] = f"{tag.interpreter}-{tag.abi}-{tag.platform}"
+        if self.build_tag:
+            msg["Build"] = self.build_tag
 
         return msg.as_bytes()
 
@@ -76,9 +75,15 @@ class WheelWriter:
     folder: Path
     tags: Set[Tag]
     wheel_metadata = WheelMetadata(root_is_purelib=False)
-    buildver: str = ""
+    build_tag: str = ""
     license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
     _zipfile: zipfile.ZipFile | None = None
+
+    def __post_init__(self) -> None:
+        if self.build_tag:
+            self.wheel_metadata = dataclasses.replace(
+                self.wheel_metadata, build_tag=self.build_tag
+            )
 
     @property
     def name_ver(self) -> str:
@@ -92,7 +97,7 @@ class WheelWriter:
         pyver = ".".join(sorted({t.interpreter for t in self.tags}))
         abi = ".".join(sorted({t.abi for t in self.tags}))
         arch = ".".join(sorted({t.platform for t in self.tags}))
-        optbuildver = [self.buildver] if self.buildver else []
+        optbuildver = [self.build_tag] if self.build_tag else []
         return "-".join([self.name_ver, *optbuildver, pyver, abi, arch])
 
     @property

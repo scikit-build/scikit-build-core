@@ -246,6 +246,7 @@ def _build_wheel_impl(
                 metadata,
                 Path(metadata_directory),
                 tags.as_tags_set(),
+                build_tag=settings.wheel.build_tag,
                 license_files=license_files,
             )
             dist_info_contents = wheel.dist_info_contents()
