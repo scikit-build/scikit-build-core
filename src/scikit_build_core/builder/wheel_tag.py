@@ -43,8 +43,8 @@ class WheelTag:
             if not build_tag[0].isdigit():
                 msg = f"Unexpected build-tag, must start with a digit, {build_tag!r} invalid"
                 raise AssertionError(msg)
-            if not build_tag.replace("_", "").isalnum():
-                msg = f"Unexpected build-tag, use '_' for special characters, {build_tag!r} contains invalid characters"
+            if "-" in build_tag:
+                msg = f"Unexpected build-tag, {build_tag!r} cannot contain dashes"
                 raise AssertionError(msg)
 
         best_tag = next(packaging.tags.sys_tags())
