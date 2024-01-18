@@ -157,7 +157,8 @@ class Builder:
             canonical_name = name.replace("-", "_").replace(".", "_")
             cache_config["SKBUILD_PROJECT_NAME"] = canonical_name
         if version is not None:
-            cache_config["SKBUILD_PROJECT_VERSION"] = str(version)
+            cache_config["SKBUILD_PROJECT_VERSION"] = version.base_version
+            cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
         if limited_abi is None:
             if self.settings.wheel.py_api.startswith("cp3"):
