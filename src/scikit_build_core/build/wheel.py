@@ -354,6 +354,7 @@ def _build_wheel_impl(
             Path(wheel_directory),
             tags.as_tags_set(),
             license_files=license_files,
+            build_tag=settings.wheel.build_tag,
         ) as wheel:
             wheel.build(wheel_dirs)
 

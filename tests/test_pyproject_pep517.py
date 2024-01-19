@@ -196,7 +196,7 @@ def test_pep517_wheel(virtualenv):
 @pytest.mark.usefixtures("package_simple_pyproject_source_dir")
 def test_pep517_wheel_source_dir(virtualenv):
     dist = Path("dist")
-    out = build_wheel("dist")
+    out = build_wheel("dist", config_settings={"skbuild.wheel.build-tag": "1foo"})
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -205,6 +205,9 @@ def test_pep517_wheel_source_dir(virtualenv):
             p = zipfile.Path(f)
             file_names = [p.name for p in p.iterdir()]
             metadata = p.joinpath("cmake_example-0.0.1.dist-info/METADATA").read_text()
+            wheel_metadata = p.joinpath(
+                "cmake_example-0.0.1.dist-info/WHEEL"
+            ).read_text()
             entry_points = p.joinpath(
                 "cmake_example-0.0.1.dist-info/entry_points.txt"
             ).read_text()
@@ -225,6 +228,11 @@ def test_pep517_wheel_source_dir(virtualenv):
         assert "Version: 0.0.1" in metadata
         assert "Requires-Python: >=3.7" in metadata
         assert "Provides-Extra: test" in metadata
+
+        assert "Build: 1foo" in wheel_metadata
+        assert "Wheel-Version: 1.0" in wheel_metadata
+        assert "Generator: scikit-build" in wheel_metadata
+        assert "Root-Is-Purelib: false" in wheel_metadata
 
     virtualenv.install(wheel)
 
