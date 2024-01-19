@@ -29,7 +29,10 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
     out_dir = tmp_path / "out"
 
     wheel = scikit_build_core.build._wheelfile.WheelWriter(
-        metadata, out_dir, {Tag("py3", "none", "any")}
+        metadata,
+        out_dir,
+        {Tag("py3", "none", "any")},
+        scikit_build_core.build._wheelfile.WheelMetadata(),
     )
     wheel.wheel_metadata.generator = "scikit-build-core 1.2.3"
 

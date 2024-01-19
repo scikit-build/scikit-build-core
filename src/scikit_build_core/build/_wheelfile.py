@@ -74,16 +74,9 @@ class WheelWriter:
     metadata: StandardMetadata
     folder: Path
     tags: Set[Tag]
-    wheel_metadata = WheelMetadata(root_is_purelib=False)
-    build_tag: str = ""
+    wheel_metadata: WheelMetadata
     license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
     _zipfile: zipfile.ZipFile | None = None
-
-    def __post_init__(self) -> None:
-        if self.build_tag:
-            self.wheel_metadata = dataclasses.replace(
-                self.wheel_metadata, build_tag=self.build_tag
-            )
 
     @property
     def name_ver(self) -> str:
@@ -97,7 +90,9 @@ class WheelWriter:
         pyver = ".".join(sorted({t.interpreter for t in self.tags}))
         abi = ".".join(sorted({t.abi for t in self.tags}))
         arch = ".".join(sorted({t.platform for t in self.tags}))
-        optbuildver = [self.build_tag] if self.build_tag else []
+        optbuildver = (
+            [self.wheel_metadata.build_tag] if self.wheel_metadata.build_tag else []
+        )
         return "-".join([self.name_ver, *optbuildver, pyver, abi, arch])
 
     @property
