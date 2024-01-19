@@ -252,6 +252,9 @@ wheel.platlib = ""
 # Editable installs may not respect this exclusion.
 wheel.exclude = []
 
+# The build tag to use for the wheel. If empty, no build tag is used.
+wheel.build-tag = ""
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"

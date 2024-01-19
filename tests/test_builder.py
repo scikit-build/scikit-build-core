@@ -123,6 +123,17 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
     assert plat == answer
 
 
+@pytest.mark.parametrize("archs", ["x86_64" "arm64" "universal2"])
+def test_wheel_build_tag(monkeypatch, archs):
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.12")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(archs, build_tag="1")
+    answer = str(tags).split("-")[0]
+    assert answer == "1"
+
+
 def test_wheel_tag_expand(monkeypatch):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")

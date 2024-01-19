@@ -27,6 +27,7 @@ class WheelTag:
     pyvers: list[str]
     abis: list[str]
     archs: list[str]
+    build_tag: str = ""
 
     # TODO: plats only used on macOS & Windows
     @classmethod
@@ -36,7 +37,16 @@ class WheelTag:
         py_api: str = "",
         *,
         expand_macos: bool = False,
+        build_tag: str = "",
     ) -> Self:
+        if build_tag:
+            if not build_tag[0].isdigit():
+                msg = f"Unexpected build-tag, must start with a digit, {build_tag!r} invalid"
+                raise AssertionError(msg)
+            if "-" in build_tag:
+                msg = f"Unexpected build-tag, {build_tag!r} cannot contain dashes"
+                raise AssertionError(msg)
+
         best_tag = next(packaging.tags.sys_tags())
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
@@ -90,7 +100,7 @@ class WheelTag:
                 msg = f"Unexpected py-api, must be abi3 (e.g. cp39) or Pythonless (e.g. py2.py3), not {py_api}"
                 raise AssertionError(msg)
 
-        return cls(pyvers=pyvers, abis=[abi], archs=plats)
+        return cls(pyvers=pyvers, abis=[abi], archs=plats, build_tag=build_tag)
 
     @property
     def pyver(self) -> str:
@@ -105,6 +115,9 @@ class WheelTag:
         return ".".join(self.archs)
 
     def __str__(self) -> str:
+        if self.build_tag:
+            return f"{self.build_tag}-{self.pyver}-{self.abi}-{self.arch}"
+
         return f"{self.pyver}-{self.abi}-{self.arch}"
 
     def tags_dict(self) -> dict[str, list[str]]:

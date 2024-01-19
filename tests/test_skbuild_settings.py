@@ -52,6 +52,7 @@ def test_skbuild_settings_default(tmp_path: Path):
         "AUTHORS*",
     ]
     assert settings.wheel.exclude == []
+    assert settings.wheel.build_tag == ""
     assert settings.backport.find_python == Version("3.26.1")
     assert settings.strict_config
     assert not settings.experimental
@@ -89,6 +90,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
     monkeypatch.setenv("SKBUILD_WHEEL_LICENSE_FILES", "a;b;c")
     monkeypatch.setenv("SKBUILD_WHEEL_EXCLUDE", "b;y;e")
+    monkeypatch.setenv("SKBUILD_WHEEL_BUILD_TAG", "1")
     monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
@@ -128,6 +130,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
     assert settings.wheel.exclude == ["b", "y", "e"]
+    assert settings.wheel.build_tag == "1"
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
@@ -173,6 +176,7 @@ def test_skbuild_settings_config_settings(
         "wheel.expand-macos-universal-tags": "True",
         "wheel.license-files": ["a", "b", "c"],
         "wheel.exclude": ["b", "y", "e"],
+        "wheel.build-tag": "1foo",
         "backport.find-python": "0",
         "strict-config": "false",
         "experimental": "1",
@@ -211,6 +215,7 @@ def test_skbuild_settings_config_settings(
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
     assert settings.wheel.exclude == ["b", "y", "e"]
+    assert settings.wheel.build_tag == "1foo"
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
@@ -254,6 +259,7 @@ def test_skbuild_settings_pyproject_toml(
             wheel.expand-macos-universal-tags = true
             wheel.license-files = ["a", "b", "c"]
             wheel.exclude = ["b", "y", "e"]
+            wheel.build-tag = "1_bar"
             backport.find-python = "3.18"
             strict-config = false
             experimental = true
@@ -302,6 +308,7 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
     assert settings.wheel.exclude == ["b", "y", "e"]
+    assert settings.wheel.build_tag == "1_bar"
     assert settings.backport.find_python == Version("3.18")
     assert not settings.strict_config
     assert settings.experimental

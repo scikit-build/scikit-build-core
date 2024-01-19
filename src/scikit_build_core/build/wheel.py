@@ -173,6 +173,7 @@ def _build_wheel_impl(
             archs_to_tags(get_archs(os.environ)),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
+            build_tag=settings.wheel.build_tag,
         )
 
         # A build dir can be specified, otherwise use a temporary directory
@@ -245,6 +246,7 @@ def _build_wheel_impl(
                 metadata,
                 Path(metadata_directory),
                 tags.as_tags_set(),
+                build_tag=settings.wheel.build_tag,
                 license_files=license_files,
             )
             dist_info_contents = wheel.dist_info_contents()
@@ -352,6 +354,7 @@ def _build_wheel_impl(
             Path(wheel_directory),
             tags.as_tags_set(),
             license_files=license_files,
+            build_tag=settings.wheel.build_tag,
         ) as wheel:
             wheel.build(wheel_dirs)
 
