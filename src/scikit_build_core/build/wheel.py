@@ -25,7 +25,7 @@ from ._pathutil import (
     packages_to_file_mapping,
 )
 from ._scripts import process_script_dir
-from ._wheelfile import WheelWriter
+from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
 
 if TYPE_CHECKING:
@@ -246,7 +246,10 @@ def _build_wheel_impl(
                 metadata,
                 Path(metadata_directory),
                 tags.as_tags_set(),
-                build_tag=settings.wheel.build_tag,
+                WheelMetadata(
+                    root_is_purelib=targetlib == "purelib",
+                    build_tag=settings.wheel.build_tag,
+                ),
                 license_files=license_files,
             )
             dist_info_contents = wheel.dist_info_contents()
@@ -353,8 +356,11 @@ def _build_wheel_impl(
             metadata,
             Path(wheel_directory),
             tags.as_tags_set(),
+            WheelMetadata(
+                root_is_purelib=targetlib == "purelib",
+                build_tag=settings.wheel.build_tag,
+            ),
             license_files=license_files,
-            build_tag=settings.wheel.build_tag,
         ) as wheel:
             wheel.build(wheel_dirs)
 
