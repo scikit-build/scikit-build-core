@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
@@ -117,3 +119,13 @@ def test_cmake_paths(tmp_path, fp):
     config.configure()
 
     assert len(fp.calls) == 2
+
+
+def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
+    monkeypatch.setattr("shutil.which", lambda x: x)
+    cmake_path = Path("some-prog")
+    fp.register([cmake_path, "--version"], stdout="cmake version 3.20.0\n")
+    monkeypatch.setenv("CMAKE_EXECUTABLE", str(cmake_path))
+    result = CMake.default_search(env=os.environ)
+    assert result.cmake_path == cmake_path
+    assert result.version == Version("3.20.0")

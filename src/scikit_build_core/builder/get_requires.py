@@ -59,6 +59,9 @@ class GetRequires:
         return self._settings
 
     def cmake(self) -> Generator[str, None, None]:
+        if os.environ.get("CMAKE_EXECUTABLE", ""):
+            return
+
         cmake_verset = self.settings.cmake.version
 
         # If the module is already installed (via caching the build

@@ -10,16 +10,16 @@ import sys
 import sysconfig
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING, Any
 
 from . import __version__
 from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
-from .program_search import best_program, get_cmake_programs
+from .program_search import Program, best_program, get_cmake_program, get_cmake_programs
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.specifiers import SpecifierSet
     from packaging.version import Version
@@ -43,9 +43,19 @@ class CMake:
 
     @classmethod
     def default_search(
-        cls, *, version: SpecifierSet | None = None, module: bool = True
+        cls,
+        *,
+        version: SpecifierSet | None = None,
+        module: bool = True,
+        env: Mapping[str, Any] | None = None,
     ) -> Self:
-        candidates = get_cmake_programs(module=module)
+        env = env or {}
+        cmake_executable = env.get("CMAKE_EXECUTABLE", "")
+        candidates: Iterable[Program] = (
+            [get_cmake_program(Path(cmake_executable))]
+            if cmake_executable
+            else get_cmake_programs(module=module)
+        )
         cmake_program = best_program(candidates, version=version)
 
         if cmake_program is None:
