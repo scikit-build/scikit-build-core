@@ -12,7 +12,7 @@ from .._compat.builtins import ExceptionGroup
 from .._compat.typing import Annotated, Literal, get_args, get_origin
 from .documentation import pull_docs
 
-__all__ = ["to_json_schema", "convert_type", "FailedConversionError"]
+__all__ = ["FailedConversionError", "convert_type", "to_json_schema"]
 
 
 def __dir__() -> list[str]:

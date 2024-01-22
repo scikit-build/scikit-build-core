@@ -11,10 +11,10 @@ __all__ = [
     "CMakeConfigError",
     "CMakeNotFoundError",
     "CMakeVersionError",
-    "NinjaVersionError",
     "FailedLiveProcessError",
     "FailedProcessError",
     "NinjaNotFoundError",
+    "NinjaVersionError",
     "NotFoundError",
     "ScikitBuildError",
 ]

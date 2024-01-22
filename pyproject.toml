@@ -169,7 +169,6 @@ ignore_missing_imports = true
 py-version = "3.7"
 jobs = "0"
 reports.output-format = "colorized"
-similarities.ignore-imports = "yes"
 good-names = ["f"]
 messages_control.disable = [
     "design",
@@ -227,7 +226,7 @@ extend-select = [
     "PYI",         # flake8-pyi
     "RET",         # flake8-return
     "RUF",         # Ruff-specific
-    "S",        # eval -> literal_eval
+    "S",           # eval -> literal_eval
     "SIM",         # flake8-simplify
     "T20",         # flake8-print
     "TCH",         # flake8-type-checking
@@ -243,10 +242,7 @@ ignore = [
     "RUF009",  # Too easy to get a false positive
     "PYI025",  # Wants Set to be renamed AbstractSet
     "ISC001",  # Conflicts with formatter
-    "PLR0911", # Too many return statements
-    "PLR0912", # Too many branches
-    "PLR0913", # Too many arguments
-    "PLR0915", # Too many local statements
+    "PLR09",   # Too many ...
     "PLR2004", # Magic value used in comparison
     "PLC0415", # Import should be at top of file
     "ANN101",  # Missing type annotation for `self` in method
@@ -255,6 +251,7 @@ ignore = [
     "S101",    # Use of assert detected
     "S603",    # subprocess untrusted input
     "S607",    # subprocess call
+    "S404",    # subprocess module is possibly insecure
 ]
 typing-modules = ["scikit_build_core._compat.typing"]
 

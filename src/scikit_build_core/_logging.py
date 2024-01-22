@@ -7,7 +7,7 @@ import re
 import sys
 from typing import Any
 
-__all__ = ["logger", "raw_logger", "ScikitBuildLogger", "rich_print"]
+__all__ = ["ScikitBuildLogger", "logger", "raw_logger", "rich_print"]
 
 
 def __dir__() -> list[str]:

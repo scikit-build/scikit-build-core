@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 from .._logging import logger
 
-__all__ = ["normalize_macos_version", "get_macosx_deployment_target", "MacOSVer"]
+__all__ = ["MacOSVer", "get_macosx_deployment_target", "normalize_macos_version"]
 
 
 class MacOSVer(NamedTuple):

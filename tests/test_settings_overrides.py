@@ -398,7 +398,7 @@ def test_skbuild_env_bool_all_any(
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
     settings = settings_reader.settings
 
-    if (foo == "true" and bar == "true") or any and (foo == "true" or bar == "true"):
+    if (foo == "true" and bar == "true") or (any and (foo == "true" or bar == "true")):
         assert settings.sdist.cmake
     else:
         assert not settings.sdist.cmake

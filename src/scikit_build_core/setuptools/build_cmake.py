@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from .._compat.typing import Literal
 
-__all__ = ["BuildCMake", "finalize_distribution_options", "cmake_source_dir"]
+__all__ = ["BuildCMake", "cmake_source_dir", "finalize_distribution_options"]
 
 
 def __dir__() -> list[str]:

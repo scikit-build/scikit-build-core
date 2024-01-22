@@ -9,13 +9,13 @@ from .common import APIVersion
 from .toolchains import Toolchains
 
 __all__ = [
-    "CMakeVersion",
-    "CMakePaths",
-    "Generator",
     "CMake",
-    "Reply",
-    "Object",
+    "CMakePaths",
+    "CMakeVersion",
+    "Generator",
     "Index",
+    "Object",
+    "Reply",
 ]
 
 

@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from .common import APIVersion
 
-__all__ = ["Implicit", "Compiler", "Toolchain", "Toolchains"]
+__all__ = ["Compiler", "Implicit", "Toolchain", "Toolchains"]
 
 
 def __dir__() -> List[str]:

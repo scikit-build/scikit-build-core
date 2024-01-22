@@ -6,7 +6,7 @@ from typing import Any
 
 from ..resources import resources
 
-__all__ = ["get_skbuild_schema", "generate_skbuild_schema"]
+__all__ = ["generate_skbuild_schema", "get_skbuild_schema"]
 
 
 def __dir__() -> list[str]:

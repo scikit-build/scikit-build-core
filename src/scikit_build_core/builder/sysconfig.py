@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
+    "get_cmake_platform",
+    "get_numpy_include_dir",
     "get_python_include_dir",
     "get_python_library",
-    "get_cmake_platform",
     "get_soabi",
-    "get_numpy_include_dir",
 ]
 
 

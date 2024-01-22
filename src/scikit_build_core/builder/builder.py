@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ..cmake import CMaker
     from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["Builder", "get_archs", "archs_to_tags"]
+__all__ = ["Builder", "archs_to_tags", "get_archs"]
 
 DIR = Path(__file__).parent.resolve()
 

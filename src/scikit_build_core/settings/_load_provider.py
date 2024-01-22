@@ -10,7 +10,7 @@ from .._compat.typing import Protocol
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping
 
-__all__ = ["load_provider", "load_dynamic_metadata"]
+__all__ = ["load_dynamic_metadata", "load_provider"]
 
 
 def __dir__() -> list[str]:

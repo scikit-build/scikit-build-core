@@ -59,7 +59,7 @@ if typing.TYPE_CHECKING:
 
 T = TypeVar("T")
 
-__all__ = ["Source", "SourceChain", "ConfSource", "EnvSource", "TOMLSource"]
+__all__ = ["ConfSource", "EnvSource", "Source", "SourceChain", "TOMLSource"]
 
 
 def __dir__() -> list[str]:
@@ -276,9 +276,9 @@ class EnvSource:
         msg = f"Can't convert target {target}"
         raise TypeError(msg)
 
+    @staticmethod
     def unrecognized_options(
-        self,
-        options: object,  # noqa: ARG002
+        options: object,  # noqa: ARG004
     ) -> Generator[str, None, None]:
         yield from ()
 
