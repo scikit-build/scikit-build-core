@@ -37,6 +37,7 @@ When setting up your dataclasses, these types are handled:
 - ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms. T can be a dataclass (TOML only).
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
 - ``Literal[...]``: A list of strings, the result must be in the list.
+- ``Annotated[Dict[...], "EnvVar"]``: A dict of items, where each item can be a string or a dict with "env" and "default" keys.
 
 These are supported for JSON schema generation for the TOML, as well.
 
@@ -51,7 +52,7 @@ import typing
 from typing import Any, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Literal, Protocol, get_args, get_origin
+from .._compat.typing import Annotated, Literal, Protocol, get_args, get_origin
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
@@ -69,6 +70,10 @@ def _dig_strict(__dict: Mapping[str, Any], *names: str) -> Any:
     for name in names:
         __dict = __dict[name]
     return __dict
+
+
+def _process_bool(value: str) -> bool:
+    return value.strip().lower() not in {"0", "false", "off", "no", ""}
 
 
 def _dig_not_strict(__dict: Mapping[str, Any], *names: str) -> Any:
@@ -104,13 +109,26 @@ def _process_union(target: type[Any]) -> Any:
     return target
 
 
+def _process_annotated(target: type[Any]) -> tuple[Any, tuple[Any, ...]]:
+    """
+    Splits annotated into raw type and annotations. If not annotated, the annotations will be empty.
+    """
+
+    origin = get_origin(target)
+    if origin is Annotated:
+        return get_args(target)[0], get_args(target)[1:]
+
+    return target, ()
+
+
 def _get_target_raw_type(target: type[Any]) -> Any:
     """
     Takes a type like ``Optional[str]`` and returns str, or ``Optional[Dict[str,
     int]]`` and returns dict. Returns Union for a Union with more than one
-    non-none type. Literal is also a valid return.
+    non-none type. Literal is also a valid return. Works through Annotated.
     """
 
+    target, _ = _process_annotated(target)
     target = _process_union(target)
     origin = get_origin(target)
     return origin or target
@@ -142,6 +160,20 @@ def _nested_dataclass_to_names(__target: type[Any], *inner: str) -> Iterator[lis
             yield from _nested_dataclass_to_names(field.type, *inner, field.name)
     else:
         yield list(inner)
+
+
+def _dict_with_envvar(target: Any) -> Any:
+    """
+    This produces values. Supports "env" and "default" keys.
+    """
+    if not isinstance(target, dict):
+        return target
+    env = target["env"]
+    default = target.get("default", None)
+    value = os.environ.get(env, default)
+    if isinstance(default, bool) and isinstance(value, str):
+        return _process_bool(value)
+    return value
 
 
 class Source(Protocol):
@@ -214,6 +246,7 @@ class EnvSource:
 
     @classmethod
     def convert(cls, item: str, target: type[Any]) -> object:
+        target, _ = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
@@ -227,7 +260,7 @@ class EnvSource:
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
 
         if raw_target is bool:
-            return item.strip().lower() not in {"0", "false", "off", "no", ""}
+            return _process_bool(item)
 
         if raw_target is Union and str in get_args(target):
             return item
@@ -329,6 +362,7 @@ class ConfSource:
     def convert(
         cls, item: str | list[str] | dict[str, str], target: type[Any]
     ) -> object:
+        target, _ = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
@@ -349,7 +383,7 @@ class ConfSource:
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is bool:
-            return item.strip().lower() not in {"0", "false", "off", "no", ""}
+            return _process_bool(item)
         if raw_target is Union and str in get_args(target):
             return item
         if raw_target is Literal:
@@ -414,6 +448,7 @@ class TOMLSource:
 
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
+        target, annotations = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             fields = dataclasses.fields(raw_target)
@@ -433,6 +468,12 @@ class TOMLSource:
             if not isinstance(item, dict):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
+            if annotations == ("EnvVar",):
+                return {
+                    k: cls.convert(_dict_with_envvar(v), _get_inner_type(target))
+                    for k, v in item.items()
+                    if _dict_with_envvar(v) is not None
+                }
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
             return item

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Literal
+from .._compat.typing import Annotated, Literal
 
 __all__ = [
     "BackportSettings",
@@ -45,7 +45,9 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Dict[str, Union[str, bool]] = dataclasses.field(default_factory=dict)
+    define: Annotated[Dict[str, Union[str, bool]], "EnvVar"] = dataclasses.field(
+        default_factory=dict
+    )
     """
     A table of defines to pass to CMake when configuring the project. Additive.
     """

@@ -32,10 +32,37 @@
             ".+": {
               "oneOf": [
                 {
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
                 },
                 {
-                  "type": "boolean"
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "env"
+                  ],
+                  "properties": {
+                    "env": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }

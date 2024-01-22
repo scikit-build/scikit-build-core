@@ -7,11 +7,14 @@ if sys.version_info < (3, 8):
     from typing_extensions import (
         Literal,
         Protocol,
-        get_args,
-        get_origin,
     )
 else:
-    from typing import Literal, Protocol, get_args, get_origin
+    from typing import Literal, Protocol
+
+if sys.version_info < (3, 9):
+    from typing_extensions import Annotated, get_args, get_origin
+else:
+    from typing import Annotated, get_args, get_origin
 
 if sys.version_info < (3, 11):
     if typing.TYPE_CHECKING:
@@ -26,7 +29,15 @@ if sys.version_info < (3, 11):
 else:
     from typing import Self, assert_never
 
-__all__ = ["Protocol", "Literal", "Self", "get_origin", "get_args", "assert_never"]
+__all__ = [
+    "Annotated",
+    "Protocol",
+    "Literal",
+    "Self",
+    "get_origin",
+    "get_args",
+    "assert_never",
+]
 
 
 def __dir__() -> list[str]:

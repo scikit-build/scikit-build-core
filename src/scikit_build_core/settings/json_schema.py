@@ -9,7 +9,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Literal, get_args, get_origin
+from .._compat.typing import Annotated, Literal, get_args, get_origin
 from .documentation import pull_docs
 
 __all__ = ["to_json_schema", "convert_type", "FailedConversionError"]
@@ -34,6 +34,31 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
                 field.type, normalize_keys=normalize_keys
             )
             continue
+
+        if get_origin(field.type) is Annotated:
+            if get_args(field.type)[1] == "EnvVar":
+                full = convert_type(
+                    get_args(field.type)[0], normalize_keys=normalize_keys
+                )
+                types = full["patternProperties"][".+"]
+                full["patternProperties"][".+"] = {
+                    "oneOf": [
+                        types,
+                        {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["env"],
+                            "properties": {
+                                "env": {"type": "string", "minLength": 1},
+                                "default": types,
+                            },
+                        },
+                    ]
+                }
+                props[field.name] = full
+                continue
+            msg = "Only EnvVar is supported for Annotated"
+            raise FailedConversionError(msg)
 
         try:
             props[field.name] = convert_type(field.type, normalize_keys=normalize_keys)

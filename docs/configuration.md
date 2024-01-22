@@ -386,6 +386,14 @@ SKBUILD_CMAKE_DEFINE: SOME_DEFINE=ON
 
 ````
 
+You can also (`pyproject.toml` only) specify a dict, with `env=` to load a
+define from an environment variable, with optional `default=`.
+
+```toml
+[tool.scikit-build.cmake.define]
+SOME_DEFINE = {env="SOME_DEFINE", default="EMPTY"}
+```
+
 You can also manually specify the exact CMake args. Beyond the normal
 `SKBUILD_CMAKE_ARGS`, the `CMAKE_ARGS` space-separated environment variable is
 also supported (with some filtering for options scikit-build-core doesn't
