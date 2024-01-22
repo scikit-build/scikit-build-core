@@ -462,3 +462,46 @@ def test_skbuild_settings_version_too_old(
 
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml, {"minimum-version": "0.7"})
+
+
+def test_skbuild_settings_pyproject_toml_envvar_defines(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build.cmake.define]
+            a = "1"
+            b = {env = "SIMPLE"}
+            c = {env = "DEFAULT", default="empty"}
+            d = false
+            e = {env = "BOOL", default = false}
+            f = {env = "NOTSET"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_settings: dict[str, list[str] | str] = {}
+
+    monkeypatch.setenv("SIMPLE", "2")
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    assert settings_reader.settings.cmake.define == {
+        "a": "1",
+        "b": "2",
+        "c": "empty",
+        "d": False,
+        "e": False,
+    }
+
+    monkeypatch.setenv("DEFAULT", "3")
+    monkeypatch.setenv("BOOL", "ON")
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    assert settings_reader.settings.cmake.define == {
+        "a": "1",
+        "b": "2",
+        "c": "3",
+        "d": False,
+        "e": True,
+    }

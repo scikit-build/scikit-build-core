@@ -1,12 +1,11 @@
 import dataclasses
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Literal
+from .._compat.typing import Annotated, Literal
 
 __all__ = [
     "BackportSettings",
@@ -46,9 +45,9 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Dict[
-        str, Union[str, bool, Dict[str, Union[str, bool]]]
-    ] = dataclasses.field(default_factory=dict)
+    define: Annotated[Dict[str, Union[str, bool]], "EnvVar"] = dataclasses.field(
+        default_factory=dict
+    )
     """
     A table of defines to pass to CMake when configuring the project. Additive.
     """
@@ -76,20 +75,6 @@ class CMakeSettings:
     The build targets to use when building the project. Empty builds the
     default target.
     """
-
-    def __post_init__(self) -> None:
-        # read define values from environment
-        for key, value in self.define.items():
-            if isinstance(value, dict):
-                env = value.get("env", "")
-                if env == "":
-                    error_msg = (
-                        f"Dictionary for `cmake.define.{key}` must include the key `env`, "
-                        f"whose value must be a non-empty string."
-                    )
-                    raise KeyError(error_msg)
-                default = value.get("default", "")
-                self.define[key] = os.environ.get(env, default)  # type: ignore[arg-type]
 
 
 @dataclasses.dataclass
