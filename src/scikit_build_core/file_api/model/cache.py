@@ -3,7 +3,7 @@ from typing import List
 
 from .common import APIVersion
 
-__all__ = ["Property", "Entry", "Cache"]
+__all__ = ["Cache", "Entry", "Property"]
 
 
 def __dir__() -> List[str]:

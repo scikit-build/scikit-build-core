@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 
 from .common import Paths
 
-__all__ = ["Target", "InstallRule", "Node", "BacktraceGraph", "Directory"]
+__all__ = ["BacktraceGraph", "Directory", "InstallRule", "Node", "Target"]
 
 
 def __dir__() -> List[str]:

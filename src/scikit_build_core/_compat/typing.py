@@ -31,12 +31,12 @@ else:
 
 __all__ = [
     "Annotated",
-    "Protocol",
     "Literal",
+    "Protocol",
     "Self",
-    "get_origin",
-    "get_args",
     "assert_never",
+    "get_args",
+    "get_origin",
 ]
 
 

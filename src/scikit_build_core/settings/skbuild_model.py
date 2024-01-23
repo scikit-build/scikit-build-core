@@ -11,12 +11,12 @@ __all__ = [
     "BackportSettings",
     "CMakeSettings",
     "EditableSettings",
+    "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
     "NinjaSettings",
     "SDistSettings",
     "ScikitBuildSettings",
-    "GenerateSettings",
     "WheelSettings",
 ]
 

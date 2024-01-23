@@ -15,7 +15,7 @@ from .model.index import Index, Reply
 
 T = TypeVar("T")
 
-__all__ = ["make_converter", "load_reply_dir"]
+__all__ = ["load_reply_dir", "make_converter"]
 
 
 def to_path(path: str, _: Type[Path]) -> Path:

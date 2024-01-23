@@ -17,11 +17,11 @@ if TYPE_CHECKING:
     from packaging.specifiers import SpecifierSet
 
 __all__ = [
+    "Program",
+    "best_program",
+    "get_cmake_program",
     "get_cmake_programs",
     "get_ninja_programs",
-    "get_cmake_program",
-    "best_program",
-    "Program",
 ]
 
 

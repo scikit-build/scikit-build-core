@@ -37,7 +37,7 @@ def _b64encode(data: bytes) -> bytes:
     return base64.urlsafe_b64encode(data).rstrip(b"=")
 
 
-__all__ = ["WheelWriter", "WheelMetadata"]
+__all__ = ["WheelMetadata", "WheelWriter"]
 
 
 def __dir__() -> list[str]:

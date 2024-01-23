@@ -9,7 +9,7 @@ from ._file_processor import each_unignored_file
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
-__all__ = ["scantree", "path_to_module", "packages_to_file_mapping", "is_valid_module"]
+__all__ = ["is_valid_module", "packages_to_file_mapping", "path_to_module", "scantree"]
 
 
 def __dir__() -> list[str]:
