@@ -2,8 +2,6 @@
 
 ## Version 0.8.0
 
-## What's Changed
-
 This version replaces the `cmake`/`ninja` minimum-version config option with a
 more powerful free-form version field. Scikit-build-core will now respect
 `CMAKE_EXECUTABLE` for finding CMake. You can override based on the build state,
