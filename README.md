@@ -53,7 +53,8 @@ features over classic Scikit-build:
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
-- SDists are reproducible by default (UNIX, Python 3.9+)
+- SDists are reproducible by default (UNIX, Python 3.9+, uncompressed comparison
+  recommended)
 - Support for caching between builds (opt-in by setting `build-dir`)
 - Support for writing out to extra wheel folders (scripts, headers, data)
 - Support for selecting install components and build targets

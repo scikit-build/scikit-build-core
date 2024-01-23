@@ -1,5 +1,36 @@
 # Changelog
 
+## Version 0.8.0
+
+## What's Changed
+
+This version replaces the `cmake`/`ninja` minimum-version config option with a
+more powerful free-form version field. Scikit-build-core will now respect
+`CMAKE_EXECUTABLE` for finding CMake. You can override based on the build state,
+allowing overrides for editable installs, for example. You can specify a build
+tag (AKA build number). And you can define CMake variables from environment
+variables.
+
+Features:
+
+- Add `build-tag` by @henryiii in #612
+- Add `if.state` to overrides by @henryiii in #600
+- Add `cmake.version` and `ninja.version` by @henryiii in #602
+- Support `CMAKE_EXECUTABLE` by @henryiii in #603
+- Config to set CMake variables with environment variables by @stubbiali in #565
+
+Fixes:
+
+- Include license file entry in search by @henryiii in #601
+- Make sure purelib is indicated by @henryiii in #613
+- Project version should always be CMake parsable by @henryiii in #608
+
+Tests and internal:
+
+- Compare uncompressed files by @henryiii in #610
+- A couple of minor cleanups by @henryiii in #599
+- Some preview Ruff touchups by @henryiii in #617
+
 ## Version 0.7.1
 
 This is a quick fix for a downstream change in hatch-fancy-pypi-readme that
