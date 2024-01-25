@@ -403,6 +403,13 @@ support overriding).
 
 ```
 
+:::{warning}
+
+Setting defines through `cmake.args` in `pyproject.toml` is discouraged because
+this cannot be later altered via command line. Use `cmake.define` instead.
+
+:::
+
 You can also specify this using `CMAKE_ARGS`, space separated:
 
 ```yaml
