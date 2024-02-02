@@ -80,7 +80,7 @@ repos:
           - nox
           - packaging
           - pyproject_metadata
-          - pytest
+          - pytest<8
           - rich
           - setuptools-scm
           - tomli
