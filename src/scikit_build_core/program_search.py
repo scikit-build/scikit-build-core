@@ -78,7 +78,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
     """
     try:
         result = Run().capture(cmake_path, "--version")
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, PermissionError):
         return Program(cmake_path, None)
 
     try:
@@ -110,7 +110,7 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
     for ninja_path in _get_ninja_path(module=module):
         try:
             result = Run().capture(ninja_path, "--version")
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, PermissionError):
             yield Program(ninja_path, None)
             continue
 
