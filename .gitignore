@@ -176,3 +176,4 @@ Thumbs.db
 /.distro/tests/main.fmf
 
 /docs/**/build
+.vscode/
