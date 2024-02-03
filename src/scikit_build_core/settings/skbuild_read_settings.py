@@ -191,6 +191,24 @@ def _handle_minimum_version(
         dc.version = SpecifierSet(f">={dc.minimum_version}")
 
 
+def inherit_join(
+    value: list[str] | dict[str, str] | str | int | bool,
+    previous: list[str] | dict[str, str] | str | int | bool | None,
+    mode: str,
+) -> list[str] | dict[str, str] | str | int | bool:
+    if mode not in {"none", "append", "prepend"}:
+        msg = "Only 'none', 'append', and 'prepend' supported for inherit"
+        raise TypeError(msg)
+    if mode == "none" or previous is None:
+        return value
+    if isinstance(previous, list) and isinstance(value, list):
+        return [*previous, *value] if mode == "append" else [*value, *previous]
+    if isinstance(previous, dict) and isinstance(value, dict):
+        return {**previous, **value} if mode == "append" else {**value, **previous}
+    msg = "Append/prepend modes can only be used on lists or dicts"
+    raise TypeError(msg)
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -222,6 +240,12 @@ class SettingsReader:
                 matched = override_match(
                     match_all=False, current_env=env, current_state=state, **select
                 )
+
+            inherit_override = override.pop("inherit", {})
+            if not isinstance(inherit_override, dict):
+                msg = "'inherit' override must be a table"
+                raise TypeError(msg)
+
             select = {k.replace("-", "_"): v for k, v in if_override.items()}
             if select:
                 matched = matched and override_match(
@@ -229,27 +253,22 @@ class SettingsReader:
                 )
             if matched:
                 for key, value in override.items():
+                    inherit1 = inherit_override.get(key, {})
                     if isinstance(value, dict):
                         for key2, value2 in value.items():
+                            inherit2 = inherit1.get(key2, "none")
                             inner = tool_skb.get(key, {})
-                            inner[key2] = value2
-                            tool_skb[key] = inner
-                    elif key.startswith("+"):
-                        levels = key[1:].split(".")
-                        if levels[0] == "cmake":
-                            cmake = tool_skb.setdefault("cmake", {})
-                            if levels[1] == "args":
-                                args = cmake.setdefault("args", [])
-                                args += value
-                            elif levels[1] == "define":
-                                define = cmake.setdefault("define", {})
-                                define[levels[2]] = value
-                        else:
-                            raise RuntimeError(
-                                "Only `cmake.args` and `cmake.define` support additive changes."
+                            inner[key2] = inherit_join(
+                                value2, inner.get(key2, None), inherit2
                             )
+                            tool_skb[key] = inner
                     else:
-                        tool_skb[key] = value
+                        if isinstance(inherit_override, dict):
+                            assert not inherit_override
+                            inherit_override = "none"
+                        tool_skb[key] = inherit_join(
+                            value, tool_skb.get(key, None), inherit_override
+                        )
 
         prefixed = {
             k: v for k, v in config_settings.items() if k.startswith("skbuild.")

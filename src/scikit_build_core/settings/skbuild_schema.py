@@ -127,6 +127,26 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
             },
         },
     }
+    schema["$defs"]["inherit"] = {
+        "enum": ["none", "append", "prepend"],
+        "default": "none",
+    }
+
+    inherit_props: dict[str, Any] = {
+        k: {
+            kk: {"$ref": "#/$defs/inherit"}
+            for kk, vv in v["properties"].items()
+            if vv.get("type", "") in {"object", "array"}
+        }
+        for k, v in schema["properties"].items()
+        if v.get("type", "") == "object"
+    }
+    inherit_props = {
+        k: {"type": "object", "additionalProperties": False, "properties": v}
+        for k, v in inherit_props.items()
+        if v
+    }
+
     schema["properties"]["overrides"] = {
         "type": "array",
         "description": "A list of overrides to apply to the settings, based on the `if` selector.",
@@ -146,6 +166,11 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                             "additionalProperties": False,
                         },
                     ]
+                },
+                "inherit": {
+                    "type": "object",
+                    "properties": inherit_props,
+                    "additionalProperties": False,
                 },
                 **props,
             },

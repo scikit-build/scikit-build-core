@@ -436,6 +436,63 @@
               }
             ]
           },
+          "inherit": {
+            "type": "object",
+            "properties": {
+              "cmake": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "define": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "targets": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              },
+              "sdist": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "include": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "exclude": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              },
+              "wheel": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "packages": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "license-files": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "exclude": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              },
+              "install": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "components": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
           "cmake": {
             "$ref": "#/properties/cmake"
           },
@@ -546,6 +603,14 @@
           "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0."
         }
       }
+    },
+    "inherit": {
+      "enum": [
+        "none",
+        "append",
+        "prepend"
+      ],
+      "default": "none"
     }
   }
 }
