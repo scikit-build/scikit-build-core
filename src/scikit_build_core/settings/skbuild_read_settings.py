@@ -263,11 +263,11 @@ class SettingsReader:
                             )
                             tool_skb[key] = inner
                     else:
-                        if isinstance(inherit_override, dict):
-                            assert not inherit_override
-                            inherit_override = "none"
+                        inherit_override_tmp = inherit_override or "none"
+                        if isinstance(inherit_override_tmp, dict):
+                            assert not inherit_override_tmp
                         tool_skb[key] = inherit_join(
-                            value, tool_skb.get(key, None), inherit_override
+                            value, tool_skb.get(key, None), inherit_override_tmp
                         )
 
         prefixed = {
