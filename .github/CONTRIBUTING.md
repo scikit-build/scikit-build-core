@@ -138,7 +138,10 @@ Included modules:
 ## Basic CMake usage
 
 ```python
-cmake = CMake.default_search(version=">=3.15")
+from packaging.specifiers import SpecifierSet
+from scikit_build_core.cmake import CMake, CMaker
+
+cmake = CMake.default_search(version=SpecifierSet(">=3.15"))
 config = CMaker(
     cmake,
     source_dir=source_dir,
