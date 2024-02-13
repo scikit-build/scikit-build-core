@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling", "pybind11"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hatchling_example"
+version = "0.1.0"
+
+[tool.hatch.build.targets.wheel.hooks.scikit-build]
+dependencies = ["scikit-build-core"]
+wheel.install-dir = "hatchling_example"

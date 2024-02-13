@@ -15,6 +15,7 @@ Subpackages
    scikit_build_core.build
    scikit_build_core.builder
    scikit_build_core.file_api
+   scikit_build_core.hatch
    scikit_build_core.metadata
    scikit_build_core.resources
    scikit_build_core.settings

@@ -36,7 +36,7 @@ dependencies = [
     "exceptiongroup >=1.0; python_version<'3.11'",
     "importlib-metadata >=4.13; python_version<'3.8'",
     "importlib-resources >=1.3; python_version<'3.9'",
-    "packaging >=20.9",
+    "packaging >=21.3",
     "tomli >=1.1; python_version<'3.11'",
     "typing-extensions >=3.10.0; python_version<'3.9'",
 ]
@@ -52,6 +52,7 @@ pyproject = [
 test = [
     "build >=0.8",
     "cattrs >=22.2.0",
+    "hatchling",
     "pathspec >=0.10.1",
     "pip >=22",
     "pybind11 >=2.11",
@@ -91,6 +92,7 @@ dev = [
 ]
 docs = [
     "furo",
+    "hatchling",
     "myst-parser >=0.13",
     "pathspec >=0.10.1",
     "pyproject-metadata >=0.5",
@@ -115,6 +117,7 @@ Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 "distutils.setup_keywords".cmake_args = "scikit_build_core.setuptools.build_cmake:cmake_args"
 "setuptools.finalize_distribution_options".scikit_build_entry = "scikit_build_core.setuptools.build_cmake:finalize_distribution_options"
 "validate_pyproject.tool_schema".scikit-build = "scikit_build_core.settings.skbuild_schema:get_skbuild_schema"
+hatch.scikit-build = "scikit_build_core.hatch.hooks"
 
 [tool.hatch]
 version.source = "vcs"
