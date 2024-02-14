@@ -178,9 +178,6 @@ class CMaker:
         if self.init_cache_file.is_file():
             yield f"-C{self.init_cache_file}"
 
-        if self.single_config and self.build_type:
-            yield f"-DCMAKE_BUILD_TYPE:STRING={self.build_type}"
-
         for key, value in defines.items():
             if isinstance(value, bool):
                 str_value = "ON" if value else "OFF"
@@ -213,6 +210,9 @@ class CMaker:
         gen = self.get_generator(*all_args)
         if gen:
             self.single_config = gen == "Ninja" or "Makefiles" in gen
+
+        if self.single_config and self.build_type:
+            all_args.insert(2, f"-DCMAKE_BUILD_TYPE:STRING={self.build_type}")
 
         try:
             Run(env=self.env).live(self.cmake, *all_args)
