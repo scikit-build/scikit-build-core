@@ -66,7 +66,7 @@ class Run:
                 logger.debug("RUNENV - changes since last run only:\n  {}", msg)
                 type(self)._prev_env = self.env.copy()
 
-        logger.debug("RUN: {}", " ".join(options))
+        logger.info("RUN: {}", " ".join(options))
 
         return subprocess.run(
             options,
