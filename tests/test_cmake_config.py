@@ -22,12 +22,12 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
 
+    if config.single_config:
+        yield f"-DCMAKE_BUILD_TYPE:STRING={config.build_type}"
+
     if init:
         cmake_init = config.build_dir / "CMakeInit.txt"
         yield f"-C{cmake_init}"
-
-    if config.single_config:
-        yield f"-DCMAKE_BUILD_TYPE:STRING={config.build_type}"
 
 
 @pytest.mark.configure()
