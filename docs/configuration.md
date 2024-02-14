@@ -566,7 +566,7 @@ Known limitations:
 
 ```console
 # Very experimental rebuild on initial import feature
-$ pip install --no-build-isolation --config-settings=editable.rebuild=true --config-settings=build-dir=/path/to/my/build/dir -ve.
+$ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
 ```
 
 Due to the length of this line already being long, you do not need to set the
