@@ -277,7 +277,7 @@ class SettingsReader:
 
         if self.settings.editable.rebuild and not self.settings.build_dir:
             rich_print(
-                "[red][bold]ERROR:[/bold] editable mode with rebuild requires build_dir"
+                "[red][bold]ERROR:[/bold] editable mode with rebuild requires build-dir"
             )
             raise SystemExit(7)
 
