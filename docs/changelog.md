@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 0.8.1
+
+This version fixes two small issues with specific situations: if ninja/cmake is
+present but not executable, and ninja on Windows not respecting the build type.
+
+Fixes:
+
+- Do not exit with exec permission error in ninja check by @thewtex in
+  https://github.com/scikit-build/scikit-build-core/pull/626
+- Include `CMAKE_BUILD_TYPE` on Windows Ninja by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/640
+- Use `-` vs `_` in error message by @nbelakovski in
+  https://github.com/scikit-build/scikit-build-core/pull/638
+- Make run command logged at info by @LecrisUT in
+  https://github.com/scikit-build/scikit-build-core/pull/639
+
+Documentation:
+
+- Warning about using `cmake.args` for defines by @LecrisUT in
+  https://github.com/scikit-build/scikit-build-core/pull/620
+- Correct API usage example by @henryiii in
+  https://github.com/scikit-build/scikit-build-core/pull/627
+
 ## Version 0.8.0
 
 This version replaces the `cmake`/`ninja` minimum-version config option with a
