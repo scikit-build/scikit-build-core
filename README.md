@@ -86,10 +86,12 @@ The recommended interface is the native pyproject builder. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
 for classic scikit-build.
 
-**WARNING**: Only the pyproject-based builder should be used; the setuptools
-backend is experimental and likely to move to a separate package before being
-declared stable, and internal API is still being solidified. A future version of
-this package will support creating new build extensions.
+> [!WARNING]
+>
+> Only the pyproject-based builder should be used; the setuptools
+> backend is experimental and likely to move to a separate package before being
+> declared stable, and internal API is still being solidified. A future version of
+> this package will support creating new build extensions.
 
 ## Example
 
