@@ -604,7 +604,8 @@ party tooling might work better with this mode. Scikit-build-core will simply
 install a `.pth` file that points at your source package(s) and do an inplace
 CMake build.
 
-On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
+On the command line, you can pass `-Ceditable.mode=inplace -Cbuild-dir=""` to
+enable this mode.
 
 :::
 
