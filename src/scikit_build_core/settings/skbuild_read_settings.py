@@ -262,24 +262,18 @@ class SettingsReader:
                 )
                 raise CMakeConfigError(msg)
 
-        if self.settings.editable.mode == "inplace":
-            if self.settings.editable.rebuild:
+        if self.settings.editable.rebuild:
+            if self.settings.editable.mode == "inplace":
                 rich_print(
                     "[red][bold]ERROR:[/bold] editable rebuild is incompatible with inplace mode"
                 )
                 raise SystemExit(7)
 
-            if self.settings.build_dir:
+            if not self.settings.build_dir:
                 rich_print(
-                    "[red][bold]ERROR:[/bold] build-dir must be empty for editable inplace mode"
+                    "[red][bold]ERROR:[/bold] editable mode with rebuild requires build-dir"
                 )
                 raise SystemExit(7)
-
-        if self.settings.editable.rebuild and not self.settings.build_dir:
-            rich_print(
-                "[red][bold]ERROR:[/bold] editable mode with rebuild requires build-dir"
-            )
-            raise SystemExit(7)
 
         install_policy = (
             self.settings.minimum_version is None

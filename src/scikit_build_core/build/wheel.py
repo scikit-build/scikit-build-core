@@ -177,19 +177,22 @@ def _build_wheel_impl(
         )
 
         # A build dir can be specified, otherwise use a temporary directory
-        build_dir = (
-            Path(
-                settings.build_dir.format(
-                    cache_tag=sys.implementation.cache_tag,
-                    wheel_tag=str(tags),
-                    build_type=settings.cmake.build_type,
-                    state=state,
+        if cmake is not None and editable and settings.editable.mode == "inplace":
+            build_dir = settings.cmake.source_dir
+        else:
+            build_dir = (
+                Path(
+                    settings.build_dir.format(
+                        cache_tag=sys.implementation.cache_tag,
+                        wheel_tag=str(tags),
+                        build_type=settings.cmake.build_type,
+                        state=state,
+                    )
                 )
+                if settings.build_dir
+                else build_tmp_folder / "build"
             )
-            if settings.build_dir
-            else build_tmp_folder / "build"
-        )
-        logger.info("Build directory: {}", build_dir.resolve())
+            logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {
             targetlib: wheel_dir / targetlib,
@@ -279,8 +282,6 @@ def _build_wheel_impl(
         install_options = []
 
         if cmake is not None:
-            if editable and settings.editable.mode == "inplace":
-                build_dir = settings.cmake.source_dir
             config = CMaker(
                 cmake,
                 source_dir=settings.cmake.source_dir,

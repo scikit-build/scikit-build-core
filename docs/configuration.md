@@ -595,8 +595,9 @@ artifacts, etc. Also, to make your binaries importable, you should set
 all possible `*_<CONFIG>` variations) to make sure they are placed inside your
 source directory inside the Python packages; this will be run from the build
 directory, rather than installed. This will also not support automatic rebuilds.
-The build directory setting must be empty/unset to use this. You can detect this
-mode by checking for an in-place build and checking `SKBUILD` being set.
+The build directory setting will be ignored if you use this and perform an
+editable install. You can detect this mode by checking for an in-place build and
+checking `SKBUILD` being set.
 
 With all the caveats, this is very logically simple (one directory) and a near
 identical replacement for `python setup.py build_ext --inplace`. Some third
@@ -604,8 +605,7 @@ party tooling might work better with this mode. Scikit-build-core will simply
 install a `.pth` file that points at your source package(s) and do an inplace
 CMake build.
 
-On the command line, you can pass `-Ceditable.mode=inplace -Cbuild-dir=""` to
-enable this mode.
+On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
 
 :::
 
