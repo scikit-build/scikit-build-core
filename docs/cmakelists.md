@@ -42,7 +42,12 @@ If you are making a Limited ABI / Stable API package, you'll need the
 
 If you want to cross-compile to Windows ARM, you'll need to use
 `${SKBUILD_SOABI}`, which is always correct, instead of trusting FindPython's
-`Python_SOABI` value.
+`Python_SOABI` value. To do so, override `Python_SOABI` after
+`find_package(Python)`:
+
+```cmake
+set(Python_SOABI ${SKBUILD_SOABI})
+```
 
 :::
 
