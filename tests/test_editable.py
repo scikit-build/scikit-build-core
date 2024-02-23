@@ -1,3 +1,4 @@
+import ast
 import shutil
 import sys
 from pathlib import Path
@@ -111,7 +112,9 @@ def test_editable_symlink(monkeypatch, tmp_path, isolated):
     package_dir = tmp_path / pkg_name
 
     # Need to set symlinks=True.
-    shutil.copytree(Path(__file__).parent / "packages" / pkg.name, package_dir, symlinks=True)
+    shutil.copytree(
+        Path(__file__).parent / "packages" / pkg.name, package_dir, symlinks=True
+    )
 
     # Have to change to the `project` directory because above we use the top-level
     # directory `editable_symlink` in order to ensure that the symlinked VERSION file is
@@ -128,5 +131,5 @@ def test_editable_symlink(monkeypatch, tmp_path, isolated):
     )
 
     value = isolated.execute(f"import {pkg_name}; print({pkg_name}.__path__)")
-    value = eval(value)
+    value = ast.literal_eval(value)
     assert len(value) == 1
