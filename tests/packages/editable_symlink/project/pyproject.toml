@@ -1,0 +1,19 @@
+[build-system]
+requires = [
+    "pybind11",
+    "scikit-build-core[pyproject]",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+editable.mode = "redirect"
+
+[project]
+name = "editable_symlink"
+dynamic = ["version"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "editable_symlink/VERSION"
+regex = "(?P<value>.*)"

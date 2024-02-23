@@ -1,3 +1,4 @@
+import shutil
 import sys
 from pathlib import Path
 
@@ -97,3 +98,35 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
         *editable_flag,
         ".",
     )
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
+def test_editable_symlink(monkeypatch, tmp_path, isolated):
+    # The nested directory name here must be identical to the package name
+    # (editable_symlink in this case) to trigger the undesired behavior.
+    pkg_name = "editable_symlink"
+    pkg = PackageInfo(pkg_name)
+    package_dir = tmp_path / pkg_name
+
+    # Need to set symlinks=True.
+    shutil.copytree(Path(__file__).parent / "packages" / pkg.name, package_dir, symlinks=True)
+
+    # Have to change to the `project` directory because above we use the top-level
+    # directory `editable_symlink` in order to ensure that the symlinked VERSION file is
+    # also present in the temporary directory.
+    monkeypatch.chdir(package_dir / "project")
+
+    isolated.install("pip>23", "pybind11", "scikit-build-core[pyproject]")
+
+    isolated.install(
+        "-v",
+        "--no-build-isolation",
+        "-e",
+        ".",
+    )
+
+    value = isolated.execute(f"import {pkg_name}; print({pkg_name}.__path__)")
+    value = eval(value)
+    assert len(value) == 1
