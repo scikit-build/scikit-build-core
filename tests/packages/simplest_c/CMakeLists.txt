@@ -34,3 +34,7 @@ install(
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated_ignored.txt "Testing")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated_ignored.txt
         DESTINATION ${SKBUILD_PROJECT_NAME})
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated_no_wheel.txt "Testing")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated_no_wheel.txt
+        DESTINATION ${SKBUILD_PROJECT_NAME})

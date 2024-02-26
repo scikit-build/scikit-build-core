@@ -344,7 +344,8 @@ def _build_wheel_impl(
             packages=packages,
             platlib_dir=wheel_dirs[targetlib],
             include=settings.sdist.include,
-            exclude=[*settings.sdist.exclude, *settings.wheel.exclude],
+            src_exclude=settings.sdist.exclude,
+            target_exclude=settings.wheel.exclude,
         )
 
         if not editable:
@@ -364,7 +365,7 @@ def _build_wheel_impl(
             ),
             license_files=license_files,
         ) as wheel:
-            wheel.build(wheel_dirs)
+            wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 
             str_pkgs = (str(Path.cwd().joinpath(p).parent.resolve()) for p in packages)
             if editable and settings.editable.mode == "redirect":

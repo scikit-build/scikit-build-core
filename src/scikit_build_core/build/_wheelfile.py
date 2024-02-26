@@ -17,11 +17,12 @@ from typing import TYPE_CHECKING
 from zipfile import ZipInfo
 
 import packaging.utils
+import pathspec
 
 from .. import __version__
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Set
+    from collections.abc import Mapping, Sequence, Set
 
     from packaging.tags import Tag
     from pyproject_metadata import StandardMetadata
@@ -141,7 +142,9 @@ class WheelWriter:
             **license_entries,
         }
 
-    def build(self, wheel_dirs: dict[str, Path]) -> None:
+    def build(
+        self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = ()
+    ) -> None:
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
         assert {targetlib, "data", "headers", "scripts", "null"} >= wheel_dirs.keys()
 
@@ -152,14 +155,21 @@ class WheelWriter:
         for key in sorted({"data", "headers", "scripts"} & wheel_dirs.keys()):
             plans[key] = wheel_dirs[key]
 
+        exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude)
+
         for key, path in plans.items():
             for filename in sorted(path.glob("**/*")):
-                is_in_dist_info = any(x.endswith(".dist-info") for x in filename.parts)
-                is_python_cache = filename.suffix in {".pyc", ".pyo"}
-                if filename.is_file() and not is_in_dist_info and not is_python_cache:
-                    relpath = filename.relative_to(path)
-                    target = Path(data_dir) / key / relpath if key else relpath
-                    self.write(str(filename), str(target))
+                if not filename.is_file():
+                    continue
+                if any(x.endswith(".dist-info") for x in filename.parts):
+                    continue
+                if filename.suffix in {".pyc", ".pyo"}:
+                    continue
+                relpath = filename.relative_to(path)
+                if exclude_spec.match_file(relpath):
+                    continue
+                target = Path(data_dir) / key / relpath if key else relpath
+                self.write(str(filename), str(target))
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
