@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from packaging.version import InvalidVersion, Version
 
-from ._logging import logger
+from ._logging import logger, rich_print
 from ._shutil import Run
 
 if TYPE_CHECKING:
@@ -149,3 +149,20 @@ def best_program(
             return program
 
     return None
+
+
+def info_print(*, color: str = "") -> None:
+    """
+    Print information about the program search.
+    """
+    rich_print(f"[bold {color}]Detected CMake and Ninja[/bold] (all versions):")
+    for n, prog in enumerate(get_cmake_programs()):
+        s = " " if n else "*"
+        rich_print(f"{s} [bold {color}]CMake:[/bold] {prog.path} {prog.version!r}")
+    for n, prog in enumerate(get_ninja_programs()):
+        s = " " if n else "*"
+        rich_print(f"{s} [bold {color}]Ninja:[/bold] {prog.path} {prog.version!r}")
+
+
+if __name__ == "__main__":
+    info_print()

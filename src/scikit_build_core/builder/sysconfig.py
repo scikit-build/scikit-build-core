@@ -7,7 +7,7 @@ import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .._logging import logger
+from .._logging import logger, rich_print
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -18,6 +18,7 @@ __all__ = [
     "get_python_include_dir",
     "get_python_library",
     "get_soabi",
+    "info_print",
 ]
 
 
@@ -169,3 +170,33 @@ def get_numpy_include_dir() -> Path | None:
         return None
 
     return Path(np.get_include())
+
+
+def info_print(*, color: str = "") -> None:
+    """
+    Print information about the Python environment.
+    """
+
+    rich_print(
+        f"[bold {color}]Detected Python Library:[/bold] {get_python_library(os.environ, abi3=False)}"
+    )
+    rich_print(
+        f"[bold {color}]Detected ABI3 Python Library:[/bold] {get_python_library(os.environ, abi3=True)}"
+    )
+    rich_print(
+        f"[bold {color}]Detected Python Include Directory:[/bold] {get_python_include_dir()}"
+    )
+    rich_print(
+        f"[bold {color}]Detected NumPy Include Directory:[/bold] {get_numpy_include_dir()}"
+    )
+    rich_print(f"[bold {color}]Detected Platform:[/bold] {get_platform()}")
+    rich_print(
+        f"[bold {color}]Detected SOABI:[/bold] {get_soabi(os.environ, abi3=False)}"
+    )
+    rich_print(
+        f"[bold {color}]Detected ABI3 SOABI:[/bold] {get_soabi(os.environ, abi3=True)}"
+    )
+
+
+if __name__ == "__main__":
+    info_print()
