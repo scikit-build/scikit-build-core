@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -31,20 +32,16 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             build_data["artifacts"].append("CMakeLists.txt")  # Needs full list, etc.
             return
 
-        source_dir = Path.cwd() / "cpp"
-        build_dir = Path.cwd() / "build"
-        prefix = Path.cwd() / "prefix"
-
         pyproject_path = Path("pyproject.toml")
         with pyproject_path.open("rb") as ft:
             pyproject = tomllib.load(ft)
 
-        state: Literal["wheel"] = "wheel"  # Hatchling should tell you this
-
         config_dict = copy.deepcopy(self.config)
+
         config_dict.pop("dependencies", None)
+
         settings_reader = SettingsReader(
-            pyproject, {}, state=state, extra_settings=config_dict
+            pyproject, {}, state=self.target_name, extra_settings=config_dict
         )
         settings = settings_reader.settings
 
@@ -56,11 +53,24 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         settings_reader.validate_may_exit()
 
+        source_dir = Path.cwd() / "cpp"
+        if settings.cmake.source_dir:
+            print(f"source-dir: {settings.cmake.source_dir}")
+            source_dir = Path.cwd() / settings.cmake.source_dir
+
+        build_dir = Path.cwd() / TemporaryDirectory().name
+        if settings.build_dir:
+            print(f"build-dir: {settings.build_dir}")
+            build_dir = Path.cwd() / settings.build_dir
+
+        prefix = Path.cwd() / "prefix"
+
+
         config = CMaker(
             cmake,
             source_dir=source_dir,
             build_dir=build_dir,
-            build_type="Release",
+            build_type=settings.cmake.build_type
         )
 
         builder = Builder(settings, config)
