@@ -4,7 +4,7 @@ import copy
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
@@ -12,10 +12,6 @@ from .._compat import tomllib
 from ..builder.builder import Builder
 from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
-
-if TYPE_CHECKING:
-    from .._compat.typing import Literal
-
 
 __all__ = ["ScikitBuildHook"]
 
@@ -65,12 +61,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         prefix = Path.cwd() / "prefix"
 
-
         config = CMaker(
             cmake,
             source_dir=source_dir,
             build_dir=build_dir,
-            build_type=settings.cmake.build_type
+            build_type=settings.cmake.build_type,
         )
 
         builder = Builder(settings, config)
