@@ -173,6 +173,7 @@ def _build_wheel_impl(
             archs_to_tags(get_archs(os.environ)),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
+            root_is_purelib=targetlib == "purelib",
             build_tag=settings.wheel.build_tag,
         )
 

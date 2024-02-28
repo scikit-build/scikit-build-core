@@ -11,7 +11,7 @@ from scikit_build_core.build import build_wheel
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")
     out = build_wheel("dist", {})
-    (wheel,) = dist.glob("purelib_example-0.0.1-*.whl")
+    (wheel,) = dist.glob("purelib_example-0.0.1-*-none-any.whl")
     assert wheel == dist / out
 
     virtualenv.install(wheel)
