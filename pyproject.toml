@@ -170,6 +170,7 @@ py-version = "3.7"
 jobs = "0"
 reports.output-format = "colorized"
 good-names = ["f"]
+ignore-patterns = ['.*\.pyi']
 messages_control.disable = [
     "design",
     "fixme",
