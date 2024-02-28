@@ -88,6 +88,10 @@ class WheelTag:
                 if len(pyvers_new) != 1:
                     msg = "Unexpected py-api, must be a single cp version (e.g. cp39), not {py_api}"
                     raise AssertionError(msg)
+                if root_is_purelib:
+                    msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
+                    raise AssertionError(msg)
+
                 minor = int(pyvers_new[0][3:])
                 if (
                     sys.implementation.name == "cpython"
@@ -98,9 +102,6 @@ class WheelTag:
                 else:
                     msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high"
                     logger.debug(msg, sys.implementation.name, minor)
-                if root_is_purelib:
-                    msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
-                    raise AssertionError(msg)
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
                 abi = "none"
