@@ -37,6 +37,7 @@ class WheelTag:
         py_api: str = "",
         *,
         expand_macos: bool = False,
+        root_is_purelib: bool = False,
         build_tag: str = "",
     ) -> Self:
         if build_tag:
@@ -77,6 +78,10 @@ class WheelTag:
             # Remove duplicates (e.g. universal2 if macOS > 11.0 and expanded)
             plats = list(dict.fromkeys(plats))
 
+        if root_is_purelib:
+            plats = ["any"]
+            abi = "none"
+
         if py_api:
             pyvers_new = py_api.split(".")
             if all(x.startswith("cp3") and x[3:].isdecimal() for x in pyvers_new):
@@ -93,6 +98,9 @@ class WheelTag:
                 else:
                     msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high"
                     logger.debug(msg, sys.implementation.name, minor)
+                if root_is_purelib:
+                    msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
+                    raise AssertionError(msg)
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
                 abi = "none"
