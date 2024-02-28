@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
+        id: python
         with:
           python-version: "3.11"
       - uses: pre-commit/action@v3.0.1
@@ -32,10 +33,10 @@ jobs:
       - name: Run PyLint
         run: |
           echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
-          pipx run nox -s pylint
+          pipx run --python "${{ steps.python.outputs.python-path }}" nox -s pylint
       - name: Run nox generator
         run: |
-          pipx run nox -s generate_schema -s readme
+          pipx run --python "${{ steps.python.outputs.python-path }}" nox -s generate_schema -s readme
           git diff --exit-code
 
   checks:
