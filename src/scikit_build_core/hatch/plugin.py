@@ -49,12 +49,12 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         settings_reader.validate_may_exit()
 
-        source_dir = Path.cwd() / "cpp"
+        source_dir = Path.cwd()
         if settings.cmake.source_dir:
             print(f"source-dir: {settings.cmake.source_dir}")
             source_dir = Path.cwd() / settings.cmake.source_dir
 
-        build_dir = Path.cwd() / TemporaryDirectory().name
+        build_dir = Path(TemporaryDirectory().name)
         if settings.build_dir:
             print(f"build-dir: {settings.build_dir}")
             build_dir = Path.cwd() / settings.build_dir
