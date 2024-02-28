@@ -272,7 +272,7 @@ def _build_wheel_impl(
             if gen.location == "build":
                 path = build_dir / gen.path
             elif gen.location == "install":
-                path = install_dir / gen.path
+                path = wheel_dirs[targetlib] / gen.path
             else:
                 assert_never(gen.location)
             path.parent.mkdir(parents=True, exist_ok=True)
