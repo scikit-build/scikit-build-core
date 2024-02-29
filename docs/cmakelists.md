@@ -42,12 +42,26 @@ If you are making a Limited ABI / Stable API package, you'll need the
 
 If you want to cross-compile to Windows ARM, you'll need to use
 `${SKBUILD_SOABI}`, which is always correct, instead of trusting FindPython's
-`Python_SOABI` value. To do so, override `Python_SOABI` after
+`Python_SOABI` value. You can manually set the extension suffix after making a
+target:
+
+```cmake
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set_property (TARGET ${name} PROPERTY SUFFIX "$.{SKBUILD_SOSABI}.pyd")
+else()
+    set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOSABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+endif()
+```
+
+A quicker way to do this would be to instead override `Python_SOABI` after
 `find_package(Python)`:
 
 ```cmake
 set(Python_SOABI ${SKBUILD_SOABI})
 ```
+
+However, this isn't officially supported upstream, and only works due to the way
+this variable is used when creating targets.
 
 :::
 
