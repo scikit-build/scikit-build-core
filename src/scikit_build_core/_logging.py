@@ -79,7 +79,7 @@ class ScikitBuildLogger:
 logger = ScikitBuildLogger(raw_logger)
 
 
-ANY_ESCAPE = re.compile(r"\[([\w\s/]*)\]")
+ANY_ESCAPE = re.compile(r"\[([\w\s/]+)\]")
 
 
 _COLORS = {
