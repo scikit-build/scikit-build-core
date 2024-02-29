@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 0.8.2
+
+This version fixes a few small issues related to configuration. The wheel tag is
+fixed when `wheel.platlib` is False, inplace editable installs ignore
+`build-dir`, and `install-dir` no longer affects the generate path.
+
+Fixes:
+
+- Ensure `wheel.platlib` being false sets `<abi>-<platform>` as `"none-any"` by
+  @jcfr in #655
+- Inplace editable install should ignore `build-dir` by @henryiii in #644
+- `install-dir` shouldn't affect generate path by @henryiii in #654
+- Expand info printing by @henryiii in #651
+
+Documentation:
+
+- Clarify requirement for using "inplace" editable mode by @jcfr in #643
+- Update README to use modern GitHub admonition by @jcfr in #641
+- be explicit about what it means to "use SKBUILD_SOABI" by @minrk in #646
+
 ## Version 0.8.1
 
 This version fixes two small issues with specific situations: if ninja/cmake is
@@ -7,21 +27,15 @@ present but not executable, and ninja on Windows not respecting the build type.
 
 Fixes:
 
-- Do not exit with exec permission error in ninja check by @thewtex in
-  https://github.com/scikit-build/scikit-build-core/pull/626
-- Include `CMAKE_BUILD_TYPE` on Windows Ninja by @henryiii in
-  https://github.com/scikit-build/scikit-build-core/pull/640
-- Use `-` vs `_` in error message by @nbelakovski in
-  https://github.com/scikit-build/scikit-build-core/pull/638
-- Make run command logged at info by @LecrisUT in
-  https://github.com/scikit-build/scikit-build-core/pull/639
+- Do not exit with exec permission error in ninja check by @thewtex in #626
+- Include `CMAKE_BUILD_TYPE` on Windows Ninja by @henryiii in #640
+- Use `-` vs `_` in error message by @nbelakovski in #638
+- Make run command logged at info by @LecrisUT in #639
 
 Documentation:
 
-- Warning about using `cmake.args` for defines by @LecrisUT in
-  https://github.com/scikit-build/scikit-build-core/pull/620
-- Correct API usage example by @henryiii in
-  https://github.com/scikit-build/scikit-build-core/pull/627
+- Warning about using `cmake.args` for defines by @LecrisUT in #620
+- Correct API usage example by @henryiii in #627
 
 ## Version 0.8.0
 
