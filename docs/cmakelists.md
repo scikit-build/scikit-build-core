@@ -38,7 +38,9 @@ If you are making a Limited ABI / Stable API package, you'll need the
 `Development.SABIModule` component instead. You can use the
 `SKBUILD_LIMITED_API` variable to check to see if it was requested.
 
+<!-- prettier-ignore-start -->
 :::{warning}
+:name: soabi
 
 If you want to cross-compile to Windows ARM, you'll need to use
 `${SKBUILD_SOABI}`, which is always correct, instead of trusting FindPython's
@@ -52,6 +54,7 @@ else()
     set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOSABI}${CMAKE_SHARED_MODULE_SUFFIX}")
 endif()
 ```
+<!-- prettier-ignore-end -->
 
 A quicker way to do this would be to instead override `Python_SOABI` after
 `find_package(Python)`:

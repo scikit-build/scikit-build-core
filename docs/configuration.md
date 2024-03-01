@@ -5,6 +5,8 @@ in scikit-build-core can be specified in one of three ways: as a
 `pyproject.toml` option (preferred if static), as a config-settings options
 (preferred if dynamic), or as an environment variable.
 
+(verbosity)=
+
 ## Verbosity
 
 You can increase the verbosity of the build with two settings - `cmake.verbose`

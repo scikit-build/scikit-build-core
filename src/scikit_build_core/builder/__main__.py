@@ -24,7 +24,7 @@ def main() -> None:
 
     rich_print(f"[bold blue]Default Wheel Tag:[/bold] {WheelTag.compute_best([])}")
     rich_print(
-        "[blue] - Note: use [bold]python -m scikit_build_core.builder.wheel_tag[/bold] for further options[/blue]"
+        "[blue] - Note: use [bold]python -m scikit_build_core.builder.wheel_tag -h[/bold] for further options[/blue]"
     )
 
     if Path("pyproject.toml").is_file():

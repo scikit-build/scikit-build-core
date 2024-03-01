@@ -51,10 +51,28 @@ What's more, the manylinux image (which is used to make redistributable Linux
 wheels) does not have the Python libraries, both to avoid this mistake, and to
 reduce size.
 
+## Cross compiling
+
+When cross compiling, FindPython may not get the correct SOABI extension.
+Scikit-build-core does know the correct extension, however, and sets it as
+`SKBUILD_SOABI`. See [the SOABI docs](#soabi).
+
+## Things to try
+
+If you want to debug a scikit-build-core build, you have several options. If you
+are using `pip`, make sure you are passing the `-v` flag, otherwise `pip`
+suppresses all output. You can
+[increase scikit-build-core's logging verbosity](#verbosity). You can also get a
+printout of the current settings using:
+
+```bash
+python -m scikit_build_core.builder
+```
+
 <!-- prettier-ignore-start -->
 
 [scientific python cookie]: https://github.com/scientific-python/cookie
-[scientific python development guide]: https://learn.scientific-python.org/development
+[scientific python development guidelines]: https://learn.scientific-python.org/development
 [pybind11 example]: https://github.com/pybind/scikit_build_example
 
 <!-- prettier-ignore-end -->
