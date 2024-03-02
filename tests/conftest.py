@@ -267,6 +267,13 @@ def package_dynamic_metadata(
 
 
 @pytest.fixture()
+def package_hatchling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo("hatchling")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "simplest_c",
