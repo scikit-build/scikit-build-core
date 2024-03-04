@@ -269,6 +269,13 @@ as well (not guaranteed to be respected by editable installs):
 wheel.exclude = ["**.pyx"]
 ```
 
+:::{versionchanged} 0.9
+
+Before scikit-build-core 0.9, these were matched on the source path, rather than
+the wheel path, and didn't apply to CMake output.
+
+:::
+
 :::{note}
 
 There are two more settings that are primarily intended for `overrides` (see

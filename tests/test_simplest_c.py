@@ -82,6 +82,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
 
         if not component:
             expected_wheel_files.add("generated_ignored.txt")
+            expected_wheel_files.add("generated_no_wheel.txt")
 
         if not component or "Generated" in component:
             expected_wheel_files.add("generated.txt")
@@ -110,7 +111,10 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
         {
             "sdist.include": "src/simplest/*included*.txt",
             "sdist.exclude": "src/simplest/*excluded*.txt",
-            "wheel.exclude": "src/simplest/sdist_only.txt",
+            "wheel.exclude": [
+                "simplest/sdist_only.txt",
+                "simplest/generated_no_wheel.txt",
+            ],
             "wheel.packages": ["src/simplest", "src/not_a_package"],
         },
     )

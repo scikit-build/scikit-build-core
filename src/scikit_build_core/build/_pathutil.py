@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pathspec
+
 from ._file_processor import each_unignored_file
 
 if TYPE_CHECKING:
@@ -37,20 +39,23 @@ def packages_to_file_mapping(
     packages: Sequence[str],
     platlib_dir: Path,
     include: Sequence[str],
-    exclude: Sequence[str],
+    src_exclude: Sequence[str],
+    target_exclude: Sequence[str],
 ) -> dict[str, str]:
     mapping = {}
+    exclude_spec = pathspec.GitIgnoreSpec.from_lines(target_exclude)
     for package in packages:
         source_package = Path(package)
         base_path = source_package.parent
         for filepath in each_unignored_file(
             source_package,
             include=include,
-            exclude=exclude,
+            exclude=src_exclude,
         ):
-            package_dir = platlib_dir / filepath.relative_to(base_path)
-            if not package_dir.is_file():
-                mapping[str(filepath)] = str(package_dir)
+            rel_path = filepath.relative_to(base_path)
+            target_path = platlib_dir / rel_path
+            if not exclude_spec.match_file(rel_path) and not target_path.is_file():
+                mapping[str(filepath)] = str(target_path)
 
     return mapping
 
