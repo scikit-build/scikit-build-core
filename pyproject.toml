@@ -53,6 +53,7 @@ test = [
     "build[virtualenv]",
     "cattrs >=22.2.0",
     "pathspec >=0.10.1",
+    "pip",
     "pybind11",
     "pyproject-metadata >=0.5",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
