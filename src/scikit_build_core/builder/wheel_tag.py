@@ -81,6 +81,7 @@ class WheelTag:
         if root_is_purelib:
             plats = ["any"]
             abi = "none"
+            pyvers = ["py3"]
 
         if py_api:
             pyvers_new = py_api.split(".")
@@ -156,6 +157,11 @@ if __name__ == "__main__":
         default="",
         help="Specify py-api, like 'cp37' or 'py3'",
     )
+    parser.add_argument(
+        "--purelib",
+        action="store_true",
+        help="Specify a non-platlib (pure) tag",
+    )
     args = parser.parse_args()
-    tag = WheelTag.compute_best(args.archs, args.abi)
+    tag = WheelTag.compute_best(args.archs, args.abi, root_is_purelib=args.purelib)
     print(tag)  # noqa: T201
