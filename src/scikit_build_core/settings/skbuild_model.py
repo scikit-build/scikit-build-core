@@ -100,9 +100,9 @@ class NinjaSettings:
 
 @dataclasses.dataclass
 class LoggingSettings:
-    level: Literal[
-        "NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-    ] = "WARNING"
+    level: Literal["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = (
+        "WARNING"
+    )
     """
     The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
     possible options.
