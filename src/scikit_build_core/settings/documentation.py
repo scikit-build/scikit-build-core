@@ -29,6 +29,7 @@ def _get_value(value: ast.expr) -> str:
         return value.s
 
     assert isinstance(value, ast.Constant)
+    assert isinstance(value.value, str)
     return value.value
 
 
