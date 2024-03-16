@@ -96,12 +96,10 @@ class VEnv:
         )
 
     @overload
-    def run(self, *args: str, capture: Literal[True]) -> str:
-        ...
+    def run(self, *args: str, capture: Literal[True]) -> str: ...
 
     @overload
-    def run(self, *args: str, capture: Literal[False] = ...) -> None:
-        ...
+    def run(self, *args: str, capture: Literal[False] = ...) -> None: ...
 
     def run(self, *args: str, capture: bool = False) -> str | None:
         __tracebackhide__ = True

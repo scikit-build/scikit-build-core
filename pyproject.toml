@@ -149,7 +149,7 @@ norecursedirs = ["tests/packages/**"]
 [tool.mypy]
 files = ["src", "tests", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
-python_version = "3.7"
+python_version = "3.8"
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true

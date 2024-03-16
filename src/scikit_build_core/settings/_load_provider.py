@@ -20,26 +20,24 @@ def __dir__() -> list[str]:
 class DynamicMetadataProtocol(Protocol):
     def dynamic_metadata(
         self, fields: Iterable[str], settings: dict[str, Any]
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
 
 class DynamicMetadataRequirementsProtocol(DynamicMetadataProtocol, Protocol):
-    def get_requires_for_dynamic_metadata(self, settings: dict[str, Any]) -> list[str]:
-        ...
+    def get_requires_for_dynamic_metadata(
+        self, settings: dict[str, Any]
+    ) -> list[str]: ...
 
 
 class DynamicMetadataWheelProtocol(DynamicMetadataProtocol, Protocol):
     def dynamic_wheel(
         self, field: str, settings: Mapping[str, Any] | None = None
-    ) -> bool:
-        ...
+    ) -> bool: ...
 
 
 class DynamicMetadataRequirementsWheelProtocol(
     DynamicMetadataRequirementsProtocol, DynamicMetadataWheelProtocol, Protocol
-):
-    ...
+): ...
 
 
 DMProtocols = Union[
