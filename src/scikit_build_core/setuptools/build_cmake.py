@@ -198,7 +198,7 @@ def _prepare_build_cmake_command(dist: Distribution) -> None:
     assert build is not None
     if "build_cmake" not in {x for x, _ in build.sub_commands}:
         build.sub_commands.append(
-            ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))  # type: ignore[arg-type]
+            ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))
         )
 
 

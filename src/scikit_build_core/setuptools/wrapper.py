@@ -26,7 +26,7 @@ def setup(
     cmake_process_manifest_hook: Callable[[list[str]], list[str]] | None = None,
     cmake_install_target: str = "install",
     **kw: Any,
-) -> None:
+) -> setuptools.Distribution:
     assert not cmake_install_dir, "cmake_install_dir not supported yet"
     assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
     assert (
