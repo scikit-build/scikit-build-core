@@ -42,12 +42,12 @@ def test_get_cmake_programs_all(monkeypatch, fp):
     cmake_path = Path("cmake")
     cmake3_path = Path("cmake3")
     fp.register(
-        [cmake_path, "--version"],
-        stdout="cmake version 3.20.0\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+        [cmake_path, "-E", "capabilities"],
+        stdout='{"version":{"string":"3.20.0"}}',
     )
     fp.register(
-        [cmake3_path, "--version"],
-        stdout="cmake version 3.19.0\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+        [cmake3_path, "-E", "capabilities"],
+        stdout='{"version":{"string":"3.19.0"}}',
     )
     programs = list(get_cmake_programs(module=False))
     assert len(programs) == 2
@@ -92,12 +92,17 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     monkeypatch.setattr("shutil.which", lambda x: x)
     cmake_path = Path("cmake")
     cmake3_path = Path("cmake3")
-    fp.register([cmake_path, "--version"], stdout="scrambled output\n")
-    fp.register([cmake3_path, "--version"], stdout="cmake version 3.17.3\n")
+    fp.register([cmake_path, "-E", "capabilities"], stdout="scrambled output\n")
+    fp.register([cmake3_path, "-E", "capabilities"], stdout="{}")
     programs = list(get_cmake_programs(module=False))
     assert caplog.records
     assert "Could not determine CMake version" in str(caplog.records[0].msg)
+    assert "Could not determine CMake version" in str(caplog.records[1].msg)
     assert len(programs) == 2
+
+    fp.register([cmake_path, "-E", "capabilities"], stdout="scrambled output\n")
+    fp.register([cmake3_path, "-E", "capabilities"], stdout='{"version":{"string":"3.17.3"}}')
+    programs = list(get_cmake_programs(module=False))
 
     best_none = best_program(programs, version=None)
     assert best_none

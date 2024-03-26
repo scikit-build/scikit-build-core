@@ -32,8 +32,8 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
 
 @pytest.mark.configure()
 def test_init_cache(fp, tmp_path):
-    fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
-    fp.register([fp.program("cmake3"), "--version"], stdout="3.14.0")
+    fp.register([fp.program("cmake"), "-E", "capabilities"], stdout='{"version":{"string":"3.14.0"}}')
+    fp.register([fp.program("cmake3"), "-E", "capabilities"], stdout='{"version":{"string":"3.14.0"}}')
 
     config = CMaker(
         CMake.default_search(),
@@ -66,8 +66,8 @@ set(SKBUILD_PATH [===[{source_dir_str}]===] CACHE PATH "" FORCE)
 @pytest.mark.configure()
 def test_too_old(fp, monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda _: None)
-    fp.register([fp.program("cmake"), "--version"], stdout="3.14.0")
-    fp.register([fp.program("cmake3"), "--version"], stdout="3.14.0")
+    fp.register([fp.program("cmake"), "-E", "capabilities"], stdout='{"version":{"string":"3.14.0"}}')
+    fp.register([fp.program("cmake3"), "-E", "capabilities"], stdout='{"version":{"string":"3.14.0"}}')
 
     with pytest.raises(CMakeNotFoundError) as excinfo:
         CMake.default_search(version=SpecifierSet(">=3.15"))
@@ -76,8 +76,8 @@ def test_too_old(fp, monkeypatch):
 
 @pytest.mark.configure()
 def test_cmake_args(tmp_path, fp):
-    fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
-    fp.register([fp.program("cmake3"), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake"), "-E", "capabilities"], stdout='{"version":{"string":"3.15.0"}}')
+    fp.register([fp.program("cmake3"), "-E", "capabilities"], stdout='{"version":{"string":"3.15.0"}}')
 
     config = CMaker(
         CMake.default_search(),
@@ -99,8 +99,8 @@ def test_cmake_args(tmp_path, fp):
 
 @pytest.mark.configure()
 def test_cmake_paths(tmp_path, fp):
-    fp.register([fp.program("cmake"), "--version"], stdout="3.15.0")
-    fp.register([fp.program("cmake3"), "--version"], stdout="3.15.0")
+    fp.register([fp.program("cmake"), "-E", "capabilities"], stdout='{"version":{"string":"3.15.0"}}')
+    fp.register([fp.program("cmake3"), "-E", "capabilities"], stdout='{"version":{"string":"3.15.0"}}')
 
     config = CMaker(
         CMake.default_search(),
@@ -124,7 +124,7 @@ def test_cmake_paths(tmp_path, fp):
 def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
     monkeypatch.setattr("shutil.which", lambda x: x)
     cmake_path = Path("some-prog")
-    fp.register([cmake_path, "--version"], stdout="cmake version 3.20.0\n")
+    fp.register([cmake_path, "-E", "capabilities"], stdout='{"version":{"string":"3.20.0"}}')
     monkeypatch.setenv("CMAKE_EXECUTABLE", str(cmake_path))
     result = CMake.default_search(env=os.environ)
     assert result.cmake_path == cmake_path

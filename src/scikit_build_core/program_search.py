@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -77,14 +78,14 @@ def get_cmake_program(cmake_path: Path) -> Program:
     None if it cannot be determined.
     """
     try:
-        result = Run().capture(cmake_path, "--version")
+        result = Run().capture(cmake_path, "-E", "capabilities")
     except (subprocess.CalledProcessError, PermissionError):
         return Program(cmake_path, None)
 
     try:
-        version = Version(result.stdout.splitlines()[0].split()[-1].split("-")[0])
-    except (IndexError, InvalidVersion):
-        logger.warning(f"Could not determine CMake version, got {result.stdout!r}")
+        version = Version(json.loads(result.stdout)["version"]["string"])
+    except (json.decoder.JSONDecodeError, KeyError, InvalidVersion):
+        logger.warning("Could not determine CMake version, got {!r}", result.stdout)
         return Program(cmake_path, None)
 
     logger.info("CMake version: {}", version)
