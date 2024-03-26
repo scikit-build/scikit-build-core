@@ -123,9 +123,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         for path in prefix.iterdir():
             build_data["artifacts"].append(path)
-            # build_data["force_include"][f"prefix/{path.relative_to(prefix)}"] = str(
-            #     settings.wheel.install_dir / path.relative_to(prefix)
-            # )
+            build_data["force_include"][f"{targetlib}/{settings.wheel.install_dir}/{path.relative_to(prefix)}"] = str(
+                settings.wheel.install_dir / path.relative_to(prefix)
+            )
 
         build_data["infer_tag"] = True
         build_data["pure_python"] = not settings.wheel.platlib
