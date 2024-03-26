@@ -101,7 +101,9 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     assert len(programs) == 2
 
     fp.register([cmake_path, "-E", "capabilities"], stdout="scrambled output\n")
-    fp.register([cmake3_path, "-E", "capabilities"], stdout='{"version":{"string":"3.17.3"}}')
+    fp.register(
+        [cmake3_path, "-E", "capabilities"], stdout='{"version":{"string":"3.17.3"}}'
+    )
     programs = list(get_cmake_programs(module=False))
 
     best_none = best_program(programs, version=None)
