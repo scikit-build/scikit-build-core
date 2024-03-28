@@ -17,8 +17,8 @@ from scikit_build_core.build import (
 def test_prepare_metadata_for_build(fp, editable):
     # Old versions of packaging call mac_ver via subprocess
     fp.pass_command([sys.executable, fp.any()])
-    fp.pass_command([fp.program("cmake"), "--version"])
-    fp.pass_command([fp.program("cmake3"), "--version"])
+    fp.pass_command([fp.program("cmake"), "-E", "capabilities"])
+    fp.pass_command([fp.program("cmake3"), "-E", "capabilities"])
 
     if editable:
         assert (

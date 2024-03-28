@@ -48,19 +48,28 @@ def protect_get_requires(fp, monkeypatch):
 
 
 def test_get_requires_parts(fp):
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(GetRequires().cmake()) == {"cmake>=3.15"}
     assert set(GetRequires().ninja()) == {*ninja}
 
 
 def test_get_requires_parts_uneeded(fp):
-    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.18.0"}}',
+    )
     assert set(GetRequires().cmake()) == set()
     assert set(GetRequires().ninja()) == {*ninja}
 
 
 def test_get_requires_parts_settings(fp):
-    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.18.0"}}',
+    )
     config = {"cmake.version": ">=3.20"}
     assert set(GetRequires(config).cmake()) == {"cmake>=3.20"}
     assert set(GetRequires(config).ninja()) == {*ninja}
@@ -74,7 +83,10 @@ def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):
         version = ">=3.21"
         """
     )
-    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.18.0"}}',
+    )
 
     assert set(GetRequires().cmake()) == {"cmake>=3.21"}
     assert set(GetRequires().ninja()) == {*ninja}
@@ -90,42 +102,63 @@ def test_get_requires_parts_pyproject_old(fp, monkeypatch, tmp_path):
         cmake.minimum-version = "3.21"
         """
     )
-    fp.register([Path("cmake/path"), "--version"], stdout="3.18.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.18.0"}}',
+    )
 
     assert set(GetRequires().cmake()) == {"cmake>=3.21"}
     assert set(GetRequires().ninja()) == {*ninja}
 
 
 def test_get_requires_for_build_sdist(fp):
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_sdist({})) == {"pathspec", "pyproject_metadata"}
 
 
 def test_get_requires_for_build_sdist_cmake(fp):
     expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_sdist({"sdist.cmake": "True"})) == expected
 
 
 def test_get_requires_for_build_wheel(fp):
     expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_wheel({})) == expected
 
 
 def test_get_requires_for_build_wheel_pure(fp):
     expected = {"pathspec", "pyproject_metadata"}
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == expected
 
 
 def test_get_requires_for_build_editable(fp):
     expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_editable({})) == expected
 
 
 def test_get_requires_for_build_editable_pure(fp):
     expected = {"pathspec", "pyproject_metadata"}
-    fp.register([Path("cmake/path"), "--version"], stdout="3.14.0")
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
     assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == expected
