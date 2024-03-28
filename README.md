@@ -191,8 +191,8 @@ ninja.minimum-version = ""
 # string will disable this check.
 ninja.version = ">=1.5"
 
-# If CMake is not present on the system or is older required, it will be
-# downloaded via PyPI if possible. An empty string will disable this check.
+# If Ninja is not present on the system or is older than required, it will be
+# downloaded via PyPI if this is false.
 ninja.make-fallback = true
 
 # The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
