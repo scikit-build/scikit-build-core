@@ -26,11 +26,13 @@ A next generation Python CMake adapter and Python API for plugins
 Summary:        %{summary}
 Requires:       cmake
 Recommends:     (ninja-build or make)
-Recommends:     python3dist(pyproject-metadata)
-Recommends:     python3dist(pathspec)
+Recommends:     python3-scikit-build-core+pyproject = %{version}-%{release}
 Suggests:       ninja-build
 Suggests:       gcc
 %description -n python3-scikit-build-core %_description
+
+
+%pyproject_extras_subpkg -n python3-scikit-build-core pyproject
 
 
 %prep
@@ -38,7 +40,7 @@ Suggests:       gcc
 
 
 %generate_buildrequires
-%pyproject_buildrequires -x test,test-meta,test-numpy
+%pyproject_buildrequires -x test,test-meta,test-numpy,pyproject
 
 
 %build
