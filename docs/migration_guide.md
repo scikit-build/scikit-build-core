@@ -25,7 +25,7 @@ may be out of date.
   shows the information that can be placed directly in the project table. For
   additional metadata, see [our configuration guide](./configuration.md). A
   useful trick for performing this migration is to change the `build-backend`
-  from `skbuild` to `setuptools`, install `hatch`, and run `hatch init --new`.
+  from `skbuild` to `setuptools`, install `hatch`, and run `hatch new --init`.
   This should automatically migrate the configuration to pyproject.toml, after
   which you can change the `build-backend` to `scikit-build-core`.
 - If you specify files to include in sdists via MANIFEST.in, with
