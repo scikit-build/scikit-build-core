@@ -151,7 +151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.11"]
+        python-version: ["3.8", "3.11"]
         runs-on: [ubuntu-latest, macos-13, windows-latest]
 
     steps:
@@ -161,10 +161,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: yezz123/setup-uv@v4
+
       # The min requirements are not compatible with some of the extra test
       # deps, so limit to just built-in deps.
-      - name: Min requirements
-        run: pip install --constraint tests/constraints.txt .[test] ninja
+      - name: Install extra helpers
+        run: uv pip install ninja --system
+
+      - name: Install min requirements
+        run:
+          uv pip install -e .[test,pyproject] --resolution=lowest-direct
+          --system
 
       - name: Setup CMake 3.15
         uses: jwlawson/actions-setup-cmake@v2.0

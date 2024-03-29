@@ -109,14 +109,15 @@ def readme(session: nox.Session) -> None:
     session.run("cog", "-P", *args, "README.md")
 
 
-@nox.session
+@nox.session(venv_backend="uv")
 def minimums(session: nox.Session) -> None:
     """
     Test the minimum versions of dependencies.
     """
+
     _run_tests(
         session,
-        install_args=["--constraint=tests/constraints.txt"],
+        install_args=["--resolution=lowest-direct"],
         run_args=["-Wdefault"],
     )
 
