@@ -93,8 +93,8 @@ class NinjaSettings:
 
     make_fallback: bool = True
     """
-    If CMake is not present on the system or is older required, it will be
-    downloaded via PyPI if possible. An empty string will disable this check.
+    If Ninja is not present on the system or is older than required,
+    it will be downloaded via PyPI if this is false.
     """
 
 
