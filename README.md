@@ -277,7 +277,7 @@ editable.rebuild = false
 install.components = []
 
 # Whether to strip the binaries. True for scikit-build-core 0.5+.
-install.strip = false
+install.strip = true
 
 # The path (relative to platlib) for the file to generate.
 generate[].path = ""
