@@ -23,7 +23,7 @@ def mk_skbuild_docs() -> str:
         if item.name == "minimum-version":
             item.default = f'"{version}"  # current version'
         if item.name == "install.strip":
-            item.default = "false"
+            item.default = "true"
         if item.name == "wheel.packages":
             item.default = '["src/<package>", "python/<package>", "<package>"]'
     return "\n".join(str(item) for item in items)
