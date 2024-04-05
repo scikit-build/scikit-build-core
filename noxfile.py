@@ -120,30 +120,20 @@ def minimums(session: nox.Session) -> None:
 @nox.session(reuse_venv=True)
 def docs(session: nox.Session) -> None:
     """
-    Build the docs. Pass "--serve" to serve. Pass "-b linkcheck" to check links.
+    Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--serve", action="store_true", help="Serve after building")
     parser.add_argument(
         "-b", dest="builder", default="html", help="Build target (default: html)"
     )
     args, posargs = parser.parse_known_args(session.posargs)
 
-    if args.builder != "html" and args.serve:
-        session.error("Must not specify non-HTML builder with --serve")
-
-    extra_installs = ["sphinx-autobuild"] if args.serve else []
-
+    serve = args.builder == "html" and session.interactive
+    extra_installs = ["sphinx-autobuild"] if serve else []
     session.install("-e.[docs,pyproject]", *extra_installs)
-    session.run("pip", "list")
-    session.chdir("docs")
 
-    if args.builder == "linkcheck":
-        session.run(
-            "sphinx-build", "-b", "linkcheck", ".", "_build/linkcheck", *posargs
-        )
-        return
+    session.chdir("docs")
 
     shared_args = (
         "-n",  # nitpicky mode
@@ -154,8 +144,8 @@ def docs(session: nox.Session) -> None:
         *posargs,
     )
 
-    if args.serve:
-        session.run("sphinx-autobuild", *shared_args)
+    if serve:
+        session.run("sphinx-autobuild", "--open-browser", *shared_args)
     else:
         session.run("sphinx-build", "--keep-going", *shared_args)
 
