@@ -1,0 +1,3 @@
+addFilter("python.?-scikit-build-core\+pyproject.* spelling-error \('[Mm]etapackage")
+addFilter("python.?-scikit-build-core\+.* no-documentation")
+addFilter("python.?-scikit-build-core.* files-duplicate .*__init__.py .*")
