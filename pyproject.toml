@@ -50,7 +50,7 @@ pyproject = [
     "pyproject-metadata >=0.5",
 ]
 test = [
-    "build >=1",
+    "build >=0.8",
     "cattrs >=22.2.0",
     "pathspec >=0.10.1",
     "pip >=22",
