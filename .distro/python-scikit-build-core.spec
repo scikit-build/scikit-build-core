@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Name:           python-scikit-build-core
 Version:        0.0.0
 Release:        %autorelease
@@ -7,7 +9,6 @@ License:        Apache-2.0
 URL:            https://github.com/scikit-build/scikit-build-core
 Source:         %{pypi_source scikit_build_core}
 
-BuildArch:      noarch
 BuildRequires:  python3-devel
 # Testing dependences
 BuildRequires:  cmake
@@ -29,6 +30,7 @@ Recommends:     (ninja-build or make)
 Recommends:     python3-scikit-build-core+pyproject = %{version}-%{release}
 Suggests:       ninja-build
 Suggests:       gcc
+BuildArch:      noarch
 %description -n python3-scikit-build-core %_description
 
 
