@@ -34,7 +34,20 @@ BuildArch:      noarch
 %description -n python3-scikit-build-core %_description
 
 
-%pyproject_extras_subpkg -n python3-scikit-build-core pyproject
+# Add %%pyproject_extras_subpkg results manually because BuildArch: noarch is not injected
+# https://src.fedoraproject.org/rpms/python-rpm-macros/pull-request/174
+# %%pyproject_extras_subpkg -n python3-scikit-build-core pyproject
+
+%package -n python3-scikit-build-core+pyproject
+Summary: Metapackage for python3-scikit-build-core: pyproject extras
+Requires: python3-scikit-build-core = %{?epoch:%{epoch}:}%{version}-%{release}
+BuildArch:      noarch
+%description -n python3-scikit-build-core+pyproject
+This is a metapackage bringing in pyproject extras requires for
+python3-scikit-build-core.
+It makes sure the dependencies are installed.
+
+%files -n python3-scikit-build-core+pyproject -f %{_pyproject_ghost_distinfo}
 
 
 %prep
