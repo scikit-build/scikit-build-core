@@ -8,6 +8,7 @@ find_package(
 
 find_program(CYTHON "cython")
 
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BUILD_DIR}")
 add_custom_command(
   OUTPUT example.c
   COMMAND "${CYTHON}" "${CMAKE_CURRENT_SOURCE_DIR}/example.pyx" --output-file
