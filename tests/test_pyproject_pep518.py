@@ -157,6 +157,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
     assert cleanup_overwrite.is_file()
 
 
+@pytest.mark.network()
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
@@ -196,6 +197,7 @@ def test_pep518_wheel(isolated, build_args):
     assert add == "3"
 
 
+@pytest.mark.network()
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
@@ -242,6 +244,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
     assert version == "0.0.1"
 
 
+@pytest.mark.network()
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.integration()
