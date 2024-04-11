@@ -154,6 +154,8 @@ class VEnv:
 
     def install(self, *args: str, isolated: bool = True) -> None:
         isolated_flags = "" if isolated else ["--no-build-isolation"]
+        if self.wheelhouse is not None:
+            print("Wheelhouse:", *self.wheelhouse.iterdir())
         self.module("pip", "install", *isolated_flags, *args)
 
 
