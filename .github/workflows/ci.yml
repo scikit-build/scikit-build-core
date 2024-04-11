@@ -151,6 +151,11 @@ jobs:
 
       - name: Setup CMake ${{ matrix.cmake-version }}
         uses: jwlawson/actions-setup-cmake@v2.0
+        with:
+          cmake-version: "3.15.x"
+
+      - name: Show installed packages
+        run: pip list
 
       - name: Test min package
         run: pytest -ra --showlocals -Wdefault
