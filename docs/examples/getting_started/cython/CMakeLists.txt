@@ -8,6 +8,8 @@ find_package(
 
 find_program(CYTHON "cython")
 
+message(STATUS "Found Cython at ${CYTHON}")
+
 add_custom_command(
   OUTPUT example.c
   COMMENT
