@@ -9,11 +9,12 @@ from typing import Any
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 from .._compat import tomllib
-from ..cmake import CMake, CMaker
+from ..build._init import setup_logging
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
-from ..build._init import setup_logging
+from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
+
 # from ..settings.metadata import get_standard_metadata
 
 __all__ = ["ScikitBuildHook"]
@@ -52,7 +53,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         # metadata = get_standard_metadata(pyproject, settings)
 
         if self.target_name == "sdist":
-            if settings.sdist.include or settings.sdist.exclude or settings.sdist.reproducible:
+            if (
+                settings.sdist.include
+                or settings.sdist.exclude
+                or settings.sdist.reproducible
+            ):
                 msg = ""
                 raise ValueError(msg)
 
@@ -69,7 +74,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             expand_macos=settings.wheel.expand_macos_universal_tags,
             build_tag=settings.wheel.build_tag,
         )
-        build_data['tag'] = str(tags)
+        build_data["tag"] = str(tags)
 
         # if settings.wheel.packages or settings.wheel.license_files:
         #     msg = ""
@@ -123,9 +128,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         for path in prefix.iterdir():
             build_data["artifacts"].append(path)
-            build_data["force_include"][f"{targetlib}/{settings.wheel.install_dir}/{path.relative_to(prefix)}"] = str(
-                settings.wheel.install_dir / path.relative_to(prefix)
-            )
+            build_data["force_include"][
+                f"{targetlib}/{settings.wheel.install_dir}/{path.relative_to(prefix)}"
+            ] = str(settings.wheel.install_dir / path.relative_to(prefix))
 
         build_data["infer_tag"] = True
         build_data["pure_python"] = not settings.wheel.platlib
