@@ -209,6 +209,61 @@ def inherit_join(
     raise TypeError(msg)
 
 
+def process_overides(
+    tool_skb: dict[str, Any],
+    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
+    env: Mapping[str, str] | None = None,
+) -> None:
+    """
+    Process overrides into the main dictionary if they match. Modifies the input dictionary.
+    """
+
+    for override in tool_skb.pop("overrides", []):
+        matched = True
+        if_override = override.pop("if", None)
+        if not if_override:
+            msg = "At least one 'if' override must be provided"
+            raise KeyError(msg)
+        if not isinstance(if_override, dict):
+            msg = "'if' override must be a table"
+            raise TypeError(msg)
+        if "any" in if_override:
+            any_override = if_override.pop("any")
+            select = {k.replace("-", "_"): v for k, v in any_override.items()}
+            matched = override_match(
+                match_all=False, current_env=env, current_state=state, **select
+            )
+
+        inherit_override = override.pop("inherit", {})
+        if not isinstance(inherit_override, dict):
+            msg = "'inherit' override must be a table"
+            raise TypeError(msg)
+
+        select = {k.replace("-", "_"): v for k, v in if_override.items()}
+        if select:
+            matched = matched and override_match(
+                match_all=True, current_env=env, current_state=state, **select
+            )
+        if matched:
+            for key, value in override.items():
+                inherit1 = inherit_override.get(key, {})
+                if isinstance(value, dict):
+                    for key2, value2 in value.items():
+                        inherit2 = inherit1.get(key2, "none")
+                        inner = tool_skb.get(key, {})
+                        inner[key2] = inherit_join(
+                            value2, inner.get(key2, None), inherit2
+                        )
+                        tool_skb[key] = inner
+                else:
+                    inherit_override_tmp = inherit_override or "none"
+                    if isinstance(inherit_override_tmp, dict):
+                        assert not inherit_override_tmp
+                    tool_skb[key] = inherit_join(
+                        value, tool_skb.get(key), inherit_override_tmp
+                    )
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -218,57 +273,18 @@ class SettingsReader:
         state: Literal[
             "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
         ],
+        extra_settings: Mapping[str, Any] | None = None,
         verify_conf: bool = True,
         env: Mapping[str, str] | None = None,
     ) -> None:
         pyproject = copy.deepcopy(pyproject)
+        process_overides(pyproject.get("tool", {}).get("scikit-build", {}), state, env)
+        toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
 
-        # Process overrides into the main dictionary if they match
-        tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
-        for override in tool_skb.pop("overrides", []):
-            matched = True
-            if_override = override.pop("if", None)
-            if not if_override:
-                msg = "At least one 'if' override must be provided"
-                raise KeyError(msg)
-            if not isinstance(if_override, dict):
-                msg = "'if' override must be a table"
-                raise TypeError(msg)
-            if "any" in if_override:
-                any_override = if_override.pop("any")
-                select = {k.replace("-", "_"): v for k, v in any_override.items()}
-                matched = override_match(
-                    match_all=False, current_env=env, current_state=state, **select
-                )
-
-            inherit_override = override.pop("inherit", {})
-            if not isinstance(inherit_override, dict):
-                msg = "'inherit' override must be a table"
-                raise TypeError(msg)
-
-            select = {k.replace("-", "_"): v for k, v in if_override.items()}
-            if select:
-                matched = matched and override_match(
-                    match_all=True, current_env=env, current_state=state, **select
-                )
-            if matched:
-                for key, value in override.items():
-                    inherit1 = inherit_override.get(key, {})
-                    if isinstance(value, dict):
-                        for key2, value2 in value.items():
-                            inherit2 = inherit1.get(key2, "none")
-                            inner = tool_skb.get(key, {})
-                            inner[key2] = inherit_join(
-                                value2, inner.get(key2, None), inherit2
-                            )
-                            tool_skb[key] = inner
-                    else:
-                        inherit_override_tmp = inherit_override or "none"
-                        if isinstance(inherit_override_tmp, dict):
-                            assert not inherit_override_tmp
-                        tool_skb[key] = inherit_join(
-                            value, tool_skb.get(key, None), inherit_override_tmp
-                        )
+        if extra_settings is not None:
+            extra_skb = copy.deepcopy(dict(extra_settings))
+            process_overides(extra_skb, state, env)
+            toml_srcs.insert(0, TOMLSource(settings=extra_skb))
 
         prefixed = {
             k: v for k, v in config_settings.items() if k.startswith("skbuild.")
@@ -280,7 +296,7 @@ class SettingsReader:
             EnvSource("SKBUILD"),
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
             ConfSource(settings=remaining, verify=verify_conf),
-            TOMLSource("tool", "scikit-build", settings=pyproject),
+            *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
