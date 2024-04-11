@@ -11,6 +11,9 @@ import nox
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+nox.needs_version = ">=2024.3.2"
+nox.options.default_venv_backend = "uv|virtualenv"
+
 DIR = Path(__file__).parent.resolve()
 
 nox.options.sessions = [
@@ -54,12 +57,11 @@ def _run_tests(
     posargs = list(session.posargs)
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
 
-    _install_args = list(install_args)
     # This will not work if system CMake is too old (<3.15)
     if shutil.which("cmake") is None and shutil.which("cmake3") is None:
-        _install_args.append("cmake")
+        session.install("cmake")
     if shutil.which("ninja") is None:
-        _install_args.append("ninja")
+        session.install("ninja")
 
     _extras = ["test", *extras]
     if "--cov" in posargs:
@@ -68,6 +70,7 @@ def _run_tests(
 
     install_arg = f"-e.[{','.join(_extras)}]"
     session.install(install_arg, *install_args)
+    session.run("pip", "list")
     session.run("pytest", *run_args, *posargs, env=env)
 
 

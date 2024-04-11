@@ -97,7 +97,20 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - name: Install package
+      - uses: yezz123/setup-uv@v4
+        if:
+          matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
+
+      - name: Install package (uv)
+        if:
+          matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
+        run:
+          uv pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
+          --system
+
+      - name: Install package (pip)
+        if:
+          matrix.python-version == '3.7' || matrix.python-version == 'pypy-3.8'
         run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
 
       - name: Test package
@@ -254,6 +267,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: yezz123/setup-uv@v4
 
       - uses: wntrblm/nox@2024.03.02
         with:
