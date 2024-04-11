@@ -149,10 +149,18 @@ jobs:
       - name: Min requirements
         run: pip install --constraint tests/constraints.txt .[test] ninja
 
-      - name: Setup CMake ${{ matrix.cmake-version }}
+      - name: Setup CMake 3.15
         uses: jwlawson/actions-setup-cmake@v2.0
+        if: runner.os != 'Windows'
         with:
           cmake-version: "3.15.x"
+
+        # First version to support VS 17.0
+      - name: Setup CMake 3.21
+        uses: jwlawson/actions-setup-cmake@v2.0
+        if: runner.os == 'Windows'
+        with:
+          cmake-version: "3.21.x"
 
       - name: Show installed packages
         run: pip list
