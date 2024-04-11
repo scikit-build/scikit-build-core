@@ -7,6 +7,7 @@ find_package(
   REQUIRED)
 
 find_program(CYTHON "cython")
+file(TO_CMAKE_PATH "${CYTHON}" CYTHON)
 
 message(STATUS "Found Cython at ${CYTHON}")
 
