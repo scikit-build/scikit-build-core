@@ -184,20 +184,20 @@ source directory; for example:
 ```cmake
 include(FetchContent)
 
+set(PYBIND11_FINDPYTHON ON)
+
 if(NOT SKBUILD_STATE STREQUAL "sdist"
    AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pybind11/CMakeLists.txt")
   message(STATUS "Using integrated pybind11")
-  set(FETCHCONTENT_FULLY_DISCONNECTED ON)
+  add_subdirectory(pybind11)
+else()
+  FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11.git
+    GIT_TAG v2.12.0
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pybind11)
+  FetchContent_MakeAvailable(pybind11)
 endif()
-
-FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.12.0
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pybind11)
-
-set(PYBIND11_FINDPYTHON ON)
-FetchContent_MakeAvailable(pybind11)
 ```
 
 The `/pybind11` directory is in the `.gitignore` and important parts are in
