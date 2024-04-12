@@ -10,3 +10,4 @@ version = "0.1.0"
 dependencies = ["scikit-build-core"]
 wheel.install-dir = "hatchling_example"
 cmake.source-dir = "cpp"
+experimental = true
