@@ -31,7 +31,7 @@ def test_skbuild_overrides_pyver(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if python_version == "3.10":
@@ -77,7 +77,7 @@ def test_skbuild_overrides_dual(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if implementation_name == "pypy" and platform_system == "darwin":
@@ -122,7 +122,7 @@ def test_skbuild_overrides_any(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if implementation_name == "cpython" or platform_system == "darwin":
@@ -168,7 +168,7 @@ def test_skbuild_overrides_any_mixed(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if python_version == "3.10" and (
@@ -198,7 +198,7 @@ def test_skbuild_overrides_platnode(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if platform_node == "matchthat":
@@ -234,7 +234,7 @@ def test_skbuild_overrides_regex(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if platform_machine == "x86_64":
@@ -260,7 +260,7 @@ def test_skbuild_overrides_no_if(
     )
 
     with pytest.raises(KeyError, match="At least one 'if' override must be provided"):
-        SettingsReader.from_file(pyproject_toml, {})
+        SettingsReader.from_file(pyproject_toml)
 
 
 def test_skbuild_overrides_empty_if(
@@ -279,7 +279,7 @@ def test_skbuild_overrides_empty_if(
     )
 
     with pytest.raises(KeyError, match="At least one 'if' override must be provided"):
-        SettingsReader.from_file(pyproject_toml, {})
+        SettingsReader.from_file(pyproject_toml)
 
 
 def test_skbuild_overrides_invalid_key(
@@ -297,7 +297,7 @@ def test_skbuild_overrides_invalid_key(
         encoding="utf-8",
     )
 
-    settings = SettingsReader.from_file(pyproject_toml, {})
+    settings = SettingsReader.from_file(pyproject_toml)
     with pytest.raises(SystemExit):
         settings.validate_may_exit()
 
@@ -333,7 +333,7 @@ def test_skbuild_env(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if envvar == "BAR":
@@ -363,7 +363,7 @@ def test_skbuild_env_bool(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if envvar in {"tRUE", "3"}:
@@ -395,7 +395,7 @@ def test_skbuild_env_bool_all_any(
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
     if (foo == "true" and bar == "true") or (any and (foo == "true" or bar == "true")):
@@ -418,7 +418,7 @@ def test_skbuild_overrides_state(state: str, tmp_path: Path):
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {}, state="wheel")
+    settings_reader = SettingsReader.from_file(pyproject_toml, state="wheel")
     settings = settings_reader.settings
 
     if state == "wheel":
@@ -463,7 +463,7 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         encoding="utf-8",
     )
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {}, state="wheel")
+    settings_reader = SettingsReader.from_file(pyproject_toml, state="wheel")
     settings = settings_reader.settings
 
     if inherit == "none":
