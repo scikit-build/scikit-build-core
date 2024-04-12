@@ -46,10 +46,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         )
 
     def _validate(self, settings_reader: SettingsReader) -> None:
-        if sys.version_info < (3, 8):
-            msg = "Python 3.8 or later is required for scikit-build's hatch plugin"
-            raise ValueError(msg)
-
         settings = settings_reader.settings
 
         settings_reader.validate_may_exit()
