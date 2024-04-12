@@ -48,7 +48,14 @@ class WheelTag:
                 msg = f"Unexpected build-tag, {build_tag!r} cannot contain dashes"
                 raise AssertionError(msg)
 
-        best_tag = next(packaging.tags.sys_tags())
+        # manylinux sometimes comes before linux, but can't assume manylinux, use auditwheel instead
+        best_tag = next(
+            iter(
+                p
+                for p in packaging.tags.sys_tags()
+                if "manylinux" not in p.platform and "muslllinux" not in p.platform
+            )
+        )
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
 
