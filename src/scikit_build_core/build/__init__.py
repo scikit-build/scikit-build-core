@@ -101,7 +101,7 @@ def get_requires_for_build_sdist(
 ) -> list[str]:
     from ..builder.get_requires import GetRequires
 
-    requires = GetRequires(config_settings)
+    requires = GetRequires.from_config_settings(config_settings)
 
     # These are only injected if cmake is required for the SDist step
     cmake_requires = (
@@ -121,7 +121,7 @@ def get_requires_for_build_wheel(
 ) -> list[str]:
     from ..builder.get_requires import GetRequires
 
-    requires = GetRequires(config_settings)
+    requires = GetRequires.from_config_settings(config_settings)
 
     # These are only injected if cmake is required for the wheel step
     cmake_requires = (
@@ -141,7 +141,7 @@ def get_requires_for_build_editable(
 ) -> list[str]:
     from ..builder.get_requires import GetRequires
 
-    requires = GetRequires(config_settings)
+    requires = GetRequires.from_config_settings(config_settings)
 
     # These are only injected if cmake is required for the wheel step
     cmake_requires = (

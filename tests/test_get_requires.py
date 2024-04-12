@@ -71,8 +71,8 @@ def test_get_requires_parts_settings(fp):
         stdout='{"version":{"string":"3.18.0"}}',
     )
     config = {"cmake.version": ">=3.20"}
-    assert set(GetRequires(config).cmake()) == {"cmake>=3.20"}
-    assert set(GetRequires(config).ninja()) == {*ninja}
+    assert set(GetRequires.from_config_settings(config).cmake()) == {"cmake>=3.20"}
+    assert set(GetRequires.from_config_settings(config).ninja()) == {*ninja}
 
 
 def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):

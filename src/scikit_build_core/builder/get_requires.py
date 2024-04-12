@@ -24,7 +24,7 @@ from ..settings.skbuild_read_settings import SettingsReader
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 
-    from .._compat.typing import Literal
+    from .._compat.typing import Literal, Self
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["GetRequires"]
@@ -45,18 +45,23 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
     return any(tag.platform in platforms for tag in sys_tags())
 
 
-@dataclasses.dataclass
+def _load_scikit_build_settings(
+    config_settings: Mapping[str, list[str] | str] | None = None,
+) -> ScikitBuildSettings:
+    return SettingsReader.from_file("pyproject.toml", config_settings).settings
+
+
+@dataclasses.dataclass(frozen=True)
 class GetRequires:
-    config_settings: Mapping[str, list[str] | str] | None = None
+    settings: ScikitBuildSettings = dataclasses.field(
+        default_factory=_load_scikit_build_settings
+    )
 
-    def __post_init__(self) -> None:
-        self._settings = SettingsReader.from_file(
-            "pyproject.toml", self.config_settings
-        ).settings
-
-    @property
-    def settings(self) -> ScikitBuildSettings:
-        return self._settings
+    @classmethod
+    def from_config_settings(
+        cls, config_settings: Mapping[str, list[str] | str] | None
+    ) -> Self:
+        return cls(_load_scikit_build_settings(config_settings))
 
     def cmake(self) -> Generator[str, None, None]:
         if os.environ.get("CMAKE_EXECUTABLE", ""):

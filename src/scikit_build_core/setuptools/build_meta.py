@@ -42,7 +42,7 @@ def get_requires_for_build_sdist(
     setuptools_reqs = setuptools.build_meta.get_requires_for_build_sdist(
         config_settings
     )
-    requires = GetRequires(config_settings)
+    requires = GetRequires.from_config_settings(config_settings)
 
     # These are only injected if cmake is required for the SDist step
     cmake_requires = (
@@ -54,7 +54,7 @@ def get_requires_for_build_sdist(
 def get_requires_for_build_wheel(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
-    requires = GetRequires(config_settings)
+    requires = GetRequires.from_config_settings(config_settings)
 
     setuptools_reqs = setuptools.build_meta.get_requires_for_build_wheel(
         config_settings
@@ -68,7 +68,7 @@ if hasattr(setuptools.build_meta, "get_requires_for_build_editable"):
     def get_requires_for_build_editable(
         config_settings: dict[str, str | list[str]] | None = None,
     ) -> list[str]:
-        requires = GetRequires(config_settings)
+        requires = GetRequires.from_config_settings(config_settings)
         setuptools_reqs = setuptools.build_meta.get_requires_for_build_editable(
             config_settings
         )
