@@ -458,7 +458,7 @@ def test_skbuild_settings_version_too_old(
         "tool.scikit-build.cmake.version = '>=3.21'", encoding="utf-8"
     )
 
-    SettingsReader.from_file(pyproject_toml, {})
+    SettingsReader.from_file(pyproject_toml)
 
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml, {"minimum-version": "0.7"})

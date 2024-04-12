@@ -403,16 +403,23 @@ class SettingsReader:
     def from_file(
         cls,
         pyproject_path: os.PathLike[str] | str,
-        config_settings: Mapping[str, str | list[str]] | None,
+        config_settings: Mapping[str, str | list[str]] | None = None,
         *,
         state: Literal[
             "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
         ] = "sdist",
         verify_conf: bool = True,
+        extra_settings: Mapping[str, Any] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> SettingsReader:
         with Path(pyproject_path).open("rb") as f:
             pyproject = tomllib.load(f)
 
         return cls(
-            pyproject, config_settings or {}, verify_conf=verify_conf, state=state
+            pyproject,
+            config_settings or {},
+            verify_conf=verify_conf,
+            state=state,
+            extra_settings=extra_settings,
+            env=env,
         )

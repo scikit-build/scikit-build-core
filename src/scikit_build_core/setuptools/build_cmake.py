@@ -27,7 +27,7 @@ def __dir__() -> list[str]:
 
 
 def _validate_settings() -> None:
-    settings = SettingsReader.from_file("pyproject.toml", {}).settings
+    settings = SettingsReader.from_file("pyproject.toml").settings
 
     assert (
         not settings.wheel.expand_macos_universal_tags
@@ -112,7 +112,7 @@ class BuildCMake(setuptools.Command):
         if build_temp.exists():
             shutil.rmtree(build_temp)
 
-        settings = SettingsReader.from_file("pyproject.toml", {}).settings
+        settings = SettingsReader.from_file("pyproject.toml").settings
 
         cmake = CMake.default_search(version=settings.cmake.version)
 
