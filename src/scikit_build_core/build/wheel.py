@@ -201,10 +201,12 @@ def _build_wheel_impl(
             "headers": wheel_dir / "headers",
             "scripts": wheel_dir / "scripts",
             "null": wheel_dir / "null",
+            "metadata": wheel_dir / "metadata",
         }
 
         for d in wheel_dirs.values():
             d.mkdir(parents=True)
+        wheel_dirs["metadata"].joinpath("licenses").mkdir()
 
         if ".." in settings.wheel.install_dir:
             msg = "wheel.install_dir must not contain '..'"
@@ -225,13 +227,14 @@ def _build_wheel_impl(
         if metadata.license and metadata.license.file:
             license_file_globs.append(str(metadata.license.file))
 
-        license_files = {
-            x: x.read_bytes()
-            for y in license_file_globs
-            for x in Path().glob(y)
-            if x.is_file()
-        }
-        if settings.wheel.license_files and not license_files:
+        for y in license_file_globs:
+            for x in Path().glob(y):
+                if x.is_file():
+                    shutil.copy(x, wheel_dirs["metadata"] / "licenses" / x)
+
+        if settings.wheel.license_files and not list(
+            (wheel_dirs["metadata"] / "licenses").iterdir()
+        ):
             logger.warning(
                 "No license files found, set wheel.license-files to [] to suppress this warning"
             )
@@ -254,7 +257,7 @@ def _build_wheel_impl(
                     root_is_purelib=targetlib == "purelib",
                     build_tag=settings.wheel.build_tag,
                 ),
-                license_files=license_files,
+                wheel_dirs["metadata"],
             )
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
@@ -363,7 +366,7 @@ def _build_wheel_impl(
                 root_is_purelib=targetlib == "purelib",
                 build_tag=settings.wheel.build_tag,
             ),
-            license_files=license_files,
+            wheel_dirs["metadata"],
         ) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 

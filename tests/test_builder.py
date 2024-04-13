@@ -53,7 +53,13 @@ def test_get_python_include_dir():
     strict=False, reason="Doesn't matter if this fails, usually not used"
 )
 def test_get_python_library():
-    pprint.pprint(sysconfig.get_config_vars())
+    pprint.pprint(
+        {
+            k: v
+            for k, v in sysconfig.get_config_vars().items()
+            if isinstance(v, str) and 128 > len(v) > 2 and not k.startswith("MODULE")
+        }
+    )
 
     lib = get_python_library({})
     if sysconfig.get_platform().startswith("win"):
