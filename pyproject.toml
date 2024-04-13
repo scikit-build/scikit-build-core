@@ -95,11 +95,11 @@ docs = [
     "pathspec >=0.10.1",
     "pyproject-metadata >=0.5",
     "setuptools",
-    "sphinx",
+    "sphinx >=7.0",
+    "sphinx-autodoc-typehints",
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
-    "sphinx-autodoc-typehints",
 ]
 
 [project.urls]

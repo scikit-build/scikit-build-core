@@ -30,13 +30,14 @@ def test_pep517_sdist():
     out = build_sdist("dist")
 
     (sdist,) = dist.iterdir()
-    assert sdist.name == "cmake-example-0.0.1.tar.gz"
+    assert sdist.name in {"cmake-example-0.0.1.tar.gz", "cmake_example-0.0.1.tar.gz"}
     assert sdist == dist / out
+    cmake_example = sdist.name[:13]
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
         assert file_names == {
-            f"cmake-example-0.0.1/{x}"
+            f"{cmake_example}-0.0.1/{x}"
             for x in (
                 # TODO: "CMakeLists.txt",
                 "PKG-INFO",
@@ -54,8 +55,8 @@ def test_pep517_sdist():
                 "LICENSE",
                 # TODO: "src/main.cpp",
             )
-        } | {"cmake-example-0.0.1"}
-        pkg_info = f.extractfile("cmake-example-0.0.1/PKG-INFO")
+        } | {f"{cmake_example}-0.0.1"}
+        pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = set(pkg_info.read().decode().strip().splitlines())
         assert metadata_set <= pkg_info_contents

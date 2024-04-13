@@ -277,6 +277,8 @@ class SettingsReader:
         verify_conf: bool = True,
         env: Mapping[str, str] | None = None,
     ) -> None:
+        self.state = state
+
         pyproject = copy.deepcopy(pyproject)
         process_overides(pyproject.get("tool", {}).get("scikit-build", {}), state, env)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
