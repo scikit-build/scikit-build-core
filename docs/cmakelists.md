@@ -106,6 +106,10 @@ configuration, with the variables:
   installed to Python's header directory.
 - `${SKBUILD_SCRIPTS_DIR}`: The scripts directory. Anything placed in here will
   go to `bin` (Unix) or `Scripts` (Windows).
+- `${SKBUILD_METADATA_DIR}`: The dist-info directory. Licenses go in the
+  `licenses` subdirectory. _Note that CMake is not run in the
+  `prepare*metadata*_` hooks, so anything written to this directory will only be
+  present when writing wheels.\*
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
