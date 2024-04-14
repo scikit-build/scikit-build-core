@@ -108,8 +108,8 @@ configuration, with the variables:
   go to `bin` (Unix) or `Scripts` (Windows).
 - `${SKBUILD_METADATA_DIR}`: The dist-info directory. Licenses go in the
   `licenses` subdirectory. _Note that CMake is not run in the
-  `prepare_metadata_*` hooks, so anything written to this directory will only be
-  present when writing wheels._
+  `prepare_metadata_\*` hooks, so anything written to this directory will only
+  be present when writing wheels.\_
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
