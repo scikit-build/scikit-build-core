@@ -10,7 +10,13 @@ from pathlib import Path
 import build.util
 import pytest
 
-from scikit_build_core.build import _file_processor, build_sdist, build_wheel
+from scikit_build_core._compat.importlib.metadata import PathDistribution
+from scikit_build_core.build import (
+    _file_processor,
+    build_sdist,
+    build_wheel,
+    prepare_metadata_for_build_wheel,
+)
 
 ENTRYPOINTS = """\
 [one.two]
@@ -292,10 +298,31 @@ def test_prepare_metdata_for_build_wheel():
         "Requires-Python": ">=3.7",
         "Provides-Extra": "test",
         "Requires-Dist": 'pytest>=6.0; extra == "test"',
-        "License-File": "LICENSE",
     }
 
     for k, b in answer.items():
-        assert metadata[k] == b
+        assert metadata.get(k, None) == b
+
+    assert len(metadata) == len(answer)
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
+    mddir = tmp_path / "dist"
+    mddir.mkdir()
+    out = prepare_metadata_for_build_wheel(str(mddir), {})
+    print("Metadata dir:", (mddir / out).resolve())
+    metadata = PathDistribution(mddir / out).metadata
+    answer = {
+        "Metadata-Version": "2.1",
+        "Name": "CMake.Example",
+        "Version": "0.0.1",
+        "Requires-Python": ">=3.7",
+        "Provides-Extra": "test",
+        "Requires-Dist": 'pytest>=6.0; extra == "test"',
+    }
+
+    for k, b in answer.items():
+        assert metadata.get(k, None) == b
 
     assert len(metadata) == len(answer)

@@ -230,7 +230,9 @@ def _build_wheel_impl(
         for y in license_file_globs:
             for x in Path().glob(y):
                 if x.is_file():
-                    shutil.copy(x, wheel_dirs["metadata"] / "licenses" / x)
+                    path = wheel_dirs["metadata"] / "licenses" / x
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(x, path)
 
         if settings.wheel.license_files and not list(
             (wheel_dirs["metadata"] / "licenses").iterdir()

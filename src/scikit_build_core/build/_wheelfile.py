@@ -129,15 +129,15 @@ class WheelWriter:
         # https://github.com/FFY00/python-pyproject-metadata/pull/49
         rfc822 = copy.deepcopy(self.metadata).as_rfc822()
 
-        metadata_files = self.metadata_dir.glob("*") if self.metadata_dir else []
-        extra_metadata = {str(f): f.read_bytes() for f in metadata_files if f.is_file()}
+        metadata_files = self.metadata_dir.rglob("*") if self.metadata_dir else []
+        extra_metadata = {
+            str(f.relative_to(self.metadata_dir or Path())): f.read_bytes()
+            for f in metadata_files
+            if f.is_file()
+        }
         if {"METADATA", "WHEEL", "entry_points.txt"} & extra_metadata.keys():
             msg = "Cannot have METADATA, WHEEL, or entry_points.txt in metadata_dir"
             raise ValueError(msg)
-
-        for fp in extra_metadata:
-            if fp.startswith("licenses/"):
-                rfc822["License-File"] = f"{fp}"
 
         return {
             "METADATA": bytes(rfc822),
