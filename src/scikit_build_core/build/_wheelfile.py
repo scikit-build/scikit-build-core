@@ -135,8 +135,8 @@ class WheelWriter:
             for f in metadata_files
             if f.is_file()
         }
-        if {"METADATA", "WHEEL", "entry_points.txt"} & extra_metadata.keys():
-            msg = "Cannot have METADATA, WHEEL, or entry_points.txt in metadata_dir"
+        if {"METADATA", "WHEEL", "RECORD", "entry_points.txt"} & extra_metadata.keys():
+            msg = "Cannot have METADATA, WHEEL, RECORD, or entry_points.txt in metadata_dir"
             raise ValueError(msg)
 
         return {

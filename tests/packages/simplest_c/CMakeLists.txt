@@ -38,3 +38,11 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated_ignored.txt
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated_no_wheel.txt "Testing")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated_no_wheel.txt
         DESTINATION ${SKBUILD_PROJECT_NAME})
+
+# Testing metadata
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt "Testing")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt "Testing")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt
+        DESTINATION "${SKBUILD_METADATA_DIR}")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt
+        DESTINATION "${SKBUILD_METADATA_DIR}/licenses")

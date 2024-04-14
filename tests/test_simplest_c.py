@@ -124,25 +124,46 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
 
     virtualenv.install(wheel)
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = {x.name for x in p.iterdir()}
-            simplest_pkg = {x.name for x in p.joinpath("simplest").iterdir()}
-            not_a_pkg = {x.name for x in p.joinpath("not_a_package").iterdir()}
+    with wheel.open("rb") as f:
+        file_names = set(zipfile.ZipFile(f).namelist())
 
-        filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
+    simplest_pkg = {
+        x.split("/", maxsplit=1)[-1] for x in file_names if x.startswith("simplest/")
+    }
+    not_a_pkg = {
+        x.split("/", maxsplit=1)[-1]
+        for x in file_names
+        if x.startswith("not_a_package/")
+    }
+    metadata_items = {
+        x.split("/", maxsplit=1)[-1]
+        for x in file_names
+        if x.startswith("simplest-0.0.1.dist-info/")
+    }
 
-        assert len(filtered_pkg) == len(simplest_pkg) - 2
-        assert {"simplest-0.0.1.dist-info", "simplest", "not_a_package"} == file_names
-        assert {
-            "__init__.py",
-            "data.txt",
-            "ignored_included.txt",
-            "generated.txt",
-            "generated_ignored.txt",
-        } == filtered_pkg
-        assert {"simple.txt"} == not_a_pkg
+    assert {
+        "licenses/LICENSE.txt",
+        "metadata_file.txt",
+        "RECORD",
+        "METADATA",
+        "WHEEL",
+        "entry_points.txt",
+    } == metadata_items
+
+    filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
+
+    assert len(filtered_pkg) == len(simplest_pkg) - 2
+    assert {"simplest-0.0.1.dist-info", "simplest", "not_a_package"} == {
+        x.split("/")[0] for x in file_names
+    }
+    assert {
+        "__init__.py",
+        "data.txt",
+        "ignored_included.txt",
+        "generated.txt",
+        "generated_ignored.txt",
+    } == filtered_pkg
+    assert {"simple.txt"} == not_a_pkg
 
     version = virtualenv.execute(
         "from simplest import square; print(square(2))",

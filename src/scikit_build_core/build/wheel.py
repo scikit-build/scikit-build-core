@@ -206,7 +206,6 @@ def _build_wheel_impl(
 
         for d in wheel_dirs.values():
             d.mkdir(parents=True)
-        wheel_dirs["metadata"].joinpath("licenses").mkdir()
 
         if ".." in settings.wheel.install_dir:
             msg = "wheel.install_dir must not contain '..'"
@@ -234,8 +233,9 @@ def _build_wheel_impl(
                     path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy(x, path)
 
-        if settings.wheel.license_files and not list(
-            (wheel_dirs["metadata"] / "licenses").iterdir()
+        if (
+            settings.wheel.license_files
+            and not (wheel_dirs["metadata"] / "licenses").is_dir()
         ):
             logger.warning(
                 "No license files found, set wheel.license-files to [] to suppress this warning"
