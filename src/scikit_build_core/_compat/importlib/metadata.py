@@ -5,10 +5,10 @@ import typing
 
 if sys.version_info < (3, 8):
     import importlib_metadata as _metadata
-    from importlib_metadata import PathDistribution
+    from importlib_metadata import PathDistribution, version
 else:
     import importlib.metadata as _metadata
-    from importlib.metadata import PathDistribution
+    from importlib.metadata import PathDistribution, version
 
 
 if typing.TYPE_CHECKING:
@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     else:
         from importlib.metadata import EntryPoints
 
-__all__ = ["entry_points", "PathDistribution"]
+__all__ = ["entry_points", "PathDistribution", "version"]
 
 
 def entry_points(*, group: str) -> EntryPoints:

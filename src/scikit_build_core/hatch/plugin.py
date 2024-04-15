@@ -16,6 +16,7 @@ from packaging.version import Version
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 from .. import __version__
+from .._compat.importlib.metadata import version as pkg_version
 from .._compat.typing import Literal
 from .._logging import logger, rich_print
 from ..build._init import setup_logging
@@ -202,6 +203,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
         }
         cache_entries["SKBUILD_STATE"] = state
+        cache_entries["SKBUILD_HATCHLING"] = pkg_version("hatchling")
         builder.configure(
             defines=defines,
             cache_entries=cache_entries,

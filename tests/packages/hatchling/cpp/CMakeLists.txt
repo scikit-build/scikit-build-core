@@ -7,6 +7,11 @@ find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(_core MODULE example.cpp)
 install(TARGETS _core DESTINATION .)
 
+if(NOT DEFINED SKBUILD_HATCHLING)
+  message(
+    FATAL_ERROR "This project should be built using scikit-build & hatchling")
+endif()
+
 # Testing metadata file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt
 # "Testing") install(FILES ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt
 # DESTINATION "${SKBUILD_METADATA_DIR}")
