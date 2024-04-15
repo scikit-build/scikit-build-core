@@ -76,7 +76,7 @@ class WheelWriter:
     folder: Path
     tags: Set[Tag]
     wheel_metadata: WheelMetadata
-    license_files: Mapping[Path, bytes] = dataclasses.field(default_factory=dict)
+    metadata_dir: Path | None
     _zipfile: zipfile.ZipFile | None = None
 
     @property
@@ -128,25 +128,36 @@ class WheelWriter:
         # Using deepcopy here because of a bug in pyproject-metadata
         # https://github.com/FFY00/python-pyproject-metadata/pull/49
         rfc822 = copy.deepcopy(self.metadata).as_rfc822()
-        for fp in self.license_files:
-            rfc822["License-File"] = f"{fp}"
 
-        license_entries = {
-            f"licenses/{fp}": data for fp, data in self.license_files.items()
+        metadata_files = self.metadata_dir.rglob("*") if self.metadata_dir else []
+        extra_metadata = {
+            str(f.relative_to(self.metadata_dir or Path())): f.read_bytes()
+            for f in metadata_files
+            if f.is_file()
         }
+        if {"METADATA", "WHEEL", "RECORD", "entry_points.txt"} & extra_metadata.keys():
+            msg = "Cannot have METADATA, WHEEL, RECORD, or entry_points.txt in metadata_dir"
+            raise ValueError(msg)
 
         return {
             "METADATA": bytes(rfc822),
             "WHEEL": self.wheel_metadata.as_bytes(),
             "entry_points.txt": entry_points.getvalue().encode("utf-8"),
-            **license_entries,
+            **extra_metadata,
         }
 
     def build(
         self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = ()
     ) -> None:
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
-        assert {targetlib, "data", "headers", "scripts", "null"} >= wheel_dirs.keys()
+        assert {
+            targetlib,
+            "data",
+            "headers",
+            "scripts",
+            "null",
+            "metadata",
+        } >= wheel_dirs.keys()
 
         # The "main" directory (platlib usually for us) will be handled specially below
         plans = {"": wheel_dirs[targetlib]}
