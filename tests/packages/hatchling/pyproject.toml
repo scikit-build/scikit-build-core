@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "pybind11", "scikit-build-core~=0.9"]
+requires = ["hatchling", "pybind11", "scikit-build-core"]
 build-backend = "hatchling.build"
 
 [project]

@@ -61,4 +61,13 @@ supported by hatchling for plugins.
 
 Key limitations:
 
-- You need to require cmake for sdist or wheel.
+- You need to leave `cmake.wheel` on. No `wheel.platlib = False` builds.
+- Using cmake in SDist step is not supported yet.
+- Editable installs are not supported yet.
+- `scikit-build.generate` and `scikit-build.metadata` is not supported.
+- `${SKBUILD_HEADER_DIR}` is not supported, request support in Hatching if
+  needed.
+
+## Writing CMakeLists.txt
+
+The hatchling version is available as `${SKBUILD_HATCHLING}`.
