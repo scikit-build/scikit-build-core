@@ -71,3 +71,5 @@ Key limitations:
 ## Writing CMakeLists.txt
 
 The hatchling version is available as `${SKBUILD_HATCHLING}`.
+
+[hatchling]: https://hatch.pypa.io
