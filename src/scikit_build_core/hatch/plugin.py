@@ -45,7 +45,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         config_dict.pop("dependencies", None)
         config_dict.pop("require-runtime-dependencies", None)
         config_dict.pop("require-runtime-features", None)
-        config_dict.pop("require-runtime-features", None)
 
         state = typing.cast(Literal["sdist", "wheel", "editable"], self.target_name)
         return SettingsReader.from_file(
@@ -93,6 +92,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "Generate is not supported for hatch builds"
             raise ValueError(msg)
 
+        if settings.metadata:
+            msg = "Metadata is not supported for hatch builds"
+            raise ValueError(msg)
+
     # Requires Hatchling 1.22.0 to have an effect
     def dependencies(self) -> list[str]:
         settings = self._read_config().settings
@@ -111,6 +114,14 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         return [*cmake_requires, *requires.dynamic_metadata()]
 
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # noqa: ARG002
+        self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
+        try:
+            self._initialize(build_data=build_data)
+        except Exception:
+            self._cleanup()
+            raise
+
+    def _initialize(self, *, build_data: dict[str, Any]) -> None:
         settings_reader = self._read_config()
         settings = settings_reader.settings
         state = settings_reader.state
@@ -269,6 +280,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
     def finalize(
         self, version: str, build_data: dict[str, Any], artifact_path: str
     ) -> None:
+        self._cleanup()
+        return super().finalize(version, build_data, artifact_path)
+
+    def _cleanup(self) -> None:
         if self.__tmp_dir:
             shutil.rmtree(self.__tmp_dir, ignore_errors=True)
-        return super().finalize(version, build_data, artifact_path)
+            self.__tmp_dir = None
