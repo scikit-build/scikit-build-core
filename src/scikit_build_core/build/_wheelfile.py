@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import copy
 import csv
 import dataclasses
 import hashlib
@@ -16,7 +15,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from zipfile import ZipInfo
 
-import packaging.utils
 import pathspec
 
 from .. import __version__
@@ -81,7 +79,7 @@ class WheelWriter:
 
     @property
     def name_ver(self) -> str:
-        name = packaging.utils.canonicalize_name(self.metadata.name).replace("-", "_")
+        name = self.metadata.canonical_name.replace("-", "_")
         # replace - with _ as a local version separator
         version = str(self.metadata.version).replace("-", "_")
         return f"{name}-{version}"
@@ -125,9 +123,7 @@ class WheelWriter:
 
         self.wheel_metadata.tags = self.tags
 
-        # Using deepcopy here because of a bug in pyproject-metadata
-        # https://github.com/FFY00/python-pyproject-metadata/pull/49
-        rfc822 = copy.deepcopy(self.metadata).as_rfc822()
+        rfc822 = self.metadata.as_rfc822()
 
         metadata_files = self.metadata_dir.rglob("*") if self.metadata_dir else []
         extra_metadata = {
