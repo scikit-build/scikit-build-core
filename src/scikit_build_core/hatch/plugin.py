@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import copy
 import os
+import shutil
 import sys
 import sysconfig
+import tempfile
 import typing
 from pathlib import Path
 from typing import Any
@@ -32,6 +34,10 @@ def __dir__() -> list[str]:
 
 class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
     PLUGIN_NAME = "scikit-build"
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.__tmp_dir: Path | None = None
 
     def _read_config(self) -> SettingsReader:
         config_dict = copy.deepcopy(self.config)
@@ -86,6 +92,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "Generate is not supported for hatch builds"
             raise ValueError(msg)
 
+    # Requires Hatchling 1.22.0 to have an effect
     def dependencies(self) -> list[str]:
         settings = self._read_config().settings
         requires = GetRequires(settings)
@@ -123,8 +130,8 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             f"[red]({state})[/red]",
         )
 
-        build_tmp_folder = Path(self.directory)
-        wheel_dir = build_tmp_folder / "wheel"
+        self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
+        wheel_dir = self.__tmp_dir / "wheel"
 
         tags = WheelTag.compute_best(
             archs_to_tags(get_archs(os.environ)),
@@ -145,7 +152,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 )
             )
             if settings.build_dir
-            else build_tmp_folder / "build"
+            else self.__tmp_dir / "build"
         )
         logger.info("Build directory: {}", build_dir.resolve())
 
@@ -157,6 +164,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             "headers": wheel_dir / "headers",
             "scripts": wheel_dir / "scripts",
             "null": wheel_dir / "null",
+            "metadata": wheel_dir / "metadata",
         }
 
         for d in wheel_dirs.values():
@@ -216,19 +224,49 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         rich_print("[green]***[/green] [bold]Installing project into wheel...")
         builder.install(install_dir)
 
-        for unsupported in ("headers", "scripts"):
-            files = list(wheel_dirs[unsupported].iterdir())
-            if files:
-                msg = f"Unsupported files found in {unsupported} directory: {files}"
-                raise ValueError(msg)
+        files = list(wheel_dirs["headers"].iterdir())
+        if files:
+            msg = (
+                f"Unsupported files found in 'headers' directory: {files}\n"
+                "Please report use case to https://github.com/pypa/hatch/issues/1291 if you need it."
+            )
+            raise ValueError(msg)
 
         for path in wheel_dirs[targetlib].iterdir():
-            build_data["artifacts"].append(path)
             build_data["force_include"][f"{path}"] = str(
                 settings.wheel.install_dir / path.relative_to(wheel_dirs[targetlib])
             )
-        for path in wheel_dirs["data"].iterdir():
-            build_data["artifacts"].append(path)
-            build_data["shared-data"][f"{path}"] = str(
-                path.relative_to(wheel_dirs[targetlib])
-            )
+
+        try:
+            for path in wheel_dirs["data"].iterdir():
+                build_data["shared-data"][f"{path.resolve()}"] = str(
+                    path.relative_to(wheel_dirs["data"])
+                )
+        except KeyError:
+            logger.error("SKBUILD_DATA_DIR not supported by Hatchling < 1.24.0")
+            raise
+
+        try:
+            for path in wheel_dirs["scripts"].iterdir():
+                build_data["shared-scripts"][f"{path.resolve()}"] = str(
+                    path.relative_to(wheel_dirs["scripts"])
+                )
+        except KeyError:
+            logger.error("SKBUILD_SCRIPTS_DIR not supported by Hatchling < 1.24.0")
+            raise
+
+        try:
+            for path in wheel_dirs["metadata"].iterdir():
+                build_data["extra-metadata"][f"{path.resolve()}"] = str(
+                    path.relative_to(wheel_dirs["metadata"])
+                )
+        except KeyError:
+            logger.error("SKBUILD_METADATA_DIR not supported by Hatchling < 1.24.0")
+            raise
+
+    def finalize(
+        self, version: str, build_data: dict[str, Any], artifact_path: str
+    ) -> None:
+        if self.__tmp_dir:
+            shutil.rmtree(self.__tmp_dir, ignore_errors=True)
+        return super().finalize(version, build_data, artifact_path)
