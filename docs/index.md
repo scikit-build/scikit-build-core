@@ -41,6 +41,15 @@ changelog
 ```{toctree}
 :maxdepth: 1
 :titlesonly:
+:caption: Plugins
+
+plugins/setuptools
+plugins/hatchling
+```
+
+```{toctree}
+:maxdepth: 1
+:titlesonly:
 :caption: API docs
 
 api/scikit_build_core
