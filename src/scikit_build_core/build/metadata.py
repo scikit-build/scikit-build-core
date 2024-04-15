@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
-from pyproject_metadata import StandardMetadata
 
 from ..settings._load_provider import load_dynamic_metadata
+from .._vendor.pyproject_metadata import StandardMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

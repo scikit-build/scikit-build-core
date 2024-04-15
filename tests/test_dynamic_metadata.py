@@ -9,11 +9,11 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-import pyproject_metadata
 import pytest
 from packaging.version import Version
 
 from scikit_build_core._compat import tomllib
+from scikit_build_core._vendor import pyproject_metadata
 from scikit_build_core.build import build_wheel
 from scikit_build_core.build.metadata import get_standard_metadata
 from scikit_build_core.builder.get_requires import GetRequires

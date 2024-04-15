@@ -282,3 +282,29 @@ def downstream(session: nox.Session) -> None:
 
     if args.code:
         session.run("python", "-c", args.code)
+
+
+@nox.session(venv_backend="none")
+def vendor_pyproject_metadata(session: nox.Session) -> None:
+    """
+    Vendor pyproject.toml metadata.
+    """
+
+    parser = argparse.ArgumentParser(
+        prog=f"{Path(sys.argv[0]).name} -s vendor_pyproject_metadata"
+    )
+    parser.add_argument("version", help="A tag or ref to vendor")
+    args = parser.parse_args(session.posargs)
+
+    session.run(
+        "curl",
+        "-o",
+        "src/scikit_build_core/_vendor/pyproject_metadata/__init__.py",
+        f"https://raw.githubusercontent.com/pypa/pyproject-metadata/{args.version}/pyproject_metadata/__init__.py",
+    )
+    session.run(
+        "curl",
+        "-o",
+        "src/scikit_build_core/_vendor/pyproject_metadata/LICENSE",
+        f"https://raw.githubusercontent.com/pypa/pyproject-metadata/{args.version}/LICENSE",
+    )

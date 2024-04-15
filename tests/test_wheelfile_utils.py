@@ -2,9 +2,9 @@ import stat
 import zipfile
 
 from packaging.tags import Tag
-from pyproject_metadata import StandardMetadata
 
 import scikit_build_core.build._wheelfile
+from scikit_build_core._vendor.pyproject_metadata import StandardMetadata
 
 
 def test_wheel_metadata() -> None:

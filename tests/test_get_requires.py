@@ -116,11 +116,11 @@ def test_get_requires_for_build_sdist(fp):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
-    assert set(get_requires_for_build_sdist({})) == {"pathspec", "pyproject_metadata"}
+    assert set(get_requires_for_build_sdist({})) == {"pathspec"}
 
 
 def test_get_requires_for_build_sdist_cmake(fp):
-    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    expected = {"pathspec", "cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -129,7 +129,7 @@ def test_get_requires_for_build_sdist_cmake(fp):
 
 
 def test_get_requires_for_build_wheel(fp):
-    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    expected = {"pathspec", "cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -138,7 +138,7 @@ def test_get_requires_for_build_wheel(fp):
 
 
 def test_get_requires_for_build_wheel_pure(fp):
-    expected = {"pathspec", "pyproject_metadata"}
+    expected = {"pathspec"}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -147,7 +147,7 @@ def test_get_requires_for_build_wheel_pure(fp):
 
 
 def test_get_requires_for_build_editable(fp):
-    expected = {"pathspec", "pyproject_metadata", "cmake>=3.15", *ninja}
+    expected = {"pathspec", "cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -156,7 +156,7 @@ def test_get_requires_for_build_editable(fp):
 
 
 def test_get_requires_for_build_editable_pure(fp):
-    expected = {"pathspec", "pyproject_metadata"}
+    expected = {"pathspec"}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',

@@ -25,9 +25,9 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence, Set
 
     from packaging.tags import Tag
-    from pyproject_metadata import StandardMetadata
 
     from .._compat.typing import Self
+    from .._vendor.pyproject_metadata import StandardMetadata
 
 EMAIL_POLICY = EmailPolicy(max_line_length=0, mangle_from_=False, utf8=True)
 

@@ -7,8 +7,7 @@ import string
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pyproject_metadata import StandardMetadata
-
+    from .._vendor.pyproject_metadata import StandardMetadata
     from ..settings.skbuild_model import GenerateSettings
 
 

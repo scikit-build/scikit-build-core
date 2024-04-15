@@ -96,7 +96,6 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "packaging": ("https://packaging.pypa.io/en/stable", None),
     "setuptools": ("https://setuptools.pypa.io/en/latest", None),
-    "pyproject_metadata": ("https://pep621.readthedocs.io/en/latest", None),
     "hatchling": ("https://hatch.pypa.io/latest", None),
 }
 
@@ -104,6 +103,7 @@ nitpick_ignore = [
     ("py:class", "setuptools.dist.Distribution"),
     ("py:class", "T"),
     ("py:class", "scikit_build_core.settings.sources.T"),
+    ("py:class", "scikit_build_core._vendor.pyproject_metadata.StandardMetadata"),
 ]
 
 linkcheck_anchors_ignore = [
