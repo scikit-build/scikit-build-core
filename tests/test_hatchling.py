@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import tarfile
 import zipfile
 from pathlib import Path
@@ -43,11 +44,11 @@ def test_hatchling_sdist(isolated) -> None:
 def test_hatchling_wheel(isolated, build_args) -> None:
     isolated.install("build[virtualenv]", "scikit-build-core", "hatchling", "pybind11")
     isolated.module("build", "--no-isolation", *build_args)
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     (wheel,) = Path("dist").iterdir()
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
-    print(file_names)
     assert file_names == {
         "hatchling_example-0.1.0.data/data/data_file.txt",
         "hatchling_example-0.1.0.data/scripts/myscript",
@@ -57,5 +58,5 @@ def test_hatchling_wheel(isolated, build_args) -> None:
         "hatchling_example-0.1.0.dist-info/extra_metadata/metadata_file.txt",
         "hatchling_example/__init__.py",
         "hatchling_example/_core.pyi",
-        "hatchling_example/hatchling_example/_core.cpython-312-darwin.so",
+        f"hatchling_example/hatchling_example/_core{ext_suffix}",
     }
