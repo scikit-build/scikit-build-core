@@ -46,7 +46,7 @@ def test_hatchling_wheel(isolated, build_args) -> None:
     isolated.module("build", "--no-isolation", *build_args)
     ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
-    (wheel,) = Path("dist").iterdir()
+    (wheel,) = Path("dist").glob("*.whl")
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
     assert file_names == {
