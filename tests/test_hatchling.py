@@ -1,7 +1,11 @@
+import sys
 import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("hatchling")
 
 
 @pytest.mark.network()
@@ -25,6 +29,9 @@ def test_hatchling_sdist(isolated) -> None:
         }
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="Full hatchling support requires Python 3.8+"
+)
 @pytest.mark.network()
 @pytest.mark.compile()
 @pytest.mark.configure()
@@ -36,3 +43,19 @@ def test_hatchling_sdist(isolated) -> None:
 def test_hatchling_wheel(isolated, build_args) -> None:
     isolated.install("build[virtualenv]", "scikit-build-core", "hatchling", "pybind11")
     isolated.module("build", "--no-isolation", *build_args)
+
+    (wheel,) = Path("dist").iterdir()
+    with zipfile.ZipFile(wheel) as f:
+        file_names = set(f.namelist())
+    print(file_names)
+    assert file_names == {
+        "hatchling_example-0.1.0.data/data/data_file.txt",
+        "hatchling_example-0.1.0.data/scripts/myscript",
+        "hatchling_example-0.1.0.dist-info/METADATA",
+        "hatchling_example-0.1.0.dist-info/RECORD",
+        "hatchling_example-0.1.0.dist-info/WHEEL",
+        "hatchling_example-0.1.0.dist-info/extra_metadata/metadata_file.txt",
+        "hatchling_example/__init__.py",
+        "hatchling_example/_core.pyi",
+        "hatchling_example/hatchling_example/_core.cpython-312-darwin.so",
+    }

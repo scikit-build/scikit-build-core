@@ -254,7 +254,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         try:
             for path in wheel_dirs["data"].iterdir():
-                build_data["shared-data"][f"{path.resolve()}"] = str(
+                build_data["shared_data"][f"{path.resolve()}"] = str(
                     path.relative_to(wheel_dirs["data"])
                 )
         except KeyError:
@@ -263,21 +263,24 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         try:
             for path in wheel_dirs["scripts"].iterdir():
-                build_data["shared-scripts"][f"{path.resolve()}"] = str(
+                build_data["shared_scripts"][f"{path.resolve()}"] = str(
                     path.relative_to(wheel_dirs["scripts"])
                 )
         except KeyError:
             logger.error("SKBUILD_SCRIPTS_DIR not supported by Hatchling < 1.24.0")
             raise
 
-        try:
-            for path in wheel_dirs["metadata"].iterdir():
-                build_data["extra-metadata"][f"{path.resolve()}"] = str(
-                    path.relative_to(wheel_dirs["metadata"])
-                )
-        except KeyError:
-            logger.error("SKBUILD_METADATA_DIR not supported by Hatchling < 1.24.0")
-            raise
+        for path_root in wheel_dirs["metadata"].iterdir():
+            if path_root.name != "extra_metadata":
+                msg = f"Hatchling metadata must be in an extra_metadata folder, got {path_root}"
+                raise ValueError(msg)
+            for path in path_root.iterdir():
+                location = path.relative_to(path_root)
+                try:
+                    build_data["extra_metadata"][f"{path.resolve()}"] = str(location)
+                except KeyError:
+                    logger.error("SKBUILD_METADATA_DIR needs a newer Hatchling")
+                    raise
 
     def finalize(
         self, version: str, build_data: dict[str, Any], artifact_path: str

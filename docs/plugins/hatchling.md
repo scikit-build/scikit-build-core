@@ -15,12 +15,12 @@ moves.
 
 To use the plugin, make sure hatchling and scikit-build-core are in your
 `build-system.requires`. A recent version of hatchling is best; you need 1.23 to
-get `cmake` and `ninja` auto-added if needed, and 1.25 if you want to write out
+get `cmake` and `ninja` auto-added if needed, and 1.24 if you want to write out
 custom scripts, metadata, or shared data.
 
 You need a `tool.hatch.build.targrst.wheel.hooks.scikit-build` section to
 activate the plugin. Currently, you need at least the `experimental` option to
-use the plugin, which means you awknoledge that this might move in the next
+use the plugin, which means you acknowledge that this might move in the next
 release of scikit-build-core. It was added in 0.9.
 
 ```toml
@@ -67,6 +67,10 @@ Key limitations:
 - `scikit-build.generate` and `scikit-build.metadata` is not supported.
 - `${SKBUILD_HEADER_DIR}` is not supported, request support in Hatching if
   needed.
+- Anything in `${SKBUILD_METADATA_DIR}` must be placed in an `extra_metadata`
+  folder.
+- Python 3.8 highly recommended as features are missing from the last hatchling
+  for 3.7.
 
 ## Writing CMakeLists.txt
 

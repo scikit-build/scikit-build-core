@@ -12,14 +12,18 @@ if(NOT DEFINED SKBUILD_HATCHLING)
     FATAL_ERROR "This project should be built using scikit-build & hatchling")
 endif()
 
-# Testing metadata file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt
-# "Testing") install(FILES ${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt
-# DESTINATION "${SKBUILD_METADATA_DIR}")
+# Testing metadata
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt" "Testing")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/metadata_file.txt"
+        DESTINATION "${SKBUILD_METADATA_DIR}/extra_metadata/")
 
-# Testing scripts file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/myscript
-# "#!/usr/bin/env python\nprint('Hello from myscript.py')") install(FILES
-# ${CMAKE_CURRENT_BINARY_DIR}/myscript DESTINATION "${SKBUILD_SCRIPTS_DIR}")
+# Testing scripts
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/myscript"
+     "#!/usr/bin/env python\nprint('Hello from myscript.py')")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/myscript"
+        DESTINATION "${SKBUILD_SCRIPTS_DIR}")
 
-# Testing data file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/data_file.txt "Data")
-# install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data_file.txt DESTINATION
-# "${SKBUILD_DATA_DIR}")
+# Testing data
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/data_file.txt" "Data")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/data_file.txt"
+        DESTINATION "${SKBUILD_DATA_DIR}")

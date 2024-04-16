@@ -105,7 +105,8 @@ jobs:
         if:
           matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
         run:
-          uv pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
+          uv pip install
+          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov]
           --system
 
       - name: Install package (pip)

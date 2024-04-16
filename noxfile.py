@@ -93,7 +93,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(session, extras=["test-meta,test-numpy,test-schema"])
+    _run_tests(session, extras=["test-meta,test-numpy,test-schema,test-hatchling"])
 
 
 @nox.session(reuse_venv=True)
