@@ -17,6 +17,14 @@ scikit\_build\_core.build.generate module
    :undoc-members:
    :show-inheritance:
 
+scikit\_build\_core.build.metadata module
+-----------------------------------------
+
+.. automodule:: scikit_build_core.build.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.build.sdist module
 --------------------------------------
 
