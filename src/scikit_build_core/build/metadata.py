@@ -37,8 +37,19 @@ def get_standard_metadata(
         new_pyproject_dict["project"]["dynamic"].remove(field)
 
     metadata = StandardMetadata.from_pyproject(new_pyproject_dict)
+
     # pyproject-metadata normalizes the name - see https://github.com/FFY00/python-pyproject-metadata/pull/65
     # For scikit-build-core 0.5+, we keep the un-normalized name, and normalize it when using it for filenames
     if settings.minimum_version is None or settings.minimum_version >= Version("0.5"):
         metadata.name = new_pyproject_dict["project"]["name"]
+
+    # The description field is required to be one line. Instead of merging it
+    # or cutting off subsequent lines (setuptools), we throw a nice error.
+    # But we didn't validate before 0.9.
+    if (
+        settings.minimum_version is None or settings.minimum_version >= Version("0.9")
+    ) and "\n" in (metadata.description or ""):
+        msg = "Multiple lines in project.description are not supported; this is supposed to be a one line summary"
+        raise ValueError(msg)
+
     return metadata
