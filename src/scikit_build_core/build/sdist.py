@@ -15,11 +15,11 @@ from packaging.version import Version
 from .. import __version__
 from .._compat import tomllib
 from .._logging import rich_print
-from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
 from .generate import generate_file_contents
+from .metadata import get_standard_metadata
 from .wheel import _build_wheel_impl
 
 __all__ = ["build_sdist"]

@@ -15,9 +15,9 @@ from packaging.version import Version
 
 from scikit_build_core._compat import tomllib
 from scikit_build_core.build import build_wheel
+from scikit_build_core.build.metadata import get_standard_metadata
 from scikit_build_core.builder.get_requires import GetRequires
 from scikit_build_core.metadata import regex
-from scikit_build_core.settings.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 

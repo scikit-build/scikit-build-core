@@ -17,7 +17,6 @@ from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
-from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
@@ -27,6 +26,7 @@ from ._pathutil import (
 from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
+from .metadata import get_standard_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence

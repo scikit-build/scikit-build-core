@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
-from ._load_provider import load_dynamic_metadata
+from ..settings._load_provider import load_dynamic_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
