@@ -9,6 +9,7 @@ import email.utils
 import os
 import os.path
 import pathlib
+import sys
 import typing
 
 
@@ -18,6 +19,11 @@ if typing.TYPE_CHECKING:
 
     from packaging.requirements import Requirement
 
+    if sys.version_info < (3, 11):
+        from typing_extensions import Self
+    else:
+        from typing import Self
+
 import packaging.markers
 import packaging.requirements
 import packaging.specifiers
@@ -25,7 +31,7 @@ import packaging.utils
 import packaging.version
 
 
-__version__ = '0.8.0rc1'
+__version__ = '0.8.0rc2'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
@@ -204,7 +210,7 @@ class StandardMetadata:
         data: Mapping[str, Any],
         project_dir: str | os.PathLike[str] = os.path.curdir,
         metadata_version: str | None = None,
-    ) -> StandardMetadata:
+    ) -> Self:
         fetcher = DataFetcher(data)
         project_dir = pathlib.Path(project_dir)
 
@@ -219,7 +225,7 @@ class StandardMetadata:
 
         for field in dynamic:
             if field in data['project']:
-                msg = f'Field "project.{field}" declared as dynamic in but is defined'
+                msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
                 raise ConfigurationError(msg)
 
         name = fetcher.get_str('project.name')
@@ -235,11 +241,10 @@ class StandardMetadata:
             msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
             raise ConfigurationError(msg)
 
-        # Description can't be multiline
+        # Description fills Summary, which cannot be multiline
+        # However, throwing an error isn't backward compatible,
+        # so leave it up to the users for now.
         description = fetcher.get_str('project.description')
-        if description and '\n' in description:
-            msg = 'The description must be a single line'
-            raise ConfigurationError(msg)
 
         if metadata_version and metadata_version not in KNOWN_METADATA_VERSIONS:
             msg = f'The metadata_version must be one of {KNOWN_METADATA_VERSIONS} or None (default)'
