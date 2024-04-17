@@ -18,7 +18,7 @@ To use the plugin, make sure hatchling and scikit-build-core are in your
 get `cmake` and `ninja` auto-added if needed, and 1.24 if you want to write out
 custom scripts, metadata, or shared data.
 
-You need a `tool.hatch.build.targrst.wheel.hooks.scikit-build` section to
+You need a `tool.hatch.build.targets.wheel.hooks.scikit-build` section to
 activate the plugin. Currently, you need at least the `experimental` option to
 use the plugin, which means you acknowledge that this might move in the next
 release of scikit-build-core. It was added in 0.9.
@@ -69,8 +69,8 @@ Key limitations:
   needed.
 - Anything in `${SKBUILD_METADATA_DIR}` must be placed in an `extra_metadata`
   folder.
-- Python 3.8 highly recommended as features are missing from the last hatchling
-  for 3.7.
+- Python 3.8 highly recommended as features are missing from the last Hatchling
+  to support 3.7.
 
 ## Writing CMakeLists.txt
 
