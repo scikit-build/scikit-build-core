@@ -201,6 +201,7 @@ messages_control.disable = [
 
 [tool.coverage]
 run.source = ["scikit_build_core"]
+run.omit = ["src/scikit_build_core/_vendor"]
 report.exclude_lines = [
     'pragma: no cover',
     '\.\.\.',
