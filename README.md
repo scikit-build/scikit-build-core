@@ -79,12 +79,13 @@ Some known missing features that will be developed soon:
 Other backends are also planned:
 
 - Setuptools integration highly experimental
+- Hatchling plugin highly experimental
 - The extensionlib integration is missing
-- No hatchling plugin yet.
 
 The recommended interface is the native pyproject builder. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
-for classic scikit-build.
+for classic scikit-build, and a WIP Hatchling plugin. Both might be moved to
+standalone packages in the future.
 
 > [!WARNING]
 >

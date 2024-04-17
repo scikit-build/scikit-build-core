@@ -31,7 +31,10 @@ def test_all_modules_filter_all():
     all_modules = on_all_modules("scikit_build_core", pkg=False)
     all_modules = (n for n in all_modules if not n.split(".")[-1].startswith("__"))
     for name in all_modules:
-        module = importlib.import_module(name)
+        try:
+            module = importlib.import_module(name)
+        except ModuleNotFoundError:
+            continue
 
         try:
             dir_module = set(dir(module))
@@ -47,7 +50,10 @@ def test_all_modules_has_all():
     all_modules = on_all_modules("scikit_build_core", pkg=True)
     all_modules = (n for n in all_modules if not n.split(".")[-1].startswith("_"))
     for name in all_modules:
-        module = importlib.import_module(name)
+        try:
+            module = importlib.import_module(name)
+        except ModuleNotFoundError:
+            continue
 
         dir_module = module.__dict__
         items = ["__all__"]

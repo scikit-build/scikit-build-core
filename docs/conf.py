@@ -97,6 +97,7 @@ intersphinx_mapping = {
     "packaging": ("https://packaging.pypa.io/en/stable", None),
     "setuptools": ("https://setuptools.pypa.io/en/latest", None),
     "pyproject_metadata": ("https://pep621.readthedocs.io/en/latest", None),
+    "hatchling": ("https://hatch.pypa.io/latest", None),
 }
 
 nitpick_ignore = [
