@@ -44,7 +44,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
             "wheel",
             "--wheel-dir",
             str(wheelhouse),
-            f"{BASE}[pyproject]",
+            f"{BASE}",
         ],
         check=True,
     )
@@ -208,10 +208,10 @@ def package_simple_pyproject_ext(
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
-        "6c5bb5f1b6c44f3aab37fc8f768004f644c24001ad0304759a69b754ca6ad46d",
-        "ba13e4195ae6333459412bc802ba8c02c231cf1c5ee143f6a3392786d80a49b4",
-        "f1a6050eae910de7cd86830ba97af5e74ff953f9acc2adab47aa9cdf2a3eca91",
-        "b861db81fd1de6dee4a0d6574af27af54424fbccce12b018644d1db136f218ac",
+        "5544d96810ce60ac40baf28cf8caf2e1e7e1fa7439b283d3fb52cdc1f87f12ac",
+        "aaa15c185dc3fbc301dc2fca937cc935442c38e55bc400fbefd424bd6ce92adb",
+        "ee3a564a37c42df3abdcee3862175baceeb6f6eff0b29931681b424ec5d96067",
+        "4c1d402621e7f00fce4ce5afdb73a9ba4cc25cd4bb57619113432841f779dd68",
     )
     process_package(package, tmp_path, monkeypatch)
     return package

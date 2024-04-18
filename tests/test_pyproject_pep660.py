@@ -59,7 +59,7 @@ def test_pep660_pip_isolated(isolated, isolate, editable_mode: str):
     isolate_args = ["--no-build-isolation"] if not isolate else []
     isolated.install("pip>=23")
     if not isolate:
-        isolated.install("scikit-build-core[pyproject]")
+        isolated.install("scikit-build-core")
 
     build_dir = "" if editable_mode == "inplace" else "build/{wheel_tag}"
 

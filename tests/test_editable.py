@@ -28,7 +28,7 @@ def test_navigate_editable(isolated, isolate, package):
     isolate_args = ["--no-build-isolation"] if not isolate else []
     isolated.install("pip>=23")
     if not isolate:
-        isolated.install("scikit-build-core[pyproject]")
+        isolated.install("scikit-build-core")
 
     if package:
         init_py = Path("python/shared_pkg/data/__init__.py")
@@ -73,7 +73,7 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
     tmp_path1.mkdir()
     process_package(package1, tmp_path1, monkeypatch)
 
-    isolated.install("pip>23", "cython", "scikit-build-core[pyproject]")
+    isolated.install("pip>23", "cython", "scikit-build-core")
 
     isolated.install(
         "-v",
