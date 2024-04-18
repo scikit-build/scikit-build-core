@@ -1,5 +1,59 @@
 # Changelog
 
+## Version 0.9.0
+
+This version adds the ability to `inherit` in override tables, matching a
+similar feature added to cibuildwheel 2.17's overrides. You can now write out
+extra metadata to `@{SKBUILD_METADATA_DIR}`. A new Hatchling plugin is provided
+as an experimental feature (will likely be made a separate package in the future
+like the setuptools plugin).
+
+Features:
+
+- feat: Preserve additivity of `cmake.define` across `overrides` tables by
+  @stubbiali in #564
+- feat: add metadata dir access by @henryiii in #702
+- feat: experimental hatchling builder by @henryiii and @aryamanjeendgar in #637
+- feat: vendor pyproject-metadata by @henryiii in #703
+
+Fixes:
+
+- fix!: exclude installed files if listed in exclude by @henryiii in #652
+- fix: Make `.git_archival.txt` reproducible by @LecrisUT in #706
+- fix: Use `cmake -E` capabilities instead of `cmake --version` by
+  @KyleFromNVIDIA in #675
+- fix: ensure many/musl tags not selected by @henryiii in #698
+- fix: purelib should set py3 tag if unset by @henryiii in #661
+- fix: validate description for 0.9+ by @henryiii in #709
+- fix: support bools in config settings by @henryiii in #712
+- fix: always require pathspec by @henryiii in #711
+
+API changes:
+
+- feat(api): `extra_settings` for SettingsReader by @henryiii in #697
+- refactor: `GetRequires` args changed by @henryiii in #699
+- refactor: make `from_file` a little more powerful by @henryiii in #700
+- refactor: metadata is part of the build backend by @henryiii in #708
+
+Documentation:
+
+- docs: `cmakelists.md` Windows `SOABI` suffix variable by @thewtex in #684
+- docs: fix hatch init command by @thewtex in #677
+- docs: fix install strip default by @henryiii in #681
+- docs: improve `ninja.make-fallback` description in the README by @thewtex in
+  #676
+- docs: mention printouts by @henryiii in #660
+
+CI and testing:
+
+- chore: Lower `pybind11` test dependency by @LecrisUT in #691
+- chore: some cleanup from uv branch by @henryiii in #686
+- ci: Fedora CI maintenance by @LecrisUT in #689
+- ci: small additions by @henryiii in #694
+- ci: some changes from uv job by @henryiii in #693
+- tests: fix setuptools on Python 3.12 by @henryiii in #701
+- fedora: Port downstream PR-49 by @LecrisUT in #678
+
 ## Version 0.8.2
 
 This version fixes a few small issues related to configuration. The wheel tag is

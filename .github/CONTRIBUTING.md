@@ -129,11 +129,16 @@ Included modules:
 - `.cmake`: `CMake`/`CMaker` general interface for building code
 - `.fileapi`: Interface for reading the CMake File API
 - `.builder`: Generalized backend builder and related helpers
-- `.build`: PEP 517 builder
-- `.setuptools`: The setuptools Extension interface (and PEP 517 hooks)
-- `.setuptools.build_api`: Wrapper injecting build requirements
 - `.settings`: The configuration system, reading from pyproject.toml, PEP 517
-  config, and envvars
+
+The build backend and plugins:
+
+- `.build`: PEP 517 builder
+- `.setuptools`: The setuptools Extension interface (and PEP 517 hooks) (will
+  likely be split out)
+- `.setuptools.build_api`: Wrapper injecting build requirements
+- `.hatch`: The hatchling extension (will likely be split out) config, and
+  envvars
 
 ## Basic CMake usage
 
@@ -303,7 +308,8 @@ install(TARGETS cmake_example DESTINATION .)
 ### Backports
 
 All backported standard library code is in `scikit_build_core._compat`, in a
-module with the stdlib name.
+module with the stdlib name. Ruff will ensure you use the backport instead of
+the original module.
 
 ### Detecting the platform
 
