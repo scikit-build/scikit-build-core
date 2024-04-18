@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
-from pyproject_metadata import StandardMetadata
 
+from .._vendor.pyproject_metadata import StandardMetadata
 from ..settings._load_provider import load_dynamic_metadata
 
 if TYPE_CHECKING:
@@ -38,10 +38,11 @@ def get_standard_metadata(
 
     metadata = StandardMetadata.from_pyproject(new_pyproject_dict)
 
-    # pyproject-metadata normalizes the name - see https://github.com/FFY00/python-pyproject-metadata/pull/65
-    # For scikit-build-core 0.5+, we keep the un-normalized name, and normalize it when using it for filenames
-    if settings.minimum_version is None or settings.minimum_version >= Version("0.5"):
-        metadata.name = new_pyproject_dict["project"]["name"]
+    # For scikit-build-core < 0.5, we keep the normalized name for back-compat
+    if settings.minimum_version is not None and settings.minimum_version < Version(
+        "0.5"
+    ):
+        metadata.name = metadata.canonical_name
 
     # The description field is required to be one line. Instead of merging it
     # or cutting off subsequent lines (setuptools), we throw a nice error.

@@ -2,6 +2,8 @@ ci:
   autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"
 
+exclude: ^src/scikit_build_core/_vendor
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -79,7 +81,6 @@ repos:
           - ninja
           - nox
           - packaging
-          - pyproject_metadata
           - pytest<8
           - rich
           - setuptools-scm

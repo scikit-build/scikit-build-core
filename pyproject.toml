@@ -201,6 +201,7 @@ messages_control.disable = [
 
 [tool.coverage]
 run.source = ["scikit_build_core"]
+run.omit = ["src/scikit_build_core/_vendor"]
 report.exclude_lines = [
     'pragma: no cover',
     '\.\.\.',
@@ -214,7 +215,7 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 [tool.ruff]
 src = ["src"]
-exclude = []  # Required due to "build" module
+exclude = ["src/scikit_build_core/_vendor"]  # Required due to "build" module
 
 [tool.ruff.lint]
 extend-select = [
@@ -289,6 +290,7 @@ typing-modules = ["scikit_build_core._compat.typing"]
 "importlib_metadata".msg = "Use scikit_build_core._compat.importlib.metadata instead."
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
+"pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
 
 
 [tool.ruff.lint.per-file-ignores]
