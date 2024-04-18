@@ -31,7 +31,7 @@ import packaging.utils
 import packaging.version
 
 
-__version__ = '0.8.0rc2'
+__version__ = '0.8.0'
 
 KNOWN_METADATA_VERSIONS = {'2.1', '2.2', '2.3'}
 
