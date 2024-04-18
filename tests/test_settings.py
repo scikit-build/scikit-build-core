@@ -345,6 +345,16 @@ def test_env_var_bools(monkeypatch, truthy, falsey):
     assert not settings.true
 
 
+def test_conf_settings_bools():
+    sources = SourceChain(
+        ConfSource(settings={"false": True, "true": False}),
+    )
+    settings = sources.convert_target(SettingBools)
+
+    assert settings.false
+    assert not settings.true
+
+
 @dataclasses.dataclass
 class SettingLists:
     list0: List[str] = dataclasses.field(default_factory=list)
