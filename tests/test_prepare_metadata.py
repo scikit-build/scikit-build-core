@@ -5,11 +5,14 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 
 from scikit_build_core.build import (
     prepare_metadata_for_build_editable,
     prepare_metadata_for_build_wheel,
 )
+from scikit_build_core.build.metadata import get_standard_metadata
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 
 @pytest.mark.usefixtures("package_simplest_c")
@@ -41,3 +44,36 @@ def test_prepare_metadata_for_build(fp, editable):
 
     assert len(list(Path("simple/simplest-0.0.1.dist-info").iterdir())) == 3
     assert len(list(Path("simple").iterdir())) == 1
+
+
+def test_multiline_description():
+    with pytest.raises(ValueError, match="one line summary"):
+        get_standard_metadata(
+            pyproject_dict={
+                "project": {
+                    "name": "hello",
+                    "version": "1.1.1",
+                    "description": "One\nTwo",
+                }
+            },
+            settings=ScikitBuildSettings(),
+        )
+
+    with pytest.raises(ValueError, match="one line summary"):
+        get_standard_metadata(
+            pyproject_dict={
+                "project": {
+                    "name": "hello",
+                    "version": "1.1.1",
+                    "description": "One\nTwo",
+                }
+            },
+            settings=ScikitBuildSettings(minimum_version=Version("0.9")),
+        )
+
+    get_standard_metadata(
+        pyproject_dict={
+            "project": {"name": "hello", "version": "1.1.1", "description": "One\nTwo"}
+        },
+        settings=ScikitBuildSettings(minimum_version=Version("0.8")),
+    )
