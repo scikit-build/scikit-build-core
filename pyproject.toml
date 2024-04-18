@@ -47,7 +47,6 @@ dependencies = [
 [project.optional-dependencies]
 pyproject = [
     "pathspec >=0.10.1",
-    "pyproject-metadata >=0.6.1",
 ]
 test = [
     "build >=0.8",
@@ -55,7 +54,6 @@ test = [
     "pathspec >=0.10.1",
     "pip >=22",
     "pybind11 >=2.11",
-    "pyproject-metadata >=0.5",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     'setuptools >=43; python_version<"3.9"',
@@ -97,7 +95,6 @@ docs = [
     "hatchling",
     "myst-parser >=0.13",
     "pathspec >=0.10.1",
-    "pyproject-metadata >=0.5",
     "setuptools",
     "sphinx >=7.0",
     "sphinx-autodoc-typehints",
