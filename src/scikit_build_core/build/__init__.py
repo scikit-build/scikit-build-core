@@ -109,7 +109,6 @@ def get_requires_for_build_sdist(
     )
 
     return [
-        "pathspec",
         *cmake_requires,
         *requires.dynamic_metadata(),
     ]
@@ -128,7 +127,6 @@ def get_requires_for_build_wheel(
     )
 
     return [
-        "pathspec",
         *cmake_requires,
         *requires.dynamic_metadata(),
     ]
@@ -147,7 +145,6 @@ def get_requires_for_build_editable(
     )
 
     return [
-        "pathspec",
         *cmake_requires,
         *requires.dynamic_metadata(),
     ]

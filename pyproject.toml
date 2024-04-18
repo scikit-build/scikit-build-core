@@ -37,6 +37,7 @@ dependencies = [
     "importlib-metadata >=4.13; python_version<'3.8'",
     "importlib-resources >=1.3; python_version<'3.9'",
     "packaging >=21.3",
+    "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
     "typing-extensions >=3.10.0; python_version<'3.9'",
 ]
@@ -46,16 +47,12 @@ dependencies = [
 
 [project.optional-dependencies]
 pyproject = [
-    "pathspec >=0.10.1",
-    "pyproject-metadata >=0.6.1",
 ]
 test = [
     "build >=0.8",
     "cattrs >=22.2.0",
-    "pathspec >=0.10.1",
     "pip >=22",
     "pybind11 >=2.11",
-    "pyproject-metadata >=0.5",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",
     'setuptools >=43; python_version<"3.9"',
@@ -96,8 +93,6 @@ docs = [
     "furo",
     "hatchling",
     "myst-parser >=0.13",
-    "pathspec >=0.10.1",
-    "pyproject-metadata >=0.5",
     "setuptools",
     "sphinx >=7.0",
     "sphinx-autodoc-typehints",

@@ -116,11 +116,11 @@ def test_get_requires_for_build_sdist(fp):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
-    assert set(get_requires_for_build_sdist({})) == {"pathspec"}
+    assert set(get_requires_for_build_sdist({})) == set()
 
 
 def test_get_requires_for_build_sdist_cmake(fp):
-    expected = {"pathspec", "cmake>=3.15", *ninja}
+    expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -129,7 +129,7 @@ def test_get_requires_for_build_sdist_cmake(fp):
 
 
 def test_get_requires_for_build_wheel(fp):
-    expected = {"pathspec", "cmake>=3.15", *ninja}
+    expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -138,16 +138,15 @@ def test_get_requires_for_build_wheel(fp):
 
 
 def test_get_requires_for_build_wheel_pure(fp):
-    expected = {"pathspec"}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
-    assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == expected
+    assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == set()
 
 
 def test_get_requires_for_build_editable(fp):
-    expected = {"pathspec", "cmake>=3.15", *ninja}
+    expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -156,9 +155,8 @@ def test_get_requires_for_build_editable(fp):
 
 
 def test_get_requires_for_build_editable_pure(fp):
-    expected = {"pathspec"}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
-    assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == expected
+    assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == set()

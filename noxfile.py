@@ -134,7 +134,7 @@ def docs(session: nox.Session) -> None:
 
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
-    session.install("-e.[docs,pyproject]", *extra_installs)
+    session.install("-e.[docs]", *extra_installs)
 
     session.chdir("docs")
 
@@ -229,7 +229,7 @@ def downstream(session: nox.Session) -> None:
     proj_dir = tmp_dir / "_".join(args.project.split("/"))
 
     session.install("build", "hatch-vcs", "hatchling")
-    session.install(".[pyproject]", "--no-build-isolation")
+    session.install(".", "--no-build-isolation")
 
     if proj_dir.is_dir():
         session.chdir(proj_dir)
