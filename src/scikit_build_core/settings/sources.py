@@ -314,12 +314,15 @@ class ConfSource:
     nested dicts. "verify" is a boolean that determines whether unrecognized
     options should be checked for. Only set this to false if this might be sharing
     config options at the same level.
+
+    While most mechanisms (pip, uv, build) only support text, gpep517 allows an
+    arbitrary json input, so this currently also handles bools.
     """
 
     def __init__(
         self,
         *prefixes: str,
-        settings: Mapping[str, str | list[str]],
+        settings: Mapping[str, str | list[str] | bool],
         verify: bool = True,
     ) -> None:
         self.prefixes = prefixes
@@ -339,7 +342,9 @@ class ConfSource:
 
         return name in self.settings
 
-    def get_item(self, *fields: str, is_dict: bool) -> str | list[str] | dict[str, str]:
+    def get_item(
+        self, *fields: str, is_dict: bool
+    ) -> str | list[str] | dict[str, str] | bool:
         names = self._get_name(*fields)
         name = ".".join(names)
         if is_dict:
@@ -360,7 +365,7 @@ class ConfSource:
 
     @classmethod
     def convert(
-        cls, item: str | list[str] | dict[str, str], target: type[Any]
+        cls, item: str | list[str] | dict[str, str] | bool, target: type[Any]
     ) -> object:
         target, _ = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
@@ -370,20 +375,20 @@ class ConfSource:
         if raw_target is list:
             if isinstance(item, list):
                 return [cls.convert(i, _get_inner_type(target)) for i in item]
-            if isinstance(item, dict):
+            if isinstance(item, (dict, bool)):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
-            assert not isinstance(item, (str, list))
+            assert not isinstance(item, (str, list, bool))
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if isinstance(item, (list, dict)):
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is bool:
-            return _process_bool(item)
+            return item if isinstance(item, bool) else _process_bool(item)
         if raw_target is Union and str in get_args(target):
             return item
         if raw_target is Literal:
