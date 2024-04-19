@@ -79,17 +79,40 @@ def get_cmake_program(cmake_path: Path) -> Program:
     """
     try:
         result = Run().capture(cmake_path, "-E", "capabilities")
-    except (subprocess.CalledProcessError, PermissionError):
-        return Program(cmake_path, None)
+        try:
+            version = Version(json.loads(result.stdout)["version"]["string"])
+            logger.info("CMake version: {}", version)
+            return Program(cmake_path, version)
+        except (json.decoder.JSONDecodeError, KeyError, InvalidVersion):
+            logger.warning("Could not determine CMake version, got {!r}", result.stdout)
+    except subprocess.CalledProcessError:
+        try:
+            result = Run().capture(cmake_path, "--version")
+            try:
+                version = Version(
+                    result.stdout.splitlines()[0].split()[-1].split("-")[0]
+                )
+                logger.info("CMake version via --version: {}", version)
+                return Program(cmake_path, version)
+            except (IndexError, InvalidVersion):
+                logger.warning(
+                    "Could not determine CMake version via --version, got {!r}",
+                    result.stdout,
+                )
+        except subprocess.CalledProcessError:
+            logger.warning(
+                "Could not determine CMake version via --version, got {!r} {!r}",
+                result.stdout,
+                result.stderr,
+            )
+    except PermissionError:
+        logger.warning(
+            "Permissions Error getting CMake's version, got {!r} {!r}",
+            result.stdout,
+            result.stderr,
+        )
 
-    try:
-        version = Version(json.loads(result.stdout)["version"]["string"])
-    except (json.decoder.JSONDecodeError, KeyError, InvalidVersion):
-        logger.warning("Could not determine CMake version, got {!r}", result.stdout)
-        return Program(cmake_path, None)
-
-    logger.info("CMake version: {}", version)
-    return Program(cmake_path, version)
+    return Program(cmake_path, None)
 
 
 def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]:

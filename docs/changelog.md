@@ -1,10 +1,18 @@
 # Changelog
 
+## Version 0.9.1
+
+Quick fix for Pyodide (WebAssembly) builds.
+
+Fixes:
+
+- Try `--version` if `-E capabilities` fails by @henryiii in #717
+
 ## Version 0.9.0
 
 This version adds the ability to `inherit` in override tables, matching a
 similar feature added to cibuildwheel 2.17's overrides. You can now write out
-extra metadata to `@{SKBUILD_METADATA_DIR}`. A new Hatchling plugin is provided
+extra metadata to `${SKBUILD_METADATA_DIR}`. A new Hatchling plugin is provided
 as an experimental feature (will likely be made a separate package in the future
 like the setuptools plugin).
 
@@ -26,7 +34,7 @@ Fixes:
 
 - Exclude installed files if listed in exclude by @henryiii in #652
 - Make `.git_archival.txt` reproducible by @LecrisUT in #706
-- Use `cmake -E` capabilities instead of `cmake --version` by @KyleFromNVIDIA in
+- Use `cmake -E capabilities` instead of `cmake --version` by @KyleFromNVIDIA in
   #675
 - Ensure many/musl tags not selected by @henryiii in #698
 - purelib should set py3 tag if unset by @henryiii in #661
