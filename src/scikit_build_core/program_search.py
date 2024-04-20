@@ -99,18 +99,14 @@ def get_cmake_program(cmake_path: Path) -> Program:
                     "Could not determine CMake version via --version, got {!r}",
                     result.stdout,
                 )
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as err:
             logger.warning(
                 "Could not determine CMake version via --version, got {!r} {!r}",
-                result.stdout,
-                result.stderr,
+                err.stdout,
+                err.stderr,
             )
     except PermissionError:
-        logger.warning(
-            "Permissions Error getting CMake's version, got {!r} {!r}",
-            result.stdout,
-            result.stderr,
-        )
+        logger.warning("Permissions Error getting CMake's version")
 
     return Program(cmake_path, None)
 
