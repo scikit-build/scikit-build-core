@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.9.2
+
+Quick fix for quick fix in 0.9.1; if `cmake` is a broken script (which can
+happen if you pip install outside an environment then enter an environment,
+there was an unbound local error instead of ignoring the broken cmake script.
+
+Fixes:
+
+- Unbound local error by @henryiii in #719
+
 ## Version 0.9.1
 
 Quick fix for Pyodide (WebAssembly) builds.
