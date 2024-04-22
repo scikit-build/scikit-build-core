@@ -287,7 +287,7 @@ jobs:
 
       - uses: yezz123/setup-uv@v4
 
-      - uses: wntrblm/nox@2024.03.02
+      - uses: wntrblm/nox@2024.04.15
         with:
           python-versions: "3.11"
 
