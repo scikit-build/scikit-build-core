@@ -281,7 +281,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-13, windows-latest]
+        runs-on: [ubuntu-latest, macos-14, windows-latest]
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 15
 
