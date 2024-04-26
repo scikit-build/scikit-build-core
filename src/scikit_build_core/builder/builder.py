@@ -94,13 +94,13 @@ class Builder:
         """
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
-        env_cmake_args = list(
+        env_cmake_args: list[str] = list(
             filter(
                 None,
                 re.findall(
                     r'(?<!\S)(?:"[^"]*"|\'[^\']*\'|\S)+',
-                    self.config.env.get("CMAKE_ARGS", "")
-                )
+                    self.config.env.get("CMAKE_ARGS", ""),
+                ),
             )
         )
 

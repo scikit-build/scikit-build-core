@@ -221,7 +221,9 @@ def package_simple_pyproject_ext(
 def package_simple_pyproject_ext_with_flags(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
-    package = PackageInfo("simple_pyproject_ext_with_flags",)
+    package = PackageInfo(
+        "simple_pyproject_ext_with_flags",
+    )
     process_package(package, tmp_path, monkeypatch)
     return package
 

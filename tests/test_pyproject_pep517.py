@@ -164,7 +164,7 @@ def test_pep517_sdist_time_hash_set_epoch(
 @pytest.mark.configure()
 @pytest.mark.usefixtures("package_simple_pyproject_ext_with_flags")
 @pytest.mark.parametrize("env_var", ["CMAKE_ARGS", "SKBUILD_CMAKE_ARGS"])
-def test_passing_cxx_flags(monkeypatch, virtualenv, env_var):
+def test_passing_cxx_flags(monkeypatch, env_var):
     # Note: This is sensitive to the types of quotes because it's being forwarded to
     # bash as an environment variable. If you use single quotes as the outer quote and
     # double quotes inside the definition of CMAKE_CXX_FLAGS, it will get passed to
