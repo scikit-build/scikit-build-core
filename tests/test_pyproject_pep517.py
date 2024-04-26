@@ -163,6 +163,20 @@ def test_pep517_sdist_time_hash_set_epoch(
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
+def test_passing_cxx_flags(monkeypatch, virtualenv):
+    # Note: This is sensitive to the types of quotes because it's being forwarded to
+    # bash as an environment variable. If you use single quotes as the outer quote and
+    # double quotes inside the definition of CMAKE_CXX_FLAGS, it will get passed to
+    # CMake as "-DPy_LIMITED_API=0x030B0000 -DCYTHON_LIMITED_API=1" and fail. I don't
+    # know if we want scikit-build-core to be intelligent enough to handle that case,
+    # though, or if we should just document it.
+    monkeypatch.setenv("CMAKE_ARGS", "-DCMAKE_CXX_FLAGS='-DFOO=1 -DBAR='")
+    build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")
     out = build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
