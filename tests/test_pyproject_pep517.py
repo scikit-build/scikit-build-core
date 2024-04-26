@@ -163,14 +163,15 @@ def test_pep517_sdist_time_hash_set_epoch(
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.usefixtures("package_simple_pyproject_ext_with_flags")
-def test_passing_cxx_flags(monkeypatch, virtualenv):
+@pytest.mark.parametrize("env_var", ["CMAKE_ARGS", "SKBUILD_CMAKE_ARGS"])
+def test_passing_cxx_flags(monkeypatch, virtualenv, env_var):
     # Note: This is sensitive to the types of quotes because it's being forwarded to
     # bash as an environment variable. If you use single quotes as the outer quote and
     # double quotes inside the definition of CMAKE_CXX_FLAGS, it will get passed to
-    # CMake as "-DPy_LIMITED_API=0x030B0000 -DCYTHON_LIMITED_API=1" and fail. I don't
+    # CMake as a single quoted command line argument "-DFOO=1 -DBAR=" and fail. I don't
     # know if we want scikit-build-core to be intelligent enough to handle that case,
     # though, or if we should just document it.
-    monkeypatch.setenv("CMAKE_ARGS", "-DCMAKE_CXX_FLAGS='-DFOO=1 -DBAR='")
+    monkeypatch.setenv(env_var, "-DCMAKE_CXX_FLAGS='-DFOO=1 -DBAR='")
     build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
 
 
