@@ -218,6 +218,15 @@ def package_simple_pyproject_ext(
 
 
 @pytest.fixture()
+def package_simple_pyproject_ext_with_flags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("simple_pyproject_ext_with_flags",)
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_simple_pyproject_source_dir(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
