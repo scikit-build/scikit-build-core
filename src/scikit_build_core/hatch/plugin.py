@@ -105,17 +105,21 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         if self.target_name == "sdist":
             required = requires.settings.sdist.cmake
-        elif self.target_name in {"wheel", "editable"}:
+        elif self.target_name == "wheel":
             required = requires.settings.wheel.cmake
         else:
-            msg = f"Unknown target: {self.target_name!r}, only 'sdist', 'wheel', 'editable' are supported"
+            msg = f"Unknown target: {self.target_name!r}, only 'sdist' and 'wheel' are supported"
             raise ValueError(msg)
 
         # These are only injected if cmake is required
         cmake_requires = [*requires.cmake(), *requires.ninja()] if required else []
         return [*cmake_requires, *requires.dynamic_metadata()]
 
-    def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # noqa: ARG002
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
+        if version == "editable":
+            msg = "Editable installs are not yet supported"
+            raise ValueError(msg)
+
         self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
         try:
             self._initialize(build_data=build_data)
