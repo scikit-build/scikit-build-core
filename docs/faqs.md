@@ -69,6 +69,23 @@ printout of the current settings using:
 python -m scikit_build_core.builder
 ```
 
+## Repairing wheels
+
+Like most other backends[^1], scikit-build-core produced `linux` wheels, which
+are not redistrubutable cannot be uploaded to PyPI[^2]. You have to run your
+wheels through `auditwheel` to make `manylinux` wheels. `cibuildwheel`
+automatically does this for you. See [repairing](#repairing-wheels).
+
+[^1]:
+    Due to a [bug in packaging](https://github.com/pypa/packaging/issues/160),
+    some backends may mistakenly produce the wrong tags (including
+    scikit-build-core < 0.9), but the wheels are not actually
+    manylinux/musllinux, just mistagged.
+
+[^2]:
+    Platforms like ARMv6 that do not have a manylinux spec are exempt from this
+    rule.
+
 <!-- prettier-ignore-start -->
 
 [scientific python cookie]: https://github.com/scientific-python/cookie

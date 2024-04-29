@@ -110,6 +110,10 @@ The three new items here (compared to SDists) are the [compatibility tags][]:
 - `platform tag`: This is the platform the wheel is valid on, such as `any`,
   `linux_x86_64`, or `manylinux_2_17_x86_64`.
 
+(repairing-wheels)=
+
+## Repairing
+
 The wheels produced by default are not designed to be redistributable. Making
 them redistributable depends on platform:
 
@@ -122,8 +126,9 @@ them redistributable depends on platform:
   tag, and can be uploaded to PyPI.
 - macOS: The wheels should be build with the official CPython releases, and
   target a reasonable `MACOSX_DEPLOYMENT_TARGET` value (10.9 or newer). You
-  should run the wheels through `develwheel` to bundle external dependencies.
-  You'll also want to (carefully) cross compile for Apple Silicon.
+  should run the wheels through `develocate` to bundle external dependencies.
+  You'll also want to (carefully) cross compile for Apple Silicon or build on
+  Apple Silicon runners (`macos-14`+ on GHA).
 - Windows: this is the easiest, usually, as the wheels don't have special rules
   on what Python or OS is being used. However, if you want to bundle
   dependencies, you'll need `delvewheel`, which is a bit younger than the other
@@ -131,7 +136,11 @@ them redistributable depends on platform:
   works like those packages.
 
 The easiest way to handle all the above for all Python versions, OSs,
-architectures, including testing, is to use [cibuildwheel][].
+architectures, including testing, is to use [cibuildwheel][]. There's also a
+fairly new tool, [repairwheel][], that combines all these tools. Tools usually
+allow extra flags that can be used for trickier repairs, like ignoring CUDA
+libraries when bundling (which technically is not a true manylinux wheel, but is
+the current workaround).
 
 <!-- prettier-ignore-start -->
 
@@ -143,6 +152,7 @@ architectures, including testing, is to use [cibuildwheel][].
       `setup.py bdist_wheel`! You can avoid this whole mess with
       scikit-build-core.
 
+[repairwheel]: https://github.com/jvolkman/repairwheel
 [cibuildwheel]: https://cibuildwheel.readthedocs.io
 [compatibility tags]: https://packaging.python.org/en/latest/specifications/binary-distribution-format
 
