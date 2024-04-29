@@ -60,6 +60,8 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
     multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
     masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
+    log_func = logger.warning if sys.platform.startswith("win") else logger.debug
+
     if libdir and ldlibrary:
         try:
             libdir_is_dir = libdir.is_dir()
@@ -75,9 +77,9 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
             libpath = libdir / ldlibrary
             if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
-            logger.warning("libdir/ldlibrary: {} is not a real file!", libpath)
+            log_func("libdir/ldlibrary: {} is not a real file!", libpath)
         else:
-            logger.warning("libdir: {} is not a directory", libdir)
+            log_func("libdir: {} is not a directory", libdir)
 
     framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
     if framework_prefix and Path(framework_prefix).is_dir() and ldlibrary:
