@@ -147,7 +147,6 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
         "RECORD",
         "METADATA",
         "WHEEL",
-        "entry_points.txt",
     } == metadata_items
 
     filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}

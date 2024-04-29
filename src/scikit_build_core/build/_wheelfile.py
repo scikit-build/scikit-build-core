@@ -135,10 +135,15 @@ class WheelWriter:
             msg = "Cannot have METADATA, WHEEL, RECORD, or entry_points.txt in metadata_dir"
             raise ValueError(msg)
 
+        entry_points_txt = entry_points.getvalue().encode("utf-8")
+        entry_points_dict = (
+            {"entry_points.txt": entry_points_txt} if entry_points_txt else {}
+        )
+
         return {
             "METADATA": bytes(rfc822),
             "WHEEL": self.wheel_metadata.as_bytes(),
-            "entry_points.txt": entry_points.getvalue().encode("utf-8"),
+            **entry_points_dict,
             **extra_metadata,
         }
 
