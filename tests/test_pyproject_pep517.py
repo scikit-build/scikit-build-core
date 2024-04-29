@@ -177,10 +177,12 @@ def test_passing_cxx_flags(monkeypatch, env_var):
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
 
+    ext = ".exe" if sys.platform.startswith(("win", "cygwin")) else ""
+
     assert file_names == {
         "cmake_example-0.0.1.dist-info/RECORD",
         "cmake_example-0.0.1.dist-info/WHEEL",
-        "cmake_example-0.0.1.data/scripts/cmake_example",
+        f"cmake_example-0.0.1.data/scripts/cmake_example{ext}",
         "cmake_example-0.0.1.dist-info/METADATA",
         "cmake_example-0.0.1.dist-info/licenses/LICENSE",
     }
