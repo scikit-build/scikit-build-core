@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import re
+import shlex
 import sys
 import sysconfig
 from pathlib import Path
@@ -95,13 +96,7 @@ class Builder:
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSX on conda-forge)
         env_cmake_args: list[str] = list(
-            filter(
-                None,
-                re.findall(
-                    r'(?<!\S)(?:"[^"]*"|\'[^\']*\'|\S)+',
-                    self.config.env.get("CMAKE_ARGS", ""),
-                ),
-            )
+            filter(None, shlex.split(self.config.env.get("CMAKE_ARGS", "")))
         )
 
         if env_cmake_args:

@@ -163,15 +163,16 @@ def test_pep517_sdist_time_hash_set_epoch(
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.usefixtures("package_simple_pyproject_script_with_flags")
-@pytest.mark.parametrize("env_var", ["CMAKE_ARGS", "SKBUILD_CMAKE_ARGS"])
-def test_passing_cxx_flags(monkeypatch, env_var):
-    # Note: This is sensitive to the types of quotes because it's being forwarded to
-    # bash as an environment variable. If you use single quotes as the outer quote and
-    # double quotes inside the definition of CMAKE_CXX_FLAGS, it will get passed to
-    # CMake as a single quoted command line argument "-DFOO=1 -DBAR=" and fail. I don't
-    # know if we want scikit-build-core to be intelligent enough to handle that case,
-    # though, or if we should just document it.
-    monkeypatch.setenv(env_var, "-DCMAKE_C_FLAGS='-DFOO=1 -DBAR='")
+@pytest.mark.parametrize(
+    ("env_var", "setting"),
+    [
+        ("CMAKE_ARGS", '-DCMAKE_C_FLAGS="-DFOO=1 -DBAR="'),
+        ("SKBUILD_CMAKE_ARGS", "-DCMAKE_C_FLAGS=-DFOO=1 -DBAR="),
+    ],
+)
+def test_passing_cxx_flags(monkeypatch, env_var, setting):
+    # Note: This is sensitive to the types of quotes for SKBUILD_CMAKE_ARGS
+    monkeypatch.setenv(env_var, setting)
     build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
     (wheel,) = Path("dist").glob("cmake_example-0.0.1-py3-none-*.whl")
     with zipfile.ZipFile(wheel) as f:
