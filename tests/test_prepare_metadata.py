@@ -42,7 +42,7 @@ def test_prepare_metadata_for_build(fp, editable):
         == metadata.strip()
     )
 
-    assert len(list(Path("simple/simplest-0.0.1.dist-info").iterdir())) == 3
+    assert len(list(Path("simple/simplest-0.0.1.dist-info").iterdir())) == 2
     assert len(list(Path("simple").iterdir())) == 1
 
 

@@ -48,7 +48,6 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
     assert dist_info == {
         "METADATA": b"Metadata-Version: 2.1\nName: something\nVersion: 1.2.3\n",
         "WHEEL": b"Wheel-Version: 1.0\nGenerator: scikit-build-core 1.2.3\nRoot-Is-Purelib: false\nTag: py3-none-any\n\n",
-        "entry_points.txt": b"",
     }
 
     platlib = tmp_path / "platlib"
@@ -62,16 +61,11 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
         assert zf.namelist() == [
             "something-1.2.3.dist-info/METADATA",
             "something-1.2.3.dist-info/WHEEL",
-            "something-1.2.3.dist-info/entry_points.txt",
             "something-1.2.3.dist-info/RECORD",
         ]
 
         assert zf.read("something-1.2.3.dist-info/METADATA") == dist_info["METADATA"]
         assert zf.read("something-1.2.3.dist-info/WHEEL") == dist_info["WHEEL"]
-        assert (
-            zf.read("something-1.2.3.dist-info/entry_points.txt")
-            == dist_info["entry_points.txt"]
-        )
 
         for info in zf.infolist():
             assert info.external_attr == (0o664 | stat.S_IFREG) << 16
