@@ -110,6 +110,25 @@ def test_builder_macos_arch_extra(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    ("cmake_args", "answer"),
+    [
+        ("-DA=1 -DB=2", ["-DA=1", "-DB=2"]),
+        (r"-DA='1 1' -DB=\'2\'", ["-DA=1 1", "-DB='2'"]),
+        (r'-DA="1 1" -DB=\"2\"', ["-DA=1 1", '-DB="2"']),
+        ('"-DA=1 1" -DB=2', ["-DA=1 1", "-DB=2"]),
+    ],
+)
+def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
+    monkeypatch.setenv("CMAKE_ARGS", cmake_args)
+    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
+    )
+    assert tmpbuilder.get_cmake_args() == answer
+
+
+@pytest.mark.parametrize(
     ("minver", "archs", "answer"),
     [
         pytest.param("10.12", ["x86_64"], "macosx_10_12_x86_64", id="10.12_x86_64"),
