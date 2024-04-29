@@ -8,3 +8,6 @@ build-backend = "scikit_build_core.build"
 name = "CMake.Example"
 version = "0.0.1"
 requires-python = ">=3.7"
+
+[tool.scikit-build]
+wheel.py-api = "py3"

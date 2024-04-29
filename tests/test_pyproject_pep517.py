@@ -171,8 +171,19 @@ def test_passing_cxx_flags(monkeypatch, env_var):
     # CMake as a single quoted command line argument "-DFOO=1 -DBAR=" and fail. I don't
     # know if we want scikit-build-core to be intelligent enough to handle that case,
     # though, or if we should just document it.
-    monkeypatch.setenv(env_var, "-DCMAKE_CXX_FLAGS='-DFOO=1 -DBAR='")
+    monkeypatch.setenv(env_var, "-DCMAKE_C_FLAGS='-DFOO=1 -DBAR='")
     build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
+    (wheel,) = Path("dist").glob("cmake_example-0.0.1-py3-none-*.whl")
+    with zipfile.ZipFile(wheel) as f:
+        file_names = set(f.namelist())
+
+    assert file_names == {
+        "cmake_example-0.0.1.dist-info/RECORD",
+        "cmake_example-0.0.1.dist-info/WHEEL",
+        "cmake_example-0.0.1.data/scripts/cmake_example",
+        "cmake_example-0.0.1.dist-info/METADATA",
+        "cmake_example-0.0.1.dist-info/licenses/LICENSE",
+    }
 
 
 @pytest.mark.compile()
