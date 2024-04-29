@@ -162,6 +162,35 @@ def test_pep517_sdist_time_hash_set_epoch(
 
 @pytest.mark.compile()
 @pytest.mark.configure()
+@pytest.mark.usefixtures("package_simple_pyproject_script_with_flags")
+@pytest.mark.parametrize(
+    ("env_var", "setting"),
+    [
+        ("CMAKE_ARGS", '-DCMAKE_C_FLAGS="-DFOO=1 -DBAR="'),
+        ("SKBUILD_CMAKE_ARGS", "-DCMAKE_C_FLAGS=-DFOO=1 -DBAR="),
+    ],
+)
+def test_passing_cxx_flags(monkeypatch, env_var, setting):
+    # Note: This is sensitive to the types of quotes for SKBUILD_CMAKE_ARGS
+    monkeypatch.setenv(env_var, setting)
+    build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
+    (wheel,) = Path("dist").glob("cmake_example-0.0.1-py3-none-*.whl")
+    with zipfile.ZipFile(wheel) as f:
+        file_names = set(f.namelist())
+
+    ext = ".exe" if sys.platform.startswith(("win", "cygwin")) else ""
+
+    assert file_names == {
+        "cmake_example-0.0.1.dist-info/RECORD",
+        "cmake_example-0.0.1.dist-info/WHEEL",
+        f"cmake_example-0.0.1.data/scripts/cmake_example{ext}",
+        "cmake_example-0.0.1.dist-info/METADATA",
+        "cmake_example-0.0.1.dist-info/licenses/LICENSE",
+    }
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")
