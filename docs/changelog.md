@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 0.9.3
+
+This version ensures the Hatchling plugin correctly indicates editable mode is
+not yet supported, supports `CMAKE_ARGS` that have spaces, and has a bit of
+other minor cleanup.
+
+Fixes:
+
+- Properly indicate lack of editable support in Hatch plugin by @ofek in #728
+- Don't generate `entrypoints.txt` if none set by @henryiii in #729
+- Don't warn if lib not found on UNIX, just debug by @henryiii in #730
+- Support `CMAKE_ARGS` that may have spaces inside quotes by @vyasr in #727
+
+Docs:
+
+- Add FAQ entry on repairing wheels by @henryiii in #731
+
+CI and testing:
+
+- Use `macos-13` and `macos-14` explicitly by @henryiii in #724
+- `macos-latest` is changing to `macos-14` ARM runners by @henryiii in #725
+
 ## Version 0.9.2
 
 Quick fix for quick fix in 0.9.1; if `cmake` is a broken script (which can
