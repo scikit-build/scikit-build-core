@@ -62,6 +62,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.editable.mode == "redirect"
     assert not settings.editable.rebuild
     assert settings.editable.verbose
+    assert settings.build.tool_args == []
     assert settings.install.components == []
     assert settings.install.strip
     assert settings.generate == []
@@ -99,6 +100,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
     monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "False")
+    monkeypatch.setenv("SKBUILD_BUILD_TOOL_ARGS", "a;b")
     monkeypatch.setenv("SKBUILD_INSTALL_COMPONENTS", "a;b;c")
     monkeypatch.setenv("SKBUILD_INSTALL_STRIP", "False")
 
@@ -140,6 +142,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert not settings.install.strip
 
@@ -185,6 +188,7 @@ def test_skbuild_settings_config_settings(
         "editable.mode": "redirect",
         "editable.rebuild": "True",
         "editable.verbose": "False",
+        "build.tool-args": ["a", "b"],
         "install.components": ["a", "b", "c"],
         "install.strip": "True",
     }
@@ -225,6 +229,7 @@ def test_skbuild_settings_config_settings(
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
 
@@ -269,6 +274,7 @@ def test_skbuild_settings_pyproject_toml(
             editable.mode = "redirect"
             editable.rebuild = true
             editable.verbose = false
+            build.tool-args = ["a", "b"]
             install.components = ["a", "b", "c"]
             install.strip = true
             [[tool.scikit-build.generate]]
@@ -318,6 +324,7 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
     assert settings.generate == [
