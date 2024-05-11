@@ -35,7 +35,7 @@ as that include "Embed" component, which is not always present and is not
 related to making Python extension modules.
 
 If you are making a Limited ABI / Stable API package, you'll need the
-`Development.SABIModule` component instead. You can use the
+`Development.SABIModule` component instead (CMake 3.26+). You can use the
 `SKBUILD_LIMITED_API` variable to check to see if it was requested.
 
 <!-- prettier-ignore-start -->
@@ -127,6 +127,22 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD
 This will add this only if scikit-build-core is driving the compilation and is
 targeting ABI3. If you want to support limited ABI from outside
 scikit-build-core, look into the `OPTIONAL_COMPONENTS` flag for `find_package`.
+
+When defining your module, if you only support the Stable ABI after some point,
+you should use (for example for 3.11):
+
+```cmake
+if(Python_VERSION VERSION_GREATER_EQUAL 3.11 AND Python_INTERPRETER_ID STREQUAL Python)
+  python_add_library(some_ext MODULE USE_SABI 3.11 ...)
+else()
+  python_add_library(some_ext MODULE WITH_SOABI ...)
+endif()
+```
+
+This will define `Py_LIMITED_API` for you.
+
+If you are using `nanobind`'s `nanobind_add_module`, the `STABLE_ABI` flag does
+this automatically for you for 3.12+.
 
 ## Future additions
 
