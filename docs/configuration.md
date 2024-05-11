@@ -679,7 +679,7 @@ will match top to bottom, overriding previous matches. For example:
 
 ```toml
 [[tool.scikit-build.overrides]]
-if.sys-platform = "darwin"
+if.platform-system = "darwin"
 cmake.version = ">=3.18"
 ```
 
