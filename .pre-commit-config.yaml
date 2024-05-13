@@ -119,3 +119,17 @@ repos:
         language: pygrep
         entry: tool\.cmake
         exclude: .pre-commit-config.yaml
+
+  - repo: https://github.com/henryiii/validate-pyproject-schema-store
+    rev: 2024.04.29
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.3
+    hooks:
+      - id: check-dependabot
+      - id: check-github-workflows
+      - id: check-readthedocs
+      - id: check-metaschema
+        files: \.schema\.json
