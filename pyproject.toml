@@ -26,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Development Status :: 4 - Beta",
     "Typing :: Typed",
 ]
@@ -51,7 +52,8 @@ pyproject = [
 test = [
     "build >=0.8",
     "cattrs >=22.2.0",
-    "pip >=22",
+    "pip >=22; python_version<'3.13'",
+    "pip >=24.1b1; python_version>='3.13'",
     "pybind11 >=2.11",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",

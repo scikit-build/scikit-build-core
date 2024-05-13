@@ -114,7 +114,7 @@ class Builder:
         cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
-        limited_abi: bool | None = None,
+        limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
     ) -> None:
         cmake_defines = {
@@ -162,16 +162,26 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION"] = version.base_version
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
-        if limited_abi is None:
+        if limited_api is None:
             if self.settings.wheel.py_api.startswith("cp3"):
                 target_minor_version = int(self.settings.wheel.py_api[3:])
-                limited_abi = target_minor_version <= sys.version_info.minor
+                limited_api = target_minor_version <= sys.version_info.minor
             else:
-                limited_abi = False
+                limited_api = False
+
+        if limited_api and sys.implementation.name != "cpython":
+            limited_api = False
+            logger.info("PyPy doesn't support the Limited API, ignoring")
+
+        if limited_api and sysconfig.get_config_var("Py_GIL_DISABLED"):
+            limited_api = False
+            logger.info(
+                "Free-threaded Python doesn't support the Limited API currently, ignoring"
+            )
 
         python_library = get_python_library(self.config.env, abi3=False)
         python_sabi_library = (
-            get_python_library(self.config.env, abi3=True) if limited_abi else None
+            get_python_library(self.config.env, abi3=True) if limited_api else None
         )
         python_include_dir = get_python_include_dir()
         numpy_include_dir = get_numpy_include_dir()
@@ -196,11 +206,11 @@ class Builder:
             if numpy_include_dir:
                 cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 
-        cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_abi)
+        cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_api)
 
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
         cache_config["SKBUILD_SABI_COMPONENT"] = (
-            "Development.SABIModule" if limited_abi else ""
+            "Development.SABIModule" if limited_api else ""
         )
 
         if cache_entries:

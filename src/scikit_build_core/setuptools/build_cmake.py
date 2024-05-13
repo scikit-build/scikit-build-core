@@ -141,7 +141,7 @@ class BuildCMake(setuptools.Command):
             name=dist.get_name(),
             version=Version(dist.get_version()),
             defines={},
-            limited_abi=limited_api,
+            limited_api=limited_api,
             configure_args=configure_args,
         )
 

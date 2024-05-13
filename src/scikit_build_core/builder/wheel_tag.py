@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import itertools
 import sys
+import sysconfig
 from typing import TYPE_CHECKING
 
 import packaging.tags
@@ -104,11 +105,12 @@ class WheelTag:
                 if (
                     sys.implementation.name == "cpython"
                     and minor <= sys.version_info.minor
+                    and not sysconfig.get_config_var("Py_GIL_DISABLED")
                 ):
                     pyvers = pyvers_new
                     abi = "abi3"
                 else:
-                    msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high"
+                    msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high or free-threaded"
                     logger.debug(msg, sys.implementation.name, minor)
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new

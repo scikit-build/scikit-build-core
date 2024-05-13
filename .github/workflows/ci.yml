@@ -175,6 +175,25 @@ jobs:
       - name: Test min package
         run: pytest -ra --showlocals -Wdefault
 
+  manylinux:
+    name: Manylinux on 🐍 3.13 • Free-threaded
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container: quay.io/pypa/musllinux_1_2_x86_64:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare venv
+        run: python3.13t -m venv /venv
+
+      - name: Install deps
+        run: /venv/bin/pip install -e .[test] ninja
+
+      - name: Test package
+        run: /venv/bin/pytest
+
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
     runs-on: windows-latest
