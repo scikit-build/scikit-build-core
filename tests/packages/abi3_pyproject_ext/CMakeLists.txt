@@ -11,7 +11,7 @@ find_package(
   REQUIRED)
 
 if(NOT "${SKBUILD_SABI_COMPONENT}" STREQUAL "")
-  python_add_library(abi3_example MODULE abi3_example.c USE_SABI 3.7)
+  python_add_library(abi3_example MODULE abi3_example.c WITH_SOABI USE_SABI 3.7)
 else()
   python_add_library(abi3_example MODULE abi3_example.c WITH_SOABI)
 endif()
