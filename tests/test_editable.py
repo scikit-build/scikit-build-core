@@ -73,7 +73,14 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
     tmp_path1.mkdir()
     process_package(package1, tmp_path1, monkeypatch)
 
-    isolated.install("pip>23", "cython", "scikit-build-core")
+    ninja = [
+        "ninja" for f in isolated.wheelhouse.iterdir() if f.name.startswith("ninja-")
+    ]
+    cmake = [
+        "cmake" for f in isolated.wheelhouse.iterdir() if f.name.startswith("cmake-")
+    ]
+
+    isolated.install("pip>23", "cython", "scikit-build-core", *ninja, *cmake)
 
     isolated.install(
         "-v",
