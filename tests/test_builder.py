@@ -4,6 +4,7 @@ import pprint
 import sys
 import sysconfig
 import typing
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -17,7 +18,11 @@ from scikit_build_core.builder.sysconfig import (
 )
 from scikit_build_core.builder.wheel_tag import WheelTag
 from scikit_build_core.cmake import CMaker
-from scikit_build_core.settings.skbuild_model import ScikitBuildSettings, WheelSettings
+from scikit_build_core.settings.skbuild_model import (
+    BuildSettings,
+    ScikitBuildSettings,
+    WheelSettings,
+)
 
 
 # The envvar_higher case shouldn't happen, but the compiler should cause the
@@ -126,6 +131,19 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
         config=tmpcfg,
     )
     assert tmpbuilder.get_cmake_args() == answer
+
+
+def test_build_tool_args():
+    config = unittest.mock.create_autospec(CMaker)
+    settings = ScikitBuildSettings(build=BuildSettings(tool_args=["b"]))
+    tmpbuilder = Builder(
+        settings=settings,
+        config=typing.cast(CMaker, config),
+    )
+    tmpbuilder.build(["a"])
+    config.build.assert_called_once_with(
+        build_args=["a", "--", "b"], targets=[], verbose=settings.cmake.verbose
+    )
 
 
 @pytest.mark.parametrize(
