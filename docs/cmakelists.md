@@ -133,7 +133,7 @@ you should use (for example for 3.11):
 
 ```cmake
 if(NOT "${SKBUILD_SABI_COMPONENT}" STREQUAL "")
-  python_add_library(some_ext MODULE USE_SABI 3.11 ...)
+  python_add_library(some_ext MODULE WITH_SOABI USE_SABI 3.11 ...)
 else()
   python_add_library(some_ext MODULE WITH_SOABI ...)
 endif()
