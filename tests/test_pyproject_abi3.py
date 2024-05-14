@@ -51,7 +51,10 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         (so_file,) = file_names
 
         if sysconfig.get_platform().startswith("win"):
-            assert so_file == "abi3_example.pyd"
+            if sys.implementation.name == "cpython":
+                assert so_file == "abi3_example.pyd"
+            else:
+                assert so_file.endswith(".pyd")
         elif sys.platform.startswith("cygwin"):
             if abi3:
                 assert so_file == "abi3_example.abi3.dll"
