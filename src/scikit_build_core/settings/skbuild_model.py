@@ -13,6 +13,7 @@ __all__ = [
     "EditableSettings",
     "GenerateSettings",
     "InstallSettings",
+    "BuildSettings",
     "LoggingSettings",
     "NinjaSettings",
     "SDistSettings",
@@ -233,6 +234,14 @@ class EditableSettings:
 
 
 @dataclasses.dataclass
+class BuildSettings:
+    tool_args: List[str] = dataclasses.field(default_factory=list)
+    """
+    Extra args to pass directly to the builder in the build step.
+    """
+
+
+@dataclasses.dataclass
 class InstallSettings:
     components: List[str] = dataclasses.field(default_factory=list)
     """
@@ -281,6 +290,7 @@ class ScikitBuildSettings:
     wheel: WheelSettings = dataclasses.field(default_factory=WheelSettings)
     backport: BackportSettings = dataclasses.field(default_factory=BackportSettings)
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
+    build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
     generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
 

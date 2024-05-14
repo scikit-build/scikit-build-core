@@ -253,6 +253,19 @@
         }
       }
     },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool-args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Extra args to pass directly to the builder in the build step."
+        }
+      }
+    },
     "install": {
       "type": "object",
       "additionalProperties": false,
@@ -481,6 +494,15 @@
                   }
                 }
               },
+              "build": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "tool-args": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              },
               "install": {
                 "type": "object",
                 "additionalProperties": false,
@@ -513,6 +535,9 @@
           },
           "editable": {
             "$ref": "#/properties/editable"
+          },
+          "build": {
+            "$ref": "#/properties/build"
           },
           "install": {
             "$ref": "#/properties/install"

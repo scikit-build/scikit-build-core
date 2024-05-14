@@ -272,6 +272,9 @@ editable.verbose = true
 # set.
 editable.rebuild = false
 
+# Extra args to pass directly to the builder in the build step.
+build.tool-args = []
+
 # The components to install. If empty, all default components are installed.
 install.components = []
 

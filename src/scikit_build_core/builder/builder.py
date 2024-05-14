@@ -227,7 +227,11 @@ class Builder:
             cmake_args=[*self.get_cmake_args(), *configure_args],
         )
 
-    def build(self, build_args: list[str]) -> None:
+    def build(self, build_args: Sequence[str]) -> None:
+        build_tool_args = self.settings.build.tool_args
+        if build_tool_args:
+            build_args = [*build_args, "--", *build_tool_args]
+
         self.config.build(
             build_args=build_args,
             targets=self.settings.cmake.targets,
