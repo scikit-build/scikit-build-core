@@ -10,7 +10,7 @@ find_package(
   COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT}
   REQUIRED)
 
-if(SKBUILD_SABI_COMPONENT)
+if(NOT "${SKBUILD_SABI_COMPONENT}" STREQUAL "")
   python_add_library(abi3_example MODULE abi3_example.c USE_SABI 3.7)
 else()
   python_add_library(abi3_example MODULE abi3_example.c WITH_SOABI)
