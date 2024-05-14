@@ -10,4 +10,4 @@ name = "pkg2"
 version = "1.0.0"
 
 [tool.scikit-build]
-wheel.packages = ["src/pkg2"]
+ninja.make-fallback = false

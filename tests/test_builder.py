@@ -157,6 +157,12 @@ def test_build_tool_args():
     ],
 )
 def test_wheel_tag(monkeypatch, minver, archs, answer):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", minver)
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
@@ -168,6 +174,12 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
 
 @pytest.mark.parametrize("archs", ["x86_64" "arm64" "universal2"])
 def test_wheel_build_tag(monkeypatch, archs):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.12")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
@@ -178,6 +190,12 @@ def test_wheel_build_tag(monkeypatch, archs):
 
 
 def test_wheel_tag_expand(monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
@@ -195,6 +213,12 @@ def test_wheel_tag_expand(monkeypatch):
 
 
 def test_wheel_tag_expand_11(monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "11.2")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
@@ -209,6 +233,12 @@ def test_wheel_tag_expand_11(monkeypatch):
 
 
 def test_wheel_tag_with_abi_darwin(monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))

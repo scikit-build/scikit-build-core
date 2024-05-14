@@ -16,9 +16,6 @@ SYSCONFIGPLAT = sysconfig.get_platform()
 @pytest.mark.compile()
 @pytest.mark.configure()
 @pytest.mark.skipif(
-    sys.implementation.name == "pypy", reason="pypy does not support abi3"
-)
-@pytest.mark.skipif(
     sysconfig.get_platform().startswith(("msys", "mingw")),
     reason="abi3 FindPython on MSYS/MinGW reports not found",
 )
@@ -34,7 +31,14 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
     assert wheel == dist / out
-    assert "-cp37-abi3-" in out
+    abi3 = sys.implementation.name == "cpython" and not sysconfig.get_config_var(
+        "Py_GIL_DISABLED"
+    )
+
+    if abi3:
+        assert "-cp37-abi3-" in out
+    else:
+        assert "-cp37-abi3-" not in out
 
     if sys.version_info >= (3, 8):
         with wheel.open("rb") as f:
@@ -47,11 +51,19 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         (so_file,) = file_names
 
         if sysconfig.get_platform().startswith("win"):
-            assert so_file == "abi3_example.pyd"
+            if sys.implementation.name == "cpython":
+                assert so_file == "abi3_example.pyd"
+            else:
+                assert so_file.endswith(".pyd")
         elif sys.platform.startswith("cygwin"):
-            assert so_file == "abi3_example.abi3.dll"
-        else:
+            if abi3:
+                assert so_file == "abi3_example.abi3.dll"
+            else:
+                assert so_file != "abi3_example.abi3.dll"
+        elif abi3:
             assert so_file == "abi3_example.abi3.so"
+        else:
+            assert so_file != "abi3_example.abi3.so"
 
     virtualenv.install(wheel)
 

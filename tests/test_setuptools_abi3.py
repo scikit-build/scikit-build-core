@@ -21,6 +21,10 @@ SYSCONFIGPLAT = sysconfig.get_platform()
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
 @pytest.mark.skipif(
+    sysconfig.get_config_var("Py_GIL_DISABLED"),
+    reason="Free-threaded Python does not support abi3",
+)
+@pytest.mark.skipif(
     SYSCONFIGPLAT.startswith(("msys", "mingw")),
     reason="abi3 FindPython on MSYS/MinGW reports not found",
 )

@@ -132,14 +132,17 @@ When defining your module, if you only support the Stable ABI after some point,
 you should use (for example for 3.11):
 
 ```cmake
-if(Python_VERSION VERSION_GREATER_EQUAL 3.11 AND Python_INTERPRETER_ID STREQUAL Python)
-  python_add_library(some_ext MODULE USE_SABI 3.11 ...)
+if(NOT "${SKBUILD_SABI_COMPONENT}" STREQUAL "")
+  python_add_library(some_ext MODULE WITH_SOABI USE_SABI 3.11 ...)
 else()
   python_add_library(some_ext MODULE WITH_SOABI ...)
 endif()
 ```
 
-This will define `Py_LIMITED_API` for you.
+This will define `Py_LIMITED_API` for you. If you want to support building
+directly from CMake, you need to protect this for Python version,
+`Python_INTERPRETER_ID STREQUAL Python`, and free-threading Python 3.13+ doesn't
+support ABI3 either.
 
 If you are using `nanobind`'s `nanobind_add_module`, the `STABLE_ABI` flag does
 this automatically for you for 3.12+.
