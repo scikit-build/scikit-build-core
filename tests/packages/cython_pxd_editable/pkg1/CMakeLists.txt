@@ -7,8 +7,8 @@ find_package(
   REQUIRED)
 
 add_custom_command(
-  OUTPUT src/pkg1/one.c
-  DEPENDS src/pkg1/one.pyx
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/src/pkg1/one.c"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/pkg1/one.pyx"
   VERBATIM
   COMMAND
     Python::Interpreter -m cython
