@@ -68,7 +68,7 @@ class ConfTabs(SphinxDirective):
         ````{{tab}} Environment
 
         ```yaml
-        {env_name}: {joined_result}
+        {env_name}: "{joined_result}"
         ```
 
         ````

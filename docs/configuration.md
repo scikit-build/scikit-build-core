@@ -432,6 +432,16 @@ default targets):
 
 ```
 
+You can pass raw arguments directly to the build tool, as well:
+
+```{conftabs} build.tool-args ["-j12", "-l13"]
+
+```
+
+```{versionadded} 0.9.4
+
+```
+
 ## Dynamic metadata
 
 Scikit-build-core 0.3.0+ supports dynamic metadata with two built-in plugins.

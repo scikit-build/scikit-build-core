@@ -1,5 +1,32 @@
 # Changelog
 
+## Version 0.9.4
+
+This version supports the newly available free-threading variant of Python
+3.13b1 (mostly related to skipping the stable ABI). We test this via the
+manylinux/musllinux images. There's also a new feature requested by third-party
+packagers; the ability to pass args directly to the build tool
+
+Features:
+
+- Add `build.tool-args` by @henryiii in #733
+
+Fixes:
+
+- Support free-threaded builds of Python 3.13+ by @henryiii in #741
+- Slightly better stable ABI behavior using PyPy by @henryiii in #741
+
+Documentation:
+
+- Fix example of configuration overrides in configuration.md by @wu-vincent in
+  #739
+- Update stable ABI instructions by @henryiii in #740
+
+CI and testing:
+
+- Use pylint 3.2, gha reporter by @henryiii in #745
+- Some minor improvements to running tests on some systems by @henryiii in #741
+
 ## Version 0.9.3
 
 This version ensures the Hatchling plugin correctly indicates editable mode is
