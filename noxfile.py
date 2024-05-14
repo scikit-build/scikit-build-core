@@ -43,7 +43,7 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev,test,test-meta]", "pylint==3.1.*")
+    session.install("-e.[dev,test,test-meta]", "pylint==3.2.*")
     session.run("pylint", "--version")
     session.run("pylint", "scikit_build_core", *session.posargs)
 
