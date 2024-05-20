@@ -195,7 +195,7 @@ class CMaker:
         """
         generators = [g for g in args if g.startswith("-G")]
         if generators:
-            return generators[-1][2:]
+            return generators[-1][2:].strip()
         return self.env.get("CMAKE_GENERATOR", None)
 
     def configure(
