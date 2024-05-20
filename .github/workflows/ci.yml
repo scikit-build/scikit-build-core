@@ -125,7 +125,7 @@ jobs:
           --durations=20
 
       - name: Test package (two attempts)
-        uses: nick-fields/retry@v2
+        uses: nick-fields/retry@v3
         if: "contains(matrix.python_version, 'pypy')"
         with:
           max_attempts: 2
