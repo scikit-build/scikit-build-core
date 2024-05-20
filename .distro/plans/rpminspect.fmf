@@ -8,3 +8,7 @@ environment:
   # This happens when the released version already contains the package version:
   # https://github.com/packit/tmt-plans/issues/13
   RPMINSPECT_EXCLUDE: metadata,upstream
+adjust:
+  when: distro == fedora-rawhide
+  because: Recently rpminspect fails to get the distro-tag
+  enabled: false
