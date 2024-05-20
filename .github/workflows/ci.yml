@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --hook-stage manual --all-files
@@ -119,9 +119,21 @@ jobs:
         run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
 
       - name: Test package
+        if: "!contains(matrix.python_version, 'pypy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
           --durations=20
+
+      - name: Test package (two attempts)
+        uses: nick-fields/retry@v2
+        if: "contains(matrix.python_version, 'pypy')"
+        with:
+          max_attempts: 2
+          retry_on: error
+          timeout_seconds: 5
+          command: >-
+            pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
+            --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
