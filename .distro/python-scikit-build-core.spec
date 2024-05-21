@@ -11,6 +11,7 @@ Source:         %{pypi_source scikit_build_core}
 
 BuildRequires:  python3-devel
 # Testing dependences
+BuildRequires:  python3-freethreading
 BuildRequires:  cmake
 BuildRequires:  ninja-build
 BuildRequires:  gcc
