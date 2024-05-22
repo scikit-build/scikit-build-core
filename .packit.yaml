@@ -33,14 +33,9 @@ jobs:
     trigger: release
     owner: "@scikit-build"
     project: release
-    # Drop F38 due to dependency
     targets: &targets
-      - fedora-latest-x86_64
-      - fedora-latest-aarch64
-      - fedora-latest-stable-x86_64
-      - fedora-latest-stable-aarch64
-      - fedora-development-x86_64
-      - fedora-development-aarch64
+      - fedora-all-x86_64
+      - fedora-all-aarch64
   - &tests
     job: tests
     trigger: release
