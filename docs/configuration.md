@@ -3,7 +3,9 @@
 Scikit-build-core supports a powerful unified configuration system. Every option
 in scikit-build-core can be specified in one of three ways: as a
 `pyproject.toml` option (preferred if static), as a config-settings options
-(preferred if dynamic), or as an environment variable.
+(preferred if dynamic), or as an environment variable. Note that config-settings
+options can optionally be prefixed with `skbuild.`, for example
+`-C skbuild.logging.level=INFO`.
 
 (verbosity)=
 
