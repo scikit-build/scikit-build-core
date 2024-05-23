@@ -70,8 +70,7 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
 
     install_arg = f"-e.[{','.join(_extras)}]"
-    session.install(install_arg, *install_args)
-    session.run("pip", "list")
+    session.install(install_arg, *install_args, silent=False)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -109,14 +108,15 @@ def readme(session: nox.Session) -> None:
     session.run("cog", "-P", *args, "README.md")
 
 
-@nox.session
+@nox.session(venv_backend="uv")
 def minimums(session: nox.Session) -> None:
     """
     Test the minimum versions of dependencies.
     """
+
     _run_tests(
         session,
-        install_args=["--constraint=tests/constraints.txt"],
+        install_args=["--resolution=lowest-direct"],
         run_args=["-Wdefault"],
     )
 
