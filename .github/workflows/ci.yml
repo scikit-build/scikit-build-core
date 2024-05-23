@@ -169,9 +169,8 @@ jobs:
         run: uv pip install ninja --system
 
       - name: Install min requirements
-        run:
-          uv pip install -e .[test,pyproject] --resolution=lowest-direct
-          --system
+        run: |
+          uv pip install -e .[test,pyproject] --resolution=lowest-direct --system
 
       - name: Setup CMake 3.15
         uses: jwlawson/actions-setup-cmake@v2.0
