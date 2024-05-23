@@ -70,8 +70,7 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
 
     install_arg = f"-e.[{','.join(_extras)}]"
-    session.install(install_arg, *install_args)
-    session.run("pip", "list")
+    session.install(install_arg, *install_args, silent=False)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
