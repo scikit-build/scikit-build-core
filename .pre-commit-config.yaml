@@ -24,7 +24,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.4.5
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -97,7 +97,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
@@ -121,7 +121,7 @@ repos:
         exclude: .pre-commit-config.yaml
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.05.13
+    rev: 2024.05.24
     hooks:
       - id: validate-pyproject
 
