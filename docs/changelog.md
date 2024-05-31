@@ -1,5 +1,25 @@
 # Changelog
 
+This release fixes building for the the Windows variant of free-threaded Python
+3.13.
+
+Fixes:
+
+- Support Windows free-threading by @henryiii in #759
+- Strip whitespace around generator so that it's passed through correctly by
+  @vyasr in #748
+
+Documentation:
+
+- Note that `-C` options can be prefixed with `skbuild.` by @KyleFromNVIDIA in
+  #754
+
+CI and testing:
+
+- Retry pypy if fails by @henryiii in #746
+- Disable rpminspect on rawhide by @LecrisUT in #753
+- Use uv for minimum version check by @henryiii in #679
+
 ## Version 0.9.4
 
 This version supports the newly available free-threading variant of Python
@@ -13,7 +33,7 @@ Features:
 
 Fixes:
 
-- Support free-threaded builds of Python 3.13+ by @henryiii in #741
+- Support free-threaded builds of Python 3.13+ on Linux by @henryiii in #741
 - Slightly better stable ABI behavior using PyPy by @henryiii in #741
 
 Documentation:
