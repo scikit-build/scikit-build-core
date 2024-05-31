@@ -51,12 +51,16 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
         if result:
             logger.info("Reading DIST_EXTRA_CONFIG:build_ext.library_dirs={}", result)
             minor = "" if abi3 else sys.version_info[1]
+            if env.get("SETUPTOOLS_EXT_SUFFIX", "").endswith("t.pyd"):
+                return Path(result) / f"python3{minor}t.lib"
             return Path(result) / f"python3{minor}.lib"
 
     libdirstr = sysconfig.get_config_var("LIBDIR")
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
+    librarystr = sysconfig.get_config_var("LDLIBRARY")
     libdir: Path | None = libdirstr and Path(libdirstr)
     ldlibrary: Path | None = ldlibrarystr and Path(ldlibrarystr)
+    library: Path | None = librarystr and Path(librarystr)
     multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
     masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
@@ -77,7 +81,13 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
             libpath = libdir / ldlibrary
             if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
-            log_func("libdir/ldlibrary: {} is not a real file!", libpath)
+            if library:
+                libpath = libdir / library
+                if sys.platform.startswith("win") and libpath.suffix == ".dll":
+                    libpath = libpath.with_suffix(".lib")
+                if Path(os.path.expandvars(libpath)).is_file():
+                    return libpath
+            log_func("libdir/(ld)library: {} is not a real file!", libpath)
         else:
             log_func("libdir: {} is not a directory", libdir)
 
