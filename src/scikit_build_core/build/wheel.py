@@ -142,7 +142,7 @@ def _build_wheel_impl(
     metadata = get_standard_metadata(pyproject, settings)
 
     if metadata.version is None:
-        msg = "project.version is not statically specified, must be present currently"
+        msg = "project.version is not specified, must be statically present or tool.scikit-build metadata.version.provider configured when dynamic"
         raise AssertionError(msg)
 
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
