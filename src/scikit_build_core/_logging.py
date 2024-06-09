@@ -117,7 +117,7 @@ def colors() -> dict[str, str]:
     return _NO_COLORS
 
 
-def _sub_rich(m: re.Match) -> str:
+def _sub_rich(m: re.Match[Any]) -> str:
     try:
         r = "".join(colors()[x] for x in m.group(1).split())
     except KeyError:
