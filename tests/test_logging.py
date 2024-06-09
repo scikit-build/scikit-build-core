@@ -26,4 +26,7 @@ def test_rich_notrichbrackets(capsys, monkeypatch):
     monkeypatch.setenv("FORCE_COLOR", "1")
     monkeypatch.delenv("NO_COLOR", raising=False)
     rich_print("[red bold]hello[/bold] world[/red] [notrich]", end="")
-    assert capsys.readouterr().out == "\33[91m\33[1mhello\33[22m world\33[0m [notrich]\33[0m"
+    assert (
+        capsys.readouterr().out
+        == "\33[91m\33[1mhello\33[22m world\33[0m [notrich]\33[0m"
+    )
