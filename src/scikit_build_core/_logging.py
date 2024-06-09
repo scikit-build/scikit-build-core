@@ -116,12 +116,14 @@ def colors() -> dict[str, str]:
             return _COLORS
     return _NO_COLORS
 
+
 def _sub_rich(m: re.Match) -> str:
     try:
         r = "".join(colors()[x] for x in m.group(1).split())
     except KeyError:
         r = m.group(0)
     return r
+
 
 def _process_rich(msg: object) -> str:
     return ANY_ESCAPE.sub(
