@@ -1,6 +1,8 @@
 ci:
   autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: monthly
+  skip: [prettier]
 
 exclude: ^src/scikit_build_core/_vendor
 
