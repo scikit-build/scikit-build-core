@@ -5,10 +5,10 @@ This section covers common needs.
 ## Starting a new project
 
 The easiest way to get started is to use the [Scientific Python cookie][], which
-makes a new project following the [Scientific Python Development Guidelines][]. Scikit-build-core
-is one of the backends you can select. The project will have a lot of tooling prepared
-for you as well, including pre-commit checks and a noxfile; be sure to read the guidelines
-to see what is there and how it works.
+makes a new project following the [Scientific Python Development Guidelines][].
+Scikit-build-core is one of the backends you can select. The project will have a
+lot of tooling prepared for you as well, including pre-commit checks and a
+noxfile; be sure to read the guidelines to see what is there and how it works.
 
 Another option is the [pybind11 example][].
 
