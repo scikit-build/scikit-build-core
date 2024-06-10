@@ -117,9 +117,20 @@ def colors() -> dict[str, str]:
     return _NO_COLORS
 
 
+def _sub_rich(m: re.Match[str]) -> str:
+    """
+    Replace rich-like tags, but only if they are defined in colors.
+    """
+    color_dict = colors()
+    try:
+        return "".join(color_dict[x] for x in m.group(1).split())
+    except KeyError:
+        return m.group(0)
+
+
 def _process_rich(msg: object) -> str:
     return ANY_ESCAPE.sub(
-        lambda m: "".join(colors()[x] for x in m.group(1).split()),
+        _sub_rich,
         str(msg),
     )
 

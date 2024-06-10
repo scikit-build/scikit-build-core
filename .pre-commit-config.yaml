@@ -1,6 +1,7 @@
 ci:
   autoupdate_commit_msg: "chore(deps): update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: monthly
 
 exclude: ^src/scikit_build_core/_vendor
 
@@ -56,6 +57,7 @@ repos:
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json"
+        stages: [manual]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.10.0
