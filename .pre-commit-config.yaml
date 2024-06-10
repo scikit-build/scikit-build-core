@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.5
+    rev: v0.4.7
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -123,7 +123,7 @@ repos:
         exclude: .pre-commit-config.yaml
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.05.24
+    rev: 2024.06.03
     hooks:
       - id: validate-pyproject
 
