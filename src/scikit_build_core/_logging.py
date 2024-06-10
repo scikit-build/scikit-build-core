@@ -125,7 +125,7 @@ def _sub_rich(m: re.Match[Any]) -> str:
     try:
         return "".join(color_dict[x] for x in m.group(1).split())
     except KeyError:
-        return m.group(0)
+        return m.group(0)  type: ignore[no-any-return]
 
 
 def _process_rich(msg: object) -> str:
