@@ -1,15 +1,9 @@
 from __future__ import annotations
 
+import importlib.metadata as _metadata
 import sys
 import typing
-
-if sys.version_info < (3, 8):
-    import importlib_metadata as _metadata
-    from importlib_metadata import PathDistribution, version
-else:
-    import importlib.metadata as _metadata
-    from importlib.metadata import PathDistribution, version
-
+from importlib.metadata import PathDistribution, version
 
 if typing.TYPE_CHECKING:
     if sys.version_info < (3, 8):
