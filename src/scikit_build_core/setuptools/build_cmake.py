@@ -192,7 +192,7 @@ def cmake_extension(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
 
-def cmake_command(dist: Distribution) -> None:
+def finalize_distribution_options(dist: Distribution) -> None:
     # Prepare new build_cmake command and make sure build calls it
     build = dist.get_command_class("build")
     assert build is not None
