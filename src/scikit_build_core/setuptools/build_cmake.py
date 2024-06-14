@@ -218,4 +218,3 @@ def cmake_source_dir(
     if not Path(value).is_dir():
         msg = "cmake_source_dir must be an existing directory"
         raise setuptools.errors.SetupError(msg)
-
