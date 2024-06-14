@@ -77,10 +77,7 @@ class FStringMessage:
         )
 
 
-if sys.version_info < (3, 8):
-    opts: Any = {}
-else:
-    opts: Any = {"stacklevel": 2}
+opts: Any = {"stacklevel": 2}
 
 
 class ScikitBuildLogger:

@@ -8,17 +8,11 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, overload
 
 import virtualenv as _virtualenv
-
-if sys.version_info < (3, 8):
-    import importlib_metadata as metadata
-    from typing_extensions import Literal, overload
-else:
-    from importlib import metadata
-    from typing import Literal, overload
 
 if sys.version_info < (3, 11):
     import tomli as tomllib

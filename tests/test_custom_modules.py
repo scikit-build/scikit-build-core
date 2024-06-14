@@ -23,10 +23,9 @@ def test_ep(isolated):
     contents = Path(script).read_text(encoding="utf-8")
     assert contents.startswith(f"#!{pysys}")
 
-    if sys.version_info >= (3, 8):
-        assert (
-            isolated.execute(
-                "from importlib import metadata; print(metadata.version('custom_modules'), end='')"
-            )
-            == "2.3.4"
+    assert (
+        isolated.execute(
+            "from importlib import metadata; print(metadata.version('custom_modules'), end='')"
         )
+        == "2.3.4"
+    )
