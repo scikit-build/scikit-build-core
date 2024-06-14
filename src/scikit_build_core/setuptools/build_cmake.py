@@ -176,7 +176,7 @@ def _has_cmake(dist: Distribution) -> bool:
     )
 
 
-def _prepare_extension_detection(dist: Distribution) -> None:
+def cmake_extension(dist: Distribution) -> None:
     # Setuptools needs to know that it has extensions modules
 
     orig_has_ext_modules = dist.has_ext_modules
@@ -192,7 +192,7 @@ def _prepare_extension_detection(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
 
-def _prepare_build_cmake_command(dist: Distribution) -> None:
+def cmake_command(dist: Distribution) -> None:
     # Prepare new build_cmake command and make sure build calls it
     build = dist.get_command_class("build")
     assert build is not None
@@ -219,7 +219,3 @@ def cmake_source_dir(
         msg = "cmake_source_dir must be an existing directory"
         raise setuptools.errors.SetupError(msg)
 
-
-def finalize_distribution_options(dist: Distribution) -> None:
-    _prepare_extension_detection(dist)
-    _prepare_build_cmake_command(dist)
