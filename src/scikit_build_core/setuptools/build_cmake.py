@@ -196,6 +196,7 @@ def _cmake_extension(dist: Distribution) -> None:
     # Run this only once
     if getattr(dist, "_has_cmake_extensions", False):
         return
+    # pylint: disable-next=protected-access
     dist._has_cmake_extensions = True  # type: ignore[attr-defined]
 
     # Setuptools needs to know that it has extensions modules
