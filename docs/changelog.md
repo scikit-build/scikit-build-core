@@ -1,6 +1,19 @@
 # Changelog
 
-This release fixes building for the the Windows variant of free-threaded Python
+## Version 0.9.6
+
+This release provides a fix for the experimental setuptools plugin leaking and
+affecting other setuptools plugins.
+
+Fixes:
+
+* Improve error message when `metadata.version.provider` not set by @thewtex in #762
+* Only inject logic if `cmake_*` keywords present by @kiwifb in #768
+* Only replace color tags if the color is defined by @bnavigator in #764
+
+## Version 0.9.5
+
+This release fixes building for the Windows variant of free-threaded Python
 3.13.
 
 Fixes:
