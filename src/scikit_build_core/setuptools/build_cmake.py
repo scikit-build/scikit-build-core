@@ -19,7 +19,12 @@ if TYPE_CHECKING:
 
     from .._compat.typing import Literal
 
-__all__ = ["BuildCMake", "cmake_source_dir", "finalize_distribution_options"]
+__all__ = [
+    "BuildCMake",
+    "cmake_args",
+    "cmake_source_dir",
+    "finalize_distribution_options",
+]
 
 
 def __dir__() -> list[str]:
@@ -176,9 +181,25 @@ def _has_cmake(dist: Distribution) -> bool:
     )
 
 
-def _prepare_extension_detection(dist: Distribution) -> None:
-    # Setuptools needs to know that it has extensions modules
+def finalize_distribution_options(dist: Distribution) -> None:
+    # Prepare new build_cmake command and make sure build calls it
+    build = dist.get_command_class("build")
+    assert build is not None
+    if "build_cmake" not in {x for x, _ in build.sub_commands}:
+        build.sub_commands.append(
+            ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))
+        )
 
+
+def _cmake_extension(dist: Distribution) -> None:
+    # Every keyword argument needs to call this
+    # Run this only once
+    if getattr(dist, "_has_cmake_extensions", False):
+        return
+    # pylint: disable-next=protected-access
+    dist._has_cmake_extensions = True  # type: ignore[attr-defined]
+
+    # Setuptools needs to know that it has extensions modules
     orig_has_ext_modules = dist.has_ext_modules
     dist.has_ext_modules = lambda: orig_has_ext_modules() or _has_cmake(dist)  # type: ignore[method-assign]
 
@@ -192,34 +213,21 @@ def _prepare_extension_detection(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
 
-def _prepare_build_cmake_command(dist: Distribution) -> None:
-    # Prepare new build_cmake command and make sure build calls it
-    build = dist.get_command_class("build")
-    assert build is not None
-    if "build_cmake" not in {x for x, _ in build.sub_commands}:
-        build.sub_commands.append(
-            ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))
-        )
-
-
 def cmake_args(
-    _dist: Distribution, attr: Literal["cmake_args"], value: list[str]
+    dist: Distribution, attr: Literal["cmake_args"], value: list[str]
 ) -> None:
     assert attr == "cmake_args"
+    _cmake_extension(dist)
     if not isinstance(value, list):
         msg = "cmake_args must be a list"
         raise setuptools.errors.SetupError(msg)
 
 
 def cmake_source_dir(
-    _dist: Distribution, attr: Literal["cmake_source_dir"], value: str
+    dist: Distribution, attr: Literal["cmake_source_dir"], value: str
 ) -> None:
     assert attr == "cmake_source_dir"
+    _cmake_extension(dist)
     if not Path(value).is_dir():
         msg = "cmake_source_dir must be an existing directory"
         raise setuptools.errors.SetupError(msg)
-
-
-def finalize_distribution_options(dist: Distribution) -> None:
-    _prepare_extension_detection(dist)
-    _prepare_build_cmake_command(dist)
