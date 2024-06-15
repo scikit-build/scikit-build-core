@@ -129,13 +129,6 @@ def get_host_platform() -> str:
     Return a string that identifies the current platform. This mimics
     setuptools get_host_platform (without 3.8 aix compat).
     """
-
-    if sys.version_info < (3, 8) and os.name == "nt":
-        if "(arm)" in sys.version.lower():
-            return "win-arm32"
-        if "(arm64)" in sys.version.lower():
-            return "win-arm64"
-
     return sysconfig.get_platform()
 
 
@@ -176,13 +169,7 @@ def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
     if setuptools_ext_suffix:
         return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
-    if sys.version_info < (3, 8, 7):
-        # See https://github.com/python/cpython/issues/84006
-        import distutils.sysconfig  # pylint: disable=deprecated-module
-
-        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
-    else:
-        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     assert isinstance(ext_suffix, str)
     return ext_suffix.rsplit(".", 1)[0].lstrip(".")

@@ -6,9 +6,7 @@ import typing
 from importlib.metadata import PathDistribution, version
 
 if typing.TYPE_CHECKING:
-    if sys.version_info < (3, 8):
-        from importlib_metadata import EntryPoints
-    elif sys.version_info < (3, 10):
+    if sys.version_info < (3, 10):
         from importlib.metadata import EntryPoint
 
         EntryPoints = typing.List[EntryPoint]
@@ -23,11 +21,6 @@ def entry_points(*, group: str) -> EntryPoints:
         return _metadata.entry_points(group=group)
 
     epg = _metadata.entry_points()
-
-    if sys.version_info < (3, 8) and hasattr(epg, "select"):
-        return epg.select(group=group)  # type: ignore[no-any-return, no-untyped-call]
-
-    # pylint: disable-next=no-member
     return epg.get(group, [])
 
 
