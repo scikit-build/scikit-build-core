@@ -13,11 +13,6 @@ import sys
 import warnings
 from pathlib import Path
 
-if sys.version_info < (3, 8):
-    import importlib_metadata
-else:
-    import importlib.metadata as importlib_metadata
-
 try:
     import scikit_build_core
 except ModuleNotFoundError:
@@ -32,7 +27,7 @@ try:
     from scikit_build_core import __version__ as version
 except ModuleNotFoundError:
     try:
-        version = importlib_metadata.version("scikit_build_core")
+        version = importlib.metadata.version("scikit_build_core")
     except ModuleNotFoundError:
         msg = (
             "Package should be installed to produce documentation! "
