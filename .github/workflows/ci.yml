@@ -52,23 +52,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "pypy-3.9", "3.12", "3.13"]
+        python-version: ["3.8", "pypy-3.9", "3.13"]
         runs-on: [ubuntu-latest, macos-13]
         cmake-version: ["3.15.x"]
 
         include:
-          - python-version: "3.7"
-            runs-on: windows-2022
-            cmake-version: "3.21.x"
           - python-version: "pypy-3.8"
             runs-on: windows-2022
             cmake-version: "3.21.x"
           - python-version: "3.11"
             runs-on: windows-2022
             cmake-version: "3.26.x"
-          - python-version: "pypy-3.7"
-            runs-on: ubuntu-latest
-            cmake-version: "3.15.x"
           - python-version: "pypy-3.10"
             runs-on: ubuntu-latest
             cmake-version: "3.15.x"
@@ -99,7 +93,7 @@ jobs:
           - python-version: "3.13"
             runs-on: windows-latest
             cmake-version: "3.26.x"
-          - python-version: "3.7"
+          - python-version: "3.8"
             runs-on: ubuntu-22.04
             cmake-version: "3.15.x"
         exclude:
