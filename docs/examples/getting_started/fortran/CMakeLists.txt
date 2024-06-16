@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.2...3.26)
+cmake_minimum_required(VERSION 3.17.2...3.29)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
 
 find_package(
@@ -25,8 +25,10 @@ add_custom_command(
   COMMAND "${Python_EXECUTABLE}" -m numpy.f2py
           "${CMAKE_CURRENT_SOURCE_DIR}/example.f" -m example --lower)
 
-python_add_library(example MODULE "${CMAKE_CURRENT_BINARY_DIR}/examplemodule.c"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/example.f" WITH_SOABI)
+python_add_library(
+  example MODULE "${CMAKE_CURRENT_BINARY_DIR}/examplemodule.c"
+  "${CMAKE_CURRENT_BINARY_DIR}/example-f2pywrappers.f"
+  "${CMAKE_CURRENT_SOURCE_DIR}/example.f" WITH_SOABI)
 target_link_libraries(example PRIVATE fortranobject)
 
 install(TARGETS example DESTINATION .)
