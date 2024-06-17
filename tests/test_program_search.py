@@ -51,18 +51,18 @@ def test_get_cmake_programs_all(monkeypatch, fp):
     )
     programs = list(get_cmake_programs(module=False))
     assert len(programs) == 2
-    assert programs[0].path.name == "cmake3"
-    assert programs[0].version == Version("3.19.0")
-    assert programs[1].path.name == "cmake"
-    assert programs[1].version == Version("3.20.0")
+    assert programs[0].path.name == "cmake"
+    assert programs[0].version == Version("3.20.0")
+    assert programs[1].path.name == "cmake3"
+    assert programs[1].version == Version("3.19.0")
 
     best1 = best_program(programs, version=None)
     assert best1
-    assert best1.path.name == "cmake3"
+    assert best1.path.name == "cmake"
 
-    best2 = best_program(programs, version=SpecifierSet(">=3.20.0"))
+    best2 = best_program(programs, version=SpecifierSet("<3.20.0"))
     assert best2
-    assert best2.path.name == "cmake"
+    assert best2.path.name == "cmake3"
 
 
 def test_get_ninja_programs_all(monkeypatch, fp):

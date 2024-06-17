@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import json
 import shutil
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
 
@@ -30,27 +31,13 @@ def __dir__() -> list[str]:
     return __all__
 
 
-class Program(NamedTuple):
+@dataclasses.dataclass
+class Program:
     path: Path
     version: Version | None
 
-
-def _get_cmake_path(*, module: bool = True) -> Generator[Path, None, None]:
-    """
-    Get the path to CMake.
-    """
-    if module:
-        with contextlib.suppress(ImportError):
-            # If a "cmake" directory exists, this will also ImportError
-            from cmake import CMAKE_BIN_DIR
-
-            yield Path(CMAKE_BIN_DIR) / "cmake"
-
-    candidates = ("cmake3", "cmake")
-    for candidate in candidates:
-        cmake_path = shutil.which(candidate)
-        if cmake_path is not None:
-            yield Path(cmake_path)
+    def __lt__(self, other: Program) -> bool:
+        return (self.version or Version("0.0")) < (other.version or Version("0.0"))
 
 
 def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
@@ -86,6 +73,9 @@ def get_cmake_program(cmake_path: Path) -> Program:
         except (json.decoder.JSONDecodeError, KeyError, InvalidVersion):
             logger.warning("Could not determine CMake version, got {!r}", result.stdout)
     except subprocess.CalledProcessError:
+        # In some cases (like Pyodide<0.26's cmake wrapper), `-E` isn't handled
+        # correctly, so let's try `--version`, which is more common so more
+        # likely to be wrapped correctly
         try:
             result = Run().capture(cmake_path, "--version")
             try:
@@ -114,11 +104,19 @@ def get_cmake_program(cmake_path: Path) -> Program:
 def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]:
     """
     Get the path and version for CMake. If the version cannot be determined,
-    yiels (path, None). Otherwise, yields (path, version). Best matches are
-    yielded first.
+    yields (path, None). Otherwise, yields (path, version). Best matches are
+    yielded first; module, then cmake and cmake3 sorted by highest version first.
     """
-    for cmake_path in _get_cmake_path(module=module):
-        yield get_cmake_program(cmake_path)
+    if module:
+        with contextlib.suppress(ImportError):
+            # If a "cmake" directory exists, this will also ImportError
+            from cmake import CMAKE_BIN_DIR
+
+            yield get_cmake_program(Path(CMAKE_BIN_DIR) / "cmake")
+
+    candidates = ("cmake3", "cmake")
+    paths = (shutil.which(c) for c in candidates)
+    yield from sorted((get_cmake_program(Path(p)) for p in paths if p), reverse=True)
 
 
 def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]:
