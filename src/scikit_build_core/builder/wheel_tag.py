@@ -54,7 +54,7 @@ class WheelTag:
             iter(
                 p
                 for p in packaging.tags.sys_tags()
-                if "manylinux" not in p.platform and "muslllinux" not in p.platform
+                if "manylinux" not in p.platform and "musllinux" not in p.platform
             )
         )
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
