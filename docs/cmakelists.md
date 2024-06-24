@@ -49,9 +49,9 @@ target:
 
 ```cmake
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOSABI}.pyd")
+    set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOABI}.pyd")
 else()
-    set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOSABI}${CMAKE_SHARED_MODULE_SUFFIX}")
+    set_property (TARGET ${name} PROPERTY SUFFIX ".${SKBUILD_SOABI}${CMAKE_SHARED_MODULE_SUFFIX}")
 endif()
 ```
 <!-- prettier-ignore-end -->
