@@ -14,10 +14,8 @@ def __dir__() -> list[str]:
     return __all__
 
 
-raw_logger = logging.getLogger(
-    "scikit_build_core"
-)  # TODO: maybe should be scikit-build?
-raw_logger.setLevel(logging.DEBUG)  # TODO: configure
+# TODO: maybe should be scikit-build?
+raw_logger = logging.getLogger("scikit_build_core")
 
 
 class FStringMessage:
