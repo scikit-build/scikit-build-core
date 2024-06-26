@@ -62,8 +62,9 @@ features over classic Scikit-build:
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
 - Experimental editable mode support, with optional experimental auto rebuilds
-  on import
+  on import and optional in-place mode
 - Supports WebAssembly (Emscripten/Pyodide).
+- Supports free-threaded Python 3.13.
 
 The following limitations are present compared to classic scikit-build:
 
@@ -80,7 +81,6 @@ Other backends are also planned:
 
 - Setuptools integration highly experimental
 - Hatchling plugin highly experimental
-- The extensionlib integration is missing
 
 The recommended interface is the native pyproject builder. There is also a WIP
 setuptools-based interface that is being developed to provide a transition path
