@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 import shutil
 import sys
@@ -33,11 +32,6 @@ __all__ = [
 
 def __dir__() -> list[str]:
     return __all__
-
-
-@functools.lru_cache(maxsize=None)
-def _get_settings() -> ScikitBuildSettings:
-    return SettingsReader.from_file("pyproject.toml").settings
 
 
 def _validate_settings(settings: ScikitBuildSettings) -> None:
@@ -101,7 +95,7 @@ class BuildCMake(setuptools.Command):
         assert self.build_temp is not None
         assert self.plat_name is not None
 
-        settings = _get_settings()
+        settings = SettingsReader.from_file("pyproject.toml").settings
         _validate_settings(settings)
 
         build_tmp_folder = Path(self.build_temp)
@@ -220,7 +214,7 @@ def _cmake_extension(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
     # Setup logging
-    settings = _get_settings()
+    settings = SettingsReader.from_file("pyproject.toml").settings
     level_value = {
         "CRITICAL": logging.CRITICAL,
         "ERROR": logging.ERROR,
