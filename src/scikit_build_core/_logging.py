@@ -14,7 +14,6 @@ def __dir__() -> list[str]:
     return __all__
 
 
-# TODO: maybe should be scikit-build?
 raw_logger = logging.getLogger("scikit_build_core")
 
 
