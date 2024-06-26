@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import shutil
 import sys
 from pathlib import Path
@@ -10,7 +9,7 @@ import setuptools
 import setuptools.errors
 from packaging.version import Version
 
-from .._logging import raw_logger
+from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
@@ -215,14 +214,7 @@ def _cmake_extension(dist: Distribution) -> None:
 
     # Setup logging
     settings = SettingsReader.from_file("pyproject.toml").settings
-    level_value = {
-        "CRITICAL": logging.CRITICAL,
-        "ERROR": logging.ERROR,
-        "WARNING": logging.WARNING,
-        "INFO": logging.INFO,
-        "DEBUG": logging.DEBUG,
-        "NOTSET": logging.NOTSET,
-    }[settings.logging.level]
+    level_value = LEVEL_VALUE[settings.logging.level]
     raw_logger.setLevel(level_value)
 
 

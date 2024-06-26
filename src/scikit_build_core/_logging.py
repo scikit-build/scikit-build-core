@@ -7,7 +7,7 @@ import re
 import sys
 from typing import Any
 
-__all__ = ["ScikitBuildLogger", "logger", "raw_logger", "rich_print"]
+__all__ = ["ScikitBuildLogger", "logger", "raw_logger", "rich_print", "LEVEL_VALUE"]
 
 
 def __dir__() -> list[str]:
@@ -15,6 +15,16 @@ def __dir__() -> list[str]:
 
 
 raw_logger = logging.getLogger("scikit_build_core")
+
+
+LEVEL_VALUE = {
+    "CRITICAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+    "WARNING": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+    "NOTSET": logging.NOTSET,
+}
 
 
 class FStringMessage:
