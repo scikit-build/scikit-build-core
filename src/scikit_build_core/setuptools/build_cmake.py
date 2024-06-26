@@ -9,6 +9,7 @@ import setuptools
 import setuptools.errors
 from packaging.version import Version
 
+from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
     from setuptools.dist import Distribution
 
     from .._compat.typing import Literal
+    from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [
     "BuildCMake",
@@ -31,9 +33,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _validate_settings() -> None:
-    settings = SettingsReader.from_file("pyproject.toml").settings
-
+def _validate_settings(settings: ScikitBuildSettings) -> None:
     assert (
         not settings.wheel.expand_macos_universal_tags
     ), "wheel.expand_macos_universal_tags is not supported in setuptools mode"
@@ -94,7 +94,8 @@ class BuildCMake(setuptools.Command):
         assert self.build_temp is not None
         assert self.plat_name is not None
 
-        _validate_settings()
+        settings = SettingsReader.from_file("pyproject.toml").settings
+        _validate_settings(settings)
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
@@ -116,8 +117,6 @@ class BuildCMake(setuptools.Command):
         # TODO: this is a hack due to moving temporary paths for isolation
         if build_temp.exists():
             shutil.rmtree(build_temp)
-
-        settings = SettingsReader.from_file("pyproject.toml").settings
 
         cmake = CMake.default_search(version=settings.cmake.version)
 
@@ -196,6 +195,7 @@ def _cmake_extension(dist: Distribution) -> None:
     # Run this only once
     if getattr(dist, "_has_cmake_extensions", False):
         return
+
     # pylint: disable-next=protected-access
     dist._has_cmake_extensions = True  # type: ignore[attr-defined]
 
@@ -211,6 +211,11 @@ def _cmake_extension(dist: Distribution) -> None:
                 return super().__len__() or int(_has_cmake(dist))
 
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
+
+    # Setup logging
+    settings = SettingsReader.from_file("pyproject.toml").settings
+    level_value = LEVEL_VALUE[settings.logging.level]
+    raw_logger.setLevel(level_value)
 
 
 def cmake_args(
