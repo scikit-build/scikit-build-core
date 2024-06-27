@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15...3.19)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(
@@ -8,7 +8,7 @@ find_package(
 
 add_custom_command(
   OUTPUT src/pkg2/two.c
-  DEPENDS src/pkg2/two.pyx
+  MAIN_DEPENDENCY src/pkg2/two.pyx
   VERBATIM
   COMMAND
     Python::Interpreter -m cython
