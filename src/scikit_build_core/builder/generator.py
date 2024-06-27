@@ -106,6 +106,17 @@ def set_environment_for_gen(
         env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
         return {}
 
+    # Set Python's recommended CC and CXX if not already set by the user
+    if "CC" not in env:
+        cc = sysconfig.get_config_var("CC")
+        if cc:
+            env["CC"] = cc
+
+    if "CXX" not in env:
+        cxx = sysconfig.get_config_var("CXX")
+        if cxx:
+            env["CXX"] = cxx
+
     if (generator or "Ninja") == "Ninja":
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)
 
