@@ -20,6 +20,7 @@ add_custom_command(
   OUTPUT fibbymodule.c fibby-f2pywrappers.f
   COMMAND Python::Interpreter -m numpy.f2py --lower
           "${CMAKE_CURRENT_SOURCE_DIR}/fib1.f" -m fibby
+  COMMAND cmake -E touch fibby-f2pywrappers.f
   VERBATIM
   DEPENDS fib1.f)
 
