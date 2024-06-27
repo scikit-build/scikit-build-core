@@ -52,8 +52,8 @@ pyproject = [
 test = [
     "build >=0.8",
     "cattrs >=22.2.0",
-    "pip >=22; python_version<'3.13'",
-    "pip >=24.1b1; python_version>='3.13'",
+    "pip>=23; python_version<'3.13'",
+    "pip>=24.1; python_version>='3.13'",
     "pybind11 >=2.11",
     "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
     "pytest-subprocess >=1.5",

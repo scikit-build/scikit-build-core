@@ -52,8 +52,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "build",
         "cython",
         "hatchling",
-        "pip>=23; python_version<'3.13'",
-        "pip>=24.1b1; python_version>='3.13'",
+        "pip",
         "pybind11",
         "setuptools",
         "virtualenv",
@@ -96,7 +95,7 @@ class VEnv:
             self.execute("import sysconfig; print(sysconfig.get_path('purelib'))")
         )
         if sys.version_info >= (3, 13):
-            self.run("pip", "install", "-U", "pip>=24.1b1")
+            self.run("pip", "install", "-U", "pip>=24.1")
 
     @overload
     def run(self, *args: str, capture: Literal[True]) -> str: ...

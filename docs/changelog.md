@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 0.9.7
+
+This release makes a few small fixes, enabling better Fortran support and
+correct tags on MUSL. And releases now have Attestations on GitHub at
+<https://github.com/scikit-build/scikit-build-core/attestations>.
+
+Fixes:
+
+* Set `CC` and `CXX` from sysconfig if not set by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/782
+* `musllinux` tag incorrect by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/773
+* Logger unconditionally set to `DEBUG` in non-PEP 517 usage by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/779
+
+Documentation:
+
+* Fix Fortran example by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/771
+* Fix typo in skbuild soabi docs by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/775
+* Fortran and Cython updates by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/781
+
 ## Version 0.9.6
 
 This release provides a fix for the experimental setuptools plugin leaking and
