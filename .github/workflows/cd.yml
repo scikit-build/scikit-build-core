@@ -32,6 +32,9 @@ jobs:
       url: https://pypi.org/p/scikit-build-core
     permissions:
       id-token: write
+      attestations: write
+      contents: read
+
     needs: [dist]
 
     steps:
@@ -39,5 +42,10 @@ jobs:
         with:
           name: artifact
           path: dist
+
+      - name: Generate artifact attestation for sdist and wheel
+        uses: actions/attest-build-provenance@v1.1.2
+        with:
+          subject-path: "dist/*"
 
       - uses: pypa/gh-action-pypi-publish@release/v1
