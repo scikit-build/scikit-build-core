@@ -97,7 +97,7 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
         if libpath.is_file():
             return libpath
 
-    logger.warning(
+    log_func(
         "Can't find a Python library, got libdir={}, ldlibrary={}, multiarch={}, masd={}",
         libdir,
         ldlibrary,
