@@ -141,10 +141,15 @@ class BuildCMake(setuptools.Command):
 
         builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
 
+        # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
+        # Otherwise `cmake --install --prefix` would work by itself
+        install_dir = Path(self.build_lib)
+        defines = {"CMAKE_INSTALL_PREFIX": install_dir}
+
         builder.configure(
             name=dist.get_name(),
             version=Version(dist.get_version()),
-            defines={},
+            defines=defines,
             limited_api=limited_api,
             configure_args=configure_args,
         )
@@ -159,7 +164,7 @@ class BuildCMake(setuptools.Command):
             build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
-        builder.install(Path(self.build_lib))
+        builder.install(install_dir=install_dir)
 
     # def "get_source_file+ys"(self) -> list[str]:
     #    return ["CMakeLists.txt"]
