@@ -20,6 +20,8 @@ from scikit_build_core.builder.get_requires import GetRequires
 from scikit_build_core.metadata import regex
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
+from pathutils import contained
+
 
 # these are mock plugins returning known results
 # it turns out to be easier to create EntryPoint objects pointing to real
@@ -242,18 +244,15 @@ def test_pep517_wheel(virtualenv):
         )
         assert license == "MIT License"
 
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = {x.name for x in p.iterdir()}
-            dynamic_pkg = {x.name for x in p.joinpath("dynamic").iterdir()}
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(n) for n in zf.namelist()}
 
-        filtered_pkg = {x for x in dynamic_pkg if not x.startswith("_module")}
+    dynamic_pkg = {x.name for x in contained(file_paths, "dynamic")}
+    filtered_pkg = {x for x in dynamic_pkg if not x.startswith("_module")}
 
-        assert len(filtered_pkg) == len(dynamic_pkg) - 1
-        assert {"dynamic-0.0.2.dist-info", "dynamic"} == file_names
-        assert {
-            "__init__.py",
-        } == filtered_pkg
+    assert len(filtered_pkg) == len(dynamic_pkg) - 1
+    assert {"dynamic-0.0.2.dist-info", "dynamic"} == {p.parts[0] for p in file_paths}
+    assert {"__init__.py"} == filtered_pkg
 
     version = virtualenv.execute("from dynamic import square; print(square(2))")
     assert version == "4.0"

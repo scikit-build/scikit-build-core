@@ -1,5 +1,4 @@
 import shutil
-import sys
 import tarfile
 import zipfile
 from pathlib import Path
@@ -7,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from scikit_build_core.build import build_sdist, build_wheel
+
+from pathutils import contained
 
 DIR = Path(__file__).parent.resolve()
 SIMPLEST = DIR / "packages/simplest_c"
@@ -61,37 +62,37 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
 
     virtualenv.install(wheel)
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = {x.name for x in p.iterdir()}
-            simplest_pkg = {x.name for x in p.joinpath("simplest").iterdir()}
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(n) for n in zf.namelist()}
 
-        filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
-        if not component or "PythonModule" in component:
-            assert filtered_pkg != simplest_pkg
-        else:
-            assert filtered_pkg == simplest_pkg
+    file_names = {p.parts[0] for p in file_paths}
+    simplest_pkg = {p.name for p in contained(file_paths, "simplest")}
+    filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
 
-        expected_wheel_files = {
-            "__init__.py",
-            "data.txt",
-            "excluded.txt",
-            "sdist_only.txt",
-        }
+    if not component or "PythonModule" in component:
+        assert filtered_pkg != simplest_pkg
+    else:
+        assert filtered_pkg == simplest_pkg
 
-        if not component:
-            expected_wheel_files.add("generated_ignored.txt")
-            expected_wheel_files.add("generated_no_wheel.txt")
+    expected_wheel_files = {
+        "__init__.py",
+        "data.txt",
+        "excluded.txt",
+        "sdist_only.txt",
+    }
 
-        if not component or "Generated" in component:
-            expected_wheel_files.add("generated.txt")
+    if not component:
+        expected_wheel_files.add("generated_ignored.txt")
+        expected_wheel_files.add("generated_no_wheel.txt")
 
-        assert len(filtered_pkg) == len(simplest_pkg) - 2
-        assert {"simplest-0.0.1.dist-info", "simplest"} == file_names
-        assert expected_wheel_files == filtered_pkg
-        # Note that generated_ignored.txt is here because all CMake installed files are
-        # present, CMake has the final say.
+    if not component or "Generated" in component:
+        expected_wheel_files.add("generated.txt")
+
+    assert len(filtered_pkg) == len(simplest_pkg) - 2
+    assert {"simplest-0.0.1.dist-info", "simplest"} == file_names
+    assert expected_wheel_files == filtered_pkg
+    # Note that generated_ignored.txt is here because all CMake installed files are
+    # present, CMake has the final say.
 
     version = virtualenv.execute("from simplest import square; print(square(2))")
     assert version == "4.0"
@@ -124,37 +125,26 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
 
     virtualenv.install(wheel)
 
-    with wheel.open("rb") as f:
-        file_names = set(zipfile.ZipFile(f).namelist())
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(n) for n in zf.namelist()}
+    file_names = {p.parts[0] for p in file_paths}
 
-    simplest_pkg = {
-        x.split("/", maxsplit=1)[-1] for x in file_names if x.startswith("simplest/")
-    }
-    not_a_pkg = {
-        x.split("/", maxsplit=1)[-1]
-        for x in file_names
-        if x.startswith("not_a_package/")
-    }
-    metadata_items = {
-        x.split("/", maxsplit=1)[-1]
-        for x in file_names
-        if x.startswith("simplest-0.0.1.dist-info/")
-    }
+    simplest_pkg = {x.name for x in contained(file_paths, "simplest")}
+    not_a_pkg = {x.name for x in contained(file_paths, "not_a_package")}
+    metadata_items = set(contained(file_paths, "simplest-0.0.1.dist-info"))
 
     assert {
-        "licenses/LICENSE.txt",
-        "metadata_file.txt",
-        "RECORD",
-        "METADATA",
-        "WHEEL",
+        Path("licenses/LICENSE.txt"),
+        Path("metadata_file.txt"),
+        Path("RECORD"),
+        Path("METADATA"),
+        Path("WHEEL"),
     } == metadata_items
 
     filtered_pkg = {x for x in simplest_pkg if not x.startswith("_module")}
 
     assert len(filtered_pkg) == len(simplest_pkg) - 2
-    assert {"simplest-0.0.1.dist-info", "simplest", "not_a_package"} == {
-        x.split("/")[0] for x in file_names
-    }
+    assert {"simplest-0.0.1.dist-info", "simplest", "not_a_package"} == file_names
     assert {
         "__init__.py",
         "data.txt",

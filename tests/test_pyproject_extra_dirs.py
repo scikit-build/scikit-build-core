@@ -1,4 +1,3 @@
-import sys
 import zipfile
 from pathlib import Path
 
@@ -7,13 +6,11 @@ import pytest
 from scikit_build_core.build import build_wheel
 from scikit_build_core.errors import CMakeConfigError
 
+from pathutils import contained
+
 
 @pytest.mark.compile()
 @pytest.mark.configure()
-@pytest.mark.skipif(
-    sys.version_info < (3, 8),
-    reason="Python 3.7 doesn't have a nice Path zipfile interface",
-)
 @pytest.mark.usefixtures("package_filepath_pure")
 def test_pep517_wheel_extra_dirs(monkeypatch):
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
@@ -27,33 +24,30 @@ def test_pep517_wheel_extra_dirs(monkeypatch):
     (wheel,) = dist.glob("cmake_dirs-0.0.1-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = {p.name for p in p.iterdir()}
-            data_dir = {p.name for p in p.joinpath("cmake_dirs-0.0.1.data").iterdir()}
-            package = {p.name for p in p.joinpath("cmake_dirs").iterdir()}
-            data = {p.name for p in p.joinpath("cmake_dirs-0.0.1.data/data").iterdir()}
-            headers = {
-                p.name for p in p.joinpath("cmake_dirs-0.0.1.data/headers").iterdir()
-            }
-            scripts = {
-                p.name for p in p.joinpath("cmake_dirs-0.0.1.data/scripts").iterdir()
-            }
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(n) for n in zf.namelist()}
+    data_paths = set(contained(file_paths, "cmake_dirs-0.0.1.data"))
 
-        assert {
-            "cmake_dirs-0.0.1.dist-info",
-            "cmake_dirs-0.0.1.data",
-            "cmake_dirs",
-            "random_file.py",
-        } == file_names
+    file_names = {p.parts[0] for p in file_paths}
+    data_dir = {p.parts[0] for p in data_paths}
+    package = {p.name for p in contained(file_paths, "cmake_dirs")}
+    data = {p.name for p in contained(data_paths, "data")}
+    headers = {p.name for p in contained(data_paths, "headers")}
+    scripts = {p.name for p in contained(data_paths, "scripts")}
 
-        assert data_dir == {"data", "headers", "scripts"}
+    assert {
+        "cmake_dirs-0.0.1.dist-info",
+        "cmake_dirs-0.0.1.data",
+        "cmake_dirs",
+        "random_file.py",
+    } == file_names
 
-        assert package == {"main.py"}
-        assert data == {"in_data.txt"}
-        assert headers == {"in_headers.h"}
-        assert scripts == {"in_scripts.py"}
+    assert data_dir == {"data", "headers", "scripts"}
+
+    assert package == {"main.py"}
+    assert data == {"in_data.txt"}
+    assert headers == {"in_headers.h"}
+    assert scripts == {"in_scripts.py"}
 
 
 @pytest.mark.usefixtures("package_filepath_pure")

@@ -381,9 +381,8 @@ your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by NumPy directly at the moment.
-A helper (similar to scikti-build classic) might be added in the future. On
-macOS, you may need to set the Fortran compiler and C compiler to different
-toolchains with `CC=clang FC=gfortran`.
+A helper (similar to scikti-build classic) might be added in the future. You'll
+need gfortran on macOS.
 
 ````
 

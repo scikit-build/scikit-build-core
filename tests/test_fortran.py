@@ -1,5 +1,4 @@
 import shutil
-import sys
 import sysconfig
 import zipfile
 from pathlib import Path
@@ -48,20 +47,17 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("fibby-0.0.1-*.whl")
     assert wheel == dist / out
-    print(wheel)
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        assert len(file_names) == 2
-        assert "fibby-0.0.1.dist-info" in file_names
-        file_names.remove("fibby-0.0.1.dist-info")
-        (so_file,) = file_names
+    assert len(file_names) == 2
+    assert "fibby-0.0.1.dist-info" in file_names
+    file_names.remove("fibby-0.0.1.dist-info")
+    (so_file,) = file_names
 
-        assert so_file.startswith("fibby")
-        print("SOFILE:", so_file)
+    assert so_file.startswith("fibby")
+    print("SOFILE:", so_file)
 
     virtualenv.install(wheel)
 

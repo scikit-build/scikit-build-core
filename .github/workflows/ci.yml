@@ -38,7 +38,7 @@ jobs:
 
   checks:
     name:
-      Check 🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }}
+      🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }}
       on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 40

@@ -47,17 +47,15 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
 
     assert virtualenv.execute("print('hello')") == "hello"
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = {p.name for p in p.iterdir()}
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        if sysconfig.get_platform().startswith("win"):
-            assert "abi3_example.pyd" in file_names
-        elif sys.platform.startswith("cygwin"):
-            assert "abi3_example.abi3.dll" in file_names
-        else:
-            assert "abi3_example.abi3.so" in file_names
+    if sysconfig.get_platform().startswith("win"):
+        assert "abi3_example.pyd" in file_names
+    elif sys.platform.startswith("cygwin"):
+        assert "abi3_example.abi3.dll" in file_names
+    else:
+        assert "abi3_example.abi3.so" in file_names
 
     virtualenv.install(wheel)
 

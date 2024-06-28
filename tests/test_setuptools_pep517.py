@@ -77,18 +77,16 @@ def test_pep517_wheel(virtualenv):
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        assert len(file_names) == 2
-        assert "cmake_example-0.0.1.dist-info" in file_names
-        file_names.remove("cmake_example-0.0.1.dist-info")
-        (so_file,) = file_names
+    assert len(file_names) == 2
+    assert "cmake_example-0.0.1.dist-info" in file_names
+    file_names.remove("cmake_example-0.0.1.dist-info")
+    (so_file,) = file_names
 
-        assert so_file.startswith("cmake_example")
-        print("SOFILE:", so_file)
+    assert so_file.startswith("cmake_example")
+    print("SOFILE:", so_file)
 
     virtualenv.install(wheel)
 
@@ -110,18 +108,16 @@ def test_pep517_mixed_wheel(virtualenv):
     (wheel,) = dist.glob("mixed_setuptools-3.1.4-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        assert len(file_names) == 2
-        assert "mixed_setuptools-3.1.4.dist-info" in file_names
-        file_names.remove("mixed_setuptools-3.1.4.dist-info")
-        (so_file,) = file_names
+    assert len(file_names) == 2
+    assert "mixed_setuptools-3.1.4.dist-info" in file_names
+    file_names.remove("mixed_setuptools-3.1.4.dist-info")
+    (so_file,) = file_names
 
-        assert so_file.startswith("mixed_setuptools")
-        print("SOFILE:", so_file)
+    assert so_file.startswith("mixed_setuptools")
+    print("SOFILE:", so_file)
 
     virtualenv.install(wheel)
 
