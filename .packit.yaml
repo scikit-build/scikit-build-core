@@ -50,11 +50,17 @@ jobs:
     branch: main
   - <<: *copr_build
     trigger: pull_request
-    project: scikit-build-core
+    project: scikit-build-core-python-3.13
+    additional_repos:
+      - copr://@python/python3.13
+    targets:
+      - fedora-rawhide-x86_64
     update_release: true
     release_suffix: "{PACKIT_RPMSPEC_RELEASE}"
   - <<: *tests
     trigger: pull_request
+    targets:
+      - fedora-rawhide-x86_64
   - job: propose_downstream
     trigger: release
     dist_git_branches:
