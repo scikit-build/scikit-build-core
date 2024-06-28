@@ -254,9 +254,13 @@ class CMaker:
             raise FailedLiveProcessError(msg) from None
 
     def install(
-        self, prefix: Path, *, strip: bool = False, components: Sequence[str] = ()
+        self,
+        prefix: Path | None,
+        *,
+        strip: bool = False,
+        components: Sequence[str] = (),
     ) -> None:
-        opts = ["--prefix", str(prefix)]
+        opts = ["--prefix", str(prefix)] if prefix else []
         if not self.single_config and self.build_type:
             opts += ["--config", self.build_type]
         if strip:

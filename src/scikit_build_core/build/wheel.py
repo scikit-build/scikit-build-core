@@ -301,7 +301,9 @@ def _build_wheel_impl(
             )
 
             rich_print("[green]***[/green] [bold]Configuring CMake...")
-            defines: dict[str, str] = {}
+            # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
+            # Otherwise `cmake --install --prefix` would work by itself
+            defines = {"CMAKE_INSTALL_PREFIX": install_dir}
             cache_entries: dict[str, str | Path] = {
                 f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
             }

@@ -110,7 +110,7 @@ class Builder:
     def configure(
         self,
         *,
-        defines: Mapping[str, str | bool],
+        defines: Mapping[str, str | bool | Path],
         cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
@@ -118,7 +118,7 @@ class Builder:
         configure_args: Iterable[str] = (),
     ) -> None:
         cmake_defines = {
-            k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else v
+            k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else str(v)
             for k, v in defines.items()
         }
 
@@ -248,7 +248,14 @@ class Builder:
             verbose=self.settings.cmake.verbose,
         )
 
-    def install(self, install_dir: Path) -> None:
+    def install(self, install_dir: Path | None) -> None:
+        """
+        Install to a path.
+
+        Warning: if a package hard-codes CMAKE_INSTALL_PREFIX in the install
+        commands, this will not rewrite those; set that variable when
+        configuring for maximum compatibility.
+        """
         components = self.settings.install.components
         strip = self.settings.install.strip
         assert strip is not None
