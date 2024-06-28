@@ -50,10 +50,10 @@ from __future__ import annotations
 import dataclasses
 import os
 import typing
-from typing import Any, TypeVar, Union
+from typing import Any, Literal, Protocol, TypeVar, Union
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Annotated, Literal, Protocol, get_args, get_origin
+from .._compat.typing import Annotated, get_args, get_origin
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence

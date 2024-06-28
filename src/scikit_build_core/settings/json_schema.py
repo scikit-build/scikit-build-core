@@ -3,13 +3,13 @@ from __future__ import annotations
 import dataclasses
 import sys
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Annotated, Literal, get_args, get_origin
+from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import pull_docs
 
 __all__ = ["FailedConversionError", "convert_type", "to_json_schema"]

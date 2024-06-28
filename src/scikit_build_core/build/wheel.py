@@ -8,13 +8,13 @@ import sysconfig
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
 from .._compat import tomllib
-from .._compat.typing import Literal, assert_never
+from .._compat.typing import assert_never
 from .._logging import LEVEL_VALUE, logger, rich_error, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs

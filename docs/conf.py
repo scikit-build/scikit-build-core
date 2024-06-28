@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 import inspect
 import os
 import sys

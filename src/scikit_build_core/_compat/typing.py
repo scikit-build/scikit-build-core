@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import typing
-from typing import Literal, Protocol
 
 if sys.version_info < (3, 9):
     from typing_extensions import Annotated, get_args, get_origin
@@ -24,8 +23,6 @@ else:
 
 __all__ = [
     "Annotated",
-    "Literal",
-    "Protocol",
     "Self",
     "assert_never",
     "get_args",

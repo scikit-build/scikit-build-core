@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import importlib.metadata as _metadata
+import importlib.metadata
 import sys
 import typing
-from importlib.metadata import PathDistribution, version
 
 if typing.TYPE_CHECKING:
     if sys.version_info < (3, 10):
@@ -13,14 +12,14 @@ if typing.TYPE_CHECKING:
     else:
         from importlib.metadata import EntryPoints
 
-__all__ = ["PathDistribution", "entry_points", "version"]
+__all__ = ["entry_points"]
 
 
 def entry_points(*, group: str) -> EntryPoints:
     if sys.version_info >= (3, 10):
-        return _metadata.entry_points(group=group)
+        return importlib.metadata.entry_points(group=group)
 
-    epg = _metadata.entry_points()
+    epg = importlib.metadata.entry_points()
     return epg.get(group, [])
 
 

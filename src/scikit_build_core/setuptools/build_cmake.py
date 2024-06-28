@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import setuptools
 import setuptools.errors
@@ -19,7 +19,6 @@ from ..settings.skbuild_read_settings import SettingsReader
 if TYPE_CHECKING:
     from setuptools.dist import Distribution
 
-    from .._compat.typing import Literal
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [

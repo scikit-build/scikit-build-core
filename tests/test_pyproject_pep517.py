@@ -6,12 +6,12 @@ import sys
 import tarfile
 import time
 import zipfile
+from importlib.metadata import PathDistribution
 from pathlib import Path
 
 import build.util
 import pytest
 
-from scikit_build_core._compat.importlib.metadata import PathDistribution
 from scikit_build_core.build import (
     _file_processor,
     build_sdist,
