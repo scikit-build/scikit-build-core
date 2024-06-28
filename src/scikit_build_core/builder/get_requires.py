@@ -5,7 +5,7 @@ import functools
 import importlib.util
 import os
 import sysconfig
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from packaging.tags import sys_tags
 
@@ -24,7 +24,7 @@ from ..settings.skbuild_read_settings import SettingsReader
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 
-    from .._compat.typing import Literal, Self
+    from .._compat.typing import Self
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["GetRequires"]
