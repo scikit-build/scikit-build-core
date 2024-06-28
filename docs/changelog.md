@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 0.9.8
+
+This version ships a few more small fixes. Multi-target builds were missing
+build arguments due to an exhausted generator. And some packages seem to
+hard-code `${CMAKE_INSTALL_PREFIX}` in the `install()` call, which is an
+anti-pattern, but we can set that variable too. More tests now run on Python
+3.7.
+
+Fixes:
+
+* Empty build arguments for some targets in multi-target build by @junrushao in https://github.com/scikit-build/scikit-build-core/pull/784
+* Support packages that hardcode `CMAKE_INSTALL_PREFIX` in their `install` commands by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/786
+* Logger shouldn't warn for missing lib on UNIX by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/787
+
+Tests:
+
+* Use `ZipFile` instead of `zipfile.Path` to enable more tests on Python 3.7 by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/785
+
 ## Version 0.9.7
 
 This release makes a few small fixes, enabling better Fortran support and
