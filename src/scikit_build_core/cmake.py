@@ -238,7 +238,7 @@ class CMaker:
         targets: Sequence[str] = (),
         verbose: bool = False,
     ) -> None:
-        local_args = self._compute_build_args(verbose=verbose)
+        local_args = list(self._compute_build_args(verbose=verbose))
         if not targets:
             self._build(*local_args, *build_args)
             return
