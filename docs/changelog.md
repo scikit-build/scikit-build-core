@@ -10,13 +10,13 @@ anti-pattern, but we can set that variable too. More tests now run on Python
 
 Fixes:
 
-* Empty build arguments for some targets in multi-target build by @junrushao in https://github.com/scikit-build/scikit-build-core/pull/784
-* Support packages that hardcode `CMAKE_INSTALL_PREFIX` in their `install` commands by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/786
-* Logger shouldn't warn for missing lib on UNIX by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/787
+* Empty build arguments for some targets in multi-target build by @junrushao in #784
+* Support packages that hardcode `CMAKE_INSTALL_PREFIX` in their `install` commands by @henryiii in #786
+* Logger shouldn't warn for missing lib on UNIX by @henryiii in #787
 
 Tests:
 
-* Use `ZipFile` instead of `zipfile.Path` to enable more tests on Python 3.7 by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/785
+* Use `ZipFile` instead of `zipfile.Path` to enable more tests on Python 3.7 by @henryiii in #785
 
 ## Version 0.9.7
 
@@ -26,15 +26,15 @@ correct tags on MUSL. And releases now have Attestations on GitHub at
 
 Fixes:
 
-* Set `CC` and `CXX` from sysconfig if not set by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/782
-* `musllinux` tag incorrect by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/773
-* Logger unconditionally set to `DEBUG` in non-PEP 517 usage by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/779
+* Set `CC` and `CXX` from sysconfig if not set by @henryiii in #782
+* `musllinux` tag incorrect by @henryiii in #773
+* Logger unconditionally set to `DEBUG` in non-PEP 517 usage by @henryiii in #779
 
 Documentation:
 
-* Fix Fortran example by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/771
-* Fix typo in skbuild soabi docs by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/775
-* Fortran and Cython updates by @henryiii in https://github.com/scikit-build/scikit-build-core/pull/781
+* Fix Fortran example by @henryiii in #771
+* Fix typo in skbuild soabi docs by @henryiii in #775
+* Fortran and Cython updates by @henryiii in #781
 
 ## Version 0.9.6
 
