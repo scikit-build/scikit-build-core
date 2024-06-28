@@ -40,9 +40,9 @@ for project in projects["project"]:
 * [astyle](https://pypi.org/project/astyle) ([source](https://github.com/Freed-Wu/astyle-wheel/blob/HEAD/pyproject.toml))
 * [lammps](https://pypi.org/project/lammps) ([source](https://github.com/njzjz/lammps-wheel/blob/HEAD/pyproject.toml))
 * [llamacpp](https://pypi.org/project/llamacpp) ([source](https://github.com/thomasantony/llamacpp-python/blob/HEAD/pyproject.toml))
-* [nodejs-wheel](https://pypi.org/project/nodejs-wheel) ([source](https://github.com/https://github.com/njzjz/nodejs-wheel/blob/HEAD/pyproject.toml))
+* [nodejs-wheel](https://pypi.org/project/nodejs-wheel) ([source](https://github.com/njzjz/nodejs-wheel/blob/HEAD/pyproject.toml))
 * [pygram11](https://pypi.org/project/pygram11) ([source](https://github.com/douglasdavis/pygram11/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (checksum: 996cf1980837a801b4379dffe4f6f6cb)-->
+<!--[[[end]]] (checksum: a4abb793ffea3e66bfd362c5cc587555)-->
 
 
 In addition, most of the [RAPIDSAI](https://github.com/rapidsai) projects use scikit-build-core, but they are not published on PyPI. A few of them are:
