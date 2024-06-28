@@ -87,7 +87,7 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     ".env",
-    ".venv",
+    "**.venv",
     "examples/downstream",
 ]
 

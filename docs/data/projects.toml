@@ -1,0 +1,77 @@
+[[project]]
+pypi = "cmake"
+github = "scikit-build/cmake-python-distributions"
+
+[[project]]
+pypi = "ninja"
+github = "scikit-build/ninja-python-distributions"
+
+[[project]]
+pypi = "pyzmq"
+github = "zeromq/pyzmq"
+
+[[project]]
+pypi = "LightGBM"
+github = "microsoft/LightGBM"
+path = "python-package/pyproject.toml"
+
+[[project]]
+pypi = "phik"
+github = "kaveio/phik"
+
+[[project]]
+pypi = "clang-format"
+github = "ssciwr/clang-format-wheel"
+
+[[project]]
+pypi = "llama-cpp-python"
+github = "abetlen/llama-cpp-python"
+
+[[project]]
+pypi = "coreforecast"
+github = "Nixtla/coreforecast"
+
+[[project]]
+pypi = "sparse-dot-topn"
+github = "ing-bank/sparse_dot_topn"
+
+[[project]]
+pypi = "spglib"
+github = "spglib/spglib"
+
+[[project]]
+pypi = "awkward-cpp"
+github = "scikit-hep/awkward"
+path = "awkward-cpp/pyproject.toml"
+
+[[project]]
+pypi = "openexr"
+github = "AcademySoftwareFoundation/OpenEXR"
+
+[[project]]
+pypi = "iminuit"
+github = "scikit-hep/iminuit"
+
+[[project]]
+pypi = "boost-histogram"
+github = "scikit-hep/iminuit"
+
+[[project]]
+pypi = "astyle"
+github = "Freed-Wu/astyle-wheel"
+
+[[project]]
+pypi = "lammps"
+github = "njzjz/lammps-wheel"
+
+[[project]]
+pypi = "llamacpp"
+github = "thomasantony/llamacpp-python"
+
+[[project]]
+pypi = "nodejs-wheel"
+github = "njzjz/nodejs-wheel"
+
+[[project]]
+pypi = "pygram11"
+github = "douglasdavis/pygram11"
