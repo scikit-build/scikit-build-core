@@ -40,30 +40,28 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     else:
         assert "-cp37-abi3-" not in out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        assert len(file_names) == 2
-        assert "abi3_example-0.0.1.dist-info" in file_names
-        file_names.remove("abi3_example-0.0.1.dist-info")
-        (so_file,) = file_names
+    assert len(file_names) == 2
+    assert "abi3_example-0.0.1.dist-info" in file_names
+    file_names.remove("abi3_example-0.0.1.dist-info")
+    (so_file,) = file_names
 
-        if sysconfig.get_platform().startswith("win"):
-            if sys.implementation.name == "cpython":
-                assert so_file == "abi3_example.pyd"
-            else:
-                assert so_file.endswith(".pyd")
-        elif sys.platform.startswith("cygwin"):
-            if abi3:
-                assert so_file == "abi3_example.abi3.dll"
-            else:
-                assert so_file != "abi3_example.abi3.dll"
-        elif abi3:
-            assert so_file == "abi3_example.abi3.so"
+    if sysconfig.get_platform().startswith("win"):
+        if sys.implementation.name == "cpython":
+            assert so_file == "abi3_example.pyd"
         else:
-            assert so_file != "abi3_example.abi3.so"
+            assert so_file.endswith(".pyd")
+    elif sys.platform.startswith("cygwin"):
+        if abi3:
+            assert so_file == "abi3_example.abi3.dll"
+        else:
+            assert so_file != "abi3_example.abi3.dll"
+    elif abi3:
+        assert so_file == "abi3_example.abi3.so"
+    else:
+        assert so_file != "abi3_example.abi3.so"
 
     virtualenv.install(wheel)
 

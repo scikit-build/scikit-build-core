@@ -198,31 +198,33 @@ def test_pep517_wheel(virtualenv):
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
-            metadata = p.joinpath("cmake_example-0.0.1.dist-info/METADATA").read_text()
-            entry_points = p.joinpath(
-                "cmake_example-0.0.1.dist-info/entry_points.txt"
-            ).read_text()
-            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(p) for p in zf.namelist()}
+        file_names = {p.parts[0] for p in file_paths}
 
-        assert len(file_names) == 2
-        assert "cmake_example-0.0.1.dist-info" in file_names
-        file_names.remove("cmake_example-0.0.1.dist-info")
-        (so_file,) = file_names
+        with zf.open("cmake_example-0.0.1.dist-info/METADATA") as f:
+            metadata = f.read().decode("utf-8")
 
-        assert so_file.startswith("cmake_example")
-        print("SOFILE:", so_file)
+        with zf.open("cmake_example-0.0.1.dist-info/entry_points.txt") as f:
+            entry_points = f.read().decode("utf-8")
 
-        print(entry_points == ENTRYPOINTS)
-        assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
-        assert "Metadata-Version: 2.1" in metadata
-        assert "Name: CMake.Example" in metadata
-        assert "Version: 0.0.1" in metadata
-        assert "Requires-Python: >=3.7" in metadata
-        assert "Provides-Extra: test" in metadata
+    assert Path("cmake_example-0.0.1.dist-info/licenses/LICENSE") in file_paths
+
+    assert len(file_names) == 2
+    assert "cmake_example-0.0.1.dist-info" in file_names
+    file_names.remove("cmake_example-0.0.1.dist-info")
+    (so_file,) = file_names
+
+    assert so_file.startswith("cmake_example")
+    print("SOFILE:", so_file)
+
+    print(entry_points == ENTRYPOINTS)
+    assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
+    assert "Metadata-Version: 2.1" in metadata
+    assert "Name: CMake.Example" in metadata
+    assert "Version: 0.0.1" in metadata
+    assert "Requires-Python: >=3.7" in metadata
+    assert "Provides-Extra: test" in metadata
 
     virtualenv.install(wheel)
 
@@ -246,39 +248,41 @@ def test_pep517_wheel_source_dir(virtualenv):
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
-            metadata = p.joinpath("cmake_example-0.0.1.dist-info/METADATA").read_text()
-            wheel_metadata = p.joinpath(
-                "cmake_example-0.0.1.dist-info/WHEEL"
-            ).read_text()
-            entry_points = p.joinpath(
-                "cmake_example-0.0.1.dist-info/entry_points.txt"
-            ).read_text()
-            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(p) for p in zf.namelist()}
+        file_names = {p.parts[0] for p in file_paths}
 
-        assert len(file_names) == 2
-        assert "cmake_example-0.0.1.dist-info" in file_names
-        file_names.remove("cmake_example-0.0.1.dist-info")
-        (so_file,) = file_names
+        with zf.open("cmake_example-0.0.1.dist-info/METADATA") as f:
+            metadata = f.read().decode("utf-8")
 
-        assert so_file.startswith("cmake_example")
-        print("SOFILE:", so_file)
+        with zf.open("cmake_example-0.0.1.dist-info/WHEEL") as f:
+            wheel_metadata = f.read().decode("utf-8")
 
-        print(entry_points == ENTRYPOINTS)
-        assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
-        assert "Metadata-Version: 2.1" in metadata
-        assert "Name: CMake.Example" in metadata
-        assert "Version: 0.0.1" in metadata
-        assert "Requires-Python: >=3.7" in metadata
-        assert "Provides-Extra: test" in metadata
+        with zf.open("cmake_example-0.0.1.dist-info/entry_points.txt") as f:
+            entry_points = f.read().decode("utf-8")
 
-        assert "Build: 1foo" in wheel_metadata
-        assert "Wheel-Version: 1.0" in wheel_metadata
-        assert "Generator: scikit-build" in wheel_metadata
-        assert "Root-Is-Purelib: false" in wheel_metadata
+    assert Path("cmake_example-0.0.1.dist-info/licenses/LICENSE") in file_paths
+
+    assert len(file_names) == 2
+    assert "cmake_example-0.0.1.dist-info" in file_names
+    file_names.remove("cmake_example-0.0.1.dist-info")
+    (so_file,) = file_names
+
+    assert so_file.startswith("cmake_example")
+    print("SOFILE:", so_file)
+
+    print(entry_points == ENTRYPOINTS)
+    assert 'Requires-Dist: pytest>=6.0; extra == "test"' in metadata
+    assert "Metadata-Version: 2.1" in metadata
+    assert "Name: CMake.Example" in metadata
+    assert "Version: 0.0.1" in metadata
+    assert "Requires-Python: >=3.7" in metadata
+    assert "Provides-Extra: test" in metadata
+
+    assert "Build: 1foo" in wheel_metadata
+    assert "Wheel-Version: 1.0" in wheel_metadata
+    assert "Generator: scikit-build" in wheel_metadata
+    assert "Root-Is-Purelib: false" in wheel_metadata
 
     virtualenv.install(wheel)
 

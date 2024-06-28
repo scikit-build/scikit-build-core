@@ -133,18 +133,16 @@ def test_pep518_wheel_sdist_with_cmake_config(
 
     (wheel,) = Path("dist").glob("sdist_config-0.1.0-*.whl")
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
 
-        assert len(file_names) == 3
-        file_names.remove("sdist_config-0.1.0.dist-info")
-        file_names.remove("output.py")
-        (so_file,) = file_names
+    assert len(file_names) == 3
+    file_names.remove("sdist_config-0.1.0.dist-info")
+    file_names.remove("output.py")
+    (so_file,) = file_names
 
-        assert so_file.startswith("sdist_config")
-        print("SOFILE:", so_file)
+    assert so_file.startswith("sdist_config")
+    print("SOFILE:", so_file)
 
     isolated.install(wheel)
 
@@ -174,19 +172,19 @@ def test_pep518_wheel(isolated, build_args):
     )
     (wheel,) = Path("dist").glob("cmake_example-0.0.1-*.whl")
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
-            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(n) for n in zf.namelist()}
+    file_names = {p.parts[0] for p in file_paths}
 
-        assert len(file_names) == 2
-        assert "cmake_example-0.0.1.dist-info" in file_names
-        file_names.remove("cmake_example-0.0.1.dist-info")
-        (so_file,) = file_names
+    assert Path("cmake_example-0.0.1.dist-info/licenses/LICENSE") in file_paths
 
-        assert so_file.startswith("cmake_example")
-        print("SOFILE:", so_file)
+    assert len(file_names) == 2
+    assert "cmake_example-0.0.1.dist-info" in file_names
+    file_names.remove("cmake_example-0.0.1.dist-info")
+    (so_file,) = file_names
+
+    assert so_file.startswith("cmake_example")
+    print("SOFILE:", so_file)
 
     isolated.install(wheel)
 
@@ -224,19 +222,19 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
         )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
-            assert p.joinpath("cmake_example-0.0.1.dist-info/licenses/LICENSE").exists()
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(p) for p in zf.namelist()}
+        file_names = {p.parts[0] for p in file_paths}
 
-        assert len(file_names) == 2
-        assert "cmake_example-0.0.1.dist-info" in file_names
-        file_names.remove("cmake_example-0.0.1.dist-info")
-        (so_file,) = file_names
+    assert Path("cmake_example-0.0.1.dist-info/licenses/LICENSE") in file_paths
 
-        assert so_file.startswith("cmake_example")
-        print("SOFILE:", so_file)
+    assert len(file_names) == 2
+    assert "cmake_example-0.0.1.dist-info" in file_names
+    file_names.remove("cmake_example-0.0.1.dist-info")
+    (so_file,) = file_names
+
+    assert so_file.startswith("cmake_example")
+    print("SOFILE:", so_file)
 
     isolated.install(wheel)
 

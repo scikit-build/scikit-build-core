@@ -29,25 +29,25 @@ def test_pep660_wheel(editable_mode: str):
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
-    if sys.version_info >= (3, 8):
-        with wheel.open("rb") as f:
-            p = zipfile.Path(f)
-            file_names = [p.name for p in p.iterdir()]
-            metadata = p.joinpath("simplest-0.0.1.dist-info/METADATA").read_text()
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(p).parts[0] for p in zf.namelist()}
 
-        assert len(file_names) == 4 if editable_mode == "redirect" else 2
-        assert "simplest-0.0.1.dist-info" in file_names
-        if editable_mode == "redirect":
-            assert "simplest" in file_names
-            assert "_simplest_editable.py" in file_names
-        else:
-            assert "simplest" not in file_names
-            assert "_simplest_editable.py" not in file_names
-        assert "_simplest_editable.pth" in file_names
+        with zf.open("simplest-0.0.1.dist-info/METADATA") as f:
+            metadata = f.read().decode("utf-8")
 
-        assert "Metadata-Version: 2.1" in metadata
-        assert "Name: simplest" in metadata
-        assert "Version: 0.0.1" in metadata
+    assert len(file_names) == 4 if editable_mode == "redirect" else 2
+    assert "simplest-0.0.1.dist-info" in file_names
+    if editable_mode == "redirect":
+        assert "simplest" in file_names
+        assert "_simplest_editable.py" in file_names
+    else:
+        assert "simplest" not in file_names
+        assert "_simplest_editable.py" not in file_names
+    assert "_simplest_editable.pth" in file_names
+
+    assert "Metadata-Version: 2.1" in metadata
+    assert "Name: simplest" in metadata
+    assert "Version: 0.0.1" in metadata
 
 
 @pytest.mark.compile()
