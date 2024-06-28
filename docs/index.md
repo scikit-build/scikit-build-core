@@ -35,6 +35,7 @@ crosscompile
 migration_guide
 build
 faqs
+projects
 changelog
 ```
 
