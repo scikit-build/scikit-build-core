@@ -167,8 +167,8 @@ cmake.args = []
 # A table of defines to pass to CMake when configuring the project. Additive.
 cmake.define = {}
 
-# Verbose printout when building.
-cmake.verbose = false
+# DEPRECATED in 0.10, use build.verbose instead.
+cmake.verbose = ""
 
 # The build type to use when building the project. Valid options are: "Debug",
 # "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
@@ -178,9 +178,8 @@ cmake.build-type = "Release"
 # the native builder (not the setuptools plugin).
 cmake.source-dir = "."
 
-# The build targets to use when building the project. Empty builds the default
-# target.
-cmake.targets = []
+# DEPRECATED in 0.10; use build.targets instead.
+cmake.targets = ""
 
 # DEPRECATED in 0.8; use version instead.
 ninja.minimum-version = ""
@@ -274,6 +273,13 @@ editable.rebuild = false
 
 # Extra args to pass directly to the builder in the build step.
 build.tool-args = []
+
+# The build targets to use when building the project. Empty builds the default
+# target.
+build.targets = []
+
+# Verbose printout when building.
+build.verbose = false
 
 # The components to install. If empty, all default components are installed.
 install.components = []
