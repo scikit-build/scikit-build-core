@@ -1,11 +1,11 @@
 import dataclasses
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Annotated, Literal
+from .._compat.typing import Annotated
 
 __all__ = [
     "BackportSettings",
