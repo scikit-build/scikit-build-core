@@ -54,6 +54,7 @@ plugins/hatchling
 :caption: API docs
 
 api/scikit_build_core
+schema
 ```
 
 ## Indices and tables
