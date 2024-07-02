@@ -698,12 +698,9 @@ cmake.version = ">=3.18"
 If you use `if.any` instead of `if`, then the override is true if any one of the
 items in it are true.
 
-## Full schema
+## Full Schema
 
-The full schema for the `tool.scikit-build` table is below:
+You can see the full schema at [](#full-schema).
 
-```{jsonschema} ../src/scikit_build_core/resources/scikit-build.schema.json
-
-```
 
 [pep 508]: https://peps.python.org/pep-0508/#environment-markers
