@@ -152,9 +152,6 @@ print("```\n")
 
 ```toml
 [tool.scikit-build]
-# DEPRECATED in 0.8; use version instead.
-cmake.minimum-version = ""
-
 # The versions of CMake to allow. If CMake is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.
@@ -181,9 +178,6 @@ cmake.source-dir = "."
 # The build targets to use when building the project. Empty builds the default
 # target.
 cmake.targets = []
-
-# DEPRECATED in 0.8; use version instead.
-ninja.minimum-version = ""
 
 # The versions of Ninja to allow. If Ninja is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
