@@ -33,10 +33,10 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.cmake.version == SpecifierSet(">=3.15")
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
-    assert not settings.cmake.verbose
+    assert not settings.build.verbose
     assert settings.cmake.build_type == "Release"
     assert settings.cmake.source_dir == Path()
-    assert settings.cmake.targets == []
+    assert settings.build.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
@@ -70,17 +70,16 @@ def test_skbuild_settings_default(tmp_path: Path):
 
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
     )
 
-    monkeypatch.setenv("SKBUILD_NINJA_MINIMUM_VERSION", "1.1")
+    monkeypatch.setenv("SKBUILD_NINJA_VERSION", ">=1.1")
     monkeypatch.setenv("SKBUILD_NINJA_MAKE_FALLBACK", "0")
-    monkeypatch.setenv("SKBUILD_CMAKE_MINIMUM_VERSION", "3.16")
+    monkeypatch.setenv("SKBUILD_CMAKE_VERSION", ">=3.16")
     monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DFOO=BAR;-DBAR=FOO")
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "a=1;b=2")
     monkeypatch.setenv("SKBUILD_CMAKE_BUILD_TYPE", "Debug")
     monkeypatch.setenv("SKBUILD_CMAKE_SOURCE_DIR", "a/b/c")
-    monkeypatch.setenv("SKBUILD_CMAKE_TARGETS", "a;b;c")
     monkeypatch.setenv("SKBUILD_LOGGING_LEVEL", "DEBUG")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
@@ -95,11 +94,12 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
-    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.1")
-    monkeypatch.setenv("SKBUILD_CMAKE_VERBOSE", "TRUE")
+    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.10")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
     monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "False")
+    monkeypatch.setenv("SKBUILD_BUILD_VERBOSE", "TRUE")
+    monkeypatch.setenv("SKBUILD_BUILD_TARGETS", "a;b;c")
     monkeypatch.setenv("SKBUILD_BUILD_TOOL_ARGS", "a;b")
     monkeypatch.setenv("SKBUILD_INSTALL_COMPONENTS", "a;b;c")
     monkeypatch.setenv("SKBUILD_INSTALL_STRIP", "False")
@@ -113,14 +113,12 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == Version("1.1")
-    assert settings.cmake.minimum_version == Version("3.16")
+    assert settings.ninja.version == SpecifierSet(">=1.1")
+    assert settings.cmake.version == SpecifierSet(">=3.16")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -136,12 +134,14 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == Version("0.1")
+    assert settings.minimum_version == Version("0.10")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.verbose
+    assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert not settings.install.strip
@@ -152,23 +152,21 @@ def test_skbuild_settings_config_settings(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefix: bool
 ):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
     )
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
 
     config_settings: dict[str, str | list[str]] = {
-        "ninja.minimum-version": "1.2",
+        "ninja.version": ">=1.2",
         "ninja.make-fallback": "False",
-        "cmake.minimum-version": "3.17",
+        "cmake.version": ">=3.17",
         "cmake.args": ["-DFOO=BAR", "-DBAR=FOO"],
         "cmake.define.a": "1",
         "cmake.define.b": "2",
-        "cmake.verbose": "true",
         "cmake.build-type": "Debug",
         "cmake.source-dir": "a/b/c",
-        "cmake.targets": ["a", "b", "c"],
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -183,11 +181,13 @@ def test_skbuild_settings_config_settings(
         "backport.find-python": "0",
         "strict-config": "false",
         "experimental": "1",
-        "minimum-version": "0.1",
+        "minimum-version": "0.10",
         "build-dir": "a/b/c",
         "editable.mode": "redirect",
         "editable.rebuild": "True",
         "editable.verbose": "False",
+        "build.verbose": "true",
+        "build.targets": ["a", "b", "c"],
         "build.tool-args": ["a", "b"],
         "install.components": ["a", "b", "c"],
         "install.strip": "True",
@@ -200,15 +200,14 @@ def test_skbuild_settings_config_settings(
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == Version("1.2")
+    assert settings.ninja.version == SpecifierSet(">=1.2")
     assert not settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == Version("3.17")
+    assert settings.cmake.version == SpecifierSet(">=3.17")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
+    assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -223,12 +222,13 @@ def test_skbuild_settings_config_settings(
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == Version("0.1")
+    assert settings.minimum_version == Version("0.10")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
@@ -238,22 +238,20 @@ def test_skbuild_settings_pyproject_toml(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.1.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
     )
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
             """\
             [tool.scikit-build]
-            ninja.minimum-version = "1.3"
+            ninja.version = ">=1.3"
             ninja.make-fallback = false
-            cmake.minimum-version = "3.18"
+            cmake.version = ">=3.18"
             cmake.args = ["-DFOO=BAR", "-DBAR=FOO"]
             cmake.define = {a = "1", b = "2"}
             cmake.build-type = "Debug"
-            cmake.verbose = true
             cmake.source-dir = "a/b/c"
-            cmake.targets = ["a", "b", "c"]
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -268,12 +266,14 @@ def test_skbuild_settings_pyproject_toml(
             backport.find-python = "3.18"
             strict-config = false
             experimental = true
-            minimum-version = "0.1"
+            minimum-version = "0.10"
             build-dir = "a/b/c"
             metadata.version.provider = "a"
             editable.mode = "redirect"
             editable.rebuild = true
             editable.verbose = false
+            build.verbose = true
+            build.targets = ["a", "b", "c"]
             build.tool-args = ["a", "b"]
             install.components = ["a", "b", "c"]
             install.strip = true
@@ -295,15 +295,13 @@ def test_skbuild_settings_pyproject_toml(
     settings = settings_reader.settings
     assert list(settings_reader.unrecognized_options()) == []
 
-    assert settings.ninja.minimum_version == Version("1.3")
+    assert settings.ninja.version == SpecifierSet(">=1.3")
     assert not settings.ninja.make_fallback
-    assert settings.cmake.minimum_version == Version("3.18")
+    assert settings.cmake.version == SpecifierSet(">=3.18")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -318,12 +316,14 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.backport.find_python == Version("3.18")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == Version("0.1")
+    assert settings.minimum_version == Version("0.10")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {"version": {"provider": "a"}}
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
+    assert settings.build.verbose
+    assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
@@ -512,3 +512,68 @@ def test_skbuild_settings_pyproject_toml_envvar_defines(
         "d": False,
         "e": True,
     }
+
+
+def test_backcompat_cmake_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.9"
+            cmake.verbose = true
+            cmake.targets = ["a", "b"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.build.verbose
+    assert settings_reader.settings.build.targets == ["a", "b"]
+
+
+def test_backcompat_cmake_build_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.9.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.9"
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("SKBUILD_CMAKE_VERBOSE", "ON")
+    monkeypatch.setenv("SKBUILD_CMAKE_TARGETS", "a;b")
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.build.verbose
+    assert settings_reader.settings.build.targets == ["a", "b"]
+
+
+def test_backcompat_cmake_build_both_specified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})

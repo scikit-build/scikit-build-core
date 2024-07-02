@@ -244,8 +244,8 @@ class Builder:
 
         self.config.build(
             build_args=build_args,
-            targets=self.settings.cmake.targets,
-            verbose=self.settings.cmake.verbose,
+            targets=self.settings.build.targets,
+            verbose=self.settings.build.verbose,
         )
 
     def install(self, install_dir: Path | None) -> None:
