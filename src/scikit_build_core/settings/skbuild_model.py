@@ -53,9 +53,9 @@ class CMakeSettings:
     A table of defines to pass to CMake when configuring the project. Additive.
     """
 
-    verbose: bool = False
+    verbose: Optional[bool] = None
     """
-    Verbose printout when building.
+    DEPRECATED in 0.10, use build.verbose instead.
     """
 
     build_type: str = "Release"
@@ -71,10 +71,9 @@ class CMakeSettings:
     affects the native builder (not the setuptools plugin).
     """
 
-    targets: List[str] = dataclasses.field(default_factory=list)
+    targets: Optional[List[str]] = None
     """
-    The build targets to use when building the project. Empty builds the
-    default target.
+    DEPRECATED in 0.10; use build.targets instead.
     """
 
 
@@ -238,6 +237,17 @@ class BuildSettings:
     tool_args: List[str] = dataclasses.field(default_factory=list)
     """
     Extra args to pass directly to the builder in the build step.
+    """
+
+    targets: List[str] = dataclasses.field(default_factory=list)
+    """
+    The build targets to use when building the project. Empty builds the
+    default target.
+    """
+
+    verbose: bool = False
+    """
+    Verbose printout when building.
     """
 
 

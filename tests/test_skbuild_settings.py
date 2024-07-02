@@ -33,10 +33,10 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.cmake.version == SpecifierSet(">=3.15")
     assert settings.cmake.args == []
     assert settings.cmake.define == {}
-    assert not settings.cmake.verbose
+    assert not settings.build.verbose
     assert settings.cmake.build_type == "Release"
     assert settings.cmake.source_dir == Path()
-    assert settings.cmake.targets == []
+    assert settings.build.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
@@ -117,10 +117,10 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.cmake.minimum_version == Version("3.16")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
+    assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
+    assert settings.build.targets == ["a", "b", "c"]
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -165,10 +165,10 @@ def test_skbuild_settings_config_settings(
         "cmake.args": ["-DFOO=BAR", "-DBAR=FOO"],
         "cmake.define.a": "1",
         "cmake.define.b": "2",
-        "cmake.verbose": "true",
+        "build.verbose": "true",
         "cmake.build-type": "Debug",
         "cmake.source-dir": "a/b/c",
-        "cmake.targets": ["a", "b", "c"],
+        "build.targets": ["a", "b", "c"],
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -205,10 +205,10 @@ def test_skbuild_settings_config_settings(
     assert settings.cmake.minimum_version == Version("3.17")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
+    assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
+    assert settings.build.targets == ["a", "b", "c"]
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -251,9 +251,9 @@ def test_skbuild_settings_pyproject_toml(
             cmake.args = ["-DFOO=BAR", "-DBAR=FOO"]
             cmake.define = {a = "1", b = "2"}
             cmake.build-type = "Debug"
-            cmake.verbose = true
+            build.verbose = true
             cmake.source-dir = "a/b/c"
-            cmake.targets = ["a", "b", "c"]
+            build.targets = ["a", "b", "c"]
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -300,10 +300,10 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.cmake.minimum_version == Version("3.18")
     assert settings.cmake.args == ["-DFOO=BAR", "-DBAR=FOO"]
     assert settings.cmake.define == {"a": "1", "b": "2"}
-    assert settings.cmake.verbose
+    assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert settings.cmake.targets == ["a", "b", "c"]
+    assert settings.build.targets == ["a", "b", "c"]
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -369,7 +369,7 @@ def test_skbuild_settings_pyproject_toml_broken(
         ex.split()
         == """\
       ERROR: Unrecognized options in pyproject.toml:
-        tool.scikit-build.cmake.verison -> Did you mean: tool.scikit-build.cmake.version, tool.scikit-build.cmake.verbose, tool.scikit-build.cmake.define?
+        tool.scikit-build.cmake.verison -> Did you mean: tool.scikit-build.cmake.version, tool.scikit-build.build.verbose, tool.scikit-build.cmake.define?
         tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.wheel?
       """.split()
     )
@@ -512,3 +512,38 @@ def test_skbuild_settings_pyproject_toml_envvar_defines(
         "d": False,
         "e": True,
     }
+
+
+def test_backcompat_cmake_build(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.9"
+            cmake.verbose = true
+            cmake.targets = ["a", "b"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.build.verbose
+    assert settings_reader.settings.build.targets == ["a", "b"]
+
+
+def test_backcompat_cmake_build_both_specified(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})
