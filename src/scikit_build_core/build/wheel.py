@@ -7,11 +7,11 @@ import sys
 import sysconfig
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from .. import __version__
 from .._compat import tomllib
-from .._compat.typing import Literal, assert_never
+from .._compat.typing import assert_never
 from .._logging import logger, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs

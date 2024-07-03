@@ -8,7 +8,7 @@ import platform
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -23,7 +23,6 @@ from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 
-    from .._compat.typing import Literal
 
 __all__ = ["SettingsReader"]
 
