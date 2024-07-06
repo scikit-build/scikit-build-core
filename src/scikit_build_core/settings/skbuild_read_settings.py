@@ -8,7 +8,7 @@ import platform
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -30,6 +30,9 @@ __all__ = ["SettingsReader"]
 
 def __dir__() -> list[str]:
     return __all__
+
+
+T = TypeVar("T")
 
 
 def strtobool(value: str) -> bool:
@@ -191,6 +194,51 @@ def _handle_minimum_version(
         dc.version = SpecifierSet(f">={dc.minimum_version}")
 
 
+def _handle_move(
+    before_name: str,
+    before: T | None,
+    after_name: str,
+    after: T,
+    minimum_version: Version | None,
+    introduced_in: Version,
+) -> T:
+    """
+    Backward_compat for moving names around. The default must be false-like.
+    """
+
+    if after and minimum_version is not None and minimum_version < introduced_in:
+        rich_print(
+            f"[red][bold]ERROR:[/bold] Cannot set {after_name} if minimum-version is set to less than {introduced_in} (which is where it was introduced)"
+        )
+        raise SystemExit(7)
+
+    if (
+        before is not None
+        and minimum_version is not None
+        and minimum_version >= introduced_in
+    ):
+        rich_print(
+            f"[red][bold]ERROR:[/bold] Cannot set {before_name} if minimum-version is set to {introduced_in} or higher"
+        )
+        raise SystemExit(7)
+
+    if before is not None and after:
+        rich_print(
+            f"[red][bold]ERROR:[/bold] Cannot set {before_name} and {after_name} at the same time"
+        )
+        raise SystemExit(7)
+
+    if before is None:
+        return after
+
+    if minimum_version is None:
+        rich_print(
+            f"[yellow][bold]WARNING:[/bold] Use {after_name} instead of {before_name} for scikit-build-core >= {introduced_in}"
+        )
+
+    return before
+
+
 def inherit_join(
     value: list[str] | dict[str, str] | str | int | bool,
     previous: list[str] | dict[str, str] | str | int | bool | None,
@@ -335,6 +383,23 @@ class SettingsReader:
 
         _handle_minimum_version(self.settings.cmake, self.settings.minimum_version)
         _handle_minimum_version(self.settings.ninja, self.settings.minimum_version)
+
+        self.settings.build.verbose = _handle_move(
+            "cmake.verbose",
+            self.settings.cmake.verbose,
+            "build.verbose",
+            self.settings.build.verbose,
+            self.settings.minimum_version,
+            Version("0.10"),
+        )
+        self.settings.build.targets = _handle_move(
+            "cmake.targets",
+            self.settings.cmake.targets,
+            "build.targets",
+            self.settings.build.targets,
+            self.settings.minimum_version,
+            Version("0.10"),
+        )
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

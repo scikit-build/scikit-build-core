@@ -71,8 +71,8 @@
         },
         "verbose": {
           "type": "boolean",
-          "default": false,
-          "description": "Verbose printout when building."
+          "description": "DEPRECATED in 0.10, use build.verbose instead.",
+          "deprecated": true
         },
         "build-type": {
           "type": "string",
@@ -89,7 +89,8 @@
           "items": {
             "type": "string"
           },
-          "description": "The build targets to use when building the project. Empty builds the default target."
+          "description": "DEPRECATED in 0.10; use build.targets instead.",
+          "deprecated": true
         }
       }
     },
@@ -263,6 +264,18 @@
             "type": "string"
           },
           "description": "Extra args to pass directly to the builder in the build step."
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The build targets to use when building the project. Empty builds the default target."
+        },
+        "verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Verbose printout when building."
         }
       }
     },
@@ -499,6 +512,9 @@
                 "additionalProperties": false,
                 "properties": {
                   "tool-args": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "targets": {
                     "$ref": "#/$defs/inherit"
                   }
                 }
