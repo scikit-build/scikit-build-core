@@ -12,7 +12,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   scikit_build_core.ast
    scikit_build_core.build
    scikit_build_core.builder
    scikit_build_core.file_api
