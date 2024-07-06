@@ -101,6 +101,19 @@ probably keep in sync with your build-system requirements.
 minimum-version = "0.2"
 ```
 
+In your `pyproject.toml`, you can specify the special string
+`"build-system.requirements"`, which will read the minimum version from your
+build-system requirements directly; you must specify a minimum there to use this
+automatic feature.
+
+```toml
+[build-system]
+requires = ["scikit-build-core>=0.10"]
+
+[tool.scikit-build]
+minimum-version = "build-system.requirements"
+```
+
 :::{warning}
 
 The following behaviors are affected by `minimum-version`:
@@ -110,6 +123,8 @@ The following behaviors are affected by `minimum-version`:
 - `minimum-version` 0.5+ (or unset) strips binaries by default.
 - `minimum-version` 0.8+ (or unset) `cmake.minimum-version` and
   `ninja.minimum-version` are replaced with `cmake.version` and `ninja.version`.
+- `minimum-version` 0.10+ (or unset) `cmake.targets` and
+  `cmake.verbose` are replaced with `build.targets` and `build.verbose`.
 
 :::
 

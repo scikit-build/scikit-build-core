@@ -577,3 +577,25 @@ def test_backcompat_cmake_build_both_specified(
 
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})
+
+
+def test_auto_minimum_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core>=0.8"]
+
+            [tool.scikit-build]
+            minimum-version = "build-system.requires"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    reader = SettingsReader.from_file(pyproject_toml, {})
+    assert reader.settings.minimum_version == Version("0.8")
