@@ -102,7 +102,7 @@ minimum-version = "0.2"
 ```
 
 In your `pyproject.toml`, you can specify the special string
-`"build-system.requirements"`, which will read the minimum version from your
+`"build-system.requires"`, which will read the minimum version from your
 build-system requirements directly; you must specify a minimum there to use this
 automatic feature.
 
@@ -111,7 +111,7 @@ automatic feature.
 requires = ["scikit-build-core>=0.10"]
 
 [tool.scikit-build]
-minimum-version = "build-system.requirements"
+minimum-version = "build-system.requires"
 ```
 
 :::{warning}
