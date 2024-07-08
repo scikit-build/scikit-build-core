@@ -15,6 +15,17 @@ specfile_path: .distro/python-scikit-build-core.spec
 downstream_package_name: python-scikit-build-core
 upstream_tag_template: v{version}
 
+srpm_build_deps:
+  - hatch
+  - python3-hatch-vcs
+
+actions:
+  create-archive:
+    - hatch build -t sdist
+    - bash -c "ls dist/scikit_build_core-*.tar.gz"
+  get-current-version:
+    - bash -c "hatch version"
+
 targets: &targets
   - fedora-all-x86_64
   - fedora-all-aarch64
