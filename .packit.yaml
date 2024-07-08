@@ -20,6 +20,8 @@ targets: &targets
   - fedora-all-aarch64
   - epel-9-x86_64
   - epel-9-aarch64
+  - centos-stream-10-x86_64
+  - centos-stream-10-aarch64
 
 jobs:
   - &copr_build
