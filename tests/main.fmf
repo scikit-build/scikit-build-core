@@ -1,0 +1,17 @@
+/pytest:
+  summary: Run pytest tests
+  tag: [ pytest ]
+  # TODO: filter only for network marked tests
+  /all:
+    summary: All pytest
+    # TODO: Find a better way to deal with lack of git data
+    path: /
+    test: |
+      # Fake a git archive
+      cat << EOF > .git_archival.txt
+      node: 47431d4eefbac9c3a7c49e62c73e624b932023eb
+      node-date: 2025-02-27T16:18:39-05:00
+      describe-name: v0.11.0
+      EOF
+      # Actually run pytest
+      python3 -m pytest
