@@ -17,6 +17,7 @@ from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
+from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
@@ -327,8 +328,25 @@ class SettingsReader:
     ) -> None:
         self.state = state
 
+        # Handle overrides
         pyproject = copy.deepcopy(pyproject)
         process_overides(pyproject.get("tool", {}).get("scikit-build", {}), state, env)
+
+        # Support for minimum-version='build-system.requires'
+        tmp_min_v = (
+            pyproject.get("tool", {})
+            .get("scikit-build", {})
+            .get("minimum-version", None)
+        )
+        if tmp_min_v == "build-system.requires":
+            reqlist = pyproject["build-system"]["requires"]
+            min_v = get_min_requires("scikit-build-core", reqlist)
+            if min_v is None:
+                rich_print(
+                    "[red][bold]ERROR:[/bold] scikit-build-core needs a min version in build-system.requires to use minimum-version='build-system.requires'"
+                )
+                raise SystemExit(7)
+            pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
 
         if extra_settings is not None:
