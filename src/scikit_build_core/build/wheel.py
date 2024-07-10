@@ -9,6 +9,9 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
+
 from .. import __version__
 from .._compat import tomllib
 from .._compat.typing import Literal, assert_never
@@ -139,12 +142,27 @@ def _build_wheel_impl(
 
     settings_reader.validate_may_exit()
 
+    # Warn if cmake or ninja is in build-system.requires
+    requirements = [
+        canonicalize_name(Requirement(p).name)
+        for p in pyproject.get("build-system", {}).get("requires", [])
+    ]
+    if "cmake" in requirements:
+        logger.warning(
+            "cmake should not be in build-system.requires - scikit-build-core will inject it as needed"
+        )
+    if "ninja" in requirements:
+        logger.warning(
+            "ninja should not be in build-system.requires - scikit-build-core will inject it as needed"
+        )
+
     metadata = get_standard_metadata(pyproject, settings)
 
     if metadata.version is None:
         msg = "project.version is not specified, must be statically present or tool.scikit-build metadata.version.provider configured when dynamic"
         raise AssertionError(msg)
 
+    # Get the closest (normally) importable name
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
     if settings.wheel.cmake:
