@@ -343,6 +343,13 @@ historic compatibility if you'd like:
 wheel.expand-macos-universal-tags = true
 ```
 
+
+You can also specify a build tag:
+
+```{conftabs} wheel.build-tag 1
+
+```
+
 You can select only specific components to install:
 
 ```{conftabs} install.components ["python"]
@@ -354,6 +361,7 @@ And you can turn off binary stripping:
 ```{conftabs} install.strip False
 
 ```
+
 
 ## Configuring CMake arguments and defines
 
