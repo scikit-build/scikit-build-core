@@ -599,3 +599,32 @@ def test_auto_minimum_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     reader = SettingsReader.from_file(pyproject_toml, {})
     assert reader.settings.minimum_version == Version("0.8")
+
+
+def test_auto_cmake_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core>=0.8"]
+
+            [tool.scikit-build]
+            cmake.version = "CMakeLists.txt"
+            """
+        ),
+        encoding="utf-8",
+    )
+    cmakelists_txt = tmp_path / "CMakeLists.txt"
+    cmakelists_txt.write_text(
+        textwrap.dedent(
+            """\
+            cmake_minimum_required(VERSION 3.21)
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    reader = SettingsReader.from_file(pyproject_toml, {})
+    assert reader.settings.cmake.version == SpecifierSet(">=3.21")

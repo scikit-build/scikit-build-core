@@ -17,6 +17,7 @@ from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
+from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
@@ -349,6 +350,17 @@ class SettingsReader:
             pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
 
+        # Support for cmake.version='CMakeLists.txt'
+        # We will save the value for now since we need the CMakeLists location
+        tmp_min_cmake = (
+            pyproject.get("tool", {})
+            .get("scikit-build", {})
+            .get("cmake", {})
+            .get("version", None)
+        )
+        if tmp_min_cmake == "CMakeLists.txt":
+            pyproject["tool"]["scikit-build"]["cmake"]["version"] = ""
+
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
             process_overides(extra_skb, state, env)
@@ -398,6 +410,22 @@ class SettingsReader:
         )
         if self.settings.install.strip is None:
             self.settings.install.strip = install_policy
+
+        # If we noted earlier that auto-cmake was requested, handle it now
+        if tmp_min_cmake is not None and self.settings.cmake.version == SpecifierSet(
+            ""
+        ):
+            cmake_path = self.settings.cmake.source_dir / "CMakeLists.txt"
+            with cmake_path.open(encoding="utf-8") as f:
+                new_min_cmake = find_min_cmake_version(f.read())
+                if new_min_cmake is None:
+                    rich_print(
+                        "[red][bold]ERROR:[/bold] Minimum CMake version set as "
+                        "'CMakeLists.txt' wasn't able to find minimum version setting. "
+                        "If the CMakeLists.txt is valid, this might be a bug in our search algorithm."
+                    )
+                    raise SystemExit(7)
+            self.settings.cmake.version = new_min_cmake
 
         _handle_minimum_version(self.settings.cmake, self.settings.minimum_version)
         _handle_minimum_version(self.settings.ninja, self.settings.minimum_version)
