@@ -348,7 +348,10 @@ use cases. This is the tool scikit-build-core itself uses.
 
 ## Acknowledgements
 
-Support for this work was provided by NSF grant [OAC-2209877][].
+Support for this work was provided by NSF grant [OAC-2209877][]. Any opinions,
+findings, and conclusions or recommendations expressed in this material are
+those of the author(s) and do not necessarily reflect the views of the National
+Science Foundation.
 
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/scikit-build/scikit-build-core/workflows/CI/badge.svg
