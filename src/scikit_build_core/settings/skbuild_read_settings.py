@@ -425,7 +425,15 @@ class SettingsReader:
                         "If the CMakeLists.txt is valid, this might be a bug in our search algorithm."
                     )
                     raise SystemExit(7)
-            self.settings.cmake.version = new_min_cmake
+                if Version(new_min_cmake) < Version("3.15"):
+                    rich_print(
+                        "[red][bold]WARNING:[/bold] Minimum CMake version set as "
+                        "'CMakeLists.txt' is less than 3.15. "
+                        "This is not supported by scikit-build-core; set manually "
+                        "or increase to avoid this warning."
+                    )
+                    new_min_cmake = "3.15"
+            self.settings.cmake.version = SpecifierSet(f">={new_min_cmake}")
 
         _handle_minimum_version(self.settings.cmake, self.settings.minimum_version)
         _handle_minimum_version(self.settings.ninja, self.settings.minimum_version)
