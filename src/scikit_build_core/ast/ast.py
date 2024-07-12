@@ -56,40 +56,11 @@ def parse(
             first_paren = token.value.index("(")
             name = token.value[:first_paren].lower()
             value = token.value[first_paren + 1 : -1]
-            if name == "if":
-                yield Block(
-                    name, value, token.start, token.end, list(parse(tokens, "endif"))
-                )
-            elif name == "foreach":
-                yield Block(
-                    name,
-                    value,
-                    token.start,
-                    token.end,
-                    list(parse(tokens, "endforeach")),
-                )
-            elif name == "while":
-                yield Block(
-                    name, value, token.start, token.end, list(parse(tokens, "endwhile"))
-                )
-            elif name == "macro":
-                yield Block(
-                    name, value, token.start, token.end, list(parse(tokens, "endmacro"))
-                )
-            elif name == "function":
-                yield Block(
-                    name,
-                    value,
-                    token.start,
-                    token.end,
-                    list(parse(tokens, "endfunction")),
-                )
-            elif name == "block":
-                yield Block(
-                    name, value, token.start, token.end, list(parse(tokens, "endblock"))
-                )
+            if name in {"if", "foreach", "while", "macro", "function", "block"}:
+                contents = list(parse(tokens, f"end{name}"))
+                yield Block(name, value, token.start, contents[-1].stop, contents)
             else:
-                yield Node(name, value, token.start, token.end)
+                yield Node(name, value, token.start, token.stop)
             if stop and name == stop:
                 break
     except StopIteration:

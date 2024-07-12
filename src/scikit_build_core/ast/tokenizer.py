@@ -35,11 +35,11 @@ class TokenType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Token:
-    __slots__ = ("type", "start", "end", "value")
+    __slots__ = ("type", "start", "stop", "value")
 
     type: TokenType
     start: int
-    end: int
+    stop: int
     value: str
 
     def __str__(self) -> str:

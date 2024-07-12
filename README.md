@@ -154,8 +154,10 @@ print("```\n")
 [tool.scikit-build]
 # The versions of CMake to allow. If CMake is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
-# string will disable this check.
-cmake.version = ">=3.15"
+# string will disable this check. The default on 0.10+ is "CMakeLists.txt",
+# which will read it from the project's CMakeLists.txt file, or ">=3.15" if
+# unreadable or <0.10.
+cmake.version = ""
 
 # A list of args to pass to CMake when configuring the project. Setting this in
 # config or envvar will override toml. See also ``cmake.define``.
