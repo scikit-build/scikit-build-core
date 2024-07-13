@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.abc
 import importlib.util
+import importlib.machinery
+import importlib.readers # Might be Python version specific?
 import os
 import subprocess
 import sys
@@ -75,6 +77,26 @@ class FileLockIfUnix:
         assert isinstance(self.lock_file_fd, int)
         fcntl.flock(self.lock_file_fd, fcntl.LOCK_UN)
         os.close(self.lock_file_fd)
+
+# Note: This solution relies on importlib's call stack in Python 3.11. Python 3.9 looks
+# different, so might require a different solution, but I haven't gone deeper into that
+# yet since I don't have a solution for the 3.11 case yet anyway.
+class ScikitBuildRedirectingReader(importlib.readers.FileReader):
+    def files(self):
+        # ATTENTION: This is where the problem is. The expectation is that this returns
+        # a Traversable object. We could hack together an object that satisfies that
+        # API, but methods like `joinpath` don't have sensible implementations if
+        # `files` could return multiple paths instead of a single one. We could do some
+        # hackery to figure out which paths exist on the backend by hiding some internal
+        # representation that knows both possible roots and checks for existence when
+        # necessary, but that seriously violates the principle of least surprise for the
+        # user so I'd be quite skeptical.
+        return self.path
+
+
+class ScikitBuildRedirectingLoader(importlib.machinery.SourceFileLoader):
+    def get_resource_reader(self, module):
+        return ScikitBuildRedirectingReader(self)
 
 
 class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
@@ -153,6 +175,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 submodule_search_locations=submodule_search_locations
                 if redir.endswith(("__init__.py", "__init__.pyc"))
                 else None,
+                loader=ScikitBuildRedirectingLoader(fullname, os.path.join(self.dir, redir)),
             )
         if fullname in self.known_source_files:
             redir = self.known_source_files[fullname]
@@ -162,6 +185,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 submodule_search_locations=submodule_search_locations
                 if redir.endswith(("__init__.py", "__init__.pyc"))
                 else None,
+                loader=ScikitBuildRedirectingLoader(fullname, redir),
             )
         return None
 
