@@ -51,16 +51,33 @@ def parse(
     try:
         while True:
             token = next(tokens)
-            if token.type != TokenType.FUNCTION:
+            if token.type != TokenType.UNQUOTED:
                 continue
-            first_paren = token.value.index("(")
-            name = token.value[:first_paren].lower()
-            value = token.value[first_paren + 1 : -1]
+            name = token.value.lower()
+            start = token.start
+            token = next(tokens)
+            if token.type == TokenType.WHITESPACE:
+                token = next(tokens)
+            if token.type != TokenType.OPEN_PAREN:
+                msg = f"Expected open paren after {name!r}, got {token!r}"
+                raise AssertionError(msg)
+            count = 1
+            value = ""
+            while True:
+                token = next(tokens)
+                if token.type == TokenType.OPEN_PAREN:
+                    count += 1
+                elif token.type == TokenType.CLOSE_PAREN:
+                    count -= 1
+                    if count == 0:
+                        break
+                value += token.value
+
             if name in {"if", "foreach", "while", "macro", "function", "block"}:
                 contents = list(parse(tokens, f"end{name}"))
-                yield Block(name, value, token.start, contents[-1].stop, contents)
+                yield Block(name, value, start, contents[-1].stop, contents)
             else:
-                yield Node(name, value, token.start, token.stop)
+                yield Node(name, value, start, token.stop)
             if stop and name == stop:
                 break
     except StopIteration:
@@ -68,7 +85,7 @@ def parse(
 
 
 if __name__ == "__main__":
-    with Path(sys.argv[1]).open(encoding="utf-8") as f:
+    with Path(sys.argv[1]).open(encoding="utf-8-sig") as f:
         for node in parse(tokenize(f.read())):
             cnode = dataclasses.replace(
                 node,

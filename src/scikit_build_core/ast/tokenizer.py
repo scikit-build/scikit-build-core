@@ -22,14 +22,24 @@ def __dir__() -> list[str]:
 TOKEN_EXPRS = {
     "BRACKET_COMMENT": r"\s*#\s*\[(?P<bc1>=*)\[(?s:.)*?\](?P=bc1)\]",
     "COMMENT": r"#.*$",
-    "FUNCTION": r"\b\w+\s*\((?:[^)(]*|\((?:[^)(]*|\([^)(]*\))*\))*\)",
+    "QUOTED": r'"(?:\\(?s:.)|[^"\\])*?"',
+    "BRACKET_QUOTE": r"\[(?P<bq1>=*)\[(?s:.)*?\](?P=bq1)\]",
+    "OPEN_PAREN": r"\(",
+    "CLOSE_PAREN": r"\)",
+    "LEGACY": r'\b\w+=[^\s"()$\\]*(?:"[^"\\]*"[^\s"()$\\]*)*|"(?:[^"\\]*(?:\\.[^"\\]*)*)*"',
+    "UNQUOTED": r"(?:\\.|[^\s()#\"\\])+",
 }
 
 
 class TokenType(enum.Enum):
     BRACKET_COMMENT = enum.auto()
     COMMENT = enum.auto()
-    FUNCTION = enum.auto()
+    UNQUOTED = enum.auto()
+    QUOTED = enum.auto()
+    BRACKET_QUOTE = enum.auto()
+    LEGACY = enum.auto()
+    OPEN_PAREN = enum.auto()
+    CLOSE_PAREN = enum.auto()
     WHITESPACE = enum.auto()
 
 
@@ -64,6 +74,8 @@ def tokenize(contents: str) -> Generator[Token, None, None]:
 
 
 if __name__ == "__main__":
-    with Path(sys.argv[1]).open(encoding="utf-8") as f:
+    with Path(sys.argv[1]).open(encoding="utf-8-sig") as f:
         for token in tokenize(f.read()):
-            rich_print(token)
+            rich_print(
+                f"[green]{token.type.name}[/green][red]([/red]{token.value}[red])[/red]"
+            )
