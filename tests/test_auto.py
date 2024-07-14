@@ -64,7 +64,7 @@ def test_auto_cmake_version_block(block: str):
     txt = textwrap.dedent(f"""\
         # cmake_minimum_version(VERSION 3.1)
                           
-        # [[
+        #[[
         cmake_minimum_required(VERSION 3.2)
         ]]
         

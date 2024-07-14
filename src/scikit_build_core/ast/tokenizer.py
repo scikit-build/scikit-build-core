@@ -20,7 +20,7 @@ def __dir__() -> list[str]:
 
 
 TOKEN_EXPRS = {
-    "BRACKET_COMMENT": r"\s*#\s*\[(?P<bc1>=*)\[(?s:.)*?\](?P=bc1)\]",
+    "BRACKET_COMMENT": r"\s*#\[(?P<bc1>=*)\[(?s:.)*?\](?P=bc1)\]",
     "COMMENT": r"#.*$",
     "QUOTED": r'"(?:\\(?s:.)|[^"\\])*?"',
     "BRACKET_QUOTE": r"\[(?P<bq1>=*)\[(?s:.)*?\](?P=bq1)\]",
