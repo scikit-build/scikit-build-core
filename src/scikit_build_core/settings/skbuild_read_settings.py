@@ -431,7 +431,7 @@ class SettingsReader:
         if self.settings.cmake.version is None:
             cmake_path = self.settings.cmake.source_dir / "CMakeLists.txt"
             try:
-                with cmake_path.open(encoding="utf-8") as f:
+                with cmake_path.open(encoding="utf-8-sig") as f:
                     new_min_cmake = find_min_cmake_version(f.read())
             except FileNotFoundError:
                 new_min_cmake = "3.15"
