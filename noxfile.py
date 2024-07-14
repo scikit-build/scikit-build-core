@@ -11,7 +11,7 @@ import nox
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-nox.needs_version = ">=2024.3.2"
+nox.needs_version = ">=2024.4.15"
 nox.options.default_venv_backend = "uv|virtualenv"
 
 DIR = Path(__file__).parent.resolve()
@@ -48,6 +48,16 @@ def pylint(session: nox.Session) -> None:
     session.run("pylint", "scikit_build_core", *session.posargs)
 
 
+def _prepare_cmake_ninja(
+    session: nox.Session,
+) -> None:
+    # This will not work if system CMake is too old (<3.15)
+    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
+        session.install("cmake")
+    if shutil.which("ninja") is None:
+        session.install("ninja")
+
+
 def _run_tests(
     session: nox.Session,
     *,
@@ -58,11 +68,7 @@ def _run_tests(
     posargs = list(session.posargs)
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
 
-    # This will not work if system CMake is too old (<3.15)
-    if shutil.which("cmake") is None and shutil.which("cmake3") is None:
-        session.install("cmake")
-    if shutil.which("ninja") is None:
-        session.install("ninja")
+    _prepare_cmake_ninja(session)
 
     _extras = ["test", *extras]
     if "--cov" in posargs:
@@ -193,8 +199,17 @@ EXAMPLES += ["downstream/pybind11_example", "downstream/nanobind_example"]
 @nox.session
 @nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
 def test_doc_examples(session: nox.Session, example: str) -> None:
+    _prepare_cmake_ninja(session)
+    session.install("-e.")
     session.chdir(f"docs/examples/{example}")
-    session.install(".", "--config-settings=cmake.verbose=true", "pytest")
+    reqs = nox.project.load_toml("pyproject.toml")["build-system"]["requires"]
+    session.install(*reqs, "pytest")
+    session.install(
+        ".",
+        "--no-build-isolation",
+        "--config-settings=cmake.verbose=true",
+        env={"PYTHONWARNINGS": "error"},
+    )
     if Path("../test.py").is_file():
         session.run("python", "../test.py")
     else:
