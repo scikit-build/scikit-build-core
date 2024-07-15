@@ -11,3 +11,6 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 dependencies = ["numpy"]
+
+[tool.scikit-build]
+cmake.version = "CMakeLists.txt"

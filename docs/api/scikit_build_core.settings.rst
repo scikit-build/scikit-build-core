@@ -9,6 +9,14 @@ scikit\_build\_core.settings package
 Submodules
 ----------
 
+scikit\_build\_core.settings.auto\_cmake\_version module
+--------------------------------------------------------
+
+.. automodule:: scikit_build_core.settings.auto_cmake_version
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.settings.auto\_requires module
 --------------------------------------------------
 

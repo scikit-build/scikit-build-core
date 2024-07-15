@@ -336,13 +336,17 @@ def test_skbuild_settings_pyproject_toml(
 
 
 def test_skbuild_settings_pyproject_toml_broken(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.9.0"
+    )
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
             """\
             [tool.scikit-build]
+            minimum-version = "0.9"
             cmake.verison = ">=3.18"
             ninja.version = ">=1.3"
             ninja.make-fallback = false
@@ -375,9 +379,16 @@ def test_skbuild_settings_pyproject_toml_broken(
     )
 
 
-def test_skbuild_settings_pyproject_conf_broken(tmp_path, capsys):
+def test_skbuild_settings_pyproject_conf_broken(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.9.0"
+    )
     pyproject_toml = tmp_path / "pyproject.toml"
-    pyproject_toml.write_text("", encoding="utf-8")
+    pyproject_toml.write_text(
+        "tool.scikit-build.minimum-version = '0.9'", encoding="utf-8"
+    )
 
     config_settings: dict[str, str | list[str]] = {
         "cmake.verison": ">=3.17",
@@ -599,3 +610,114 @@ def test_auto_minimum_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     reader = SettingsReader.from_file(pyproject_toml, {})
     assert reader.settings.minimum_version == Version("0.8")
+
+
+def test_auto_cmake_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core>=0.8"]
+
+            [tool.scikit-build]
+            cmake.version = "CMakeLists.txt"
+            """
+        ),
+        encoding="utf-8",
+    )
+    cmakelists_txt = tmp_path / "CMakeLists.txt"
+    cmakelists_txt.write_text(
+        textwrap.dedent(
+            """\
+            cmake_minimum_required(VERSION 3.21)
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    reader = SettingsReader.from_file(pyproject_toml, {})
+    assert reader.settings.cmake.version == SpecifierSet(">=3.21")
+
+
+@pytest.mark.parametrize("version", ["0.9", "0.10"])
+def test_default_auto_cmake_version(
+    version: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            f"""\
+            [build-system]
+            requires = ["scikit-build-core>={version}"]
+
+            [tool.scikit-build]
+            minimum-version = "build-system.requires"
+            """
+        ),
+        encoding="utf-8",
+    )
+    cmakelists_txt = tmp_path / "CMakeLists.txt"
+    cmakelists_txt.write_text(
+        textwrap.dedent(
+            """\
+            cmake_minimum_required(VERSION 3.21)
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    reader = SettingsReader.from_file(pyproject_toml, {})
+    assert reader.settings.cmake.version == SpecifierSet(
+        ">=3.21" if version == "0.10" else ">=3.15"
+    )
+
+
+def test_skbuild_settings_auto_cmake_warning(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.10"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    cmakelists_txt = tmp_path / "CMakeLists.txt"
+    cmakelists_txt.write_text(
+        textwrap.dedent(
+            """\
+            cmake_minimum_required(VERSION 3.14)
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_settings: dict[str, list[str] | str] = {}
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+
+    assert settings_reader.settings.cmake.version == SpecifierSet(">=3.15")
+
+    ex = capsys.readouterr().out
+    ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
+    print(ex)
+    assert (
+        ex.split()
+        == """\
+            WARNING: CMakeLists.txt not found when looking for minimum CMake version.
+            Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back.
+      """.split()
+    )

@@ -142,6 +142,12 @@ cmake.version = ">=3.26.1"
 ninja.version = ">=1.11"
 ```
 
+You can try to read the version from your CMakeLists.txt with the special
+string `"CMakeLists.txt"`. This is an error if the minimum version was not
+statically detectable in the file. If your `minimum-version` setting is unset
+or set to "0.10" or higher, scikit-build-core will still try to read this if
+possible, and will fall back on ">=3.15" if it can't read it.
+
 You can also enforce ninja to be required even if make is present on Unix:
 
 ```toml

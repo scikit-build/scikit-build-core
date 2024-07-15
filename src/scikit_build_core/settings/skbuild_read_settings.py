@@ -17,6 +17,7 @@ from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_print
 from ..errors import CMakeConfigError
+from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
@@ -154,7 +155,9 @@ def override_match(
 
 
 def _handle_minimum_version(
-    dc: CMakeSettings | NinjaSettings, minimum_version: Version | None
+    dc: CMakeSettings | NinjaSettings,
+    minimum_version: Version | None,
+    default: str = "",
 ) -> None:
     """
     Handle the minimum version option. Supports scikit-build-core < 0.8 style
@@ -165,6 +168,11 @@ def _handle_minimum_version(
     version_default = next(
         iter(f for f in dataclasses.fields(dc) if f.name == "version")
     ).default
+    if version_default is None:
+        if not default:
+            msg = "Default version must be provided for this function if None is the default"
+            raise AssertionError(msg)
+        version_default = SpecifierSet(f">={default}")
 
     # Check for minimum_version < 0.8 and the modern version setting
     if (
@@ -343,11 +351,23 @@ class SettingsReader:
             min_v = get_min_requires("scikit-build-core", reqlist)
             if min_v is None:
                 rich_print(
-                    "[red][bold]ERROR:[/bold] scikit-build-core needs a min version in build-system.requires to use minimum-version='build-system.requires'"
+                    "[red][bold]ERROR:[/bold] scikit-build-core needs a min version in "
+                    "build-system.requires to use minimum-version='build-system.requires'"
                 )
                 raise SystemExit(7)
             pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
+
+        # Support for cmake.version='CMakeLists.txt'
+        # We will save the value for now since we need the CMakeLists location
+        force_auto_cmake = (
+            pyproject.get("tool", {})
+            .get("scikit-build", {})
+            .get("cmake", {})
+            .get("version", None)
+        ) == "CMakeLists.txt"
+        if force_auto_cmake:
+            del pyproject["tool"]["scikit-build"]["cmake"]["version"]
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
@@ -399,7 +419,53 @@ class SettingsReader:
         if self.settings.install.strip is None:
             self.settings.install.strip = install_policy
 
-        _handle_minimum_version(self.settings.cmake, self.settings.minimum_version)
+        # Before 0.10, we hard-coded 3.15+ as the minimum CMake version
+        if (
+            self.settings.cmake.version is None
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("0.10")
+        ):
+            self.settings.cmake.version = SpecifierSet(">=3.15")
+
+        # If we noted earlier that auto-cmake was requested, handle it now
+        if self.settings.cmake.version is None:
+            cmake_path = self.settings.cmake.source_dir / "CMakeLists.txt"
+            try:
+                with cmake_path.open(encoding="utf-8-sig") as f:
+                    new_min_cmake = find_min_cmake_version(f.read())
+            except FileNotFoundError:
+                new_min_cmake = "3.15"
+                rich_print(
+                    "[red][bold]WARNING:[/bold] CMakeLists.txt not found when looking for minimum CMake version. "
+                    "Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back."
+                )
+
+            if new_min_cmake is None:
+                if force_auto_cmake:
+                    rich_print(
+                        "[red][bold]ERROR:[/bold] Minimum CMake version set as "
+                        "'CMakeLists.txt' wasn't able to find minimum version setting. "
+                        "If the CMakeLists.txt is valid, this might be a bug in our search algorithm."
+                    )
+                    raise SystemExit(7)
+                rich_print(
+                    "[red][bold]WARNING:[/bold] Minimum CMake version not found in CMakeLists.txt. "
+                    "If the CMakeLists.txt is valid, this might be a bug in our search algorithm. Report "
+                    "this or (and) set manually to avoid this warning."
+                )
+                new_min_cmake = "3.15"
+            if Version(new_min_cmake) < Version("3.15"):
+                rich_print(
+                    "[red][bold]WARNING:[/bold] Minimum CMake version set as "
+                    "'CMakeLists.txt' is less than 3.15. "
+                    "This is not supported by scikit-build-core; set manually or increase to avoid this warning."
+                )
+                new_min_cmake = "3.15"
+            self.settings.cmake.version = SpecifierSet(f">={new_min_cmake}")
+
+        _handle_minimum_version(
+            self.settings.cmake, self.settings.minimum_version, "3.15"
+        )
         _handle_minimum_version(self.settings.ninja, self.settings.minimum_version)
 
         self.settings.build.verbose = _handle_move(

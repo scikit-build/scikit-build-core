@@ -33,11 +33,13 @@ class CMakeSettings:
     DEPRECATED in 0.8; use version instead.
     """
 
-    version: SpecifierSet = SpecifierSet(">=3.15")
+    version: Optional[SpecifierSet] = None
     """
-    The versions of CMake to allow. If CMake is not present on the system or does
-    not pass this specifier, it will be downloaded via PyPI if possible. An empty
-    string will disable this check.
+    The versions of CMake to allow. If CMake is not present on the system or
+    does not pass this specifier, it will be downloaded via PyPI if possible. An
+    empty string will disable this check. The default on 0.10+ is
+    "CMakeLists.txt", which will read it from the project's CMakeLists.txt file,
+    or ">=3.15" if unreadable or <0.10.
     """
 
     args: List[str] = dataclasses.field(default_factory=list)
