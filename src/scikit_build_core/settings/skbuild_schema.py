@@ -116,6 +116,10 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 "type": "string",
                 "description": "The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`, and `metadata_editable`. Takes a regex.",
             },
+            "from-sdist": {
+                "type": "boolean",
+                "description": "Whether the build is from an sdist.",
+            },
             "env": {
                 "type": "object",
                 "patternProperties": {

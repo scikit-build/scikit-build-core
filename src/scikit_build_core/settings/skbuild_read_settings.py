@@ -71,6 +71,7 @@ def override_match(
     current_state: Literal[
         "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
     ],
+    has_dist_info: bool,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -79,8 +80,14 @@ def override_match(
     platform_node: str | None = None,
     env: dict[str, str] | None = None,
     state: str | None = None,
+    from_sdist: bool | None = None,
 ) -> bool:
+    # This makes a matches list. A match is a string; if it's an empty string,
+    # then it did not match. If it's not empty, it did match, and the string
+    # will be printed in the logs - it's the match reason. If match_all is True,
+    # then all must match, otherwise any match will count.
     matches = []
+
     if current_env is None:
         current_env = os.environ
 
@@ -123,6 +130,12 @@ def override_match(
     if state is not None:
         match_msg = regex_match(current_state, state)
         matches.append(match_msg)
+
+    if from_sdist is not None:
+        if has_dist_info:
+            matches.append("from sdist due to PKG-INFO" if from_sdist else "")
+        else:
+            matches.append("" if from_sdist else "not from sdist, no PKG-INFO")
 
     if env:
         for key, value in env.items():
@@ -264,8 +277,10 @@ def process_overides(
     env: Mapping[str, str] | None = None,
 ) -> None:
     """
-    Process overrides into the main dictionary if they match. Modifies the input dictionary.
+    Process overrides into the main dictionary if they match. Modifies the input
+    dictionary. Must be run from the package directory.
     """
+    has_dist_info = Path("PKG-INFO").is_file()
 
     for override in tool_skb.pop("overrides", []):
         matched = True
@@ -280,7 +295,11 @@ def process_overides(
             any_override = if_override.pop("any")
             select = {k.replace("-", "_"): v for k, v in any_override.items()}
             matched = override_match(
-                match_all=False, current_env=env, current_state=state, **select
+                match_all=False,
+                current_env=env,
+                current_state=state,
+                has_dist_info=has_dist_info,
+                **select,
             )
 
         inherit_override = override.pop("inherit", {})
@@ -291,7 +310,11 @@ def process_overides(
         select = {k.replace("-", "_"): v for k, v in if_override.items()}
         if select:
             matched = matched and override_match(
-                match_all=True, current_env=env, current_state=state, **select
+                match_all=True,
+                current_env=env,
+                current_state=state,
+                has_dist_info=has_dist_info,
+                **select,
             )
         if matched:
             for key, value in override.items():
