@@ -15,7 +15,7 @@ from packaging.version import Version
 
 from .. import __version__
 from .._compat import tomllib
-from .._logging import logger, rich_print
+from .._logging import logger, rich_error, rich_print, rich_warning
 from ..errors import CMakeConfigError
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
@@ -180,25 +180,22 @@ def _handle_minimum_version(
         and minimum_version is not None
         and minimum_version < Version("0.8")
     ):
-        rich_print(
-            f"[red][bold]ERROR:[/bold] Cannot set {name}.version if minimum-version is set to less than 0.8 (which is where it was introduced)"
+        rich_error(
+            f"Cannot set {name}.version if minimum-version is set to less than 0.8 (which is where it was introduced)"
         )
-        raise SystemExit(7)
 
     # Backwards compatibility for minimum_version
     if dc.minimum_version is not None:
         msg = f"Use {name}.version instead of {name}.minimum-version with scikit-build-core >= 0.8"
         if minimum_version is None:
-            rich_print(f"[yellow][bold]WARNING:[/bold] {msg}")
+            rich_warning(msg)
         elif minimum_version >= Version("0.8"):
-            rich_print(f"[red][bold]ERROR:[/bold] {msg}")
-            raise SystemExit(7)
+            rich_error(msg)
 
         if dc.version != version_default:
-            rich_print(
-                f"[red][bold]ERROR:[/bold] Cannot set both {name}.minimum_version and {name}.version; use version only for scikit-build-core >= 0.8."
+            rich_error(
+                f"Cannot set both {name}.minimum_version and {name}.version; use version only for scikit-build-core >= 0.8."
             )
-            raise SystemExit(7)
 
         dc.version = SpecifierSet(f">={dc.minimum_version}")
 
@@ -216,33 +213,28 @@ def _handle_move(
     """
 
     if after and minimum_version is not None and minimum_version < introduced_in:
-        rich_print(
-            f"[red][bold]ERROR:[/bold] Cannot set {after_name} if minimum-version is set to less than {introduced_in} (which is where it was introduced)"
+        rich_error(
+            f"Cannot set {after_name} if minimum-version is set to less than {introduced_in} (which is where it was introduced)"
         )
-        raise SystemExit(7)
 
     if (
         before is not None
         and minimum_version is not None
         and minimum_version >= introduced_in
     ):
-        rich_print(
-            f"[red][bold]ERROR:[/bold] Cannot set {before_name} if minimum-version is set to {introduced_in} or higher"
+        rich_error(
+            f"Cannot set {before_name} if minimum-version is set to {introduced_in} or higher"
         )
-        raise SystemExit(7)
 
     if before is not None and after:
-        rich_print(
-            f"[red][bold]ERROR:[/bold] Cannot set {before_name} and {after_name} at the same time"
-        )
-        raise SystemExit(7)
+        rich_error(f"Cannot set {before_name} and {after_name} at the same time")
 
     if before is None:
         return after
 
     if minimum_version is None:
-        rich_print(
-            f"[yellow][bold]WARNING:[/bold] Use {after_name} instead of {before_name} for scikit-build-core >= {introduced_in}"
+        rich_warning(
+            f"Use {after_name} instead of {before_name} for scikit-build-core >= {introduced_in}"
         )
 
     return before
@@ -350,11 +342,10 @@ class SettingsReader:
             reqlist = pyproject["build-system"]["requires"]
             min_v = get_min_requires("scikit-build-core", reqlist)
             if min_v is None:
-                rich_print(
-                    "[red][bold]ERROR:[/bold] scikit-build-core needs a min version in "
+                rich_error(
+                    "scikit-build-core needs a min version in "
                     "build-system.requires to use minimum-version='build-system.requires'"
                 )
-                raise SystemExit(7)
             pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
 
@@ -401,16 +392,10 @@ class SettingsReader:
 
         if self.settings.editable.rebuild:
             if self.settings.editable.mode == "inplace":
-                rich_print(
-                    "[red][bold]ERROR:[/bold] editable rebuild is incompatible with inplace mode"
-                )
-                raise SystemExit(7)
+                rich_error("editable rebuild is incompatible with inplace mode")
 
             if not self.settings.build_dir:
-                rich_print(
-                    "[red][bold]ERROR:[/bold] editable mode with rebuild requires build-dir"
-                )
-                raise SystemExit(7)
+                rich_error("editable mode with rebuild requires build-dir")
 
         install_policy = (
             self.settings.minimum_version is None
@@ -435,29 +420,27 @@ class SettingsReader:
                     new_min_cmake = find_min_cmake_version(f.read())
             except FileNotFoundError:
                 new_min_cmake = "3.15"
-                rich_print(
-                    "[red][bold]WARNING:[/bold] CMakeLists.txt not found when looking for minimum CMake version. "
+                rich_warning(
+                    "CMakeLists.txt not found when looking for minimum CMake version. "
                     "Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back."
                 )
 
             if new_min_cmake is None:
                 if force_auto_cmake:
-                    rich_print(
-                        "[red][bold]ERROR:[/bold] Minimum CMake version set as "
+                    rich_error(
+                        "Minimum CMake version set as "
                         "'CMakeLists.txt' wasn't able to find minimum version setting. "
                         "If the CMakeLists.txt is valid, this might be a bug in our search algorithm."
                     )
-                    raise SystemExit(7)
-                rich_print(
-                    "[red][bold]WARNING:[/bold] Minimum CMake version not found in CMakeLists.txt. "
+                rich_warning(
+                    "Minimum CMake version not found in CMakeLists.txt. "
                     "If the CMakeLists.txt is valid, this might be a bug in our search algorithm. Report "
                     "this or (and) set manually to avoid this warning."
                 )
                 new_min_cmake = "3.15"
             if Version(new_min_cmake) < Version("3.15"):
-                rich_print(
-                    "[red][bold]WARNING:[/bold] Minimum CMake version set as "
-                    "'CMakeLists.txt' is less than 3.15. "
+                rich_warning(
+                    "Minimum CMake version set as 'CMakeLists.txt' is less than 3.15. "
                     "This is not supported by scikit-build-core; set manually or increase to avoid this warning."
                 )
                 new_min_cmake = "3.15"
@@ -528,27 +511,20 @@ class SettingsReader:
         for key, value in self.settings.metadata.items():
             if "provider" not in value:
                 sys.stdout.flush()
-                rich_print(
-                    f"[red][bold]ERROR:[/bold] provider= must be provided in {key!r}:"
-                )
-                raise SystemExit(7)
+                rich_error(f"provider= must be provided in {key!r}:")
             if not self.settings.experimental and (
                 "provider-path" in value
                 or not value["provider"].startswith("scikit_build_core.")
             ):
                 sys.stdout.flush()
-                rich_print(
-                    "[red][bold]ERROR:[/bold] experimental must be enabled currently to use plugins not provided by scikit-build-core"
+                rich_error(
+                    "experimental must be enabled currently to use plugins not provided by scikit-build-core"
                 )
-                raise SystemExit(7)
 
         for gen in self.settings.generate:
             if not gen.template and not gen.template_path:
                 sys.stdout.flush()
-                rich_print(
-                    "[red][bold]ERROR:[/bold] template= or template-path= must be provided in generate"
-                )
-                raise SystemExit(7)
+                rich_error("template= or template-path= must be provided in generate")
 
     @classmethod
     def from_file(

@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import logging
 import os
 import re
 import sys
-from typing import Any
+from typing import Any, NoReturn
 
-__all__ = ["ScikitBuildLogger", "logger", "raw_logger", "rich_print", "LEVEL_VALUE"]
+__all__ = [
+    "ScikitBuildLogger",
+    "logger",
+    "raw_logger",
+    "rich_print",
+    "rich_warning",
+    "rich_error",
+    "LEVEL_VALUE",
+]
 
 
 def __dir__() -> list[str]:
@@ -147,3 +156,13 @@ def rich_print(*args: object, **kwargs: object) -> None:
     if args != args_2:
         args_2 = (*args_2[:-1], args_2[-1] + colors()["reset"])
     print(*args_2, **kwargs, flush=True)  # type: ignore[call-overload] # noqa: T201
+
+
+@functools.lru_cache(maxsize=None)
+def rich_warning(*args: object, **kwargs: object) -> None:
+    rich_print("[red][yellow]WARNING:[/bold]", *args, **kwargs)
+
+
+def rich_error(*args: object, **kwargs: object) -> NoReturn:
+    rich_print("[red][bold]ERROR:[/bold]", *args, **kwargs)
+    raise SystemExit(7)
