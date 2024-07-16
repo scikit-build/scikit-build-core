@@ -11,6 +11,7 @@ import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+import scikit_build_core._logging
 import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core.settings.skbuild_model import GenerateSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
@@ -684,6 +685,7 @@ def test_skbuild_settings_auto_cmake_warning(
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
     )
+    scikit_build_core._logging.rich_warning.cache_clear()
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
