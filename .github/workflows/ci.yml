@@ -26,14 +26,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: yezz123/setup-uv@v4
+      - name: Install nox
+        run: uv pip install --system nox
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --all-files
       - name: Run PyLint
-        run: pipx run nox -s pylint -- --output-format=github
+        run: nox -s pylint -- --output-format=github
       - name: Run nox generator
         run: |
-          pipx run nox -s generate_schema -s readme
+          nox -s generate_schema -s readme
           git diff --exit-code
 
   checks:
