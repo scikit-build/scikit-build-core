@@ -697,39 +697,9 @@ experimental = true
 
 ## Overrides
 
-Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
-specify a `tool.scikit-build.overrides` array with an `if` key. That if key can
-take several values, including several based on [PEP 508][]:
-
-- `python-version`: The two-digit Python version. Takes a specifier set.
-- `platform-system`: The value of `sys.platform`. Takes a regex.
-- `platform-machine`: The value of `platform.machine()`. Takes a regex.
-- `platform-node`: The value of `platform.node()`. Takes a regex.
-- `implementation-name`: The value of `sys.implementation.name`. Takes a regex.
-- `implementation-version`: Derived from `sys.implementation.version`, following
-  PEP 508. Takes a specifier set.
-- `env`: A table of environment variables mapped to either string regexs, or
-  booleans. Valid "truthy" environment variables are case insensitive `true`,
-  `on`, `yes`, `y`, `t`, or a number more than 0.
-- `state`: The state of the build, one of `sdist`, `wheel`, `editable`,
-  `metadata_wheel`, and `metadata_editable`. Takes a regex.
-
-At least one must be provided. Then you can specify any collection of valid
-options, and those will override if all the items in the `if` are true. They
-will match top to bottom, overriding previous matches. For example:
-
-```toml
-[[tool.scikit-build.overrides]]
-if.platform-system = "darwin"
-cmake.version = ">=3.18"
-```
-
-If you use `if.any` instead of `if`, then the override is true if any one of the
-items in it are true.
+The overrides system allows you to customize for a wide variety of situations.
+It is described at [](#overrides).
 
 ## Full Schema
 
-You can see the full schema at [](#full-schema).
-
-
-[pep 508]: https://peps.python.org/pep-0508/#environment-markers
+You can see the full schema at [](#schema).

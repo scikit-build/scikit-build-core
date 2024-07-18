@@ -30,6 +30,7 @@ first Friday of every month at the same time. Our past meeting minutes are
 
 getting_started
 configuration
+overrides
 cmakelists
 crosscompile
 migration_guide

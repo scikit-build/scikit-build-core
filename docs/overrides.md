@@ -1,0 +1,186 @@
+# Overrides
+
+Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
+specify a `tool.scikit-build.overrides` array with an `if` key. That `if` key can
+take several values, including several based on [PEP 508][]. Inside the override,
+you can set any value `tool.scikit-build` supports, and it will override if the
+`if` condition is true.
+
+## If conditions
+
+There are three types of conditions. Booleans, strings, and version numbers.
+Booleans take a bool; if the boolean matches the bool you give, the override
+matches. If the value is a string (such as an environment variable), it will
+match truth-like values.  Strings take a regex which will try to match. Version
+numbers take a specifier set, like `>=1.0`.
+
+If multiple conditions are given, they all must be true. Use `if.any` (below)
+if you would rather matching on any one of multiple conditions being true.
+
+At least one must be provided. Then you can specify any collection of valid
+options, and those will override if all the items in the `if` are true. They
+will match top to bottom, overriding previous matches.
+
+### `python-version` (version)
+
+The two-digit Python version. Takes a specifier set.
+
+Example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.python_version = ">=3.13"
+wheel.cmake = false
+```
+
+
+### `platform-system` (string)
+
+The value of `sys.platform`. Takes a regex. Like `sys.platform`, you should allow
+suffixes. Common values:
+
+| System         | `platform-system` (w/o suffix) |
+|----------------|--------------------------------|
+| AIX            | `aix`                          |
+| Android[^1]    | `android`                      |
+| FreeBSD        | `freebsd`                      |
+| iOS            | `ios`                          |
+| Linux          | `linux`                        |
+| Mac OS X       | `darwin`                       |
+| OpenBSD        | `openbsd`                      |
+| Pyodide        | `emscripten`                   |
+| WASI           | `wasi`                         |
+| Windows        | `win32`                        |
+| Windows/Cygwin | `cygwin`                       |
+| Windows/MSYS2  | `msys`                         |
+
+
+[^1]: Before CPython 3.13, this returned `linux`.
+
+Example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.platform-system = "$darwin"
+cmake.version = ">=3.18"
+```
+
+
+### `platform-machine` (string)
+
+The value of `platform.machine()`. Takes a regex.
+A few sample values:
+
+| OS      | Machine       | `platform-system` |
+|---------|---------------|-------------------|
+| Unix    | Intel 64-bit  | `x86_64`          |
+| Linux   | Intel 32-bit  | `i686`            |
+| macOS   | ARM           | `arm64`           |
+| Linux   | ARM           | `aarch64`         |
+| Linux   | Power PC      | `ppc64le`         |
+| Linux   | s390x         | `s390x`           |
+| Windows | Intel 64-bit  | `AMD64`           |
+| Windows | Intel 32-bit  | `x86`             |
+| Windows | ARM           | `ARM64`           |
+
+
+### `platform-node` (string)
+
+The value of `platform.node()`. This is generally your computer's name. Takes a
+regex.
+
+### `implementation-name` (string)
+
+The value of `sys.implementation.name`. Takes a regex. Some common values:
+
+| Implementation | `implementation-name` |
+|----------------|-----------------------|
+| CPython        | `cpython`             |
+| PyPy           | `pypy`                |
+
+### `implementation-version` (version)
+
+Derived from `sys.implementation.version`, following [PEP 508][]. Takes a
+specifier set. This is the PyPy version on PyPy, for example.
+
+### `env.*` (string or bool)
+
+A table of environment variables mapped to either string regexs, or booleans.
+Valid "truthy" environment variables are case insensitive `true`, `on`, `yes`,
+`y`, `t`, or a number more than 0.
+
+Example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.env.CI = true
+cmake.version = ">=3.30"
+```
+
+This is often combined with `if.any`.
+
+### `state` (string)
+
+The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`,
+and `metadata_editable`. Takes a regex.
+
+Note that you can build directly to wheel; you don't have to go through an
+SDist.
+
+## Any matching condition
+
+If you use `if.any` instead of `if`, then the override is true if any one of the
+items in it are true.
+
+If you have both `if` and `if.any` conditions, then all the `if` conditions and
+one of the `if.any` conditions must match.
+
+Example:
+
+
+```toml
+[tool.scikit-build]
+wheel.cmake = false
+
+[[tool.scikit-build.overrides]]
+if.any.env.CIBUILDWHEEL = true
+if.any.env.BUILD_MY_LIB = true
+wheel.cmake = true
+```
+
+Above, either `CIBUILDWHEEL` or `BUILD_MY_LIB` being truthy will trigger a
+binary build.
+
+## Inheriting for tables and arrays
+
+If you specify `inherit.<thing> = "append"` or `"prepend"`, then an override
+will append or prepend tables and lists, either from the base configuration or
+a previous override. For a table, the difference is apparent when you have
+matching keys; `"append"` means the override replaces the old key, while
+`"prepend"` will leave the key alone.
+
+Example:
+
+```toml
+[tool.scikit-build]
+cmake.define.FOO = "0"
+cmake.define.BAR = "0"
+
+[[tool.scikit-build.overrides]]
+if.env.SET_FOO = "ON"
+inherit.cmake.define = "append"
+cmake.define.FOO = "1"
+
+[[tool.scikit-build.overrides]]
+if.env.SET_BAR = "ON"
+inherit.cmake.define = "append"
+cmake.define.BAR = "1"
+```
+
+In the above example, setting `SET_FOO` will add `FOO` as a define, and
+likewise for `SET_BAR` and `BAR`. Without the inherit, setting one would remove
+the other, as the table would be replaced. And `"prepend"` wouldn't be useful
+at all, since FOO and BAR are already defined, so the original definition would
+win.
+
+[pep 508]: https://peps.python.org/pep-0508/#environment-markers
