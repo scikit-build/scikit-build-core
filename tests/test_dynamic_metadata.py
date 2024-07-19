@@ -4,6 +4,7 @@ import importlib
 import shutil
 import subprocess
 import sys
+import textwrap
 import types
 import zipfile
 from pathlib import Path
@@ -274,3 +275,36 @@ def test_regex_errors() -> None:
         regex.dynamic_metadata("version", {})
     with pytest.raises(RuntimeError, match="Only string fields supported"):
         regex.dynamic_metadata("author", {"input": "x", "regex": "x"})
+
+
+def test_multipart_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    d = tmp_path / "test_multi_regex"
+    d.mkdir()
+    monkeypatch.chdir(d)
+
+    with Path("version.hpp").open("w") as f:
+        f.write(
+            textwrap.dedent(
+                """\
+            #define VERSION_MAJOR 1
+            // Comment
+            #define VERSION_MINOR 2
+            #define VERSION_PATCH 3dev1
+            """
+            )
+        )
+
+    version = regex.dynamic_metadata(
+        "version",
+        {
+            "input": "version.hpp",
+            "regex": r"""(?sx)
+            \#define \s+ VERSION_MAJOR \s+ (?P<major>\d+) .*?
+            \#define \s+ VERSION_MINOR \s+ (?P<minor>\d+) .*?
+            \#define \s+ VERSION_PATCH \s+ (?P<patch>\w+)
+            """,
+            "result": "{major}.{minor}.{patch}",
+        },
+    )
+
+    assert version == "1.2.3dev1"
