@@ -564,7 +564,7 @@ input = "src/mypackage/__init__.py"
 You can set a custom regex with `regex=`; use `(?P<value>...)` to capture the
 value you want to use. By default when targeting version, you get a reasonable
 regex for python files,
-`'(?i)^(__version__|VERSION) *= *([\'"])v?(?P<value>.+?)\2'`.
+`'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`.
 
 ```{versionadded} 0.5
 

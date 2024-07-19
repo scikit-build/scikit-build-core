@@ -37,7 +37,8 @@ def dynamic_metadata(
 
     input_filename = settings["input"]
     regex = settings.get(
-        "regex", r'(?i)^(__version__|VERSION) *= *([\'"])v?(?P<value>.+?)\2'
+        "regex",
+        r'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2',
     )
 
     with Path(input_filename).open(encoding="utf-8") as f:
