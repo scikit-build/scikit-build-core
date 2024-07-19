@@ -79,6 +79,7 @@ def test_skbuild_overrides_dual(
 
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
+    print(settings_reader.overrides)
 
     if implementation_name == "pypy" and platform_system == "darwin":
         assert not settings.editable.verbose

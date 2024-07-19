@@ -72,6 +72,7 @@ def override_match(
         "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
     ],
     has_dist_info: bool,
+    retry: bool,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -81,12 +82,18 @@ def override_match(
     env: dict[str, str] | None = None,
     state: str | None = None,
     from_sdist: bool | None = None,
-) -> bool:
+    failed: bool | None = None,
+) -> set[str]:
+    """
+    Check if the current environment matches the overrides. Returns the set of matched keys.
+    """
     # This makes a matches list. A match is a string; if it's an empty string,
     # then it did not match. If it's not empty, it did match, and the string
     # will be printed in the logs - it's the match reason. If match_all is True,
     # then all must match, otherwise any match will count.
     matches = []
+
+    passed_keys = set()
 
     if current_env is None:
         current_env = os.environ
@@ -95,11 +102,15 @@ def override_match(
         current_python_version = ".".join(str(x) for x in sys.version_info[:2])
         match_msg = version_match(current_python_version, python_version, "Python")
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("python-version")
 
     if implementation_name is not None:
         current_impementation_name = sys.implementation.name
         match_msg = regex_match(current_impementation_name, implementation_name)
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("implementation-name")
 
     if implementation_version is not None:
         info = sys.implementation.version
@@ -111,46 +122,74 @@ def override_match(
             version, implementation_version, "Python implementation"
         )
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("implementation-version")
 
     if platform_system is not None:
         current_platform_system = sys.platform
         match_msg = regex_match(current_platform_system, platform_system)
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("platform-system")
 
     if platform_machine is not None:
         current_platform_machine = platform.machine()
         match_msg = regex_match(current_platform_machine, platform_machine)
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("platform-machine")
 
     if platform_node is not None:
         current_platform_node = platform.node()
         match_msg = regex_match(current_platform_node, platform_node)
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("platform-node")
 
     if state is not None:
         match_msg = regex_match(current_state, state)
         matches.append(match_msg)
+        if match_msg:
+            passed_keys.add("state")
+
+    if failed is not None:
+        if failed and retry:
+            matches.append("Previous run failed")
+            passed_keys.add("failed")
+        elif not failed and not retry:
+            matches.append("Running on a fresh run")
+            passed_keys.add("failed")
+        else:
+            matches.append("")
 
     if from_sdist is not None:
         if has_dist_info:
             matches.append("from sdist due to PKG-INFO" if from_sdist else "")
+            if from_sdist:
+                passed_keys.add("from-sdist")
         else:
             matches.append("" if from_sdist else "not from sdist, no PKG-INFO")
+            if not from_sdist:
+                passed_keys.add("from-sdist")
 
     if env:
         for key, value in env.items():
             if isinstance(value, bool):
-                matches.append(
+                match_msg = (
                     f"env {key} is {value}"
                     if strtobool(current_env.get(key, "")) == value
                     else ""
                 )
+                matches.append(match_msg)
+                passed_keys.add(f"env.{key}")
             elif key not in current_env:
                 matches.append("")
             else:
                 current_value = current_env.get(key, "")
                 match_msg = regex_match(current_value, value)
                 matches.append(match_msg and f"env {key}: {match_msg}")
+                if match_msg:
+                    passed_keys.add(f"env.{key}")
 
     if not matches:
         msg = "At least one override must be provided"
@@ -164,7 +203,8 @@ def override_match(
         matched = any(matches)
         if matched:
             logger.info("Overrides {}", " or ".join([m for m in matches if m]))
-    return matched
+
+    return passed_keys if matched else set()
 
 
 def _handle_minimum_version(
@@ -273,17 +313,20 @@ def inherit_join(
 
 def process_overides(
     tool_skb: dict[str, Any],
+    *,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
+    retry: bool,
     env: Mapping[str, str] | None = None,
-) -> None:
+) -> set[str]:
     """
     Process overrides into the main dictionary if they match. Modifies the input
     dictionary. Must be run from the package directory.
     """
     has_dist_info = Path("PKG-INFO").is_file()
 
+    global_matched: set[str] = set()
     for override in tool_skb.pop("overrides", []):
-        matched = True
+        matched: set[str] | None = None
         if_override = override.pop("if", None)
         if not if_override:
             msg = "At least one 'if' override must be provided"
@@ -299,6 +342,7 @@ def process_overides(
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
+                retry=retry,
                 **select,
             )
 
@@ -309,13 +353,23 @@ def process_overides(
 
         select = {k.replace("-", "_"): v for k, v in if_override.items()}
         if select:
-            matched = matched and override_match(
+            each_matched = override_match(
                 match_all=True,
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
+                retry=retry,
                 **select,
             )
+            if matched is None:
+                matched = each_matched
+            elif matched and each_matched:
+                matched |= each_matched
+            else:
+                matched = set()
+        if matched is None:
+            matched = set()
+        global_matched |= matched
         if matched:
             for key, value in override.items():
                 inherit1 = inherit_override.get(key, {})
@@ -334,6 +388,7 @@ def process_overides(
                     tool_skb[key] = inherit_join(
                         value, tool_skb.get(key), inherit_override_tmp
                     )
+    return global_matched
 
 
 class SettingsReader:
@@ -348,12 +403,18 @@ class SettingsReader:
         extra_settings: Mapping[str, Any] | None = None,
         verify_conf: bool = True,
         env: Mapping[str, str] | None = None,
+        retry: bool = False,
     ) -> None:
         self.state = state
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        process_overides(pyproject.get("tool", {}).get("scikit-build", {}), state, env)
+        self.overrides = process_overides(
+            pyproject.get("tool", {}).get("scikit-build", {}),
+            state=state,
+            env=env,
+            retry=retry,
+        )
 
         # Support for minimum-version='build-system.requires'
         tmp_min_v = (
@@ -385,7 +446,7 @@ class SettingsReader:
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
-            process_overides(extra_skb, state, env)
+            process_overides(extra_skb, state=state, env=env, retry=retry)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
 
         prefixed = {

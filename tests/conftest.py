@@ -303,6 +303,15 @@ def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Packag
 
 
 @pytest.fixture()
+def broken_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "broken_fallback",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture()
 def package_sdist_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:

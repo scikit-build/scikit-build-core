@@ -15,9 +15,9 @@ def __dir__() -> list[str]:
 @functools.lru_cache(1)
 def setup_logging(log_level: str) -> None:
     level_value = LEVEL_VALUE[log_level]
+    logger.setLevel(level_value)
 
     ch = logging.StreamHandler()
-    ch.setLevel(level_value)
     # create formatter and add it to the handlers
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
