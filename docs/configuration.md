@@ -561,10 +561,23 @@ provider = "scikit_build_core.metadata.regex"
 input = "src/mypackage/__init__.py"
 ```
 
-You can set a custom regex with `regex=`; use `(?P<value>...)` to capture the
-value you want to use. By default when targeting version, you get a reasonable
-regex for python files,
+You can set a custom regex with `regex=`. By default when targeting version, you
+get a reasonable regex for python files,
 `'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`.
+You can set `result` to a format string to process the matches; the default is
+`"{value}"`. A more complex example:
+
+```toml
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/mypackage/version.hpp"
+regex = '''(?sx)
+\#define \w+ VERSION_MAJOR \w+ (?P<major>\d+) .*?
+\#define \w+ VERSION_MINOR \w+ (?P<minor>\d+) .*?
+\#define \w+ VERSION_PATCH \w+ (?P<patch>\d+)
+'''
+result = "{major}.{minor}.{patch}"
+```
 
 ```{versionadded} 0.5
 
