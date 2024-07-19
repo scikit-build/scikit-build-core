@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sysconfig
 import typing
 from pathlib import Path
 from textwrap import dedent
@@ -540,6 +541,7 @@ def test_skbuild_overrides_from_sdist(
         tmp_path / ("from_sdist" if from_sdist else "not_from_sdist") / "pyproject.toml"
     )
     pyproject_toml.parent.mkdir(exist_ok=True)
+
     pyproject_toml.write_text(
         dedent(
             """\
@@ -666,3 +668,23 @@ def test_system_cmake(
     settings_reader = SettingsReader.from_file(pyproject_toml, retry=False)
     settings = settings_reader.settings
     assert settings.wheel.cmake == (cmake_version == "3.27")
+
+
+def test_free_threaded_override(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            wheel.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.abi-flags = "t"
+            wheel.cmake = true
+            """
+        )
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, state="wheel")
+    settings = settings_reader.settings
+    assert settings.wheel.cmake == bool(sysconfig.get_config_var("Py_GIL_DISABLED"))

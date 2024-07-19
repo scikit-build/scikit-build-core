@@ -29,7 +29,7 @@ Example:
 
 ```toml
 [[tool.scikit-build.overrides]]
-if.python_version = ">=3.13"
+if.python-version = ">=3.13"
 wheel.cmake = false
 ```
 
@@ -83,6 +83,10 @@ A few sample values:
 | Windows | Intel 32-bit  | `x86`             |
 | Windows | ARM           | `ARM64`           |
 
+
+### `abi-flags` (string)
+
+A sorted list of the ABI flags. `t` is the free-threaded build.
 
 ### `platform-node` (string)
 

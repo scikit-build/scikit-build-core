@@ -12,6 +12,7 @@ from packaging.specifiers import SpecifierSet
 
 from .._compat import tomllib
 from .._logging import logger
+from ..builder.sysconfig import get_abi_flags
 from ..cmake import CMake
 from ..errors import CMakeNotFoundError
 from ..resources import resources
@@ -76,6 +77,7 @@ def override_match(
     failed: bool | None = None,
     system_cmake: str | None = None,
     cmake_wheel: bool | None = None,
+    abi_flags: str | None = None,
 ) -> tuple[dict[str, str], set[str]]:
     """
     Check if the current environment matches the overrides. Returns a dict
@@ -190,6 +192,14 @@ def override_match(
             passed_dict["cmake-wheel"] = f"cmake wheel available on {cmake_plat}"
         else:
             failed_set.add("cmake-wheel")
+
+    if abi_flags is not None:
+        current_abi_flags = get_abi_flags()
+        match_msg = regex_match(current_abi_flags, abi_flags)
+        if match_msg:
+            passed_dict["abi-flags"] = match_msg
+        else:
+            failed_set.add("abi-flags")
 
     if env:
         for key, value in env.items():

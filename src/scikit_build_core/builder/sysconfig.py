@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
+    "get_abi_flags",
     "get_cmake_platform",
     "get_numpy_include_dir",
     "get_python_include_dir",
@@ -182,6 +183,13 @@ def get_numpy_include_dir() -> Path | None:
         return None
 
     return Path(np.get_include())
+
+
+def get_abi_flags() -> str:
+    """
+    Return the ABI flags for the current Python interpreter.
+    """
+    return "".join(sorted(sysconfig.get_config_var("ABIFLAGS"))) or ""
 
 
 def info_print(*, color: str = "") -> None:
