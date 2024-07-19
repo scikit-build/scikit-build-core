@@ -53,3 +53,10 @@ In addition, most of the [RAPIDSAI](https://github.com/rapidsai) projects use sc
 * CuSpatial ([source](https://github.com/rapidsai/cuspatial/blob/HEAD/python/cuspatial/pyproject.toml))
 * RMM ([source](https://github.com/rapidsai/rmm/blob/HEAD/python/rmm/pyproject.toml))
 * Raft ([source](https://github.com/rapidsai/raft/blob/HEAD/python/pylibraft/pyproject.toml))
+
+The [Insight Toolkit (ITK)](https://docs.itk.org), the initial target project
+for scikit-build classic, has [transitioned to
+sckit-build-core](https://github.com/InsightSoftwareConsortium/ITKPythonPackage/blob/master/scripts/pyproject.toml.in).
+ITK currently provides one example of a production SWIG-based deployment. In
+addition, dozens of [ITK-based extension packages are configured with
+scikit-build-core](https://github.com/topics/itk-module).
