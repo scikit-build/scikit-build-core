@@ -490,3 +490,43 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.wheel.exclude == ["xx", "yy", "x", "y"]
         assert settings.install.components == ["c", "d", "a", "b"]
         assert settings.cmake.define == {"a": "A", "b": "B", "c": "C"}
+
+
+@pytest.mark.parametrize("from_sdist", [True, False])
+def test_skbuild_overrides_from_sdist(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, from_sdist: bool
+):
+    pyproject_toml = (
+        tmp_path / ("from_sdist" if from_sdist else "not_from_sdist") / "pyproject.toml"
+    )
+    pyproject_toml.parent.mkdir(exist_ok=True)
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            cmake.version = ">=3.15"
+            wheel.cmake = false
+            sdist.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = false
+            wheel.cmake = true
+
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = true
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    if from_sdist:
+        pyproject_toml.parent.joinpath("PKG-INFO").touch(exist_ok=True)
+
+    monkeypatch.chdir(pyproject_toml.parent)
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, state="wheel")
+    settings = settings_reader.settings
+
+    assert settings.wheel.cmake != from_sdist
+    assert settings.sdist.cmake == from_sdist

@@ -127,6 +127,11 @@ and `metadata_editable`. Takes a regex.
 Note that you can build directly to wheel; you don't have to go through an
 SDist.
 
+### `from-sdist` (bool)
+
+This will be true if the `PKG-INFO` file exists, that is, if this is coming
+from an SDist. Takes a bool.
+
 ## Any matching condition
 
 If you use `if.any` instead of `if`, then the override is true if any one of the
