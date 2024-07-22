@@ -11,6 +11,13 @@ if typing.TYPE_CHECKING:
     from pathlib import Path
 
 
+class VersionInfo(typing.NamedTuple):
+    major: int
+    minor: int
+    micro: int
+    releaselevel: str = "final"
+
+
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
 def test_skbuild_overrides_pyver(
     python_version: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -43,7 +50,37 @@ def test_skbuild_overrides_pyver(
         assert not settings.cmake.args
         assert not settings.cmake.define
         assert not settings.experimental
-        assert not settings.sdist.cmake
+
+
+@pytest.mark.parametrize("implementation_version", ["7.3.14", "7.3.15"])
+def test_skbuild_overrides_implver(
+    implementation_version: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("sys.implementation.name", "pypy")
+    monkeypatch.setattr(
+        "sys.implementation.version",
+        VersionInfo(*(int(x) for x in implementation_version.split("."))),  # type: ignore[arg-type]
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.implementation-name = "pypy"
+            if.implementation-version = ">=7.3.15"
+            experimental = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings = settings_reader.settings
+
+    if implementation_version == "7.3.15":
+        assert settings.experimental
+    else:
+        assert not settings.experimental
 
 
 @pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
@@ -79,6 +116,7 @@ def test_skbuild_overrides_dual(
 
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
+    print(settings_reader.overrides)
 
     if implementation_name == "pypy" and platform_system == "darwin":
         assert not settings.editable.verbose
@@ -530,3 +568,37 @@ def test_skbuild_overrides_from_sdist(
 
     assert settings.wheel.cmake != from_sdist
     assert settings.sdist.cmake == from_sdist
+
+
+def test_failed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            wheel.cmake = false
+            sdist.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.failed = true
+            wheel.cmake = true
+
+            [[tool.scikit-build.overrides]]
+            if.failed = false
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, retry=False)
+    settings = settings_reader.settings
+    assert not settings.wheel.cmake
+    assert settings.sdist.cmake
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, retry=True)
+    settings = settings_reader.settings
+    assert settings.wheel.cmake
+    assert not settings.sdist.cmake

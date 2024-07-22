@@ -7,7 +7,7 @@ import sys
 import sysconfig
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
@@ -15,11 +15,12 @@ from packaging.utils import canonicalize_name
 from .. import __version__
 from .._compat import tomllib
 from .._compat.typing import Literal, assert_never
-from .._logging import logger, rich_print
+from .._logging import LEVEL_VALUE, logger, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..errors import FailedLiveProcessError
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
@@ -123,6 +124,7 @@ def _build_wheel_impl(
 ) -> WheelImplReturn:
     """
     Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
+    Handles one retry attempt if "failed" override present.
     """
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
     if exit_after_config:
@@ -136,9 +138,10 @@ def _build_wheel_impl(
     with pyproject_path.open("rb") as ft:
         pyproject = tomllib.load(ft)
 
-    settings_reader = SettingsReader(pyproject, config_settings or {}, state=state)
-    settings = settings_reader.settings
-    setup_logging(settings.logging.level)
+    settings_reader = SettingsReader(
+        pyproject, config_settings or {}, state=state, retry=False
+    )
+    setup_logging(settings_reader.settings.logging.level)
 
     settings_reader.validate_may_exit()
 
@@ -155,6 +158,56 @@ def _build_wheel_impl(
         logger.warning(
             "ninja should not be in build-system.requires - scikit-build-core will inject it as needed"
         )
+
+    try:
+        return _build_wheel_impl_impl(
+            wheel_directory,
+            metadata_directory,
+            exit_after_config=exit_after_config,
+            editable=editable,
+            state=state,
+            settings=settings_reader.settings,
+            pyproject=pyproject,
+        )
+    except FailedLiveProcessError as err:
+        settings_reader = SettingsReader(
+            pyproject, config_settings or {}, state=state, retry=True
+        )
+        if "failed" not in settings_reader.overrides:
+            raise
+
+        rich_print(
+            f"\n[yellow bold]*** {' '.join(err.args)} - retrying due to override..."
+        )
+
+        logger.setLevel(LEVEL_VALUE[settings_reader.settings.logging.level])
+
+        settings_reader.validate_may_exit()
+
+        return _build_wheel_impl_impl(
+            wheel_directory,
+            metadata_directory,
+            exit_after_config=exit_after_config,
+            editable=editable,
+            state=state,
+            settings=settings_reader.settings,
+            pyproject=pyproject,
+        )
+
+
+def _build_wheel_impl_impl(
+    wheel_directory: str | None,
+    metadata_directory: str | None,
+    *,
+    exit_after_config: bool = False,
+    editable: bool,
+    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
+    settings: ScikitBuildSettings,
+    pyproject: dict[str, Any],
+) -> WheelImplReturn:
+    """
+    Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
+    """
 
     metadata = get_standard_metadata(pyproject, settings)
 

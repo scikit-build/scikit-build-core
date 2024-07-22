@@ -132,6 +132,19 @@ SDist.
 This will be true if the `PKG-INFO` file exists, that is, if this is coming
 from an SDist. Takes a bool.
 
+### `failed` (bool)
+
+This override is a bit special. If a build fails, scikit-build-core will check
+to see if there'a a matching `failed = true` override. If there is, the the build will
+be retried once with the new settings. This can be used to build a pure-Python fallback
+if a build fails, for example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.failed = true
+wheel.cmake = false
+```
+
 ## Any matching condition
 
 If you use `if.any` instead of `if`, then the override is true if any one of the

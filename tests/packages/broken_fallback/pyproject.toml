@@ -1,0 +1,14 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "broken_fallback"
+version = "0.0.1"
+
+[tool.scikit-build]
+wheel.license-files = []
+
+[[tool.scikit-build.overrides]]
+if.failed = true
+wheel.cmake = false

@@ -66,12 +66,12 @@ def regex_match(value: str, match: str) -> str:
 
 def override_match(
     *,
-    match_all: bool,
     current_env: Mapping[str, str] | None,
     current_state: Literal[
         "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
     ],
     has_dist_info: bool,
+    retry: bool,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -81,12 +81,15 @@ def override_match(
     env: dict[str, str] | None = None,
     state: str | None = None,
     from_sdist: bool | None = None,
-) -> bool:
-    # This makes a matches list. A match is a string; if it's an empty string,
-    # then it did not match. If it's not empty, it did match, and the string
-    # will be printed in the logs - it's the match reason. If match_all is True,
-    # then all must match, otherwise any match will count.
-    matches = []
+    failed: bool | None = None,
+) -> tuple[dict[str, str], set[str]]:
+    """
+    Check if the current environment matches the overrides. Returns a dict
+    of passed matches, with reasons for values, and a set of non-matches.
+    """
+
+    passed_dict = {}
+    failed_set: set[str] = set()
 
     if current_env is None:
         current_env = os.environ
@@ -94,12 +97,18 @@ def override_match(
     if python_version is not None:
         current_python_version = ".".join(str(x) for x in sys.version_info[:2])
         match_msg = version_match(current_python_version, python_version, "Python")
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["python-version"] = match_msg
+        else:
+            failed_set.add("python-version")
 
     if implementation_name is not None:
         current_impementation_name = sys.implementation.name
         match_msg = regex_match(current_impementation_name, implementation_name)
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["implementation-name"] = match_msg
+        else:
+            failed_set.add("implementation-name")
 
     if implementation_version is not None:
         info = sys.implementation.version
@@ -110,61 +119,84 @@ def override_match(
         match_msg = version_match(
             version, implementation_version, "Python implementation"
         )
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["implementation-version"] = match_msg
+        else:
+            failed_set.add("implementation-version")
 
     if platform_system is not None:
         current_platform_system = sys.platform
         match_msg = regex_match(current_platform_system, platform_system)
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["platform-system"] = match_msg
+        else:
+            failed_set.add("platform-system")
 
     if platform_machine is not None:
         current_platform_machine = platform.machine()
         match_msg = regex_match(current_platform_machine, platform_machine)
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["platform-machine"] = match_msg
+        else:
+            failed_set.add("platform-machine")
 
     if platform_node is not None:
         current_platform_node = platform.node()
         match_msg = regex_match(current_platform_node, platform_node)
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["platform-node"] = match_msg
+        else:
+            failed_set.add("platform-node")
 
     if state is not None:
         match_msg = regex_match(current_state, state)
-        matches.append(match_msg)
+        if match_msg:
+            passed_dict["state"] = match_msg
+        else:
+            failed_set.add("state")
+
+    if failed is not None:
+        if failed and retry:
+            passed_dict["failed"] = "Previous run failed"
+        elif not failed and not retry:
+            passed_dict["failed"] = "Running on a fresh run"
+        else:
+            failed_set.add("failed")
 
     if from_sdist is not None:
         if has_dist_info:
-            matches.append("from sdist due to PKG-INFO" if from_sdist else "")
+            if from_sdist:
+                passed_dict["from-sdist"] = "from sdist due to PKG-INFO"
+            else:
+                failed_set.add("from-sdist")
+        elif not from_sdist:
+            passed_dict["from-sdist"] = "not from sdist, no PKG-INFO"
         else:
-            matches.append("" if from_sdist else "not from sdist, no PKG-INFO")
+            failed_set.add("from-sdist")
 
     if env:
         for key, value in env.items():
-            if isinstance(value, bool):
-                matches.append(
-                    f"env {key} is {value}"
-                    if strtobool(current_env.get(key, "")) == value
-                    else ""
-                )
-            elif key not in current_env:
-                matches.append("")
+            if key not in current_env:
+                failed_set.add(f"env.{key}")
+            elif isinstance(value, bool):
+                if strtobool(current_env[key]) == value:
+                    passed_dict[f"env.{key}"] = f"env {key} is {value}"
+                else:
+                    failed_set.add(f"env.{key}")
             else:
-                current_value = current_env.get(key, "")
+                current_value = current_env[key]
                 match_msg = regex_match(current_value, value)
-                matches.append(match_msg and f"env {key}: {match_msg}")
 
-    if not matches:
+                if match_msg:
+                    passed_dict[f"env.{key}"] = f"env {key}: {match_msg}"
+                else:
+                    failed_set.add(f"env.{key}")
+
+    if not passed_dict and not failed_set:
         msg = "At least one override must be provided"
         raise ValueError(msg)
 
-    if match_all:
-        matched = all(matches)
-        if matched:
-            logger.info("Overrides {}", " and ".join(matches))
-    else:
-        matched = any(matches)
-        if matched:
-            logger.info("Overrides {}", " or ".join([m for m in matches if m]))
-    return matched
+    return passed_dict, failed_set
 
 
 def _handle_minimum_version(
@@ -273,17 +305,22 @@ def inherit_join(
 
 def process_overides(
     tool_skb: dict[str, Any],
+    *,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
+    retry: bool,
     env: Mapping[str, str] | None = None,
-) -> None:
+) -> set[str]:
     """
     Process overrides into the main dictionary if they match. Modifies the input
     dictionary. Must be run from the package directory.
     """
     has_dist_info = Path("PKG-INFO").is_file()
 
+    global_matched: set[str] = set()
     for override in tool_skb.pop("overrides", []):
-        matched = True
+        passed_any: dict[str, str] | None = None
+        passed_all: dict[str, str] | None = None
+        failed: set[str] = set()
         if_override = override.pop("if", None)
         if not if_override:
             msg = "At least one 'if' override must be provided"
@@ -294,11 +331,11 @@ def process_overides(
         if "any" in if_override:
             any_override = if_override.pop("any")
             select = {k.replace("-", "_"): v for k, v in any_override.items()}
-            matched = override_match(
-                match_all=False,
+            passed_any, _ = override_match(
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
+                retry=retry,
                 **select,
             )
 
@@ -309,14 +346,37 @@ def process_overides(
 
         select = {k.replace("-", "_"): v for k, v in if_override.items()}
         if select:
-            matched = matched and override_match(
-                match_all=True,
+            passed_all, failed = override_match(
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
+                retry=retry,
                 **select,
             )
-        if matched:
+
+        # If no overrides are passed, do nothing
+        if passed_any is None and passed_all is None:
+            continue
+
+        # If normal overrides are passed and one or more fails, do nothing
+        if passed_all is not None and failed:
+            continue
+
+        # If any is passed, at least one always needs to pass.
+        if passed_any is not None and not passed_any:
+            continue
+
+        local_matched = set(passed_any or []) | set(passed_all or [])
+        global_matched |= local_matched
+        if local_matched:
+            all_str = " and ".join(
+                [
+                    *(passed_all or {}).values(),
+                    *([" or ".join(passed_any.values())] if passed_any else []),
+                ]
+            )
+            logger.info("Overrides {}", all_str)
+
             for key, value in override.items():
                 inherit1 = inherit_override.get(key, {})
                 if isinstance(value, dict):
@@ -334,6 +394,7 @@ def process_overides(
                     tool_skb[key] = inherit_join(
                         value, tool_skb.get(key), inherit_override_tmp
                     )
+    return global_matched
 
 
 class SettingsReader:
@@ -348,12 +409,18 @@ class SettingsReader:
         extra_settings: Mapping[str, Any] | None = None,
         verify_conf: bool = True,
         env: Mapping[str, str] | None = None,
+        retry: bool = False,
     ) -> None:
         self.state = state
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        process_overides(pyproject.get("tool", {}).get("scikit-build", {}), state, env)
+        self.overrides = process_overides(
+            pyproject.get("tool", {}).get("scikit-build", {}),
+            state=state,
+            env=env,
+            retry=retry,
+        )
 
         # Support for minimum-version='build-system.requires'
         tmp_min_v = (
@@ -385,7 +452,7 @@ class SettingsReader:
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
-            process_overides(extra_skb, state, env)
+            process_overides(extra_skb, state=state, env=env, retry=retry)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
 
         prefixed = {
@@ -561,6 +628,7 @@ class SettingsReader:
         verify_conf: bool = True,
         extra_settings: Mapping[str, Any] | None = None,
         env: Mapping[str, str] | None = None,
+        retry: bool = False,
     ) -> SettingsReader:
         with Path(pyproject_path).open("rb") as f:
             pyproject = tomllib.load(f)
@@ -572,4 +640,5 @@ class SettingsReader:
             state=state,
             extra_settings=extra_settings,
             env=env,
+            retry=retry,
         )
