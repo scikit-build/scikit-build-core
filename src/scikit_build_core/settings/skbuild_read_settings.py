@@ -628,6 +628,7 @@ class SettingsReader:
         verify_conf: bool = True,
         extra_settings: Mapping[str, Any] | None = None,
         env: Mapping[str, str] | None = None,
+        retry: bool = False,
     ) -> SettingsReader:
         with Path(pyproject_path).open("rb") as f:
             pyproject = tomllib.load(f)
@@ -639,4 +640,5 @@ class SettingsReader:
             state=state,
             extra_settings=extra_settings,
             env=env,
+            retry=retry,
         )
