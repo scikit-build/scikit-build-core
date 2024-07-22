@@ -5,7 +5,8 @@ from textwrap import dedent
 
 import pytest
 
-from scikit_build_core.settings.skbuild_read_settings import SettingsReader, regex_match
+from scikit_build_core.settings.skbuild_overrides import regex_match
+from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 if typing.TYPE_CHECKING:
     from pathlib import Path
