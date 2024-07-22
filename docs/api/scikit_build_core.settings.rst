@@ -57,6 +57,14 @@ scikit\_build\_core.settings.skbuild\_model module
    :undoc-members:
    :show-inheritance:
 
+scikit\_build\_core.settings.skbuild\_overrides module
+------------------------------------------------------
+
+.. automodule:: scikit_build_core.settings.skbuild_overrides
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 scikit\_build\_core.settings.skbuild\_read\_settings module
 -----------------------------------------------------------
 
