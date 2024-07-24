@@ -1,3 +1,9 @@
+"""
+Scikit-build-core's nox configuration.
+
+Use `-t gen` to run all the generation jobs.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -80,7 +86,7 @@ def _run_tests(
     session.run("pytest", *run_args, *posargs, env=env)
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=True, tags=["gen"])
 def generate_schema(session: nox.Session) -> None:
     """
     (Re)generate src/scikit_build_core/resources/scikit-build.schema.json from model.
@@ -102,7 +108,7 @@ def tests(session: nox.Session) -> None:
     _run_tests(session, extras=["test-meta,test-numpy,test-schema,test-hatchling"])
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=True, tags=["gen"])
 def readme(session: nox.Session) -> None:
     """
     Update the readme with cog. Pass --check to check instead.
@@ -160,7 +166,7 @@ def docs(session: nox.Session) -> None:
         session.run("sphinx-build", "--keep-going", *shared_args)
 
 
-@nox.session
+@nox.session(tags=["gen"])
 def build_api_docs(session: nox.Session) -> None:
     """
     Build (regenerate) API docs.

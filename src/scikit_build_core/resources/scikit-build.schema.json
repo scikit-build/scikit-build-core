@@ -431,6 +431,11 @@
       "default": "",
       "description": "The build directory. Defaults to a temporary directory, but can be set."
     },
+    "fail": {
+      "type": "boolean",
+      "default": false,
+      "description": "Immediately fail the build. This is only useful in overrides."
+    },
     "overrides": {
       "type": "array",
       "description": "A list of overrides to apply to the settings, based on the `if` selector.",
@@ -574,6 +579,9 @@
           },
           "build-dir": {
             "$ref": "#/properties/build-dir"
+          },
+          "fail": {
+            "$ref": "#/properties/fail"
           }
         }
       }

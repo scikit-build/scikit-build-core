@@ -33,6 +33,7 @@ def entry_points(*, group: str) -> EntryPoints:
     if sys.version_info < (3, 8) and hasattr(epg, "select"):
         return epg.select(group=group)  # type: ignore[no-any-return, no-untyped-call]
 
+    # pylint: disable-next=no-member
     return epg.get(group, [])
 
 

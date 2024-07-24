@@ -15,7 +15,7 @@ from packaging.utils import canonicalize_name
 from .. import __version__
 from .._compat import tomllib
 from .._compat.typing import Literal, assert_never
-from .._logging import LEVEL_VALUE, logger, rich_print
+from .._logging import LEVEL_VALUE, logger, rich_error, rich_print
 from .._shutil import fix_win_37_all_permissions
 from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
@@ -144,6 +144,9 @@ def _build_wheel_impl(
     setup_logging(settings_reader.settings.logging.level)
 
     settings_reader.validate_may_exit()
+
+    if settings_reader.settings.fail:
+        rich_error("scikit-build-core's fail setting was enabled. Exiting immediately.")
 
     # Warn if cmake or ninja is in build-system.requires
     requirements = [

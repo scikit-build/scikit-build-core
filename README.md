@@ -315,6 +315,9 @@ minimum-version = "0.9"  # current version
 # The build directory. Defaults to a temporary directory, but can be set.
 build-dir = ""
 
+# Immediately fail the build. This is only useful in overrides.
+fail = false
+
 ```
 
 <!-- [[[end]]] -->

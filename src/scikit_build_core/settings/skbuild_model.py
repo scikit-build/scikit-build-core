@@ -331,3 +331,8 @@ class ScikitBuildSettings:
     """
     The build directory. Defaults to a temporary directory, but can be set.
     """
+
+    fail: bool = False
+    """
+    Immediately fail the build. This is only useful in overrides.
+    """
