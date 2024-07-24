@@ -64,7 +64,7 @@ class GetRequires:
         return cls(_load_scikit_build_settings(config_settings))
 
     def cmake(self) -> Generator[str, None, None]:
-        if os.environ.get("CMAKE_EXECUTABLE", ""):
+        if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
             return
 
         cmake_verset = self.settings.cmake.version
@@ -83,8 +83,10 @@ class GetRequires:
 
     def ninja(self) -> Generator[str, None, None]:
         # On Windows MSVC, Ninja is not default
-        if sysconfig.get_platform().startswith("win") and "Ninja" not in os.environ.get(
-            "CMAKE_GENERATOR", ""
+        if (
+            self.settings.fail
+            or sysconfig.get_platform().startswith("win")
+            and "Ninja" not in os.environ.get("CMAKE_GENERATOR", "")
         ):
             return
 
@@ -121,6 +123,9 @@ class GetRequires:
         yield f"ninja{ninja_verset}"
 
     def dynamic_metadata(self) -> Generator[str, None, None]:
+        if self.settings.fail:
+            return
+
         for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:
                 config = dynamic_metadata.copy()

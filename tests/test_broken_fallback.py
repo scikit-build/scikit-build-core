@@ -5,6 +5,7 @@ import pytest
 
 from scikit_build_core.build import (
     build_wheel,
+    get_requires_for_build_wheel,
 )
 
 
@@ -34,3 +35,18 @@ def test_broken_code(broken_define: str, capfd: pytest.CaptureFixture[str]):
     else:
         assert "Broken code" in out
         assert "CMake build failed" in out
+
+
+@pytest.mark.usefixtures("broken_fallback")
+def test_fail_setting(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    monkeypatch.setenv("FAIL_NOW", "1")
+
+    assert get_requires_for_build_wheel({}) == []
+    with pytest.raises(SystemExit) as exc:
+        build_wheel("dist")
+
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "fail setting was enabled" in out

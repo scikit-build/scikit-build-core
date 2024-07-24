@@ -12,3 +12,7 @@ wheel.license-files = []
 [[tool.scikit-build.overrides]]
 if.failed = true
 wheel.cmake = false
+
+[[tool.scikit-build.overrides]]
+if.env.FAIL_NOW = true
+fail = true

@@ -708,6 +708,10 @@ only be used if you enable them:
 experimental = true
 ```
 
+You can also fail the build with `fail = true`. This is useful with overrides if
+you want to make a specific configuration fail. If this is set, extra
+dependencies like `"cmake"` will not be requested.
+
 ## Overrides
 
 The overrides system allows you to customize for a wide variety of situations.
