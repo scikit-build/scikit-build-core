@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import importlib.util
-import shutil
-import sys
 import sysconfig
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,38 +13,20 @@ from scikit_build_core.build import (
 )
 from scikit_build_core.builder.get_requires import GetRequires
 
+if TYPE_CHECKING:
+    from pytest_subprocess import FakeProcess
+
 ninja = [] if sysconfig.get_platform().startswith("win") else ["ninja>=1.5"]
 
 
-def which_mock(name: str) -> str | None:
-    if name in {"ninja", "ninja-build", "cmake3", "samu", "gmake", "make"}:
-        return None
-    if name == "cmake":
-        return "cmake/path"
-    return None
-
-
 @pytest.fixture(autouse=True)
-def protect_get_requires(fp, monkeypatch):
+def protect_get_requires_autouse(protect_get_requires: None):  # noqa: ARG001
     """
-    Protect get_requires from actually calling anything variable during tests.
+    Autouse this fixture in this test.
     """
-    # This needs to be passed due to packaging.tags 22 extra checks if macos 10.16 is reported
-    fp.pass_command([sys.executable, fp.any()])
-    monkeypatch.setattr(shutil, "which", which_mock)
-    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
-
-    orig_find_spec = importlib.util.find_spec
-
-    def find_spec(name: str, package: str | None = None) -> Any:
-        if name in {"cmake", "ninja"}:
-            return None
-        return orig_find_spec(name, package)
-
-    monkeypatch.setattr(importlib.util, "find_spec", find_spec)
 
 
-def test_get_requires_parts(fp):
+def test_get_requires_parts(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -56,7 +35,7 @@ def test_get_requires_parts(fp):
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_parts_uneeded(fp):
+def test_get_requires_parts_uneeded(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
@@ -65,7 +44,7 @@ def test_get_requires_parts_uneeded(fp):
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_parts_settings(fp):
+def test_get_requires_parts_settings(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
@@ -75,7 +54,9 @@ def test_get_requires_parts_settings(fp):
     assert set(GetRequires.from_config_settings(config).ninja()) == {*ninja}
 
 
-def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):
+def test_get_requires_parts_pyproject(
+    fp: FakeProcess, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
@@ -92,7 +73,9 @@ def test_get_requires_parts_pyproject(fp, monkeypatch, tmp_path):
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_parts_pyproject_old(fp, monkeypatch, tmp_path):
+def test_get_requires_parts_pyproject_old(
+    fp: FakeProcess, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
@@ -111,7 +94,7 @@ def test_get_requires_parts_pyproject_old(fp, monkeypatch, tmp_path):
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_for_build_sdist(fp):
+def test_get_requires_for_build_sdist(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -119,7 +102,7 @@ def test_get_requires_for_build_sdist(fp):
     assert set(get_requires_for_build_sdist({})) == set()
 
 
-def test_get_requires_for_build_sdist_cmake(fp):
+def test_get_requires_for_build_sdist_cmake(fp: FakeProcess):
     expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
@@ -128,7 +111,7 @@ def test_get_requires_for_build_sdist_cmake(fp):
     assert set(get_requires_for_build_sdist({"sdist.cmake": "True"})) == expected
 
 
-def test_get_requires_for_build_wheel(fp):
+def test_get_requires_for_build_wheel(fp: FakeProcess):
     expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
@@ -137,7 +120,7 @@ def test_get_requires_for_build_wheel(fp):
     assert set(get_requires_for_build_wheel({})) == expected
 
 
-def test_get_requires_for_build_wheel_pure(fp):
+def test_get_requires_for_build_wheel_pure(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -145,7 +128,7 @@ def test_get_requires_for_build_wheel_pure(fp):
     assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == set()
 
 
-def test_get_requires_for_build_editable(fp):
+def test_get_requires_for_build_editable(fp: FakeProcess):
     expected = {"cmake>=3.15", *ninja}
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
@@ -154,7 +137,7 @@ def test_get_requires_for_build_editable(fp):
     assert set(get_requires_for_build_editable({})) == expected
 
 
-def test_get_requires_for_build_editable_pure(fp):
+def test_get_requires_for_build_editable_pure(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',

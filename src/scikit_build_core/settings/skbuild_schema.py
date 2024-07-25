@@ -124,6 +124,14 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 "type": "boolean",
                 "description": "Matches if the build fails. A build will be retried if there is at least one matching override with this set to true.",
             },
+            "system-cmake": {
+                "type": "string",
+                "description": "The version of CMake found on the system. Takes a specifier set.",
+            },
+            "cmake-wheel": {
+                "type": "boolean",
+                "description": "Whether a cmake wheel is known to be provided for this system.",
+            },
             "env": {
                 "type": "object",
                 "patternProperties": {

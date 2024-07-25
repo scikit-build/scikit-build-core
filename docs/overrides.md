@@ -132,6 +132,38 @@ SDist.
 This will be true if the `PKG-INFO` file exists, that is, if this is coming
 from an SDist. Takes a bool.
 
+### `system-cmake` (version)
+
+This will match if there's a system CMake matching this version specification.
+
+```toml
+[[tool.scikit-build.overrides]]
+if.system-cmake = ">=3.15"
+cmake.version = ""
+message.after-success = "Built using a system CMake, not a wheel"
+```
+
+### `cmake-wheel` (bool)
+
+This matches true if a wheel is known to be provided for this platform, and
+false otherwise.  This is useful for specifying a pure Python fallback on
+systems that don't have provided CMake wheels. Ninja wheels are available on all
+platforms CMake is, so a separate override for Ninja isn't needed. Often
+combined with `system-cmake`.
+
+For example, this would be an optional build only on systems with CMake or
+supported by wheels:
+
+```toml
+[tool.scikit-build]
+wheel.cmake = false
+
+[[tool.scikit-build.overrides]]
+if.any.system-cmake = ">=3.15"
+if.any.cmake-wheel = true
+wheel.cmake = true
+```
+
 ### `failed` (bool)
 
 This override is a bit special. If a build fails, scikit-build-core will check

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import sysconfig
 from pathlib import Path
+from typing import Any
 
 import virtualenv as _virtualenv
 
@@ -331,6 +332,34 @@ def package_simple_purelib_package(
     )
     process_package(package, tmp_path, monkeypatch)
     return package
+
+
+def which_mock(name: str) -> str | None:
+    if name in {"ninja", "ninja-build", "cmake3", "samu", "gmake", "make"}:
+        return None
+    if name == "cmake":
+        return "cmake/path"
+    return None
+
+
+@pytest.fixture()
+def protect_get_requires(fp, monkeypatch):
+    """
+    Protect get_requires from actually calling anything variable during tests.
+    """
+    # This needs to be passed due to packaging.tags 22 extra checks if macos 10.16 is reported
+    fp.pass_command([sys.executable, fp.any()])
+    monkeypatch.setattr(shutil, "which", which_mock)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
+
+    orig_find_spec = importlib.util.find_spec
+
+    def find_spec(name: str, package: str | None = None) -> Any:
+        if name in {"cmake", "ninja"}:
+            return None
+        return orig_find_spec(name, package)
+
+    monkeypatch.setattr(importlib.util, "find_spec", find_spec)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import typing
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -9,7 +10,7 @@ from scikit_build_core.settings.skbuild_overrides import regex_match
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 if typing.TYPE_CHECKING:
-    from pathlib import Path
+    from pytest_subprocess import FakeProcess
 
 
 class VersionInfo(typing.NamedTuple):
@@ -603,3 +604,65 @@ def test_failed_retry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     settings = settings_reader.settings
     assert settings.wheel.cmake
     assert not settings.sdist.cmake
+
+
+@pytest.mark.parametrize("sys_tag", ["win32", "linux"])
+def test_wheel_platform(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, sys_tag: str):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            wheel.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.cmake-wheel = true
+            wheel.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+
+    monkeypatch.setattr("packaging.tags.sys_tags", lambda: [sys_tag])
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, retry=False)
+    settings = settings_reader.settings
+    assert settings.wheel.cmake == (sys_tag == "win32")
+
+
+@pytest.mark.parametrize("cmake_version", ["3.21", "3.27"])
+@pytest.mark.usefixtures("protect_get_requires")
+def test_system_cmake(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cmake_version: str | None,
+    fp: FakeProcess,
+) -> None:
+    if cmake_version:
+        fp.register(
+            [Path("cmake/path"), "-E", "capabilities"],
+            stdout=f'{{"version":{{"string": "{cmake_version}"}}}}',
+        )
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            wheel.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.system-cmake = ">=3.24"
+            wheel.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.chdir(tmp_path)
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, retry=False)
+    settings = settings_reader.settings
+    assert settings.wheel.cmake == (cmake_version == "3.27")

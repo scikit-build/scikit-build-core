@@ -14,8 +14,8 @@ known-wheels = [
     "manylinux_2_17_aarch64",
     "manylinux_2_17_x86_64",
     "manylinux_2_17_i686",
-    "manylinux_2_5_x86_64",
-    "manylinux_2_5_i686",
+    "manylinux_2_12_x86_64",
+    "manylinux_2_12_i686",
 ]
 
 [tool.scikit-build.ninja]
