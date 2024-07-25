@@ -38,6 +38,18 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     exposed_symlink = dir / "exposed_symlink"
     exposed_symlink.symlink_to("../hidden_dir")
 
+    local_ignored_file = Path("local_ignored_file.txt")
+    Path(".git/info").mkdir(parents=True)
+    Path(".git/info/exclude").write_text(f"{local_ignored_file}\n")
+
+    nested_dir = Path("nested_dir")
+    nested_dir.mkdir()
+    nested_dir.joinpath("not_ignored.txt").write_text("content")
+    nested_dir.joinpath("ignored.txt").write_text("content")
+    nested_dir.joinpath(".gitignore").write_text("ignored.txt")
+    nested_dir.joinpath("more").mkdir()
+    nested_dir.joinpath("more/ignored.txt").write_text("content")
+
     if (
         sys.platform.startswith("win")
         and not exposed_symlink.joinpath("file2").is_file()
@@ -45,9 +57,11 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         pytest.skip("Windows symlink support not available")
 
     # Test that each_unignored_file() follows the symlink
-    assert sorted(each_unignored_file(Path())) == [
+    assert set(each_unignored_file(Path())) == {
         gitignore,
         exposed_symlink / "file2",
         file1,
         file2,
-    ]
+        nested_dir / "not_ignored.txt",
+        nested_dir / ".gitignore",
+    }
