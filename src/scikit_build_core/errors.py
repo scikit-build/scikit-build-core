@@ -76,6 +76,10 @@ class FailedLiveProcessError(Exception):
     Exception for when output was not being redirected.
     """
 
+    def __init__(self, *args: object, msg: str = "") -> None:
+        super().__init__(*args)
+        self.msg = msg
+
 
 class CMakeAccessError(FailedProcessError):
     """

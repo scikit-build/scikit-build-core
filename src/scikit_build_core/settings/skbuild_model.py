@@ -9,12 +9,13 @@ from .._compat.typing import Annotated, Literal
 
 __all__ = [
     "BackportSettings",
+    "BuildSettings",
     "CMakeSettings",
     "EditableSettings",
     "GenerateSettings",
     "InstallSettings",
-    "BuildSettings",
     "LoggingSettings",
+    "MessagesSettings",
     "NinjaSettings",
     "SDistSettings",
     "ScikitBuildSettings",
@@ -294,6 +295,23 @@ class GenerateSettings:
 
 
 @dataclasses.dataclass
+class MessagesSettings:
+    """
+    Settings for messages.
+    """
+
+    after_failure: str = ""
+    """
+    A message to print after a build failure.
+    """
+
+    after_success: str = ""
+    """
+    A message to print after a successful build.
+    """
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -305,6 +323,7 @@ class ScikitBuildSettings:
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
     generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
+    messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
 
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     """

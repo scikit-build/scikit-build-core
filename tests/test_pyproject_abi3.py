@@ -19,7 +19,7 @@ SYSCONFIGPLAT = sysconfig.get_platform()
     sysconfig.get_platform().startswith(("msys", "mingw")),
     reason="abi3 FindPython on MSYS/MinGW reports not found",
 )
-def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
+def test_abi3_wheel(tmp_path, monkeypatch, virtualenv, capsys):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(ABI_PKG)
@@ -29,6 +29,8 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         shutil.rmtree("build")
 
     out = build_wheel(str(dist))
+    stdout, stderr = capsys.readouterr()
+    assert "This is a message after success" in stdout
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
     assert wheel == dist / out
     abi3 = sys.implementation.name == "cpython" and not sysconfig.get_config_var(

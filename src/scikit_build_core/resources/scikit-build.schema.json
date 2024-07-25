@@ -360,6 +360,22 @@
         ]
       }
     },
+    "messages": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "after-failure": {
+          "type": "string",
+          "default": "",
+          "description": "A message to print after a build failure."
+        },
+        "after-success": {
+          "type": "string",
+          "default": "",
+          "description": "A message to print after a successful build."
+        }
+      }
+    },
     "metadata": {
       "type": "object",
       "description": "List dynamic metadata fields and hook locations in this table.",
@@ -564,6 +580,9 @@
           },
           "generate": {
             "$ref": "#/properties/generate"
+          },
+          "messages": {
+            "$ref": "#/properties/messages"
           },
           "metadata": {
             "$ref": "#/properties/metadata"

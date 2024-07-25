@@ -299,6 +299,12 @@ generate[].template-path = ""
 # files & remember to gitignore the file.
 generate[].location = "install"
 
+# A message to print after a build failure.
+messages.after-failure = ""
+
+# A message to print after a successful build.
+messages.after-success = ""
+
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 
