@@ -7,9 +7,14 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import packaging.tags
 from packaging.specifiers import SpecifierSet
 
+from .._compat import tomllib
 from .._logging import logger
+from ..cmake import CMake
+from ..errors import CMakeNotFoundError
+from ..resources import resources
 
 __all__ = ["process_overides", "regex_match"]
 
@@ -69,6 +74,8 @@ def override_match(
     state: str | None = None,
     from_sdist: bool | None = None,
     failed: bool | None = None,
+    system_cmake: str | None = None,
+    cmake_wheel: bool | None = None,
 ) -> tuple[dict[str, str], set[str]]:
     """
     Check if the current environment matches the overrides. Returns a dict
@@ -160,6 +167,29 @@ def override_match(
             passed_dict["from-sdist"] = "not from sdist, no PKG-INFO"
         else:
             failed_set.add("from-sdist")
+
+    if system_cmake is not None:
+        try:
+            cmake = CMake.default_search(
+                version=SpecifierSet(system_cmake), module=False, env=current_env
+            )
+            passed_dict["system-cmake"] = (
+                f"system cmake {cmake.version} found at {cmake.cmake_path} passing {system_cmake}"
+            )
+        except CMakeNotFoundError:
+            failed_set.add("system-cmake")
+
+    if cmake_wheel is not None:
+        with resources.joinpath("known_wheels.toml").open("rb") as f:
+            known_wheels_toml = tomllib.load(f)
+        known_cmake_wheels = set(
+            known_wheels_toml["tool"]["scikit-build"]["cmake"]["known-wheels"]
+        )
+        cmake_plat = known_cmake_wheels.intersection(packaging.tags.sys_tags())
+        if cmake_plat:
+            passed_dict["cmake-wheel"] = f"cmake wheel available on {cmake_plat}"
+        else:
+            failed_set.add("cmake-wheel")
 
     if env:
         for key, value in env.items():
