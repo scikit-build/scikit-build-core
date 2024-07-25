@@ -50,3 +50,22 @@ def test_fail_setting(
     assert exc.value.code == 7
     out, _ = capsys.readouterr()
     assert "fail setting was enabled" in out
+
+
+@pytest.mark.usefixtures("broken_fallback")
+def test_fail_setting_msg(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    monkeypatch.setenv("FAIL_NOW", "1")
+    monkeypatch.setenv(
+        "SKBUILD_MESSAGES_AFTER_FAILURE", "This is a test failure message"
+    )
+
+    assert get_requires_for_build_wheel({}) == []
+    with pytest.raises(SystemExit) as exc:
+        build_wheel("dist")
+
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "This is a test failure message" in out
+    assert "fail setting was enabled" not in out

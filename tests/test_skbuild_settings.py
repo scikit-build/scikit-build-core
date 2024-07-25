@@ -68,6 +68,8 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.install.strip
     assert settings.generate == []
     assert not settings.fail
+    assert settings.messages.after_failure == ""
+    assert settings.messages.after_success == ""
 
 
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -106,6 +108,12 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_INSTALL_COMPONENTS", "a;b;c")
     monkeypatch.setenv("SKBUILD_INSTALL_STRIP", "False")
     monkeypatch.setenv("SKBUILD_FAIL", "1")
+    monkeypatch.setenv(
+        "SKBUILD_MESSAGES_AFTER_FAILURE", "This is a test failure message"
+    )
+    monkeypatch.setenv(
+        "SKBUILD_MESSAGES_AFTER_SUCCESS", "This is a test success message"
+    )
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
@@ -149,6 +157,8 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.install.components == ["a", "b", "c"]
     assert not settings.install.strip
     assert settings.fail
+    assert settings.messages.after_failure == "This is a test failure message"
+    assert settings.messages.after_success == "This is a test success message"
 
 
 @pytest.mark.parametrize("prefix", [True, False], ids=["skbuild", "noprefix"])
@@ -196,6 +206,8 @@ def test_skbuild_settings_config_settings(
         "install.components": ["a", "b", "c"],
         "install.strip": "True",
         "fail": "1",
+        "messages.after-failure": "This is a test failure message",
+        "messages.after-success": "This is a test success message",
     }
 
     if prefix:
@@ -238,6 +250,8 @@ def test_skbuild_settings_config_settings(
     assert settings.install.components == ["a", "b", "c"]
     assert settings.install.strip
     assert settings.fail
+    assert settings.messages.after_failure == "This is a test failure message"
+    assert settings.messages.after_success == "This is a test success message"
 
 
 def test_skbuild_settings_pyproject_toml(
@@ -284,6 +298,8 @@ def test_skbuild_settings_pyproject_toml(
             install.components = ["a", "b", "c"]
             install.strip = true
             fail = true
+            messages.after-failure = "This is a test failure message"
+            messages.after-success = "This is a test success message"
             [[tool.scikit-build.generate]]
             path = "a/b/c"
             template = "hello"
@@ -341,6 +357,8 @@ def test_skbuild_settings_pyproject_toml(
         ),
     ]
     assert settings.fail
+    assert settings.messages.after_failure == "This is a test failure message"
+    assert settings.messages.after_success == "This is a test success message"
 
 
 def test_skbuild_settings_pyproject_toml_broken(

@@ -672,6 +672,29 @@ On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
 
 :::
 
+## Messages
+
+You can add a message to be printed after a successful or failed build. For example:
+
+```toml
+[tool.scikit-build]
+messages.after-sucesss = "[green]Wheel successfully built"
+messages.after-failure = """
+[red bold]Sorry[/bold], build failed.
+"""
+```
+
+This will be run through Python's formatter, so escape curly brackets. There
+currently are no items provided in the format call, but some may be added in the
+future if requested.
+
+A small mini-language for colorization using `[]` is also provided somewhat
+similar to [Rich](https://rich.readthedocs.io). Supported keywords inside the
+square brackets are `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, and
+`bold`.  These can be reset with a proceeding `/`. `reset` is also supported.
+Unsupported options will be ignored, but keep in mind other keywords from Rich
+might be added in the future.
+
 ## Other options
 
 You can select a custom build dir; by default scikit-build-core will use a

@@ -111,6 +111,7 @@ def _get_packages(
 @dataclasses.dataclass
 class WheelImplReturn:
     wheel_filename: str
+    settings: ScikitBuildSettings
     mapping: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
@@ -146,6 +147,9 @@ def _build_wheel_impl(
     settings_reader.validate_may_exit()
 
     if settings_reader.settings.fail:
+        if settings_reader.settings.messages.after_failure:
+            rich_print(settings_reader.settings.messages.after_failure.format())
+            raise SystemExit(7)
         rich_error("scikit-build-core's fail setting was enabled. Exiting immediately.")
 
     # Warn if cmake or ninja is in build-system.requires
@@ -177,6 +181,7 @@ def _build_wheel_impl(
             pyproject, config_settings or {}, state=state, retry=True
         )
         if "failed" not in settings_reader.overrides:
+            err.msg = settings_reader.settings.messages.after_failure.format()
             raise
 
         rich_print(
@@ -187,15 +192,19 @@ def _build_wheel_impl(
 
         settings_reader.validate_may_exit()
 
-        return _build_wheel_impl_impl(
-            wheel_directory,
-            metadata_directory,
-            exit_after_config=exit_after_config,
-            editable=editable,
-            state=state,
-            settings=settings_reader.settings,
-            pyproject=pyproject,
-        )
+        try:
+            return _build_wheel_impl_impl(
+                wheel_directory,
+                metadata_directory,
+                exit_after_config=exit_after_config,
+                editable=editable,
+                state=state,
+                settings=settings_reader.settings,
+                pyproject=pyproject,
+            )
+        except FailedLiveProcessError as err2:
+            err2.msg = settings_reader.settings.messages.after_failure.format()
+            raise
 
 
 def _build_wheel_impl_impl(
@@ -343,7 +352,7 @@ def _build_wheel_impl_impl(
                 if not path.parent.is_dir():
                     path.parent.mkdir(exist_ok=True, parents=True)
                 path.write_bytes(data)
-            return WheelImplReturn(wheel_filename=dist_info.name)
+            return WheelImplReturn(wheel_filename=dist_info.name, settings=settings)
 
         for gen in settings.generate:
             contents = generate_file_contents(gen, metadata)
@@ -390,7 +399,7 @@ def _build_wheel_impl_impl(
             )
 
             if exit_after_config:
-                return WheelImplReturn("")
+                return WheelImplReturn("", settings=settings)
 
             default_gen = (
                 "MSVC"
@@ -486,4 +495,8 @@ def _build_wheel_impl_impl(
 
     wheel_filename: str = wheel.wheelpath.name
     rich_print(f"[green]***[/green] [bold]Created[/bold] {wheel_filename}...")
-    return WheelImplReturn(wheel_filename=wheel_filename, mapping=mapping)
+    if settings.messages.after_success:
+        rich_print(settings.messages.after_success.format())
+    return WheelImplReturn(
+        wheel_filename=wheel_filename, mapping=mapping, settings=settings
+    )
