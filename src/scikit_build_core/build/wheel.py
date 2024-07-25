@@ -202,8 +202,8 @@ def _build_wheel_impl(
                 settings=settings_reader.settings,
                 pyproject=pyproject,
             )
-        except FailedLiveProcessError as err:
-            err.msg = settings_reader.settings.messages.after_failure.format()
+        except FailedLiveProcessError as err2:
+            err2.msg = settings_reader.settings.messages.after_failure.format()
             raise
 
 
