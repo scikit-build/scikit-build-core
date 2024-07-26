@@ -565,7 +565,8 @@ You can set a custom regex with `regex=`. By default when targeting version, you
 get a reasonable regex for python files,
 `'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`.
 You can set `result` to a format string to process the matches; the default is
-`"{value}"`. A more complex example:
+`"{value}"`. You can also specify a regex for `remove=` which will strip any
+matches from the final result. A more complex example:
 
 ```toml
 [tool.scikit-build.metadata.version]
@@ -574,13 +575,22 @@ input = "src/mypackage/version.hpp"
 regex = '''(?sx)
 \#define \w+ VERSION_MAJOR \w+ (?P<major>\d+) .*?
 \#define \w+ VERSION_MINOR \w+ (?P<minor>\d+) .*?
-\#define \w+ VERSION_PATCH \w+ (?P<patch>\d+)
+\#define \w+ VERSION_PATCH \w+ (?P<patch>\d+) .*?
+\#define \w+ VERSION_DEV \w+ (?P<dev>\d+) .*?
 '''
-result = "{major}.{minor}.{patch}"
+result = "{major}.{minor}.{patch}dev{dev}"
+remove = "dev0"
 ```
+
+This will remove the "dev" tag when it is equal to 0.
 
 ```{versionadded} 0.5
 
+```
+
+```{versionchanged} 0.10
+
+Support for `result` and `remove` added.
 ```
 
 :::
