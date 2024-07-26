@@ -308,3 +308,42 @@ def test_multipart_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     assert version == "1.2.3dev1"
+
+
+@pytest.mark.parametrize("dev", [0, 1])
+def test_regex_remove(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, dev: int
+) -> None:
+    d = tmp_path / "test_multidev_regex"
+    d.mkdir()
+    monkeypatch.chdir(d)
+
+    with Path("version.hpp").open("w") as f:
+        f.write(
+            textwrap.dedent(
+                f"""\
+                #define VERSION_MAJOR 1
+                // Comment
+                #define VERSION_MINOR 2
+                #define VERSION_PATCH 3
+                #define VERSION_DEV {dev}
+                """
+            )
+        )
+
+    version = regex.dynamic_metadata(
+        "version",
+        {
+            "input": "version.hpp",
+            "regex": r"""(?sx)
+            \#define \s+ VERSION_MAJOR \s+ (?P<major>\d+) .*?
+            \#define \s+ VERSION_MINOR \s+ (?P<minor>\d+) .*?
+            \#define \s+ VERSION_PATCH \s+ (?P<patch>\d+) .*?
+            \#define \s+ VERSION_DEV \s+ (?P<dev>\d+)
+            """,
+            "result": "{major}.{minor}.{patch}dev{dev}",
+            "remove": r"dev0",
+        },
+    )
+
+    assert version == "1.2.3dev1" if dev else "1.2.3"

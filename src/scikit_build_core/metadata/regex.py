@@ -14,7 +14,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-KEYS = {"input", "regex", "result"}
+KEYS = {"input", "regex", "result", "remove"}
 
 
 def dynamic_metadata(
@@ -46,6 +46,7 @@ def dynamic_metadata(
     )
     result = settings.get("result", "{value}")
     assert isinstance(result, str)
+    remove = settings.get("result", "")
 
     with Path(input_filename).open(encoding="utf-8") as f:
         match = re.search(regex, f.read(), re.MULTILINE)
@@ -54,4 +55,7 @@ def dynamic_metadata(
         msg = f"Couldn't find {regex!r} in {input_filename}"
         raise RuntimeError(msg)
 
-    return result.format(*match.groups(), **match.groupdict())
+    retval = result.format(*match.groups(), **match.groupdict())
+    if remove:
+        retval = re.sub(remove, "", retval)
+    return retval
