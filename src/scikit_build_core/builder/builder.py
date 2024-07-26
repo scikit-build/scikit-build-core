@@ -159,7 +159,9 @@ class Builder:
             canonical_name = name.replace("-", "_").replace(".", "_")
             cache_config["SKBUILD_PROJECT_NAME"] = canonical_name
         if version is not None:
-            cache_config["SKBUILD_PROJECT_VERSION"] = version.base_version
+            cache_config["SKBUILD_PROJECT_VERSION"] = ".".join(
+                str(v) for v in version.release
+            )
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
         if limited_api is None:
