@@ -80,7 +80,9 @@ def get_cmake_program(cmake_path: Path) -> Program:
     try:
         result = Run().capture(cmake_path, "-E", "capabilities")
         try:
-            version = Version(json.loads(result.stdout)["version"]["string"])
+            version = Version(
+                json.loads(result.stdout)["version"]["string"].split("-")[0]
+            )
             logger.info("CMake version: {}", version)
             return Program(cmake_path, version)
         except (json.decoder.JSONDecodeError, KeyError, InvalidVersion):
