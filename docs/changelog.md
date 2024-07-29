@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.9.9
+
+This release backports a couple of fixes made during work towards 0.10.
+
+Fixes:
+
+- Regression for `'-'` in version name by @henryiii in #834
+- Strip epoch from `SKBUILD_PROJECT_VERSION` by @henryiii in #829
+
+**Full Changelog**: https://github.com/scikit-build/scikit-build-core/compare/v0.9.8...v0.9.9
+
 ## Version 0.9.8
 
 This version ships a few more small fixes. Multi-target builds were missing
