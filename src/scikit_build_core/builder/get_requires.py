@@ -34,6 +34,21 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _uses_ninja_generator(settings: ScikitBuildSettings) -> bool | None:
+    """
+    Returns True if Ninja is set, False if something else is set, and None
+    otherwise.
+    """
+    gen_args = [arg[2:] for arg in settings.cmake.args if arg.startswith("-G")]
+    if gen_args:
+        return any("Ninja" in gen for gen in gen_args)
+
+    if "CMAKE_GENERATOR" in os.environ:
+        return "Ninja" in os.environ["CMAKE_GENERATOR"]
+
+    return None
+
+
 @functools.lru_cache(maxsize=2)
 def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:
     with resources.joinpath("known_wheels.toml").open("rb") as f:
@@ -82,16 +97,17 @@ class GetRequires:
         logger.debug("Found system CMake: {} - not requiring PyPI package", cmake)
 
     def ninja(self) -> Generator[str, None, None]:
+        # Check to see if Ninja is clearly not used
+        use_ninja = _uses_ninja_generator(self.settings)
+        if use_ninja is False:
+            return
+
         # On Windows MSVC, Ninja is not default
         if (
             self.settings.fail
             or sysconfig.get_platform().startswith("win")
-            and "Ninja" not in os.environ.get("CMAKE_GENERATOR", "")
+            and use_ninja is None
         ):
-            return
-
-        # If something besides Windows is set, don't add ninja
-        if "Ninja" not in os.environ.get("CMAKE_GENERATOR", "Ninja"):
             return
 
         # If CMAKE_MAKE_PROGRAM is set, don't add anything, someone already knows what they want
