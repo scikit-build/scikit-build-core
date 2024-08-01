@@ -142,12 +142,13 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[List[str]] = None
+    packages: Optional[Union[List[str], Dict[str, str]]] = None
     """
     A list of packages to auto-copy into the wheel. If this is not set, it will
     default to the first of ``src/<package>``, ``python/<package>``, or
     ``<package>`` if they exist.  The prefix(s) will be stripped from the
-    package name inside the wheel.
+    package name inside the wheel. If a dict, provides a mapping of package
+    name to source directory.
     """
 
     py_api: str = ""

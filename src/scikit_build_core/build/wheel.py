@@ -6,6 +6,7 @@ import shutil
 import sys
 import sysconfig
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -86,21 +87,23 @@ def _make_editable(
 
 def _get_packages(
     *,
-    packages: Sequence[str] | None,
+    packages: Sequence[str] | Mapping[str, str] | None,
     name: str,
-) -> list[str]:
+) -> dict[str, str]:
     if packages is not None:
-        return list(packages)
+        if isinstance(packages, Mapping):
+            return dict(packages)
+        return {str(Path(p).name): p for p in packages}
 
     # Auto package discovery
-    packages = []
+    packages = {}
     for base_path in (Path("src"), Path("python"), Path()):
         path = base_path / name
         if path.is_dir() and (
             (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
         ):
             logger.info("Discovered Python package at {}", path)
-            packages += [str(path)]
+            packages[name] = str(path)
             break
     else:
         logger.debug("Didn't find a Python package for {}", name)

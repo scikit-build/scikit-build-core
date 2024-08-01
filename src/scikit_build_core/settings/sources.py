@@ -36,6 +36,7 @@ When setting up your dataclasses, these types are handled:
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
 - ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms. T can be a dataclass (TOML only).
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
+- ``Union[list[T], Dict[str, T]]`` (TOML only): A list or dict of items.
 - ``Literal[...]``: A list of strings, the result must be in the list.
 - ``Annotated[Dict[...], "EnvVar"]``: A dict of items, where each item can be a string or a dict with "env" and "default" keys.
 
@@ -246,6 +247,9 @@ class EnvSource:
 
     @classmethod
     def convert(cls, item: str, target: type[Any]) -> object:
+        """
+        Convert an item from the environment (always a string) into a target type.
+        """
         target, _ = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
@@ -264,6 +268,23 @@ class EnvSource:
 
         if raw_target is Union and str in get_args(target):
             return item
+
+        if raw_target is Union:
+            args = {_get_target_raw_type(t): t for t in get_args(target)}
+            if str in args:
+                return item
+            if dict in args and "=" in item:
+                items = (i.strip().split("=") for i in item.split(";"))
+                return {
+                    k: cls.convert(v, _get_inner_type(args[dict])) for k, v in items
+                }
+            if list in args:
+                return [
+                    cls.convert(i.strip(), _get_inner_type(args[list]))
+                    for i in item.split(";")
+                ]
+            msg = f"Can't convert into {target}"
+            raise TypeError(msg)
 
         if raw_target is Literal:
             if item not in get_args(_process_union(target)):
@@ -376,7 +397,7 @@ class ConfSource:
             if isinstance(item, list):
                 return [cls.convert(i, _get_inner_type(target)) for i in item]
             if isinstance(item, (dict, bool)):
-                msg = f"Expected {target}, got {type(item).__name__}"
+                msg = f"Expected {target}, got {type(item)}"
                 raise TypeError(msg)
             return [
                 cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
@@ -384,13 +405,24 @@ class ConfSource:
         if raw_target is dict:
             assert not isinstance(item, (str, list, bool))
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+        if raw_target is Union:
+            args = {_get_target_raw_type(t): t for t in get_args(target)}
+            if str in args:
+                return item
+            if dict in args and isinstance(item, dict):
+                return {
+                    k: cls.convert(v, _get_inner_type(args[dict]))
+                    for k, v in item.items()
+                }
+            if list in args and isinstance(item, list):
+                return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+            msg = f"Can't convert into {target}"
+            raise TypeError(msg)
         if isinstance(item, (list, dict)):
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is bool:
             return item if isinstance(item, bool) else _process_bool(item)
-        if raw_target is Union and str in get_args(target):
-            return item
         if raw_target is Literal:
             if item not in get_args(_process_union(target)):
                 msg = f"{item!r} not in {get_args(_process_union(target))!r}"
@@ -453,6 +485,9 @@ class TOMLSource:
 
     @classmethod
     def convert(cls, item: Any, target: type[Any]) -> object:
+        """
+        Convert an ``item`` from TOML into a ``target`` type.
+        """
         target, annotations = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
@@ -482,8 +517,17 @@ class TOMLSource:
             return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
             return item
-        if raw_target is Union and type(item) in get_args(target):
-            return item
+        if raw_target is Union:
+            args = {_get_target_raw_type(t): t for t in get_args(target)}
+            if type(item) in args:
+                if isinstance(item, dict):
+                    return {
+                        k: cls.convert(v, _get_inner_type(args[dict]))
+                        for k, v in item.items()
+                    }
+                if isinstance(item, list):
+                    return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+                return item
         if raw_target is Literal:
             if item not in get_args(_process_union(target)):
                 msg = f"{item!r} not in {get_args(_process_union(target))!r}"

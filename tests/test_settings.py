@@ -31,6 +31,7 @@ class SettingChecker:
     literal: Literal["one", "two", "three"] = "one"
     # TOML only
     ten: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    eleven: Optional[Union[List[str], Dict[str, str]]] = None
 
 
 def test_empty(monkeypatch):
@@ -70,6 +71,7 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SKBUILD_SEVEN", "7")
     monkeypatch.setenv("SKBUILD_EIGHT", "thing=8;thought=9")
     monkeypatch.setenv("SKBUILD_NINE", "thing=8")
+    monkeypatch.setenv("SKBUILD_ELEVEN", "one;two")
     monkeypatch.setenv("SKBUILD_LITERAL", "two")
 
     sources = SourceChain(
@@ -89,7 +91,25 @@ def test_env(monkeypatch):
     assert settings.seven == 7
     assert settings.eight == {"thing": "8", "thought": "9"}
     assert settings.nine == {"thing": 8}
+    assert settings.eleven == ["one", "two"]
     assert settings.literal == "two"
+
+
+def test_env_union(monkeypatch):
+    monkeypatch.setenv("SKBUILD_ZERO", "zero")
+    monkeypatch.setenv("SKBUILD_ONE", "one")
+    monkeypatch.setenv("SKBUILD_TWO", "2")
+    monkeypatch.setenv("SKBUILD_THREE", "three")
+    monkeypatch.setenv("SKBUILD_ELEVEN", "a=one;b=two")
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingChecker)
+
+    assert settings.eleven == {"a": "one", "b": "two"}
 
 
 def test_conf():
@@ -105,6 +125,7 @@ def test_conf():
         "eight.foo": "one",
         "eight.bar": "two",
         "nine.thing": "8",
+        "eleven": ["one", "two"],
         "literal": "three",
     }
 
@@ -141,6 +162,7 @@ def test_toml():
         "eight": {"one": "one", "two": "two", "bool": False},
         "nine": {"thing": 8},
         "ten": {"a": {"b": 3}},
+        "eleven": ["one", "two"],
         "literal": "three",
     }
 
@@ -162,7 +184,27 @@ def test_toml():
     assert settings.eight == {"one": "one", "two": "two", "bool": False}
     assert settings.nine == {"thing": 8}
     assert settings.ten == {"a": {"b": 3}}
+    assert settings.eleven == ["one", "two"]
     assert settings.literal == "three"
+
+
+def test_toml_union():
+    toml_settings = {
+        "zero": "zero",
+        "one": "one",
+        "two": 2,
+        "three": ["three"],
+        "eleven": {"a": "one", "b": "two"},
+    }
+
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings={}),
+        TOMLSource(settings=toml_settings),
+    )
+    settings = sources.convert_target(SettingChecker)
+
+    assert settings.eleven == {"a": "one", "b": "two"}
 
 
 def test_all_names():

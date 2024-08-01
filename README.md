@@ -212,7 +212,8 @@ sdist.cmake = false
 # A list of packages to auto-copy into the wheel. If this is not set, it will
 # default to the first of ``src/<package>``, ``python/<package>``, or
 # ``<package>`` if they exist.  The prefix(s) will be stripped from the package
-# name inside the wheel.
+# name inside the wheel. If a dict, provides a mapping of package name to source
+# directory.
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 
 # The Python tags. The default (empty string) will use the default Python
