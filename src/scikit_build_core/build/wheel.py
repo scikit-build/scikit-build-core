@@ -460,7 +460,9 @@ def _build_wheel_impl_impl(
         ) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 
-            str_pkgs = (str(Path.cwd().joinpath(p).parent.resolve()) for p in packages)
+            str_pkgs = (
+                str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()
+            )
             if editable and settings.editable.mode == "redirect":
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 

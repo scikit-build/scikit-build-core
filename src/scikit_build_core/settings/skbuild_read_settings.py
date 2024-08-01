@@ -205,6 +205,13 @@ class SettingsReader:
                 )
                 raise CMakeConfigError(msg)
 
+        if isinstance(self.settings.wheel.packages, dict):
+            for key, value in self.settings.wheel.packages.items():
+                if Path(key).name != Path(value).name:
+                    rich_error(
+                        "wheel.packages table must match in the last component of the paths"
+                    )
+
         if self.settings.editable.rebuild:
             if self.settings.editable.mode == "inplace":
                 rich_error("editable rebuild is incompatible with inplace mode")
