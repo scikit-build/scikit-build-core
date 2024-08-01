@@ -7,6 +7,8 @@ import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import packaging.tags
+
 from .._logging import logger, rich_print
 
 if TYPE_CHECKING:
@@ -187,9 +189,15 @@ def get_numpy_include_dir() -> Path | None:
 
 def get_abi_flags() -> str:
     """
-    Return the ABI flags for the current Python interpreter.
+    Return the ABI flags for the current Python interpreter. Derived from
+    ``packaging.tags.sys_tags()`` since that works on Windows.
     """
-    return "".join(sorted(sysconfig.get_config_var("ABIFLAGS"))) or ""
+
+    most_compatible = next(iter(packaging.tags.sys_tags()))
+    full_abi = most_compatible.abi
+    vers = packaging.tags.interpreter_version()
+    abi_flags = full_abi[full_abi.find(vers) + len(vers) :]
+    return "".join(sorted(abi_flags))
 
 
 def info_print(*, color: str = "") -> None:
@@ -216,6 +224,7 @@ def info_print(*, color: str = "") -> None:
     rich_print(
         f"[bold {color}]Detected ABI3 SOABI:[/bold] {get_soabi(os.environ, abi3=True)}"
     )
+    rich_print(f"[bold {color}Detected ABI flags:[/bold] {get_abi_flags()}")
 
 
 if __name__ == "__main__":
