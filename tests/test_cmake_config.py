@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import os.path
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,7 +16,7 @@ from scikit_build_core.errors import CMakeNotFoundError
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-DIR = Path(__file__).parent.resolve()
+DIR = Path(os.path.expandvars(__file__)).parent.resolve()
 
 
 def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
