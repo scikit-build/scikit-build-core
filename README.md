@@ -63,8 +63,8 @@ features over classic Scikit-build:
   soon)
 - Experimental editable mode support, with optional experimental auto rebuilds
   on import and optional in-place mode
-- Supports WebAssembly (Emscripten/Pyodide).
-- Supports free-threaded Python 3.13.
+- Supports WebAssembly (Emscripten/[Pyodide](https://pyodide.org)).
+- Supports [free-threaded Python 3.13](https://py-free-threading.github.io).
 
 The following limitations are present compared to classic scikit-build:
 
@@ -117,7 +117,7 @@ the minimum to get started.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.27)
+cmake_minimum_required(VERSION 3.15...3.30)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)

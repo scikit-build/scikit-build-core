@@ -132,6 +132,10 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 "type": "boolean",
                 "description": "Whether a cmake wheel is known to be provided for this system.",
             },
+            "abi-flags": {
+                "type": "string",
+                "description": "A sorted string of the abi flags. Takes a regex.",
+            },
             "env": {
                 "type": "object",
                 "patternProperties": {

@@ -7,12 +7,15 @@ import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import packaging.tags
+
 from .._logging import logger, rich_print
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
+    "get_abi_flags",
     "get_cmake_platform",
     "get_numpy_include_dir",
     "get_python_include_dir",
@@ -184,6 +187,19 @@ def get_numpy_include_dir() -> Path | None:
     return Path(np.get_include())
 
 
+def get_abi_flags() -> str:
+    """
+    Return the ABI flags for the current Python interpreter. Derived from
+    ``packaging.tags.sys_tags()`` since that works on Windows.
+    """
+
+    most_compatible = next(iter(packaging.tags.sys_tags()))
+    full_abi = most_compatible.abi
+    vers = packaging.tags.interpreter_version()
+    abi_flags = full_abi[full_abi.find(vers) + len(vers) :]
+    return "".join(sorted(abi_flags))
+
+
 def info_print(*, color: str = "") -> None:
     """
     Print information about the Python environment.
@@ -208,6 +224,7 @@ def info_print(*, color: str = "") -> None:
     rich_print(
         f"[bold {color}]Detected ABI3 SOABI:[/bold] {get_soabi(os.environ, abi3=True)}"
     )
+    rich_print(f"[bold {color}Detected ABI flags:[/bold] {get_abi_flags()}")
 
 
 if __name__ == "__main__":
