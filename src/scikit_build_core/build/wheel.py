@@ -505,7 +505,7 @@ def _build_wheel_impl_impl(
                 raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name
-    rich_print("{green}***", f"{{bold}}Created{{normal}} {wheel_filename}...")
+    rich_print("{green}***", f"{{bold}}Created{{normal}} {wheel_filename}")
     if settings.messages.after_success:
         rich_print(settings.messages.after_success)
     return WheelImplReturn(

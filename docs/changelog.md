@@ -1,5 +1,51 @@
 # Changelog
 
+## Version 0.10.0
+
+This version adds auto CMake version discovery, opt-in auto minimum-version,
+rebuild on failure support, quite a few new override options greatly expanding
+the static config options for builds, more powerful regexs, and more.
+
+New features:
+
+* Auto CMake version by @henryiii in #804
+* Auto minimum-version by @henryiii in #798
+* Add `fail` setting to instant-fail build by @henryiii in #824
+* Add messages config for failure/success by @henryiii in #825
+* New color system for message config by @henryiii in #842
+* Add `if.abi-flags` (for free-threaded) by @henryiii in #819
+* Adding `if.system-cmake` and `if.cmake-wheel` by @henryiii in #826
+* Add `if.from-sdist` for overrides by @henryiii in #812
+* Add `if.failed` (retry) by @henryiii in #820
+* Packages can also be specified via a table by @henryiii in #841
+* Move `cmake.targets` and `cmake.verbose` to `build.targets` and `build.verbose` by @henryiii in #793
+* Support multipart regex by @henryiii in #818
+* Add `remove=` postprocess to regex by @henryiii in #828
+
+Fixes:
+
+* Warn if cmake/ninja in build system requirements by @henryiii in #803
+* Detect manual generator setting for `get_requires_*` by @henryiii in #840
+* Support nested and local gitignores by @henryiii in #827
+* Expand variables in some paths (mostly helps tests) by @henryiii in #842
+
+Internal:
+
+* Pull out overrides to separate file by @henryiii in #821
+* Nicer error/warning printer by @henryiii in #813
+* Speed up CI for format job by @henryiii in #814
+
+Documentation:
+
+* Fix typo in projects list by @jcfr in #797
+* Add disclaimer by @henryiii in #805
+* Add pointer to itk by @thewtex in #817
+* Add projects list by @henryiii in #788
+* Examples nox job should use local copy of scikit-build-core by @henryiii in #810
+* Expand defs and move schema by @henryiii in #795
+* Hide deprecated options in README by @henryiii in #792
+* Move overrides to page, expand by @henryiii in #815
+* Use modern cmake/ninja version setting in Fortran example by @henryiii in #809
 
 ## Version 0.9.10
 

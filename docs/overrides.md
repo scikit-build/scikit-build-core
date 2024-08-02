@@ -123,6 +123,10 @@ cmake.version = ">=3.30"
 
 This is often combined with `if.any`.
 
+:::{versionadded} 0.7
+
+:::
+
 ### `state` (string)
 
 The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`,
@@ -131,10 +135,18 @@ and `metadata_editable`. Takes a regex.
 Note that you can build directly to wheel; you don't have to go through an
 SDist.
 
+:::{versionadded} 0.8
+
+:::
+
 ### `from-sdist` (bool)
 
 This will be true if the `PKG-INFO` file exists, that is, if this is coming
 from an SDist. Takes a bool.
+
+:::{versionadded} 0.10
+
+:::
 
 ### `system-cmake` (version)
 
@@ -146,6 +158,9 @@ if.system-cmake = ">=3.15"
 cmake.version = ""
 message.after-success = "Built using a system CMake, not a wheel"
 ```
+:::{versionadded} 0.10
+
+:::
 
 ### `cmake-wheel` (bool)
 
@@ -167,6 +182,9 @@ if.any.system-cmake = ">=3.15"
 if.any.cmake-wheel = true
 wheel.cmake = true
 ```
+:::{versionadded} 0.10
+
+:::
 
 ### `failed` (bool)
 
@@ -180,6 +198,9 @@ if a build fails, for example:
 if.failed = true
 wheel.cmake = false
 ```
+:::{versionadded} 0.10
+
+:::
 
 ## Any matching condition
 
@@ -204,6 +225,10 @@ wheel.cmake = true
 
 Above, either `CIBUILDWHEEL` or `BUILD_MY_LIB` being truthy will trigger a
 binary build.
+
+:::{versionadded} 0.7
+
+:::
 
 ## Inheriting for tables and arrays
 
@@ -236,5 +261,9 @@ likewise for `SET_BAR` and `BAR`. Without the inherit, setting one would remove
 the other, as the table would be replaced. And `"prepend"` wouldn't be useful
 at all, since FOO and BAR are already defined, so the original definition would
 win.
+
+:::{versionadded} 0.9
+
+:::
 
 [pep 508]: https://peps.python.org/pep-0508/#environment-markers

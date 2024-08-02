@@ -11,8 +11,8 @@ options can optionally be prefixed with `skbuild.`, for example
 
 ## Verbosity
 
-You can increase the verbosity of the build with two settings - `cmake.verbose`
-is a shortcut for verbose build output, and logging.level controls
+You can increase the verbosity of the build with two settings - `build.verbose`
+is a shortcut for verbose build output, and `logging.level` controls
 scikit-build-core's internal logging. An example (with all configuration styles)
 of setting both is:
 
@@ -82,6 +82,12 @@ workaround for legacy tooling.
 
 :::
 
+:::{versionchanged} 0.10
+
+`cmake.verbose` was renamed to `build.verbose`.
+
+:::
+
 ## Minimum version & defaults
 
 Scikit-build-core, like CMake, has a special minimum required version setting.
@@ -114,6 +120,13 @@ requires = ["scikit-build-core>=0.10"]
 minimum-version = "build-system.requires"
 ```
 
+:::{versionchanged} 0.10
+
+The `"build-system.requires"` option was added.
+
+:::
+
+
 :::{warning}
 
 The following behaviors are affected by `minimum-version`:
@@ -124,7 +137,8 @@ The following behaviors are affected by `minimum-version`:
 - `minimum-version` 0.8+ (or unset) `cmake.minimum-version` and
   `ninja.minimum-version` are replaced with `cmake.version` and `ninja.version`.
 - `minimum-version` 0.10+ (or unset) `cmake.targets` and
-  `cmake.verbose` are replaced with `build.targets` and `build.verbose`.
+  `cmake.verbose` are replaced with `build.targets` and `build.verbose`. The
+  CMake minimum version will be detected if not given.
 
 :::
 
@@ -265,6 +279,12 @@ But you can also do more complex moves:
 "mypackage/subpackage" = "python/src/subpackage"
 ```
 
+:::{versionadded} 0.10
+
+Support for the table form.
+
+:::
+
 You can disable Python file inclusion entirely, and rely only on CMake's
 install mechanism:
 
@@ -310,8 +330,8 @@ wheel.exclude = ["**.pyx"]
 
 :::{versionchanged} 0.9
 
-Before scikit-build-core 0.9, these were matched on the source path, rather than
-the wheel path, and didn't apply to CMake output.
+Previously these were matched on the source path, rather than the wheel path,
+and didn't apply to CMake output.
 
 :::
 
@@ -475,9 +495,15 @@ CMAKE_ARGS: -DSOME_DEFINE=ON -DOTHER=OFF
 You can also specify only specific targets to build (leaving this off builds the
 default targets):
 
-```{conftabs} cmake.targets ["python"]
+```{conftabs} build.targets ["python"]
 
 ```
+
+:::{versionchanged} 0.10
+
+`cmake.targets` was renamed to `build.targets`.
+
+:::
 
 You can pass raw arguments directly to the build tool, as well:
 
@@ -600,13 +626,10 @@ remove = "dev0"
 
 This will remove the "dev" tag when it is equal to 0.
 
-```{versionadded} 0.5
-
-```
-
-```{versionchanged} 0.10
+:::{versionchanged} 0.10
 
 Support for `result` and `remove` added.
+
 ```
 
 :::
@@ -724,6 +747,10 @@ styles is possible with `reset`. These all can be chained, as well, so
 Remember that you need to set the environment variable `FORCE_COLOR` to see
 colors with pip.
 
+```{versionadded} 0.10
+
+```
+
 ## Other options
 
 You can select a custom build dir; by default scikit-build-core will use a
@@ -763,6 +790,10 @@ experimental = true
 You can also fail the build with `fail = true`. This is useful with overrides if
 you want to make a specific configuration fail. If this is set, extra
 dependencies like `"cmake"` will not be requested.
+
+```{versionadded} 0.10
+
+```
 
 ## Overrides
 

@@ -11,6 +11,10 @@ moves.
 
 :::
 
+:::{versionadded} 0.9
+
+:::
+
 ## Basic usage
 
 To use the plugin, make sure hatchling and scikit-build-core are in your
