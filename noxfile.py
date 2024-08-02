@@ -245,6 +245,7 @@ def downstream(session: nox.Session) -> None:
         "--editable", action="store_true", help="Install as editable wheel"
     )
     parser.add_argument("-c", dest="code", help="Run some Python code")
+    parser.add_argument("-C", help="config-settings", action="append", default=[])
     args, remaining = parser.parse_known_args(session.posargs)
 
     tmp_dir = Path(session.create_tmp())
@@ -298,6 +299,7 @@ def downstream(session: nox.Session) -> None:
             "--skip-dependency-check",
             "--wheel",
             ".",
+            *(f"-C{x}" for x in args.C),
         )
         if args.code:
             session.error("Must use editable install for code at the moment")
