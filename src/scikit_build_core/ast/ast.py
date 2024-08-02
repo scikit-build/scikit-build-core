@@ -87,9 +87,11 @@ def parse(
 if __name__ == "__main__":
     with Path(sys.argv[1]).open(encoding="utf-8-sig") as f:
         for node in parse(tokenize(f.read())):
+            node_name = node.name.replace("{", "{{").replace("}", "}}")
+            node_value = node.value.replace("{", "{{").replace("}", "}}")
             cnode = dataclasses.replace(
                 node,
-                name=f"[bold blue]{node.name}[/bold /blue]",
-                value=f"[green]{node.value}[/green]",
+                name=f"{{bold.blue}}{node_name}{{default}}",
+                value=f"{{green}}{node_value}{{default}}",
             )
             rich_print(cnode)

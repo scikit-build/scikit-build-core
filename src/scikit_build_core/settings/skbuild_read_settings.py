@@ -313,12 +313,14 @@ class SettingsReader:
             ]
             suggestions_dict = self.suggestions(index)
             if suggestions_dict:
-                rich_print(f"[red][bold]ERROR:[/bold] Unrecognized options in {name}:")
+                rich_print(
+                    f"{{bold.red}}ERROR:{{normal}} Unrecognized options in {name}:"
+                )
                 for option, suggestions in suggestions_dict.items():
-                    rich_print(f"  [red]{option}", end="")
+                    rich_print(f"  {{red}}{option}", end="")
                     if suggestions:
                         sugstr = ", ".join(suggestions)
-                        rich_print(f"[yellow] -> Did you mean: {sugstr}?", end="")
+                        rich_print(f"{{yellow}} -> Did you mean: {sugstr}?", end="")
                     rich_print()
 
     def validate_may_exit(self) -> None:

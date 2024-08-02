@@ -17,7 +17,6 @@ from packaging.version import Version
 
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
-from .. import __version__
 from .._compat.importlib.metadata import version as pkg_version
 from .._compat.typing import Literal
 from .._logging import logger, rich_print
@@ -143,9 +142,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         cmake = CMake.default_search(version=settings.cmake.version, env=os.environ)
 
         rich_print(
-            f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
-            f"using [blue]CMake {cmake.version}[/blue]",
-            f"[red]({state})[/red]",
+            "{green}***",
+            "{bold.green}scikit-build-core {__version__}",
+            f"using {{blue}}CMake {cmake.version}",
+            f"{{red}}({state})",
         )
 
         self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
@@ -214,7 +214,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             config=config,
         )
 
-        rich_print("[green]***[/green] [bold]Configuring CMake...")
+        rich_print("{green}***", "{bold}Configuring CMake...")
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
         defines = {"CMAKE_INSTALL_PREFIX": install_dir}
@@ -237,12 +237,13 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         )
         generator = builder.get_generator() or default_gen
         rich_print(
-            f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
+            "{green}***",
+            f"{{bold}}Building project with {{blue}}{generator}{{default}}...",
         )
         build_args: list[str] = []
         builder.build(build_args=build_args)
 
-        rich_print("[green]***[/green] [bold]Installing project into wheel...")
+        rich_print("{green}***", "{bold}Installing project into wheel...")
         builder.install(install_dir)
 
         files = list(wheel_dirs["headers"].iterdir())

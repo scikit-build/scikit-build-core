@@ -18,19 +18,21 @@ def __dir__() -> list[str]:
 
 
 def main() -> None:
-    rich_print(f"[bold]Scikit-build-core {__version__}[/bold] on Python {sys.version}")
+    rich_print(
+        f"{{bold}}Scikit-build-core {__version__}{{normal}} on Python {sys.version}"
+    )
 
     ip_sysconfig(color="green")
 
-    rich_print(f"[bold blue]Default Wheel Tag:[/bold] {WheelTag.compute_best([])}")
+    rich_print(f"{{bold.blue}}Default Wheel Tag:{{normal}} {WheelTag.compute_best([])}")
     rich_print(
-        "[blue] - Note: use [bold]python -m scikit_build_core.builder.wheel_tag -h[/bold] for further options[/blue]"
+        "{blue} - Note: use {bold}python -m scikit_build_core.builder.wheel_tag -h{normal} for further options"
     )
 
     if Path("pyproject.toml").is_file():
         req = GetRequires()
         all_req = [*req.cmake(), *req.ninja(), *req.dynamic_metadata()]
-        rich_print(f"[bold red]Get Requires:[/bold] {all_req!r}")
+        rich_print(f"{{bold.red}}Get Requires:{{normal}} {all_req!r}")
 
     ip_program_search(color="magenta")
 

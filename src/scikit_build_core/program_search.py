@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
     from packaging.specifiers import SpecifierSet
 
+    from ._compat.typing import Literal
+
 __all__ = [
     "Program",
     "best_program",
@@ -173,17 +175,26 @@ def best_program(
     return None
 
 
-def info_print(*, color: str = "") -> None:
+def info_print(
+    *,
+    color: Literal[
+        "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
+    ] = "",
+) -> None:
     """
     Print information about the program search.
     """
-    rich_print(f"[bold {color}]Detected CMake and Ninja[/bold] (all versions):")
+    rich_print("{bold}Detected CMake and Ninja{normal} (all versions):", color=color)
     for n, prog in enumerate(get_cmake_programs()):
-        s = " " if n else "*"
-        rich_print(f"{s} [bold {color}]CMake:[/bold] {prog.path} {prog.version!r}")
+        s = " " if n else "{default}*{color}"
+        rich_print(
+            f"{s} {{bold}}CMake:{{normal}} {prog.path} {prog.version!r}", color=color
+        )
     for n, prog in enumerate(get_ninja_programs()):
-        s = " " if n else "*"
-        rich_print(f"{s} [bold {color}]Ninja:[/bold] {prog.path} {prog.version!r}")
+        s = " " if n else "{default}*{color}"
+        rich_print(
+            f"{s} {{bold}}Ninja:{{normal}} {prog.path} {prog.version!r}", color=color
+        )
 
 
 if __name__ == "__main__":

@@ -704,22 +704,25 @@ You can add a message to be printed after a successful or failed build. For exam
 
 ```toml
 [tool.scikit-build]
-messages.after-sucesss = "[green]Wheel successfully built"
+messages.after-sucesss = "{green}Wheel successfully built"
 messages.after-failure = """
-[red bold]Sorry[/bold], build failed.
+{bold.red}Sorry{normal}, build failed. Your platform is {platform.platform}.
 """
 ```
 
-This will be run through Python's formatter, so escape curly brackets. There
-currently are no items provided in the format call, but some may be added in the
-future if requested.
+This will be run through Python's formatter, so escape curly brackets if you
+need them.  Currently, there are several formatter-style keywords available:
+`sys`, `platform` (parenthesis will be added for items like `platform.platform`
+for you), `__version__` for scikit-build-core's version, and style keywords.
 
-A small mini-language for colorization using `[]` is also provided somewhat
-similar to [Rich](https://rich.readthedocs.io). Supported keywords inside the
-square brackets are `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, and
-`bold`.  These can be reset with a proceeding `/`. `reset` is also supported.
-Unsupported options will be ignored, but keep in mind other keywords from Rich
-might be added in the future.
+For styles, the colors are `default`, `red`, `green`, `yellow`, `blue`,
+`magenta`, `cyan`, and `white`. These can be accessed as `fg.*` or `bg.*`,
+without a qualifier the foreground is assumed. Styles like `normal`, `bold`,
+`italic`, `underline`, `reverse` are also provided. A full clearing of all
+styles is possible with `reset`. These all can be chained, as well, so
+`bold.red.bg.blue` is valid, and will produce an optimized escape code.
+Remember that you need to set the environment variable `FORCE_COLOR` to see
+colors with pip.
 
 ## Other options
 

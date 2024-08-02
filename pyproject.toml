@@ -252,6 +252,7 @@ extend-select = [
 ignore = [
     "PLE1205", # Format check doesn't work with our custom logger
     "PT004",   # Incorrect, just usefixtures instead.
+    "PT013",   # It's correct to import classes for typing!
     "RUF009",  # Too easy to get a false positive
     "PYI025",  # Wants Set to be renamed AbstractSet
     "ISC001",  # Conflicts with formatter
