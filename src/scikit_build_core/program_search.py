@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os.path
 import shutil
 import subprocess
 from pathlib import Path
@@ -50,7 +51,7 @@ def _get_cmake_path(*, module: bool = True) -> Generator[Path, None, None]:
     for candidate in candidates:
         cmake_path = shutil.which(candidate)
         if cmake_path is not None:
-            yield Path(cmake_path)
+            yield Path(os.path.expandvars(cmake_path))
 
 
 def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
@@ -69,7 +70,7 @@ def _get_ninja_path(*, module: bool = True) -> Generator[Path, None, None]:
     for candidate in candidates:
         ninja_path = shutil.which(candidate)
         if ninja_path is not None:
-            yield Path(ninja_path)
+            yield Path(os.path.expandvars(ninja_path))
 
 
 def get_cmake_program(cmake_path: Path) -> Program:
@@ -154,7 +155,7 @@ def get_make_programs() -> Generator[Path, None, None]:
     for candidate in candidates:
         make_path = shutil.which(candidate)
         if make_path is not None:
-            yield Path(make_path)
+            yield Path(os.path.expandvars(make_path))
 
 
 def best_program(
