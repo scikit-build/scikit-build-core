@@ -77,5 +77,6 @@ if __name__ == "__main__":
     with Path(sys.argv[1]).open(encoding="utf-8-sig") as f:
         for token in tokenize(f.read()):
             rich_print(
-                f"[green]{token.type.name}[/green][red]([/red]{token.value}[red])[/red]"
+                "{green}{token.type.name}{red}({default}{token.value}{red})",
+                token=token,
             )

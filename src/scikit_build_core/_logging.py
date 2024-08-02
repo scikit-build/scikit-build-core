@@ -1,12 +1,26 @@
 from __future__ import annotations
 
 import contextlib
+import dataclasses
+import enum
 import functools
 import logging
 import os
-import re
+import platform
 import sys
-from typing import Any, NoReturn
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, NoReturn
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from ._compat.typing import Literal, Self
+
+    StrMapping = Mapping[str, "Style"]
+else:
+    StrMapping = Mapping
+
+from . import __version__
 
 __all__ = [
     "ScikitBuildLogger",
@@ -16,6 +30,7 @@ __all__ = [
     "rich_warning",
     "rich_error",
     "LEVEL_VALUE",
+    "Style",
 ]
 
 
@@ -34,6 +49,15 @@ LEVEL_VALUE = {
     "DEBUG": logging.DEBUG,
     "NOTSET": logging.NOTSET,
 }
+
+
+class PlatformHelper:
+    def __getattr__(self, name: str) -> Any:
+        result = getattr(platform, name)
+        return result() if callable(result) else result
+
+    def __repr__(self) -> str:
+        return repr(platform)
 
 
 class FStringMessage:
@@ -95,74 +119,249 @@ class ScikitBuildLogger:
 logger = ScikitBuildLogger(raw_logger)
 
 
-ANY_ESCAPE = re.compile(r"\[([\w\s/]+)\]")
-
-
-_COLORS = {
-    "red": "\33[91m",
-    "green": "\33[92m",
-    "yellow": "\33[93m",
-    "blue": "\33[94m",
-    "magenta": "\33[95m",
-    "cyan": "\33[96m",
-    "bold": "\33[1m",
-    "/red": "\33[0m",
-    "/green": "\33[0m",
-    "/blue": "\33[0m",
-    "/yellow": "\33[0m",
-    "/magenta": "\33[0m",
-    "/cyan": "\33[0m",
-    "/bold": "\33[22m",
-    "reset": "\33[0m",
-}
-_NO_COLORS = {color: "" for color in _COLORS}
-
-
-def colors() -> dict[str, str]:
+def colors() -> bool:
     if "NO_COLOR" in os.environ:
-        return _NO_COLORS
+        return False
     # Pip reroutes sys.stdout, so FORCE_COLOR is required there
     if os.environ.get("FORCE_COLOR", ""):
-        return _COLORS
+        return True
     # Avoid ValueError: I/O operation on closed file
     with contextlib.suppress(ValueError):
         # Assume sys.stderr is similar to sys.stdout
         isatty = sys.stdout.isatty()
         if isatty and not sys.platform.startswith("win"):
-            return _COLORS
-    return _NO_COLORS
+            return True
+    return False
 
 
-def _sub_rich(m: re.Match[str]) -> str:
-    """
-    Replace rich-like tags, but only if they are defined in colors.
-    """
-    color_dict = colors()
-    try:
-        return "".join(color_dict[x] for x in m.group(1).split())
-    except KeyError:
-        return m.group(0)
+class Colors(enum.Enum):
+    black = 0
+    red = 1
+    green = 2
+    yellow = 3
+    blue = 4
+    magenta = 5
+    cyan = 6
+    white = 7
+    default = 9
 
 
-def _process_rich(msg: object) -> str:
-    return ANY_ESCAPE.sub(
-        _sub_rich,
-        str(msg),
+class Styles(enum.Enum):
+    bold = 1
+    italic = 3
+    underline = 4
+    reverse = 7
+    reset = 0
+    normal = 22
+
+
+@dataclasses.dataclass(frozen=True)
+class Style(StrMapping):
+    color: bool = dataclasses.field(default_factory=colors)
+    styles: tuple[int, ...] = dataclasses.field(default_factory=tuple)
+    current: int = 0
+
+    def __str__(self) -> str:
+        styles = ";".join(str(x) for x in self.styles)
+        return f"\33[{styles}m" if styles and self.color else ""
+
+    @property
+    def fg(self) -> Self:
+        return dataclasses.replace(self, current=30)
+
+    @property
+    def bg(self) -> Self:
+        return dataclasses.replace(self, current=40)
+
+    @property
+    def bold(self) -> Self:
+        return dataclasses.replace(self, styles=(*self.styles, Styles.bold.value))
+
+    @property
+    def italic(self) -> Self:
+        return dataclasses.replace(self, styles=(*self.styles, Styles.italic.value))
+
+    @property
+    def underline(self) -> Self:
+        return dataclasses.replace(self, styles=(*self.styles, Styles.underline.value))
+
+    @property
+    def reverse(self) -> Self:
+        return dataclasses.replace(self, styles=(*self.styles, Styles.reverse.value))
+
+    @property
+    def reset(self) -> Self:
+        return dataclasses.replace(self, styles=(Styles.reset.value,), current=0)
+
+    @property
+    def normal(self) -> Self:
+        return dataclasses.replace(self, styles=(*self.styles, Styles.normal.value))
+
+    @property
+    def black(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.black.value + (self.current or 30))
+        )
+
+    @property
+    def red(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.red.value + (self.current or 30))
+        )
+
+    @property
+    def green(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.green.value + (self.current or 30))
+        )
+
+    @property
+    def yellow(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.yellow.value + (self.current or 30))
+        )
+
+    @property
+    def blue(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.blue.value + (self.current or 30))
+        )
+
+    @property
+    def magenta(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.magenta.value + (self.current or 30))
+        )
+
+    @property
+    def cyan(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.cyan.value + (self.current or 30))
+        )
+
+    @property
+    def white(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.white.value + (self.current or 30))
+        )
+
+    @property
+    def default(self) -> Self:
+        return dataclasses.replace(
+            self, styles=(*self.styles, Colors.default.value + (self.current or 30))
+        )
+
+    _keys = (
+        "bold",
+        "italic",
+        "underline",
+        "reverse",
+        "reset",
+        "normal",
+        "black",
+        "red",
+        "green",
+        "yellow",
+        "blue",
+        "magenta",
+        "cyan",
+        "white",
+        "default",
     )
 
+    def __len__(self) -> int:
+        return len(self._keys)
 
-def rich_print(*args: object, **kwargs: object) -> None:
-    args_2 = tuple(_process_rich(arg) for arg in args)
-    if args != args_2:
-        args_2 = (*args_2[:-1], args_2[-1] + colors()["reset"])
-    print(*args_2, **kwargs, flush=True)  # type: ignore[call-overload] # noqa: T201
+    def __getitem__(self, name: str) -> Self:
+        return getattr(self, name)  # type: ignore[no-any-return]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._keys)
+
+
+_style = Style()
+_nostyle = Style(color=False)
+
+
+def rich_print(
+    *args: object,
+    file: object = None,
+    sep: str = " ",
+    end: str = "\n",
+    color: Literal[
+        "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
+    ] = "",
+    **kwargs: object,
+) -> None:
+    """
+    Print a message with style and useful common includes provided via formatting.
+
+    This function will process every argument with the following formatting:
+
+        - ``{__version__}``: The version of scikit-build-core.
+        - ``{platform}``: The platform module.
+        - ``{sys}``: The sys module.
+        - Colors and styles.
+
+    Any keyword arguments will be passed directly to the `str.format` method
+    unless they conflict with the above. ``print`` arguments work as normal, and
+    the output will be flushed.
+
+    Each argument will clear the style afterwards if a style is applied. The
+    ``color=`` argument will set a default color to apply to every argument, and
+    is available to arguments as ``{color}``.
+    """
+    if color:
+        kwargs["color"] = _style[color]
+
+    args_1 = tuple(str(arg) for arg in args)
+    args_1_gen = (
+        arg.format(
+            __version__=__version__,
+            platform=PlatformHelper(),
+            sys=sys,
+            **_nostyle,
+            **kwargs,
+        )
+        for arg in args_1
+    )
+    args_2_gen = (
+        arg.format(
+            __version__=__version__,
+            platform=PlatformHelper(),
+            sys=sys,
+            **_style,
+            **kwargs,
+        )
+        for arg in args_1
+    )
+    if color:
+        args_2 = (f"{_style[color]}{new}{_style.reset}" for new in args_2_gen)
+    else:
+        args_2 = (
+            new if new == orig else f"{new}{_style.reset}"
+            for new, orig in zip(args_2_gen, args_1_gen)
+        )
+    print(*args_2, flush=True, sep=sep, end=end, file=file)  # type: ignore[call-overload]
 
 
 @functools.lru_cache(maxsize=None)
-def rich_warning(*args: object, **kwargs: object) -> None:
-    rich_print("[red][yellow]WARNING:[/bold]", *args, **kwargs)
+def rich_warning(
+    *args: str,
+    color: Literal[
+        "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
+    ] = "yellow",
+    **kwargs: object,
+) -> None:
+    rich_print("{bold.yellow}WARNING:", *args, color=color, **kwargs)  # type: ignore[arg-type]
 
 
-def rich_error(*args: object, **kwargs: object) -> NoReturn:
-    rich_print("[red][bold]ERROR:[/bold]", *args, **kwargs)
+def rich_error(
+    *args: str,
+    color: Literal[
+        "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
+    ] = "red",
+    **kwargs: object,
+) -> NoReturn:
+    rich_print("{bold.red}ERROR:", *args, color=color, **kwargs)  # type: ignore[arg-type]
     raise SystemExit(7)

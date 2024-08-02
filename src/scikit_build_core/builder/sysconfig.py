@@ -14,6 +14,8 @@ from .._logging import logger, rich_print
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from .._compat.typing import Literal
+
 __all__ = [
     "get_abi_flags",
     "get_cmake_platform",
@@ -200,31 +202,55 @@ def get_abi_flags() -> str:
     return "".join(sorted(abi_flags))
 
 
-def info_print(*, color: str = "") -> None:
+def info_print(
+    *,
+    color: Literal[
+        "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
+    ] = "",
+) -> None:
     """
     Print information about the Python environment.
     """
-
     rich_print(
-        f"[bold {color}]Detected Python Library:[/bold] {get_python_library(os.environ, abi3=False)}"
+        "{bold}Detected Python Library:",
+        get_python_library(os.environ, abi3=False),
+        color=color,
     )
     rich_print(
-        f"[bold {color}]Detected ABI3 Python Library:[/bold] {get_python_library(os.environ, abi3=True)}"
+        "{bold}Detected ABI3 Python Library:",
+        get_python_library(os.environ, abi3=True),
+        color=color,
     )
     rich_print(
-        f"[bold {color}]Detected Python Include Directory:[/bold] {get_python_include_dir()}"
+        "{bold}Detected Python Include Directory:",
+        get_python_include_dir(),
+        color=color,
     )
     rich_print(
-        f"[bold {color}]Detected NumPy Include Directory:[/bold] {get_numpy_include_dir()}"
-    )
-    rich_print(f"[bold {color}]Detected Platform:[/bold] {get_platform()}")
-    rich_print(
-        f"[bold {color}]Detected SOABI:[/bold] {get_soabi(os.environ, abi3=False)}"
+        "{bold}Detected NumPy Include Directory:",
+        get_numpy_include_dir(),
+        color=color,
     )
     rich_print(
-        f"[bold {color}]Detected ABI3 SOABI:[/bold] {get_soabi(os.environ, abi3=True)}"
+        "{bold}Detected Platform:",
+        get_platform(),
+        color=color,
     )
-    rich_print(f"[bold {color}Detected ABI flags:[/bold] {get_abi_flags()}")
+    rich_print(
+        "{bold}Detected SOABI:",
+        get_soabi(os.environ, abi3=False),
+        color=color,
+    )
+    rich_print(
+        "{color}Detected ABI3 SOABI:",
+        get_soabi(os.environ, abi3=True),
+        color=color,
+    )
+    rich_print(
+        "{bold}Detected ABI flags:",
+        get_abi_flags(),
+        color=color,
+    )
 
 
 if __name__ == "__main__":

@@ -93,8 +93,7 @@ def build_sdist(
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
     rich_print(
-        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
-        "[red](sdist)[/red]",
+        f"{{green}}***{{bold.green}} scikit-build-core {__version__}{{red}} (sdist)",
     )
 
     with Path("pyproject.toml").open("rb") as f:

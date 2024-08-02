@@ -36,7 +36,7 @@ def build_wheel(
         ).wheel_filename
     except FailedLiveProcessError as err:
         sys.stdout.flush()
-        rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
+        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
         if err.msg:
             rich_print(err.msg)
         raise SystemExit(1) from None
@@ -60,7 +60,7 @@ def build_editable(
         ).wheel_filename
     except FailedLiveProcessError as err:
         sys.stdout.flush()
-        rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
+        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
         if err.msg:
             rich_print(err.msg)
         raise SystemExit(1) from None
@@ -103,7 +103,7 @@ def build_sdist(
         return skbuild_build_sdist(sdist_directory, config_settings)
     except FailedLiveProcessError as err:
         sys.stdout.flush()
-        rich_print(f"\n[red bold]*** {' '.join(err.args)}", file=sys.stderr)
+        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
         if err.msg:
             rich_print(err.msg)
         raise SystemExit(1) from None

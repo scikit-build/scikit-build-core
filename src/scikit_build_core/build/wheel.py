@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-from .. import __version__
 from .._compat import tomllib
 from .._compat.typing import Literal, assert_never
 from .._logging import LEVEL_VALUE, logger, rich_error, rich_print
@@ -151,7 +150,7 @@ def _build_wheel_impl(
 
     if settings_reader.settings.fail:
         if settings_reader.settings.messages.after_failure:
-            rich_print(settings_reader.settings.messages.after_failure.format())
+            rich_print(settings_reader.settings.messages.after_failure)
             raise SystemExit(7)
         rich_error("scikit-build-core's fail setting was enabled. Exiting immediately.")
 
@@ -184,11 +183,14 @@ def _build_wheel_impl(
             pyproject, config_settings or {}, state=state, retry=True
         )
         if "failed" not in settings_reader.overrides:
-            err.msg = settings_reader.settings.messages.after_failure.format()
+            err.msg = settings_reader.settings.messages.after_failure
             raise
 
         rich_print(
-            f"\n[yellow bold]*** {' '.join(err.args)} - retrying due to override..."
+            "\n***",
+            *err.args,
+            "- retrying due to override...",
+            color="yellow",
         )
 
         logger.setLevel(LEVEL_VALUE[settings_reader.settings.logging.level])
@@ -235,7 +237,7 @@ def _build_wheel_impl_impl(
 
     if settings.wheel.cmake:
         cmake = CMake.default_search(version=settings.cmake.version, env=os.environ)
-        cmake_msg = [f"using [blue]CMake {cmake.version}[/blue]"]
+        cmake_msg = [f"using {{blue}}CMake {cmake.version}{{default}}"]
     else:
         cmake = None
         cmake_msg = []
@@ -246,9 +248,9 @@ def _build_wheel_impl_impl(
         targetlib = "platlib" if settings.wheel.platlib else "purelib"
 
     rich_print(
-        f"[green]***[/green] [bold][green]scikit-build-core {__version__}[/green]",
+        "{green}*** {bold}scikit-build-core {__version__}",
         *cmake_msg,
-        f"[red]({state})[/red]",
+        f"{{red}}({state})",
     )
 
     with tempfile.TemporaryDirectory() as tmpdir, fix_win_37_all_permissions(tmpdir):
@@ -386,7 +388,7 @@ def _build_wheel_impl_impl(
                 config=config,
             )
 
-            rich_print("[green]***[/green] [bold]Configuring CMake...")
+            rich_print("{green}***", "{bold}Configuring CMake...")
             # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
             # Otherwise `cmake --install --prefix` would work by itself
             defines = {"CMAKE_INSTALL_PREFIX": install_dir}
@@ -411,13 +413,17 @@ def _build_wheel_impl_impl(
             )
             generator = builder.get_generator() or default_gen
             rich_print(
-                f"[green]***[/green] [bold]Building project with [blue]{generator}[/blue]..."
+                "{green}***",
+                f"{{bold}}Building project with {{blue}}{generator}{{default}}...",
             )
             build_args: list[str] = []
             builder.build(build_args=build_args)
 
             if not (editable and settings.editable.mode == "inplace"):
-                rich_print("[green]***[/green] [bold]Installing project into wheel...")
+                rich_print(
+                    "{green}***",
+                    "{bold}Installing project into wheel...",
+                )
                 builder.install(install_dir)
 
             if not builder.config.single_config and builder.config.build_type:
@@ -428,7 +434,7 @@ def _build_wheel_impl_impl(
 
         assert wheel_directory is not None
 
-        rich_print(f"[green]***[/green] [bold]Making {state}...")
+        rich_print("{green}***", f"{{bold}}Making {state}...")
         packages = _get_packages(
             packages=settings.wheel.packages,
             name=normalized_name,
@@ -499,9 +505,9 @@ def _build_wheel_impl_impl(
                 raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name
-    rich_print(f"[green]***[/green] [bold]Created[/bold] {wheel_filename}...")
+    rich_print("{green}***", f"{{bold}}Created{{normal}} {wheel_filename}...")
     if settings.messages.after_success:
-        rich_print(settings.messages.after_success.format())
+        rich_print(settings.messages.after_success)
     return WheelImplReturn(
         wheel_filename=wheel_filename, mapping=mapping, settings=settings
     )
