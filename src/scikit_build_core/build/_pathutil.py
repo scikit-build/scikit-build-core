@@ -9,7 +9,7 @@ import pathspec
 from ._file_processor import each_unignored_file
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Generator, Mapping, Sequence
 
 __all__ = ["is_valid_module", "packages_to_file_mapping", "path_to_module", "scantree"]
 
@@ -36,24 +36,28 @@ def path_to_module(path: Path) -> str:
 
 def packages_to_file_mapping(
     *,
-    packages: Sequence[str],
+    packages: Mapping[str, str],
     platlib_dir: Path,
     include: Sequence[str],
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
 ) -> dict[str, str]:
+    """
+    This will output a mapping of source files to target files.
+    """
     mapping = {}
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(target_exclude)
-    for package in packages:
-        source_package = Path(package)
-        base_path = source_package.parent
+    for package_str, source_str in packages.items():
+        package_dir = Path(package_str)
+        source_dir = Path(source_str)
+
         for filepath in each_unignored_file(
-            source_package,
+            source_dir,
             include=include,
             exclude=src_exclude,
         ):
-            rel_path = filepath.relative_to(base_path)
-            target_path = platlib_dir / rel_path
+            rel_path = filepath.relative_to(source_dir)
+            target_path = platlib_dir / package_dir / rel_path
             if not exclude_spec.match_file(rel_path) and not target_path.is_file():
                 mapping[str(filepath)] = str(target_path)
 

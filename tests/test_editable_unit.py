@@ -134,7 +134,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     site_packages, pkg_dir, src_pkg_dir = editable_package
 
     # Create a fake editable install
-    packages = ["pkg"]
+    packages = {"pkg": "pkg"}
     mapping = packages_to_file_mapping(
         packages=packages,
         platlib_dir=site_packages,

@@ -249,8 +249,24 @@ list packages explicitly, you can. The final path element is the package.
 wheel.packages = ["python/src/mypackage"]
 ```
 
-Or you can disable Python file inclusion entirely, and rely only on CMake's
-install mechanism, you can do that instead:
+This can also be a table, allowing full customization of where a source package
+maps to a wheel directory. The final components of both paths must match due to the
+way editable installs work. The equivalent of the above is:
+
+```toml
+[tool.scikit-build.wheel.packages]
+mypackage = "python/src/mypackage"
+```
+
+But you can also do more complex moves:
+
+```toml
+[tool.scikit-build.wheel.packages]
+"mypackage/subpackage" = "python/src/subpackage"
+```
+
+You can disable Python file inclusion entirely, and rely only on CMake's
+install mechanism:
 
 ```toml
 [tool.scikit-build]

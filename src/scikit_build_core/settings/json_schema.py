@@ -142,7 +142,13 @@ def convert_type(t: Any, *, normalize_keys: bool) -> dict[str, Any]:
                 next(iter(a for a in args if a is not type(None))),
                 normalize_keys=normalize_keys,
             )
-        return {"oneOf": [convert_type(a, normalize_keys=normalize_keys) for a in args]}
+        return {
+            "oneOf": [
+                convert_type(a, normalize_keys=normalize_keys)
+                for a in args
+                if a is not type(None)
+            ]
+        }
     if origin is Literal:
         return {"enum": list(args)}
 

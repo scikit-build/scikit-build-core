@@ -157,6 +157,10 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
             kk: {"$ref": "#/$defs/inherit"}
             for kk, vv in v["properties"].items()
             if vv.get("type", "") in {"object", "array"}
+            or any(
+                vvv.get("type", "") in {"object", "array"}
+                for vvv in vv.get("oneOf", {})
+            )
         }
         for k, v in schema["properties"].items()
         if v.get("type", "") == "object"
