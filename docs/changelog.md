@@ -27,7 +27,6 @@ Fixes:
 * Warn if cmake/ninja in build system requirements by @henryiii in #803
 * Detect manual generator setting for `get_requires_*` by @henryiii in #840
 * Support nested and local gitignores by @henryiii in #827
-* Expand variables in some paths (mostly helps tests) by @henryiii in #842
 
 Internal:
 
