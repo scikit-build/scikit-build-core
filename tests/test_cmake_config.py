@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib
 import os
 import shutil
 import sysconfig
@@ -11,7 +10,6 @@ import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from scikit_build_core import cmake
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
 
@@ -23,36 +21,31 @@ if TYPE_CHECKING:
 DIR = Path(__file__).parent.resolve()
 
 
-def get_cmake_configure_test_parameters() -> (
-    tuple[tuple[str, str, str], list[ParameterSet]]
-):
-    return ("platform_system", "generator", "single_config"), [
-        pytest.param("win", None, False, id="only_win_round"),
-        pytest.param("win", "Ninja", True, id="win_ninja_round"),
-        pytest.param("win", "Makefiles", True, id="win_makefiles_round"),
-        pytest.param("win", "Others", False, id="win_others_round"),
-        pytest.param("linux", None, True, id="only_linux_round"),
-        pytest.param("linux", "Ninja", True, id="linux_ninja_round"),
+def get_cmake_configure_test_parameters() -> tuple[tuple[str, str], list[ParameterSet]]:
+    win_marks = []
+    linux_or_darwin_marks = []
+    if sysconfig.get_platform().startswith("win"):
+        linux_or_darwin_marks = [pytest.mark.skip(reason="run only on Linux/Darwin")]
+    else:
+        win_marks = [pytest.mark.skip(reason="run only on Windows")]
+    return ("generator", "single_config"), [
+        # windows
+        pytest.param(None, False, marks=win_marks, id="only_win_round"),
+        pytest.param("Ninja", True, marks=win_marks, id="win_ninja_round"),
+        pytest.param("Makefiles", True, marks=win_marks, id="win_makefiles_round"),
+        pytest.param("Others", False, marks=win_marks, id="win_others_round"),
+        # linux or darwin
+        pytest.param(None, True, marks=linux_or_darwin_marks, id="only_linux_round"),
+        pytest.param(
+            "Ninja", True, marks=linux_or_darwin_marks, id="linux_ninja_round"
+        ),
     ]
 
 
 def configure_cmake_configure_test(
-    platform_system: str,
     generator: str | None,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # CMaker::single_config is initialized with
-    # not sysconfig.get_platform().startswith("win")
-    monkeypatch.setattr(
-        sysconfig,
-        "get_platform",
-        lambda: platform_system,
-    )
-    # we need to reload the module and later in
-    # the test use its class cmake.CMaker, and not
-    # the global CMaker which is not mocked
-    importlib.reload(cmake)
-
     if generator is None:
         monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
     else:
@@ -76,7 +69,6 @@ def configure_args(
 @pytest.mark.configure()
 @pytest.mark.parametrize(*get_cmake_configure_test_parameters())
 def test_init_cache(
-    platform_system: str,
     generator: str,
     single_config: bool,
     tmp_path: Path,
@@ -92,12 +84,10 @@ def test_init_cache(
         stdout='{"version":{"string":"3.14.0"}}',
     )
 
-    # this also reloads the cmake module
-    configure_cmake_configure_test(platform_system, generator, monkeypatch)
+    configure_cmake_configure_test(generator, monkeypatch)
 
-    # use cmake.CMaker, and not the global CMaker which is not mocked
-    config = cmake.CMaker(
-        cmake.CMake.default_search(),
+    config = CMaker(
+        CMake.default_search(),
         source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
@@ -144,7 +134,6 @@ def test_too_old(fp, monkeypatch):
 @pytest.mark.configure()
 @pytest.mark.parametrize(*get_cmake_configure_test_parameters())
 def test_cmake_args(
-    platform_system: str,
     generator: str,
     single_config: bool,
     tmp_path: Path,
@@ -160,12 +149,10 @@ def test_cmake_args(
         stdout='{"version":{"string":"3.15.0"}}',
     )
 
-    # this also reloads the cmake module
-    configure_cmake_configure_test(platform_system, generator, monkeypatch)
+    configure_cmake_configure_test(generator, monkeypatch)
 
-    # use cmake.CMaker, and not the global CMaker which is not mocked
-    config = cmake.CMaker(
-        cmake.CMake.default_search(),
+    config = CMaker(
+        CMake.default_search(),
         source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
@@ -186,7 +173,6 @@ def test_cmake_args(
 @pytest.mark.configure()
 @pytest.mark.parametrize(*get_cmake_configure_test_parameters())
 def test_cmake_paths(
-    platform_system: str,
     generator: str,
     single_config: bool,
     tmp_path: Path,
@@ -202,12 +188,10 @@ def test_cmake_paths(
         stdout='{"version":{"string":"3.15.0"}}',
     )
 
-    # this also reloads the cmake module
-    configure_cmake_configure_test(platform_system, generator, monkeypatch)
+    configure_cmake_configure_test(generator, monkeypatch)
 
-    # use cmake.CMaker, and not the global CMaker which is not mocked
-    config = cmake.CMaker(
-        cmake.CMake.default_search(),
+    config = CMaker(
+        CMake.default_search(),
         source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
