@@ -98,7 +98,7 @@ def test_init_cache(
     # use cmake.CMaker, and not the global CMaker which is not mocked
     config = cmake.CMaker(
         cmake.CMake.default_search(),
-        source_dir=DIR / "packages/simple_pure",
+        source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
     )
@@ -208,7 +208,7 @@ def test_cmake_paths(
     # use cmake.CMaker, and not the global CMaker which is not mocked
     config = cmake.CMaker(
         cmake.CMake.default_search(),
-        source_dir=DIR / "packages/simple_pure",
+        source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
         prefix_dirs=[tmp_path / "prefix"],
