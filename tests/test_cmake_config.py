@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,11 +19,51 @@ if TYPE_CHECKING:
 DIR = Path(__file__).parent.resolve()
 
 
-def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None, None]:
+def single_config(param: None | str) -> bool:
+    if param is None:
+        return not sysconfig.get_platform().startswith("win")
+
+    return param in {"Ninja", "Makefiles"}
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(None, id="default"),
+        pytest.param("Ninja", id="ninja"),
+        pytest.param(
+            "Makefiles",
+            id="makefiles",
+            marks=pytest.mark.skipif(
+                sysconfig.get_platform().startswith("win"), reason="run on Windows only"
+            ),
+        ),
+        pytest.param(
+            "Others",
+            id="others",
+            marks=pytest.mark.skipif(
+                sysconfig.get_platform().startswith("win"), reason="run on Windows only"
+            ),
+        ),
+    ]
+)
+def generator(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> str | None:
+    if request.param is None:
+        monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
+    else:
+        monkeypatch.setenv("CMAKE_GENERATOR", request.param)
+
+    return request.param
+
+
+def configure_args(
+    config: CMaker, *, init: bool = False, single_config: bool = False
+) -> Generator[str, None, None]:
     yield f"-S{config.source_dir}"
     yield f"-B{config.build_dir}"
 
-    if config.single_config:
+    if single_config:
         yield f"-DCMAKE_BUILD_TYPE:STRING={config.build_type}"
 
     if init:
@@ -31,7 +72,11 @@ def configure_args(config: CMaker, *, init: bool = False) -> Generator[str, None
 
 
 @pytest.mark.configure()
-def test_init_cache(fp, tmp_path):
+def test_init_cache(
+    generator: str,
+    tmp_path: Path,
+    fp,
+):
     fp.register(
         [fp.program("cmake"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
@@ -51,7 +96,9 @@ def test_init_cache(fp, tmp_path):
         {"SKBUILD": True, "SKBUILD_VERSION": "1.0.0", "SKBUILD_PATH": config.source_dir}
     )
 
-    cmd = list(configure_args(config, init=True))
+    cmd = list(
+        configure_args(config, init=True, single_config=single_config(generator))
+    )
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
     fp.register([fp.program("cmake3"), *cmd])
@@ -87,7 +134,11 @@ def test_too_old(fp, monkeypatch):
 
 
 @pytest.mark.configure()
-def test_cmake_args(tmp_path, fp):
+def test_cmake_args(
+    generator: str,
+    tmp_path: Path,
+    fp,
+):
     fp.register(
         [fp.program("cmake"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.15.0"}}',
@@ -99,24 +150,29 @@ def test_cmake_args(tmp_path, fp):
 
     config = CMaker(
         CMake.default_search(),
-        source_dir=DIR / "packages/simple_pure",
+        source_dir=DIR / "packages" / "simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
     )
 
-    cmd = list(configure_args(config))
+    cmd = list(configure_args(config, single_config=single_config(generator)))
     cmd.append("-DSOMETHING=one")
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
     fp.register([fp.program("cmake3"), *cmd])
 
     config.configure(cmake_args=["-DSOMETHING=one"])
-
+    # config.configure might mutate config.single_config
+    assert config.single_config == single_config(generator)
     assert len(fp.calls) == 2
 
 
 @pytest.mark.configure()
-def test_cmake_paths(tmp_path, fp):
+def test_cmake_paths(
+    generator: str,
+    tmp_path: Path,
+    fp,
+):
     fp.register(
         [fp.program("cmake"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.15.0"}}',
@@ -135,7 +191,7 @@ def test_cmake_paths(tmp_path, fp):
         module_dirs=[tmp_path / "module"],
     )
 
-    cmd = list(configure_args(config))
+    cmd = list(configure_args(config, single_config=single_config(generator)))
     print("Registering: cmake", *cmd)
     fp.register([fp.program("cmake"), *cmd])
     fp.register([fp.program("cmake3"), *cmd])
