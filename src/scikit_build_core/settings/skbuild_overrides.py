@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 import packaging.tags
 from packaging.specifiers import SpecifierSet
 
+from .. import __version__
 from .._compat import tomllib
 from .._logging import logger
 from ..builder.sysconfig import get_abi_flags
@@ -78,6 +79,8 @@ def override_match(
     system_cmake: str | None = None,
     cmake_wheel: bool | None = None,
     abi_flags: str | None = None,
+    version: str | None = None,
+    **unknown: Any,
 ) -> tuple[dict[str, str], set[str]]:
     """
     Check if the current environment matches the overrides. Returns a dict
@@ -89,6 +92,14 @@ def override_match(
 
     if current_env is None:
         current_env = os.environ
+
+    if version is not None:
+        current_version = __version__
+        match_msg = version_match(current_version, version, "scikit-build-core")
+        if match_msg:
+            passed_dict["version"] = match_msg
+        else:
+            failed_set.add("version")
 
     if python_version is not None:
         current_python_version = ".".join(str(x) for x in sys.version_info[:2])
@@ -222,6 +233,11 @@ def override_match(
     if not passed_dict and not failed_set:
         msg = "At least one override must be provided"
         raise ValueError(msg)
+
+    # Only validate unknown overrides if version is not provided or matched
+    if (version is None or passed_dict) and unknown:
+        msg = f"Unknown overrides: {', '.join(unknown)}"
+        raise TypeError(msg)
 
     return passed_dict, failed_set
 

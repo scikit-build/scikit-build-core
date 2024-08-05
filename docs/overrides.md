@@ -21,6 +21,16 @@ At least one must be provided. Then you can specify any collection of valid
 options, and those will override if all the items in the `if` are true. They
 will match top to bottom, overriding previous matches.
 
+If an override does not match, it's contents are ignored, including invalid
+options. Combined with the `if.version` override, this allows using overrides to
+support a range of scikit-build-core versions that added settings you want to
+use.
+
+### `version` (version)
+
+The version of scikit-build-core itself. Takes a specifier set. If this is
+provided, unknown overrides will not be validated unless it's a match.
+
 ### `python-version` (version)
 
 The two-digit Python version. Takes a specifier set.

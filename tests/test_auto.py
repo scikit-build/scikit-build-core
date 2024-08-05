@@ -30,6 +30,15 @@ def test_auto_requires_pkg_version(spec: str, version: Version):
     assert get_min_requires("scikit-build-core", reqlist) == version
 
 
+def test_auto_requires_with_marker():
+    reqlist = [
+        "scikit_build_core>=0.1; python_version < '3.7'",
+        "scikit_build_core>=0.2; python_version >= '3.7'",
+    ]
+
+    assert get_min_requires("scikit-build-core", reqlist) == Version("0.2")
+
+
 @pytest.mark.parametrize(
     ("expr", "answer"),
     [
