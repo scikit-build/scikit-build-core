@@ -102,6 +102,9 @@ docs = [
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
 ]
+wheel-free-setuptools = [
+    'setuptools>=70.1; python_version>="3.8"',
+]
 
 [project.urls]
 Changelog = "https://scikit-build-core.readthedocs.io/en/latest/changelog.html"
