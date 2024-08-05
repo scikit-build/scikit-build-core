@@ -88,7 +88,7 @@ def test_init_cache(
 
     config = CMaker(
         CMake.default_search(),
-        source_dir=DIR / "packages" / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
     )
