@@ -615,10 +615,10 @@ matches from the final result. A more complex example:
 provider = "scikit_build_core.metadata.regex"
 input = "src/mypackage/version.hpp"
 regex = '''(?sx)
-\#define \w+ VERSION_MAJOR \w+ (?P<major>\d+) .*?
-\#define \w+ VERSION_MINOR \w+ (?P<minor>\d+) .*?
-\#define \w+ VERSION_PATCH \w+ (?P<patch>\d+) .*?
-\#define \w+ VERSION_DEV \w+ (?P<dev>\d+) .*?
+\#define \s+ VERSION_MAJOR \s+ (?P<major>\d+) .*?
+\#define \s+ VERSION_MINOR \s+ (?P<minor>\d+) .*?
+\#define \s+ VERSION_PATCH \s+ (?P<patch>\d+) .*?
+\#define \s+ VERSION_DEV   \s+ (?P<dev>\d+)   .*?
 '''
 result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
