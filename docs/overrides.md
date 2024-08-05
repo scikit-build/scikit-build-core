@@ -22,7 +22,7 @@ options, and those will override if all the items in the `if` are true. They
 will match top to bottom, overriding previous matches.
 
 If an override does not match, it's contents are ignored, including invalid
-options. Combined with the `if.version` override, this allows using overrides to
+options. Combined with the `if.scikit-build-version` override, this allows using overrides to
 support a range of scikit-build-core versions that added settings you want to
 use.
 

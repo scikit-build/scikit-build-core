@@ -635,7 +635,7 @@
       "minProperties": 1,
       "additionalProperties": false,
       "properties": {
-        "core-version": {
+        "scikit-build-version": {
           "type": "string",
           "description": "The version of scikit-build-version. Takes a specifier set."
         },
