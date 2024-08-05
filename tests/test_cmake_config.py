@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,7 +21,7 @@ DIR = Path(__file__).parent.resolve()
 
 def single_config(param: None | str) -> bool:
     if param is None:
-        return not sys.platform.startswith("win")
+        return not sysconfig.get_platform().startswith("win")
 
     return param in {"Ninja", "Makefiles"}
 
@@ -34,14 +34,14 @@ def single_config(param: None | str) -> bool:
             "Makefiles",
             id="makefiles",
             marks=pytest.mark.skipif(
-                sys.platform.startswith("win"), reason="run on Windows only"
+                sysconfig.get_platform().startswith("win"), reason="run on Windows only"
             ),
         ),
         pytest.param(
             "Others",
             id="others",
             marks=pytest.mark.skipif(
-                sys.platform.startswith("win"), reason="run on Windows only"
+                sysconfig.get_platform().startswith("win"), reason="run on Windows only"
             ),
         ),
     ]
