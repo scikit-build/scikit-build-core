@@ -17,6 +17,7 @@ New features:
 * Adding `if.system-cmake` and `if.cmake-wheel` by @henryiii in #826
 * Add `if.from-sdist` for overrides by @henryiii in #812
 * Add `if.failed` (retry) by @henryiii in #820
+* Add `if.scikit-build-version` by @henryiii in #851
 * Packages can also be specified via a table by @henryiii in #841
 * Move `cmake.targets` and `cmake.verbose` to `build.targets` and `build.verbose` by @henryiii in #793
 * Support multipart regex by @henryiii in #818

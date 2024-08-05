@@ -706,7 +706,7 @@ def test_skbuild_overrides_version(
             wheel.cmake = false
 
             [[tool.scikit-build.overrides]]
-            if.version = ">=0.10"
+            if.scikit-build-version = ">=0.10"
             wheel.cmake = true
             """
         )
@@ -731,14 +731,15 @@ def test_skbuild_overrides_unmatched_version(
         dedent(
             """\
             [[tool.scikit-build.overrides]]
-            if.version = "<0.10"
+            if.scikit-build-version = "<0.10"
             if.is-not-real = true
             also-not-real = true
             """
         )
     )
 
-    SettingsReader.from_file(pyproject_toml, state="wheel")
+    settings = SettingsReader.from_file(pyproject_toml)
+    settings.validate_may_exit()
 
 
 def test_skbuild_overrides_matched_version_if(
@@ -752,14 +753,14 @@ def test_skbuild_overrides_matched_version_if(
         dedent(
             """\
             [[tool.scikit-build.overrides]]
-            if.version = ">=0.10"
+            if.scikit-build-version = ">=0.10"
             if.is-not-real = true
             """
         )
     )
 
     with pytest.raises(TypeError, match="is_not_real"):
-        SettingsReader.from_file(pyproject_toml, state="wheel")
+        SettingsReader.from_file(pyproject_toml)
 
 
 def test_skbuild_overrides_matched_version_extra(
@@ -773,14 +774,82 @@ def test_skbuild_overrides_matched_version_extra(
         dedent(
             """\
             [[tool.scikit-build.overrides]]
-            if.version = ">=0.10"
+            if.scikit-build-version = ">=0.10"
             not-real = true
             """
         )
     )
 
-    settings = SettingsReader.from_file(pyproject_toml, state="wheel")
+    settings = SettingsReader.from_file(pyproject_toml)
     with pytest.raises(SystemExit):
         settings.validate_may_exit()
 
     assert "not-real" in capsys.readouterr().out
+
+
+def test_skbuild_overrides_matched_version_if_any(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_overrides, "__version__", "0.9"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.any.scikit-build-version = ">=0.10"
+            if.any.not-real = true
+            also-not-real = true
+            """
+        )
+    )
+
+    settings = SettingsReader.from_file(pyproject_toml)
+    settings.validate_may_exit()
+
+
+def test_skbuild_overrides_matched_version_if_any_dual(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_overrides, "__version__", "0.9"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.scikit-build-version = ">=0.10"
+            if.any.not-real = true
+            if.any.python-version = ">=3.7"
+            also-not-real = true
+            """
+        )
+    )
+
+    settings = SettingsReader.from_file(pyproject_toml)
+    settings.validate_may_exit()
+
+
+def test_skbuild_overrides_matched_version_if_any_match(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_overrides, "__version__", "0.10"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.any.scikit-build-version = ">=0.10"
+            if.any.not-real = true
+            if.python-version = ">=3.7"
+            experimental = true
+            """
+        )
+    )
+
+    with pytest.raises(TypeError, match="not_real"):
+        SettingsReader.from_file(pyproject_toml)

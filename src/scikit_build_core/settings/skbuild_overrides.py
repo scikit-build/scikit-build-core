@@ -79,12 +79,12 @@ def override_match(
     system_cmake: str | None = None,
     cmake_wheel: bool | None = None,
     abi_flags: str | None = None,
-    version: str | None = None,
+    scikit_build_version: str | None = None,
     **unknown: Any,
-) -> tuple[dict[str, str], set[str]]:
+) -> tuple[dict[str, str], set[str], dict[str, Any]]:
     """
-    Check if the current environment matches the overrides. Returns a dict
-    of passed matches, with reasons for values, and a set of non-matches.
+    Check if the current environment matches the overrides. Returns a dict of
+    passed matches, with reasons for values, and a set of non-matches.
     """
 
     passed_dict = {}
@@ -93,13 +93,15 @@ def override_match(
     if current_env is None:
         current_env = os.environ
 
-    if version is not None:
+    if scikit_build_version is not None:
         current_version = __version__
-        match_msg = version_match(current_version, version, "scikit-build-core")
+        match_msg = version_match(
+            current_version, scikit_build_version, "scikit-build-core"
+        )
         if match_msg:
-            passed_dict["version"] = match_msg
+            passed_dict["scikit-build-version"] = match_msg
         else:
-            failed_set.add("version")
+            failed_set.add("scikit-build-version")
 
     if python_version is not None:
         current_python_version = ".".join(str(x) for x in sys.version_info[:2])
@@ -230,16 +232,11 @@ def override_match(
                 else:
                     failed_set.add(f"env.{key}")
 
-    if not passed_dict and not failed_set:
+    if len(passed_dict) + len(failed_set) + len(unknown) < 1:
         msg = "At least one override must be provided"
         raise ValueError(msg)
 
-    # Only validate unknown overrides if version is not provided or matched
-    if (version is None or passed_dict) and unknown:
-        msg = f"Unknown overrides: {', '.join(unknown)}"
-        raise TypeError(msg)
-
-    return passed_dict, failed_set
+    return passed_dict, failed_set, unknown
 
 
 def inherit_join(
@@ -277,7 +274,9 @@ def process_overides(
     for override in tool_skb.pop("overrides", []):
         passed_any: dict[str, str] | None = None
         passed_all: dict[str, str] | None = None
-        failed: set[str] = set()
+        unknown: set[str] = set()
+        failed_any: set[str] = set()
+        failed_all: set[str] = set()
         if_override = override.pop("if", None)
         if not if_override:
             msg = "At least one 'if' override must be provided"
@@ -288,13 +287,14 @@ def process_overides(
         if "any" in if_override:
             any_override = if_override.pop("any")
             select = {k.replace("-", "_"): v for k, v in any_override.items()}
-            passed_any, _ = override_match(
+            passed_any, failed_any, unknown_any = override_match(
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
                 retry=retry,
                 **select,
             )
+            unknown |= set(unknown_any)
 
         inherit_override = override.pop("inherit", {})
         if not isinstance(inherit_override, dict):
@@ -303,20 +303,32 @@ def process_overides(
 
         select = {k.replace("-", "_"): v for k, v in if_override.items()}
         if select:
-            passed_all, failed = override_match(
+            passed_all, failed_all, unknown_all = override_match(
                 current_env=env,
                 current_state=state,
                 has_dist_info=has_dist_info,
                 retry=retry,
                 **select,
             )
+            unknown |= set(unknown_all)
+
+        # Verify no unknown options are present unless scikit-build-version is specified
+        passed_or_failed = {
+            *(passed_all or {}),
+            *(passed_any or {}),
+            *failed_all,
+            *failed_any,
+        }
+        if "scikit-build-version" not in passed_or_failed and unknown:
+            msg = f"Unknown overrides: {', '.join(unknown)}"
+            raise TypeError(msg)
 
         # If no overrides are passed, do nothing
         if passed_any is None and passed_all is None:
             continue
 
         # If normal overrides are passed and one or more fails, do nothing
-        if passed_all is not None and failed:
+        if passed_all is not None and failed_all:
             continue
 
         # If any is passed, at least one always needs to pass.
@@ -326,6 +338,10 @@ def process_overides(
         local_matched = set(passed_any or []) | set(passed_all or [])
         global_matched |= local_matched
         if local_matched:
+            if unknown:
+                msg = f"Unknown overrides: {', '.join(unknown)}"
+                raise TypeError(msg)
+
             all_str = " and ".join(
                 [
                     *(passed_all or {}).values(),

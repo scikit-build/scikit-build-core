@@ -26,7 +26,7 @@ options. Combined with the `if.version` override, this allows using overrides to
 support a range of scikit-build-core versions that added settings you want to
 use.
 
-### `version` (version)
+### `scikit-build-version` (version)
 
 The version of scikit-build-core itself. Takes a specifier set. If this is
 provided, unknown overrides will not be validated unless it's a match.
