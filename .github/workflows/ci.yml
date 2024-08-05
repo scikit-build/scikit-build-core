@@ -114,6 +114,7 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov]
+          "setuptools>=70.1"
           --system
 
       - name: Install package (pip)
