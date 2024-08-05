@@ -19,7 +19,7 @@ New features:
 * Add `if.failed` (retry) by @henryiii in #820
 * Packages can also be specified via a table by @henryiii in #841
 * Move `cmake.targets` and `cmake.verbose` to `build.targets` and `build.verbose` by @henryiii in #793
-* Support multipart regex by @henryiii in #818
+* Support multipart regex using `result=` by @henryiii in #818
 * Add `remove=` postprocess to regex by @henryiii in #828
 
 Fixes:
