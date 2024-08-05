@@ -192,7 +192,7 @@ def test_cmake_paths(
 
     config = CMaker(
         CMake.default_search(),
-        source_dir=DIR / "packages" / "simple_pure",
+        source_dir=DIR / "packages/simple_pure",
         build_dir=tmp_path / "build",
         build_type="Release",
         prefix_dirs=[tmp_path / "prefix"],
