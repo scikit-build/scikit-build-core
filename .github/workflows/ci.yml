@@ -113,15 +113,14 @@ jobs:
           && matrix.python-version != 'pypy-3.7'
         run:
           uv pip install
-          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov]
-          "setuptools>=70.1"
+          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
           --system
 
       - name: Install package (pip)
         if:
           matrix.python-version == '3.7' || matrix.python-version == 'pypy-3.8'
           || matrix.python-version == 'pypy-3.7'
-        run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov]
+        run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
