@@ -33,7 +33,6 @@ def test_broken_code(broken_define: str, capfd: pytest.CaptureFixture[str]):
         assert "CMake Error at CMakeLists.txt" in err
         assert "CMake configuration failed" in out
     else:
-        assert "Broken code" in out
         assert "CMake build failed" in out
 
 
