@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 __all__ = ["each_unignored_file"]
 
 EXCLUDE_LINES = [
-    ".git/",
+    ".git",
     ".tox/",
     ".nox/",
     ".egg-info/",
@@ -39,7 +39,8 @@ def each_unignored_file(
     exclude_lines = EXCLUDE_LINES + list(exclude)
 
     for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
-        with contextlib.suppress(FileNotFoundError), gi.open(encoding="utf-8") as f:
+        ignore_errs = [FileNotFoundError, NotADirectoryError]
+        with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
             exclude_lines += f.readlines()
 
     nested_excludes = {

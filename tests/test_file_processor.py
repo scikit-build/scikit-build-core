@@ -65,3 +65,16 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         nested_dir / "not_ignored.txt",
         nested_dir / ".gitignore",
     }
+
+
+def test_dot_git_is_a_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Test that each_unignored_file() does not crash when .git is a file (e.g.,
+    if the build is being run in a submodule)
+    """
+    monkeypatch.chdir(tmp_path)
+    # Create a file named .git
+    git = Path(".git")
+    git.write_text("gitdir: ../../.git/modules/foo")
+    # If this throws an exception, the test will fail
+    assert list(each_unignored_file(Path())) == []
