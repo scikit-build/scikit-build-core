@@ -58,7 +58,8 @@ def _handle_minimum_version(
 
     # Check for minimum_version < 0.8 and the modern version setting
     if (
-        dc.version != version_default
+        dc.version is not None
+        and dc.version != version_default
         and minimum_version is not None
         and minimum_version < Version("0.8")
     ):
@@ -74,12 +75,15 @@ def _handle_minimum_version(
         elif minimum_version >= Version("0.8"):
             rich_error(msg)
 
-        if dc.version != version_default:
+        if dc.version is not None and dc.version != version_default:
             rich_error(
                 f"Cannot set both {name}.minimum_version and {name}.version; use version only for scikit-build-core >= 0.8."
             )
 
         dc.version = SpecifierSet(f">={dc.minimum_version}")
+
+    if dc.version is None:
+        dc.version = SpecifierSet(f">={default}")
 
 
 def _handle_move(
@@ -226,16 +230,15 @@ class SettingsReader:
         if self.settings.install.strip is None:
             self.settings.install.strip = install_policy
 
-        # Before 0.10, we hard-coded 3.15+ as the minimum CMake version
+        # If we noted earlier that auto-cmake was requested, handle it now
         if (
             self.settings.cmake.version is None
-            and self.settings.minimum_version is not None
-            and self.settings.minimum_version < Version("0.10")
+            and self.settings.cmake.minimum_version is None
+            and (
+                self.settings.minimum_version is None
+                or self.settings.minimum_version >= Version("0.10")
+            )
         ):
-            self.settings.cmake.version = SpecifierSet(">=3.15")
-
-        # If we noted earlier that auto-cmake was requested, handle it now
-        if self.settings.cmake.version is None:
             cmake_path = self.settings.cmake.source_dir / "CMakeLists.txt"
             try:
                 with cmake_path.open(encoding="utf-8-sig") as f:
