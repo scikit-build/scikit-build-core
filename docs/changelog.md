@@ -6,6 +6,8 @@ This version adds auto CMake version discovery, opt-in auto minimum-version,
 rebuild on failure support, quite a few new override options greatly expanding
 the static config options for builds, more powerful regexs, and more.
 
+Also see [the announcement post](https://iscinumpy.dev/post/scikit-build-core-0-10).
+
 New features:
 
 * Auto CMake version by @henryiii in #804
@@ -29,11 +31,16 @@ Fixes:
 * Detect manual generator setting for `get_requires_*` by @henryiii in #840
 * Support nested and local gitignores by @henryiii in #827
 
+Tests:
+
+* Fix `test_cmake_config` if `CMAKE_GENERATOR` is already set by @lorepirri in #847
+
 Internal:
 
 * Pull out overrides to separate file by @henryiii in #821
 * Nicer error/warning printer by @henryiii in #813
 * Speed up CI for format job by @henryiii in #814
+* Avoid old wheel warning in CI test job by @henryiii in #849
 
 Documentation:
 

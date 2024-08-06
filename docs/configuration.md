@@ -517,16 +517,7 @@ You can pass raw arguments directly to the build tool, as well:
 
 ## Dynamic metadata
 
-Scikit-build-core 0.3.0+ supports dynamic metadata with two built-in plugins.
-
-:::{warning}
-
-This is not ready for plugin development outside of scikit-build-core;
-`tool.scikit-build.experimental=true` is required to use plugins that are not
-shipped with scikit-build-core, since the interface is provisional and may
-change between _minor_ versions.
-
-:::
+Scikit-build-core supports dynamic metadata with three built-in plugins.
 
 :::{tab} Setuptools-scm
 
@@ -626,11 +617,22 @@ remove = "dev0"
 
 This will remove the "dev" tag when it is equal to 0.
 
-:::{versionchanged} 0.10
+::::{versionchanged} 0.10
 
 Support for `result` and `remove` added.
 
-```
+::::
+
+:::
+
+
+:::{warning}
+
+Your package and third-party packages can also extend these with new plugins,
+but this is currently not ready for development outside of scikit-build-core;
+`tool.scikit-build.experimental=true` is required to use plugins that are not
+shipped with scikit-build-core, since the interface is provisional and may
+change between _minor_ versions.
 
 :::
 
