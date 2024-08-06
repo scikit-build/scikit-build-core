@@ -29,13 +29,14 @@ def get_min_requires(package: str, reqlist: Iterable[str]) -> Version | None:
 
     requires = [Requirement(req) for req in reqlist]
 
-    for req in requires:
-        if canonicalize_name(req.name) == norm_package:
-            specset = req.specifier
-            versions = (min_from_spec(v) for v in specset)
-            return min((v for v in versions if v is not None), default=None)
-
-    return None
+    versions = (
+        min_from_spec(v)
+        for req in requires
+        if canonicalize_name(req.name) == norm_package
+        and (req.marker is None or req.marker.evaluate())
+        for v in req.specifier
+    )
+    return min((v for v in versions if v is not None), default=None)
 
 
 def min_from_spec(spec: Specifier) -> Version | None:

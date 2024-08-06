@@ -88,6 +88,10 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         "minProperties": 1,
         "additionalProperties": False,
         "properties": {
+            "scikit-build-version": {
+                "type": "string",
+                "description": "The version of scikit-build-version. Takes a specifier set.",
+            },
             "python-version": {
                 "type": "string",
                 "description": "The two-digit Python version. Takes a specifier set.",
