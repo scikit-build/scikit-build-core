@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.10.1
+
+This is a quick fix release with two patches for specific situations.
+
+Fixes:
+
+* Fix crash when building inside a submodule by @ausbin in #854
+* `cmake.minimum-version` logic issue by @henryiii in #853
+
 ## Version 0.10.0
 
 This version adds auto CMake version discovery, opt-in auto minimum-version,
