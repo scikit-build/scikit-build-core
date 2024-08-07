@@ -472,13 +472,19 @@ def test_skbuild_settings_min_version_versions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.8.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
     )
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         "tool.scikit-build.cmake.minimum-version = '3.21'", encoding="utf-8"
     )
+    cmakelists = tmp_path / "CMakeLists.txt"
+    cmakelists.write_text("cmake_minimum_required(VERSION 3.20)", encoding="utf-8")
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    settings = settings_reader.settings
+    assert settings.cmake.version == SpecifierSet(">=3.21")
 
     settings_reader = SettingsReader.from_file(
         pyproject_toml, {"minimum-version": "0.7"}
