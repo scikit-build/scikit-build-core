@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.10.3
+
 This release fixes an issue on Windows systems with non-utf-8 default encodings
 for Python \<3.14 when reading gitignores with special characters.
 
