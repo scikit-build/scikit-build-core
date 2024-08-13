@@ -12,6 +12,8 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from packaging.version import Version
+
 from . import __version__
 from ._logging import logger
 from ._shutil import Run
@@ -22,7 +24,6 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.specifiers import SpecifierSet
-    from packaging.version import Version
 
     from ._compat.typing import Self
 
@@ -79,6 +80,8 @@ class CMaker:
     build_type: str
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
+    ignore_prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
+    canonical_name: str = ""
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
@@ -161,6 +164,23 @@ class CMaker:
                     f'set(CMAKE_PREFIX_PATH [===[{prefix_dirs_str}]===] CACHE PATH "" FORCE)\n'
                 )
                 f.write('set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE "BOTH" CACHE PATH "")\n')
+
+            if self.ignore_prefix_dirs:
+                ignore_prefix_dirs_str = ""
+                for ignore_prefix in self.ignore_prefix_dirs:
+                    # TODO: Detect the appropriate prefix dirs to ignore depending on installed packages?
+                    ignore_prefix_dirs_str += f"{ignore_prefix / self.canonical_name};"
+                ignore_prefix_dirs_str = ignore_prefix_dirs_str.strip(";").replace(
+                    "\\", "/"
+                )
+                ignore_path_var = (
+                    "CMAKE_IGNORE_PREFIX_PATH"
+                    if self.cmake.version >= Version("3.23")
+                    else "CMAKE_IGNORE_PATH"
+                )
+                f.write(
+                    f'set({ignore_path_var} [===[{ignore_prefix_dirs_str}]===] CACHE PATH "" FORCE)\n'
+                )
 
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
