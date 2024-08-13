@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.10.2
+
+This release fixes a regression with 0.10 where a manually included file in an
+sdist would get included twice, affecting some tools (like uv).
+
+Fixes:
+
+* Files included twice when they match `include_spec` by @abetlen in #857
+
 ## Version 0.10.1
 
 This is a quick fix release with two patches for specific situations.
