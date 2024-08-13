@@ -212,7 +212,7 @@ def get_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     "Get the stored complete schema for scikit-build settings."
     assert tool_name == "scikit-build", "Only scikit-build is supported."
 
-    with resources.joinpath("scikit-build.schema.json").open(encoding="utf-8-sig") as f:
+    with resources.joinpath("scikit-build.schema.json").open(encoding="utf-8") as f:
         return json.load(f)  # type: ignore[no-any-return]
 
 

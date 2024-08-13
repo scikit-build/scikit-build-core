@@ -36,7 +36,7 @@ def editable_redirect(
     """
 
     editable_py = resources / "_editable_redirect.py"
-    editable_txt: str = editable_py.read_text(encoding="utf-8-sig")
+    editable_txt: str = editable_py.read_text(encoding="utf-8")
 
     arguments = (
         modules,

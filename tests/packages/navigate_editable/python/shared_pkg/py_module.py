@@ -19,10 +19,10 @@ def py_method():
 def read_py_data_txt():
     root = files("shared_pkg.data")
     py_data = root / "py_data.txt"
-    print(py_data.read_text(encoding="utf-8-sig"))
+    print(py_data.read_text(encoding="utf-8"))
 
 
 def read_c_generated_txt():
     root = files("shared_pkg.data")
     c_generated_txt = root / "c_generated.txt"
-    print(c_generated_txt.read_text(encoding="utf-8-sig"))
+    print(c_generated_txt.read_text(encoding="utf-8"))

@@ -26,7 +26,7 @@ def generate_file_contents(gen: GenerateSettings, metadata: StandardMetadata) ->
     ), f"One of template or template-path must be set for {gen.path}"
 
     if gen.template_path:
-        template = gen.template_path.read_text(encoding="utf-8-sig")
+        template = gen.template_path.read_text(encoding="utf-8")
     else:
         template = gen.template
 

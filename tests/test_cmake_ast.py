@@ -17,7 +17,7 @@ IDS = [str(p.relative_to(DIR.parent).parent) for p in FILENAMES]
 
 @pytest.mark.parametrize("filename", FILENAMES, ids=IDS)
 def test_cmake_file_parse(filename: Path):
-    for x in parse(tokenize(filename.read_text(encoding="utf-8-sig"))):
+    for x in parse(tokenize(filename.read_text(encoding="utf-8"))):
         assert str(x).startswith(f"{x.name}({x.value})")
 
 

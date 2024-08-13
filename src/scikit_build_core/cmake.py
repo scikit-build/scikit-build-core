@@ -100,7 +100,7 @@ class CMaker:
             skbuild_info = self.build_dir / ".skbuild-info.json"
             # If building via SDist, this could be pre-filled, so delete it if it exists
             with contextlib.suppress(FileNotFoundError):
-                with skbuild_info.open("r", encoding="utf-8-sig") as f:
+                with skbuild_info.open("r", encoding="utf-8") as f:
                     info = json.load(f)
 
                 cached_source_dir = Path(info["source_dir"])
@@ -113,7 +113,7 @@ class CMaker:
                     shutil.rmtree(self.build_dir)
                     self.build_dir.mkdir()
 
-            with skbuild_info.open("w", encoding="utf-8-sig") as f:
+            with skbuild_info.open("w", encoding="utf-8") as f:
                 json.dump(self._info_dict(), f, indent=2)
 
     def _info_dict(self) -> dict[str, str]:
@@ -132,7 +132,7 @@ class CMaker:
     def init_cache(
         self, cache_settings: Mapping[str, str | os.PathLike[str] | bool]
     ) -> None:
-        with self.init_cache_file.open("w", encoding="utf-8-sig") as f:
+        with self.init_cache_file.open("w", encoding="utf-8") as f:
             for key, value in cache_settings.items():
                 if isinstance(value, bool):
                     str_value = "ON" if value else "OFF"
@@ -162,7 +162,7 @@ class CMaker:
                 )
                 f.write('set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE "BOTH" CACHE PATH "")\n')
 
-        contents = self.init_cache_file.read_text(encoding="utf-8-sig").strip()
+        contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(
             "{}:\n{}",
             self.init_cache_file,
