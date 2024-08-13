@@ -59,6 +59,7 @@ def each_unignored_file(
             # Always include something included
             if include_spec.match_file(p):
                 yield p
+                continue
 
             # Ignore from global ignore
             if exclude_spec.match_file(p):
