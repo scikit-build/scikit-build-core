@@ -1,5 +1,13 @@
 # Changelog
 
+This release fixes an issue on Windows systems with non-utf-8 default encodings
+for Python \<3.14 when reading gitignores with special characters.
+
+Fixes:
+
+* Make sure encoding is specified in more places by @henryiii in #861
+
+
 ## Version 0.10.2
 
 This release fixes a regression with 0.10 where a manually included file in an
