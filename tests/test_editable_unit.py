@@ -84,7 +84,7 @@ def editable_package(
 
             from importlib.resources import files
 
-            read_file = files("pkg.resources").joinpath("file.txt").read_text(encoding="utf-8")
+            read_file = files("pkg.resources").joinpath("file.txt").read_text(encoding="utf-8-sig")
             assert read_file == "hello"
             """
         )
@@ -98,7 +98,7 @@ def editable_package(
             """\
             from importlib.resources import files
 
-            read_file = files("pkg.iresources").joinpath("file.txt").read_text(encoding="utf-8")
+            read_file = files("pkg.iresources").joinpath("file.txt").read_text(encoding="utf-8-sig")
             assert read_file == "hi"
             """
         )

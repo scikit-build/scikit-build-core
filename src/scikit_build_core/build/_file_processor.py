@@ -40,11 +40,13 @@ def each_unignored_file(
 
     for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
         ignore_errs = [FileNotFoundError, NotADirectoryError]
-        with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
+        with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8-sig") as f:
             exclude_lines += f.readlines()
 
     nested_excludes = {
-        p.parent: pathspec.GitIgnoreSpec.from_lines(p.read_text().splitlines())
+        p.parent: pathspec.GitIgnoreSpec.from_lines(
+            p.read_text(encoding="utf-8-sig").splitlines()
+        )
         for p in Path().rglob("**/.gitignore")
         if p != Path(".gitignore")
     }

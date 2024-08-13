@@ -20,7 +20,9 @@ SHEBANG_PATTERN = re.compile(r"^#!.*(?:python|pythonw|pypy)[0-9.]*([ \t].*)?$")
 def process_script_dir(script_dir: Path) -> None:
     for item in script_dir.iterdir():
         content = []
-        with contextlib.suppress(UnicodeDecodeError), item.open(encoding="utf-8") as f:
+        with contextlib.suppress(UnicodeDecodeError), item.open(
+            encoding="utf-8-sig"
+        ) as f:
             file_iter = iter(f)
             try:
                 # TODO: handle empty files
@@ -31,5 +33,5 @@ def process_script_dir(script_dir: Path) -> None:
             if match:
                 content = [f"#!python{match.group(1) or ''}\n", *file_iter]
         if content:
-            with item.open("w", encoding="utf-8") as f:
+            with item.open("w", encoding="utf-8-sig") as f:
                 f.writelines(content)

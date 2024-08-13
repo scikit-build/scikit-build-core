@@ -40,7 +40,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
         if with_path["jsonFile"] is None:
             return converter.structure_attrs_fromdict({}, t)
         path = base_dir / Path(with_path["jsonFile"])
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8-sig"))
         return converter.structure_attrs_fromdict(raw, t)
 
     converter.register_structure_hook(CodeModel, from_json_file)
@@ -57,7 +57,7 @@ def load_reply_dir(reply_dir: Path) -> Index:
         msg = f"index file not found in {reply_dir}"
         raise IndexError(msg)
     index_file = indexes[-1]
-    return converter.loads(index_file.read_text(), Index)
+    return converter.loads(index_file.read_text("utf-8-sig"), Index)
 
 
 if __name__ == "__main__":

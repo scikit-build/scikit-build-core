@@ -107,7 +107,7 @@ def test_init_cache(
     cmake_init = config.build_dir / "CMakeInit.txt"
     source_dir_str = str(config.source_dir).replace("\\", "/")
     assert (
-        cmake_init.read_text()
+        cmake_init.read_text(encoding="utf-8-sig")
         == f"""\
 set(SKBUILD ON CACHE BOOL "" FORCE)
 set(SKBUILD_VERSION [===[1.0.0]===] CACHE STRING "" FORCE)

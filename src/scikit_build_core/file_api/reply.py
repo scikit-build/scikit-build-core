@@ -34,13 +34,13 @@ class Converter:
         Load the newest index.json file and return the Index object.
         """
         index_file = sorted(self.base_dir.glob("index-*"))[-1]
-        with index_file.open(encoding="utf-8") as f:
+        with index_file.open(encoding="utf-8-sig") as f:
             data = json.load(f)
 
         return self.make_class(data, Index)
 
     def _load_from_json(self, name: Path, target: Type[T]) -> T:
-        with self.base_dir.joinpath(name).open(encoding="utf-8") as f:
+        with self.base_dir.joinpath(name).open(encoding="utf-8-sig") as f:
             data = json.load(f)
 
         return self.make_class(data, target)

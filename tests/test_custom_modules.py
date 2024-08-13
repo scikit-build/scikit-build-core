@@ -20,7 +20,7 @@ def test_ep(isolated):
 
     script = isolated.run("script1", capture=True).strip()
     pysys = isolated.execute("import sys; print(sys.executable)").strip()
-    contents = Path(script).read_text()
+    contents = Path(script).read_text(encoding="utf-8-sig")
     assert contents.startswith(f"#!{pysys}")
 
     if sys.version_info >= (3, 8):
