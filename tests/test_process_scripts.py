@@ -33,18 +33,26 @@ def test_script_dir(tmp_path: Path) -> None:
 
     process_script_dir(script_dir)
 
-    assert script_1.read_text() == "#!python\n\nprint('hello world')"
+    assert script_1.read_text(encoding="utf-8") == "#!python\n\nprint('hello world')"
     assert script_1.stat().st_mode == orig_mode_1
 
-    assert script_2.read_text() == "#!python\n\nprint('hello world')"
+    assert script_2.read_text(encoding="utf-8") == "#!python\n\nprint('hello world')"
     assert script_2.stat().st_mode == orig_mode_2
 
-    assert script_3.read_text() == "#!python\n\nprint('hello world')"
+    assert script_3.read_text(encoding="utf-8") == "#!python\n\nprint('hello world')"
 
-    assert script_4.read_text() == "#!python\n\nprint('hello world')"
+    assert script_4.read_text(encoding="utf-8") == "#!python\n\nprint('hello world')"
 
-    assert script_5.read_text() == "#!/usr/bin/other\n\nprint('hello world')"
+    assert (
+        script_5.read_text(encoding="utf-8")
+        == "#!/usr/bin/other\n\nprint('hello world')"
+    )
 
-    assert script_6.read_text() == "#!python other\n\nprint('hello world')"
+    assert (
+        script_6.read_text(encoding="utf-8") == "#!python other\n\nprint('hello world')"
+    )
 
-    assert script_7.read_text() == "#!/usr/bin/env other\n\nprint('hello world')"
+    assert (
+        script_7.read_text(encoding="utf-8")
+        == "#!/usr/bin/env other\n\nprint('hello world')"
+    )

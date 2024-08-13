@@ -44,7 +44,9 @@ def each_unignored_file(
             exclude_lines += f.readlines()
 
     nested_excludes = {
-        p.parent: pathspec.GitIgnoreSpec.from_lines(p.read_text().splitlines())
+        p.parent: pathspec.GitIgnoreSpec.from_lines(
+            p.read_text(encoding="utf-8").splitlines()
+        )
         for p in Path().rglob("**/.gitignore")
         if p != Path(".gitignore")
     }

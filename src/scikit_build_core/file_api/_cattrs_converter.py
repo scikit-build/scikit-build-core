@@ -57,7 +57,7 @@ def load_reply_dir(reply_dir: Path) -> Index:
         msg = f"index file not found in {reply_dir}"
         raise IndexError(msg)
     index_file = indexes[-1]
-    return converter.loads(index_file.read_text(), Index)
+    return converter.loads(index_file.read_text("utf-8"), Index)
 
 
 if __name__ == "__main__":
