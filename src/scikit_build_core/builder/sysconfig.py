@@ -62,7 +62,13 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
 
     libdirstr = sysconfig.get_config_var("LIBDIR")
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
-    librarystr = sysconfig.get_config_var("LDLIBRARY")
+    librarystr = sysconfig.get_config_var("LIBRARY")
+    if abi3:
+        if ldlibrarystr is not None:
+            ldlibrarystr = ldlibrarystr.replace(f"python3{sys.version_info[1]}", "python3")
+        if librarystr is not None:
+            librarystr = librarystr.replace(f"python3{sys.version_info[1]}", "python3")
+
     libdir: Path | None = libdirstr and Path(libdirstr)
     ldlibrary: Path | None = ldlibrarystr and Path(ldlibrarystr)
     library: Path | None = librarystr and Path(librarystr)
