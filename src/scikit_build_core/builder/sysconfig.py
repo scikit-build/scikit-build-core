@@ -65,7 +65,9 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
     librarystr = sysconfig.get_config_var("LIBRARY")
     if abi3:
         if ldlibrarystr is not None:
-            ldlibrarystr = ldlibrarystr.replace(f"python3{sys.version_info[1]}", "python3")
+            ldlibrarystr = ldlibrarystr.replace(
+                f"python3{sys.version_info[1]}", "python3"
+            )
         if librarystr is not None:
             librarystr = librarystr.replace(f"python3{sys.version_info[1]}", "python3")
 
