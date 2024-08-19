@@ -324,6 +324,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-14, windows-latest]
+        python-version: ["3.11", "3.13"]
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 15
 
@@ -334,7 +335,7 @@ jobs:
 
       - uses: wntrblm/nox@2024.04.15
         with:
-          python-versions: "3.11"
+          python-versions: ${{ matrix.python-version }}
 
       - name: Linkcheck
         run: nox -s docs -- -b linkcheck
