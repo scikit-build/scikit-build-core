@@ -67,6 +67,7 @@ def _make_editable(
         verbose=settings.editable.verbose,
         build_options=build_options,
         install_options=install_options,
+        install_dir=settings.wheel.install_dir or None,
     )
 
     wheel.writestr(

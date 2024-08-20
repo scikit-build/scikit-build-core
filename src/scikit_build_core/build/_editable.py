@@ -30,11 +30,11 @@ def editable_redirect(
     verbose: bool,
     build_options: Sequence[str],
     install_options: Sequence[str],
+    install_dir: str | None,
 ) -> str:
     """
     Prepare the contents of the _editable_redirect.py file.
     """
-
     editable_py = resources / "_editable_redirect.py"
     editable_txt: str = editable_py.read_text(encoding="utf-8")
 
@@ -46,6 +46,7 @@ def editable_redirect(
         verbose,
         build_options,
         install_options,
+        install_dir,
     )
     arguments_str = ", ".join(repr(x) for x in arguments)
     editable_txt += f"\n\ninstall({arguments_str})\n"
