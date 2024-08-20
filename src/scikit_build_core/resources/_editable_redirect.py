@@ -33,7 +33,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         build_options: list[str],
         install_options: list[str],
         dir: str,
-        install_dir: str,
+        install_dir: str | None,
     ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
@@ -43,7 +43,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.build_options = build_options
         self.install_options = install_options
         self.dir = dir
-        self.install_dir = install_dir
+        self.install_dir = install_dir or DIR
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
         submodule_search_locations: dict[str, set[str]] = {}
