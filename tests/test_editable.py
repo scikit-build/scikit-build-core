@@ -118,18 +118,20 @@ def test_install_dir(isolated):
 
     settings_overrides = {
         "build-dir": "build/{wheel_tag}",
-        "wheel.install-dir": "sub_pkg",
+        "wheel.install-dir": "other_pkg",
         "editable.rebuild": "true",
     }
-    # Create a dummy _module to satisfy the import
-    Path("./src/simplest/_module.py").write_text(
+    # Create a dummy other_pkg package to satisfy the import
+    other_pkg_src = Path("./src/other_pkg")
+    other_pkg_src.joinpath("simplest").mkdir(parents=True)
+    other_pkg_src.joinpath("__init__.py").write_text(
         textwrap.dedent(
             """
-            def square(__x: float, __y: float) -> float:
-                pass
+            from .simplest._module import square
             """
         )
     )
+    other_pkg_src.joinpath("simplest/__init__.py").touch()
 
     isolated.install(
         "-v",
@@ -140,16 +142,17 @@ def test_install_dir(isolated):
     )
 
     # Make sure the package is correctly installed in the subdirectory
-    sub_pkg_path = isolated.platlib / "sub_pkg"
-    c_module_glob = list(sub_pkg_path.glob("simplest/_module*"))
+    other_pkg_path = isolated.platlib / "other_pkg"
+    c_module_glob = list(other_pkg_path.glob("simplest/_module*"))
     assert len(c_module_glob) == 1
     c_module = c_module_glob[0]
     assert c_module.exists()
     # If `install-dir` was not taken into account it would install here
-    failed_c_module = sub_pkg_path / "../simplest" / c_module.name
+    failed_c_module = other_pkg_path / "../simplest" / c_module.name
     assert not failed_c_module.exists()
 
     # Run an import in order to re-trigger the rebuild and check paths again
-    isolated.execute("import simplest")
+    out = isolated.execute("import other_pkg.simplest")
+    assert "Running cmake" in out
     assert c_module.exists()
     assert not failed_c_module.exists()
