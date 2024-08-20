@@ -1,4 +1,5 @@
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -105,3 +106,53 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
         *editable_flag,
         ".",
     )
+
+
+@pytest.mark.compile()
+@pytest.mark.configure()
+@pytest.mark.integration()
+@pytest.mark.usefixtures("package_simplest_c")
+def test_install_dir(isolated):
+    isolated.install("pip>=23")
+    isolated.install("scikit-build-core")
+
+    settings_overrides = {
+        "build-dir": "build/{wheel_tag}",
+        "wheel.install-dir": "other_pkg",
+        "editable.rebuild": "true",
+    }
+    # Create a dummy other_pkg package to satisfy the import
+    other_pkg_src = Path("./src/other_pkg")
+    other_pkg_src.joinpath("simplest").mkdir(parents=True)
+    other_pkg_src.joinpath("__init__.py").write_text(
+        textwrap.dedent(
+            """
+            from .simplest._module import square
+            """
+        )
+    )
+    other_pkg_src.joinpath("simplest/__init__.py").touch()
+
+    isolated.install(
+        "-v",
+        *[f"--config-settings={k}={v}" for k, v in settings_overrides.items()],
+        "--no-build-isolation",
+        "-e",
+        ".",
+    )
+
+    # Make sure the package is correctly installed in the subdirectory
+    other_pkg_path = isolated.platlib / "other_pkg"
+    c_module_glob = list(other_pkg_path.glob("simplest/_module*"))
+    assert len(c_module_glob) == 1
+    c_module = c_module_glob[0]
+    assert c_module.exists()
+    # If `install-dir` was not taken into account it would install here
+    failed_c_module = other_pkg_path / "../simplest" / c_module.name
+    assert not failed_c_module.exists()
+
+    # Run an import in order to re-trigger the rebuild and check paths again
+    out = isolated.execute("import other_pkg.simplest")
+    assert "Running cmake" in out
+    assert c_module.exists()
+    assert not failed_c_module.exists()

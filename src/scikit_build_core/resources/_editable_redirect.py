@@ -32,7 +32,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         verbose: bool,
         build_options: list[str],
         install_options: list[str],
-        dir: str = DIR,
+        dir: str,
+        install_dir: str,
     ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
@@ -42,6 +43,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.build_options = build_options
         self.install_options = install_options
         self.dir = dir
+        self.install_dir = os.path.join(DIR, install_dir)
+
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
         submodule_search_locations: dict[str, set[str]] = {}
@@ -136,7 +139,14 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         result.check_returncode()
 
         result = subprocess.run(
-            ["cmake", "--install", ".", "--prefix", DIR, *self.install_options],
+            [
+                "cmake",
+                "--install",
+                ".",
+                "--prefix",
+                self.install_dir,
+                *self.install_options,
+            ],
             cwd=self.path,
             stdout=sys.stderr if verbose else subprocess.PIPE,
             env=env,
@@ -159,6 +169,7 @@ def install(
     verbose: bool = False,
     build_options: list[str] | None = None,
     install_options: list[str] | None = None,
+    install_dir: str = "",
 ) -> None:
     """
     Install a meta path finder that redirects imports to the source files, and
@@ -169,6 +180,8 @@ def install(
     :param path: The path to the build directory, or None
     :param verbose: Whether to print the cmake commands (also controlled by the
                     SKBUILD_EDITABLE_VERBOSE environment variable)
+    :param install_dir: The wheel install directory override, if one was
+                        specified
     """
     sys.meta_path.insert(
         0,
@@ -180,5 +193,7 @@ def install(
             verbose,
             build_options or [],
             install_options or [],
+            DIR,
+            install_dir,
         ),
     )
