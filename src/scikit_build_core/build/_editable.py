@@ -35,6 +35,7 @@ def editable_redirect(
     """
     Prepare the contents of the _editable_redirect.py file.
     """
+
     editable_py = resources / "_editable_redirect.py"
     editable_txt: str = editable_py.read_text(encoding="utf-8")
 

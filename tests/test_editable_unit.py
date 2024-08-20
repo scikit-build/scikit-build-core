@@ -181,6 +181,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         verbose=False,
         build_options=[],
         install_options=[],
+        install_dir=None,
     )
 
     site_packages.joinpath("_pkg_editable.py").write_text(editable_txt)

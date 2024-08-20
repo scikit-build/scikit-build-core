@@ -44,6 +44,7 @@ def test_editable_redirect():
         build_options=[],
         install_options=[],
         dir=str(Path("/sitepackages")),
+        install_dir=None
     )
 
     assert finder.submodule_search_locations == process_dict_set(
