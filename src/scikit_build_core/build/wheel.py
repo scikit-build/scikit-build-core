@@ -58,7 +58,9 @@ def _make_editable(
 ) -> None:
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
-
+    if settings.wheel.install_dir.startswith("/"):
+        msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
+        raise AssertionError(msg)
     editable_txt = editable_redirect(
         modules=modules,
         installed=installed,
