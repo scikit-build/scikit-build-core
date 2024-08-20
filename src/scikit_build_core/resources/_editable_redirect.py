@@ -138,8 +138,14 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         result.check_returncode()
 
         result = subprocess.run(
-            ["cmake", "--install", ".", "--prefix", self.install_dir,
-             *self.install_options],
+            [
+                "cmake",
+                "--install",
+                ".",
+                "--prefix",
+                self.install_dir,
+                *self.install_options,
+            ],
             cwd=self.path,
             stdout=sys.stderr if verbose else subprocess.PIPE,
             env=env,
