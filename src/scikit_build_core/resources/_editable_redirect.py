@@ -33,7 +33,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         build_options: list[str],
         install_options: list[str],
         dir: str,
-        install_dir: str | None,
+        install_dir: str,
     ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
@@ -43,7 +43,11 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.build_options = build_options
         self.install_options = install_options
         self.dir = dir
-        self.install_dir = install_dir or DIR
+        self.install_dir = (
+            install_dir
+            if os.path.isabs(install_dir)
+            else os.path.join(DIR, install_dir)
+        )
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
         submodule_search_locations: dict[str, set[str]] = {}
@@ -168,7 +172,7 @@ def install(
     verbose: bool = False,
     build_options: list[str] | None = None,
     install_options: list[str] | None = None,
-    install_dir: str | None = None,
+    install_dir: str = "",
 ) -> None:
     """
     Install a meta path finder that redirects imports to the source files, and
@@ -193,6 +197,6 @@ def install(
             build_options or [],
             install_options or [],
             DIR,
-            os.path.join(DIR, install_dir) if install_dir else DIR,
+            install_dir,
         ),
     )

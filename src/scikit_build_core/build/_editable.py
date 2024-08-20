@@ -30,7 +30,7 @@ def editable_redirect(
     verbose: bool,
     build_options: Sequence[str],
     install_options: Sequence[str],
-    install_dir: str | None,
+    install_dir: str,
 ) -> str:
     """
     Prepare the contents of the _editable_redirect.py file.
