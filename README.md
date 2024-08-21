@@ -10,6 +10,7 @@
 [![PyPI version][pypi-version]][pypi-link]
 [![Conda-Forge][conda-badge]][conda-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
+[![Downloads][download-badge]][download-link]
 
 > [!NOTE]
 >
@@ -366,26 +367,28 @@ those of the author(s) and do not necessarily reflect the views of the National
 Science Foundation.
 
 <!-- prettier-ignore-start -->
+[OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
 [actions-badge]:            https://github.com/scikit-build/scikit-build-core/workflows/CI/badge.svg
 [actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
-[conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
-[conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
 [cmeel]:                    https://github.com/cmake-wheel/cmeel
-[github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
-[github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
-[discord-badge]:            https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23scikit-build
-[discord-link]:             https://discord.gg/pypa
 [codecov-badge]:            https://codecov.io/gh/scikit-build/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
 [codecov-link]:             https://codecov.io/gh/scikit-build/scikit-build-core
+[conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
+[conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
+[discord-badge]:            https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23scikit-build
+[discord-link]:             https://discord.gg/pypa
+[download-badge]:           https://static.pepy.tech/badge/scikit-build-core/month
+[download-link]:            https://pepy.tech/project/scikit-build-core
+[enscons]:                  https://pypi.org/project/enscons
+[github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
+[github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
+[hatchling]:                https://hatch.pypa.io/latest
+[maturin]:                  https://www.maturin.rs
+[meson-python]:             https://meson-python.readthedocs.io
+[py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 [pypi-link]:                https://pypi.org/project/scikit-build-core/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/scikit-build-core
 [pypi-version]:             https://badge.fury.io/py/scikit-build-core.svg
 [rtd-badge]:                https://readthedocs.org/projects/scikit-build-core/badge/?version=latest
 [rtd-link]:                 https://scikit-build-core.readthedocs.io/en/latest/?badge=latest
-[OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
-[hatchling]:                https://hatch.pypa.io/latest
-[maturin]:                  https://www.maturin.rs
-[meson-python]:             https://meson-python.readthedocs.io
-[enscons]:                  https://pypi.org/project/enscons
-[py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 <!-- prettier-ignore-end -->

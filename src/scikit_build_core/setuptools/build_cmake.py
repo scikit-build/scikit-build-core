@@ -112,7 +112,7 @@ class BuildCMake(setuptools.Command):
 
         bdist_wheel = dist.get_command_obj("bdist_wheel")
         assert bdist_wheel is not None
-        limited_api = bdist_wheel.py_limited_api  # type: ignore[attr-defined]
+        limited_api = bdist_wheel.py_limited_api
 
         # TODO: this is a hack due to moving temporary paths for isolation
         if build_temp.exists():
@@ -150,7 +150,7 @@ class BuildCMake(setuptools.Command):
             name=dist.get_name(),
             version=Version(dist.get_version()),
             defines=defines,
-            limited_api=limited_api,
+            limited_api=bool(limited_api),
             configure_args=configure_args,
         )
 
