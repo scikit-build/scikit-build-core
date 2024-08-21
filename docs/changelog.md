@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.10.4
+
+This version fixes the logic for handling the sysconfig variables on Windows
+for the values that used to be only provided on UNIX. This mostly affects
+targeting the Stable ABI on Python 3.13. Editable install rebuilds now work if
+you have a `wheel.install-dir` set, too.
+
+Fixes:
+
+* Windows 3.13 stable ABI by @LecrisUT in #865
+* Editable installs now respect the value of `wheel.install-dir` by @psalvaggio in #867
+
+Docs:
+
+* Add conda help to faqs by @henryiii in #868
+
 ## Version 0.10.3
 
 This release fixes an issue on Windows systems with non-utf-8 default encodings
