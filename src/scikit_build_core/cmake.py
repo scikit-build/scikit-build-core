@@ -4,6 +4,7 @@ import contextlib
 import dataclasses
 import json
 import os
+import shutil
 import subprocess
 import sys
 import sysconfig
@@ -81,7 +82,6 @@ class CMaker:
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
-    stale: bool | None = None
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -97,35 +97,42 @@ class CMaker:
             raise CMakeConfigError(msg)
 
         skbuild_info = self.build_dir / ".skbuild-info.json"
-        # If building via SDist, this could be pre-filled, so delete it if it exists
-        if self.stale is None:
-            info: dict[str, str] = {}
-            with contextlib.suppress(FileNotFoundError), skbuild_info.open(
-                "r", encoding="utf-8"
-            ) as f:
-                info = json.load(f)
+        stale = False
 
-            if info:
-                cached_source_dir = Path(info["source_dir"])
-                if cached_source_dir != source_dir:
-                    logger.warning(
-                        "Original src {} != {}, setting --fresh",
-                        cached_source_dir,
-                        source_dir,
-                    )
-                    self.stale = True
+        info: dict[str, str] = {}
+        with contextlib.suppress(FileNotFoundError), skbuild_info.open(
+            "r", encoding="utf-8"
+        ) as f:
+            info = json.load(f)
 
-                cached_skbuild_dir = Path(info["skbuild_path"])
-                if cached_skbuild_dir != DIR:
-                    logger.info(
-                        "New isolated environment {} -> {}, setting --fresh",
-                        cached_skbuild_dir,
-                        DIR,
-                    )
-                    self.stale = True
+        if info:
+            # If building via SDist, this could be pre-filled
+            cached_source_dir = Path(info["source_dir"])
+            if cached_source_dir != source_dir:
+                logger.warning(
+                    "Original src {} != {}, clearing cache",
+                    cached_source_dir,
+                    source_dir,
+                )
+                stale = True
 
-        if self.stale is None:
-            self.stale = False
+            # Isolated environments can cause this
+            cached_skbuild_dir = Path(info["skbuild_path"])
+            if cached_skbuild_dir != DIR:
+                logger.info(
+                    "New isolated environment {} -> {}, clearing cache",
+                    cached_skbuild_dir,
+                    DIR,
+                )
+                stale = True
+
+        # Not using --fresh here, not just due to CMake 3.24+, but also just in
+        # case it triggers an extra FetchContent pull in CMake 3.30+
+        if stale:
+            # Python 3.8+ can use missing_ok=True
+            with contextlib.suppress(FileNotFoundError):
+                self.build_dir.joinpath("CMakeCache.txt").unlink()
+            shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)
 
         with skbuild_info.open("w", encoding="utf-8") as f:
             json.dump(self._info_dict(), f, indent=2)
@@ -201,9 +208,6 @@ class CMaker:
                 yield f"-D{key}:PATH={str_value}"
             else:
                 yield f"-D{key}={value}"
-
-        if self.stale:
-            yield "--fresh"
 
     def get_generator(self, *args: str) -> str | None:
         """
