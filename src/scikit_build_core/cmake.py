@@ -4,7 +4,6 @@ import contextlib
 import dataclasses
 import json
 import os
-import shutil
 import subprocess
 import sys
 import sysconfig
@@ -82,9 +81,11 @@ class CMaker:
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
+    stale: bool | None = None
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
+        source_dir = self.source_dir.resolve()
 
         if not self.source_dir.is_dir():
             msg = f"source directory {self.source_dir} does not exist"
@@ -95,26 +96,39 @@ class CMaker:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
             raise CMakeConfigError(msg)
 
-        # If these were the same, the following check could wipe the source directory!
-        if self.build_dir.resolve() != self.source_dir.resolve():
-            skbuild_info = self.build_dir / ".skbuild-info.json"
-            # If building via SDist, this could be pre-filled, so delete it if it exists
-            with contextlib.suppress(FileNotFoundError):
-                with skbuild_info.open("r", encoding="utf-8") as f:
-                    info = json.load(f)
+        skbuild_info = self.build_dir / ".skbuild-info.json"
+        # If building via SDist, this could be pre-filled, so delete it if it exists
+        if self.stale is None:
+            info: dict[str, str] = {}
+            with contextlib.suppress(FileNotFoundError), skbuild_info.open(
+                "r", encoding="utf-8"
+            ) as f:
+                info = json.load(f)
 
+            if info:
                 cached_source_dir = Path(info["source_dir"])
-                if cached_source_dir.resolve() != self.source_dir.resolve():
+                if cached_source_dir != source_dir:
                     logger.warning(
-                        "Original src {} != {}, wiping build directory",
+                        "Original src {} != {}, setting --fresh",
                         cached_source_dir,
-                        self.source_dir,
+                        source_dir,
                     )
-                    shutil.rmtree(self.build_dir)
-                    self.build_dir.mkdir()
+                    self.stale = True
 
-            with skbuild_info.open("w", encoding="utf-8") as f:
-                json.dump(self._info_dict(), f, indent=2)
+                cached_skbuild_dir = Path(info["skbuild_path"])
+                if cached_skbuild_dir != DIR:
+                    logger.info(
+                        "New isolated environment {} -> {}, setting --fresh",
+                        cached_skbuild_dir,
+                        DIR,
+                    )
+                    self.stale = True
+
+        if self.stale is None:
+            self.stale = False
+
+        with skbuild_info.open("w", encoding="utf-8") as f:
+            json.dump(self._info_dict(), f, indent=2)
 
     def _info_dict(self) -> dict[str, str]:
         """
@@ -187,6 +201,9 @@ class CMaker:
                 yield f"-D{key}:PATH={str_value}"
             else:
                 yield f"-D{key}={value}"
+
+        if self.stale:
+            yield "--fresh"
 
     def get_generator(self, *args: str) -> str | None:
         """
