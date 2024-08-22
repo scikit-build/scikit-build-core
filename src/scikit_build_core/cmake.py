@@ -85,6 +85,7 @@ class CMaker:
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
+        source_dir = self.source_dir.resolve()
 
         if not self.source_dir.is_dir():
             msg = f"source directory {self.source_dir} does not exist"
@@ -95,26 +96,46 @@ class CMaker:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
             raise CMakeConfigError(msg)
 
-        # If these were the same, the following check could wipe the source directory!
-        if self.build_dir.resolve() != self.source_dir.resolve():
-            skbuild_info = self.build_dir / ".skbuild-info.json"
-            # If building via SDist, this could be pre-filled, so delete it if it exists
+        skbuild_info = self.build_dir / ".skbuild-info.json"
+        stale = False
+
+        info: dict[str, str] = {}
+        with contextlib.suppress(FileNotFoundError), skbuild_info.open(
+            "r", encoding="utf-8"
+        ) as f:
+            info = json.load(f)
+
+        if info:
+            # If building via SDist, this could be pre-filled
+            cached_source_dir = Path(info["source_dir"])
+            if cached_source_dir != source_dir:
+                logger.warning(
+                    "Original src {} != {}, clearing cache",
+                    cached_source_dir,
+                    source_dir,
+                )
+                stale = True
+
+            # Isolated environments can cause this
+            cached_skbuild_dir = Path(info["skbuild_path"])
+            if cached_skbuild_dir != DIR:
+                logger.info(
+                    "New isolated environment {} -> {}, clearing cache",
+                    cached_skbuild_dir,
+                    DIR,
+                )
+                stale = True
+
+        # Not using --fresh here, not just due to CMake 3.24+, but also just in
+        # case it triggers an extra FetchContent pull in CMake 3.30+
+        if stale:
+            # Python 3.8+ can use missing_ok=True
             with contextlib.suppress(FileNotFoundError):
-                with skbuild_info.open("r", encoding="utf-8") as f:
-                    info = json.load(f)
+                self.build_dir.joinpath("CMakeCache.txt").unlink()
+            shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)
 
-                cached_source_dir = Path(info["source_dir"])
-                if cached_source_dir.resolve() != self.source_dir.resolve():
-                    logger.warning(
-                        "Original src {} != {}, wiping build directory",
-                        cached_source_dir,
-                        self.source_dir,
-                    )
-                    shutil.rmtree(self.build_dir)
-                    self.build_dir.mkdir()
-
-            with skbuild_info.open("w", encoding="utf-8") as f:
-                json.dump(self._info_dict(), f, indent=2)
+        with skbuild_info.open("w", encoding="utf-8") as f:
+            json.dump(self._info_dict(), f, indent=2)
 
     def _info_dict(self) -> dict[str, str]:
         """
