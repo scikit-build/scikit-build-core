@@ -36,12 +36,11 @@ def each_unignored_file(
     """
     Runs through all non-ignored files. Must be run from the root directory.
     """
-    exclude_lines = EXCLUDE_LINES + list(exclude)
-
+    global_exclude_lines = []
     for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
         ignore_errs = [FileNotFoundError, NotADirectoryError]
         with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
-            exclude_lines += f.readlines()
+            global_exclude_lines += f.readlines()
 
     nested_excludes = {
         p.parent: pathspec.GitIgnoreSpec.from_lines(
@@ -51,7 +50,10 @@ def each_unignored_file(
         if p != Path(".gitignore")
     }
 
-    exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
+    user_exclude_spec = pathspec.GitIgnoreSpec.from_lines(list(exclude))
+    global_exclude_spec = pathspec.GitIgnoreSpec.from_lines(global_exclude_lines)
+    builtin_exclude_spec = pathspec.GitIgnoreSpec.from_lines(EXCLUDE_LINES)
+
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
 
     for dirstr, _, filenames in os.walk(str(starting_path), followlinks=True):
@@ -63,8 +65,16 @@ def each_unignored_file(
                 yield p
                 continue
 
+            # Always exclude something excluded
+            if user_exclude_spec.match_file(p):
+                continue
+
             # Ignore from global ignore
-            if exclude_spec.match_file(p):
+            if global_exclude_spec.match_file(p):
+                continue
+
+            # Ignore built-in patterns
+            if builtin_exclude_spec.match_file(p):
                 continue
 
             # Check relative ignores (Python 3.9's is_relative_to workaround)
