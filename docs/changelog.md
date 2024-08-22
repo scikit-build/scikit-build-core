@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.10.5
+
+This version fixes a issue rebuilding if you have a `build-dir` set and are
+using isolated build environments. The cache is now correctly cleared if this
+occurs. An issue with a certain style of gitignore was also fixed.
+
+Fixes:
+
+* Automatically refresh the cache when required by @henryiii in #870
+* `sdist.exclude` takes precedence over `.gitignore` by @alexreinking in #872
+
 ## Version 0.10.4
 
 This version fixes the logic for handling the sysconfig variables on Windows
