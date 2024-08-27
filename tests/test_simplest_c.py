@@ -45,8 +45,8 @@ def test_pep517_sdist(tmp_path, monkeypatch):
         }
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.parametrize(
     "component", [[], ["PythonModule"], ["PythonModule", "Generated"]]
 )
@@ -98,8 +98,8 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
     assert version == "4.0"
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()

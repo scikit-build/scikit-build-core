@@ -20,7 +20,7 @@ ninja = [] if sysconfig.get_platform().startswith("win") else ["ninja>=1.5"]
 
 
 @pytest.fixture(autouse=True)
-def protect_get_requires_autouse(protect_get_requires: None):  # noqa: ARG001
+def protect_get_requires_autouse(protect_get_requires: None):
     """
     Autouse this fixture in this test.
     """

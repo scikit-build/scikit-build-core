@@ -157,13 +157,13 @@ class VEnv:
         self.module("pip", "install", *isolated_flags, *args)
 
 
-@pytest.fixture()
+@pytest.fixture
 def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
     path = tmp_path / "venv"
     return VEnv(path, wheelhouse=pep518_wheelhouse)
 
 
-@pytest.fixture()
+@pytest.fixture
 def virtualenv(tmp_path: Path) -> VEnv:
     path = tmp_path / "venv"
     return VEnv(path)
@@ -205,7 +205,7 @@ def process_package(
         shutil.rmtree("dist")
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simple_pyproject_ext(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -220,7 +220,7 @@ def package_simple_pyproject_ext(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simple_pyproject_script_with_flags(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -231,7 +231,7 @@ def package_simple_pyproject_script_with_flags(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simple_pyproject_source_dir(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -242,7 +242,7 @@ def package_simple_pyproject_source_dir(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simple_setuptools_ext(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -251,7 +251,7 @@ def package_simple_setuptools_ext(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_mixed_setuptools(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -260,7 +260,7 @@ def package_mixed_setuptools(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_filepath_pure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -269,7 +269,7 @@ def package_filepath_pure(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_dynamic_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -278,14 +278,14 @@ def package_dynamic_metadata(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_hatchling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo("hatchling")
     process_package(package, tmp_path, monkeypatch)
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "simplest_c",
@@ -294,7 +294,7 @@ def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Packa
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "navigate_editable",
@@ -303,7 +303,7 @@ def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Packag
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def broken_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "broken_fallback",
@@ -312,7 +312,7 @@ def broken_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageI
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_sdist_config(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -323,7 +323,7 @@ def package_sdist_config(
     return package
 
 
-@pytest.fixture()
+@pytest.fixture
 def package_simple_purelib_package(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
@@ -342,7 +342,7 @@ def which_mock(name: str) -> str | None:
     return None
 
 
-@pytest.fixture()
+@pytest.fixture
 def protect_get_requires(fp, monkeypatch):
     """
     Protect get_requires from actually calling anything variable during tests.

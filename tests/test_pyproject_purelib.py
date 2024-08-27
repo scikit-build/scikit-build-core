@@ -5,8 +5,8 @@ import pytest
 from scikit_build_core.build import build_wheel
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_purelib_package")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")

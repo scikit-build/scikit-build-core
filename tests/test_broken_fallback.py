@@ -9,8 +9,8 @@ from scikit_build_core.build import (
 )
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("broken_fallback")
 @pytest.mark.parametrize("broken_define", ["BROKEN_CMAKE", "BROKEN_CODE"])
 def test_broken_code(broken_define: str, capfd: pytest.CaptureFixture[str]):

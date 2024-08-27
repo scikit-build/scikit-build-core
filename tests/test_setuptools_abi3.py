@@ -15,8 +15,8 @@ ABI_PKG = DIR / "packages/abi3_setuptools_ext"
 SYSCONFIGPLAT = sysconfig.get_platform()
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.skipif(
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )

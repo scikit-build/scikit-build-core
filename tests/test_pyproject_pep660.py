@@ -15,8 +15,8 @@ def editable_mode(request: pytest.FixtureRequest) -> str:
 
 
 # TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
     strict=False,
@@ -50,9 +50,9 @@ def test_pep660_wheel(editable_mode: str):
     assert "Version: 0.0.1" in metadata
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "not_isolated"])
 @pytest.mark.usefixtures("package_simplest_c")
 def test_pep660_pip_isolated(isolated, isolate, editable_mode: str):

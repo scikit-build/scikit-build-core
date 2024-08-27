@@ -1,8 +1,53 @@
 # Build procedure
 
+## Quickstart
+
+For any backend, you can make a SDist and then build a wheel from it with one
+command (choose your favorite way to run apps):
+
+````{tab} pipx
+
+```bash
+pipx run build
+```
+
+````
+
+````{tab} uv
+
+```bash
+uvx --from build pyproject-build --installer=uv
+```
+
+````
+
+````{tab} pip
+
+```bash
+pip install build
+python -m build
+```
+
+````
+
+You can then check the file contents:
+
+```bash
+tar -tf dist/*.tar.gz
+unzip -l dist/*.whl
+```
+
+The SDist should contain a copy of the repo with all the files you'll need (CI
+files and such are not required). And the wheel should look like the installed
+project with a few helper files.
+
+You can inspect any SDist or wheel on PyPI at <https://inspector.pypi.io>.
+
+## In-depth
+
 Modern Python build procedure is as follows:
 
-## SDist
+### SDist
 
 The SDist is a tarfile with all the code required to build the project, along
 with a little bit of metadata. To build an SDist, you use the `build` tool with
@@ -29,7 +74,16 @@ Without build isolation, you can build an SDist manually with
 This will produce an SDist in the `dist` directory. For any other backend,
 substitute the backend above.
 
-## Wheel
+#### File structure in the SDist
+
+Since you can build a wheel from the source or from the SDist, the structure
+should be identical to the source, though some files (like CI files) may be
+omitted. Files from git submodules should be included. It is best if the SDist
+can be installed without internet connection, but that's not always the case.
+
+There also is a `PKG-INFO` file with metadata in SDists.
+
+### Wheel
 
 The wheel is a zip file (ending in `.whl`) with the built code of the project,
 along with required metadata. There is no code that executes on install; it is a
@@ -69,7 +123,36 @@ without building a wheel, and editable versions of the wheel build. Editable
 "wheels" are temporary wheels that are only produced to immediately install and
 discard, and are expected to provide mechanisms to link back to the source code.
 
-## Installing
+#### File structure in the wheel
+
+The basic structure of the wheel is what will be extracted to site-packages.
+This means most of the files are usually in `<package-name>/...`, though if a
+top-level extension is present, then that could be something like
+`<package-name>.<platform-tag>.so`. There's also a
+`<package-name>-<package-version>.dist-info/` directory with various metadata
+files in it (`METADATA`, `WHEEL`, and `RECORD`), along with license files. There
+are a few other metadata files that could be here too, like `entry_points.txt`.
+
+There are also several directories that installers can extract to different locations,
+namely:
+
+* `<package-name>.data/scripts`: Goes to the `/bin` or `/Scripts` directory in
+  the environment. Any file starting with `#!python` will get the correct path
+  injected by the installer. Most build-backends (like setuptools and
+  scikit-build-core) will convert normal Python shabang lines like
+  `#!/usr/bin/env python` into `#!python` for you. Though if you are writing Python
+  and placing them here, it's usually better to use entry points and let the installer
+  generate the entire file.
+* `<package-name>.data/headers`: Goes to the include directory for the current
+  version of Python in the environment.
+* `<package-name>.data/data`: Goes to the root of the environment.
+
+Note that if a user is not in a virtual environment, these folders install
+directly to the Python install's location, which could be `/` or `/usr`!  In
+general, it's best to put data inside the package's folder in site-packages and
+then use `importlib.resources` to access it.
+
+### Installing
 
 Installing simply unpacks a wheel into the target filesystem. No code is run, no
 configuration files are present. If pip tries to install a repo or an SDist, it
