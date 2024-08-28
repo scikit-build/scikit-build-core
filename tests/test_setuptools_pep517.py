@@ -62,9 +62,9 @@ def test_pep517_sdist():
         assert metadata_set <= pkg_info_contents
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.broken_on_urct()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.broken_on_urct
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
@@ -99,8 +99,8 @@ def test_pep517_wheel(virtualenv):
     assert add.strip() == "3"
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_mixed_setuptools")
 def test_pep517_mixed_wheel(virtualenv):
     dist = Path("dist")

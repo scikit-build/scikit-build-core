@@ -55,8 +55,8 @@ def config(tmp_path_factory):
 
 
 # TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
     strict=False,
@@ -80,8 +80,8 @@ def test_bin_in_config(config):
 
 
 # TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
     strict=False,
@@ -101,7 +101,7 @@ def test_install(config):
     assert result.stdout == "0 one 2 three \n"
 
 
-@pytest.mark.configure()
+@pytest.mark.configure
 def test_variable_defined(tmp_path, capfd):
     prepare_env_or_skip()
 

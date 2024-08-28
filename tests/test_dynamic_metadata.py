@@ -91,7 +91,7 @@ def special_loader(name: str, *args: Any, **kwargs: Any) -> Any:
     return original_loader(name, *args, **kwargs)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_entry_points(monkeypatch):
     monkeypatch.setattr(importlib, "import_module", special_loader)
 
@@ -229,8 +229,8 @@ def test_dual_metadata():
         get_standard_metadata(pyproject, settings)
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("mock_entry_points", "package_dynamic_metadata")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")

@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def cleanup_overwrite():
     overwrite = Path("overwrite.cmake")
     yield overwrite
@@ -23,8 +23,8 @@ def compute_uncompressed_hash(inp: Path):
         return hashlib.sha256(f.read()).hexdigest()
 
 
-@pytest.mark.network()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.integration
 def test_pep518_sdist(isolated, package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
@@ -64,9 +64,9 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
         assert correct_metadata == pkg_info_contents
 
 
-@pytest.mark.network()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_sdist_config")
 def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
     cleanup_overwrite.write_text("set(MY_VERSION fiddlesticks)")
@@ -106,10 +106,10 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
     assert cleanup_overwrite.is_file()
 
 
-@pytest.mark.network()
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_sdist_config")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
@@ -155,10 +155,10 @@ def test_pep518_wheel_sdist_with_cmake_config(
     assert cleanup_overwrite.is_file()
 
 
-@pytest.mark.network()
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
@@ -195,10 +195,10 @@ def test_pep518_wheel(isolated, build_args):
     assert add == "3"
 
 
-@pytest.mark.network()
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
@@ -242,10 +242,10 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
     assert version == "0.0.1"
 
 
-@pytest.mark.network()
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")

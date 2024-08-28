@@ -8,10 +8,10 @@ pytestmark = pytest.mark.setuptools
 
 
 # TODO: work out why this fails on Cygwin
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
-@pytest.mark.broken_on_urct()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.broken_on_urct
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
     reason="Cygwin fails here with ld errors",
@@ -46,10 +46,10 @@ def test_pep518_wheel(isolated):
     assert add == "3"
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
-@pytest.mark.broken_on_urct()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.broken_on_urct
 @pytest.mark.xfail(
     sys.platform.startswith("cygwin"),
     reason="Cygwin fails here with ld errors",

@@ -30,7 +30,7 @@ def _make_dir_with_ro(tmp_path: Path) -> Path:
     return base
 
 
-@pytest.fixture()
+@pytest.fixture
 def make_dir_with_ro(tmp_path: Path) -> Path:
     return _make_dir_with_ro(tmp_path)
 

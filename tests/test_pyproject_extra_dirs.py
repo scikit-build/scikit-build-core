@@ -9,8 +9,8 @@ from scikit_build_core.errors import CMakeConfigError
 from pathutils import contained
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_filepath_pure")
 def test_pep517_wheel_extra_dirs(monkeypatch):
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")

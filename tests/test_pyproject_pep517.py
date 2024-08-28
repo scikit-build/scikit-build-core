@@ -160,8 +160,8 @@ def test_pep517_sdist_time_hash_set_epoch(
     assert hash == package_simple_pyproject_ext.sdist_dated_hash
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_pyproject_script_with_flags")
 @pytest.mark.parametrize(
     ("env_var", "setting"),
@@ -189,8 +189,8 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting):
     }
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_wheel(virtualenv):
     dist = Path("dist")
@@ -239,8 +239,8 @@ def test_pep517_wheel(virtualenv):
     assert add.strip() == "3"
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_pyproject_source_dir")
 def test_pep517_wheel_source_dir(virtualenv):
     dist = Path("dist")
@@ -298,8 +298,8 @@ def test_pep517_wheel_source_dir(virtualenv):
 
 
 @pytest.mark.skip(reason="Doesn't work yet")
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 def test_pep517_wheel_time_hash(monkeypatch):
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
     dist = Path("dist")

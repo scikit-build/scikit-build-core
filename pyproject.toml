@@ -217,7 +217,6 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 
 [tool.ruff]
-src = ["src"]
 exclude = ["src/scikit_build_core/_vendor"]  # Required due to "build" module
 
 [tool.ruff.lint]

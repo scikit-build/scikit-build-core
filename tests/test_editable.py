@@ -6,9 +6,9 @@ import pytest
 from conftest import PackageInfo, process_package
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "notisolated"])
 @pytest.mark.parametrize(
     "package",
@@ -52,9 +52,9 @@ def test_navigate_editable(isolated, isolate, package):
     assert value == "Some_value_C"
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.parametrize(
     ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
 )
@@ -108,9 +108,9 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
     )
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_simplest_c")
 def test_install_dir(isolated):
     isolated.install("pip>=23")

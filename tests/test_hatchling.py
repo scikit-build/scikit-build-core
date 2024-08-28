@@ -9,8 +9,8 @@ import pytest
 pytest.importorskip("hatchling")
 
 
-@pytest.mark.network()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_hatchling")
 def test_hatchling_sdist(isolated) -> None:
     isolated.install("build[virtualenv]")
@@ -33,10 +33,10 @@ def test_hatchling_sdist(isolated) -> None:
 @pytest.mark.skipif(
     sys.version_info < (3, 8), reason="Full hatchling support requires Python 3.8+"
 )
-@pytest.mark.network()
-@pytest.mark.compile()
-@pytest.mark.configure()
-@pytest.mark.integration()
+@pytest.mark.network
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.usefixtures("package_hatchling")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]

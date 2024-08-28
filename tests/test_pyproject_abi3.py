@@ -13,8 +13,8 @@ ABI_PKG = DIR / "packages/abi3_pyproject_ext"
 SYSCONFIGPLAT = sysconfig.get_platform()
 
 
-@pytest.mark.compile()
-@pytest.mark.configure()
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.skipif(
     sysconfig.get_platform().startswith(("msys", "mingw")),
     reason="abi3 FindPython on MSYS/MinGW reports not found",
