@@ -149,12 +149,13 @@ class Builder:
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
-        self.config.prefix_dirs.append(site_packages)
-        logger.debug("SITE_PACKAGES: {}", site_packages)
-        if site_packages != DIR.parent.parent:
-            self.config.prefix_dirs.append(DIR.parent.parent)
-            logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
-            logger.debug("PATH: {}", sys.path)
+        if self.settings.search.use_site_packages:
+            self.config.prefix_dirs.append(site_packages)
+            logger.debug("SITE_PACKAGES: {}", site_packages)
+            if site_packages != DIR.parent.parent:
+                self.config.prefix_dirs.append(DIR.parent.parent)
+                logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
+                logger.debug("PATH: {}", sys.path)
 
         # Add the FindPython backport if needed
         if self.config.cmake.version < self.settings.backport.find_python:
