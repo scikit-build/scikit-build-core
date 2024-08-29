@@ -71,7 +71,7 @@ Example:
 
 ```toml
 [[tool.scikit-build.overrides]]
-if.platform-system = "$darwin"
+if.platform-system = "^darwin"
 cmake.version = ">=3.18"
 ```
 
