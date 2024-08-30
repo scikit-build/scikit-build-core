@@ -6,7 +6,6 @@ files_to_sync:
       - "protect .git*"
       - "protect sources"
       - "protect changelog"
-      - "- plans/rpminspect.fmf"
       - "- plans/rpmlint.fmf"
   - .packit.yaml
 
