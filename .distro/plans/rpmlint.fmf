@@ -8,8 +8,3 @@ discover:
   ref: main
 execute:
   how: tmt
-
-adjust:
-  when: distro < fedora-39
-  because: Rpmlint does not have spellcheck
-  enabled: false
