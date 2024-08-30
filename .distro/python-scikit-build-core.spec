@@ -1,3 +1,11 @@
+# Testing dependencies not satisfied on epel
+# build, cattrs, hatch-fancy-pypi-readme, pytest-subprocess
+%if 0%{?el10}
+%bcond_with tests
+%else
+%bcond_without tests
+%endif
+
 %global debug_package %{nil}
 
 Name:           python-scikit-build-core
@@ -42,6 +50,9 @@ BuildArch:      noarch
 Summary: Metapackage for python3-scikit-build-core: pyproject extras
 Requires: python3-scikit-build-core = %{?epoch:%{epoch}:}%{version}-%{release}
 BuildArch:      noarch
+# Deprecated empty extras package
+# Note: Cannot use Obsoletes + Provides here. python3dist() does not seem to be picked up
+Provides:  deprecated()
 %description -n python3-scikit-build-core+pyproject
 This is a metapackage bringing in pyproject extras requires for
 python3-scikit-build-core.
@@ -55,7 +66,7 @@ It makes sure the dependencies are installed.
 
 
 %generate_buildrequires
-%pyproject_buildrequires -x test,test-meta,test-numpy,pyproject
+%pyproject_buildrequires %{?with_tests:-x test,test-meta,test-numpy}
 
 
 %build
@@ -68,8 +79,11 @@ It makes sure the dependencies are installed.
 
 
 %check
+%pyproject_check_import
+%if %{with tests}
 %pytest \
     -m "not network"
+%endif
 
 
 %files -n python3-scikit-build-core -f %{pyproject_files}

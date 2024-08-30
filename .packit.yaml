@@ -1,67 +1,53 @@
-# See the documentation for more information:
-# https://packit.dev/docs/configuration/
-
-specfile_path: .distro/python-scikit-build-core.spec
-
 files_to_sync:
-  - src: .distro/python-scikit-build-core.spec
-    dest: python-scikit-build-core.spec
-  - .packit.yaml
-  - src: .distro/python-scikit-build-core.rpmlintrc
-    dest: python-scikit-build-core.rpmlintrc
-  # tmt setup
-  - src: .distro/.fmf/
-    dest: .fmf/
-  - src: .distro/plans/
-    dest: plans/
+  - src: .distro/
+    dest: ./
+    delete: true
     filters:
-      - "- main.fmf.dist-git"
-      - "- rpminspect.fmf"
-      - "- rpmlint.fmf"
-  - src: .distro/tests/
-    dest: tests/
-  - src: .distro/plans/main.fmf.dist-git
-    dest: plans/main.fmf
-upstream_package_name: scikit_build_core
+      - "protect .git*"
+      - "protect sources"
+      - "protect changelog"
+      - "- plans/rpmlint.fmf"
+  - .packit.yaml
+
+upstream_package_name: scikit-build-core
+specfile_path: .distro/python-scikit-build-core.spec
 downstream_package_name: python-scikit-build-core
-update_release: false
 upstream_tag_template: v{version}
+
+targets: &targets
+  - fedora-all-x86_64
+  - fedora-all-aarch64
+  - epel-10-x86_64
+  - epel-10-aarch64
 
 jobs:
   - &copr_build
     job: copr_build
+    trigger: pull_request
+  - &tests
+    job: tests
+    trigger: pull_request
+    fmf_path: .distro
+    targets:
+      - fedora-all-x86_64
+      - fedora-all-aarch64
+  - <<: *copr_build
     trigger: release
     owner: "@scikit-build"
     project: release
-    targets: &targets
-      - fedora-all-x86_64
-      - fedora-all-aarch64
-  - &tests
-    job: tests
+  - <<: *tests
     trigger: release
-    targets: *targets
-    fmf_path: .distro
   - <<: *copr_build
     trigger: commit
     branch: main
+    owner: "@scikit-build"
     project: nightly
   - <<: *tests
     trigger: commit
     branch: main
-  - <<: *copr_build
-    trigger: pull_request
-    project: scikit-build-core
-    update_release: true
-    release_suffix: "{PACKIT_RPMSPEC_RELEASE}"
-  - <<: *tests
-    trigger: pull_request
   - job: propose_downstream
     trigger: release
     dist_git_branches:
-      # TODO: Switch to fedora-development and fedora-latest
-      # There is an issue that the commits diverge on different PRs. In the meantime will create PRs on branched fedora
-      # manually
-      # https://github.com/packit/packit/issues/1724
       - fedora-rawhide
   - job: koji_build
     trigger: commit
