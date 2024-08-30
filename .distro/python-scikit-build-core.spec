@@ -35,21 +35,30 @@ A next generation Python CMake adapter and Python API for plugins
 Summary:        %{summary}
 Requires:       cmake
 Recommends:     (ninja-build or make)
+Recommends:     python3-scikit-build-core+pyproject = %{version}-%{release}
 Suggests:       ninja-build
 Suggests:       gcc
-
 BuildArch:      noarch
-
-# Deprecated extras/optional-dependencies
-# Provides python3dist() do not seem to be generated, defining them manually
-# Note: the version can be a bit off if the python metadata version is different than RPM.
-#   It shouldn't be an issue in this package.
-%py_provides    python3-scikit-build-core+pyproject
-Provides:       python3dist(scikit-build-core[pyproject]) = %{version}
-Provides:       python%{python3_version}dist(scikit-build-core[pyproject]) = %{version}
-Obsoletes:      python3-scikit-build-core+pyproject < 0.11.0-1%{?dist}
-
 %description -n python3-scikit-build-core %_description
+
+
+# Add %%pyproject_extras_subpkg results manually because BuildArch: noarch is not injected
+# https://src.fedoraproject.org/rpms/python-rpm-macros/pull-request/174
+# %%pyproject_extras_subpkg -n python3-scikit-build-core pyproject
+
+%package -n python3-scikit-build-core+pyproject
+Summary: Metapackage for python3-scikit-build-core: pyproject extras
+Requires: python3-scikit-build-core = %{?epoch:%{epoch}:}%{version}-%{release}
+BuildArch:      noarch
+# Deprecated empty extras package
+# Note: Cannot use Obsoletes + Provides here. python3dist() does not seem to be picked up
+Provides:  deprecated()
+%description -n python3-scikit-build-core+pyproject
+This is a metapackage bringing in pyproject extras requires for
+python3-scikit-build-core.
+It makes sure the dependencies are installed.
+
+%files -n python3-scikit-build-core+pyproject -f %{_pyproject_ghost_distinfo}
 
 
 %prep
