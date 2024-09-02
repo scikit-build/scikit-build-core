@@ -28,9 +28,6 @@ jobs:
     job: tests
     trigger: pull_request
     fmf_path: .distro
-    targets:
-      - fedora-all-x86_64
-      - fedora-all-aarch64
   - <<: *copr_build
     trigger: release
     owner: "@scikit-build"
