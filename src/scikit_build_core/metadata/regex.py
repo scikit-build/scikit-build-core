@@ -46,7 +46,7 @@ def dynamic_metadata(
     )
     result = settings.get("result", "{value}")
     assert isinstance(result, str)
-    remove = settings.get("result", "")
+    remove = settings.get("remove", "")
 
     with Path(input_filename).open(encoding="utf-8") as f:
         match = re.search(regex, f.read(), re.MULTILINE)
