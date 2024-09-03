@@ -346,4 +346,4 @@ def test_regex_remove(
         },
     )
 
-    assert version == "1.2.3dev1" if dev else "1.2.3"
+    assert version == ("1.2.3dev1" if dev else "1.2.3")
