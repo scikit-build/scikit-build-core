@@ -228,7 +228,10 @@ class SettingsReader:
             or self.settings.minimum_version >= Version("0.5")
         )
         if self.settings.install.strip is None:
-            self.settings.install.strip = install_policy
+            self.settings.install.strip = (
+                install_policy
+                and self.settings.cmake.build_type in {"Release", "MinSizeRel"}
+            )
 
         # If we noted earlier that auto-cmake was requested, handle it now
         if (

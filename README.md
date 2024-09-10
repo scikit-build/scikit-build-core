@@ -282,7 +282,8 @@ build.verbose = false
 # The components to install. If empty, all default components are installed.
 install.components = []
 
-# Whether to strip the binaries. True for scikit-build-core 0.5+.
+# Whether to strip the binaries. True for release builds on scikit-build-core
+# 0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
 install.strip = true
 
 # The path (relative to platlib) for the file to generate.
