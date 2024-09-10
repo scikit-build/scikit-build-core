@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import re
 import shlex
 import sys
@@ -84,6 +85,18 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, No
             yield arg
 
 
+def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
+    # This handles classes like:
+    # MultiplexedPath from importlib.resources.readers (3.11+)
+    # MultiplexedPath from importlib.readers (3.10)
+    # MultiplexedPath from importlib_resources.readers
+    if hasattr(path, "_paths"):
+        # pylint: disable-next=protected-access
+        return [Path(os.fspath(p)) for p in path._paths]
+
+    return [Path(os.fspath(path))]
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
@@ -124,11 +137,15 @@ class Builder:
 
         # Add any extra CMake modules
         eps = metadata.entry_points(group="cmake.module")
-        self.config.module_dirs.extend(resources.files(ep.load()) for ep in eps)
+        self.config.module_dirs.extend(
+            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        )
 
         # Add any extra CMake prefixes
         eps = metadata.entry_points(group="cmake.prefix")
-        self.config.prefix_dirs.extend(resources.files(ep.load()) for ep in eps)
+        self.config.prefix_dirs.extend(
+            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        )
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
@@ -137,6 +154,7 @@ class Builder:
         if site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
             logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
+            logger.debug("PATH: {}", sys.path)
 
         # Add the FindPython backport if needed
         if self.config.cmake.version < self.settings.backport.find_python:
