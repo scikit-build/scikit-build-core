@@ -13,6 +13,7 @@ Fixes:
 * Use correct settings key to remove parts of the version in regex metadata plugin by @philippjh in #887
 * Support multiplexed path by @henryiii in #896
 * Editable subpackage by @henryiii in #895
+* Only strip Release and MinSizeRel builds by default by @henryiii in #898
 * Typo in debug message by @LecrisUT in #892
 
 Docs:
