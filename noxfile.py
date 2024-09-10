@@ -230,13 +230,7 @@ def downstream(session: nox.Session) -> None:
 
     # If running in manylinux:
     #   docker run --rm -v $PWD:/sk -w /sk -t quay.io/pypa/manylinux2014_x86_64:latest \
-    #       pipx run --system-site-packages nox -s downstream -- https://github.com/...
-    # (requires tomli, so allowing access to system-site-packages)
-
-    if sys.version_info < (3, 11):
-        import tomli as tomllib
-    else:
-        import tomllib
+    #       pipx run nox -s downstream -- https://github.com/...
 
     parser = argparse.ArgumentParser(prog=f"{Path(sys.argv[0]).name} -s downstream")
     parser.add_argument("project", help="A project to build")
@@ -270,9 +264,7 @@ def downstream(session: nox.Session) -> None:
         session.chdir(proj_dir)
 
     # Read and strip requirements
-    pyproject_toml = Path("pyproject.toml")
-    with pyproject_toml.open("rb") as f:
-        pyproject = tomllib.load(f)
+    pyproject = nox.project.load_toml("pyproject.toml")
     requires = [
         x
         for x in pyproject["build-system"]["requires"]
@@ -289,7 +281,7 @@ def downstream(session: nox.Session) -> None:
         session.chdir(args.subdir)
 
     if args.editable:
-        session.install("-e.")
+        session.install("-e.", "--no-build-isolation")
     else:
         session.run(
             "python",

@@ -126,6 +126,10 @@ version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
+[tool.uv.pip]
+reinstall-package = ["scikit-build-core"]
+
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = ["-rfEsX", "--strict-markers", "--strict-config"]

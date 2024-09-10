@@ -87,6 +87,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             submodule_search_locations = list(self.submodule_search_locations[fullname])
         else:
             submodule_search_locations = None
+
         if fullname in self.known_wheel_files:
             redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
@@ -94,14 +95,18 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             return importlib.util.spec_from_file_location(
                 fullname,
                 os.path.join(self.dir, redir),
-                submodule_search_locations=submodule_search_locations,
+                submodule_search_locations=submodule_search_locations
+                if redir.endswith(("__init__.py", "__init__.pyc"))
+                else None,
             )
         if fullname in self.known_source_files:
             redir = self.known_source_files[fullname]
             return importlib.util.spec_from_file_location(
                 fullname,
                 redir,
-                submodule_search_locations=submodule_search_locations,
+                submodule_search_locations=submodule_search_locations
+                if redir.endswith(("__init__.py", "__init__.pyc"))
+                else None,
             )
         return None
 
