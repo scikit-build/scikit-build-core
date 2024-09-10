@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._compat.importlib import metadata, resources
-from .._compat.importlib.readers import MultiplexedPath
 from .._logging import logger
 from ..resources import find_python
 from .generator import set_environment_for_gen
@@ -86,12 +85,15 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, No
             yield arg
 
 
-# Type-hinting for Traversable is rather hard because they were introduced in python 3.11.
-# This avoids introducing importlib_resources dependency that may not be used in the actual package loader
 def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
-    if isinstance(path, MultiplexedPath):
+    # This handles classes like:
+    # MultiplexedPath from importlib.resources.readers (3.11+)
+    # MultiplexedPath from importlib.readers (3.10)
+    # MultiplexedPath from importlib_resources.readers
+    if hasattr(path, "_paths"):
         # pylint: disable-next=protected-access
-        return path._paths
+        return path._paths  # type: ignore[no-any-return]
+
     return [Path(path)]
 
 
