@@ -96,7 +96,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 fullname,
                 os.path.join(self.dir, redir),
                 submodule_search_locations=submodule_search_locations
-                if redir.endswith("__init__.py")
+                if redir.endswith(("__init__.py", "__init__.pyc"))
                 else None,
             )
         if fullname in self.known_source_files:
@@ -105,7 +105,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 fullname,
                 redir,
                 submodule_search_locations=submodule_search_locations
-                if redir.endswith("__init__.py")
+                if redir.endswith(("__init__.py", "__init__.pyc"))
                 else None,
             )
         return None
