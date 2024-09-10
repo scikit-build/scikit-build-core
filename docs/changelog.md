@@ -1,5 +1,29 @@
 # Changelog
 
+## Version 0.10.6
+
+This version has several fixes; the new `remove` key in 0.10 had a mistake
+making it unusable, this has been fixed along with the matching issue in the
+tests. Editable installs failed if there was a folder matching an extension
+name. Multiplexed paths were not supported for plugins, now they are. The
+downstream nox job is also now a bit better.
+
+Fixes:
+
+* Use correct settings key to remove parts of the version in regex metadata plugin by @philippjh in #887
+* Support multiplexed path by @henryiii in #896
+* Editable subpackage by @henryiii in #895
+* Typo in debug message by @LecrisUT in #892
+
+Docs:
+
+* Add build info by @henryiii in #878
+* Fix typo in `if.platform-system` example by @henryiii in #879
+
+CI and testing:
+
+* Packit configuration update by @LecrisUT in #799
+
 ## Version 0.10.5
 
 This version fixes a issue rebuilding if you have a `build-dir` set and are
