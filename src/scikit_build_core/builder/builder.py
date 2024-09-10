@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._compat.importlib import metadata, resources
+from .._compat.importlib.readers import MultiplexedPath
 from .._logging import logger
 from ..resources import find_python
 from .generator import set_environment_for_gen
@@ -22,6 +23,7 @@ from .sysconfig import (
 )
 
 if TYPE_CHECKING:
+    import os
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.version import Version
@@ -84,6 +86,15 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, No
             yield arg
 
 
+# Type-hinting for Traversable is rather hard because they were introduced in python 3.11.
+# This avoids introducing importlib_resources dependency that may not be used in the actual package loader
+def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
+    if isinstance(path, MultiplexedPath):
+        # pylint: disable-next=protected-access
+        return path._paths
+    return [Path(path)]
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
@@ -124,11 +135,15 @@ class Builder:
 
         # Add any extra CMake modules
         eps = metadata.entry_points(group="cmake.module")
-        self.config.module_dirs.extend(resources.files(ep.load()) for ep in eps)
+        self.config.module_dirs.extend(
+            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        )
 
         # Add any extra CMake prefixes
         eps = metadata.entry_points(group="cmake.prefix")
-        self.config.prefix_dirs.extend(resources.files(ep.load()) for ep in eps)
+        self.config.prefix_dirs.extend(
+            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        )
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
@@ -137,6 +152,7 @@ class Builder:
         if site_packages != DIR.parent.parent:
             self.config.prefix_dirs.append(DIR.parent.parent)
             logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
+            logger.debug("PATH: {}", sys.path)
 
         # Add the FindPython backport if needed
         if self.config.cmake.version < self.settings.backport.find_python:

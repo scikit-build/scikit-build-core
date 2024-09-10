@@ -296,6 +296,7 @@ known-local-folder = ["pathutils"]
 "importlib_metadata".msg = "Use scikit_build_core._compat.importlib.metadata instead."
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
+"importlib.readers".msg = "Use scikit_build_core._compat.importlib.readers instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
 
 
