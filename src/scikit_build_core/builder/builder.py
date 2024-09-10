@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 import re
 import shlex
 import sys
@@ -22,7 +23,6 @@ from .sysconfig import (
 )
 
 if TYPE_CHECKING:
-    import os
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.version import Version
@@ -92,9 +92,9 @@ def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
     # MultiplexedPath from importlib_resources.readers
     if hasattr(path, "_paths"):
         # pylint: disable-next=protected-access
-        return path._paths  # type: ignore[no-any-return]
+        return [Path(os.fspath(p)) for p in path._paths]
 
-    return [Path(path)]
+    return [Path(os.fspath(path))]
 
 
 @dataclasses.dataclass
