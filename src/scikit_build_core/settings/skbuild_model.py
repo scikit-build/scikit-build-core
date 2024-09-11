@@ -264,7 +264,8 @@ class InstallSettings:
 
     strip: Optional[bool] = None
     """
-    Whether to strip the binaries. True for scikit-build-core 0.5+.
+    Whether to strip the binaries. True for release builds on scikit-build-core
+    0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
     """
 
 
