@@ -12,13 +12,15 @@ rlJournalStart
         fi
         rlRun "pushd $tmp"
         rlRun "tree" 0 "Show directory tree"
+        rlRun "python3 -m venv .venv --system-site-packages" 0 "Create venv with system packages"
+        rlRun "source .venv/bin/activate" 0 "Activate venv"
         rlRun "set -o pipefail"
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "pip install --user . --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
+        rlRun "pip install . -v --config-settings=cmake.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
         if [ "${HAS_PYTEST}" == True ]; then
-          rlRun "pytest" 0 "Run built-in pytest"
+          rlRun "python3 -m pytest" 0 "Run built-in pytest"
         else
           rlRun "python3 test.py" 0 "Test project is installed correctly"
         fi
