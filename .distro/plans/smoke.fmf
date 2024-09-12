@@ -1,3 +1,6 @@
+/:
+  inherit: false
+
 summary:
   Basic smoke tests
 discover:
