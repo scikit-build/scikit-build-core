@@ -1,5 +1,4 @@
-summary:
-  Nanobind example project
+summary: Nanobind example project
 adjust:
   enabled: false
   because: Nanobind is not yet packaged on Fedora

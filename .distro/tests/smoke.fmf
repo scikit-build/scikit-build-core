@@ -5,4 +5,5 @@ path: /
 
 # Define tests
 /version:
+  summary: Read version
   test: python3 -c "import scikit_build_core; print(scikit_build_core.__version__)"
