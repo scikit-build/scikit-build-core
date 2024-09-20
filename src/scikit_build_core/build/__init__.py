@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import sys
 
+from .._compat import tomllib
+
 __all__ = [
     "build_editable",
     "build_sdist",
@@ -66,29 +68,53 @@ def build_editable(
         raise SystemExit(1) from None
 
 
-def prepare_metadata_for_build_wheel(
-    metadata_directory: str,
-    config_settings: dict[str, list[str] | str] | None = None,
-) -> str:
-    """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
-    from .wheel import _build_wheel_impl
+def _has_safe_metadata() -> bool:
+    try:
+        with open("pyproject.toml", "rb") as f:  # noqa: PTH123
+            pyproject = tomllib.load(f)
+    except FileNotFoundError:
+        return True
 
-    return _build_wheel_impl(
-        None, config_settings, metadata_directory, editable=False
-    ).wheel_filename  # actually returns the dist-info directory
+    overrides = pyproject.get("tool", {}).get("scikit-build", {}).get("overrides", [])
+    for override in overrides:
+        if_override = override.get("if", {})
+        if if_override.get("failed", False) or if_override.get("any", {}).get(
+            "failed", False
+        ):
+            return False
+
+    return True
 
 
-def prepare_metadata_for_build_editable(
-    metadata_directory: str,
-    config_settings: dict[str, list[str] | str] | None = None,
-) -> str:
-    """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
+if _has_safe_metadata():
 
-    from .wheel import _build_wheel_impl
+    def prepare_metadata_for_build_wheel(
+        metadata_directory: str,
+        config_settings: dict[str, list[str] | str] | None = None,
+    ) -> str:
+        """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
+        from .wheel import _build_wheel_impl
 
-    return _build_wheel_impl(
-        None, config_settings, metadata_directory, editable=True
-    ).wheel_filename  # actually returns the dist-info directory
+        return _build_wheel_impl(
+            None, config_settings, metadata_directory, editable=False
+        ).wheel_filename  # actually returns the dist-info directory
+
+    def prepare_metadata_for_build_editable(
+        metadata_directory: str,
+        config_settings: dict[str, list[str] | str] | None = None,
+    ) -> str:
+        """Prepare metadata for building a wheel. Does not build the wheel. Returns the dist-info directory."""
+
+        from .wheel import _build_wheel_impl
+
+        return _build_wheel_impl(
+            None, config_settings, metadata_directory, editable=True
+        ).wheel_filename  # actually returns the dist-info directory
+
+    __all__ += [
+        "prepare_metadata_for_build_wheel",
+        "prepare_metadata_for_build_editable",
+    ]
 
 
 def build_sdist(
