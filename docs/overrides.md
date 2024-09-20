@@ -212,6 +212,10 @@ wheel.cmake = false
 
 :::
 
+If this override is present in your pyproject.toml file, scikit-build-core will not
+provide the `prepare_metadata_*` hooks, as it can't know without building if the build
+will fail.
+
 ## Any matching condition
 
 If you use `if.any` instead of `if`, then the override is true if any one of the
