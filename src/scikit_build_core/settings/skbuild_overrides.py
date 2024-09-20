@@ -35,10 +35,12 @@ def strtobool(value: str) -> bool:
     """
     Converts a environment variable string into a boolean value.
     """
+    if not value:
+        return False
     value = value.lower()
     if value.isdigit():
         return bool(int(value))
-    return value in {"y", "yes", "on", "true", "t"}
+    return value not in {"n", "no", "off", "false", "f"}
 
 
 def version_match(value: str, match: str, name: str) -> str:
@@ -216,13 +218,13 @@ def override_match(
 
     if env:
         for key, value in env.items():
-            if key not in current_env:
-                failed_set.add(f"env.{key}")
-            elif isinstance(value, bool):
-                if strtobool(current_env[key]) == value:
+            if isinstance(value, bool):
+                if strtobool(current_env.get(key, "")) == value:
                     passed_dict[f"env.{key}"] = f"env {key} is {value}"
                 else:
                     failed_set.add(f"env.{key}")
+            elif key not in current_env:
+                failed_set.add(f"env.{key}")
             else:
                 current_value = current_env[key]
                 match_msg = regex_match(current_value, value)
