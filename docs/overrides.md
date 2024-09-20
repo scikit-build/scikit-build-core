@@ -11,8 +11,9 @@ you can set any value `tool.scikit-build` supports, and it will override if the
 There are three types of conditions. Booleans, strings, and version numbers.
 Booleans take a bool; if the boolean matches the bool you give, the override
 matches. If the value is a string (such as an environment variable), it will
-match truth-like values.  Strings take a regex which will try to match. Version
-numbers take a specifier set, like `>=1.0`.
+match non false-like values, and if the variable is unset or empty, that counts
+as false.  Strings take a regex which will try to match.  Version numbers take
+a specifier set, like `>=1.0`.
 
 If multiple conditions are given, they all must be true. Use `if.any` (below)
 if you would rather matching on any one of multiple conditions being true.

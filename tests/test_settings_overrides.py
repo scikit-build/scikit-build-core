@@ -414,6 +414,36 @@ def test_skbuild_env_bool(
         assert not settings.sdist.cmake
 
 
+@pytest.mark.parametrize("envvar", ["random", "FalSE", "", "0", None])
+def test_skbuild_env_negative_bool(
+    envvar: str | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    if envvar is None:
+        monkeypatch.delenv("FOO", raising=False)
+    else:
+        monkeypatch.setenv("FOO", envvar)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.env.FOO = false
+            sdist.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings = settings_reader.settings
+
+    if envvar in {"random"}:
+        assert not settings.sdist.cmake
+    else:
+        assert settings.sdist.cmake
+
+
 @pytest.mark.parametrize("foo", ["true", "false"])
 @pytest.mark.parametrize("bar", ["true", "false"])
 @pytest.mark.parametrize("any", [True, False])
