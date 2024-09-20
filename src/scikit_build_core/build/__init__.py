@@ -78,9 +78,7 @@ def _has_safe_metadata() -> bool:
     overrides = pyproject.get("tool", {}).get("scikit-build", {}).get("overrides", [])
     for override in overrides:
         if_override = override.get("if", {})
-        if if_override.get("failed", False) or if_override.get("any", {}).get(
-            "failed", False
-        ):
+        if "failed" in if_override or "failed" in if_override.get("any", {}):
             return False
 
     return True
