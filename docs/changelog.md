@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.10.7
+
+This version has three fixes related to advanced usages of overrides.
+
+Fixes:
+
+* Avoid modifying the input dict by @henryiii in #903
+* Avoid providing prepare-metadata methods if `failed` in overrides by @henryiii in #904
+* Support negative envvar values correctly by @henryiii in #907
+
+
 ## Version 0.10.6
 
 This version has several fixes; the new `remove` key in 0.10 had a mistake
