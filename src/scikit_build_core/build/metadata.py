@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
@@ -24,7 +25,7 @@ def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
 ) -> StandardMetadata:
-    new_pyproject_dict = dict(pyproject_dict)
+    new_pyproject_dict = copy.deepcopy(pyproject_dict)
     # Handle any dynamic metadata
     for field, provider, config in load_dynamic_metadata(settings.metadata):
         if provider is None:
