@@ -7,8 +7,10 @@ Use `-t gen` to run all the generation jobs.
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
+import urllib.request
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -206,16 +208,18 @@ EXAMPLES += ["downstream/pybind11_example", "downstream/nanobind_example"]
 @nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
 def test_doc_examples(session: nox.Session, example: str) -> None:
     _prepare_cmake_ninja(session)
-    session.install("-e.")
+    session.install("-e.", "pip")
     session.chdir(f"docs/examples/{example}")
     reqs = nox.project.load_toml("pyproject.toml")["build-system"]["requires"]
-    session.install(*reqs, "pytest")
+    freqs = (r for r in reqs if "scikit-build-core" not in r.replace("_", "-"))
+    session.install(*freqs, "pytest")
     session.install(
         ".",
         "--no-build-isolation",
         "--config-settings=cmake.verbose=true",
         env={"PYTHONWARNINGS": "error"},
     )
+    session.run("pip", "list")
     if Path("../test.py").is_file():
         session.run("python", "../test.py")
     else:
@@ -312,15 +316,23 @@ def vendor_pyproject_metadata(session: nox.Session) -> None:
     parser.add_argument("version", help="A tag or ref to vendor")
     args = parser.parse_args(session.posargs)
 
-    session.run(
-        "curl",
-        "-o",
-        "src/scikit_build_core/_vendor/pyproject_metadata/__init__.py",
-        f"https://raw.githubusercontent.com/pypa/pyproject-metadata/{args.version}/pyproject_metadata/__init__.py",
-    )
-    session.run(
-        "curl",
-        "-o",
-        "src/scikit_build_core/_vendor/pyproject_metadata/LICENSE",
-        f"https://raw.githubusercontent.com/pypa/pyproject-metadata/{args.version}/LICENSE",
-    )
+    repo = "pypa/pyproject-metadata"
+    branch = args.version
+
+    with urllib.request.urlopen(
+        f"https://api.github.com/repos/{repo}/git/trees/{branch}?recursive=1"
+    ) as response:
+        info = json.loads(response.read().decode("utf-8"))
+
+    files = {
+        y: y for x in info["tree"] if (y := x["path"]).startswith("pyproject_metadata/")
+    }
+    files["pyproject_metadata/LICENSE"] = "LICENSE"
+    for tgt_path, remote_path in files.items():
+        local_path = Path("src/scikit_build_core/_vendor").joinpath(tgt_path)
+        print(f"Vendoring: {remote_path} -> {local_path}")
+        with urllib.request.urlopen(
+            f"https://raw.githubusercontent.com/{repo}/{branch}/{remote_path}"
+        ) as response:
+            txt = response.read()
+        local_path.write_bytes(txt)
