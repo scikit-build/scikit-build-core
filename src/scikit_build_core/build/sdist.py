@@ -154,6 +154,7 @@ def build_sdist(
                 Path(),
                 include=settings.sdist.include,
                 exclude=settings.sdist.exclude,
+                build_dir=settings.build_dir,
             )
         )
         for filepath in paths:
