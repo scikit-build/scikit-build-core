@@ -314,7 +314,11 @@ def _build_wheel_impl_impl(
 
         # Include the metadata license.file entry if provided
         license_file_globs = list(settings.wheel.license_files)
-        if metadata.license and metadata.license.file:
+        if (
+            metadata.license
+            and not isinstance(metadata.license, str)
+            and metadata.license.file
+        ):
             license_file_globs.append(str(metadata.license.file))
 
         for y in license_file_globs:

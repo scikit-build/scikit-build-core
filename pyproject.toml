@@ -144,6 +144,7 @@ filterwarnings = [
     "default:The distutils package is deprecated and slated for removal:DeprecationWarning",  # Caused by setuptools sometimes
     "default:The distutils.sysconfig module is deprecated, use sysconfig instead:DeprecationWarning",  # Caused by setuptools sometimes
     "default:check_home argument is deprecated and ignored.:DeprecationWarning",  # Caused by setuptools sometimes
+    "ignore::scikit_build_core._vendor.pyproject_metadata.errors.ConfigurationWarning",
 ]
 log_cli_level = "info"
 pythonpath = ["tests/utils"]
