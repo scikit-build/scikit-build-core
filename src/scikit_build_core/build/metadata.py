@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
 from typing import TYPE_CHECKING, Any
 
 from packaging.version import Version
@@ -43,7 +44,7 @@ def get_standard_metadata(
     if settings.minimum_version is not None and settings.minimum_version < Version(
         "0.5"
     ):
-        metadata.name = metadata.canonical_name
+        metadata = dataclasses.replace(metadata, name=metadata.canonical_name)
 
     # The description field is required to be one line. Instead of merging it
     # or cutting off subsequent lines (setuptools), we throw a nice error.
