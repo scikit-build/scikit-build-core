@@ -27,6 +27,21 @@ def __dir__() -> List[str]:
     return __all__
 
 
+class CMakeSettingsDefine(str):
+    def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
+        def escape_semicolons(item: str) -> str:
+            return item.replace(";", r"\;")
+
+        if isinstance(raw, bool):
+            value = "TRUE" if raw else "FALSE"
+        elif isinstance(raw, list):
+            value = ";".join(map(escape_semicolons, raw))
+        else:
+            value = raw
+
+        return super().__new__(cls, value)
+
+
 @dataclasses.dataclass
 class CMakeSettings:
     minimum_version: Optional[Version] = None
@@ -49,7 +64,7 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Annotated[Dict[str, Union[str, bool]], "EnvVar"] = dataclasses.field(
+    define: Annotated[Dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
         default_factory=dict
     )
     """
