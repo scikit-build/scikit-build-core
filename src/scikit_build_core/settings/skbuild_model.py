@@ -27,7 +27,7 @@ def __dir__() -> List[str]:
     return __all__
 
 
-class _CMakeSettingsDefine(str):
+class CMakeSettingsDefine(str):
     """
     A str subtype for automatically normalizing bool and list values
     to the CMake representation in the `cmake.define` settings key.
@@ -35,7 +35,7 @@ class _CMakeSettingsDefine(str):
 
     json_schema = Union[str, bool, List[str]]
 
-    def __new__(cls, raw: Union[str, bool, List[str]]) -> "_CMakeSettingsDefine":
+    def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
 
@@ -71,7 +71,7 @@ class CMakeSettings:
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Annotated[Dict[str, _CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
+    define: Annotated[Dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
         default_factory=dict
     )
     """
