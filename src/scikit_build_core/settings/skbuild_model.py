@@ -11,6 +11,7 @@ __all__ = [
     "BackportSettings",
     "BuildSettings",
     "CMakeSettings",
+    "CMakeSettingsDefine",
     "EditableSettings",
     "GenerateSettings",
     "InstallSettings",
