@@ -28,6 +28,11 @@ def __dir__() -> List[str]:
 
 
 class CMakeSettingsDefine(str):
+    """
+    A str subtype for automatically normalizing bool and list values
+    to the CMake representation in the `cmake.define` settings key.
+    """
+
     json_schema = Union[str, bool, List[str]]
 
     def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
