@@ -151,6 +151,8 @@ def convert_type(t: Any, *, normalize_keys: bool) -> dict[str, Any]:
         }
     if origin is Literal:
         return {"enum": list(args)}
+    if hasattr(t, "json_schema"):
+        return convert_type(t.json_schema, normalize_keys=normalize_keys)
 
     msg = f"Cannot convert type {t} to JSON Schema"
     raise FailedConversionError(msg)

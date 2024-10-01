@@ -28,6 +28,8 @@ def __dir__() -> List[str]:
 
 
 class CMakeSettingsDefine(str):
+    json_schema = Union[str, bool, List[str]]
+
     def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
