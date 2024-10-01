@@ -541,8 +541,8 @@ def test_skbuild_settings_pyproject_toml_envvar_defines(
         "a": "1",
         "b": "2",
         "c": "empty",
-        "d": False,
-        "e": False,
+        "d": "FALSE",
+        "e": "FALSE",
     }
 
     monkeypatch.setenv("DEFAULT", "3")
@@ -552,8 +552,8 @@ def test_skbuild_settings_pyproject_toml_envvar_defines(
         "a": "1",
         "b": "2",
         "c": "3",
-        "d": False,
-        "e": True,
+        "d": "FALSE",
+        "e": "TRUE",
     }
 
 
