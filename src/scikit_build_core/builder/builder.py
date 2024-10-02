@@ -156,6 +156,10 @@ class Builder:
             logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
             logger.debug("PATH: {}", sys.path)
 
+        # Add site-packages to ignore prefix root
+        # TODO: Should we try to add the installation wheel.install-dir + wheel.packages here?
+        self.config.ignore_prefix_dirs.append(site_packages)
+
         # Add the FindPython backport if needed
         if self.config.cmake.version < self.settings.backport.find_python:
             fp_dir = Path(find_python.__file__).parent.resolve()
@@ -176,6 +180,7 @@ class Builder:
         if name is not None:
             canonical_name = name.replace("-", "_").replace(".", "_")
             cache_config["SKBUILD_PROJECT_NAME"] = canonical_name
+            self.config.canonical_name = canonical_name
         if version is not None:
             cache_config["SKBUILD_PROJECT_VERSION"] = ".".join(
                 str(v) for v in version.release
