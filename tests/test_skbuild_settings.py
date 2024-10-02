@@ -754,3 +754,19 @@ def test_skbuild_settings_auto_cmake_warning(
             Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back.
       """.split()
     )
+
+
+def test_skbuild_settings_cmake_define_list():
+    pyproject_toml = (
+        Path(__file__).parent / "packages" / "cmake_defines" / "pyproject.toml"
+    )
+
+    config_settings: dict[str, list[str] | str] = {}
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    settings = settings_reader.settings
+
+    assert settings.cmake.define == {
+        "NESTED_LIST": r"Apple;Lemon\;Lime;Banana",
+        "ONE_LEVEL_LIST": "Foo;Bar;ExceptionallyLargeListEntryThatWouldOverflowTheLine;Baz",
+    }
