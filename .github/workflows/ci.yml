@@ -27,9 +27,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: yezz123/setup-uv@v4
+      - uses: astral-sh/setup-uv@v3
       - name: Install nox
-        run: uv pip install --system nox
+        run: uv tool install nox
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --all-files
@@ -37,7 +37,7 @@ jobs:
         run: nox -s pylint -- --output-format=github
       - name: Run nox generator
         run: |
-          nox -s generate_schema -s readme
+          nox -t gen
           git diff --exit-code
 
   checks:
@@ -105,7 +105,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - uses: yezz123/setup-uv@v4
+      - uses: astral-sh/setup-uv@v3
         if:
           matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
           && matrix.python-version != 'pypy-3.7'
@@ -168,7 +168,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: yezz123/setup-uv@v4
+      - uses: astral-sh/setup-uv@v3
 
       # The min requirements are not compatible with some of the extra test
       # deps, so limit to just built-in deps.
@@ -332,7 +332,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: yezz123/setup-uv@v4
+      - uses: astral-sh/setup-uv@v3
 
       - uses: wntrblm/nox@2024.04.15
         with:
