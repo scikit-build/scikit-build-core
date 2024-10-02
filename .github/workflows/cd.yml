@@ -17,15 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build package
-        run: pipx run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          path: dist/*
+      - uses: hynek/build-and-inspect-python-package@v2
 
   deploy:
     if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [dist]
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -33,19 +29,18 @@ jobs:
     permissions:
       id-token: write
       attestations: write
-      contents: read
-
-    needs: [dist]
 
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          name: Packages
           path: dist
 
       - name: Generate artifact attestation for sdist and wheel
-        uses: actions/attest-build-provenance@v1.4.3
+        uses: actions/attest-build-provenance@v1
         with:
           subject-path: "dist/*"
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
