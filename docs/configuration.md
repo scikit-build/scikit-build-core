@@ -425,9 +425,7 @@ SOME_OPTION = true
 
 ````
 
-:::{versionchanged} 0.11
-
-You can specify a CMake define as a list of strings:
+You can even specify a CMake define as a list of strings:
 
 ````{tab} pyproject.toml
 
@@ -446,6 +444,10 @@ FOOD_GROUPS = [
 Semicolons inside the list elements will be escaped with a backslash (`\`) and
 the resulting list elements will be joined together with semicolons (`;`) before
 being converted to command-line arguments.
+
+:::{versionchanged} 0.11
+
+Support for list of strings.
 
 :::
 
