@@ -4,14 +4,17 @@ import os
 import shutil
 import sysconfig
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from scikit_build_core.builder.builder import Builder
 from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
+from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -199,6 +202,41 @@ def test_cmake_paths(
     config.configure()
 
     assert len(fp.calls) == 2
+
+
+@pytest.mark.configure
+def test_cmake_defines(
+    tmp_path: Path,
+):
+    source_dir = DIR / "packages" / "cmake_defines"
+    binary_dir = tmp_path / "build"
+
+    config = CMaker(
+        CMake.default_search(),
+        source_dir=source_dir,
+        build_dir=binary_dir,
+        build_type="Release",
+    )
+
+    reader = SettingsReader.from_file(source_dir / "pyproject.toml")
+
+    builder = Builder(reader.settings, config)
+    builder.configure(defines={})
+
+    configure_log = Path.read_text(binary_dir / "log.txt")
+    assert configure_log == dedent(
+        """\
+        ONE_LEVEL_LIST.LENGTH = 4
+        Foo
+        Bar
+        ExceptionallyLargeListEntryThatWouldOverflowTheLine
+        Baz
+        NESTED_LIST.LENGTH = 3
+        Apple
+        Lemon;Lime
+        Banana
+        """
+    )
 
 
 def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):

@@ -1,0 +1,11 @@
+[tool.scikit-build]
+cmake.version = '>=3.15'
+
+[tool.scikit-build.cmake.define]
+ONE_LEVEL_LIST = [
+    "Foo",
+    "Bar",
+    "ExceptionallyLargeListEntryThatWouldOverflowTheLine",
+    "Baz",
+]
+NESTED_LIST = [ "Apple", "Lemon;Lime", "Banana" ]

@@ -245,12 +245,7 @@ class Builder:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
 
         # Add the pre-defined or passed CMake defines
-        cmake_defines.update(
-            {
-                k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else v
-                for k, v in self.settings.cmake.define.items()
-            }
-        )
+        cmake_defines.update(self.settings.cmake.define)
 
         self.config.configure(
             defines=cmake_defines,

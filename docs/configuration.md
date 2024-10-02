@@ -413,16 +413,43 @@ You can select a different build type, such as `Debug`:
 
 ```
 
-You can specify CMake defines:
+You can specify CMake defines as strings or bools:
 
 ````{tab} pyproject.toml
 
 ```toml
 [tool.scikit-build.cmake.define]
-SOME_DEFINE = "ON"
+SOME_DEFINE = "Foo"
+SOME_OPTION = true
 ```
 
 ````
+
+You can even specify a CMake define as a list of strings:
+
+````{tab} pyproject.toml
+
+```toml
+[tool.scikit-build.cmake.define]
+FOOD_GROUPS = [
+    "Apple",
+    "Lemon;Lime",
+    "Banana",
+    "Pineapple;Mango",
+]
+```
+
+````
+
+Semicolons inside the list elements will be escaped with a backslash (`\`) and
+the resulting list elements will be joined together with semicolons (`;`) before
+being converted to command-line arguments.
+
+:::{versionchanged} 0.11
+
+Support for list of strings.
+
+:::
 
 `````{tab} config-settings
 
