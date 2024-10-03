@@ -24,16 +24,6 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 DIR = Path(__file__).parent.resolve()
 
-nox.options.sessions = [
-    "lint",
-    "pylint",
-    "generate_schema",
-    "readme",
-    "build_api_docs",
-    "tests",
-    "test_doc_examples",
-]
-
 
 @nox.session(reuse_venv=True)
 def lint(session: nox.Session) -> None:
@@ -122,7 +112,7 @@ def readme(session: nox.Session) -> None:
     session.run("cog", "-P", *args, "README.md")
 
 
-@nox.session(venv_backend="uv")
+@nox.session(venv_backend="uv", default=False)
 def minimums(session: nox.Session) -> None:
     """
     Test the minimum versions of dependencies.
@@ -135,7 +125,7 @@ def minimums(session: nox.Session) -> None:
     )
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=True, default=False)
 def docs(session: nox.Session) -> None:
     """
     Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
@@ -187,7 +177,7 @@ def build_api_docs(session: nox.Session) -> None:
     )
 
 
-@nox.session
+@nox.session(default=False)
 def build(session: nox.Session) -> None:
     """
     Build an SDist and wheel.
@@ -226,7 +216,7 @@ def test_doc_examples(session: nox.Session, example: str) -> None:
         session.run("pytest")
 
 
-@nox.session
+@nox.session(default=False)
 def downstream(session: nox.Session) -> None:
     """
     Build a downstream project.
@@ -304,7 +294,7 @@ def downstream(session: nox.Session) -> None:
         session.run("python", "-c", args.code)
 
 
-@nox.session(venv_backend="none")
+@nox.session(venv_backend="none", default=False)
 def vendor_pyproject_metadata(session: nox.Session) -> None:
     """
     Vendor pyproject.toml metadata.
