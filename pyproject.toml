@@ -165,6 +165,7 @@ files = ["src", "tests", "noxfile.py"]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src", "$MYPY_CONFIG_FILE_DIR/tests/utils"]
 python_version = "3.8"
 warn_unused_configs = true
+warn_unreachable = false
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 strict = true
 disallow_untyped_defs = false
@@ -221,7 +222,7 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 
 [tool.ruff]
-exclude = ["src/scikit_build_core/_vendor"]  # Required due to "build" module
+exclude = ["src/scikit_build_core/_vendor/*"]  # Required due to "build" module
 
 [tool.ruff.lint]
 extend-select = [
@@ -253,7 +254,7 @@ extend-select = [
     "TRY",         # tryceratops
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
-    # (in preview till 0.2.0) "FURB",        # refurb
+    "FURB",        # refurb
 ]
 ignore = [
     "PLE1205", # Format check doesn't work with our custom logger
@@ -274,6 +275,9 @@ ignore = [
     "S404",    # subprocess module is possibly insecure
 ]
 typing-modules = ["scikit_build_core._compat.typing"]
+
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.ruff.lint.isort]
 known-local-folder = ["pathutils"]
@@ -317,9 +321,3 @@ known-local-folder = ["pathutils"]
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
-
-
-[tool.repo-review]
-ignore = [
-    "MY103",  # We don't set mypy's warn-unreachable due to issues with platform-specific checks
-]

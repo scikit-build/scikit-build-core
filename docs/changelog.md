@@ -6,10 +6,10 @@ This version has three fixes related to advanced usages of overrides.
 
 Fixes:
 
-* Avoid modifying the input dict by @henryiii in #903
-* Avoid providing prepare-metadata methods if `failed` in overrides by @henryiii in #904
-* Support negative envvar values correctly by @henryiii in #907
-
+- Avoid modifying the input dict by @henryiii in #903
+- Avoid providing prepare-metadata methods if `failed` in overrides by @henryiii
+  in #904
+- Support negative envvar values correctly by @henryiii in #907
 
 ## Version 0.10.6
 
@@ -21,20 +21,21 @@ downstream nox job is also now a bit better.
 
 Fixes:
 
-* Use correct settings key to remove parts of the version in regex metadata plugin by @philippjh in #887
-* Support multiplexed path by @henryiii in #896
-* Editable subpackage by @henryiii in #895
-* Only strip Release and MinSizeRel builds by default by @henryiii in #898
-* Typo in debug message by @LecrisUT in #892
+- Use correct settings key to remove parts of the version in regex metadata
+  plugin by @philippjh in #887
+- Support multiplexed path by @henryiii in #896
+- Editable subpackage by @henryiii in #895
+- Only strip Release and MinSizeRel builds by default by @henryiii in #898
+- Typo in debug message by @LecrisUT in #892
 
 Docs:
 
-* Add build info by @henryiii in #878
-* Fix typo in `if.platform-system` example by @henryiii in #879
+- Add build info by @henryiii in #878
+- Fix typo in `if.platform-system` example by @henryiii in #879
 
 CI and testing:
 
-* Packit configuration update by @LecrisUT in #799
+- Packit configuration update by @LecrisUT in #799
 
 ## Version 0.10.5
 
@@ -44,24 +45,25 @@ occurs. An issue with a certain style of gitignore was also fixed.
 
 Fixes:
 
-* Automatically refresh the cache when required by @henryiii in #870
-* `sdist.exclude` takes precedence over `.gitignore` by @alexreinking in #872
+- Automatically refresh the cache when required by @henryiii in #870
+- `sdist.exclude` takes precedence over `.gitignore` by @alexreinking in #872
 
 ## Version 0.10.4
 
-This version fixes the logic for handling the sysconfig variables on Windows
-for the values that used to be only provided on UNIX. This mostly affects
-targeting the Stable ABI on Python 3.13. Editable install rebuilds now work if
-you have a `wheel.install-dir` set, too.
+This version fixes the logic for handling the sysconfig variables on Windows for
+the values that used to be only provided on UNIX. This mostly affects targeting
+the Stable ABI on Python 3.13. Editable install rebuilds now work if you have a
+`wheel.install-dir` set, too.
 
 Fixes:
 
-* Windows 3.13 stable ABI by @LecrisUT in #865
-* Editable installs now respect the value of `wheel.install-dir` by @psalvaggio in #867
+- Windows 3.13 stable ABI by @LecrisUT in #865
+- Editable installs now respect the value of `wheel.install-dir` by @psalvaggio
+  in #867
 
 Docs:
 
-* Add conda help to faqs by @henryiii in #868
+- Add conda help to faqs by @henryiii in #868
 
 ## Version 0.10.3
 
@@ -70,8 +72,7 @@ for Python \<3.14 when reading gitignores with special characters.
 
 Fixes:
 
-* Make sure encoding is specified in more places by @henryiii in #861
-
+- Make sure encoding is specified in more places by @henryiii in #861
 
 ## Version 0.10.2
 
@@ -80,7 +81,7 @@ sdist would get included twice, affecting some tools (like uv).
 
 Fixes:
 
-* Files included twice when they match `include_spec` by @abetlen in #857
+- Files included twice when they match `include_spec` by @abetlen in #857
 
 ## Version 0.10.1
 
@@ -88,8 +89,8 @@ This is a quick fix release with two patches for specific situations.
 
 Fixes:
 
-* Fix crash when building inside a submodule by @ausbin in #854
-* `cmake.minimum-version` logic issue by @henryiii in #853
+- Fix crash when building inside a submodule by @ausbin in #854
+- `cmake.minimum-version` logic issue by @henryiii in #853
 
 ## Version 0.10.0
 
@@ -97,53 +98,57 @@ This version adds auto CMake version discovery, opt-in auto minimum-version,
 rebuild on failure support, quite a few new override options greatly expanding
 the static config options for builds, more powerful regexs, and more.
 
-Also see [the announcement post](https://iscinumpy.dev/post/scikit-build-core-0-10).
+Also see
+[the announcement post](https://iscinumpy.dev/post/scikit-build-core-0-10).
 
 New features:
 
-* Auto CMake version by @henryiii in #804
-* Auto minimum-version by @henryiii in #798
-* Add `fail` setting to instant-fail build by @henryiii in #824
-* Add messages config for failure/success by @henryiii in #825
-* New color system for message config by @henryiii in #842
-* Add `if.abi-flags` (for free-threaded) by @henryiii in #819
-* Adding `if.system-cmake` and `if.cmake-wheel` by @henryiii in #826
-* Add `if.from-sdist` for overrides by @henryiii in #812
-* Add `if.failed` (retry) by @henryiii in #820
-* Add `if.scikit-build-version` by @henryiii in #851
-* Packages can also be specified via a table by @henryiii in #841
-* Move `cmake.targets` and `cmake.verbose` to `build.targets` and `build.verbose` by @henryiii in #793
-* Support multipart regex using `result=` by @henryiii in #818
-* Add `remove=` postprocess to regex by @henryiii in #828
+- Auto CMake version by @henryiii in #804
+- Auto minimum-version by @henryiii in #798
+- Add `fail` setting to instant-fail build by @henryiii in #824
+- Add messages config for failure/success by @henryiii in #825
+- New color system for message config by @henryiii in #842
+- Add `if.abi-flags` (for free-threaded) by @henryiii in #819
+- Adding `if.system-cmake` and `if.cmake-wheel` by @henryiii in #826
+- Add `if.from-sdist` for overrides by @henryiii in #812
+- Add `if.failed` (retry) by @henryiii in #820
+- Add `if.scikit-build-version` by @henryiii in #851
+- Packages can also be specified via a table by @henryiii in #841
+- Move `cmake.targets` and `cmake.verbose` to `build.targets` and
+  `build.verbose` by @henryiii in #793
+- Support multipart regex using `result=` by @henryiii in #818
+- Add `remove=` postprocess to regex by @henryiii in #828
 
 Fixes:
 
-* Warn if cmake/ninja in build system requirements by @henryiii in #803
-* Detect manual generator setting for `get_requires_*` by @henryiii in #840
-* Support nested and local gitignores by @henryiii in #827
+- Warn if cmake/ninja in build system requirements by @henryiii in #803
+- Detect manual generator setting for `get_requires_*` by @henryiii in #840
+- Support nested and local gitignores by @henryiii in #827
 
 Tests:
 
-* Fix `test_cmake_config` if `CMAKE_GENERATOR` is already set by @lorepirri in #847
+- Fix `test_cmake_config` if `CMAKE_GENERATOR` is already set by @lorepirri in
+  #847
 
 Internal:
 
-* Pull out overrides to separate file by @henryiii in #821
-* Nicer error/warning printer by @henryiii in #813
-* Speed up CI for format job by @henryiii in #814
-* Avoid old wheel warning in CI test job by @henryiii in #849
+- Pull out overrides to separate file by @henryiii in #821
+- Nicer error/warning printer by @henryiii in #813
+- Speed up CI for format job by @henryiii in #814
+- Avoid old wheel warning in CI test job by @henryiii in #849
 
 Documentation:
 
-* Fix typo in projects list by @jcfr in #797
-* Add disclaimer by @henryiii in #805
-* Add pointer to itk by @thewtex in #817
-* Add projects list by @henryiii in #788
-* Examples nox job should use local copy of scikit-build-core by @henryiii in #810
-* Expand defs and move schema by @henryiii in #795
-* Hide deprecated options in README by @henryiii in #792
-* Move overrides to page, expand by @henryiii in #815
-* Use modern cmake/ninja version setting in Fortran example by @henryiii in #809
+- Fix typo in projects list by @jcfr in #797
+- Add disclaimer by @henryiii in #805
+- Add pointer to itk by @thewtex in #817
+- Add projects list by @henryiii in #788
+- Examples nox job should use local copy of scikit-build-core by @henryiii in
+  #810
+- Expand defs and move schema by @henryiii in #795
+- Hide deprecated options in README by @henryiii in #792
+- Move overrides to page, expand by @henryiii in #815
+- Use modern cmake/ninja version setting in Fortran example by @henryiii in #809
 
 ## Version 0.9.10
 
@@ -152,7 +157,8 @@ This release backports a couple of fixes made during work towards 0.10.
 Fixes:
 
 - Regression for `'-'` in version name by @henryiii in #834
-- Improve version regex to capture typed version attributes by @maxbachmann in #816
+- Improve version regex to capture typed version attributes by @maxbachmann in
+  #816
 
 ## Version 0.9.9
 
@@ -162,7 +168,8 @@ Fixes:
 
 - Strip epoch from `SKBUILD_PROJECT_VERSION` by @henryiii in #829
 
-**Full Changelog**: https://github.com/scikit-build/scikit-build-core/compare/v0.9.8...v0.9.9
+**Full Changelog**:
+https://github.com/scikit-build/scikit-build-core/compare/v0.9.8...v0.9.9
 
 ## Version 0.9.8
 
@@ -174,13 +181,16 @@ anti-pattern, but we can set that variable too. More tests now run on Python
 
 Fixes:
 
-* Empty build arguments for some targets in multi-target build by @junrushao in #784
-* Support packages that hardcode `CMAKE_INSTALL_PREFIX` in their `install` commands by @henryiii in #786
-* Logger shouldn't warn for missing lib on UNIX by @henryiii in #787
+- Empty build arguments for some targets in multi-target build by @junrushao in
+  #784
+- Support packages that hardcode `CMAKE_INSTALL_PREFIX` in their `install`
+  commands by @henryiii in #786
+- Logger shouldn't warn for missing lib on UNIX by @henryiii in #787
 
 Tests:
 
-* Use `ZipFile` instead of `zipfile.Path` to enable more tests on Python 3.7 by @henryiii in #785
+- Use `ZipFile` instead of `zipfile.Path` to enable more tests on Python 3.7 by
+  @henryiii in #785
 
 ## Version 0.9.7
 
@@ -190,15 +200,16 @@ correct tags on MUSL. And releases now have Attestations on GitHub at
 
 Fixes:
 
-* Set `CC` and `CXX` from sysconfig if not set by @henryiii in #782
-* `musllinux` tag incorrect by @henryiii in #773
-* Logger unconditionally set to `DEBUG` in non-PEP 517 usage by @henryiii in #779
+- Set `CC` and `CXX` from sysconfig if not set by @henryiii in #782
+- `musllinux` tag incorrect by @henryiii in #773
+- Logger unconditionally set to `DEBUG` in non-PEP 517 usage by @henryiii in
+  #779
 
 Documentation:
 
-* Fix Fortran example by @henryiii in #771
-* Fix typo in skbuild soabi docs by @henryiii in #775
-* Fortran and Cython updates by @henryiii in #781
+- Fix Fortran example by @henryiii in #771
+- Fix typo in skbuild soabi docs by @henryiii in #775
+- Fortran and Cython updates by @henryiii in #781
 
 ## Version 0.9.6
 
@@ -207,9 +218,10 @@ affecting other setuptools plugins.
 
 Fixes:
 
-* Improve error message when `metadata.version.provider` not set by @thewtex in #762
-* Only inject logic if `cmake_*` keywords present by @kiwifb in #768
-* Only replace color tags if the color is defined by @bnavigator in #764
+- Improve error message when `metadata.version.provider` not set by @thewtex in
+  #762
+- Only inject logic if `cmake_*` keywords present by @kiwifb in #768
+- Only replace color tags if the color is defined by @bnavigator in #764
 
 ## Version 0.9.5
 

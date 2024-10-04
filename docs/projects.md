@@ -42,21 +42,21 @@ for project in projects["project"]:
 * [llamacpp](https://pypi.org/project/llamacpp) ([source](https://github.com/thomasantony/llamacpp-python/blob/HEAD/pyproject.toml))
 * [nodejs-wheel](https://pypi.org/project/nodejs-wheel) ([source](https://github.com/njzjz/nodejs-wheel/blob/HEAD/pyproject.toml))
 * [pygram11](https://pypi.org/project/pygram11) ([source](https://github.com/douglasdavis/pygram11/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (checksum: a4abb793ffea3e66bfd362c5cc587555)-->
+  <!--[[[end]]] (checksum: a4abb793ffea3e66bfd362c5cc587555) -->
 
+In addition, most of the [RAPIDSAI](https://github.com/rapidsai) projects use
+scikit-build-core, but they are not published on PyPI. A few of them are:
 
-In addition, most of the [RAPIDSAI](https://github.com/rapidsai) projects use scikit-build-core, but they are not published on PyPI. A few of them are:
-
-* CuDF ([source](https://github.com/rapidsai/cudf/blob/HEAD/python/cudf/pyproject.toml))
-* CuGraph ([source](https://github.com/rapidsai/cugraph/blob/HEAD/python/cugraph/pyproject.toml))
-* CuML ([source](https://github.com/rapidsai/cuml/blob/HEAD/python/cuml/pyproject.toml))
-* CuSpatial ([source](https://github.com/rapidsai/cuspatial/blob/HEAD/python/cuspatial/pyproject.toml))
-* RMM ([source](https://github.com/rapidsai/rmm/blob/HEAD/python/rmm/pyproject.toml))
-* Raft ([source](https://github.com/rapidsai/raft/blob/HEAD/python/pylibraft/pyproject.toml))
+- CuDF ([source](https://github.com/rapidsai/cudf/blob/HEAD/python/cudf/pyproject.toml))
+- CuGraph ([source](https://github.com/rapidsai/cugraph/blob/HEAD/python/cugraph/pyproject.toml))
+- CuML ([source](https://github.com/rapidsai/cuml/blob/HEAD/python/cuml/pyproject.toml))
+- CuSpatial ([source](https://github.com/rapidsai/cuspatial/blob/HEAD/python/cuspatial/pyproject.toml))
+- RMM ([source](https://github.com/rapidsai/rmm/blob/HEAD/python/rmm/pyproject.toml))
+- Raft ([source](https://github.com/rapidsai/raft/blob/HEAD/python/pylibraft/pyproject.toml))
 
 The [Insight Toolkit (ITK)](https://docs.itk.org), the initial target project
-for scikit-build classic, has [transitioned to
-sckit-build-core](https://github.com/InsightSoftwareConsortium/ITKPythonPackage/blob/master/scripts/pyproject.toml.in).
+for scikit-build classic, has
+[transitioned to sckit-build-core](https://github.com/InsightSoftwareConsortium/ITKPythonPackage/blob/master/scripts/pyproject.toml.in).
 ITK currently provides one example of a production SWIG-based deployment. In
-addition, dozens of [ITK-based extension packages are configured with
-scikit-build-core](https://github.com/topics/itk-module).
+addition, dozens of
+[ITK-based extension packages are configured with scikit-build-core](https://github.com/topics/itk-module).

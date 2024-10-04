@@ -126,7 +126,6 @@ The `"build-system.requires"` option was added.
 
 :::
 
-
 :::{warning}
 
 The following behaviors are affected by `minimum-version`:
@@ -136,9 +135,9 @@ The following behaviors are affected by `minimum-version`:
 - `minimum-version` 0.5+ (or unset) strips binaries by default.
 - `minimum-version` 0.8+ (or unset) `cmake.minimum-version` and
   `ninja.minimum-version` are replaced with `cmake.version` and `ninja.version`.
-- `minimum-version` 0.10+ (or unset) `cmake.targets` and
-  `cmake.verbose` are replaced with `build.targets` and `build.verbose`. The
-  CMake minimum version will be detected if not given.
+- `minimum-version` 0.10+ (or unset) `cmake.targets` and `cmake.verbose` are
+  replaced with `build.targets` and `build.verbose`. The CMake minimum version
+  will be detected if not given.
 
 :::
 
@@ -156,11 +155,11 @@ cmake.version = ">=3.26.1"
 ninja.version = ">=1.11"
 ```
 
-You can try to read the version from your CMakeLists.txt with the special
-string `"CMakeLists.txt"`. This is an error if the minimum version was not
-statically detectable in the file. If your `minimum-version` setting is unset
-or set to "0.10" or higher, scikit-build-core will still try to read this if
-possible, and will fall back on ">=3.15" if it can't read it.
+You can try to read the version from your CMakeLists.txt with the special string
+`"CMakeLists.txt"`. This is an error if the minimum version was not statically
+detectable in the file. If your `minimum-version` setting is unset or set to
+"0.10" or higher, scikit-build-core will still try to read this if possible, and
+will fall back on ">=3.15" if it can't read it.
 
 You can also enforce ninja to be required even if make is present on Unix:
 
@@ -264,8 +263,8 @@ wheel.packages = ["python/src/mypackage"]
 ```
 
 This can also be a table, allowing full customization of where a source package
-maps to a wheel directory. The final components of both paths must match due to the
-way editable installs work. The equivalent of the above is:
+maps to a wheel directory. The final components of both paths must match due to
+the way editable installs work. The equivalent of the above is:
 
 ```toml
 [tool.scikit-build.wheel.packages]
@@ -285,8 +284,8 @@ Support for the table form.
 
 :::
 
-You can disable Python file inclusion entirely, and rely only on CMake's
-install mechanism:
+You can disable Python file inclusion entirely, and rely only on CMake's install
+mechanism:
 
 ```toml
 [tool.scikit-build]
@@ -385,7 +384,6 @@ historic compatibility if you'd like:
 wheel.expand-macos-universal-tags = true
 ```
 
-
 You can also specify a build tag:
 
 ```{conftabs} wheel.build-tag 1
@@ -403,7 +401,6 @@ And you can turn off binary stripping:
 ```{conftabs} install.strip False
 
 ```
-
 
 ## Configuring CMake arguments and defines
 
@@ -623,8 +620,8 @@ input = "src/mypackage/__init__.py"
 
 You can set a custom regex with `regex=`. By default when targeting version, you
 get a reasonable regex for python files,
-`'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`.
-You can set `result` to a format string to process the matches; the default is
+`'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`. You
+can set `result` to a format string to process the matches; the default is
 `"{value}"`. You can also specify a regex for `remove=` which will strip any
 matches from the final result. A more complex example:
 
@@ -651,7 +648,6 @@ Support for `result` and `remove` added.
 ::::
 
 :::
-
 
 :::{warning}
 
@@ -752,7 +748,8 @@ On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
 
 ## Messages
 
-You can add a message to be printed after a successful or failed build. For example:
+You can add a message to be printed after a successful or failed build. For
+example:
 
 ```toml
 [tool.scikit-build]
@@ -763,7 +760,7 @@ messages.after-failure = """
 ```
 
 This will be run through Python's formatter, so escape curly brackets if you
-need them.  Currently, there are several formatter-style keywords available:
+need them. Currently, there are several formatter-style keywords available:
 `sys`, `platform` (parenthesis will be added for items like `platform.platform`
 for you), `__version__` for scikit-build-core's version, and style keywords.
 
@@ -772,9 +769,9 @@ For styles, the colors are `default`, `red`, `green`, `yellow`, `blue`,
 without a qualifier the foreground is assumed. Styles like `normal`, `bold`,
 `italic`, `underline`, `reverse` are also provided. A full clearing of all
 styles is possible with `reset`. These all can be chained, as well, so
-`bold.red.bg.blue` is valid, and will produce an optimized escape code.
-Remember that you need to set the environment variable `FORCE_COLOR` to see
-colors with pip.
+`bold.red.bg.blue` is valid, and will produce an optimized escape code. Remember
+that you need to set the environment variable `FORCE_COLOR` to see colors with
+pip.
 
 ```{versionadded} 0.10
 
