@@ -545,7 +545,7 @@ Scikit-build-core supports dynamic metadata with three built-in plugins.
 
 :::{tab} Setuptools-scm
 
-You can use [setuptools-scm](https://github.com/pypa/setuptools_scm) to pull the
+You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
 
 ```toml
@@ -562,9 +562,9 @@ write_to = "src/package/_version.py"
 ```
 
 This sets the python project version according to
-[git tags](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
+[git tags](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
 or a
-[`.git_archival.txt`](https://github.com/pypa/setuptools_scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#git-archives)
+[`.git_archival.txt`](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#git-archives)
 file, or equivalents for other VCS systems.
 
 If you need to set the CMake project version without scikit-build-core (which

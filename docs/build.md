@@ -236,7 +236,7 @@ the current workaround).
       scikit-build-core.
 
 [repairwheel]: https://github.com/jvolkman/repairwheel
-[cibuildwheel]: https://cibuildwheel.readthedocs.io
+[cibuildwheel]: https://cibuildwheel.pypa.io
 [compatibility tags]: https://packaging.python.org/en/latest/specifications/binary-distribution-format
 
 <!-- prettier-ignore-end -->
