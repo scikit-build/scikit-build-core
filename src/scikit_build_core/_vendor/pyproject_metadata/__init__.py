@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: MIT
 
+"""
+This is pyproject_metadata, a library for working with PEP 621 metadata.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -15,10 +19,10 @@ import sys
 import typing
 import warnings
 
+# Build backends may vendor this package, so all imports are relative.
 from . import constants
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
 from .pyproject import License, PyProjectReader, Readme
-
 
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
@@ -31,28 +35,26 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import PyProjectTable
+    from .project_table import Dynamic, PyProjectTable
 
 import packaging.markers
 import packaging.specifiers
 import packaging.utils
 import packaging.version
 
-
-__version__ = '0.9.0b5'
+__version__ = "0.9.0b6"
 
 __all__ = [
-    'ConfigurationError',
-    'ConfigurationWarning',
-    'License',
-    'RFC822Message',
-    'RFC822Policy',
-    'Readme',
-    'StandardMetadata',
-    'field_to_metadata',
-    'validate_build_system',
-    'validate_project',
-    'validate_top_level',
+    "ConfigurationError",
+    "License",
+    "RFC822Message",
+    "RFC822Policy",
+    "Readme",
+    "StandardMetadata",
+    "field_to_metadata",
+    "extras_build_system",
+    "extras_project",
+    "extras_top_level",
 ]
 
 
@@ -67,33 +69,28 @@ def field_to_metadata(field: str) -> frozenset[str]:
     return frozenset(constants.PROJECT_TO_METADATA[field])
 
 
-def validate_top_level(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in pyproject.toml: {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_top_level(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the top-level of the pyproject table.
+    """
+    return set(pyproject_table) - constants.KNOWN_TOPLEVEL_FIELDS
 
 
-def validate_build_system(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
-        set(pyproject_table.get('build-system', []))
+def extras_build_system(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the build-system table.
+    """
+    return (
+        set(pyproject_table.get("build-system", []))
         - constants.KNOWN_BUILD_SYSTEM_FIELDS
     )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "build-system": {extra_keys_str}'
-        raise ConfigurationError(msg)
 
 
-def validate_project(pyproject_table: Mapping[str, Any]) -> None:
-    extra_keys = (
-        set(pyproject_table.get('project', [])) - constants.KNOWN_PROJECT_FIELDS
-    )
-    if extra_keys:
-        extra_keys_str = ', '.join(sorted(f'"{k}"' for k in extra_keys))
-        msg = f'Extra keys present in "project": {extra_keys_str}'
-        raise ConfigurationError(msg)
+def extras_project(pyproject_table: Mapping[str, Any]) -> set[str]:
+    """
+    Return any extra keys in the project table.
+    """
+    return set(pyproject_table.get("project", [])) - constants.KNOWN_PROJECT_FIELDS
 
 
 @dataclasses.dataclass
@@ -120,21 +117,21 @@ class _SmartMessageSetter:
 @dataclasses.dataclass
 class _JSonMessageSetter:
     """
-    This provides an API to build a JSON message output. Line breaks are
-    preserved this way.
+    This provides an API to build a JSON message output in the same way as the
+    classic Message. Line breaks are preserved this way.
     """
 
     data: dict[str, str | list[str]]
 
     def __setitem__(self, name: str, value: str | None) -> None:
         name = name.lower()
-        key = name.replace('-', '_')
+        key = name.replace("-", "_")
 
         if value is None:
             return
 
-        if name == 'keywords':
-            values = (x.strip() for x in value.split(','))
+        if name == "keywords":
+            values = (x.strip() for x in value.split(","))
             self.data[key] = [x for x in values if x]
         elif name in constants.KNOWN_MULTIUSE:
             entry = self.data.setdefault(key, [])
@@ -144,7 +141,7 @@ class _JSonMessageSetter:
             self.data[key] = value
 
     def set_payload(self, payload: str) -> None:
-        self['description'] = payload
+        self["description"] = payload
 
 
 class RFC822Policy(email.policy.EmailPolicy):
@@ -159,10 +156,10 @@ class RFC822Policy(email.policy.EmailPolicy):
 
     def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
         if name.lower() not in constants.KNOWN_METADATA_FIELDS:
-            msg = f'Unknown field "{name}"'
+            msg = f"Unknown field {name!r}"
             raise ConfigurationError(msg, key=name)
         size = len(name) + 2
-        value = value.replace('\n', '\n' + ' ' * size)
+        value = value.replace("\n", "\n" + " " * size)
         return (name, value)
 
 
@@ -179,7 +176,10 @@ class RFC822Message(email.message.EmailMessage):
     def as_bytes(
         self, unixfrom: bool = False, policy: email.policy.Policy | None = None
     ) -> bytes:
-        return self.as_string(unixfrom, policy=policy).encode('utf-8')
+        """
+        This handles unicode encoding.
+        """
+        return self.as_string(unixfrom, policy=policy).encode("utf-8")
 
 
 @dataclasses.dataclass
@@ -203,7 +203,7 @@ class StandardMetadata:
     keywords: list[str] = dataclasses.field(default_factory=list)
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
-    dynamic: list[str] = dataclasses.field(default_factory=list)
+    dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
     """
@@ -220,59 +220,73 @@ class StandardMetadata:
         self.validate()
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if self._locked_metadata and name.replace('_', '-') not in set(self.dynamic) | {
-            'metadata-version',
-            'dynamic-metadata',
-        }:
-            msg = f'Field "{name}" is not dynamic'
-            raise AttributeError(msg)
+        if self._locked_metadata:
+            metadata_name = name.replace("_", "-")
+            locked_fields = constants.KNOWN_METADATA_FIELDS - set(self.dynamic)
+            if metadata_name in locked_fields:
+                msg = f"Field {name!r} is not dynamic"
+                raise AttributeError(msg)
         super().__setattr__(name, value)
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
+        """
+        Validate metadata for consistency and correctness. Will also produce warnings if
+        ``warn`` is given. Respects ``all_errors``. Checks:
+
+        - ``metadata_version`` is a known version or None
+        - ``name`` is a valid project name
+        - ``license_files`` can't be used with classic ``license``
+        - License classifiers can't be used with SPDX license
+        - ``description`` is a single line (warning)
+        - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
+        - License classifiers deprecated for metadata_version >= 2.4 (warning)
+        - ``license`` is an SPDX license expression if metadata_version >= 2.4
+        - ``license_files`` is supported only for metadata_version >= 2.4
+        """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
         if self.auto_metadata_version not in constants.KNOWN_METADATA_VERSIONS:
-            msg = f'The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)'
+            msg = f"The metadata_version must be one of {constants.KNOWN_METADATA_VERSIONS} or None (default)"
             errors.config_error(msg)
 
         # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
         # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
         if not re.match(
-            r'^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$', self.name, re.IGNORECASE
+            r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
         ):
             msg = (
-                f'Invalid project name "{self.name}". A valid name consists only of ASCII letters and '
-                'numbers, period, underscore and hyphen. It must start and end with a letter or number'
+                f"Invalid project name {self.name!r}. A valid name consists only of ASCII letters and "
+                "numbers, period, underscore and hyphen. It must start and end with a letter or number"
             )
-            errors.config_error(msg, key='project.name')
+            errors.config_error(msg, key="project.name")
 
         if self.license_files is not None and isinstance(self.license, License):
-            msg = '"project.license-files" must not be used when "project.license" is not a SPDX license expression'
-            errors.config_error(msg, key='project.license-files')
+            msg = "'project.license-files' must not be used when 'project.license' is not a SPDX license expression"
+            errors.config_error(msg, key="project.license-files")
 
         if isinstance(self.license, str) and any(
-            c.startswith('License ::') for c in self.classifiers
+            c.startswith("License ::") for c in self.classifiers
         ):
-            msg = 'Setting "project.license" to an SPDX license expression is not compatible with "License ::" classifiers'
-            errors.config_error(msg, key='project.license')
+            msg = "Setting 'project.license' to an SPDX license expression is not compatible with 'License ::' classifiers"
+            errors.config_error(msg, key="project.license")
 
         if warn:
-            if self.description and '\n' in self.description:
+            if self.description and "\n" in self.description:
                 warnings.warn(
-                    'The one-line summary "project.description" should not contain more than one line. Readers might merge or truncate newlines.',
+                    "The one-line summary 'project.description' should not contain more than one line. Readers might merge or truncate newlines.",
                     ConfigurationWarning,
                     stacklevel=2,
                 )
             if self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS:
                 if isinstance(self.license, License):
                     warnings.warn(
-                        'Set "project.license" to an SPDX license expression for metadata >= 2.4',
+                        "Set 'project.license' to an SPDX license expression for metadata >= 2.4",
                         ConfigurationWarning,
                         stacklevel=2,
                     )
-                elif any(c.startswith('License ::') for c in self.classifiers):
+                elif any(c.startswith("License ::") for c in self.classifiers):
                     warnings.warn(
-                        '"License ::" classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for "project.license" instead',
+                        "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for 'project.license' instead",
                         ConfigurationWarning,
                         stacklevel=2,
                     )
@@ -281,31 +295,38 @@ class StandardMetadata:
             isinstance(self.license, str)
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = 'Setting "project.license" to an SPDX license expression is supported only when emitting metadata version >= 2.4'
-            errors.config_error(msg, key='project.license')
+            msg = "Setting 'project.license' to an SPDX license expression is supported only when emitting metadata version >= 2.4"
+            errors.config_error(msg, key="project.license")
 
         if (
             self.license_files is not None
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = '"project.license-files" is supported only when emitting metadata version >= 2.4'
-            errors.config_error(msg, key='project.license-files')
+            msg = "'project.license-files' is supported only when emitting metadata version >= 2.4"
+            errors.config_error(msg, key="project.license-files")
 
-        errors.finalize('Metadata validation failed')
+        errors.finalize("Metadata validation failed")
 
     @property
     def auto_metadata_version(self) -> str:
+        """
+        This computes the metadata version based on the fields set in the object
+        if ``metadata_version`` is None.
+        """
         if self.metadata_version is not None:
             return self.metadata_version
 
         if isinstance(self.license, str) or self.license_files is not None:
-            return '2.4'
+            return "2.4"
         if self.dynamic_metadata:
-            return '2.2'
-        return '2.1'
+            return "2.2"
+        return "2.1"
 
     @property
     def canonical_name(self) -> str:
+        """
+        Return the canonical name of the project.
+        """
         return packaging.utils.canonicalize_name(self.name)
 
     @classmethod
@@ -319,81 +340,95 @@ class StandardMetadata:
         allow_extra_keys: bool | None = None,
         all_errors: bool = False,
     ) -> Self:
+        """
+        Read metadata from a pyproject.toml table. This is the main method for
+        creating an instance of this class. It also supports two additional
+        fields: ``allow_extra_keys`` to control what happens when extra keys are
+        present in the pyproject table, and ``all_errors``, to  raise all errors
+        in an ExceptionGroup instead of raising the first one.
+        """
         pyproject = PyProjectReader(collect_errors=all_errors)
 
         pyproject_table: PyProjectTable = data  # type: ignore[assignment]
-        if 'project' not in pyproject_table:
-            msg = 'Section "project" missing in pyproject.toml'
-            pyproject.config_error(msg, key='project')
-            pyproject.finalize('Failed to parse pyproject.toml')
-            msg = 'Unreachable code'  # pragma: no cover
+        if "project" not in pyproject_table:
+            msg = "Section 'project' missing in pyproject.toml"
+            pyproject.config_error(msg, key="project")
+            pyproject.finalize("Failed to parse pyproject.toml")
+            msg = "Unreachable code"  # pragma: no cover
             raise AssertionError(msg)  # pragma: no cover
 
-        project = pyproject_table['project']
+        project = pyproject_table["project"]
         project_dir = pathlib.Path(project_dir)
 
-        if allow_extra_keys is None:
-            try:
-                validate_project(data)
-            except ConfigurationError as err:
-                warnings.warn(str(err), ConfigurationWarning, stacklevel=2)
-        elif not allow_extra_keys:
-            with pyproject.collect():
-                validate_project(data)
+        if not allow_extra_keys:
+            extra_keys = extras_project(data)
+            if extra_keys:
+                extra_keys_str = ", ".join(sorted(f"{k!r}" for k in extra_keys))
+                msg = f"Extra keys present in 'project': {extra_keys_str}"
+                if allow_extra_keys is None:
+                    warnings.warn(msg, ConfigurationWarning, stacklevel=2)
+                else:
+                    pyproject.config_error(msg)
 
         dynamic = pyproject.get_dynamic(project)
 
         for field in dynamic:
-            if field in data['project']:
-                msg = f'Field "project.{field}" declared as dynamic in "project.dynamic" but is defined'
+            if field in data["project"]:
+                msg = f"Field 'project.{field}' declared as dynamic in 'project.dynamic' but is defined"
                 pyproject.config_error(msg, key=field)
 
-        raw_name = project.get('name')
-        name = 'UNKNOWN'
+        raw_name = project.get("name")
+        name = "UNKNOWN"
         if raw_name is None:
-            msg = 'Field "project.name" missing'
-            pyproject.config_error(msg, key='name')
+            msg = "Field 'project.name' missing"
+            pyproject.config_error(msg, key="name")
         else:
-            tmp_name = pyproject.ensure_str(raw_name, 'project.name')
+            tmp_name = pyproject.ensure_str(raw_name, "project.name")
             if tmp_name is not None:
                 name = tmp_name
 
-        version: packaging.version.Version | None = packaging.version.Version('0.0.0')
-        raw_version = project.get('version')
+        version: packaging.version.Version | None = packaging.version.Version("0.0.0")
+        raw_version = project.get("version")
         if raw_version is not None:
-            version_string = pyproject.ensure_str(raw_version, 'project.version')
+            version_string = pyproject.ensure_str(raw_version, "project.version")
             if version_string is not None:
-                with pyproject.collect():
+                try:
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
                     )
-        elif 'version' not in dynamic:
-            msg = 'Field "project.version" missing and "version" not specified in "project.dynamic"'
-            pyproject.config_error(msg, key='version')
+                except packaging.version.InvalidVersion:
+                    msg = f"Invalid 'project.version' value, expecting a valid PEP 440 version (got {version_string!r})"
+                    pyproject.config_error(msg, key="project.version")
+        elif "version" not in dynamic:
+            msg = "Field 'project.version' missing and 'version' not specified in 'project.dynamic'"
+            pyproject.config_error(msg, key="version")
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
-        project_description_raw = project.get('description')
+        project_description_raw = project.get("description")
         description = (
-            pyproject.ensure_str(project_description_raw, 'project.description')
+            pyproject.ensure_str(project_description_raw, "project.description")
             if project_description_raw is not None
             else None
         )
 
-        requires_python_raw = project.get('requires-python')
+        requires_python_raw = project.get("requires-python")
         requires_python = None
         if requires_python_raw is not None:
             requires_python_string = pyproject.ensure_str(
-                requires_python_raw, 'project.requires-python'
+                requires_python_raw, "project.requires-python"
             )
             if requires_python_string is not None:
-                with pyproject.collect():
+                try:
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
                     )
+                except packaging.specifiers.InvalidSpecifier:
+                    msg = f"Invalid 'project.requires-python' value, expecting a valid specifier set (got {requires_python_string!r})"
+                    pyproject.config_error(msg, key="project.requires-python")
 
         self = None
         with pyproject.collect():
@@ -409,27 +444,27 @@ class StandardMetadata:
                 optional_dependencies=pyproject.get_optional_dependencies(project),
                 entrypoints=pyproject.get_entrypoints(project),
                 authors=pyproject.ensure_people(
-                    project.get('authors', []), 'project.authors'
+                    project.get("authors", []), "project.authors"
                 ),
                 maintainers=pyproject.ensure_people(
-                    project.get('maintainers', []), 'project.maintainers'
+                    project.get("maintainers", []), "project.maintainers"
                 ),
-                urls=pyproject.ensure_dict(project.get('urls', {}), 'project.urls')
+                urls=pyproject.ensure_dict(project.get("urls", {}), "project.urls")
                 or {},
                 classifiers=pyproject.ensure_list(
-                    project.get('classifiers', []), 'project.classifiers'
+                    project.get("classifiers", []), "project.classifiers"
                 )
                 or [],
                 keywords=pyproject.ensure_list(
-                    project.get('keywords', []), 'project.keywords'
+                    project.get("keywords", []), "project.keywords"
                 )
                 or [],
                 scripts=pyproject.ensure_dict(
-                    project.get('scripts', {}), 'project.scripts'
+                    project.get("scripts", {}), "project.scripts"
                 )
                 or {},
                 gui_scripts=pyproject.ensure_dict(
-                    project.get('gui-scripts', {}), 'project.gui-scripts'
+                    project.get("gui-scripts", {}), "project.gui-scripts"
                 )
                 or {},
                 dynamic=dynamic,
@@ -439,17 +474,23 @@ class StandardMetadata:
             )
             self._locked_metadata = True
 
-        pyproject.finalize('Failed to parse pyproject.toml')
+        pyproject.finalize("Failed to parse pyproject.toml")
         assert self is not None
         return self
 
     def as_rfc822(self) -> RFC822Message:
+        """
+        Return an RFC822 message with the metadata.
+        """
         message = RFC822Message()
         smart_message = _SmartMessageSetter(message)
         self._write_metadata(smart_message)
         return message
 
     def as_json(self) -> dict[str, str | list[str]]:
+        """
+        Return a JSON message with the metadata.
+        """
         message: dict[str, str | list[str]] = {}
         smart_message = _JSonMessageSetter(message)
         self._write_metadata(smart_message)
@@ -458,98 +499,109 @@ class StandardMetadata:
     def _write_metadata(  # noqa: C901
         self, smart_message: _SmartMessageSetter | _JSonMessageSetter
     ) -> None:
+        """
+        Write the metadata to the message. Handles JSON or Message.
+        """
         self.validate(warn=False)
 
-        smart_message['Metadata-Version'] = self.auto_metadata_version
-        smart_message['Name'] = self.name
+        smart_message["Metadata-Version"] = self.auto_metadata_version
+        smart_message["Name"] = self.name
         if not self.version:
-            msg = 'Missing version field'
+            msg = "Missing version field"
             raise ConfigurationError(msg)
-        smart_message['Version'] = str(self.version)
+        smart_message["Version"] = str(self.version)
         # skip 'Platform'
         # skip 'Supported-Platform'
         if self.description:
-            smart_message['Summary'] = self.description
-        smart_message['Keywords'] = ','.join(self.keywords) or None
-        if 'homepage' in self.urls:
-            smart_message['Home-page'] = self.urls['homepage']
+            smart_message["Summary"] = self.description
+        smart_message["Keywords"] = ",".join(self.keywords) or None
+        if "homepage" in self.urls:
+            smart_message["Home-page"] = self.urls["homepage"]
         # skip 'Download-URL'
-        smart_message['Author'] = self._name_list(self.authors)
-        smart_message['Author-Email'] = self._email_list(self.authors)
-        smart_message['Maintainer'] = self._name_list(self.maintainers)
-        smart_message['Maintainer-Email'] = self._email_list(self.maintainers)
+        smart_message["Author"] = _name_list(self.authors)
+        smart_message["Author-Email"] = _email_list(self.authors)
+        smart_message["Maintainer"] = _name_list(self.maintainers)
+        smart_message["Maintainer-Email"] = _email_list(self.maintainers)
 
         if isinstance(self.license, License):
-            smart_message['License'] = self.license.text
+            smart_message["License"] = self.license.text
         elif isinstance(self.license, str):
-            smart_message['License-Expression'] = self.license
+            smart_message["License-Expression"] = self.license
 
         if self.license_files is not None:
             for license_file in sorted(set(self.license_files)):
-                smart_message['License-File'] = os.fspath(license_file.as_posix())
+                smart_message["License-File"] = os.fspath(license_file.as_posix())
 
         for classifier in self.classifiers:
-            smart_message['Classifier'] = classifier
+            smart_message["Classifier"] = classifier
         # skip 'Provides-Dist'
         # skip 'Obsoletes-Dist'
         # skip 'Requires-External'
         for name, url in self.urls.items():
-            smart_message['Project-URL'] = f'{name.capitalize()}, {url}'
+            smart_message["Project-URL"] = f"{name.capitalize()}, {url}"
         if self.requires_python:
-            smart_message['Requires-Python'] = str(self.requires_python)
+            smart_message["Requires-Python"] = str(self.requires_python)
         for dep in self.dependencies:
-            smart_message['Requires-Dist'] = str(dep)
+            smart_message["Requires-Dist"] = str(dep)
         for extra, requirements in self.optional_dependencies.items():
-            norm_extra = extra.replace('.', '-').replace('_', '-').lower()
-            smart_message['Provides-Extra'] = norm_extra
+            norm_extra = extra.replace(".", "-").replace("_", "-").lower()
+            smart_message["Provides-Extra"] = norm_extra
             for requirement in requirements:
-                smart_message['Requires-Dist'] = str(
-                    self._build_extra_req(norm_extra, requirement)
+                smart_message["Requires-Dist"] = str(
+                    _build_extra_req(norm_extra, requirement)
                 )
         if self.readme:
             if self.readme.content_type:
-                smart_message['Description-Content-Type'] = self.readme.content_type
+                smart_message["Description-Content-Type"] = self.readme.content_type
             smart_message.set_payload(self.readme.text)
         # Core Metadata 2.2
-        if self.auto_metadata_version != '2.1':
+        if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
-                if field.lower() in {'name', 'version', 'dynamic'}:
-                    msg = f'Field cannot be set as dynamic metadata: {field}'
+                if field.lower() in {"name", "version", "dynamic"}:
+                    msg = f"Field cannot be set as dynamic metadata: {field}"
                     raise ConfigurationError(msg)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f'Field is not known: {field}'
+                    msg = f"Field is not known: {field}"
                     raise ConfigurationError(msg)
-                smart_message['Dynamic'] = field
+                smart_message["Dynamic"] = field
 
-    def _name_list(self, people: list[tuple[str, str | None]]) -> str | None:
-        return ', '.join(name for name, email_ in people if not email_) or None
 
-    def _email_list(self, people: list[tuple[str, str | None]]) -> str | None:
-        return (
-            ', '.join(
-                email.utils.formataddr((name, _email))
-                for name, _email in people
-                if _email
-            )
-            or None
+def _name_list(people: list[tuple[str, str | None]]) -> str | None:
+    """
+    Build a comma-separated list of names.
+    """
+    return ", ".join(name for name, email_ in people if not email_) or None
+
+
+def _email_list(people: list[tuple[str, str | None]]) -> str | None:
+    """
+    Build a comma-separated list of emails.
+    """
+    return (
+        ", ".join(
+            email.utils.formataddr((name, _email)) for name, _email in people if _email
         )
+        or None
+    )
 
-    def _build_extra_req(
-        self,
-        extra: str,
-        requirement: Requirement,
-    ) -> Requirement:
-        # append or add our extra marker
-        requirement = copy.copy(requirement)
-        if requirement.marker:
-            if 'or' in requirement.marker._markers:
-                requirement.marker = packaging.markers.Marker(
-                    f'({requirement.marker}) and extra == "{extra}"'
-                )
-            else:
-                requirement.marker = packaging.markers.Marker(
-                    f'{requirement.marker} and extra == "{extra}"'
-                )
+
+def _build_extra_req(
+    extra: str,
+    requirement: Requirement,
+) -> Requirement:
+    """
+    Build a new requirement with an extra marker.
+    """
+    requirement = copy.copy(requirement)
+    if requirement.marker:
+        if "or" in requirement.marker._markers:
+            requirement.marker = packaging.markers.Marker(
+                f"({requirement.marker}) and extra == {extra!r}"
+            )
         else:
-            requirement.marker = packaging.markers.Marker(f'extra == "{extra}"')
-        return requirement
+            requirement.marker = packaging.markers.Marker(
+                f"{requirement.marker} and extra == {extra!r}"
+            )
+    else:
+        requirement.marker = packaging.markers.Marker(f"extra == {extra!r}")
+    return requirement
