@@ -448,6 +448,7 @@ def _build_wheel_impl_impl(
             include=settings.sdist.include,
             src_exclude=settings.sdist.exclude,
             target_exclude=settings.wheel.exclude,
+            build_dir=settings.build_dir,
         )
 
         if not editable:
