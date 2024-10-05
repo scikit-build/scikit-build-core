@@ -1,4 +1,3 @@
-summary:
-  Cython example project
+summary: Cython example project
 require+:
-  - python3-cython
+  - python3dist(cython)

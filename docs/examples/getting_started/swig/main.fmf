@@ -1,4 +1,3 @@
-summary:
-  Swig example project
+summary: Swig example project
 require+:
   - swig

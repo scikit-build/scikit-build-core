@@ -1,5 +1,7 @@
-summary:
-  Basic smoke tests
+/:
+  inherit: false
+
+summary: Basic smoke tests
 discover:
   how: fmf
   filter: "tag: smoke"
