@@ -11,7 +11,7 @@ pypi = "pyzmq"
 github = "zeromq/pyzmq"
 
 [[project]]
-pypi = "LightGBM"
+pypi = "lightgbm"
 github = "microsoft/LightGBM"
 path = "python-package/pyproject.toml"
 
@@ -45,7 +45,7 @@ github = "scikit-hep/awkward"
 path = "awkward-cpp/pyproject.toml"
 
 [[project]]
-pypi = "openexr"
+pypi = "OpenEXR"
 github = "AcademySoftwareFoundation/OpenEXR"
 
 [[project]]

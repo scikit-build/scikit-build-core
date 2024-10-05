@@ -41,11 +41,10 @@ The `.github/workflows` directory contains two continuous integration workflows
 for GitHub Actions. The first one (`pip`) runs automatically after each commit
 and ensures that packages can be built successfully and that tests pass.
 
-The `wheels` workflow uses
-[cibuildwheel](https://cibuildwheel.readthedocs.io/en/stable/) to automatically
-produce binary wheels for a large variety of platforms. If a `pypi_password`
-token is provided using GitHub Action's _secrets_ feature, this workflow can
-even automatically upload packages on PyPI.
+The `wheels` workflow uses [cibuildwheel](https://cibuildwheel.pypa.io) to
+automatically produce binary wheels for a large variety of platforms. If a
+`pypi_password` token is provided using GitHub Action's _secrets_ feature, this
+workflow can even automatically upload packages on PyPI.
 
 ## License
 

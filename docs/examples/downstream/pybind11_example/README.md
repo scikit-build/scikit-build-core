@@ -52,4 +52,4 @@ import scikit_build_example
 scikit_build_example.add(1, 2)
 ```
 
-[`cibuildwheel`]: https://cibuildwheel.readthedocs.io
+[`cibuildwheel`]: https://cibuildwheel.pypa.io

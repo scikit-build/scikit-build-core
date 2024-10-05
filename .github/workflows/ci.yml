@@ -42,8 +42,8 @@ jobs:
 
   checks:
     name:
-      🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }}
-      on ${{ matrix.runs-on }}
+      🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
+      matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 40
     strategy:
@@ -123,7 +123,9 @@ jobs:
         if:
           matrix.python-version == '3.7' || matrix.python-version == 'pypy-3.8'
           || matrix.python-version == 'pypy-3.7'
-        run: pip install -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
+        run:
+          pip install
+          -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"

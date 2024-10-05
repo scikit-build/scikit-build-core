@@ -133,22 +133,22 @@ top-level extension is present, then that could be something like
 files in it (`METADATA`, `WHEEL`, and `RECORD`), along with license files. There
 are a few other metadata files that could be here too, like `entry_points.txt`.
 
-There are also several directories that installers can extract to different locations,
-namely:
+There are also several directories that installers can extract to different
+locations, namely:
 
-* `<package-name>.data/scripts`: Goes to the `/bin` or `/Scripts` directory in
+- `<package-name>.data/scripts`: Goes to the `/bin` or `/Scripts` directory in
   the environment. Any file starting with `#!python` will get the correct path
   injected by the installer. Most build-backends (like setuptools and
   scikit-build-core) will convert normal Python shabang lines like
-  `#!/usr/bin/env python` into `#!python` for you. Though if you are writing Python
-  and placing them here, it's usually better to use entry points and let the installer
-  generate the entire file.
-* `<package-name>.data/headers`: Goes to the include directory for the current
+  `#!/usr/bin/env python` into `#!python` for you. Though if you are writing
+  Python and placing them here, it's usually better to use entry points and let
+  the installer generate the entire file.
+- `<package-name>.data/headers`: Goes to the include directory for the current
   version of Python in the environment.
-* `<package-name>.data/data`: Goes to the root of the environment.
+- `<package-name>.data/data`: Goes to the root of the environment.
 
 Note that if a user is not in a virtual environment, these folders install
-directly to the Python install's location, which could be `/` or `/usr`!  In
+directly to the Python install's location, which could be `/` or `/usr`! In
 general, it's best to put data inside the package's folder in site-packages and
 then use `importlib.resources` to access it.
 
@@ -236,7 +236,7 @@ the current workaround).
       scikit-build-core.
 
 [repairwheel]: https://github.com/jvolkman/repairwheel
-[cibuildwheel]: https://cibuildwheel.readthedocs.io
+[cibuildwheel]: https://cibuildwheel.pypa.io
 [compatibility tags]: https://packaging.python.org/en/latest/specifications/binary-distribution-format
 
 <!-- prettier-ignore-end -->
