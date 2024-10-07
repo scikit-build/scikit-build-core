@@ -308,6 +308,24 @@ messages.after-failure = ""
 # A message to print after a successful build.
 messages.after-success = ""
 
+# Add the install (or build isolation) site_packages folder to the CMake prefix
+# paths.
+search.use-site-packages = true
+
+# Entry points to ignore. Any entry-point in `cmake.module`, `cmake.prefix`,
+# `cmake.root` with a key value matching a value in this list will be ignored
+# when building the search paths.
+search.ignore-entry-point = []
+
+# List of additional CMake module search paths. Populates `CMAKE_MODULE_PATH`.
+search.modules = []
+
+# List of additional CMake prefix search paths. Populates `CMAKE_PREFIX_PATH`.
+search.prefixes = []
+
+# Dict of package names and prefix paths. Populates `<Pkg>_ROOT`.
+search.roots = {}
+
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 

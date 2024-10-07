@@ -400,7 +400,7 @@ def test_skbuild_settings_pyproject_toml_broken(
         == """\
       ERROR: Unrecognized options in pyproject.toml:
         tool.scikit-build.cmake.verison -> Did you mean: tool.scikit-build.cmake.version, tool.scikit-build.cmake.verbose, tool.scikit-build.cmake.define?
-        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.fail?
+        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.search?
       """.split()
     )
 
