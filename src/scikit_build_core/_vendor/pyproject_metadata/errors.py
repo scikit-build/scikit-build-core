@@ -2,7 +2,7 @@
 
 """
 This module defines exceptions and error handling utilities. It is the
-recommened path to access ``ConfiguraitonError``, ``ConfigurationWarning``, and
+recommend path to access ``ConfiguratonError``, ``ConfigurationWarning``, and
 ``ExceptionGroup``. For backward compatibility, ``ConfigurationError`` is
 re-exported in the top-level package.
 """
@@ -14,6 +14,7 @@ import contextlib
 import dataclasses
 import sys
 import typing
+import warnings
 
 __all__ = [
     "ConfigurationError",
@@ -27,7 +28,8 @@ def __dir__() -> list[str]:
 
 
 class ConfigurationError(Exception):
-    """Error in the backend metadata."""
+    """Error in the backend metadata. Has an optional key attribute, which will be non-None
+    if the error is related to a single key in the pyproject.toml file."""
 
     def __init__(self, msg: str, *, key: str | None = None):
         super().__init__(msg)
@@ -76,9 +78,26 @@ class ErrorCollector:
     collect_errors: bool
     errors: list[Exception] = dataclasses.field(default_factory=list)
 
-    def config_error(self, msg: str, key: str | None = None) -> None:
+    def config_error(
+        self,
+        msg: str,
+        *,
+        key: str | None = None,
+        got: typing.Any = None,
+        got_type: type[typing.Any] | None = None,
+        warn: bool = False,
+        **kwargs: typing.Any,
+    ) -> None:
         """Raise a configuration error, or add it to the error list."""
-        if self.collect_errors:
+        msg = msg.format(key=f'"{key}"', **kwargs)
+        if got is not None:
+            msg = f"{msg} (got {got!r})"
+        if got_type is not None:
+            msg = f"{msg} (got {got_type.__name__})"
+
+        if warn:
+            warnings.warn(msg, ConfigurationWarning, stacklevel=3)
+        elif self.collect_errors:
             self.errors.append(ConfigurationError(msg, key=key))
         else:
             raise ConfigurationError(msg, key=key)
