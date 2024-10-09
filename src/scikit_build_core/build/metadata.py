@@ -29,9 +29,9 @@ def __dir__() -> list[str]:
 
 # Use exceptiongroup backport
 if sys.version_info < (3, 11):
-    from exceptiongroups import ExceptionGroup  # type: ignore[import-not-found]
+    from exceptiongroup import ExceptionGroup
 
-    errors.ExceptionGroup = ExceptionGroup  # type: ignore[misc]
+    errors.ExceptionGroup = ExceptionGroup  # type: ignore[misc, assignment]
 
 
 # If pyproject-metadata eventually supports updates, this can be simplified
