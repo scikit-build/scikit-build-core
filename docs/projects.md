@@ -49,7 +49,7 @@ scikit-build-core, but they are not published on PyPI. A few of them are:
 
 - CuDF ([source](https://github.com/rapidsai/cudf/blob/HEAD/python/cudf/pyproject.toml))
 - CuGraph ([source](https://github.com/rapidsai/cugraph/blob/HEAD/python/cugraph/pyproject.toml))
-- CuML ([source](https://github.com/rapidsai/cuml/blob/HEAD/python/pyproject.toml))
+- CuML ([source](https://github.com/rapidsai/cuml/blob/HEAD/python/cuml/pyproject.toml))
 - CuSpatial ([source](https://github.com/rapidsai/cuspatial/blob/HEAD/python/cuspatial/pyproject.toml))
 - RMM ([source](https://github.com/rapidsai/rmm/blob/HEAD/python/rmm/pyproject.toml))
 - Raft ([source](https://github.com/rapidsai/raft/blob/HEAD/python/pylibraft/pyproject.toml))
