@@ -96,6 +96,13 @@ jobs:
           - python-version: "3.13"
             runs-on: windows-latest
             cmake-version: "3.26.x"
+          - python-version: "3.7"
+            runs-on: ubuntu-22.04
+            cmake-version: "3.15.x"
+        exclude:
+          - python-version: "3.7"
+            runs-on: ubuntu-latest
+            cmake-version: "3.15.x"
 
     steps:
       - uses: actions/checkout@v4
