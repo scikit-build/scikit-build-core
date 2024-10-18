@@ -32,6 +32,7 @@ getting_started
 configuration
 overrides
 cmakelists
+search_paths
 crosscompile
 migration_guide
 build
