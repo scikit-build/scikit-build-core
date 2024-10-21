@@ -1,5 +1,6 @@
 import gzip
 import hashlib
+import inspect
 import shutil
 import sys
 import tarfile
@@ -28,15 +29,6 @@ something = other
 [gui_scripts]
 guithing = a.b:c
 """
-METADATA = """\
-Metadata-Version: 2.1
-Name: CMake.Example
-Version: 0.0.1
-Requires-Python: >=3.7
-Provides-Extra: test
-Requires-Dist: pytest>=6.0; extra == "test"
-
-"""
 
 mark_hashes_different = pytest.mark.xfail(
     sys.platform.startswith(("win", "cygwin")),
@@ -52,6 +44,19 @@ def compute_uncompressed_hash(inp: Path) -> str:
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
 def test_pep517_sdist():
+    expected_metadata = (
+        inspect.cleandoc(
+            """
+            Metadata-Version: 2.1
+            Name: CMake.Example
+            Version: 0.0.1
+            Requires-Python: >=3.7
+            Provides-Extra: test
+            Requires-Dist: pytest>=6.0; extra == "test"
+            """
+        )
+        + "\n\n"
+    )
     dist = Path("dist")
     out = build_sdist("dist")
 
@@ -74,7 +79,7 @@ def test_pep517_sdist():
         pkg_info = f.extractfile("cmake_example-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
-        assert pkg_info_contents == METADATA
+        assert pkg_info_contents == expected_metadata
 
 
 @mark_hashes_different
@@ -360,3 +365,82 @@ def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
         assert metadata.get(k, None) == b
 
     assert len(metadata) == len(answer)
+
+
+@pytest.mark.usefixtures("package_pep639_pure")
+def test_pep639_license_files_metadata():
+    metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
+    answer = {
+        "Metadata-Version": ["2.4"],
+        "Name": ["pep639_pure"],
+        "Version": ["0.1.0"],
+        "License-Expression": ["MIT"],
+        "License-File": ["LICENSE1.txt", "nested/more/LICENSE2.txt"],
+    }
+
+    for k, b in answer.items():
+        assert metadata.get_all(k, None) == b
+
+    assert len(metadata) == sum(len(v) for v in answer.values())
+
+
+@pytest.mark.usefixtures("package_pep639_pure")
+def test_pep639_license_files_sdist():
+    expected_metadata = (
+        inspect.cleandoc(
+            """
+                Metadata-Version: 2.4
+                Name: pep639_pure
+                Version: 0.1.0
+                License-Expression: MIT
+                License-File: LICENSE1.txt
+                License-File: nested/more/LICENSE2.txt
+            """
+        )
+        + "\n\n"
+    )
+
+    dist = Path("dist")
+    out = build_sdist("dist")
+
+    (sdist,) = dist.iterdir()
+    assert sdist.name == "pep639_pure-0.1.0.tar.gz"
+    assert sdist == dist / out
+
+    with tarfile.open(sdist) as f:
+        file_names = set(f.getnames())
+        assert file_names == {
+            f"pep639_pure-0.1.0/{x}"
+            for x in (
+                "pyproject.toml",
+                "PKG-INFO",
+                "LICENSE1.txt",
+                "nested/more/LICENSE2.txt",
+            )
+        }
+        pkg_info = f.extractfile("pep639_pure-0.1.0/PKG-INFO")
+        assert pkg_info
+        pkg_info_contents = pkg_info.read().decode()
+        assert pkg_info_contents == expected_metadata
+
+
+@pytest.mark.usefixtures("package_pep639_pure")
+def test_pep639_license_files_wheel():
+    dist = Path("dist")
+    out = build_wheel("dist", {})
+    (wheel,) = dist.glob("pep639_pure-0.1.0-*.whl")
+    assert wheel == dist / out
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_paths = {Path(p) for p in zf.namelist()}
+        with zf.open("pep639_pure-0.1.0.dist-info/METADATA") as f:
+            metadata = f.read().decode("utf-8")
+
+    assert Path("pep639_pure-0.1.0.dist-info/licenses/LICENSE1.txt") in file_paths
+    assert (
+        Path("pep639_pure-0.1.0.dist-info/licenses/nested/more/LICENSE2.txt")
+        in file_paths
+    )
+
+    assert "LICENSE1.txt" in metadata
+    assert "nested/more/LICENSE2.txt" in metadata

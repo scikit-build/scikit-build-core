@@ -334,6 +334,15 @@ def package_simple_purelib_package(
     return package
 
 
+@pytest.fixture
+def package_pep639_pure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "pep639_pure",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
 def which_mock(name: str) -> str | None:
     if name in {"ninja", "ninja-build", "cmake3", "samu", "gmake", "make"}:
         return None

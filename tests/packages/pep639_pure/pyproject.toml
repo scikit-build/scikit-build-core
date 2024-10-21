@@ -1,0 +1,12 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pep639_pure"
+version = "0.1.0"
+license = "MIT"
+license-files = ["LICENSE1.txt", "nested/more/LICENSE2.txt"]
+
+[tool.scikit-build]
+wheel.cmake = false
