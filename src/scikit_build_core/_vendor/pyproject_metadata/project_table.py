@@ -11,6 +11,7 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 from __future__ import annotations
 
 import sys
+import typing
 from typing import Any, Dict, List, Union
 
 if sys.version_info < (3, 11):
@@ -28,6 +29,7 @@ __all__ = [
     "BuildSystemTable",
     "ContactTable",
     "Dynamic",
+    "IncludeGroupTable",
     "LicenseTable",
     "ProjectTable",
     "PyProjectTable",
@@ -107,12 +109,44 @@ BuildSystemTable = TypedDict(
     total=False,
 )
 
+# total=False here because this could be
+# extended in the future
+IncludeGroupTable = TypedDict(
+    "IncludeGroupTable",
+    {"include-group": str},
+    total=False,
+)
+
 PyProjectTable = TypedDict(
     "PyProjectTable",
     {
         "build-system": BuildSystemTable,
         "project": ProjectTable,
         "tool": Dict[str, Any],
+        "dependency-groups": Dict[str, List[Union[str, IncludeGroupTable]]],
     },
     total=False,
 )
+
+# Tests for type checking
+if typing.TYPE_CHECKING:
+    PyProjectTable(
+        {
+            "build-system": BuildSystemTable(
+                {"build-backend": "one", "requires": ["two"]}
+            ),
+            "project": ProjectTable(
+                {
+                    "name": "one",
+                    "version": "0.1.0",
+                }
+            ),
+            "tool": {"thing": object()},
+            "dependency-groups": {
+                "one": [
+                    "one",
+                    IncludeGroupTable({"include-group": "two"}),
+                ]
+            },
+        }
+    )

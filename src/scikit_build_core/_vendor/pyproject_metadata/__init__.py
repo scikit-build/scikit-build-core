@@ -68,7 +68,7 @@ import packaging.specifiers
 import packaging.utils
 import packaging.version
 
-__version__ = "0.9.0b7"
+__version__ = "0.9.0rc1"
 
 __all__ = [
     "ConfigurationError",
@@ -126,7 +126,6 @@ class _SmartMessageSetter:
     reduce boilerplate.
 
     If a value is None, do nothing.
-    If a value contains a newline, indent it (may produce a warning in the future).
     """
 
     message: email.message.Message
@@ -252,22 +251,9 @@ class StandardMetadata:
     """
     If True, all errors will be collected and raised in an ExceptionGroup.
     """
-    _locked_metadata: bool = False
-    """
-    Internal flag to prevent setting non-dynamic fields after initialization.
-    """
 
     def __post_init__(self) -> None:
         self.validate()
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if self._locked_metadata:
-            metadata_name = name.replace("_", "-")
-            locked_fields = constants.KNOWN_METADATA_FIELDS - set(self.dynamic)
-            if metadata_name in locked_fields:
-                msg = f"Field {name!r} is not dynamic"
-                raise AttributeError(msg)
-        super().__setattr__(name, value)
 
     @property
     def auto_metadata_version(self) -> str:
@@ -442,7 +428,6 @@ class StandardMetadata:
                 metadata_version=metadata_version,
                 all_errors=all_errors,
             )
-            self._locked_metadata = True
 
         pyproject.finalize("Failed to parse pyproject.toml")
         assert self is not None
@@ -481,6 +466,7 @@ class StandardMetadata:
         - License classifiers deprecated for metadata_version >= 2.4 (warning)
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
         - ``license_files`` is supported only for metadata_version >= 2.4
+        - ``project_url`` can't contain keys over 32 characters
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -544,6 +530,11 @@ class StandardMetadata:
             msg = "{key} is supported only when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license-files")
 
+        for name in self.urls:
+            if len(name) > 32:
+                msg = "{key} names cannot be more than 32 characters long"
+                errors.config_error(msg, key="project.urls", got=name)
+
         errors.finalize("Metadata validation failed")
 
     def _write_metadata(  # noqa: C901
@@ -565,8 +556,7 @@ class StandardMetadata:
         if self.description:
             smart_message["Summary"] = self.description
         smart_message["Keywords"] = ",".join(self.keywords) or None
-        if "homepage" in self.urls:
-            smart_message["Home-page"] = self.urls["homepage"]
+        # skip 'Home-page'
         # skip 'Download-URL'
         smart_message["Author"] = _name_list(self.authors)
         smart_message["Author-Email"] = _email_list(self.authors)
@@ -581,6 +571,12 @@ class StandardMetadata:
         if self.license_files is not None:
             for license_file in sorted(set(self.license_files)):
                 smart_message["License-File"] = os.fspath(license_file.as_posix())
+        elif (
+            self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS
+            and isinstance(self.license, License)
+            and self.license.file
+        ):
+            smart_message["License-File"] = os.fspath(self.license.file.as_posix())
 
         for classifier in self.classifiers:
             smart_message["Classifier"] = classifier
@@ -588,7 +584,7 @@ class StandardMetadata:
         # skip 'Obsoletes-Dist'
         # skip 'Requires-External'
         for name, url in self.urls.items():
-            smart_message["Project-URL"] = f"{name.capitalize()}, {url}"
+            smart_message["Project-URL"] = f"{name}, {url}"
         if self.requires_python:
             smart_message["Requires-Python"] = str(self.requires_python)
         for dep in self.dependencies:
