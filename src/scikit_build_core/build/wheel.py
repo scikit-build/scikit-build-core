@@ -235,6 +235,11 @@ def _build_wheel_impl_impl(
         msg = "project.version is not specified, must be statically present or tool.scikit-build metadata.version.provider configured when dynamic"
         raise AssertionError(msg)
 
+    # Verify PEP 639 replaces license-files
+    if metadata.license_files is not None and settings.wheel.license_files:
+        msg = "Both project.license-files and tool.scikit-build.wheel.license-files are set, use only one"
+        raise AssertionError(msg)
+
     # Get the closest (normally) importable name
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
 
@@ -313,20 +318,30 @@ def _build_wheel_impl_impl(
             install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
 
         # Include the metadata license.file entry if provided
-        license_file_globs = list(settings.wheel.license_files)
-        if (
-            metadata.license
-            and not isinstance(metadata.license, str)
-            and metadata.license.file
-        ):
-            license_file_globs.append(str(metadata.license.file))
+        if metadata.license_files:
+            license_paths = metadata.license_files
+        else:
+            license_file_globs = settings.wheel.license_files or [
+                "LICEN[CS]E*",
+                "COPYING*",
+                "NOTICE*",
+                "AUTHORS*",
+            ]
+            if (
+                metadata.license
+                and not isinstance(metadata.license, str)
+                and metadata.license.file
+            ):
+                license_file_globs.append(str(metadata.license.file))
 
-        for y in license_file_globs:
-            for x in Path().glob(y):
-                if x.is_file():
-                    path = wheel_dirs["metadata"] / "licenses" / x
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy(x, path)
+            license_paths = [
+                x for y in license_file_globs for x in Path().glob(y) if x.is_file()
+            ]
+
+        for x in license_paths:
+            path = wheel_dirs["metadata"] / "licenses" / x
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(x, path)
 
         if (
             settings.wheel.license_files

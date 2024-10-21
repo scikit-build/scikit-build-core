@@ -131,6 +131,9 @@ environments = ["python_version >= '3.11'"]
 pip.reinstall-package = ["scikit-build-core"]
 workspace.members = ["tmp/hello/hello"]
 
+[tool.uv.pip]
+reinstall-package = ["scikit-build-core"]
+
 
 [tool.pytest.ini_options]
 minversion = "7.0"
