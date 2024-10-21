@@ -207,6 +207,7 @@ messages_control.disable = [
     "broad-except",
     "unused-argument",  # Handled by Ruff
     "redefined-builtin",  # ExceptionGroup is a builtin
+    "using-exception-groups-in-unsupported-version",  # We are using a backport
 ]
 
 
