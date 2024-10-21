@@ -46,12 +46,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
-    assert settings.wheel.license_files == [
-        "LICEN[CS]E*",
-        "COPYING*",
-        "NOTICE*",
-        "AUTHORS*",
-    ]
+    assert settings.wheel.license_files is None
     assert settings.wheel.exclude == []
     assert settings.wheel.build_tag == ""
     assert settings.backport.find_python == Version("3.26.1")
