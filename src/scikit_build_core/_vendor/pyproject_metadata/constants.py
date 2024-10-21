@@ -48,7 +48,7 @@ PROJECT_TO_METADATA = {
     "version": frozenset(["Version"]),
 }
 
-KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool"}
+KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
 KNOWN_BUILD_SYSTEM_FIELDS = {"backend-path", "build-backend", "requires"}
 KNOWN_PROJECT_FIELDS = set(PROJECT_TO_METADATA)
 
@@ -58,9 +58,9 @@ KNOWN_METADATA_FIELDS = {
     "classifier",
     "description",
     "description-content-type",
-    "download-url",  # Not specified via pyproject standards
+    "download-url",  # Not specified via pyproject standards, deprecated by PEP 753
     "dynamic",  # Can't be in dynamic
-    "home-page",  # Not specified via pyproject standards
+    "home-page",  # Not specified via pyproject standards, deprecated by PEP 753
     "keywords",
     "license",
     "license-expression",
