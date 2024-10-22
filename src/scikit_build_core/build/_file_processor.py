@@ -32,6 +32,7 @@ def each_unignored_file(
     starting_path: Path,
     include: Sequence[str] = (),
     exclude: Sequence[str] = (),
+    build_dir: str = "",
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
@@ -50,9 +51,19 @@ def each_unignored_file(
         if p != Path(".gitignore")
     }
 
+    exclude_build_dir = build_dir.format(
+        cache_tag="*",
+        wheel_tag="*",
+        build_type="*",
+        state="*",
+    )
+    exclude_lines = (
+        f"{EXCLUDE_LINES}\n{exclude_build_dir}" if exclude_build_dir else EXCLUDE_LINES
+    )
+
     user_exclude_spec = pathspec.GitIgnoreSpec.from_lines(list(exclude))
     global_exclude_spec = pathspec.GitIgnoreSpec.from_lines(global_exclude_lines)
-    builtin_exclude_spec = pathspec.GitIgnoreSpec.from_lines(EXCLUDE_LINES)
+    builtin_exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
 
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
 
