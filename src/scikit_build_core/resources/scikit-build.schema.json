@@ -105,6 +105,47 @@
         }
       }
     },
+    "search": {
+      "additionalProperties": false,
+      "properties": {
+        "modules": {
+          "description": "List of additional CMake module search paths. Populates `CMAKE_MODULE_PATH`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prefixes": {
+          "description": "List of additional CMake prefix search paths. Populates `CMAKE_PREFIX_PATH`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "roots": {
+          "description": "Dict of package names and prefix paths. Populates `<Pkg>_ROOT`.",
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          }
+        },
+        "ignore-entry-point": {
+          "description": "Entry points to ignore. Any entry-point in `cmake.module`, `cmake.prefix`, `cmake.root` with a key value matching a value in this list will be ignored when building the search paths.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "use-site-packages": {
+          "default": true,
+          "description": "Add the install (or build isolation) site_packages folder to the CMake prefix paths.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "ninja": {
       "type": "object",
       "additionalProperties": false,
@@ -536,6 +577,24 @@
                   }
                 }
               },
+              "search": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ignore-entry-point": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "modules": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "prefixes": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "roots": {
+                    "$ref": "#/$defs/inherit"
+                  }
+                }
+              },
               "wheel": {
                 "type": "object",
                 "additionalProperties": false,
@@ -610,6 +669,9 @@
           },
           "metadata": {
             "$ref": "#/properties/metadata"
+          },
+          "search": {
+            "$ref": "#/properties/search"
           },
           "strict-config": {
             "$ref": "#/properties/strict-config"
