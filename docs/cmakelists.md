@@ -34,7 +34,7 @@ You always want to find at least `Interpreter` and the "Module" component of the
 as that include "Embed" component, which is not always present and is not
 related to making Python extension modules.
 
-If you are making a Limited ABI / Stable API package, you'll need the
+If you are making a Limited API / Stable ABI package, you'll need the
 `Development.SABIModule` component instead (CMake 3.26+). You can use the
 `SKBUILD_LIMITED_API` variable to check to see if it was requested.
 
@@ -115,18 +115,28 @@ configuration, with the variables:
 
 ## Limited API / Stable ABI
 
-You can activate the limited ABI by setting When you do that,
-`${SKBUILD_SABI_COMPONENT}` will be set to `Development.SABIModule` if you can
-target this (new enough CPython), and will remain an empty string otherwise
-(PyPy). This allows the following idiom:
+You can activate the Stable ABI by setting `tool.scikit-build.wheel.py-api`
+equal to a valid CPython
+[Python Tag](https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#python-tag)
+in your `pyproject.toml`:
+
+```toml
+[tool.scikit-build]
+wheel.py-api = "cp37"
+```
+
+When you do that, `${SKBUILD_SABI_COMPONENT}` will be set to
+`Development.SABIModule` if you can target this (new enough CPython), and will
+remain an empty string otherwise (PyPy). This allows the following idiom:
 
 ```cmake
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 ```
 
-This will add this only if scikit-build-core is driving the compilation and is
-targeting ABI3. If you want to support limited ABI from outside
-scikit-build-core, look into the `OPTIONAL_COMPONENTS` flag for `find_package`.
+This will require the `Development.SABIModule` component only if
+scikit-build-core is driving the compilation and is targeting ABI3. If you want
+to support Stable ABI from outside scikit-build-core, look into the
+`OPTIONAL_COMPONENTS` flag for `find_package`.
 
 When defining your module, if you only support the Stable ABI after some point,
 you should use (for example for 3.11):
