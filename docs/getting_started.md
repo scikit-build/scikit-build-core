@@ -1,11 +1,23 @@
 # Getting started
 
-If you've never made a Python package before,
-[packaging.python.org's tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
-is a great place to start. It walks you through creating a simple package in
-pure Python using modern tooling and configuration. Another great resource is
-the
-[Scientific Python Developer Guide](https://learn.scientific-python.org/development).
+If you've never made a Python package before, [packaging.python.org's
+tutorial][] is a great place to start. It walks you through creating a simple package
+in pure Python using modern tooling and configuration. Another great resource is
+the [Scientific Python Developer Guide][]. And a tutorial can be found at
+[INTERSECT Training: Packaging][].
+
+## Quick start
+
+There are several mechanisms to quickly get started with a package:
+
+- [uv][] has built-in support for scikit-build-core. Just make a directory for
+  your package and run: `uv init --lib --build-backend=scikit`.
+- [scientific-python/cookie][] has a cookiecutter/copier template for making a
+  package with all the suggestions in the [Scientific Python Developer Guide][].
+- For pybind11, there's a example template at [pybind11/scikit_build_example][].
+  For nanobind, [nanobind example][] includes the Stable ABI on Python 3.12+!
+- There are several examples including scikit-build-core examples (including
+  free-threading) at [scikit-build-sample-projects][].
 
 ## Writing an extension
 
@@ -410,15 +422,13 @@ $ pip install .
 
 That's it for a basic package!
 
-## Other examples
-
-You can find other examples here:
-
-- [pybind11's scikit_build_core example](https://github.com/pybind/scikit_build_example):
-  An example project using pybind11.
-- [nanobind example](https://github.com/wjakob/nanobind_example): An example
-  project using nanobind and the Stable ABI on Python 3.12+!
-- [scikit-build-example-projects](https://github.com/scikit-build/scikit-build-sample-projects):
-  Some example projects for both scikit-build and scikit-build-core.
-- [Scientific-Python Cookie](https://github.com/scientific-python/cookie): A
-  cookiecutter with 12 backends, including scikit-build-core.
+<!-- prettier-ignore-start -->
+[scientific python developer guide]: https://github.com/scikit-build/scikit-build-sample-projects
+[scikit-build-sample-projects]:      https://github.com/scikit-build/scikit-build-sample-projects
+[uv]:                                https://docs.astral.sh/uv/
+[scientific-python/cookie]:          https://github.com/scientific-python/cookie
+[pybind11/scikit_build_example]:     https://github.com/pybind/scikit_build_example
+[INTERSECT Training: Packaging]:     https://intersect-training.org/packaging
+[packaging.python.org's tutorial]:   https://packaging.python.org/en/latest/tutorials/packaging-projects
+[nanobind example]:                  https://github.com/wjakob/nanobind_example
+<!-- prettier-ignore-end -->
