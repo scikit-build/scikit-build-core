@@ -115,7 +115,17 @@ configuration, with the variables:
 
 ## Limited API / Stable ABI
 
-You can activate the Stable ABI by setting When you do that,
+You can activate the Stable ABI by setting
+`tool.scikit-build.wheel.py-api` equal to a valid CPython
+[Python Tag](https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#python-tag)
+in your `pyproject.toml`:
+
+```toml
+[tool.scikit-build]
+wheel.py-api = "cp37"
+```
+
+When you do that,
 `${SKBUILD_SABI_COMPONENT}` will be set to `Development.SABIModule` if you can
 target this (new enough CPython), and will remain an empty string otherwise
 (PyPy). This allows the following idiom:
@@ -124,7 +134,8 @@ target this (new enough CPython), and will remain an empty string otherwise
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 ```
 
-This will add this only if scikit-build-core is driving the compilation and is
+This will require the `Development.SABIModule` component
+only if scikit-build-core is driving the compilation and is
 targeting ABI3. If you want to support Stable ABI from outside
 scikit-build-core, look into the `OPTIONAL_COMPONENTS` flag for `find_package`.
 
