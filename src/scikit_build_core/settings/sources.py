@@ -122,7 +122,7 @@ def _process_annotated(target: type[Any]) -> tuple[Any, tuple[Any, ...]]:
     return target, ()
 
 
-def _get_target_raw_type(target: type[Any]) -> Any:
+def _get_target_raw_type(target: type[Any] | Any) -> Any:
     """
     Takes a type like ``Optional[str]`` and returns str, or ``Optional[Dict[str,
     int]]`` and returns dict. Returns Union for a Union with more than one
@@ -151,12 +151,14 @@ def _get_inner_type(__target: type[Any]) -> type[Any]:
     raise AssertionError(msg)
 
 
-def _nested_dataclass_to_names(__target: type[Any], *inner: str) -> Iterator[list[str]]:
+def _nested_dataclass_to_names(
+    __target: type[Any] | Any, *inner: str
+) -> Iterator[list[str]]:
     """
     Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
     """
 
-    if dataclasses.is_dataclass(__target):
+    if isinstance(__target, type) and dataclasses.is_dataclass(__target):
         for field in dataclasses.fields(__target):
             yield from _nested_dataclass_to_names(field.type, *inner, field.name)
     else:
@@ -194,7 +196,7 @@ class Source(Protocol):
         ...
 
     @classmethod
-    def convert(cls, item: Any, target: type[Any]) -> object:
+    def convert(cls, item: Any, target: type[Any] | Any) -> object:
         """
         Convert an ``item`` from the base representation of the source's source
         into a ``target`` type. Raises TypeError if the conversion fails.
@@ -246,7 +248,7 @@ class EnvSource:
         raise KeyError(msg)
 
     @classmethod
-    def convert(cls, item: str, target: type[Any]) -> object:
+    def convert(cls, item: str, target: type[Any] | Any) -> object:
         """
         Convert an item from the environment (always a string) into a target type.
         """
@@ -322,7 +324,7 @@ def _unrecognized_dict(
             continue
         (inner_option_field,) = matches
         inner_option = inner_option_field.type
-        if dataclasses.is_dataclass(inner_option):
+        if isinstance(inner_option, type) and dataclasses.is_dataclass(inner_option):
             yield from _unrecognized_dict(
                 settings[keystr], inner_option, (*above, keystr)
             )
@@ -386,7 +388,7 @@ class ConfSource:
 
     @classmethod
     def convert(
-        cls, item: str | list[str] | dict[str, str] | bool, target: type[Any]
+        cls, item: str | list[str] | dict[str, str] | bool, target: type[Any] | Any
     ) -> object:
         target, _ = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
@@ -484,13 +486,13 @@ class TOMLSource:
             raise KeyError(msg) from None
 
     @classmethod
-    def convert(cls, item: Any, target: type[Any]) -> object:
+    def convert(cls, item: Any, target: type[Any] | Any) -> object:
         """
         Convert an ``item`` from TOML into a ``target`` type.
         """
         target, annotations = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
-        if dataclasses.is_dataclass(raw_target):
+        if isinstance(raw_target, type) and dataclasses.is_dataclass(raw_target):
             fields = dataclasses.fields(raw_target)
             values = ((k.replace("-", "_"), v) for k, v in item.items())
             return raw_target(
@@ -579,7 +581,7 @@ class SourceChain:
         errors = []
         prep: dict[str, Any] = {}
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
-            if dataclasses.is_dataclass(field.type):
+            if isinstance(field.type, type) and dataclasses.is_dataclass(field.type):
                 try:
                     prep[field.name] = self.convert_target(
                         field.type, *prefixes, field.name

@@ -29,9 +29,10 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
     errs = []
     required = []
     for field in dataclasses.fields(dclass):
-        if dataclasses.is_dataclass(field.type):
+        field_type = field.type
+        if isinstance(field_type, type) and dataclasses.is_dataclass(field.type):
             props[field.name] = to_json_schema(
-                field.type, normalize_keys=normalize_keys
+                field_type, normalize_keys=normalize_keys
             )
             continue
 
@@ -110,7 +111,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
 
 
 def convert_type(t: Any, *, normalize_keys: bool) -> dict[str, Any]:
-    if dataclasses.is_dataclass(t):
+    if isinstance(t, type) and dataclasses.is_dataclass(t):
         return to_json_schema(t, normalize_keys=normalize_keys)
     if t is str or t is Path or t is Version or t is SpecifierSet:
         return {"type": "string"}

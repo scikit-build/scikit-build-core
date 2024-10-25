@@ -42,9 +42,8 @@ dependencies = [
     "tomli >=1.2.2; python_version<'3.11'",
     "typing-extensions >=3.10.0; python_version<'3.9'",
 ]
-# Note: for building wheels and sdists, there are also additional dependencies
-# in the pyproject extra. And cmake and possibly ninja if those are not already
-# present (user controllable)
+# Note: cmake and possibly ninja are also required if those are not already
+# present (user controllable) - but a system version is fine.
 
 [project.optional-dependencies]
 pyproject = [
@@ -82,7 +81,7 @@ test-schema = [
     "validate-pyproject",
 ]
 cov = [
-    "pytest-cov[toml]",
+    "pytest-cov",
 ]
 wheels = [
     "cmake",
@@ -126,8 +125,11 @@ version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
-[tool.uv.pip]
-reinstall-package = ["scikit-build-core"]
+[tool.uv]
+dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
+environments = ["python_version >= '3.11'"]
+pip.reinstall-package = ["scikit-build-core"]
+workspace.members = ["tmp/hello/hello"]
 
 
 [tool.pytest.ini_options]
@@ -222,7 +224,7 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 
 [tool.ruff]
-exclude = ["src/scikit_build_core/_vendor/*"]  # Required due to "build" module
+exclude = ["src/scikit_build_core/_vendor/*"]
 
 [tool.ruff.lint]
 extend-select = [

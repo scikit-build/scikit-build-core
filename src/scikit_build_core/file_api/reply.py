@@ -2,6 +2,7 @@ import builtins
 import dataclasses
 import json
 import sys
+import typing
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID251
 
@@ -56,7 +57,7 @@ class Converter:
         ):
             return self._load_from_json(Path(data["jsonFile"]), target)
 
-        input_dict = {}
+        input_dict: Dict[str, Type[Any]] = {}
         exceptions: List[Exception] = []
 
         # We don't have DataclassInstance exposed in typing yet
@@ -65,12 +66,13 @@ class Converter:
                 "cmakefiles", "cmakeFiles"
             )
             if json_field in data:
+                field_type = field.type
                 try:
                     input_dict[field.name] = self._convert_any(
-                        data[json_field], field.type
+                        data[json_field], field_type
                     )
                 except TypeError as err:
-                    msg = f"Failed to convert field {field.name!r} of type {field.type}"
+                    msg = f"Failed to convert field {field.name!r} of type {field_type}"
                     if sys.version_info < (3, 11):
                         err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
                     else:
@@ -85,18 +87,23 @@ class Converter:
 
         return target(**input_dict)
 
-    def _convert_any(self, item: Any, target: Type[T]) -> T:
-        if dataclasses.is_dataclass(target):
+    @typing.overload
+    def _convert_any(self, item: Any, target: Type[T]) -> T: ...
+    @typing.overload
+    def _convert_any(self, item: Any, target: Any) -> Any: ...
+
+    def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
+        if isinstance(target, type) and dataclasses.is_dataclass(target):
             # We don't have DataclassInstance exposed in typing yet
-            return self.make_class(item, target)  # type: ignore[return-value]
+            return self.make_class(item, target)
         origin = get_origin(target)
         if origin is not None:
             if origin is list:
-                return [self._convert_any(i, get_args(target)[0]) for i in item]  # type: ignore[return-value]
+                return [self._convert_any(i, get_args(target)[0]) for i in item]
             if origin is Union:
-                return self._convert_any(item, get_args(target)[0])  # type: ignore[no-any-return]
+                return self._convert_any(item, get_args(target)[0])
 
-        return target(item)  # type: ignore[call-arg]
+        return target(item)
 
 
 def load_reply_dir(path: Path) -> Index:
