@@ -69,13 +69,14 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
     docs = pull_docs(dc)
 
     for field in dataclasses.fields(dc):
-        if dataclasses.is_dataclass(field.type):
-            yield from mk_docs(field.type, prefix=f"{prefix}{field.name}.")
+        field_type = field.type
+        if isinstance(field_type, type) and dataclasses.is_dataclass(field_type):
+            yield from mk_docs(field_type, prefix=f"{prefix}{field.name}.")
             continue
 
         if get_origin(field.type) is list:
             field_type = get_args(field.type)[0]
-            if dataclasses.is_dataclass(field_type):
+            if isinstance(field_type, type) and dataclasses.is_dataclass(field_type):
                 yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
                 continue
 

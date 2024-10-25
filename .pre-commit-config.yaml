@@ -7,7 +7,7 @@ exclude: ^src/scikit_build_core/_vendor
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.7.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -39,7 +39,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.18.0
+    rev: 1.19.1
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==24.*]
@@ -59,7 +59,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.13.0
     hooks:
       - id: mypy
         exclude: |
@@ -81,8 +81,9 @@ repos:
           - markdown-it-py<3 # Python 3.7 compat needed for mypy check
           - ninja
           - nox
+          - orjson
           - packaging
-          - pytest<8
+          - pytest
           - pytest-subprocess
           - rich
           - setuptools-scm
@@ -90,7 +91,7 @@ repos:
           - types-setuptools>=70.1
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.0.0"
+    rev: "v1.2.0"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -129,12 +130,12 @@ repos:
         additional_dependencies: [cogapp]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.09.23
+    rev: 2024.10.21
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.3
+    rev: 0.29.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
