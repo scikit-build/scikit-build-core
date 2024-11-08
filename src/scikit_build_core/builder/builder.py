@@ -97,6 +97,32 @@ def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
     return [Path(os.fspath(path))]
 
 
+def _merge_search_paths(
+    entry_point_search_path: dict[str, list[Path]],
+    settings_val: list[str] | dict[str, str],
+    output: list[Path] | dict[str, list[Path]],
+) -> None:
+    if isinstance(settings_val, dict):
+        # if the settings and output search paths are dicts, just override them
+        # and update the output
+        assert isinstance(output, dict)
+        # No need to clone this because the search paths are not used anywhere else.
+        # Just renaming for readability
+        search_paths_dict = entry_point_search_path
+        for key, val in settings_val.items():
+            search_paths_dict[key] = [Path(val)]
+        output.update(search_paths_dict)
+        return
+    # Otherwise the settings and outputs are lists.
+    # We flatten out the dict into a list and append the settings values.
+    assert isinstance(output, list)
+    search_paths_list = [
+        path for ep_values in entry_point_search_path.values() for path in ep_values
+    ]
+    search_paths_list += map(Path, settings_val)
+    output.extend(search_paths_list)
+
+
 @dataclasses.dataclass
 class Builder:
     settings: ScikitBuildSettings
@@ -120,6 +146,23 @@ class Builder:
     def get_generator(self, *args: str) -> str | None:
         return self.config.get_generator(*self.get_cmake_args(), *args)
 
+    def _get_entry_point_search_path(self, entry_point: str) -> dict[str, list[Path]]:
+        """Get the search path dict from the entry points"""
+        search_paths = {}
+        eps = metadata.entry_points(group=entry_point)
+        if eps:
+            logger.debug(
+                "Loading search paths {} from entry-points: {}", entry_point, len(eps)
+            )
+            for ep in eps:
+                if ep.name in self.settings.search.ignore_entry_point:
+                    logger.debug("Ignoring entry-point: {}", ep.name)
+                ep_value = _sanitize_path(resources.files(ep.load()))
+                logger.debug("{}: {} -> {}", ep.name, ep.value, ep_value)
+                if ep_value:
+                    search_paths[ep.name] = ep_value
+        return search_paths
+
     def configure(
         self,
         *,
@@ -136,25 +179,39 @@ class Builder:
         }
 
         # Add any extra CMake modules
-        eps = metadata.entry_points(group="cmake.module")
-        self.config.module_dirs.extend(
-            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        _merge_search_paths(
+            self._get_entry_point_search_path("cmake.module"),
+            self.settings.search.modules,
+            self.config.module_dirs,
         )
+        logger.debug("cmake.modules: {}", self.config.module_dirs)
 
         # Add any extra CMake prefixes
-        eps = metadata.entry_points(group="cmake.prefix")
-        self.config.prefix_dirs.extend(
-            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+        _merge_search_paths(
+            self._get_entry_point_search_path("cmake.prefix"),
+            self.settings.search.prefixes,
+            self.config.prefix_dirs,
         )
+        logger.debug("cmake.prefix: {}", self.config.prefix_dirs)
+
+        # Add all CMake roots
+        # TODO: Check for unique uppercase names
+        _merge_search_paths(
+            self._get_entry_point_search_path("cmake.root"),
+            self.settings.search.roots,
+            self.config.prefix_roots,
+        )
+        logger.debug("cmake.root: {}", self.config.prefix_roots)
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
-        self.config.prefix_dirs.append(site_packages)
-        logger.debug("SITE_PACKAGES: {}", site_packages)
-        if site_packages != DIR.parent.parent:
-            self.config.prefix_dirs.append(DIR.parent.parent)
-            logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
-            logger.debug("PATH: {}", sys.path)
+        if self.settings.search.use_site_packages:
+            self.config.prefix_dirs.append(site_packages)
+            logger.debug("SITE_PACKAGES: {}", site_packages)
+            if site_packages != DIR.parent.parent:
+                self.config.prefix_dirs.append(DIR.parent.parent)
+                logger.debug("Extra SITE_PACKAGES: {}", DIR.parent.parent)
+                logger.debug("PATH: {}", sys.path)
 
         # Add the FindPython backport if needed
         if self.config.cmake.version < self.settings.backport.find_python:

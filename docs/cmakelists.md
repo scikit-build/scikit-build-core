@@ -76,15 +76,13 @@ succeed.
 
 ## Finding other packages
 
-Scikit-build-core includes the site-packages directory in CMake's search path,
-so packages can provide a find package config with a name matching the package
-name - such as the `pybind11` package.
+Scikit-build-core includes various pythonic paths to the CMake search paths by
+default so that usually you only need to include the dependent project inside
+the `build-system.requires` section. Note that `cmake` and `ninja` should not
+be included in that section.
 
-Third party packages can declare entry-points `cmake.module` and `cmake.prefix`,
-and the specified module will be added to `CMAKE_PREFIX_PATH` and
-`CMAKE_MODULE_PATH`, respectively. Currently, the key is not used, but
-eventually there might be a way to request or exclude certain entry-points by
-key.
+See [search paths section](search_paths.md) for more details on how the search
+paths are constructed and how to override them.
 
 ## Install directories
 
