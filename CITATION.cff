@@ -1,0 +1,59 @@
+cff-version: 1.2.0
+message: "Please cite this software using the metadata from 'preferred-citation'."
+title: "Scikit-build-core"
+version: "0.10.7"
+date-released: "2024-10-20"
+abstract: "Build compiled Python packages using CMake"
+keywords:
+  - python
+  - cmake
+authors:
+  - family-names: Schreiner
+    given-names: Henry
+    name-suffix: III
+    orcid: https://orcid.org/0000-0002-7833-783X
+    affiliation: Princeton University
+    website: https://iscinumpy.dev
+    alias: henryiii
+  - family-names: Fillion-Robin
+    given-names: Jean-Christophe
+    orcid: https://orcid.org/0000-0002-9688-8950
+    affiliation: Kitware
+    alias: jcfr
+  - family-names: McCormick
+    given-names: Matt
+    orcid: https://orcid.org/0000-0001-9475-3756
+    affiliation: Kitware
+    alias: thewtex
+  - family-names: Le
+    given-names: Christian
+    orcid: https://orcid.org/0000-0001-5122-8521
+    alias: LecrisUT
+url: https://scikit-build-core.readthedocs.io
+repository-code: https://github.com/scikit-build/scikit-build-core
+license: Apache-2.0
+preferred-citation:
+  type: conference-paper
+  title: Scikit-build-core
+  conference:
+    name: SciPy 2024
+  journal: Proceedings of the 23rd Python in Science Conference
+  issn: 2575-9752
+  date-published: 2024-07-10
+  doi: 10.25080/FMKR8387
+  license: CC-BY-4.0
+  authors:
+    - family-names: Schreiner
+      given-names: Henry
+      name-suffix: III
+      orcid: https://orcid.org/0000-0002-7833-783X
+      affiliation: Princeton University
+      website: https://iscinumpy.dev
+    - family-names: Fillion-Robin
+      given-names: Jean-Christophe
+      orcid: https://orcid.org/0000-0002-9688-8950
+      affiliation: Kitware
+    - family-names: McCormick
+      given-names: Matt
+      orcid: https://orcid.org/0000-0001-9475-3756
+      affiliation: Kitware
