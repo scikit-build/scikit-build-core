@@ -91,4 +91,17 @@ def get_standard_metadata(
         msg = "Multiple lines in project.description are not supported; this is supposed to be a one line summary"
         raise ValueError(msg)
 
+    # Validate license if possible.
+    if isinstance(metadata.license, str):
+        try:
+            import packaging.licenses
+
+            metadata.license = packaging.licenses.canonicalize_license_expression(
+                metadata.license
+            )
+        except ImportError:
+            logger.warning(
+                "Packaging 24.2+ required for license normalization. Please update (Python 3.8+ required)"
+            )
+
     return metadata

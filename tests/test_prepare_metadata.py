@@ -77,3 +77,14 @@ def test_multiline_description():
         },
         settings=ScikitBuildSettings(minimum_version=Version("0.8")),
     )
+
+
+def test_license_normalization():
+    pytest.importorskip("packaging.licenses")
+    metadata = get_standard_metadata(
+        pyproject_dict={
+            "project": {"name": "hello", "version": "1.1.1", "license": "ApacHE-2.0"}
+        },
+        settings=ScikitBuildSettings(),
+    )
+    assert metadata.license == "Apache-2.0"
