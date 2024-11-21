@@ -81,8 +81,8 @@ so packages can provide a find package config with a name matching the package
 name - such as the `pybind11` package.
 
 Third party packages can declare entry-points `cmake.module` and `cmake.prefix`,
-and the specified module will be added to `CMAKE_PREFIX_PATH` and
-`CMAKE_MODULE_PATH`, respectively. Currently, the key is not used, but
+and the specified module will be added to `CMAKE_MODULE_PATH` and
+`CMAKE_PREFIX_PATH`, respectively. Currently, the key is not used, but
 eventually there might be a way to request or exclude certain entry-points by
 key.
 
