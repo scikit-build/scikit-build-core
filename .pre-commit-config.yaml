@@ -82,7 +82,7 @@ repos:
           - ninja
           - nox
           - orjson
-          - packaging
+          - packaging>=24.2
           - pytest
           - pytest-subprocess
           - rich
