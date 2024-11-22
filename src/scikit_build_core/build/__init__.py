@@ -110,8 +110,8 @@ if _has_safe_metadata():
         ).wheel_filename  # actually returns the dist-info directory
 
     __all__ += [
-        "prepare_metadata_for_build_wheel",
         "prepare_metadata_for_build_editable",
+        "prepare_metadata_for_build_wheel",
     ]
 
 

@@ -23,14 +23,14 @@ else:
 from . import __version__
 
 __all__ = [
+    "LEVEL_VALUE",
     "ScikitBuildLogger",
+    "Style",
     "logger",
     "raw_logger",
+    "rich_error",
     "rich_print",
     "rich_warning",
-    "rich_error",
-    "LEVEL_VALUE",
-    "Style",
 ]
 
 

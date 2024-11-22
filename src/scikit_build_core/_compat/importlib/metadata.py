@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     else:
         from importlib.metadata import EntryPoints
 
-__all__ = ["entry_points", "PathDistribution", "version"]
+__all__ = ["PathDistribution", "entry_points", "version"]
 
 
 def entry_points(*, group: str) -> EntryPoints:

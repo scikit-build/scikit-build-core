@@ -45,7 +45,7 @@ class TokenType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Token:
-    __slots__ = ("type", "start", "stop", "value")
+    __slots__ = ("start", "stop", "type", "value")
 
     type: TokenType
     start: int
