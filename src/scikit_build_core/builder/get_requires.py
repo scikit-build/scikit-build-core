@@ -103,10 +103,8 @@ class GetRequires:
             return
 
         # On Windows MSVC, Ninja is not default
-        if (
-            self.settings.fail
-            or sysconfig.get_platform().startswith("win")
-            and use_ninja is None
+        if self.settings.fail or (
+            sysconfig.get_platform().startswith("win") and use_ninja is None
         ):
             return
 

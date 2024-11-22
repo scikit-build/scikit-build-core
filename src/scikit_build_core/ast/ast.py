@@ -11,7 +11,7 @@ from .tokenizer import Token, TokenType, tokenize
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-__all__ = ["Node", "Block", "parse"]
+__all__ = ["Block", "Node", "parse"]
 
 
 def __dir__() -> list[str]:
@@ -20,7 +20,7 @@ def __dir__() -> list[str]:
 
 @dataclasses.dataclass(frozen=True)
 class Node:
-    __slots__ = ("name", "value", "start", "stop")
+    __slots__ = ("name", "start", "stop", "value")
 
     name: str
     value: str
