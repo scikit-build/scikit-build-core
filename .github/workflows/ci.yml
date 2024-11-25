@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
       - name: Install nox
         run: uv tool install nox
       - uses: pre-commit/action@v3.0.1
@@ -112,7 +112,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
         if:
           matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
           && matrix.python-version != 'pypy-3.7'
@@ -177,7 +177,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
 
       # The min requirements are not compatible with some of the extra test
       # deps, so limit to just built-in deps.
@@ -341,7 +341,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v4
 
       - uses: wntrblm/nox@2024.10.09
         with:
