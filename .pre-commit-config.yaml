@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
+    rev: v0.8.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -51,7 +51,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.3.3"
+    rev: "v3.4.1"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -130,12 +130,12 @@ repos:
         additional_dependencies: [cogapp]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.10.21
+    rev: 2024.11.25
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.4
+    rev: 0.30.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
