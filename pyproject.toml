@@ -251,7 +251,7 @@ extend-select = [
     "S",           # eval -> literal_eval
     "SIM",         # flake8-simplify
     "T20",         # flake8-print
-    "TCH",         # flake8-type-checking
+    "TC",          # flake8-type-checking
     "TID251",      # flake8-tidy-imports.banned-api
     "TRY",         # tryceratops
     "UP",          # pyupgrade

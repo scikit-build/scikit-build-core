@@ -5,10 +5,10 @@ This section covers common needs.
 ## Starting a new project
 
 The easiest way to get started is to use the [Scientific Python cookie][], which
-makes a new project following the [Scientific Python Development Guidelines][]. Scikit-build-core
-is one of the backends you can select. The project will have a lot of tooling prepared
-for you as well, including pre-commit checks and a noxfile; be sure to read the guidelines
-to see what is there and how it works.
+makes a new project following the [Scientific Python Development Guidelines][].
+Scikit-build-core is one of the backends you can select. The project will have a
+lot of tooling prepared for you as well, including pre-commit checks and a
+noxfile; be sure to read the guidelines to see what is there and how it works.
 
 Another option is the [pybind11 example][].
 
@@ -78,8 +78,8 @@ automatically does this for you. See [repairing](#repairing-wheels).
 
 ## Making a Conda recipe
 
-`scikit-build-core` is available on conda-forge, and is used in [dozens
-of recipes][]. There are a few things to keep in mind.
+`scikit-build-core` is available on conda-forge, and is used in [dozens of
+recipes][]. There are a few things to keep in mind.
 
 You need to recreate your `build-system.requires` in the `host` table, with the
 conda versions of your dependencies. You also need to add `cmake` and either
