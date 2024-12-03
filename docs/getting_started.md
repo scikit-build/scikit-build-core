@@ -1,10 +1,10 @@
 # Getting started
 
 If you've never made a Python package before, [packaging.python.org's
-tutorial][] is a great place to start. It walks you through creating a simple package
-in pure Python using modern tooling and configuration. Another great resource is
-the [Scientific Python Developer Guide][]. And a tutorial can be found at
-[INTERSECT Training: Packaging][].
+tutorial][] is a great place to start. It walks you through creating a simple
+package in pure Python using modern tooling and configuration. Another great
+resource is the [Scientific Python Developer Guide][]. And a tutorial can be
+found at [INTERSECT Training: Packaging][].
 
 ## Quick start
 

@@ -2,9 +2,9 @@
 
 Scikit-build-core has an override system, similar to cibuildwheel and mypy. You
 specify a `tool.scikit-build.overrides` array with an `if` key. That `if` key
-can take several values, including several based on [PEP 508][]. Inside the override,
-you can set any value `tool.scikit-build` supports, and it will override if the `if`
-condition is true.
+can take several values, including several based on [PEP 508][]. Inside the
+override, you can set any value `tool.scikit-build` supports, and it will
+override if the `if` condition is true.
 
 ## If conditions
 
@@ -110,8 +110,8 @@ The value of `sys.implementation.name`. Takes a regex. Some common values:
 
 ### `implementation-version` (version)
 
-Derived from `sys.implementation.version`, following [PEP 508][]. Takes a specifier
-set. This is the PyPy version on PyPy, for example.
+Derived from `sys.implementation.version`, following [PEP 508][]. Takes a
+specifier set. This is the PyPy version on PyPy, for example.
 
 ### `env.*` (string or bool)
 
