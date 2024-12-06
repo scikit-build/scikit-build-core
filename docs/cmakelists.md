@@ -29,9 +29,9 @@ You can directly use FindPython:
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 ```
 
-You always want to find at least `Interpreter` and the "Module" component of the
-"Development" package. You do not want to find the entire "Development" package,
-as that include "Embed" component, which is not always present and is not
+You always want to find at least `Interpreter` and the `Module` component of the
+`Development` package. You do not want to find the entire `Development` package,
+as that include `Embed` component, which is not always present and is not
 related to making Python extension modules.
 
 If you are making a Limited API / Stable ABI package, you'll need the
