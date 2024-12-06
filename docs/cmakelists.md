@@ -36,7 +36,8 @@ related to making Python extension modules.
 
 If you are making a Limited API / Stable ABI package, you'll need the
 `Development.SABIModule` component instead (CMake 3.26+). You can use the
-`Python_Development.SABIModule_FOUND` variable to check to see if it was requested.
+`Python_Development.SABIModule_FOUND` variable to check to see if it was
+requested.
 
 <!-- prettier-ignore-start -->
 :::{warning}
