@@ -141,6 +141,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         include=[],
         src_exclude=[],
         target_exclude=[],
+        build_dir="",
     )
     assert mapping == {
         str(Path("pkg/__init__.py")): str(pkg_dir / "__init__.py"),
