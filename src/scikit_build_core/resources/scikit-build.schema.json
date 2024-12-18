@@ -217,7 +217,7 @@
           "items": {
             "type": "string"
           },
-          "description": "A list of license files to include in the wheel. Supports glob patterns."
+          "description": "A list of license files to include in the wheel. Supports glob patterns. The default is ``[\"LICEN[CS]E*\", \"COPYING*\", \"NOTICE*\", \"AUTHORS*\"]``. Must not be set if ``project.license-files`` is set."
         },
         "cmake": {
           "type": "boolean",
