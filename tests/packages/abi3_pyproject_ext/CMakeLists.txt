@@ -15,7 +15,10 @@ if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
                      ${SKBUILD_SABI_VERSION})
 
   if(NOT SKBUILD_SABI_VERSION STREQUAL "3.7")
-    message(FATAL_ERROR "TEST FAILED: SKBUILD_SABI_VERSION (${SKBUILD_SABI_VERSION}) is not 3.7")
+    message(
+      FATAL_ERROR
+        "TEST FAILED: SKBUILD_SABI_VERSION (${SKBUILD_SABI_VERSION}) is not 3.7"
+    )
   endif()
 else()
   python_add_library(abi3_example MODULE abi3_example.c WITH_SOABI)
