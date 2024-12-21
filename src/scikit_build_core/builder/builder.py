@@ -236,7 +236,7 @@ class Builder:
         # Allow users to detect the version requested in settings
         py_api = self.settings.wheel.py_api
         cache_config["SKBUILD_SABI_VERSION"] = (
-            "{py_api[2]}.{py_api[3:]}"
+            f"{py_api[2]}.{py_api[3:]}"
             if limited_api and py_api.startswith("cp")
             else ""
         )
