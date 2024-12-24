@@ -151,8 +151,16 @@ endif()
 ```
 
 If you have a lot of libraries, you can conditionally save these two items into
-a variable with `set(USE_SABI ${SKBUILD_SABI_VERSION})` and use it in all your
-`python_add_library` calls.
+a variable with `set(USE_SABI USE_SABI ${SKBUILD_SABI_VERSION})` and use it in all your
+`python_add_library` calls:
+
+```
+if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  set(USE_SABI "USE_SABI ${SKBUILD_SABI_VERSION}")
+endif()
+
+python_add_library(some_ext MODULE WITH_SOABI ${USE_SABI} ...)
+```
 
 This will define `Py_LIMITED_API` for you. If you want to support building
 directly from CMake, you need to protect this for Python version,
