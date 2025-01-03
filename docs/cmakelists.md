@@ -36,7 +36,8 @@ related to making Python extension modules.
 
 If you are making a Limited API / Stable ABI package, you'll need the
 `Development.SABIModule` component instead (CMake 3.26+). You can use the
-`SKBUILD_SABI_COMPONENT` variable to check to see if it was requested.
+`SKBUILD_SABI_COMPONENT` variable to check to see if it was requested. You can
+get the version requested with `${SKBUILD_SABI_VERSION}`.
 
 <!-- prettier-ignore-start -->
 :::{warning}
@@ -142,11 +143,23 @@ When defining your module, if you only support the Stable ABI after some point,
 you should use (for example for 3.11):
 
 ```cmake
-if(NOT "${SKBUILD_SABI_COMPONENT}" STREQUAL "")
-  python_add_library(some_ext MODULE WITH_SOABI USE_SABI 3.11 ...)
+if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  python_add_library(some_ext MODULE WITH_SOABI USE_SABI ${SKBUILD_SABI_VERSION} ...)
 else()
   python_add_library(some_ext MODULE WITH_SOABI ...)
 endif()
+```
+
+If you have a lot of libraries, you can conditionally save these two items into
+a variable with `set(USE_SABI USE_SABI ${SKBUILD_SABI_VERSION})` and use it in
+all your `python_add_library` calls:
+
+```
+if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  set(USE_SABI "USE_SABI ${SKBUILD_SABI_VERSION}")
+endif()
+
+python_add_library(some_ext MODULE WITH_SOABI ${USE_SABI} ...)
 ```
 
 This will define `Py_LIMITED_API` for you. If you want to support building
