@@ -236,8 +236,10 @@ wheel.expand-macos-universal-tags = false
 # to "/platlib", "/data", "/headers", and "/scripts".
 wheel.install-dir = ""
 
-# A list of license files to include in the wheel. Supports glob patterns.
-wheel.license-files = ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
+# A list of license files to include in the wheel. Supports glob patterns. The
+# default is ``["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]``. Must not be
+# set if ``project.license-files`` is set.
+wheel.license-files = ""
 
 # If set to True (the default), CMake will be run before building the wheel.
 wheel.cmake = true
