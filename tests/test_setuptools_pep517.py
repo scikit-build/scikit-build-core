@@ -15,7 +15,6 @@ pytestmark = pytest.mark.setuptools
 def test_pep517_sdist():
     correct_metadata = textwrap.dedent(
         """\
-        Metadata-Version: 2.1
         Name: cmake-example
         Version: 0.0.1
         Requires-Python: >=3.7
@@ -23,6 +22,8 @@ def test_pep517_sdist():
         """
         # TODO: why is this missing?
         # Requires-Dist: pytest>=6.0; extra == "test"
+        # This was removed in https://github.com/pypa/setuptools/pull/4698 as part of 2.2 support:
+        # Metadata-Version: 2.1
     )
     metadata_set = set(correct_metadata.strip().splitlines())
 
