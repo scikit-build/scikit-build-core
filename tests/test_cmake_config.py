@@ -57,7 +57,7 @@ def generator(
     else:
         monkeypatch.setenv("CMAKE_GENERATOR", request.param)
 
-    return request.param
+    return request.param  # type: ignore[no-any-return]
 
 
 def configure_args(
