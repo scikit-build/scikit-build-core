@@ -172,7 +172,7 @@ def test_wheel_tag(monkeypatch, minver, archs, answer):
     assert plat == answer
 
 
-@pytest.mark.parametrize("archs", ["x86_64" "arm64" "universal2"])
+@pytest.mark.parametrize("archs", ["x86_64", "arm64", "universal2"])
 def test_wheel_build_tag(monkeypatch, archs):
     get_config_var = sysconfig.get_config_var
     monkeypatch.setattr(

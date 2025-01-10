@@ -216,9 +216,9 @@ class WheelWriter:
             )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
             zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
-        assert (
-            "\\" not in zinfo.filename
-        ), f"\\ not supported in zip; got {zinfo.filename!r}"
+        assert "\\" not in zinfo.filename, (
+            f"\\ not supported in zip; got {zinfo.filename!r}"
+        )
         self._zipfile.writestr(zinfo, data)
 
     def __enter__(self) -> Self:
@@ -236,9 +236,9 @@ class WheelWriter:
         data = io.StringIO()
         writer = csv.writer(data, delimiter=",", quotechar='"', lineterminator="\n")
         for member in self._zipfile.infolist():
-            assert (
-                "\\" not in member.filename
-            ), f"Invalid zip contents: {member.filename}"
+            assert "\\" not in member.filename, (
+                f"Invalid zip contents: {member.filename}"
+            )
             with self._zipfile.open(member) as f:
                 member_data = f.read()
             sha = _b64encode(hashlib.sha256(member_data).digest()).decode("ascii")

@@ -21,9 +21,9 @@ def generate_file_contents(gen: GenerateSettings, metadata: StandardMetadata) ->
     metadata. Metadata is available inside the template.
     """
 
-    assert (
-        gen.template_path or gen.template
-    ), f"One of template or template-path must be set for {gen.path}"
+    assert gen.template_path or gen.template, (
+        f"One of template or template-path must be set for {gen.path}"
+    )
 
     if gen.template_path:
         template = gen.template_path.read_text(encoding="utf-8")

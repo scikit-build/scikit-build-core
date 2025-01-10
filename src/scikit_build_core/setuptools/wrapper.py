@@ -29,9 +29,9 @@ def setup(
 ) -> setuptools.Distribution:
     assert not cmake_install_dir, "cmake_install_dir not supported yet"
     assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
-    assert (
-        cmake_process_manifest_hook is None
-    ), "cmake_process_manifest_hook not supported yet"
+    assert cmake_process_manifest_hook is None, (
+        "cmake_process_manifest_hook not supported yet"
+    )
     assert cmake_install_target == "install", "cmake_install_target not supported yet"
 
     if cmake_languages is not None:

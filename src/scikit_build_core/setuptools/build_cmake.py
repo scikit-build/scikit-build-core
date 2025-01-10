@@ -34,13 +34,15 @@ def __dir__() -> list[str]:
 
 
 def _validate_settings(settings: ScikitBuildSettings) -> None:
-    assert (
-        not settings.wheel.expand_macos_universal_tags
-    ), "wheel.expand_macos_universal_tags is not supported in setuptools mode"
-    assert (
-        settings.logging.level == "WARNING"
-    ), "Logging is not adjustable in setuptools mode yet"
-    assert not settings.wheel.py_api, "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
+    assert not settings.wheel.expand_macos_universal_tags, (
+        "wheel.expand_macos_universal_tags is not supported in setuptools mode"
+    )
+    assert settings.logging.level == "WARNING", (
+        "Logging is not adjustable in setuptools mode yet"
+    )
+    assert not settings.wheel.py_api, (
+        "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
+    )
 
 
 class BuildCMake(setuptools.Command):
