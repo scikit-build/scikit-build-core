@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.9.1
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -130,12 +130,12 @@ repos:
         additional_dependencies: [cogapp]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2024.11.25
+    rev: 2025.01.10
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.30.0
+    rev: 0.31.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -144,7 +144,7 @@ repos:
         files: \.schema\.json
 
   - repo: https://github.com/citation-file-format/cffconvert
-    rev: 054bda51dbe278b3e86f27c890e3f3ac877d616c
+    rev: b6045d78aac9e02b039703b030588d54d53262ac
     hooks:
       - id: validate-cff
 
