@@ -22,6 +22,59 @@ def __dir__() -> list[str]:
     return __all__
 
 
+class FileLockIfUnix:
+    def __init__(self, lock_file: str) -> None:
+        self.lock_file = lock_file
+        self.lock_file_fd: int | None = None
+
+    def acquire(self) -> None:
+        # Based on filelock.BaseFileLock.acquire and filelock.UnixFileLock._acquire
+        try:
+            import fcntl
+        except ImportError:
+            return
+        import contextlib
+        import time
+
+        poll_interval = 0.05
+        log_interval = 60
+        last_log = time.perf_counter()
+
+        while True:
+            os.makedirs(os.path.dirname(self.lock_file), exist_ok=True)
+            open_flags = os.O_RDWR | os.O_TRUNC
+            if not os.path.exists(self.lock_file):
+                open_flags |= os.O_CREAT
+
+            fd = os.open(self.lock_file, open_flags, 0o644)
+            with contextlib.suppress(PermissionError):  # Lock is not owned by this UID
+                os.fchmod(fd, 0o644)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                os.close(fd)
+            else:
+                self.lock_file_fd = fd
+                return
+
+            now = time.perf_counter()
+            if now - last_log > log_interval:
+                last_log = now
+                print(f"Still waiting to acquire lock {self.lock_file}...")  # noqa: T201
+
+            time.sleep(poll_interval)
+
+    def release(self) -> None:
+        try:
+            import fcntl
+        except ImportError:
+            return
+
+        assert isinstance(self.lock_file_fd, int)
+        fcntl.flock(self.lock_file_fd, fcntl.LOCK_UN)
+        os.close(self.lock_file_fd)
+
+
 class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
     def __init__(
         self,
@@ -128,17 +181,10 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         if verbose:
             print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
 
-        import filelock
-
-        lock = filelock.FileLock(os.path.join(self.path, "editable_rebuild.lock"))
+        lock = FileLockIfUnix(os.path.join(self.path, "editable_rebuild.lock"))
 
         try:
-            try:
-                lock.acquire(timeout=60)
-            except filelock.Timeout:
-                if verbose:
-                    print(f"Still waiting to acquire rebuild lock in {self.path}...")  # noqa: T201
-                lock.acquire()
+            lock.acquire()
 
             result = subprocess.run(
                 ["cmake", "--build", ".", *self.build_options],
