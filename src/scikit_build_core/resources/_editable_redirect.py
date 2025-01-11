@@ -128,42 +128,56 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         if verbose:
             print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
 
-        result = subprocess.run(
-            ["cmake", "--build", ".", *self.build_options],
-            cwd=self.path,
-            stdout=sys.stderr if verbose else subprocess.PIPE,
-            env=env,
-            check=False,
-            text=True,
-        )
-        if result.returncode and verbose:
-            print(  # noqa: T201
-                f"ERROR: {result.stdout}",
-                file=sys.stderr,
-            )
-        result.check_returncode()
+        import filelock
 
-        result = subprocess.run(
-            [
-                "cmake",
-                "--install",
-                ".",
-                "--prefix",
-                self.install_dir,
-                *self.install_options,
-            ],
-            cwd=self.path,
-            stdout=sys.stderr if verbose else subprocess.PIPE,
-            env=env,
-            check=False,
-            text=True,
-        )
-        if result.returncode and verbose:
-            print(  # noqa: T201
-                f"ERROR: {result.stdout}",
-                file=sys.stderr,
+        lock = filelock.FileLock(os.path.join(self.path, "editable_rebuild.lock"))
+
+        try:
+            try:
+                lock.acquire(timeout=60)
+            except filelock.Timeout:
+                if verbose:
+                    print(f"Still waiting to acquire rebuild lock in {self.path}...")  # noqa: T201
+                lock.acquire()
+
+            result = subprocess.run(
+                ["cmake", "--build", ".", *self.build_options],
+                cwd=self.path,
+                stdout=sys.stderr if verbose else subprocess.PIPE,
+                env=env,
+                check=False,
+                text=True,
             )
-        result.check_returncode()
+            if result.returncode and verbose:
+                print(  # noqa: T201
+                    f"ERROR: {result.stdout}",
+                    file=sys.stderr,
+                )
+            result.check_returncode()
+
+            result = subprocess.run(
+                [
+                    "cmake",
+                    "--install",
+                    ".",
+                    "--prefix",
+                    self.install_dir,
+                    *self.install_options,
+                ],
+                cwd=self.path,
+                stdout=sys.stderr if verbose else subprocess.PIPE,
+                env=env,
+                check=False,
+                text=True,
+            )
+            if result.returncode and verbose:
+                print(  # noqa: T201
+                    f"ERROR: {result.stdout}",
+                    file=sys.stderr,
+                )
+            result.check_returncode()
+        finally:
+            lock.release()
 
 
 def install(
