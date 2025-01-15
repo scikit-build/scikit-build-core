@@ -57,8 +57,10 @@ def each_unignored_file(
         build_type="*",
         state="*",
     )
-    
-    exclude_lines = [*EXCLUDE_LINES, exclude_build_dir] if exclude_build_dir else EXCLUDE_LINES
+
+    exclude_lines = (
+        [*EXCLUDE_LINES, exclude_build_dir] if exclude_build_dir else EXCLUDE_LINES
+    )
 
     user_exclude_spec = pathspec.GitIgnoreSpec.from_lines(list(exclude))
     global_exclude_spec = pathspec.GitIgnoreSpec.from_lines(global_exclude_lines)
