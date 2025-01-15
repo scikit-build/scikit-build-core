@@ -199,11 +199,11 @@ class WheelSettings:
     root, giving access to "/platlib", "/data", "/headers", and "/scripts".
     """
 
-    license_files: List[str] = dataclasses.field(
-        default_factory=lambda: ["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]
-    )
+    license_files: Optional[List[str]] = None
     """
     A list of license files to include in the wheel. Supports glob patterns.
+    The default is ``["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]``.
+    Must not be set if ``project.license-files`` is set.
     """
 
     cmake: bool = True

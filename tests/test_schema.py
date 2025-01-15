@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -22,12 +23,15 @@ def test_compare_schemas():
     assert generate_skbuild_schema() == get_skbuild_schema()
 
 
+SCHEMAS = [
+    *DIR.parent.joinpath("docs/examples").glob("**/pyproject.toml"),
+    *DIR.joinpath("packages").glob("**/pyproject.toml"),
+]
+
+
 @pytest.mark.parametrize(
     "filepath",
-    [
-        *DIR.parent.joinpath("docs/examples").glob("**/pyproject.toml"),
-        *DIR.joinpath("packages").glob("**/pyproject.toml"),
-    ],
+    [s for s in SCHEMAS if sys.version_info >= (3, 8) or "pep639" not in str(s)],
 )
 def test_valid_schemas_files(filepath: Path) -> None:
     api = pytest.importorskip("validate_pyproject.api")

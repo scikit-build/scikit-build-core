@@ -34,6 +34,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
         Requires-Python: >=3.7
         Provides-Extra: test
         Requires-Dist: pytest>=6.0; extra == "test"
+
         """
     )
 
@@ -76,6 +77,7 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
         Metadata-Version: 2.1
         Name: sdist_config
         Version: 0.1.0
+
         """
     )
 
