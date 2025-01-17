@@ -80,7 +80,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
     None if it cannot be determined.
     """
     try:
-        result = Run().capture(cmake_path, "-E", "capabilities")
+        result = Run(timeout=2).capture(cmake_path, "-E", "capabilities")
         try:
             version = Version(
                 json.loads(result.stdout)["version"]["string"].split("-")[0]
@@ -91,7 +91,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
             logger.warning("Could not determine CMake version, got {!r}", result.stdout)
     except subprocess.CalledProcessError:
         try:
-            result = Run().capture(cmake_path, "--version")
+            result = Run(timeout=2).capture(cmake_path, "--version")
             try:
                 version = Version(
                     result.stdout.splitlines()[0].split()[-1].split("-")[0]
@@ -111,6 +111,8 @@ def get_cmake_program(cmake_path: Path) -> Program:
             )
     except PermissionError:
         logger.warning("Permissions Error getting CMake's version")
+    except subprocess.TimeoutExpired:
+        logger.warning("Accessing CMake timed out, ignoring")
 
     return Program(cmake_path, None)
 
@@ -133,8 +135,12 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
     """
     for ninja_path in _get_ninja_path(module=module):
         try:
-            result = Run().capture(ninja_path, "--version")
-        except (subprocess.CalledProcessError, PermissionError):
+            result = Run(timeout=2).capture(ninja_path, "--version")
+        except (
+            subprocess.CalledProcessError,
+            PermissionError,
+            subprocess.TimeoutExpired,
+        ):
             yield Program(ninja_path, None)
             continue
 
