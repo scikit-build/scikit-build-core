@@ -4,6 +4,7 @@ import contextlib
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
@@ -31,6 +32,8 @@ __all__ = [
 def __dir__() -> list[str]:
     return __all__
 
+# Make sure we don't wait forever for programs to respond
+TIMEOUT = 10 if sys.platform.startswith("win") else 4
 
 class Program(NamedTuple):
     path: Path
@@ -80,7 +83,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
     None if it cannot be determined.
     """
     try:
-        result = Run(timeout=2).capture(cmake_path, "-E", "capabilities")
+        result = Run(timeout=TIMEOUT).capture(cmake_path, "-E", "capabilities")
         try:
             version = Version(
                 json.loads(result.stdout)["version"]["string"].split("-")[0]
@@ -91,7 +94,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
             logger.warning("Could not determine CMake version, got {!r}", result.stdout)
     except subprocess.CalledProcessError:
         try:
-            result = Run(timeout=2).capture(cmake_path, "--version")
+            result = Run(timeout=TIMEOUT).capture(cmake_path, "--version")
             try:
                 version = Version(
                     result.stdout.splitlines()[0].split()[-1].split("-")[0]
@@ -135,7 +138,7 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
     """
     for ninja_path in _get_ninja_path(module=module):
         try:
-            result = Run(timeout=2).capture(ninja_path, "--version")
+            result = Run(timeout=TIMEOUT).capture(ninja_path, "--version")
         except (
             subprocess.CalledProcessError,
             PermissionError,
