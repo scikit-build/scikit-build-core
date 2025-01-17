@@ -24,6 +24,7 @@ def __dir__() -> list[str]:
 class Run:
     env: dict[str, str] | None = None
     cwd: os.PathLike[str] | None = None
+    timeout: None | float = None
 
     # Stores last printout, for cleaner debug logging
     _prev_env: ClassVar[dict[str, str]] = {}
@@ -75,6 +76,7 @@ class Run:
             capture_output=capture,
             env=self.env,
             cwd=self.cwd,
+            timeout=self.timeout,
         )
 
     def _key_diff(self, k: str) -> str:
