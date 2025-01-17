@@ -32,8 +32,10 @@ __all__ = [
 def __dir__() -> list[str]:
     return __all__
 
+
 # Make sure we don't wait forever for programs to respond
 TIMEOUT = 10 if sys.platform.startswith("win") else 4
+
 
 class Program(NamedTuple):
     path: Path
