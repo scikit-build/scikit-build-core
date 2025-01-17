@@ -41,6 +41,7 @@ def packages_to_file_mapping(
     include: Sequence[str],
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
+    build_dir: str,
 ) -> dict[str, str]:
     """
     This will output a mapping of source files to target files.
@@ -55,6 +56,7 @@ def packages_to_file_mapping(
             source_dir,
             include=include,
             exclude=src_exclude,
+            build_dir=build_dir,
         ):
             rel_path = filepath.relative_to(source_dir)
             target_path = platlib_dir / package_dir / rel_path
