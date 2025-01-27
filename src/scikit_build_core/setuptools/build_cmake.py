@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 __all__ = [
     "BuildCMake",
     "cmake_args",
+    "cmake_install_target",
     "cmake_source_dir",
     "finalize_distribution_options",
 ]
@@ -60,6 +61,7 @@ def get_source_dir_from_pyproject_toml() -> str | None:
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
     cmake_args: list[str] | str | None = None
+    cmake_install_target: str | None = None
 
     build_lib: str | None
     build_temp: str | None
@@ -74,8 +76,9 @@ class BuildCMake(setuptools.Command):
         ("plat-name=", "p", "platform name to cross-compile for, if supported "),
         ("debug", "g", "compile/link with debugging information"),
         ("parallel=", "j", "number of parallel build jobs"),
-        ("source-dir=", "j", "directory with CMakeLists.txt"),
+        ("source-dir=", "s", "directory with CMakeLists.txt"),
         ("cmake-args=", "a", "extra arguments for CMake"),
+        ("cmake-install-target=", "", "CMake target to install"),
     ]
 
     def initialize_options(self) -> None:
@@ -87,6 +90,7 @@ class BuildCMake(setuptools.Command):
         self.plat_name = None
         self.source_dir = get_source_dir_from_pyproject_toml()
         self.cmake_args = None
+        self.cmake_install_target = None
 
     def finalize_options(self) -> None:
         self.set_undefined_options(
@@ -180,7 +184,7 @@ class BuildCMake(setuptools.Command):
         builder.build(build_args=build_args)
         builder.install(install_dir=install_dir)
 
-    # def "get_source_file+ys"(self) -> list[str]:
+    # def "get_source_file"(self) -> list[str]:
     #    return ["CMakeLists.txt"]
 
     # def get_outputs(self) -> list[str]:
@@ -260,3 +264,13 @@ def cmake_source_dir(
     if not Path(value).is_dir():
         msg = "cmake_source_dir must be an existing directory"
         raise setuptools.errors.SetupError(msg)
+
+
+def cmake_install_target(
+    dist: Distribution, attr: Literal["cmake_install_target"], value: str
+) -> None:
+    assert attr == "cmake_install_target"
+    assert value is not None
+    _cmake_extension(dist)
+    msg = "cmake_install_target is not supported - please use components and build targets instead"
+    raise setuptools.errors.SetupError(msg)
