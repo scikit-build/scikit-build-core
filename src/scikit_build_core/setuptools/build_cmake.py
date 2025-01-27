@@ -9,6 +9,7 @@ import setuptools
 import setuptools.errors
 from packaging.version import Version
 
+from .._compat import tomllib
 from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
@@ -45,6 +46,17 @@ def _validate_settings(settings: ScikitBuildSettings) -> None:
     )
 
 
+def get_source_dir_from_pyproject_toml() -> str | None:
+    try:
+        with Path("pyproject.toml").open("rb") as f:
+            source_dir: str | None = tomllib.load(f)["tool"]["scikit-build"]["cmake"][
+                "source-dir"
+            ]
+            return source_dir
+    except (FileNotFoundError, KeyError):
+        return None
+
+
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
     cmake_args: list[str] | str | None = None
@@ -73,7 +85,7 @@ class BuildCMake(setuptools.Command):
         self.editable_mode = False
         self.parallel = None
         self.plat_name = None
-        self.source_dir = None
+        self.source_dir = get_source_dir_from_pyproject_toml()
         self.cmake_args = None
 
     def finalize_options(self) -> None:
@@ -195,6 +207,8 @@ def finalize_distribution_options(dist: Distribution) -> None:
         build.sub_commands.append(
             ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))
         )
+    if get_source_dir_from_pyproject_toml() is not None:
+        _cmake_extension(dist)
 
 
 def _cmake_extension(dist: Distribution) -> None:
@@ -239,6 +253,9 @@ def cmake_source_dir(
     dist: Distribution, attr: Literal["cmake_source_dir"], value: str
 ) -> None:
     assert attr == "cmake_source_dir"
+    if get_source_dir_from_pyproject_toml() is not None:
+        msg = "cmake_source_dir is already defined in pyproject.toml"
+        raise setuptools.errors.SetupError(msg)
     _cmake_extension(dist)
     if not Path(value).is_dir():
         msg = "cmake_source_dir must be an existing directory"

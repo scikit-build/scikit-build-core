@@ -252,6 +252,15 @@ def package_simple_setuptools_ext(
 
 
 @pytest.fixture
+def package_toml_setuptools_ext(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    package = PackageInfo("toml_setuptools_ext")
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture
 def package_mixed_setuptools(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
