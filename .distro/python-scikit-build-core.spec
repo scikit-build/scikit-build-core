@@ -1,11 +1,3 @@
-# Testing dependencies not satisfied on epel
-# build, cattrs, hatch-fancy-pypi-readme, pytest-subprocess
-%if 0%{?el10}
-%bcond_with tests
-%else
-%bcond_without tests
-%endif
-
 %global debug_package %{nil}
 
 Name:           python-scikit-build-core
@@ -72,7 +64,7 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 
 %generate_buildrequires
-%pyproject_buildrequires %{?with_tests:-x test,test-meta,test-numpy}
+%pyproject_buildrequires -x test,test-meta,test-numpy
 
 
 %build
@@ -86,10 +78,8 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 %check
 %pyproject_check_import
-%if %{with tests}
 %pytest \
     -m "not network"
-%endif
 
 
 %files -n python3-scikit-build-core -f %{pyproject_files}

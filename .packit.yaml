@@ -24,13 +24,12 @@ jobs:
   - &copr_build
     job: copr_build
     trigger: pull_request
+    additional_repos:
+      - copr://lecris/scikit-build-core-epel
   - &tests
     job: tests
     trigger: pull_request
     fmf_path: .distro
-    targets:
-      - fedora-all-x86_64
-      - fedora-all-aarch64
   - <<: *copr_build
     trigger: release
     owner: "@scikit-build"
