@@ -197,7 +197,7 @@ wheel.cmake = true
 ### `failed` (bool)
 
 This override is a bit special. If a build fails, scikit-build-core will check
-to see if there'a a matching `failed = true` override. If there is, the the
+to see if there's a matching `failed = true` override. If there is, the the
 build will be retried once with the new settings. This can be used to build a
 pure-Python fallback if a build fails, for example:
 
