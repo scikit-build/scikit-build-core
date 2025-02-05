@@ -16,7 +16,7 @@ pipx run build
 ````{tab} uv
 
 ```bash
-uvx --from build pyproject-build --installer=uv
+uv build
 ```
 
 ````
