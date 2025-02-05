@@ -104,4 +104,10 @@ def get_standard_metadata(
                 "Packaging 24.2+ required for license normalization. Please update (Python 3.8+ required)"
             )
 
+    # For scikit-build-core >= 0.11, we set METADATA 2.2 as minimum
+    if (
+        settings.minimum_version is None or settings.minimum_version >= Version("0.11")
+    ) and metadata.auto_metadata_version == "2.1":
+        metadata.metadata_version = "2.2"
+
     return metadata

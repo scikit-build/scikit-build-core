@@ -24,7 +24,8 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
                 "name": "something",
                 "version": "1.2.3",
             },
-        }
+        },
+        metadata_version="2.3",
     )
     out_dir = tmp_path / "out"
 
@@ -46,7 +47,7 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
 
     dist_info = wheel.dist_info_contents()
     assert dist_info == {
-        "METADATA": b"Metadata-Version: 2.1\nName: something\nVersion: 1.2.3\n\n",
+        "METADATA": b"Metadata-Version: 2.3\nName: something\nVersion: 1.2.3\n\n",
         "WHEEL": b"Wheel-Version: 1.0\nGenerator: scikit-build-core 1.2.3\nRoot-Is-Purelib: false\nTag: py3-none-any\n\n",
     }
 
