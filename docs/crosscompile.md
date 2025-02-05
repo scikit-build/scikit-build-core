@@ -18,8 +18,8 @@ will not know you've set this and won't get the correct wheel name.
 
 On macOS, AppleClang has excellent support for making Apple Silicon and
 Universal2 binaries (both architectures in one binary). Scikit-build-core
-respects `ARCHFLAGS` if `CMAKE_SYSTEM_PROCESSOR` is not in the cmake args.
-These values are set by most redistributable builders like cibuildwheel when
+respects `ARCHFLAGS` if `CMAKE_SYSTEM_PROCESSOR` is not in the cmake args. These
+values are set by most redistributable builders like cibuildwheel when
 cross-compiling.
 
 :::{warning}
@@ -34,8 +34,8 @@ Universal2.
 
 :::{warning}
 
-If you manually set the arch flags in other ways besides `ARCHFLAGS`, or the
-one special case above, scikit-build-core will not get the right wheel name.
+If you manually set the arch flags in other ways besides `ARCHFLAGS`, or the one
+special case above, scikit-build-core will not get the right wheel name.
 
 :::
 
