@@ -28,7 +28,7 @@ def scantree(path: Path) -> Generator[Path, None, None]:
 
 
 def path_to_module(path: Path) -> str:
-    path = path.with_name(path.name.split(".", 1)[0])
+    path = path.with_name(path.stem)
     if path.name == "__init__":
         path = path.parent
     return ".".join(path.parts)
