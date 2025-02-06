@@ -2,12 +2,25 @@
 
 ## macOS
 
+Unlike the other platforms, macOS has the ability to target older operating
+systems with the `MACOSX_DEPLOYMENT_TARGET` variable. If that is not set, you
+will get a wheel optimized for the current operating system. Popular
+redistributable builders like cibuildwheel will set this for you.
+
+:::{warning}
+
+While CMake also allows you to specify this a few other ways, scikit-build-core
+will not know you've set this and won't get the correct wheel name.
+
+:::
+
 ### Intel to AppleSilicon
 
 On macOS, AppleClang has excellent support for making Apple Silicon and
 Universal2 binaries (both architectures in one binary). Scikit-build-core
 respects `ARCHFLAGS` if `CMAKE_SYSTEM_PROCESSOR` is not in the cmake args. These
-values are set by cibuildwheel when cross-compiling.
+values are set by most redistributable builders like cibuildwheel when
+cross-compiling.
 
 :::{warning}
 
@@ -16,6 +29,13 @@ Apple Silicon component. This means you cannot use homebrew binaries (which are
 always native, and not designed to be used for building portable binaries
 anyway). Header-only dependencies, including NumPy, do not need to be
 Universal2.
+
+:::
+
+:::{warning}
+
+If you manually set the arch flags in other ways besides `ARCHFLAGS`, or the one
+special case above, scikit-build-core will not get the right wheel name.
 
 :::
 
