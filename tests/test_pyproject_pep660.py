@@ -45,7 +45,7 @@ def test_pep660_wheel(editable_mode: str):
         assert "_simplest_editable.py" not in file_names
     assert "_simplest_editable.pth" in file_names
 
-    assert "Metadata-Version: 2.1" in metadata
+    assert "Metadata-Version: 2.2" in metadata
     assert "Name: simplest" in metadata
     assert "Version: 0.0.1" in metadata
 

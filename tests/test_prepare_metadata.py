@@ -35,7 +35,7 @@ def test_prepare_metadata_for_build(fp, editable):
     assert (
         textwrap.dedent(
             """\
-        Metadata-Version: 2.1
+        Metadata-Version: 2.2
         Name: simplest
         Version: 0.0.1"""
         )

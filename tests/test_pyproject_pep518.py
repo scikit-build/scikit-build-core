@@ -28,7 +28,7 @@ def compute_uncompressed_hash(inp: Path):
 def test_pep518_sdist(isolated, package_simple_pyproject_ext):
     correct_metadata = textwrap.dedent(
         """\
-        Metadata-Version: 2.1
+        Metadata-Version: 2.2
         Name: CMake.Example
         Version: 0.0.1
         Requires-Python: >=3.7
@@ -74,7 +74,7 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
 
     correct_metadata = textwrap.dedent(
         """\
-        Metadata-Version: 2.1
+        Metadata-Version: 2.2
         Name: sdist_config
         Version: 0.1.0
 
