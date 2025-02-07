@@ -5,7 +5,7 @@ import platform
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import packaging.tags
 from packaging.specifiers import SpecifierSet
@@ -27,8 +27,6 @@ def __dir__() -> list[str]:
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from .._compat.typing import Literal
 
 
 def strtobool(value: str) -> bool:

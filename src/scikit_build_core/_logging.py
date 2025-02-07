@@ -9,12 +9,12 @@ import os
 import platform
 import sys
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ._compat.typing import Literal, Self
+    from ._compat.typing import Self
 
     StrMapping = Mapping[str, "Style"]
 else:

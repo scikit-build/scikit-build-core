@@ -1,3 +1,4 @@
+import importlib.metadata
 import tarfile
 import textwrap
 import zipfile
@@ -6,11 +7,10 @@ from pathlib import Path
 import pytest
 from packaging.version import Version
 
-from scikit_build_core._compat.importlib import metadata
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
 pytestmark = pytest.mark.setuptools
-setuptools_version = Version(metadata.version("setuptools"))
+setuptools_version = Version(importlib.metadata.version("setuptools"))
 
 
 @pytest.mark.usefixtures("package_simple_setuptools_ext")

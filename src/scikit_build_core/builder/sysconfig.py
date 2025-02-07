@@ -5,7 +5,7 @@ import os
 import sys
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import packaging.tags
 
@@ -13,8 +13,6 @@ from .._logging import logger, rich_print
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from .._compat.typing import Literal
 
 __all__ = [
     "get_abi_flags",
@@ -169,7 +167,13 @@ def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
     if setuptools_ext_suffix:
         return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
-    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    if sys.version_info < (3, 8, 7):
+        # See https://github.com/python/cpython/issues/84006
+        import distutils.sysconfig  # pylint: disable=deprecated-module
+
+        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    else:
+        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     assert isinstance(ext_suffix, str)
     return ext_suffix.rsplit(".", 1)[0].lstrip(".")

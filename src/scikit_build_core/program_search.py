@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Literal, NamedTuple
 
 from packaging.version import InvalidVersion, Version
 
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
     from packaging.specifiers import SpecifierSet
 
-    from ._compat.typing import Literal
 
 __all__ = [
     "Program",
