@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 import dataclasses
 import inspect
-import sys
 import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -24,10 +23,6 @@ def __dir__() -> list[str]:
 
 
 def _get_value(value: ast.expr) -> str:
-    if sys.version_info < (3, 8):
-        assert isinstance(value, ast.Str)
-        return value.s
-
     assert isinstance(value, ast.Constant)
     assert isinstance(value.value, str)
     return value.value

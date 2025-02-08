@@ -1,4 +1,3 @@
-import sys
 import sysconfig
 import tarfile
 import zipfile
@@ -30,9 +29,6 @@ def test_hatchling_sdist(isolated) -> None:
         }
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 8), reason="Full hatchling support requires Python 3.8+"
-)
 @pytest.mark.network
 @pytest.mark.compile
 @pytest.mark.configure

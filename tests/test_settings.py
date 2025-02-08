@@ -1,13 +1,12 @@
 import dataclasses
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import pytest
 from packaging.version import Version
 
 from scikit_build_core._compat.builtins import ExceptionGroup
-from scikit_build_core._compat.typing import Literal
 from scikit_build_core.settings.sources import (
     ConfSource,
     EnvSource,

@@ -73,8 +73,6 @@ Key limitations:
   needed.
 - Anything in `${SKBUILD_METADATA_DIR}` must be placed in an `extra_metadata`
   folder.
-- Python 3.8 highly recommended as features are missing from the last Hatchling
-  to support 3.7.
 
 ## Writing CMakeLists.txt
 

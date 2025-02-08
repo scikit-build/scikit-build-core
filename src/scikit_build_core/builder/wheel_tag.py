@@ -164,7 +164,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--abi",
         default="",
-        help="Specify py-api, like 'cp37' or 'py3'",
+        help="Specify py-api, like 'cp38' or 'py3'",
     )
     parser.add_argument(
         "--purelib",

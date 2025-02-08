@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Build backend for CMake based projects"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Build Tools",
@@ -20,7 +20,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -35,7 +34,6 @@ dynamic = ["version"]
 
 dependencies = [
     "exceptiongroup >=1.0; python_version<'3.11'",
-    "importlib-metadata >=4.13; python_version<'3.8'",
     "importlib-resources >=1.3; python_version<'3.9'",
     "packaging >=21.3",
     "pathspec >=0.10.1",
@@ -72,7 +70,6 @@ test-meta = [
 ]
 test-numpy = [
     "numpy; python_version<'3.13' and platform_python_implementation!='PyPy'",
-    "numpy~=1.21.0; python_version=='3.7' and platform_python_implementation=='PyPy' and sys_platform == 'linux'",
     "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
     "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
 ]
@@ -186,7 +183,7 @@ ignore_missing_imports = true
 
 
 [tool.pylint]
-py-version = "3.7"
+py-version = "3.8"
 jobs = "0"
 reports.output-format = "colorized"
 good-names = ["f"]
@@ -290,11 +287,8 @@ known-local-folder = ["pathutils"]
 "typing.Mapping".msg = "Use collections.abc.Mapping instead."
 "typing.Sequence".msg = "Use collections.abc.Sequence instead."
 "typing.Set".msg = "Use collections.abc.Set instead."
-"typing.Literal".msg = "Use scikit_build_core._compat.typing.Literal instead."
-"typing.Protocol".msg = "Use scikit_build_core._compat.typing.Protocol instead."
 "typing.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
 "typing_extensions.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
-"typing.runtime_checkable".msg = "Add and use scikit_build_core._compat.typing.runtime_checkable instead."
 "typing.Final".msg = "Add scikit_build_core._compat.typing.Final instead."
 "typing.NotRequired".msg = "Add scikit_build_core._compat.typing.NotRequired instead."
 "typing.OrderedDict".msg = "Add scikit_build_core._compat.typing.OrderedDict instead."
@@ -302,8 +296,8 @@ known-local-folder = ["pathutils"]
 "typing.assert_never".msg = "Add scikit_build_core._compat.typing.assert_never instead."
 "tomli".msg = "Use scikit_build_core._compat.tomllib instead."
 "tomllib".msg = "Use scikit_build_core._compat.tomllib instead."
-"importlib.metadata".msg = "Use scikit_build_core._compat.importlib.metadata instead."
-"importlib_metadata".msg = "Use scikit_build_core._compat.importlib.metadata instead."
+"importlib_metadata".msg = "Use importlib.metadata directly instead."
+"importlib.metadata.entry_points".msg = "Use scikit_build_core._compat.importlib.metadata.entry_points instead."
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."

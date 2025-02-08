@@ -5,7 +5,7 @@ import dataclasses
 import difflib
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Generator, Mapping
 
-    from .._compat.typing import Literal
 
 __all__ = ["SettingsReader"]
 

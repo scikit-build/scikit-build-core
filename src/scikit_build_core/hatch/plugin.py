@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import importlib.metadata
 import os
 import shutil
 import sys
@@ -10,15 +11,13 @@ import sysconfig
 import tempfile
 import typing
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from packaging.version import Version
 
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
-from .._compat.importlib.metadata import version as pkg_version
-from .._compat.typing import Literal
 from .._logging import logger, rich_print
 from ..build._init import setup_logging
 from ..builder.builder import Builder, archs_to_tags, get_archs
@@ -222,7 +221,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
         }
         cache_entries["SKBUILD_STATE"] = state
-        cache_entries["SKBUILD_HATCHLING"] = pkg_version("hatchling")
+        cache_entries["SKBUILD_HATCHLING"] = importlib.metadata.version("hatchling")
         builder.configure(
             defines=defines,
             cache_entries=cache_entries,

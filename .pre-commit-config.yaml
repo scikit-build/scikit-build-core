@@ -76,9 +76,8 @@ repos:
           - cmake
           - exceptiongroup
           - hatch-fancy-pypi-readme>=24
-          - importlib-metadata>=6.6.0
           - importlib-resources
-          - markdown-it-py<3 # Python 3.7 compat needed for mypy check
+          - markdown-it-py
           - ninja
           - nox
           - orjson

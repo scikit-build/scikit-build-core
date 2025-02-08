@@ -123,7 +123,7 @@ in your `pyproject.toml`:
 
 ```toml
 [tool.scikit-build]
-wheel.py-api = "cp37"
+wheel.py-api = "cp38"
 ```
 
 When you do that, `${SKBUILD_SABI_COMPONENT}` will be set to

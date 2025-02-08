@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib
 import shutil
 import subprocess
-import sys
 import textwrap
 import types
 import zipfile
@@ -239,11 +238,10 @@ def test_pep517_wheel(virtualenv):
     assert wheel == dist / out
 
     virtualenv.install(wheel)
-    if sys.version_info >= (3, 8):
-        license = virtualenv.execute(
-            "from importlib.metadata import metadata; print(metadata('dynamic')['License'])"
-        )
-        assert license == "MIT License"
+    license = virtualenv.execute(
+        "from importlib.metadata import metadata; print(metadata('dynamic')['License'])"
+    )
+    assert license == "MIT License"
 
     with zipfile.ZipFile(wheel) as zf:
         file_paths = {Path(n) for n in zf.namelist()}

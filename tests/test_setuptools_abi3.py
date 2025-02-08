@@ -43,7 +43,7 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
     assert wheel == dist / out
-    assert "-cp37-abi3-" in out
+    assert "-cp38-abi3-" in out
 
     assert virtualenv.execute("print('hello')") == "hello"
 

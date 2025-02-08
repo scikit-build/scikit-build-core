@@ -3,12 +3,14 @@ from __future__ import annotations
 import shutil
 import stat
 import sys
-import tempfile
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
-from scikit_build_core._shutil import _fix_all_permissions, fix_win_37_all_permissions
+from scikit_build_core._shutil import _fix_all_permissions
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _make_dir_with_ro(tmp_path: Path) -> Path:
@@ -46,8 +48,3 @@ def test_broken_all_permissions(make_dir_with_ro: Path) -> None:
 def test_fix_all_permissions(make_dir_with_ro: Path) -> None:
     _fix_all_permissions(str(make_dir_with_ro))
     shutil.rmtree(make_dir_with_ro)
-
-
-def test_tmpdir():
-    with tempfile.TemporaryDirectory() as tmp, fix_win_37_all_permissions(tmp):
-        _make_dir_with_ro(Path(tmp))

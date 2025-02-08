@@ -9,12 +9,12 @@ import os
 import platform
 import sys
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any, Literal, NoReturn
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ._compat.typing import Literal, Self
+    from ._compat.typing import Self
 
     StrMapping = Mapping[str, "Style"]
 else:
@@ -77,37 +77,31 @@ class FStringMessage:
         )
 
 
-if sys.version_info < (3, 8):
-    opts: Any = {}
-else:
-    opts: Any = {"stacklevel": 2}
-
-
 class ScikitBuildLogger:
     # pylint: disable-next=redefined-outer-name
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
 
     def debug(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.debug(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.debug(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def info(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.info(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.info(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def warning(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.warning(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.warning(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def error(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.error(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.error(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def critical(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.critical(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.critical(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def exception(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.exception(FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.exception(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def log(self, level: int, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.log(level, FStringMessage(msg, *args, **kwargs), **opts)
+        self.logger.log(level, FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def setLevel(self, level: int) -> None:  # noqa: N802
         self.logger.setLevel(level)

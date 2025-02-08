@@ -70,7 +70,7 @@ features over classic Scikit-build:
 The following limitations are present compared to classic scikit-build:
 
 - The minimum supported CMake is 3.15
-- The minimum supported Python is 3.7
+- The minimum supported Python is 3.8 (3.7+ for 0.10.x and older)
 
 Some known missing features that will be developed soon:
 
@@ -218,7 +218,7 @@ sdist.cmake = false
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 
 # The Python tags. The default (empty string) will use the default Python
-# version. You can also set this to "cp37" to enable the CPython 3.7+ Stable ABI
+# version. You can also set this to "cp38" to enable the CPython 3.8+ Stable ABI
 # / Limited API (only on CPython and if the version is sufficient, otherwise
 # this has no effect). Or you can set it to "py3" or "py2.py3" to ignore Python
 # ABI compatibility. The ABI tag is inferred from this tag.

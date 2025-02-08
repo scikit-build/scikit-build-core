@@ -31,7 +31,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
         Metadata-Version: 2.2
         Name: CMake.Example
         Version: 0.0.1
-        Requires-Python: >=3.7
+        Requires-Python: >=3.8
         Provides-Extra: test
         Requires-Dist: pytest>=6.0; extra == "test"
 

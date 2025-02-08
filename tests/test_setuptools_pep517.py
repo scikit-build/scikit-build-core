@@ -1,3 +1,4 @@
+import importlib.metadata
 import tarfile
 import textwrap
 import zipfile
@@ -6,11 +7,10 @@ from pathlib import Path
 import pytest
 from packaging.version import Version
 
-from scikit_build_core._compat.importlib import metadata
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
 pytestmark = pytest.mark.setuptools
-setuptools_version = Version(metadata.version("setuptools"))
+setuptools_version = Version(importlib.metadata.version("setuptools"))
 
 
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
@@ -19,7 +19,7 @@ def test_pep517_sdist():
         """\
         Name: cmake-example
         Version: 0.0.1
-        Requires-Python: >=3.7
+        Requires-Python: >=3.8
         Provides-Extra: test
         """
         # TODO: why is this missing?
@@ -106,7 +106,7 @@ def test_toml_pep517_sdist():
         """\
         Name: cmake-example
         Version: 0.0.1
-        Requires-Python: >=3.7
+        Requires-Python: >=3.8
         """
         # This was removed in https://github.com/pypa/setuptools/pull/4698 as part of 2.2 support:
         # Metadata-Version: 2.1

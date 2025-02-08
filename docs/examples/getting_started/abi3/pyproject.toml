@@ -7,4 +7,4 @@ name = "example"
 version = "0.0.1"
 
 [tool.scikit-build-core]
-wheel.py-api = "cp37"
+wheel.py-api = "cp38"

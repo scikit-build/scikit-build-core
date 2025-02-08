@@ -6,12 +6,12 @@ import sys
 import tarfile
 import time
 import zipfile
+from importlib.metadata import PathDistribution
 from pathlib import Path
 
 import build.util
 import pytest
 
-from scikit_build_core._compat.importlib.metadata import PathDistribution
 from scikit_build_core.build import (
     _file_processor,
     build_sdist,
@@ -50,7 +50,7 @@ def test_pep517_sdist():
             Metadata-Version: 2.2
             Name: CMake.Example
             Version: 0.0.1
-            Requires-Python: >=3.7
+            Requires-Python: >=3.8
             Provides-Extra: test
             Requires-Dist: pytest>=6.0; extra == "test"
             """
@@ -229,7 +229,7 @@ def test_pep517_wheel(virtualenv):
     assert "Metadata-Version: 2.2" in metadata
     assert "Name: CMake.Example" in metadata
     assert "Version: 0.0.1" in metadata
-    assert "Requires-Python: >=3.7" in metadata
+    assert "Requires-Python: >=3.8" in metadata
     assert "Provides-Extra: test" in metadata
 
     virtualenv.install(wheel)
@@ -282,7 +282,7 @@ def test_pep517_wheel_source_dir(virtualenv):
     assert "Metadata-Version: 2.2" in metadata
     assert "Name: CMake.Example" in metadata
     assert "Version: 0.0.1" in metadata
-    assert "Requires-Python: >=3.7" in metadata
+    assert "Requires-Python: >=3.8" in metadata
     assert "Provides-Extra: test" in metadata
 
     assert "Build: 1foo" in wheel_metadata
@@ -334,7 +334,7 @@ def test_prepare_metdata_for_build_wheel():
         "Metadata-Version": "2.2",
         "Name": "CMake.Example",
         "Version": "0.0.1",
-        "Requires-Python": ">=3.7",
+        "Requires-Python": ">=3.8",
         "Provides-Extra": "test",
         "Requires-Dist": 'pytest>=6.0; extra == "test"',
     }
@@ -356,7 +356,7 @@ def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
         "Metadata-Version": "2.2",
         "Name": "CMake.Example",
         "Version": "0.0.1",
-        "Requires-Python": ">=3.7",
+        "Requires-Python": ">=3.8",
         "Provides-Extra": "test",
         "Requires-Dist": 'pytest>=6.0; extra == "test"',
     }

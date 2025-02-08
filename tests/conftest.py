@@ -8,17 +8,11 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, overload
 
 import virtualenv as _virtualenv
-
-if sys.version_info < (3, 8):
-    import importlib_metadata as metadata
-    from typing_extensions import Literal, overload
-else:
-    from importlib import metadata
-    from typing import Literal, overload
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -211,10 +205,10 @@ def package_simple_pyproject_ext(
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
-        "58a92cd71f7750633296b0a44363e661ed83a908985158b83c187043ace6de4a",
-        "83c81c1b9ce2e065ac30d129d48628e01a37248f15035a8427a045a7d8e40c43",
-        "d04620a35f173ce8c94dbfdc48543e7b9f33474d6ee51221eec78b49f38b8766",
-        "d8b64bff613747b421f7c705bd9ce41b95164772a5b96789b27df79d83836148",
+        "71b4e95854ef8d04886758d24d18fe55ebe63648310acf58c7423387cca73508",
+        "ed930179fbf5adc2e71a64a6f9686c61fdcce477c85bc94dd51598641be886a7",
+        "0178462b64b4eb9c41ae70eb413a9cc111c340e431b240af1b218fe81b0c2ecb",
+        "de79895a9d5c2112257715214ab419d3635e841716655e8a55390e5d52445819",
     )
     process_package(package, tmp_path, monkeypatch)
     return package
