@@ -96,10 +96,6 @@ jobs:
           - python-version: "3.8"
             runs-on: ubuntu-22.04
             cmake-version: "3.15.x"
-        exclude:
-          - python-version: "3.7"
-            runs-on: ubuntu-latest
-            cmake-version: "3.15.x"
 
     steps:
       - uses: actions/checkout@v4
@@ -112,23 +108,17 @@ jobs:
           allow-prereleases: true
 
       - uses: astral-sh/setup-uv@v5
-        if:
-          matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
-          && matrix.python-version != 'pypy-3.7'
+        if: matrix.python-version != 'pypy-3.8'
 
       - name: Install package (uv)
-        if:
-          matrix.python-version != '3.7' && matrix.python-version != 'pypy-3.8'
-          && matrix.python-version != 'pypy-3.7'
+        if: matrix.python-version != 'pypy-3.8'
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
           --system
 
       - name: Install package (pip)
-        if:
-          matrix.python-version == '3.7' || matrix.python-version == 'pypy-3.8'
-          || matrix.python-version == 'pypy-3.7'
+        if: matrix.python-version == 'pypy-3.8'
         run:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]

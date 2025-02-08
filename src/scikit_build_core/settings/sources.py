@@ -67,34 +67,34 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _dig_strict(__dict: Mapping[str, Any], *names: str) -> Any:
+def _dig_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
     for name in names:
-        __dict = __dict[name]
-    return __dict
+        _dict = _dict[name]
+    return _dict
 
 
 def _process_bool(value: str) -> bool:
     return value.strip().lower() not in {"0", "false", "off", "no", ""}
 
 
-def _dig_not_strict(__dict: Mapping[str, Any], *names: str) -> Any:
+def _dig_not_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
     for name in names:
-        __dict = __dict.get(name, {})
-    return __dict
+        _dict = _dict.get(name, {})
+    return _dict
 
 
-def _dig_fields(__opt: Any, *names: str) -> Any:
+def _dig_fields(opt: Any, /, *names: str) -> Any:
     for name in names:
-        fields = dataclasses.fields(__opt)
+        fields = dataclasses.fields(opt)
         types = [x.type for x in fields if x.name == name]
         if len(types) != 1:
             msg = f"Could not access {'.'.join(names)}"
             raise KeyError(msg)
-        (__opt,) = types
-    return __opt
+        (opt,) = types
+    return opt
 
 
-def _process_union(target: type[Any]) -> Any:
+def _process_union(target: type[Any], /) -> Any:
     """
     Filters None out of Unions. If a Union only has one item, return that item.
     """
@@ -110,7 +110,7 @@ def _process_union(target: type[Any]) -> Any:
     return target
 
 
-def _process_annotated(target: type[Any]) -> tuple[Any, tuple[Any, ...]]:
+def _process_annotated(target: type[Any], /) -> tuple[Any, tuple[Any, ...]]:
     """
     Splits annotated into raw type and annotations. If not annotated, the annotations will be empty.
     """
@@ -122,7 +122,7 @@ def _process_annotated(target: type[Any]) -> tuple[Any, tuple[Any, ...]]:
     return target, ()
 
 
-def _get_target_raw_type(target: type[Any] | Any) -> Any:
+def _get_target_raw_type(target: type[Any] | Any, /) -> Any:
     """
     Takes a type like ``Optional[str]`` and returns str, or ``Optional[Dict[str,
     int]]`` and returns dict. Returns Union for a Union with more than one
@@ -135,14 +135,14 @@ def _get_target_raw_type(target: type[Any] | Any) -> Any:
     return origin or target
 
 
-def _get_inner_type(__target: type[Any]) -> type[Any]:
+def _get_inner_type(_target: type[Any], /) -> type[Any]:
     """
     Takes a types like ``List[str]`` and returns str,
     or ``Dict[str, int]`` and returns int.
     """
 
-    raw_target = _get_target_raw_type(__target)
-    target = _process_union(__target)
+    raw_target = _get_target_raw_type(_target)
+    target = _process_union(_target)
     if raw_target is list:
         return get_args(target)[0]  # type: ignore[no-any-return]
     if raw_target is dict:
@@ -152,20 +152,20 @@ def _get_inner_type(__target: type[Any]) -> type[Any]:
 
 
 def _nested_dataclass_to_names(
-    __target: type[Any] | Any, *inner: str
+    target: type[Any] | Any, /, *inner: str
 ) -> Iterator[list[str]]:
     """
     Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
     """
 
-    if isinstance(__target, type) and dataclasses.is_dataclass(__target):
-        for field in dataclasses.fields(__target):
+    if isinstance(target, type) and dataclasses.is_dataclass(target):
+        for field in dataclasses.fields(target):
             yield from _nested_dataclass_to_names(field.type, *inner, field.name)
     else:
         yield list(inner)
 
 
-def _dict_with_envvar(target: Any) -> Any:
+def _dict_with_envvar(target: Any, /) -> Any:
     """
     This produces values. Supports "env" and "default" keys.
     """

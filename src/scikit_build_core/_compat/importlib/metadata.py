@@ -20,7 +20,7 @@ def entry_points(*, group: str) -> EntryPoints:
         return importlib.metadata.entry_points(group=group)
 
     epg = importlib.metadata.entry_points()
-    return epg.get(group, [])
+    return epg.get(group, [])  # pylint: disable=no-member
 
 
 def __dir__() -> list[str]:

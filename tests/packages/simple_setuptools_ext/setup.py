@@ -8,6 +8,6 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(),
     extras_require={"test": ["pytest>=6.0"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     license_files=["LICENSE"],
 )

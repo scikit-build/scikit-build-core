@@ -251,13 +251,13 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     else:
         assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
 
-    tags = WheelTag.compute_best(["x86_64"], py_api="cp37")
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp38")
     if sys.implementation.name != "cpython":
         assert "macosx_10_10_x86_64" in str(tags)
         assert "abi3" not in str(tags)
-        assert "cp37" not in str(tags)
+        assert "cp38" not in str(tags)
     else:
-        assert str(tags) == "cp37-abi3-macosx_10_10_x86_64"
+        assert str(tags) == "cp38-abi3-macosx_10_10_x86_64"
 
     tags = WheelTag.compute_best(["x86_64"], py_api="py3")
     assert str(tags) == "py3-none-macosx_10_10_x86_64"

@@ -9,10 +9,6 @@ from scikit_build_core.build._file_processor import each_unignored_file
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 8) and sys.platform.startswith("win"),
-    reason="Python 3.8+ required for symlinks on Windows",
-)
-@pytest.mark.skipif(
     sys.implementation.name == "pypy" and sys.platform.startswith("win"),
     reason="PyPy on Windows does not support symlinks",
 )

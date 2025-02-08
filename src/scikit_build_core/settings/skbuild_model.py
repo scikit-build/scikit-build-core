@@ -177,7 +177,7 @@ class WheelSettings:
     py_api: str = ""
     """
     The Python tags. The default (empty string) will use the default Python
-    version. You can also set this to "cp37" to enable the CPython 3.7+ Stable
+    version. You can also set this to "cp38" to enable the CPython 3.8+ Stable
     ABI / Limited API (only on CPython and if the version is sufficient,
     otherwise this has no effect). Or you can set it to "py3" or "py2.py3" to
     ignore Python ABI compatibility. The ABI tag is inferred from this tag.

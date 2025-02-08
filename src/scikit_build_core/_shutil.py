@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import os
 import stat
 import subprocess
-import sys
 from typing import TYPE_CHECKING, ClassVar
 
 from ._logging import logger
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Iterable
 
 __all__ = ["Run"]
 
@@ -100,12 +98,3 @@ def _fix_all_permissions(directory: str) -> None:
             mode = stat.S_IMODE(entry.stat().st_mode)
             if not mode & stat.S_IWRITE:
                 os.chmod(entry.path, mode | stat.S_IWRITE)  # noqa: PTH101
-
-
-@contextlib.contextmanager
-def fix_win_37_all_permissions(tmpdir: str) -> Generator[None, None, None]:
-    try:
-        yield
-    finally:
-        if sys.version_info < (3, 8) and sys.platform.startswith("win"):
-            _fix_all_permissions(tmpdir)

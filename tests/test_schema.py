@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -29,10 +28,7 @@ SCHEMAS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "filepath",
-    [s for s in SCHEMAS if sys.version_info >= (3, 8) or "pep639" not in str(s)],
-)
+@pytest.mark.parametrize("filepath", SCHEMAS)
 def test_valid_schemas_files(filepath: Path) -> None:
     api = pytest.importorskip("validate_pyproject.api")
 

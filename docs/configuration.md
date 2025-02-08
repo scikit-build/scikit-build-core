@@ -352,7 +352,7 @@ the wheel tags for the version you support:
 
 ```toml
 [tool.scikit-build]
-wheel.py-api = "cp37"
+wheel.py-api = "cp38"
 ```
 
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
@@ -698,8 +698,8 @@ configuration. Recommendations:
 Known limitations:
 
 - Resources (via `importlib.resources`) are not properly supported (yet).
-  Currently experimentally supported except on Python 3.9 (3.7, 3.8, 3.10, 3.11,
-  and 3.12 work). `importlib_resources` may work on Python 3.9.
+  Currently experimentally supported except on Python 3.9 (3.8, 3.10, 3.11,
+  3.12, and 3.13 work). `importlib_resources` may work on Python 3.9.
 
 ```console
 # Very experimental rebuild on initial import feature

@@ -852,7 +852,7 @@ def test_skbuild_overrides_matched_version_if_any_dual(
             [[tool.scikit-build.overrides]]
             if.scikit-build-version = ">=0.10"
             if.any.not-real = true
-            if.any.python-version = ">=3.7"
+            if.any.python-version = ">=3.8"
             also-not-real = true
             """
         )
@@ -875,7 +875,7 @@ def test_skbuild_overrides_matched_version_if_any_match(
             [[tool.scikit-build.overrides]]
             if.any.scikit-build-version = ">=0.10"
             if.any.not-real = true
-            if.python-version = ">=3.7"
+            if.python-version = ">=3.8"
             experimental = true
             """
         )
