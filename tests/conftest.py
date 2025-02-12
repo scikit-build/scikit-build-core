@@ -89,8 +89,6 @@ class VEnv:
         self.purelib = Path(
             self.execute("import sysconfig; print(sysconfig.get_path('purelib'))")
         )
-        if sys.version_info >= (3, 13):
-            self.run("pip", "install", "-U", "pip>=24.1")
 
     @overload
     def run(self, *args: str, capture: Literal[True]) -> str: ...
