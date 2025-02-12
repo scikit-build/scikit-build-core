@@ -70,6 +70,7 @@ def libdir_to_installed(libdir: Path) -> dict[str, str]:
     Convert a mapping of files to modules to a mapping of modules to installed files.
     """
     return {
-        path_to_module(v.relative_to(libdir)): str(v.relative_to(libdir))
+        path_to_module(pth): str(pth)
         for v in scantree(libdir)
+        if is_valid_module(pth := v.relative_to(libdir))
     }

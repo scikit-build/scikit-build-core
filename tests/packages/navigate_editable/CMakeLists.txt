@@ -12,10 +12,13 @@ python_add_library(c_module MODULE src/shared_pkg/c_module.c WITH_SOABI)
 set(CMakeVar "Some_value_C")
 configure_file(src/shared_pkg/data/generated.txt.in
                shared_pkg/data/c_generated.txt)
+configure_file(src/shared_pkg/data/generated.txt.in shared_pkg/data/.hidden)
 
 install(
   TARGETS c_module
   DESTINATION shared_pkg/
   COMPONENT PythonModule)
 install(FILES ${PROJECT_BINARY_DIR}/shared_pkg/data/c_generated.txt
+        DESTINATION shared_pkg/data/)
+install(FILES ${PROJECT_BINARY_DIR}/shared_pkg/data/.hidden
         DESTINATION shared_pkg/data/)
