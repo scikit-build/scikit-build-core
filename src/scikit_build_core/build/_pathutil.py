@@ -28,7 +28,9 @@ def scantree(path: Path) -> Generator[Path, None, None]:
 
 
 def path_to_module(path: Path) -> str:
-    path = path.with_name(path.name.split(".", 1)[0])
+    name, _, _ = path.name.partition(".")
+    assert name, f"Empty name should be filtered by is_valid_module first, got {path}"
+    path = path.with_name(name)
     if path.name == "__init__":
         path = path.parent
     return ".".join(path.parts)
