@@ -1,11 +1,3 @@
-# Testing dependencies not satisfied on epel
-# build, cattrs, hatch-fancy-pypi-readme, pytest-subprocess
-%if 0%{?el10}
-%bcond_with tests
-%else
-%bcond_without tests
-%endif
-
 %global debug_package %{nil}
 
 Name:           python-scikit-build-core
@@ -37,32 +29,12 @@ A next generation Python CMake adapter and Python API for plugins
 %package -n python3-scikit-build-core
 Summary:        %{summary}
 Requires:       cmake
-Recommends:     (ninja-build or make)
-Recommends:     python3-scikit-build-core+pyproject = %{version}-%{release}
-Suggests:       ninja-build
-Suggests:       gcc
-Provides:       bundled(python3dist(pyproject-metadata))
+Requires:       ninja-build
 BuildArch:      noarch
+
+Obsoletes:      python3-scikit-build-core+pyproject < 0.10.7-3
+
 %description -n python3-scikit-build-core %_description
-
-
-# Add %%pyproject_extras_subpkg results manually because BuildArch: noarch is not injected
-# https://src.fedoraproject.org/rpms/python-rpm-macros/pull-request/174
-# %%pyproject_extras_subpkg -n python3-scikit-build-core pyproject
-
-%package -n python3-scikit-build-core+pyproject
-Summary: Metapackage for python3-scikit-build-core: pyproject extras
-Requires: python3-scikit-build-core = %{?epoch:%{epoch}:}%{version}-%{release}
-BuildArch:      noarch
-# Deprecated empty extras package
-# Note: Cannot use Obsoletes + Provides here. python3dist() does not seem to be picked up
-Provides:  deprecated()
-%description -n python3-scikit-build-core+pyproject
-This is a metapackage bringing in pyproject extras requires for
-python3-scikit-build-core.
-It makes sure the dependencies are installed.
-
-%files -n python3-scikit-build-core+pyproject -f %{_pyproject_ghost_distinfo}
 
 
 %prep
@@ -72,7 +44,7 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 
 %generate_buildrequires
-%pyproject_buildrequires %{?with_tests:-x test,test-meta,test-numpy}
+%pyproject_buildrequires -x test,test-meta,test-numpy
 
 
 %build
@@ -86,10 +58,8 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 %check
 %pyproject_check_import
-%if %{with tests}
 %pytest \
     -m "not network"
-%endif
 
 
 %files -n python3-scikit-build-core -f %{pyproject_files}
