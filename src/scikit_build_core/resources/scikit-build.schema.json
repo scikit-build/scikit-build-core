@@ -102,6 +102,10 @@
           },
           "description": "DEPRECATED in 0.10; use build.targets instead.",
           "deprecated": true
+        },
+        "preset": {
+          "type": "string",
+          "description": "Configure preset to use. ``cmake.source-dir`` must still be appropriately defined"
         }
       }
     },
