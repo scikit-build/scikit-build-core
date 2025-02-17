@@ -6,7 +6,7 @@ files_to_sync:
       - "protect .git*"
       - "protect sources"
       - "protect changelog"
-      - "- plans/rpmlint.fmf"
+      - "protect gating.yaml"
   - .packit.yaml
 
 upstream_package_name: scikit-build-core
@@ -20,31 +20,36 @@ targets: &targets
   - epel-10-x86_64
   - epel-10-aarch64
 
-jobs:
-  - &copr_build
+_:
+  # Job templates
+  - &build-in-packit
     job: copr_build
-    trigger: pull_request
+  - &build-in-scikit-build
+    <<: *build-in-packit
+    owner: "@scikit-build"
   - &tests
     job: tests
-    trigger: pull_request
     fmf_path: .distro
-    targets:
-      - fedora-all-x86_64
-      - fedora-all-aarch64
-  - <<: *copr_build
+
+jobs:
+  # Upstream jobs
+  - <<: *build-in-scikit-build
     trigger: release
-    owner: "@scikit-build"
     project: release
   - <<: *tests
     trigger: release
-  - <<: *copr_build
+  - <<: *build-in-scikit-build
     trigger: commit
     branch: main
-    owner: "@scikit-build"
     project: nightly
   - <<: *tests
     trigger: commit
     branch: main
+  - <<: *build-in-packit
+    trigger: pull_request
+  - <<: *tests
+    trigger: pull_request
+  # Downstream jobs
   - job: propose_downstream
     trigger: release
     dist_git_branches:
