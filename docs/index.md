@@ -26,18 +26,22 @@ first Friday of every month at the same time. Our past meeting minutes are
 :maxdepth: 2
 :titlesonly:
 :caption: Guide
-:glob:
 
-getting_started
-configuration
-overrides
-cmakelists
-crosscompile
-migration_guide
-build
-faqs
-projects
-changelog
+guide/getting_started
+guide/cmakelists
+guide/crosscompile
+guide/migration_guide
+guide/build
+guide/faqs
+```
+
+```{toctree}
+:maxdepth: 1
+:titlesonly:
+:caption: Configuration
+
+configuration/index
+configuration/overrides
 ```
 
 ```{toctree}
@@ -47,6 +51,15 @@ changelog
 
 plugins/setuptools
 plugins/hatchling
+```
+
+```{toctree}
+:maxdepth: 1
+:titlesonly:
+:caption: About project
+
+about/projects
+about/changelog
 ```
 
 ```{toctree}
