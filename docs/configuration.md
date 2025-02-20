@@ -543,6 +543,16 @@ You can pass raw arguments directly to the build tool, as well:
 
 Scikit-build-core supports dynamic metadata with three built-in plugins.
 
+:::{warning}
+
+Your package and third-party packages can also extend these with new plugins,
+but this is currently not ready for development outside of scikit-build-core;
+`tool.scikit-build.experimental=true` is required to use plugins that are not
+shipped with scikit-build-core, since the interface is provisional and may
+change between _minor_ versions.
+
+:::
+
 :::{tab} Setuptools-scm
 
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
@@ -646,16 +656,6 @@ This will remove the "dev" tag when it is equal to 0.
 Support for `result` and `remove` added.
 
 ```
-
-:::
-
-:::{warning}
-
-Your package and third-party packages can also extend these with new plugins,
-but this is currently not ready for development outside of scikit-build-core;
-`tool.scikit-build.experimental=true` is required to use plugins that are not
-shipped with scikit-build-core, since the interface is provisional and may
-change between _minor_ versions.
 
 :::
 
