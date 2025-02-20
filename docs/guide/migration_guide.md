@@ -18,13 +18,13 @@ may be out of date.
   Instead, set the minimum required versions in the `[tool.scikit-build]` table:
   `cmake.minimum-version` and `ninja.minimum-version`.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
-  [getting started](./getting_started.md) for more information.
+  [getting started](getting_started.md) for more information.
 - If your project is primarily configured using setup.py or setup.cfg, you will
   need to move the configuration to pyproject.toml. The
   [project metadata spec](https://packaging.python.org/en/latest/specifications/pyproject-toml)
   shows the information that can be placed directly in the project table. For
-  additional metadata, see [our configuration guide](./configuration.md). A
-  useful trick for performing this migration is to change the `build-backend`
+  additional metadata, see [our configuration guide](../configuration/index.md).
+  A useful trick for performing this migration is to change the `build-backend`
   from `skbuild` to `setuptools`, install `hatch`, and run `hatch new --init`.
   This should automatically migrate the configuration to pyproject.toml, after
   which you can change the `build-backend` to `scikit-build-core`.
@@ -59,7 +59,7 @@ python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 
 - The UseCython CMake module distributed with scikit-build is not currently
   supported. For examples on how to use Cython, see
-  [our getting started guide](./getting_started.md) for now.
+  [our getting started guide](getting_started.md) for now.
 - The `SKBUILD_CONFIGURE_OPTIONS` environment variable is now named
   `SKBUILD_CMAKE_ARGS` for consistency.
 - The `SKBUILD_BUILD_OPTIONS` environment variable is not supported. Some

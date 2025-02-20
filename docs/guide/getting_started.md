@@ -108,7 +108,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} pybind11
 
-```{literalinclude} examples/getting_started/pybind11/example.cpp
+```{literalinclude} ../examples/getting_started/pybind11/example.cpp
 :language: cpp
 ```
 
@@ -116,7 +116,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} nanobind
 
-```{literalinclude} examples/getting_started/nanobind/example.cpp
+```{literalinclude} ../examples/getting_started/nanobind/example.cpp
 :language: cpp
 ```
 
@@ -124,11 +124,11 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} SWIG
 
-```{literalinclude} examples/getting_started/swig/example.c
+```{literalinclude} ../examples/getting_started/swig/example.c
 :language: c
 ```
 
-```{literalinclude} examples/getting_started/swig/example.i
+```{literalinclude} ../examples/getting_started/swig/example.i
 :language: swig
 ```
 
@@ -136,7 +136,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} Cython
 
-```{literalinclude} examples/getting_started/cython/example.pyx
+```{literalinclude} ../examples/getting_started/cython/example.pyx
 :language: cython
 ```
 
@@ -144,7 +144,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} C
 
-```{literalinclude} examples/getting_started/c/example.c
+```{literalinclude} ../examples/getting_started/c/example.c
 :language: c
 ```
 
@@ -152,7 +152,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} ABI3
 
-```{literalinclude} examples/getting_started/abi3/example.c
+```{literalinclude} ../examples/getting_started/abi3/example.c
 :language: c
 ```
 
@@ -160,7 +160,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} Fortran
 
-```{literalinclude} examples/getting_started/fortran/example.f
+```{literalinclude} ../examples/getting_started/fortran/example.f
 :language: fortran
 ```
 
@@ -172,7 +172,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} pybind11
 
-```{literalinclude} examples/getting_started/pybind11/pyproject.toml
+```{literalinclude} ../examples/getting_started/pybind11/pyproject.toml
 :language: toml
 ```
 
@@ -180,7 +180,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} nanobind
 
-```{literalinclude} examples/getting_started/nanobind/pyproject.toml
+```{literalinclude} ../examples/getting_started/nanobind/pyproject.toml
 :language: toml
 ```
 
@@ -188,7 +188,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} SWIG
 
-```{literalinclude} examples/getting_started/swig/pyproject.toml
+```{literalinclude} ../examples/getting_started/swig/pyproject.toml
 :language: toml
 ```
 
@@ -196,7 +196,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} Cython
 
-```{literalinclude} examples/getting_started/cython/pyproject.toml
+```{literalinclude} ../examples/getting_started/cython/pyproject.toml
 :language: toml
 ```
 
@@ -204,7 +204,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} C
 
-```{literalinclude} examples/getting_started/c/pyproject.toml
+```{literalinclude} ../examples/getting_started/c/pyproject.toml
 :language: toml
 ```
 
@@ -212,7 +212,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} ABI3
 
-```{literalinclude} examples/getting_started/abi3/pyproject.toml
+```{literalinclude} ../examples/getting_started/abi3/pyproject.toml
 :language: toml
 ```
 
@@ -220,7 +220,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} Fortran
 
-```{literalinclude} examples/getting_started/fortran/pyproject.toml
+```{literalinclude} ../examples/getting_started/fortran/pyproject.toml
 :language: toml
 ```
 
@@ -255,7 +255,7 @@ Now, you'll need a file called `CMakeLists.txt`. This one will do:
 
 ````{tab} pybind11
 
-```{literalinclude} examples/getting_started/pybind11/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/pybind11/CMakeLists.txt
 :language: cmake
 ```
 
@@ -279,7 +279,7 @@ to `pybind11::module`, your choice.
 
 ````{tab} nanobind
 
-```{literalinclude} examples/getting_started/nanobind/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/nanobind/CMakeLists.txt
 :language: cmake
 ```
 
@@ -296,7 +296,7 @@ Nanobind places its config file such that CMake can find it from site-packages.
 
 ````{tab} SWIG
 
-```{literalinclude} examples/getting_started/swig/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/swig/CMakeLists.txt
 :language: cmake
 ```
 
@@ -313,7 +313,7 @@ You'll need to handle the generation of files by SWIG directly.
 
 ````{tab} Cython
 
-```{literalinclude} examples/getting_started/cython/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/cython/CMakeLists.txt
 :language: cmake
 ```
 
@@ -331,7 +331,7 @@ A helper (similar to scikit-build classic) might be added in the future.
 
 ````{tab} C
 
-```{literalinclude} examples/getting_started/c/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/c/CMakeLists.txt
 :language: cmake
 ```
 
@@ -355,7 +355,7 @@ without it).
 
 ````{tab} ABI3
 
-```{literalinclude} examples/getting_started/abi3/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/abi3/CMakeLists.txt
 :language: cmake
 ```
 
@@ -381,7 +381,7 @@ support PyPy).
 
 ````{tab} Fortran
 
-```{literalinclude} examples/getting_started/fortran/CMakeLists.txt
+```{literalinclude} ../examples/getting_started/fortran/CMakeLists.txt
 :language: cmake
 ```
 
