@@ -42,6 +42,7 @@ guide/faqs
 
 configuration/index
 configuration/overrides
+configuration/dynamic
 ```
 
 ```{toctree}
