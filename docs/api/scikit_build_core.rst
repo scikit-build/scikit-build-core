@@ -41,6 +41,14 @@ scikit\_build\_core.errors module
    :show-inheritance:
    :undoc-members:
 
+scikit\_build\_core.format module
+---------------------------------
+
+.. automodule:: scikit_build_core.format
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.program\_search module
 ------------------------------------------
 
