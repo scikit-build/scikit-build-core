@@ -641,11 +641,11 @@ remove = "dev0"
 
 This will remove the "dev" tag when it is equal to 0.
 
-::::{versionchanged} 0.10
+```{versionchanged} 0.10
 
 Support for `result` and `remove` added.
 
-::::
+```
 
 :::
 
