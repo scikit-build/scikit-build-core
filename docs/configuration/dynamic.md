@@ -12,7 +12,7 @@ change between _minor_ versions.
 
 :::
 
-:::{tab} Setuptools-scm
+## Setuptools-scm
 
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
@@ -52,9 +52,7 @@ dynamic_version()
 project(MyPackage VERSION ${PROJECT_VERSION})
 ```
 
-:::
-
-:::{tab} Fancy-pypi-readme
+## Fancy-pypi-readme
 
 You can use
 [hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
@@ -71,9 +69,7 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
-:::
-
-:::{tab} Regex
+## Regex
 
 If you want to pull a string-valued expression (usually version) from an
 existing file, you can the integrated `regex` plugin to pull the information.
@@ -115,8 +111,6 @@ This will remove the "dev" tag when it is equal to 0.
 Support for `result` and `remove` added.
 
 ```
-
-:::
 
 ## Writing metadata
 
