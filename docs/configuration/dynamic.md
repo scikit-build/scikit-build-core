@@ -52,23 +52,6 @@ dynamic_version()
 project(MyPackage VERSION ${PROJECT_VERSION})
 ```
 
-## `readme`: Fancy-pypi-readme
-
-You can use
-[hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
-render your README:
-
-```toml
-[project]
-name = "mypackage"
-dynamic = ["readme"]
-
-[tool.scikit-build]
-metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
-
-# tool.hatch.metadata.hooks.fancy-pypi-readme options here
-```
-
 ## `version`: Regex
 
 If you want to pull a string-valued expression (usually version) from an
@@ -110,6 +93,23 @@ This will remove the "dev" tag when it is equal to 0.
 
 Support for `result` and `remove` added.
 
+```
+
+## `readme`: Fancy-pypi-readme
+
+You can use
+[hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
+render your README:
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["readme"]
+
+[tool.scikit-build]
+metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
+
+# tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
 ## Generate files with dynamic metadata
