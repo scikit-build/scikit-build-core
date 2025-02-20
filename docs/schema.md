@@ -1,3 +1,5 @@
+(schema)=
+
 # Schema
 
 The full schema for the `tool.scikit-build` table is below:
