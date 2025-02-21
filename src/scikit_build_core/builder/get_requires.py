@@ -5,6 +5,7 @@ import functools
 import importlib.util
 import os
 import sysconfig
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from packaging.tags import sys_tags
@@ -64,6 +65,28 @@ def _load_scikit_build_settings(
     config_settings: Mapping[str, list[str] | str] | None = None,
 ) -> ScikitBuildSettings:
     return SettingsReader.from_file("pyproject.toml", config_settings).settings
+
+
+@dataclasses.dataclass()
+class RootPathResolver:
+    """Handle ``{root:uri}`` like formatting similar to ``hatchling``."""
+
+    path: Path = dataclasses.field(default_factory=Path)
+
+    def __post_init__(self) -> None:
+        self.path = self.path.resolve()
+
+    def __format__(self, fmt: str) -> str:
+        command, _, rest = fmt.partition(":")
+        if command == "parent":
+            parent = RootPathResolver(self.path.parent)
+            return parent.__format__(rest)
+        if command == "uri" and rest == "":
+            return self.path.as_uri()
+        if command == "" and rest == "":
+            return str(self)
+        msg = f"Could not handle format: {fmt}"
+        raise ValueError(msg)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -139,6 +162,9 @@ class GetRequires:
     def dynamic_metadata(self) -> Generator[str, None, None]:
         if self.settings.fail:
             return
+
+        for build_require in self.settings.build.requires:
+            yield build_require.format(root=RootPathResolver())
 
         for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:
