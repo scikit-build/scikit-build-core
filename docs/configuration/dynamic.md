@@ -112,6 +112,45 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
+## `build-system.requires`: Scikit-build-core's `build.requires`
+
+If you need to inject and manipulate additional `build-system.requires`, you can
+use the `build.requires`. This is intended to be used in combination with
+[](./overrides.md).
+
+This is not technically a dynamic metadata and thus does not have to have the
+`dynamic` field defined, and it is not defined under the `metadata` table, but
+similar to the other dynamic metadata it injects the additional
+`build-system.requires`.
+
+```toml
+[package]
+name = "mypackage"
+
+[tool.scikit-build]
+build.requires = ["foo"]
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = false
+build.requires = ["foo @ {root:uri}/foo"]
+```
+
+This example shows a common use-case where the package has a default
+`build-system.requires` pointing to the package `foo` in the PyPI index, but
+when built from the original git checkout or equivalent, the local folder is
+used as dependency instead by resolving the `{root:uri}` to a file uri pointing
+to the folder where the `pyproject.toml` is located.
+
+```{note}
+In order to be compliant with the package index, when building from `sdist`, the
+`build.requires` **MUST NOT** have any `@` redirects. This rule may be later
+enforced explicitly.
+```
+
+```{versionadded} 0.11
+
+```
+
 ## Generate files with dynamic metadata
 
 You can write out metadata to file(s) as well. Other info might become available
