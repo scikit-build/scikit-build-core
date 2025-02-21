@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import dataclasses
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
@@ -13,6 +15,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "PyprojectFormatter",
+    "RootPathResolver",
     "pyproject_format",
 ]
 
@@ -32,6 +35,7 @@ class PyprojectFormatter(TypedDict, total=False):
     wheel_tag: str
     build_type: str
     state: str
+    root: RootPathResolver
 
 
 def pyproject_format(
@@ -51,6 +55,9 @@ def pyproject_format(
     # First set all known values
     res = PyprojectFormatter(
         cache_tag=sys.implementation.cache_tag,
+        # We are assuming the Path.cwd always evaluates to the folder containing pyproject.toml
+        # as part of PEP517 standard.
+        root=RootPathResolver(),
     )
     # Then compute all optional keys depending on the function input
     if settings is not None:
@@ -61,3 +68,25 @@ def pyproject_format(
         res["state"] = state
     # Construct the final dict including the always known keys
     return res
+
+
+@dataclasses.dataclass()
+class RootPathResolver:
+    """Handle ``{root:uri}`` like formatting similar to ``hatchling``."""
+
+    path: Path = dataclasses.field(default_factory=Path)
+
+    def __post_init__(self) -> None:
+        self.path = self.path.resolve()
+
+    def __format__(self, fmt: str) -> str:
+        command, _, rest = fmt.partition(":")
+        if command == "parent":
+            parent = RootPathResolver(self.path.parent)
+            return parent.__format__(rest)
+        if command == "uri" and rest == "":
+            return self.path.as_uri()
+        if command == "" and rest == "":
+            return str(self)
+        msg = f"Could not handle format: {fmt}"
+        raise ValueError(msg)
