@@ -79,6 +79,7 @@ class CMaker:
     build_type: str
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
+    prefix_roots: dict[str, list[Path]] = dataclasses.field(default_factory=dict)
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
@@ -182,6 +183,17 @@ class CMaker:
                     f'set(CMAKE_PREFIX_PATH [===[{prefix_dirs_str}]===] CACHE PATH "" FORCE)\n'
                 )
                 f.write('set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE "BOTH" CACHE PATH "")\n')
+
+            if self.prefix_roots:
+                for pkg, path_list in self.prefix_roots.items():
+                    paths_str = ";".join(map(str, path_list)).replace("\\", "/")
+                    f.write(
+                        f'set({pkg}_ROOT [===[{paths_str}]===] CACHE PATH "" FORCE)\n'
+                    )
+                    # Available since CMake 3.27 with CMP0144
+                    f.write(
+                        f'set({pkg.upper()}_ROOT [===[{paths_str}]===] CACHE PATH "" FORCE)\n'
+                    )
 
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(

@@ -6,7 +6,7 @@ project(
   VERSION 2.3.4)
 
 find_package(ExamplePkg REQUIRED)
-
+find_package(ExampleRoot REQUIRED)
 include(ExampleInclude)
 
 if(NOT EXAMPLE_INCLUDE_FOUND)

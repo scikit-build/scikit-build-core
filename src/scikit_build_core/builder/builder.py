@@ -120,6 +120,21 @@ class Builder:
     def get_generator(self, *args: str) -> str | None:
         return self.config.get_generator(*self.get_cmake_args(), *args)
 
+    def _get_entry_point_search_path(self, entry_point: str) -> dict[str, list[Path]]:
+        """Get the search path dict from the entry points"""
+        search_paths = {}
+        eps = metadata.entry_points(group=entry_point)
+        if eps:
+            logger.debug(
+                "Loading search paths {} from entry-points: {}", entry_point, len(eps)
+            )
+            for ep in eps:
+                ep_value = _sanitize_path(resources.files(ep.load()))
+                logger.debug("{}: {} -> {}", ep.name, ep.value, ep_value)
+                if ep_value:
+                    search_paths[ep.name] = ep_value
+        return search_paths
+
     def configure(
         self,
         *,
@@ -136,16 +151,25 @@ class Builder:
         }
 
         # Add any extra CMake modules
-        eps = metadata.entry_points(group="cmake.module")
         self.config.module_dirs.extend(
-            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+            p
+            for ep_paths in self._get_entry_point_search_path("cmake.module").values()
+            for p in ep_paths
         )
+        logger.debug("cmake.modules: {}", self.config.module_dirs)
 
         # Add any extra CMake prefixes
-        eps = metadata.entry_points(group="cmake.prefix")
         self.config.prefix_dirs.extend(
-            p for ep in eps for p in _sanitize_path(resources.files(ep.load()))
+            p
+            for ep_paths in self._get_entry_point_search_path("cmake.prefix").values()
+            for p in ep_paths
         )
+        logger.debug("cmake.prefix: {}", self.config.prefix_dirs)
+
+        # Add all CMake roots
+        # TODO: Check for unique uppercase names
+        self.config.prefix_roots.update(self._get_entry_point_search_path("cmake.root"))
+        logger.debug("cmake.root: {}", self.config.prefix_roots)
 
         # Add site-packages to the prefix path for CMake
         site_packages = Path(sysconfig.get_path("purelib"))
