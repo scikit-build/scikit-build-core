@@ -67,6 +67,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "conftabs",
     "sphinx-jsonschema",
+    "sphinx_tippy",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -94,6 +95,12 @@ intersphinx_mapping = {
     "setuptools": ("https://setuptools.pypa.io/en/latest", None),
     "hatchling": ("https://hatch.pypa.io/latest", None),
 }
+tippy_rtd_urls = [
+    val[0]
+    for key, val in intersphinx_mapping.items()
+    # Only works with RTD hosted intersphinx
+    if key not in ("hatchling", "python")
+]
 
 nitpick_ignore = [
     ("py:class", "setuptools.dist.Distribution"),
