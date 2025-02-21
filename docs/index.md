@@ -43,6 +43,7 @@ guide/faqs
 configuration/index
 configuration/overrides
 configuration/dynamic
+configuration/formatted
 ```
 
 ```{toctree}

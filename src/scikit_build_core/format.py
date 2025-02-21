@@ -32,10 +32,15 @@ class PyprojectFormatter(TypedDict, total=False):
     """
 
     cache_tag: str
+    """Tag used by the import machinery in the filenames of cached modules, i.e. ``sys.implementation.cache_tag``."""
     wheel_tag: str
+    """The tags as computed for the wheel."""
     build_type: str
-    state: str
+    """Build type passed as ``cmake.build_type``."""
+    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
+    """The state of the build."""
     root: RootPathResolver
+    """Root path of the current project."""
 
 
 def pyproject_format(
