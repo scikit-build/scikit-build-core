@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import dataclasses
 import sys
+import typing
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
@@ -43,6 +44,20 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
 
 
+@typing.overload
+def pyproject_format(
+    *,
+    settings: ScikitBuildSettings,
+    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
+    | None = ...,
+    tags: WheelTag | None = ...,
+) -> PyprojectFormatter: ...
+
+
+@typing.overload
+def pyproject_format(*, dummy: Literal[True]) -> dict[str, str]: ...
+
+
 def pyproject_format(
     *,
     settings: ScikitBuildSettings | None = None,
@@ -57,16 +72,17 @@ def pyproject_format(
     if dummy:
         # Return a dict with all the known keys but with values replaced with dummy values
         return {key: "*" for key in PyprojectFormatter.__annotations__}
+
+    assert settings is not None
     # First set all known values
     res = PyprojectFormatter(
         cache_tag=sys.implementation.cache_tag,
         # We are assuming the Path.cwd always evaluates to the folder containing pyproject.toml
         # as part of PEP517 standard.
         root=RootPathResolver(),
+        build_type=settings.cmake.build_type,
     )
     # Then compute all optional keys depending on the function input
-    if settings is not None:
-        res["build_type"] = settings.cmake.build_type
     if tags is not None:
         res["wheel_tag"] = str(tags)
     if state is not None:
