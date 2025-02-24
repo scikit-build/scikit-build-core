@@ -6,7 +6,6 @@ import copy
 import importlib.metadata
 import os
 import shutil
-import sys
 import sysconfig
 import tempfile
 import typing
@@ -24,6 +23,7 @@ from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.get_requires import GetRequires
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
 
 __all__ = ["ScikitBuildHook"]
@@ -162,10 +162,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         build_dir = (
             Path(
                 settings.build_dir.format(
-                    cache_tag=sys.implementation.cache_tag,
-                    wheel_tag=str(tags),
-                    build_type=settings.cmake.build_type,
-                    state=state,
+                    **pyproject_format(
+                        settings=settings,
+                        tags=tags,
+                        state=state,
+                    )
                 )
             )
             if settings.build_dir

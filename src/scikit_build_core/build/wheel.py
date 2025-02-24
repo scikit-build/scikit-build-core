@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 import os
 import shutil
-import sys
 import sysconfig
 import tempfile
 from collections.abc import Mapping
@@ -20,6 +19,7 @@ from ..builder.builder import Builder, archs_to_tags, get_archs
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
+from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
@@ -279,10 +279,11 @@ def _build_wheel_impl_impl(
             build_dir = (
                 Path(
                     settings.build_dir.format(
-                        cache_tag=sys.implementation.cache_tag,
-                        wheel_tag=str(tags),
-                        build_type=settings.cmake.build_type,
-                        state=state,
+                        **pyproject_format(
+                            settings=settings,
+                            tags=tags,
+                            state=state,
+                        )
                     )
                 )
                 if settings.build_dir
