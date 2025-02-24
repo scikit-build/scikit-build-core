@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import pathspec
 
+from scikit_build_core.format import pyproject_format
+
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
@@ -51,12 +53,7 @@ def each_unignored_file(
         if p != Path(".gitignore")
     }
 
-    exclude_build_dir = build_dir.format(
-        cache_tag="*",
-        wheel_tag="*",
-        build_type="*",
-        state="*",
-    )
+    exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
 
     exclude_lines = (
         [*EXCLUDE_LINES, exclude_build_dir] if exclude_build_dir else EXCLUDE_LINES
