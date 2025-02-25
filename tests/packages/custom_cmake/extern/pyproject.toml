@@ -11,3 +11,6 @@ any = "custom_cmake_testing_stuff.cmake_modules"
 
 [project.entry-points."cmake.prefix"]
 any = "custom_cmake_testing_stuff.cmake_prefix"
+
+[project.entry-points."cmake.root"]
+ExampleRoot = "custom_cmake_testing_stuff.cmake_root"

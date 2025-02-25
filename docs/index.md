@@ -44,6 +44,7 @@ configuration/index
 configuration/overrides
 configuration/dynamic
 configuration/formatted
+configuration/search_paths
 ```
 
 ```{toctree}

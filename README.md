@@ -314,6 +314,10 @@ messages.after-failure = ""
 # A message to print after a successful build.
 messages.after-success = ""
 
+# Add the python build environment site_packages folder to the CMake prefix
+# paths.
+search.site-packages = true
+
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 

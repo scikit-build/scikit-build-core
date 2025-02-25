@@ -407,6 +407,17 @@
         }
       }
     },
+    "search": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "site-packages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Add the python build environment site_packages folder to the CMake prefix paths."
+        }
+      }
+    },
     "metadata": {
       "type": "object",
       "description": "List dynamic metadata fields and hook locations in this table.",
@@ -617,6 +628,9 @@
           },
           "messages": {
             "$ref": "#/properties/messages"
+          },
+          "search": {
+            "$ref": "#/properties/search"
           },
           "metadata": {
             "$ref": "#/properties/metadata"
