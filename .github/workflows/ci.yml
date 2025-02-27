@@ -127,7 +127,7 @@ jobs:
         if: matrix.python-version == 'pypy-3.8'
         run:
           pip install
-          -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
+          -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools] pytest-xdist
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"

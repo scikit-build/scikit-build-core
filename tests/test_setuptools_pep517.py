@@ -101,7 +101,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
-def test_toml_pep517_sdist(tmp_path: Path):
+def test_toml_sdist(tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
         Name: cmake-example
@@ -152,7 +152,7 @@ def test_toml_pep517_sdist(tmp_path: Path):
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
-def test_toml_pep517_wheel(virtualenv, tmp_path: Path):
+def test_toml_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
@@ -183,7 +183,7 @@ def test_toml_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_mixed_setuptools")
-def test_pep517_mixed_wheel(virtualenv, tmp_path: Path):
+def test_mixed_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("mixed_setuptools-3.1.4-*.whl")

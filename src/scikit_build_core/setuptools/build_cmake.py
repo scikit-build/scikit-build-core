@@ -115,7 +115,7 @@ class BuildCMake(setuptools.Command):
         _validate_settings(settings)
 
         build_tmp_folder = Path(self.build_temp)
-        build_temp = build_tmp_folder / "_skbuild"  # TODO: include python platform
+        build_temp = build_tmp_folder / "_skbuild"
 
         dist = self.distribution
         dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
