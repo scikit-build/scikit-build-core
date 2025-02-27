@@ -120,7 +120,7 @@ jobs:
         if: matrix.python-version != 'pypy-3.8'
         run:
           uv pip install
-          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
+          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools] pytest-xdist
           --system
 
       - name: Install package (pip)
@@ -132,7 +132,7 @@ jobs:
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
         run: >-
-          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n auto
           --durations=20
 
       - name: Test package (two attempts)
@@ -144,7 +144,7 @@ jobs:
           timeout_seconds: 5
           command: >-
             pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-            --durations=20
+            --durations=20 -n auto
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5

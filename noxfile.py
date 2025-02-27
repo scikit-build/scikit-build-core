@@ -63,7 +63,7 @@ def _run_tests(
     run_args: Sequence[str] = (),
     extras: Sequence[str] = (),
 ) -> None:
-    posargs = list(session.posargs)
+    posargs = list(session.posargs) or ["-n", "auto"]
     env = {"PIP_DISABLE_PIP_VERSION_CHECK": "1"}
 
     _prepare_cmake_ninja(session)
@@ -74,7 +74,7 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
 
     install_arg = f"-e.[{','.join(_extras)}]"
-    session.install(install_arg, *install_args, silent=False)
+    session.install(install_arg, *install_args, "pytest-xdist", silent=False)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
