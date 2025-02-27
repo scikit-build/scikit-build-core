@@ -15,7 +15,7 @@ build:
   # up tags properly
   jobs:
     post_checkout:
-      - git fetch --unshallow || true
+      - git fetch --unshallow
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
