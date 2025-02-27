@@ -1,5 +1,69 @@
 # Changelog
 
+## Version 0.11.0
+
+This version adds support for PEP 639 (license expressions) and updates the
+default METADATA version 2.2. Support for Python 3.7 has been removed. You can
+use `build.requires` to inject build requirements using overrides.
+
+Features:
+
+- Update vendored pyproject-metadata (PEP 639 support) by @henryiii in #917
+- 0.11+ default to metadata 2.2 by @henryiii in #986
+- Rework CMake search path settings and add `cmake.root` by @LecrisUT in #880
+- `SKBUILD_SABI_VERSION` by @henryiii in #962
+- Support TOML lists in `cmake.define` by @alexreinking in #921
+- Add new field `build.requires` by @LecrisUT in #992
+- Drop python<=3.7 support by @kloczek in #769
+- Setuptools plugin: pyproject-toml only config support by @henryiii in #975
+- Setuptools plugin: error for `cmake_install_target` by @henryiii in #976
+
+Fixes:
+
+- Lock during experimental `editable.rebuild` by @hauntsaninja in #968
+- Add known wheels for armv7l by @mayeut in #960
+- Ignore `build-dir` automatically by @henryiii in #916
+- Longer timeout on Windows by @henryiii in #974
+- `path_to_module` should handle hidden files (e.g. `.clang-tidy`) correctly by
+  @tae-jun in #987
+- Timeout checking cmake/ninja by @henryiii in #973
+
+Internal:
+
+- Add a `format` module that is used in the expansion of `pyproject.toml` by
+  @LecrisUT in #998
+- Bump Ruff to 0.8.0 by @AlexWaygood in #949
+- Add citation by @henryiii in #945
+- Vendor updates by @henryiii in #918
+
+CI and testing:
+
+- Correct the function prototype defined in the stub file in `simplest_c`
+  example by @LinZhihao-723 in #937
+- Synchronize with Fedora downstream by @LecrisUT in #884
+- Fix RTD builds when last git tag is more than 50 commits behind by
+  @agriyakhetarpal in #1001
+- Tighten up permissions a bit by @henryiii in #983
+- `tmt` tests improvements by @LecrisUT in #899
+- Update deployment a bit by @henryiii in #922
+- Use astral-sh/setup-uv instead by @henryiii in #923
+- Simpler noxfile by @henryiii in #924
+
+Docs:
+
+- `sphinx-apidoc` changed its mind by @LecrisUT in #996
+- Fix Google meet reference to use updated link by @jcfr in #931
+- Clarify docs for activating stable ABI by @eirrgang in #940
+- Consistently use backticks to reference Python module components by @jcfr in
+  #956
+- Fix instructions to check if `Development.SABIModule` was requested by @jcfr
+  in #957
+- Add some notes and warnings about cross-compilation by @henryiii in #985
+- Add sphinx-tippy by @LecrisUT in #1000
+- Correct the order of entry-points and CMake variables by @njzjz in #948
+- Quickstart updates by @henryiii in #939
+- Some restructuring by @LecrisUT in #997
+
 ## Version 0.10.7
 
 This version has three fixes related to advanced usages of overrides.
