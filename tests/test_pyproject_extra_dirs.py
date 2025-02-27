@@ -12,13 +12,13 @@ from pathutils import contained
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_filepath_pure")
-def test_pep517_wheel_extra_dirs(monkeypatch):
+def test_pep517_wheel_extra_dirs(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "SOME_DEFINE3=baz;SOME_DEFINE4=baz")
     monkeypatch.setenv("SKBUILD_CMAKE_ARGS", "-DSOME_ARGS1=baz")
 
-    dist = Path("dist")
+    dist = tmp_path / "dist"
     out = build_wheel(
-        "dist",
+        str(dist),
         {"cmake.define.SOME_DEFINE2": "bar", "cmake.define.SOME_DEFINE3": "bar"},
     )
     (wheel,) = dist.glob("cmake_dirs-0.0.1-*.whl")

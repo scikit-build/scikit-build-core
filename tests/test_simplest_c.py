@@ -1,4 +1,3 @@
-import shutil
 import tarfile
 import zipfile
 from pathlib import Path
@@ -16,8 +15,6 @@ SIMPLEST = DIR / "packages/simplest_c"
 def test_pep517_sdist(tmp_path, monkeypatch):
     dist = tmp_path.resolve() / "dist"
     monkeypatch.chdir(SIMPLEST)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
 
     out = build_sdist(str(dist))
 
@@ -54,8 +51,6 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(SIMPLEST)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
     out = build_wheel(str(dist), config_settings={"install.components": component})
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
@@ -104,8 +99,6 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(SIMPLEST)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
 
     out = build_wheel(
         str(dist),

@@ -25,7 +25,7 @@ def compute_uncompressed_hash(inp: Path):
 
 @pytest.mark.network
 @pytest.mark.integration
-def test_pep518_sdist(isolated, package_simple_pyproject_ext):
+def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
         Metadata-Version: 2.2
@@ -38,9 +38,10 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
         """
     )
 
+    dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
-    isolated.module("build", "--sdist")
-    (sdist,) = Path("dist").iterdir()
+    isolated.module("build", "--sdist", f"--outdir={dist}")
+    (sdist,) = dist.iterdir()
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
 
     if not sys.platform.startswith(("win", "cygwin")):
@@ -69,7 +70,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.usefixtures("package_sdist_config")
-def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
+def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: Path):
     cleanup_overwrite.write_text("set(MY_VERSION fiddlesticks)")
 
     correct_metadata = textwrap.dedent(
@@ -81,9 +82,10 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
         """
     )
 
+    dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
-    isolated.module("build", "--sdist")
-    (sdist,) = Path("dist").iterdir()
+    isolated.module("build", "--sdist", f"--outdir={dist}")
+    (sdist,) = dist.iterdir()
     assert sdist.name == "sdist_config-0.1.0.tar.gz"
 
     with tarfile.open(sdist) as f:
@@ -117,12 +119,14 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite):
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
 def test_pep518_wheel_sdist_with_cmake_config(
-    isolated, build_args, capfd, cleanup_overwrite
+    isolated, build_args, capfd, cleanup_overwrite, tmp_path: Path
 ):
+    dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
     isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
+        f"--outdir={dist}",
         *build_args,
     )
     out, err = capfd.readouterr()
@@ -133,7 +137,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
         else:
             assert "Using integrated pybind11" in out
 
-    (wheel,) = Path("dist").glob("sdist_config-0.1.0-*.whl")
+    (wheel,) = dist.glob("sdist_config-0.1.0-*.whl")
 
     with zipfile.ZipFile(wheel) as zf:
         file_names = {Path(n).parts[0] for n in zf.namelist()}
@@ -165,14 +169,16 @@ def test_pep518_wheel_sdist_with_cmake_config(
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-def test_pep518_wheel(isolated, build_args):
+def test_pep518_wheel(isolated, build_args, tmp_path: Path):
+    dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
     isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
+        f"--outdir={dist}",
         *build_args,
     )
-    (wheel,) = Path("dist").glob("cmake_example-0.0.1-*.whl")
+    (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
 
     with zipfile.ZipFile(wheel) as zf:
         file_paths = {Path(n) for n in zf.namelist()}
@@ -212,13 +218,14 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
     build_dir.mkdir()
     build_dir = build_dir.resolve()
 
-    dist = Path("dist")
+    dist = tmp_path / "dist"
 
     for _ in range(2):
         shutil.rmtree(dist, ignore_errors=True)
         isolated.module(
             "build",
             *build_args,
+            f"--outdir={dist}",
             "--config-setting=logging.level=DEBUG",
             f"--config-setting=build-dir={build_dir}",
         )

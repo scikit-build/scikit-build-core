@@ -13,9 +13,12 @@ from scikit_build_core.build import (
 @pytest.mark.configure
 @pytest.mark.usefixtures("broken_fallback")
 @pytest.mark.parametrize("broken_define", ["BROKEN_CMAKE", "BROKEN_CODE"])
-def test_broken_code(broken_define: str, capfd: pytest.CaptureFixture[str]):
-    build_wheel("dist", {f"cmake.define.{broken_define}": "1"})
-    wheel = Path("dist") / "broken_fallback-0.0.1-py3-none-any.whl"
+def test_broken_code(
+    broken_define: str, capfd: pytest.CaptureFixture[str], tmp_path: Path
+):
+    dist = tmp_path / "dist"
+    build_wheel(str(dist), {f"cmake.define.{broken_define}": "1"})
+    wheel = dist / "broken_fallback-0.0.1-py3-none-any.whl"
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
 

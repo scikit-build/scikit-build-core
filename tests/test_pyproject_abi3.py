@@ -23,13 +23,11 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv, capsys):
     dist = tmp_path / "dist"
     dist.mkdir()
     monkeypatch.chdir(ABI_PKG)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
     if Path("build").is_dir():
         shutil.rmtree("build")
 
     out = build_wheel(str(dist))
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert "This is a message after success" in stdout
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
     assert wheel == dist / out

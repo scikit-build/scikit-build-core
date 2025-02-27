@@ -37,8 +37,6 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     src = tmp_path / "src"
     shutil.copytree(ABI_PKG, src)
     monkeypatch.chdir(src)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
 
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
