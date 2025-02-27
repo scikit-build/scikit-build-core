@@ -120,8 +120,8 @@ jobs:
         if: matrix.python-version != 'pypy-3.8'
         run:
           uv pip install
-          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools] pytest-xdist
-          --system
+          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
+          pytest-xdist --system
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
@@ -132,8 +132,8 @@ jobs:
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
         run: >-
-          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n auto
-          --durations=20
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
+          auto --durations=20
 
       - name: Test package (two attempts)
         uses: nick-fields/retry@v3
