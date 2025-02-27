@@ -43,7 +43,7 @@ def compute_uncompressed_hash(inp: Path) -> str:
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_sdist():
+def test_pep517_sdist(tmp_path: Path):
     expected_metadata = (
         inspect.cleandoc(
             """
@@ -57,8 +57,8 @@ def test_pep517_sdist():
         )
         + "\n\n"
     )
-    dist = Path("dist")
-    out = build_sdist("dist")
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
@@ -83,11 +83,11 @@ def test_pep517_sdist():
 
 
 @mark_hashes_different
-def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext):
+def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext, tmp_path: Path):
     # Unset SOURCE_DATE_EPOCH in order to guarantee the hash match
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
-    dist = Path("dist")
-    out = build_sdist("dist")
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
     sdist = dist / out
     hash = compute_uncompressed_hash(sdist)
     assert hash == package_simple_pyproject_ext.sdist_hash
@@ -99,18 +99,17 @@ def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext):
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_sdist_time_hash():
-    dist = Path("dist")
+def test_pep517_sdist_time_hash(tmp_path: Path):
+    dist = tmp_path / "dist"
 
-    out = build_sdist("dist")
+    out = build_sdist(str(dist))
     sdist = dist / out
     hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
 
     time.sleep(2)
     Path("src/main.cpp").touch()
 
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+    shutil.rmtree(dist)
 
     out = build_sdist(str(dist))
     sdist = dist / out
@@ -121,17 +120,16 @@ def test_pep517_sdist_time_hash():
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_sdist_time_hash_nonreproducable():
-    dist = Path("dist")
+def test_pep517_sdist_time_hash_nonreproducable(tmp_path: Path):
+    dist = tmp_path / "dist"
 
-    out = build_sdist("dist", {"sdist.reproducible": "false"})
+    out = build_sdist(str(dist), {"sdist.reproducible": "false"})
     sdist = dist / out
     hash1 = hashlib.sha256(sdist.read_bytes()).hexdigest()
 
     time.sleep(2)
 
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+    shutil.rmtree(dist)
 
     out = build_sdist(str(dist))
     sdist = dist / out
@@ -144,9 +142,9 @@ def test_pep517_sdist_time_hash_nonreproducable():
 @mark_hashes_different
 @pytest.mark.parametrize("reverse_order", [False, True])
 def test_pep517_sdist_time_hash_set_epoch(
-    monkeypatch, reverse_order, package_simple_pyproject_ext
+    monkeypatch, reverse_order, package_simple_pyproject_ext, tmp_path: Path
 ):
-    dist = Path("dist")
+    dist = tmp_path / "dist"
     monkeypatch.setenv(
         "SOURCE_DATE_EPOCH", package_simple_pyproject_ext.source_date_epoch
     )
@@ -176,11 +174,12 @@ def test_pep517_sdist_time_hash_set_epoch(
         ("SKBUILD_CMAKE_ARGS", "-DCMAKE_C_FLAGS=-DFOO=1 -DBAR="),
     ],
 )
-def test_passing_cxx_flags(monkeypatch, env_var, setting):
+def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
     # Note: This is sensitive to the types of quotes for SKBUILD_CMAKE_ARGS
     monkeypatch.setenv(env_var, setting)
-    build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
-    (wheel,) = Path("dist").glob("cmake_example-0.0.1-py3-none-*.whl")
+    dist = tmp_path / "dist"
+    build_wheel(str(dist), {"cmake.targets": ["cmake_example"]})  # Could leave empty
+    (wheel,) = dist.glob("cmake_example-0.0.1-py3-none-*.whl")
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
 
@@ -198,9 +197,11 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_wheel(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist", {"cmake.targets": ["cmake_example"]})  # Could leave empty
+def test_pep517_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(
+        str(dist), {"cmake.targets": ["cmake_example"]}
+    )  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -248,9 +249,9 @@ def test_pep517_wheel(virtualenv):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_simple_pyproject_source_dir")
-def test_pep517_wheel_source_dir(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist", config_settings={"skbuild.wheel.build-tag": "1foo"})
+def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist), config_settings={"skbuild.wheel.build-tag": "1foo"})
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -306,18 +307,17 @@ def test_pep517_wheel_source_dir(virtualenv):
 @pytest.mark.skip(reason="Doesn't work yet")
 @pytest.mark.compile
 @pytest.mark.configure
-def test_pep517_wheel_time_hash(monkeypatch):
+def test_pep517_wheel_time_hash(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "12345")
-    dist = Path("dist")
-    out = build_wheel("dist")
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
     wheel = dist / out
     hash1 = hashlib.sha256(wheel.read_bytes()).hexdigest()
 
     time.sleep(2)
     Path("src/main.cpp").touch()
 
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
+    shutil.rmtree(dist)
 
     out = build_wheel(str(dist))
     wheel = dist / out
@@ -385,7 +385,7 @@ def test_pep639_license_files_metadata():
 
 
 @pytest.mark.usefixtures("package_pep639_pure")
-def test_pep639_license_files_sdist():
+def test_pep639_license_files_sdist(tmp_path: Path):
     expected_metadata = (
         inspect.cleandoc(
             """
@@ -400,8 +400,8 @@ def test_pep639_license_files_sdist():
         + "\n\n"
     )
 
-    dist = Path("dist")
-    out = build_sdist("dist")
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
     assert sdist.name == "pep639_pure-0.1.0.tar.gz"
@@ -425,9 +425,9 @@ def test_pep639_license_files_sdist():
 
 
 @pytest.mark.usefixtures("package_pep639_pure")
-def test_pep639_license_files_wheel():
-    dist = Path("dist")
-    out = build_wheel("dist", {})
+def test_pep639_license_files_wheel(tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist), {})
     (wheel,) = dist.glob("pep639_pure-0.1.0-*.whl")
     assert wheel == dist / out
 

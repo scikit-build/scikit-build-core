@@ -40,10 +40,7 @@ ninja_info = best_program(get_ninja_programs(), version=SpecifierSet(">=1.10"))
 )
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"
-    dist.mkdir()
     monkeypatch.chdir(FORTRAN_EXAMPLE)
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("fibby-0.0.1-*.whl")
     assert wheel == dist / out

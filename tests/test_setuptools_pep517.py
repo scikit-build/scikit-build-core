@@ -14,7 +14,7 @@ setuptools_version = Version(importlib.metadata.version("setuptools"))
 
 
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
-def test_pep517_sdist():
+def test_pep517_sdist(tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
         Name: cmake-example
@@ -29,8 +29,8 @@ def test_pep517_sdist():
     )
     metadata_set = set(correct_metadata.strip().splitlines())
 
-    dist = Path("dist")
-    out = build_sdist("dist")
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
     assert sdist.name in {"cmake-example-0.0.1.tar.gz", "cmake_example-0.0.1.tar.gz"}
@@ -69,9 +69,9 @@ def test_pep517_sdist():
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
-def test_pep517_wheel(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist")
+def test_pep517_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -101,7 +101,7 @@ def test_pep517_wheel(virtualenv):
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
-def test_toml_pep517_sdist():
+def test_toml_sdist(tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
         Name: cmake-example
@@ -113,8 +113,8 @@ def test_toml_pep517_sdist():
     )
     metadata_set = set(correct_metadata.strip().splitlines())
 
-    dist = Path("dist")
-    out = build_sdist("dist")
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
     assert sdist.name in {"cmake-example-0.0.1.tar.gz", "cmake_example-0.0.1.tar.gz"}
@@ -152,9 +152,9 @@ def test_toml_pep517_sdist():
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
-def test_toml_pep517_wheel(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist")
+def test_toml_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -183,9 +183,9 @@ def test_toml_pep517_wheel(virtualenv):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_mixed_setuptools")
-def test_pep517_mixed_wheel(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist")
+def test_mixed_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
     (wheel,) = dist.glob("mixed_setuptools-3.1.4-*.whl")
     assert wheel == dist / out
 

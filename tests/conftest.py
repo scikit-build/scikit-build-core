@@ -192,9 +192,6 @@ def process_package(
     package_dir = tmp_path / "pkg"
     shutil.copytree(DIR / "packages" / package.name, package_dir)
     monkeypatch.chdir(package_dir)
-    # Just in case this gets littered into the source tree, clear it out
-    if Path("dist").is_dir():
-        shutil.rmtree("dist")
 
 
 @pytest.fixture

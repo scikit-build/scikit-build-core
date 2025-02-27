@@ -121,19 +121,20 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
+          pytest-xdist --system
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
         run:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
+          pytest-xdist
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
         run: >-
-          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-          --durations=20
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
+          auto --durations=20
 
       - name: Test package (two attempts)
         uses: nick-fields/retry@v3
@@ -144,7 +145,7 @@ jobs:
           timeout_seconds: 5
           command: >-
             pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-            --durations=20
+            --durations=20 -n auto
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5

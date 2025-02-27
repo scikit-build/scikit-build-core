@@ -23,9 +23,9 @@ def editable_mode(request: pytest.FixtureRequest) -> str:
     reason="No idea why this fails on Cygwin",
 )
 @pytest.mark.usefixtures("package_simplest_c")
-def test_pep660_wheel(editable_mode: str):
-    dist = Path("dist")
-    out = build_editable("dist", {"editable.mode": editable_mode})
+def test_pep660_wheel(editable_mode: str, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_editable(str(dist), {"editable.mode": editable_mode})
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 

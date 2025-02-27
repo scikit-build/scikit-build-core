@@ -234,9 +234,9 @@ def test_dual_metadata():
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("mock_entry_points", "package_dynamic_metadata")
-def test_pep517_wheel(virtualenv):
-    dist = Path("dist")
-    out = build_wheel("dist")
+def test_pep517_wheel(virtualenv, tmp_path: Path) -> None:
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
     (wheel,) = dist.glob("dynamic-0.0.2-*.whl")
     assert wheel == dist / out
 

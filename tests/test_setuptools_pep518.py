@@ -18,10 +18,10 @@ pytestmark = pytest.mark.setuptools
     strict=False,
 )
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
-def test_pep518_wheel(isolated):
-    dist = Path("dist")
+def test_pep518_wheel(isolated, tmp_path: Path):
+    dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
-    isolated.module("build", "--wheel")
+    isolated.module("build", "--wheel", f"--outdir={dist}")
     (wheel,) = dist.iterdir()
     assert "cmake_example-0.0.1" in wheel.name
     assert wheel.suffix == ".whl"

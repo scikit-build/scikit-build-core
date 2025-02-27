@@ -48,6 +48,8 @@ CI and testing:
 - Update deployment a bit by @henryiii in #922
 - Use astral-sh/setup-uv instead by @henryiii in #923
 - Simpler noxfile by @henryiii in #924
+- Test on Linux ARM & Python 3.14 alphas by @henryiii in #1003
+- Support for parallel testing by @henryiii in #1004
 
 Docs:
 
