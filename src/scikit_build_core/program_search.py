@@ -33,7 +33,7 @@ def __dir__() -> list[str]:
 
 
 # Make sure we don't wait forever for programs to respond
-TIMEOUT = 10 if sys.platform.startswith("win") else 4
+TIMEOUT = 10 if sys.platform.startswith("win") else 5
 
 
 class Program(NamedTuple):
