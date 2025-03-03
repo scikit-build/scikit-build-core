@@ -97,7 +97,7 @@ def test_pep660_pip_isolated(isolated, isolate, editable_mode: str):
         "import simplest._module; print(simplest._module.__file__)"
     )
 
-    if sys.version_info < (3, 8, 7):  # noqa: UP036
+    if sys.version_info < (3, 8, 7):
         import distutils.sysconfig  # pylint: disable=deprecated-module
 
         ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")

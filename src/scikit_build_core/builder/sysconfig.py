@@ -167,7 +167,7 @@ def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
     if setuptools_ext_suffix:
         return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
-    if sys.version_info < (3, 8, 7):  # noqa: UP036
+    if sys.version_info < (3, 8, 7):
         # See https://github.com/python/cpython/issues/84006
         import distutils.sysconfig  # pylint: disable=deprecated-module
 
