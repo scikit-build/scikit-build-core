@@ -202,7 +202,7 @@ jobs:
         run: pip list
 
       - name: Test min package
-        run: pytest -ra --showlocals -Wdefault
+        run: pytest -n auto -ra --showlocals -Wdefault
 
   manylinux:
     name: Manylinux on 🐍 3.13 • Free-threaded
@@ -222,7 +222,7 @@ jobs:
         run: /venv/bin/pip install -e .[test] ninja
 
       - name: Test package
-        run: /venv/bin/pytest
+        run: /venv/bin/pytest -n auto
 
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
@@ -246,7 +246,7 @@ jobs:
 
       - name: Test package
         run:
-          python3.9 -m pytest -ra --showlocals -m "not virtualenv"
+          python3.9 -m pytest -n auto -ra --showlocals -m "not virtualenv"
           --durations=20
 
   msys:
@@ -279,7 +279,7 @@ jobs:
 
       - name: Test package
         run: >-
-          python -m pytest -ra --showlocals -m "not broken_on_urct"
+          python -m pytest -n auto -ra --showlocals -m "not broken_on_urct"
           --durations=20
 
   mingw64:
@@ -312,7 +312,7 @@ jobs:
 
       - name: Test package
         run: >-
-          python -m pytest -ra --showlocals -m "not setuptools" --durations=20
+          python -m pytest -n augo -ra --showlocals -m "not setuptools" --durations=20
         env:
           SETUPTOOLS_USE_DISTUTILS: "local"
 
