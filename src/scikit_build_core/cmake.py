@@ -13,9 +13,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from . import __version__
+from ._compat.builtins import ExceptionGroup
 from ._logging import logger
 from ._shutil import Run
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
+from .file_api.query import stateless_query
+from .file_api.reply import load_reply_dir
 from .program_search import Program, best_program, get_cmake_program, get_cmake_programs
 
 if TYPE_CHECKING:
@@ -25,6 +28,7 @@ if TYPE_CHECKING:
     from packaging.version import Version
 
     from ._compat.typing import Self
+    from .file_api.model.index import Index
 
 __all__ = ["CMake", "CMaker"]
 
@@ -83,6 +87,8 @@ class CMaker:
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
+    file_api: Index | None = None
+    _file_api_query: Path = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         self.init_cache_file = self.build_dir / "CMakeInit.txt"
@@ -97,6 +103,8 @@ class CMaker:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
             raise CMakeConfigError(msg)
 
+        # TODO: This could be stateful instead
+        self._file_api_query = stateless_query(self.build_dir)
         skbuild_info = self.build_dir / ".skbuild-info.json"
         stale = False
 
@@ -252,6 +260,13 @@ class CMaker:
         except subprocess.CalledProcessError:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
+
+        try:
+            if self._file_api_query.exists():
+                self.file_api = load_reply_dir(self._file_api_query)
+        except ExceptionGroup as exc:
+            logger.warning("Could not parse CMake file-api")
+            logger.debug(str(exc))
 
     def _compute_build_args(
         self,
