@@ -19,14 +19,8 @@ def test_full_build(isolated, isolate):
 
     isolated.install("-v", *isolate_args, ".")
 
-    with pytest.raises(SystemExit) as exc:
-        isolated.run("main")
-    assert exc.value.code != 0
-    with pytest.raises(SystemExit) as exc:
-        isolated.module("repair_wheel")
-    assert exc.value.code != 0
-    with pytest.raises(SystemExit) as exc:
-        isolated.execute(
-            "from repair_wheel._module import hello; hello()",
-        )
-    assert exc.value.code != 0
+    isolated.run("main")
+    isolated.module("repair_wheel")
+    isolated.execute(
+        "from repair_wheel._module import hello; hello()",
+    )
