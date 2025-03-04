@@ -239,6 +239,11 @@
           "type": "string",
           "default": "",
           "description": "The build tag to use for the wheel. If empty, no build tag is used."
+        },
+        "repair": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do automatic repairs of the compiled binaries and libraries."
         }
       }
     },
