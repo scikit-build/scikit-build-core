@@ -257,6 +257,9 @@ wheel.exclude = []
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
 
+# EXPERIMENTAL: Do automatic repairs of the compiled binaries and libraries.
+wheel.repair = false
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"
