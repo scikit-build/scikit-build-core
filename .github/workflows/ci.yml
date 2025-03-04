@@ -312,7 +312,8 @@ jobs:
 
       - name: Test package
         run: >-
-          python -m pytest -n augo -ra --showlocals -m "not setuptools" --durations=20
+          python -m pytest -n augo -ra --showlocals -m "not setuptools"
+          --durations=20
         env:
           SETUPTOOLS_USE_DISTUTILS: "local"
 
