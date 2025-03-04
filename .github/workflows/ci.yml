@@ -121,14 +121,13 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          pytest-xdist --system
+          --system
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
         run:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
-          pytest-xdist
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
