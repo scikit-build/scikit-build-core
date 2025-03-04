@@ -57,7 +57,7 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 
 %check
-%pyproject_check_import
+# Cannot run %%pyproject_check_import because some of the dependencies are OS dependent
 %pytest \
     -m "not network"
 
