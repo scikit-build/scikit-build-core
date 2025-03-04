@@ -314,6 +314,14 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
+    repair: bool = False
+    """
+    Do automatic repairs of the compiled binaries and libraries.
+
+    .. warning::
+       This is an experimental feature gated by :confval:`experimental`
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:
