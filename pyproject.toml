@@ -290,7 +290,6 @@ known-local-folder = ["pathutils"]
 "typing.Set".msg = "Use collections.abc.Set instead."
 "typing.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
 "typing_extensions.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
-"typing.Final".msg = "Add scikit_build_core._compat.typing.Final instead."
 "typing.assert_never".msg = "Add scikit_build_core._compat.typing.assert_never instead."
 "tomli".msg = "Use scikit_build_core._compat.tomllib instead."
 "tomllib".msg = "Use scikit_build_core._compat.tomllib instead."
