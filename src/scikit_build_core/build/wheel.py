@@ -22,6 +22,7 @@ from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
+from ..repair_wheel import WheelRepairer
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
@@ -495,6 +496,15 @@ def _build_wheel_impl_impl(
             ),
             wheel_dirs["metadata"],
         ) as wheel:
+            if cmake is not None and settings.wheel.repair and settings.experimental:
+                repairer = WheelRepairer.get_wheel_repairer(
+                    wheel=wheel,
+                    builder=builder,
+                    install_dir=install_dir,
+                    wheel_dirs=wheel_dirs,
+                )
+                repairer.repair_wheel()
+
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 
             str_pkgs = (
