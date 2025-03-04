@@ -4,6 +4,8 @@ import dataclasses
 import functools
 import importlib.util
 import os
+import platform
+import shutil
 import sysconfig
 from typing import TYPE_CHECKING, Literal
 
@@ -137,16 +139,27 @@ class GetRequires:
             return
         yield f"ninja{ninja_verset}"
 
-    def dynamic_metadata(self) -> Generator[str, None, None]:
-        if self.settings.fail:
-            return
-
+    def other_dynamic_requires(self) -> Generator[str, None, None]:
         for build_require in self.settings.build.requires:
             yield build_require.format(
                 **pyproject_format(
                     settings=self.settings,
                 )
             )
+
+        if self.settings.wheel.repair:
+            platform_system = platform.system()
+            if platform_system == "Linux":
+                yield "auditwheel"
+                patchelf_path = shutil.which("patchelf")
+                if patchelf_path is None:
+                    yield "patchelf"
+            elif platform_system == "Darwin":
+                yield "delocate"
+
+    def dynamic_metadata(self) -> Generator[str, None, None]:
+        if self.settings.fail:
+            return
 
         for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:
