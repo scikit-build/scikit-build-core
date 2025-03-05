@@ -52,8 +52,9 @@ test = [
     "pip>=23; python_version<'3.13'",
     "pip>=24.1; python_version>='3.13'",
     "pybind11 >=2.11",
-    "pytest >=7.0",  # 7.2+ recommended for better tracebacks with ExceptionGroup
+    "pytest >=7.2",
     "pytest-subprocess >=1.5",
+    'pytest-xdist >=3.1',
     'setuptools >=43; python_version<"3.9"',
     'setuptools >=45; python_version=="3.9"',
     'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
@@ -126,14 +127,13 @@ build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 [tool.uv]
 dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
-environments = ["python_version >= '3.11'"]
 pip.reinstall-package = ["scikit-build-core"]
 workspace.members = ["tmp/hello/hello"]
 
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = ["-rfEsX", "--strict-markers", "--strict-config"]
+minversion = "7.2"
+addopts = ["-ra", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
     "error",
