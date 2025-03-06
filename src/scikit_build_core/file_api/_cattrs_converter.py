@@ -11,6 +11,8 @@ import cattr.preconf.json
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
+from .model.codemodel import Directory as CodeModelDirectory
+from .model.directory import Directory
 from .model.index import Index, Reply
 
 T = TypeVar("T")
@@ -37,16 +39,21 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Reply, st_hook)
 
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
+        if "jsonFile" not in with_path and t is CodeModelDirectory:
+            return converter.structure_attrs_fromdict(with_path, t)
         if with_path["jsonFile"] is None:
             return converter.structure_attrs_fromdict({}, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
+        if t is CodeModelDirectory:
+            t = Directory  # type: ignore[assignment]
         return converter.structure_attrs_fromdict(raw, t)
 
     converter.register_structure_hook(CodeModel, from_json_file)
     converter.register_structure_hook(Target, from_json_file)
     converter.register_structure_hook(Cache, from_json_file)
     converter.register_structure_hook(CMakeFiles, from_json_file)
+    converter.register_structure_hook(CodeModelDirectory, from_json_file)
     return converter
 
 
