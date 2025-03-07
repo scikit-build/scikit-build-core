@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import WheelRepairer
+from .rpath import RpathWheelRepairer
 
 if TYPE_CHECKING:
-    from ..file_api.model.codemodel import Target
+    from pathlib import Path
 
 __all__ = ["LinuxWheelRepairer"]
 
@@ -18,13 +18,27 @@ def __dir__() -> list[str]:
     return __all__
 
 
-class LinuxWheelRepairer(WheelRepairer):
+class LinuxWheelRepairer(RpathWheelRepairer):
     """
     Adjust the RPATH with $ORIGIN.
     """
 
     _platform = "Linux"
+    _origin_symbol = "$ORIGIN"
 
-    def patch_target(self, target: Target) -> None:
-        # TODO: Implement patching
-        pass
+    def get_library_rpath(self, artifact: Path) -> list[str]:
+        from auditwheel.elfutils import elf_read_rpaths
+
+        return [
+            path
+            for dt_rpaths in elf_read_rpaths(artifact).values()
+            for path in dt_rpaths
+        ]
+
+    def patch_library_rpath(self, artifact: Path, rpaths: list[str]) -> None:
+        from auditwheel.patcher import Patchelf
+
+        final_rpaths = set(rpaths)
+        if final_rpaths:
+            patcher = Patchelf()
+            patcher.set_rpath(artifact, ":".join(final_rpaths))
