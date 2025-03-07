@@ -1,0 +1,15 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "repair_wheel"
+version = "0.1.0"
+
+[tool.scikit-build]
+build.requires = ["base_project @ {root:uri}/extern"]
+wheel.install-dir = "repair_wheel"
+wheel.repair = true
+
+[project.scripts]
+main = "repair_wheel.__main__:run"

@@ -20,6 +20,7 @@ from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
+from ..repair_wheel import WheelRepairer
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
 from ._init import setup_logging
@@ -515,6 +516,13 @@ def _build_wheel_impl_impl(
                     f"_{normalized_name}_editable.pth",
                     "\n".join(str_pkgs).encode(),
                 )
+            if cmake is not None and settings.wheel.repair:
+                repairer = WheelRepairer.get_wheel_repairer(
+                    wheel=wheel,
+                    builder=builder,
+                    install_dir=install_dir,
+                )
+                repairer.repair_wheel()
 
     if metadata_directory is not None:
         dist_info_contents = wheel.dist_info_contents()
