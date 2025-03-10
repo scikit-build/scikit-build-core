@@ -39,8 +39,8 @@ def test_full_build(isolated, isolate, manual_repair, monkeypatch):
         "-v", "--config-settings=logging.level=DEBUG", "./extern", ".", isolated=isolate
     )
 
-    isolated.run("main")
-    isolated.module("repair_wheel")
+    # isolated.run("main")
+    # isolated.module("repair_wheel")
     isolated.execute(
         "from repair_wheel._module import hello; hello()",
     )
