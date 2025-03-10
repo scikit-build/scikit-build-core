@@ -179,7 +179,15 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = [
+    "numpy",
+    "pathspec",
+    "setuptools_scm",
+    "hatch_fancy_pypi_readme",
+    "virtualenv",
+    "auditwheel.*",
+    "delvewheel.*",
+]
 ignore_missing_imports = true
 
 
