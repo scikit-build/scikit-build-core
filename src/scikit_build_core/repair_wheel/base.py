@@ -31,6 +31,44 @@ def __dir__() -> list[str]:
     return __all__
 
 
+DIR = Path(__file__).parent.resolve()
+
+
+@functools.lru_cache(1)
+def _get_buildenv_platlib() -> str:
+    # Normally we could `sysconfig.get_path("platlib")` directly, but pip fake-venv breaks it
+    platlib_path = sysconfig.get_path("platlib")
+    purelib_path = sysconfig.get_path("purelib")
+    real_purelib_path = DIR.parent.parent
+    if real_purelib_path.samefile(purelib_path):
+        # Here is the normal state if we are in a real venv
+        return str(Path(platlib_path).resolve())
+    # Otherwise we need to trick it to giving us the real path
+    data_path = sysconfig.get_path("data")
+    platlib_relative_path = Path(platlib_path).relative_to(data_path)
+    purelib_relative_path = Path(purelib_path).relative_to(data_path)
+
+    # removesuffix(purelib_relative_path)
+    if str(real_purelib_path).rfind(str(purelib_relative_path)) == -1:
+        logger.warning(
+            "Could not figure out the true build-env path:\n"
+            "sysconfig_purelib = {sysconfig_purelib}\n"
+            "scikit-build-core_purelib = {real_purelib}\n",
+            sysconfig_purelib=purelib_path,
+            real_purelib=real_purelib_path,
+        )
+        return platlib_path
+    real_root = str(real_purelib_path)[: -len(str(purelib_relative_path))]
+    real_platlib_path = str(Path(real_root) / platlib_relative_path)
+    # Yet another dirty trick necessary
+    real_platlib_path = real_platlib_path.replace(
+        os.path.normpath("/overlay/"),
+        os.path.normpath("/normal/"),
+    )
+    logger.debug("Calculated real_platlib_path = {}", real_platlib_path)
+    return str(real_platlib_path)
+
+
 @dataclasses.dataclass
 class WheelRepairer(ABC):
     """Abstract wheel repairer."""
@@ -102,7 +140,7 @@ class WheelRepairer(ABC):
             path.relative_to(self.wheel_dirs["platlib"])
         except ValueError:
             # Otherwise check if the path is relative to build environment
-            path = path.relative_to(sysconfig.get_path("platlib"))
+            path = path.relative_to(_get_buildenv_platlib())
             # Mock the path to be in the wheel install platlib
             path = self.wheel_dirs["platlib"] / path
         return Path(os.path.relpath(path, relative_to))
