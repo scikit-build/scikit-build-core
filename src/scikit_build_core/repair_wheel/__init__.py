@@ -206,6 +206,14 @@ class WheelRepairer(ABC):
                 wheel_dirs=wheel_dirs,
             )
 
+        logger.debug(
+            "wheel_dirs[platlib] = {platlib}\n"
+            "sysconfig.get_path(platlib) = {sysconfig_path}\n"
+            "install_dir = {install_dir}\n",
+            platlib=wheel_dirs["platlib"],
+            sysconfig_path=sysconfig.get_path("platlib"),
+            install_dir=install_dir,
+        )
         WheelRepairer.initialize()
         if not (
             repairer_cls := WheelRepairer._platform_repairers.get(platform.system())

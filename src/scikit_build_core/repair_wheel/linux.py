@@ -54,6 +54,11 @@ class LinuxWheelRepairer(WheelRepairer):
         # Merge with all the rpaths we were given
         final_rpaths = final_rpaths.union(rpaths)
         patcher = Patchelf()
+        logger.debug(
+            "Setting RPATH for {artifact} to: {rpath}",
+            artifact=artifact,
+            rpath=final_rpaths,
+        )
         patcher.set_rpath(artifact, ":".join(final_rpaths))
 
     def get_dependency_rpaths(self, target: Target, install_path: Path) -> list[str]:
@@ -123,10 +128,11 @@ class LinuxWheelRepairer(WheelRepairer):
                 rpath = self.path_relative_site_packages(rpath, install_path)
                 new_rpath_str = f"$ORIGIN/{rpath.parent}"
                 rpaths.append(new_rpath_str)
-            except Exception:
+            except Exception as exc:
                 logger.warning(
-                    "Could not parse link-library as a path: {fragment}",
+                    "Could not parse link-library as a path: {fragment}\nexc = {exc}",
                     fragment=link_command.fragment,
+                    exc=exc,
                 )
                 continue
         return rpaths

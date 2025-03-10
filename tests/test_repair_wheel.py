@@ -35,7 +35,9 @@ def test_full_build(isolated, isolate, manual_repair, monkeypatch):
             isolated.install("delvewheel")
         isolated.install("./extern", isolated=isolate)
 
-    isolated.install("-v", "./extern", ".", isolated=isolate)
+    isolated.install(
+        "-v", "--config-settings=logging.level=DEBUG", "./extern", ".", isolated=isolate
+    )
 
     isolated.run("main")
     isolated.module("repair_wheel")
