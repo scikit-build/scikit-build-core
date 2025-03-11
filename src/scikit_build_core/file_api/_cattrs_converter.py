@@ -2,16 +2,21 @@
 
 import builtins
 import json
+from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
+from typing import Any, Callable, Dict, Type, TypeVar, Union  # noqa: TID251
 
 import cattr
 import cattr.preconf.json
+from cattrs import ClassValidationError
+from packaging.version import Version
 
+from .._compat.typing import get_args
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.codemodel import Directory as CodeModelDirectory
+from .model.common import Paths
 from .model.directory import Directory
 from .model.index import Index, Reply
 
@@ -49,11 +54,23 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
             t = Directory  # type: ignore[assignment]
         return converter.structure_attrs_fromdict(raw, t)
 
+    def from_union(obj: Dict[str, Any], t: Type[T]) -> T:
+        for try_type in get_args(t):
+            try:
+                return converter.structure(obj, try_type)  # type: ignore[no-any-return]
+            except ClassValidationError:  # noqa: PERF203
+                continue
+        msg = f"Could not convert {obj} into {t}"
+        raise TypeError(msg)
+
     converter.register_structure_hook(CodeModel, from_json_file)
     converter.register_structure_hook(Target, from_json_file)
     converter.register_structure_hook(Cache, from_json_file)
     converter.register_structure_hook(CMakeFiles, from_json_file)
     converter.register_structure_hook(CodeModelDirectory, from_json_file)
+    # Workaround for cattrs < 23.2.0 not handling Union with dataclass properly
+    if Version(version("cattrs")) < Version("23.2.0"):
+        converter.register_structure_hook(Union[str, Paths], from_union)
     return converter
 
 
