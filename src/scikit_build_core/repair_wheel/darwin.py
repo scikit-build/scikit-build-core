@@ -6,12 +6,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import delocate  # noqa: F401
+from delocate.tools import _delete_rpaths, _get_rpaths, add_rpath
 
-from . import WheelRepairer
+from .._logging import logger
+from .rpath import RpathWheelRepairer
 
 if TYPE_CHECKING:
-    from ..file_api.model.codemodel import Target
+    from pathlib import Path
 
 __all__ = ["MacOSWheelRepairer"]
 
@@ -20,13 +21,25 @@ def __dir__() -> list[str]:
     return __all__
 
 
-class MacOSWheelRepairer(WheelRepairer):
+class MacOSWheelRepairer(RpathWheelRepairer):
     """
     Adjust the RPATH with @loader_path.
     """
 
-    _platform = "Darwin"
+    # TODO: Tighten multi-architecture assumption.
 
-    def patch_target(self, target: Target) -> None:
-        # TODO: Implement patching
-        pass
+    _platform = "Darwin"
+    _origin_symbol = "@loader_path"
+
+    def get_library_rpath(self, artifact: Path) -> list[str]:
+        arch_rpaths = _get_rpaths(artifact)
+        if len(arch_rpaths) > 1:
+            logger.warning("Multiple architecture rpath parsing not implemented")
+        return [path for arch in arch_rpaths for path in arch_rpaths[arch]]
+
+    def patch_library_rpath(self, artifact: Path, rpaths: list[str]) -> None:
+        original_rpaths = self.get_library_rpath(artifact)
+        _delete_rpaths(str(artifact), set(original_rpaths))
+        final_rpaths = set(rpaths)
+        for rpath in final_rpaths:
+            add_rpath(str(artifact), rpath)
