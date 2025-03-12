@@ -40,7 +40,6 @@ import email.utils
 import os
 import os.path
 import pathlib
-import re
 import sys
 import typing
 import warnings
@@ -68,7 +67,14 @@ import packaging.specifiers
 import packaging.utils
 import packaging.version
 
-__version__ = "0.9.0"
+if sys.version_info < (3, 12, 4):
+    import re
+
+    RE_EOL_STR = re.compile(r"[\r\n]+")
+    RE_EOL_BYTES = re.compile(rb"[\r\n]+")
+
+
+__version__ = "0.9.1"
 
 __all__ = [
     "ConfigurationError",
@@ -77,10 +83,10 @@ __all__ = [
     "RFC822Policy",
     "Readme",
     "StandardMetadata",
-    "field_to_metadata",
     "extras_build_system",
     "extras_project",
     "extras_top_level",
+    "field_to_metadata",
 ]
 
 
@@ -186,6 +192,37 @@ class RFC822Policy(email.policy.EmailPolicy):
         size = len(name) + 2
         value = value.replace("\n", "\n" + " " * size)
         return (name, value)
+
+    if sys.version_info < (3, 12, 4):
+        # Work around Python bug https://github.com/python/cpython/issues/117313
+        def _fold(
+            self, name: str, value: Any, refold_binary: bool = False
+        ) -> str:  # pragma: no cover
+            if hasattr(value, "name"):
+                return value.fold(policy=self)  # type: ignore[no-any-return]
+            maxlen = self.max_line_length if self.max_line_length else sys.maxsize
+
+            # this is from the library version, and it improperly breaks on chars like 0x0c, treating
+            # them as 'form feed' etc.
+            # we need to ensure that only CR/LF is used as end of line
+            # lines = value.splitlines()
+
+            # this is a workaround which splits only on CR/LF characters
+            if isinstance(value, bytes):
+                lines = RE_EOL_BYTES.split(value)
+            else:
+                lines = RE_EOL_STR.split(value)
+
+            refold = self.refold_source == "all" or (
+                self.refold_source == "long"
+                and (
+                    (lines and len(lines[0]) + len(name) + 2 > maxlen)
+                    or any(len(x) > maxlen for x in lines[1:])
+                )
+            )
+            if refold or (refold_binary and email.policy._has_surrogates(value)):  # type: ignore[attr-defined]
+                return self.header_factory(name, "".join(lines)).fold(policy=self)  # type: ignore[arg-type,no-any-return]
+            return name + ": " + self.linesep.join(lines) + self.linesep  # type: ignore[arg-type]
 
 
 class RFC822Message(email.message.EmailMessage):
@@ -474,11 +511,9 @@ class StandardMetadata:
             msg = "The metadata_version must be one of {versions} or None (default)"
             errors.config_error(msg, versions=constants.KNOWN_METADATA_VERSIONS)
 
-        # See https://packaging.python.org/en/latest/specifications/core-metadata/#name and
-        # https://packaging.python.org/en/latest/specifications/name-normalization/#name-format
-        if not re.match(
-            r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", self.name, re.IGNORECASE
-        ):
+        try:
+            packaging.utils.canonicalize_name(self.name, validate=True)
+        except packaging.utils.InvalidName:
             msg = (
                 "Invalid project name {name!r}. A valid name consists only of ASCII letters and "
                 "numbers, period, underscore and hyphen. It must start and end with a letter or number"
@@ -543,13 +578,15 @@ class StandardMetadata:
         """
         Write the metadata to the message. Handles JSON or Message.
         """
-        self.validate(warn=False)
+        errors = ErrorCollector(collect_errors=self.all_errors)
+        with errors.collect():
+            self.validate(warn=False)
 
         smart_message["Metadata-Version"] = self.auto_metadata_version
         smart_message["Name"] = self.name
         if not self.version:
-            msg = "Missing version field"
-            raise ConfigurationError(msg)
+            msg = "Field {key} missing"
+            errors.config_error(msg, key="project.version")
         smart_message["Version"] = str(self.version)
         # skip 'Platform'
         # skip 'Supported-Platform'
@@ -604,12 +641,14 @@ class StandardMetadata:
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
                 if field.lower() in {"name", "version", "dynamic"}:
-                    msg = f"Field cannot be set as dynamic metadata: {field}"
-                    raise ConfigurationError(msg)
+                    msg = f"Metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f"Field is not known: {field}"
-                    raise ConfigurationError(msg)
+                    msg = f"Unknown metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg)
                 smart_message["Dynamic"] = field
+
+        errors.finalize("Failed to write metadata")
 
 
 def _name_list(people: list[tuple[str, str | None]]) -> str | None:
