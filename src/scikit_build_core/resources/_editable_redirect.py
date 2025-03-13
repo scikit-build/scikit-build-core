@@ -6,9 +6,11 @@ import os
 import subprocess
 import sys
 
+# Importing as little as possible is important, since every usage of Python
+# imports this file. That's why we use this trick for TYPE_CHECKING
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    import importlib.machinery
+    from importlib.machinery import ModuleSpec
 
 
 DIR = os.path.abspath(os.path.dirname(__file__))
@@ -133,7 +135,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         fullname: str,
         path: object = None,
         target: object = None,
-    ) -> importlib.machinery.ModuleSpec | None:
+    ) -> ModuleSpec | None:
         # If no known submodule_search_locations is found, it means it is a root
         # module.
         if fullname in self.submodule_search_locations:

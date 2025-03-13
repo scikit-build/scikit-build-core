@@ -639,6 +639,6 @@ class SourceChain:
 
 
 if typing.TYPE_CHECKING:
-    _: Source = typing.cast(EnvSource, None)
-    _ = typing.cast(ConfSource, None)
-    _ = typing.cast(TOMLSource, None)
+    _: Source = typing.cast("EnvSource", None)
+    _ = typing.cast("ConfSource", None)
+    _ = typing.cast("TOMLSource", None)

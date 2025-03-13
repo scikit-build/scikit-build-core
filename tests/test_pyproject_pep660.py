@@ -11,7 +11,7 @@ from scikit_build_core.build import build_editable
 
 @pytest.fixture(params=["redirect", "inplace"])
 def editable_mode(request: pytest.FixtureRequest) -> str:
-    return typing.cast(str, request.param)
+    return typing.cast("str", request.param)
 
 
 # TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
