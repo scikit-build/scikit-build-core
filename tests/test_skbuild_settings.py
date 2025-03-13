@@ -390,14 +390,29 @@ def test_skbuild_settings_pyproject_toml_broken(
 
     ex = capsys.readouterr().out
     ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
-    assert (
-        ex.split()
-        == """\
-      ERROR: Unrecognized options in pyproject.toml:
-        tool.scikit-build.cmake.verison -> Did you mean: tool.scikit-build.cmake.version, tool.scikit-build.cmake.verbose, tool.scikit-build.cmake.define?
-        tool.scikit-build.logger -> Did you mean: tool.scikit-build.logging, tool.scikit-build.generate, tool.scikit-build.search?
-      """.split()
-    )
+    assert ex.split() == [
+        "ERROR:",
+        "Unrecognized",
+        "options",
+        "in",
+        "pyproject.toml:",
+        "tool.scikit-build.cmake.verison",
+        "->",
+        "Did",
+        "you",
+        "mean:",
+        "tool.scikit-build.cmake.version,",
+        "tool.scikit-build.cmake.verbose,",
+        "tool.scikit-build.cmake.define?",
+        "tool.scikit-build.logger",
+        "->",
+        "Did",
+        "you",
+        "mean:",
+        "tool.scikit-build.logging,",
+        "tool.scikit-build.generate,",
+        "tool.scikit-build.search?",
+    ]
 
 
 def test_skbuild_settings_pyproject_conf_broken(
@@ -430,14 +445,27 @@ def test_skbuild_settings_pyproject_conf_broken(
     ex = capsys.readouterr().out
     # Filter terminal color codes
     ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
-    assert (
-        ex.split()
-        == """\
-      ERROR: Unrecognized options in config-settings:
-        cmake.verison -> Did you mean: cmake.version, cmake.verbose, cmake.define?
-        logger -> Did you mean: logging?
-      """.split()
-    )
+    assert ex.split() == [
+        "ERROR:",
+        "Unrecognized",
+        "options",
+        "in",
+        "config-settings:",
+        "cmake.verison",
+        "->",
+        "Did",
+        "you",
+        "mean:",
+        "cmake.version,",
+        "cmake.verbose,",
+        "cmake.define?",
+        "logger",
+        "->",
+        "Did",
+        "you",
+        "mean:",
+        "logging?",
+    ]
 
 
 def test_skbuild_settings_min_version_defaults_strip(
@@ -742,13 +770,33 @@ def test_skbuild_settings_auto_cmake_warning(
     ex = capsys.readouterr().out
     ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
     print(ex)
-    assert (
-        ex.split()
-        == """\
-            WARNING: CMakeLists.txt not found when looking for minimum CMake version.
-            Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back.
-      """.split()
-    )
+    assert ex.split() == [
+        "WARNING:",
+        "CMakeLists.txt",
+        "not",
+        "found",
+        "when",
+        "looking",
+        "for",
+        "minimum",
+        "CMake",
+        "version.",
+        "Report",
+        "this",
+        "or",
+        "(and)",
+        "set",
+        "manually",
+        "to",
+        "avoid",
+        "this",
+        "warning.",
+        "Using",
+        "3.15",
+        "as",
+        "a",
+        "fall-back.",
+    ]
 
 
 def test_skbuild_settings_cmake_define_list():
