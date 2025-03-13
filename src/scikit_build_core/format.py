@@ -71,7 +71,7 @@ def pyproject_format(
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
     if dummy:
         # Return a dict with all the known keys but with values replaced with dummy values
-        return {key: "*" for key in PyprojectFormatter.__annotations__}
+        return dict.fromkeys(PyprojectFormatter.__annotations__, "*")
 
     assert settings is not None
     # First set all known values

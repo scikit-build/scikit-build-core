@@ -46,7 +46,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         config_dict.pop("require-runtime-dependencies", None)
         config_dict.pop("require-runtime-features", None)
 
-        state = typing.cast(Literal["sdist", "wheel", "editable"], self.target_name)
+        state = typing.cast("Literal['sdist', 'wheel', 'editable']", self.target_name)
         return SettingsReader.from_file(
             "pyproject.toml", state=state, extra_settings=config_dict
         )
