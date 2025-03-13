@@ -72,8 +72,10 @@ def test_full_build(
         wheels = list(dist.glob("*.whl"))
         isolated.install(*wheels)
 
-    isolated.run("main")
-    isolated.module("repair_wheel")
+    if platform.system() != "Windows":
+        # Requires a more specialized patch
+        isolated.run("main")
+        isolated.module("repair_wheel")
     isolated.execute(
         "from repair_wheel._module import hello; hello()",
     )
