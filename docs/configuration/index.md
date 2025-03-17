@@ -11,16 +11,20 @@ options can optionally be prefixed with `skbuild.`, for example
 
 ## Verbosity
 
+By default, the CMake configuration output is always shown, but it may be hidden
+behind the build frontend setting, e.g. `pip` requires including `-v` argument
+in order to display any output.
+
 You can increase the verbosity of the build with two settings - `build.verbose`
-is a shortcut for verbose build output, and `logging.level` controls
-scikit-build-core's internal logging. An example (with all configuration styles)
-of setting both is:
+is a shortcut for verbose build output (i.e. `cmake --build ... -v`), and
+`logging.level` controls scikit-build-core's internal logging. An example (with
+all configuration styles) of setting both is:
 
 ````{tab} pyproject.toml
 
 ```toml
 [tool.scikit-build]
-cmake.verbose = true
+build.verbose = true
 logging.level = "INFO"
 ```
 
@@ -32,7 +36,7 @@ logging.level = "INFO"
 ````{tab} pip
 
 ```console
-$ pip install . -v --config-settings=cmake.verbose=true --config-settings=logging.level=INFO
+$ pip install . -v --config-settings=build.verbose=true --config-settings=logging.level=INFO
 ```
 
 ````
@@ -40,7 +44,7 @@ $ pip install . -v --config-settings=cmake.verbose=true --config-settings=loggin
 ````{tab} build
 
 ```console
-$ pipx run build --wheel -Ccmake.verbose=true -Clogging.level=INFO
+$ pipx run build --wheel -Cbuild.verbose=true -Clogging.level=INFO
 ```
 
 ````
@@ -49,7 +53,7 @@ $ pipx run build --wheel -Ccmake.verbose=true -Clogging.level=INFO
 
 ```toml
 [tool.cibuildwheel.config-settings]
-"cmake.verbose" = true
+"build.verbose" = true
 "logging.level" = "INFO"
 ```
 
@@ -61,19 +65,12 @@ $ pipx run build --wheel -Ccmake.verbose=true -Clogging.level=INFO
 
 
 ```yaml
-SKBUILD_CMAKE_VERBOSE: true
+SKBUILD_BUILD_VERBOSE: true
 SKBUILD_LOGGING_LEVEL: "INFO"
 ```
 
 
 ````
-
-:::{note}
-
-When using `pip`, make sure you include at least a `-v` argument so that the
-verbosity settings above are displayed.
-
-:::
 
 :::{warning}
 
