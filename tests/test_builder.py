@@ -105,7 +105,7 @@ def test_builder_macos_arch_extra(monkeypatch):
     archflags = "-arch arm64 -arch x86_64"
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setenv("ARCHFLAGS", archflags)
-    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
 
     tmpbuilder = Builder(
         settings=ScikitBuildSettings(wheel=WheelSettings()),
@@ -125,7 +125,7 @@ def test_builder_macos_arch_extra(monkeypatch):
 )
 def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
     monkeypatch.setenv("CMAKE_ARGS", cmake_args)
-    tmpcfg = typing.cast(CMaker, SimpleNamespace(env=os.environ.copy()))
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
     tmpbuilder = Builder(
         settings=ScikitBuildSettings(wheel=WheelSettings()),
         config=tmpcfg,
@@ -138,7 +138,7 @@ def test_build_tool_args():
     settings = ScikitBuildSettings(build=BuildSettings(tool_args=["b"]))
     tmpbuilder = Builder(
         settings=settings,
-        config=typing.cast(CMaker, config),
+        config=typing.cast("CMaker", config),
     )
     tmpbuilder.build(["a"])
     config.build.assert_called_once_with(

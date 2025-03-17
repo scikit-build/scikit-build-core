@@ -10,7 +10,7 @@ import sysconfig
 import tempfile
 import typing
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from packaging.version import Version
@@ -46,7 +46,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         config_dict.pop("require-runtime-dependencies", None)
         config_dict.pop("require-runtime-features", None)
 
-        state = typing.cast(Literal["sdist", "wheel", "editable"], self.target_name)
+        state = typing.cast(
+            "typing.Literal['sdist', 'wheel', 'editable']", self.target_name
+        )
         return SettingsReader.from_file(
             "pyproject.toml", state=state, extra_settings=config_dict
         )
