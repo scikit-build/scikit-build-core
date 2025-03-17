@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -33,7 +34,11 @@ def __dir__() -> list[str]:
 
 
 # Make sure we don't wait forever for programs to respond
-TIMEOUT = 10 if sys.platform.startswith("win") else 5
+# CI services can be really slow under load
+if os.environ.get("CI", ""):
+    TIMEOUT = 20
+else:
+    TIMEOUT = 10 if sys.platform.startswith("win") else 5
 
 
 class Program(NamedTuple):
