@@ -37,7 +37,7 @@ def _get_buildenv_platlib() -> str:
     real_purelib_path = DIR.parent.parent
     if real_purelib_path.samefile(purelib_path):
         # Here is the normal state if we are in a real venv
-        return platlib_path
+        return str(Path(platlib_path).resolve())
     # Otherwise we need to trick it to giving us the real path
     data_path = sysconfig.get_path("data")
     platlib_relative_path = Path(platlib_path).relative_to(data_path)
