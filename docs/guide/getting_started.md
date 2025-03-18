@@ -268,7 +268,7 @@ CMake from searching for both `C` and `CXX` compilers (the default).
 
 If you place find Python first, pybind11 will respect it instead of the classic
 FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
-Here we set `PYBIND11_NEWPYTHON` to `ON` instead of doing the find Python
+Here we set `PYBIND11_FINDPYTHON` to `ON` instead of doing the find Python
 ourselves. Pybind11 places its config file such that CMake can find it from
 site-packages.
 
