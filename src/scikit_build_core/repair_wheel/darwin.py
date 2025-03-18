@@ -7,7 +7,6 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
-from .._logging import logger
 from .rpath import RpathWheelRepairer
 
 if TYPE_CHECKING:
@@ -32,12 +31,10 @@ class MacOSWheelRepairer(RpathWheelRepairer):
     _origin_symbol = "@loader_path"
 
     def get_library_rpath(self, artifact: Path) -> list[str]:
-        from delocate.tools import _get_rpaths
+        from delocate.tools import get_rpaths
 
-        arch_rpaths = _get_rpaths(artifact)
-        if len(arch_rpaths) > 1:
-            logger.warning("Multiple architecture rpath parsing not implemented")
-        return [path for arch in arch_rpaths for path in arch_rpaths[arch]]
+        # Using the deprecated method here in order to support python 3.8
+        return list(get_rpaths(str(artifact)))
 
     def patch_library_rpath(self, artifact: Path, rpaths: list[str]) -> None:
         from delocate.tools import _delete_rpaths, add_rpath
