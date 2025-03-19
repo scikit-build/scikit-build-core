@@ -210,6 +210,8 @@ def test_direct_import(monkeypatch, tmp_path, editable, editable_mode, isolated)
         monkeypatch, tmp_path, editable, editable_mode, isolated
     )
     isolated.execute("import pkg")
+    isolated.execute("import pmod")
+    isolated.execute("import emod")
 
 
 @pytest.mark.compile

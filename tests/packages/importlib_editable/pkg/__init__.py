@@ -1,6 +1,11 @@
 # Don't let ruff sort imports in this file, we want to keep them with the comments as is
 # for clarity.
 # ruff: noqa: I001
+# mypy: ignore-errors
+
+# Level zero import global modules
+import emod
+import pmod
 
 # Level one pure modules
 from . import pmod_a
@@ -31,11 +36,13 @@ from .sub_b.sub_c import emod_d
 from .sub_b.sub_d import emod_e
 
 __all__ = [
+    "emod",
     "emod_a",
     "emod_b",
     "emod_c",
     "emod_d",
     "emod_e",
+    "pmod",
     "pmod_a",
     "pmod_b",
     "pmod_c",
