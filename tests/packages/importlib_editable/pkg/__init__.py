@@ -4,8 +4,8 @@
 # mypy: ignore-errors
 
 # Level zero import global modules
-from emod import square as esquare
 from pmod import square as psquare
+from emod import square as esquare
 
 # Level one pure modules
 from .pmod_a import square as psquare_a
