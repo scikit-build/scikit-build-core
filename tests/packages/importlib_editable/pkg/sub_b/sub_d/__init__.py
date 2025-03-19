@@ -1,3 +1,5 @@
-from . import emod_e, pmod_e
+# ruff: noqa: I001, F401
+# mypy: ignore-errors
 
-__all__ = ["pmod_e", "emod_e"]
+from .pmod_e import square as psquare_e
+from .emod_e import square as esquare_e
