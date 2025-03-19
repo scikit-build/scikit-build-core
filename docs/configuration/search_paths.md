@@ -114,7 +114,7 @@ isolation's `site-packages` folder. This default can be disabled by setting
 
 ```toml
 [tool.scikit-build.search]
-search.use-site-packages = false
+site-packages = false
 ```
 
 Additionally, scikit-build-core reads the entry-point `cmake.prefix` of the
