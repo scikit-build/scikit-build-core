@@ -94,7 +94,7 @@ class Sysroot:
 @dataclasses.dataclass(frozen=True)
 class Link:
     language: str
-    commandFragments: List[CommandFragment]
+    commandFragments: List[CommandFragment] = dataclasses.field(default_factory=list)
     lto: Optional[bool] = None
     sysroot: Optional[Sysroot] = None
 
