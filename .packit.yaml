@@ -27,27 +27,39 @@ _:
   - &build-in-scikit-build
     <<: *build-in-packit
     owner: "@scikit-build"
-  - &tests
+  - &tests-downstream
     job: tests
     fmf_path: .distro
+    identifier: downstream
+  - &tests-upstream
+    job: tests
+    skip_build: true
+    identifier: upstream
+    targets:
+      - fedora-development
 
 jobs:
   # Upstream jobs
   - <<: *build-in-scikit-build
     trigger: release
     project: release
-  - <<: *tests
+  - <<: *tests-downstream
     trigger: release
   - <<: *build-in-scikit-build
     trigger: commit
     branch: main
     project: nightly
-  - <<: *tests
+  - <<: *tests-downstream
+    trigger: commit
+    branch: main
+  - <<: *tests-upstream
     trigger: commit
     branch: main
   - <<: *build-in-packit
     trigger: pull_request
-  - <<: *tests
+  - <<: *tests-downstream
+    trigger: pull_request
+  - <<: *tests-upstream
     trigger: pull_request
   # Downstream jobs
   - job: propose_downstream
