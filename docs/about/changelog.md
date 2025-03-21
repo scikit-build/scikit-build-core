@@ -1,5 +1,32 @@
 # Changelog
 
+## Version 0.11.1
+
+This release contains two small fixes for edge case issues.
+
+Fixes:
+
+* Bump pyproject-metadata to handle form feeds on Python < 3.12.8 by @henryiii in #1014
+* Increase timeout on CI by @henryiii in #1019
+
+CI and testing:
+
+* Ignore deprecation message from cattrs on Python 3.14 alphas by @LecrisUT in #1020
+* Add more integration tests in Fedora by @LecrisUT in #800
+* Restore example builds for Windows/macOS by @henryiii in #1025
+
+Internal:
+
+* Remove leftover Python 3.7 checks by @LecrisUT in #1011
+* Bump pytest version and include pytest-xdist by @henryiii in #1008
+* Bump to ruff 0.10, work around bug by @henryiii in #1015
+
+Docs:
+
+* Clarify verbosity options by @LecrisUT in #1018
+* Fix incorrect configuration example by @buddly27 in #1023
+* Fix incorrect name (`PYBIND11_NEWPYTHON` -> `PYBIND11_FINDPYTHON`) by @henryiii in #1021
+
 ## Version 0.11.0
 
 This version adds support for PEP 639 (license expressions) and updates the
