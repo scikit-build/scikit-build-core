@@ -18,7 +18,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "pip install . -v --config-settings=build.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
+        rlRun "pip install . -v --no-index --no-build-isolation" 0 "Build the python project"
         if [ "${HAS_PYTEST}" == True ]; then
           rlRun "python3 -m pytest" 0 "Run built-in pytest"
         else
