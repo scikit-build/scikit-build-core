@@ -1,0 +1,35 @@
+/:
+  inherit: false
+
+/pytest:
+  summary: Run all pytest
+  prepare:
+    - name: Install test packages
+      how: install
+      package:
+        # Pip install everything
+        - python3-pip
+        # Test everything we got
+        - gcc-c++
+        - gfortran
+        - cmake
+        - ninja-build
+        # For FindPython
+        - python3-devel
+        # There are tests that use FetchContent git
+        - git
+    - name: Prepare environment
+      how: shell
+      script: |
+        # Fake a git archive
+        cat << EOF > .git_archival.txt
+        node: 47431d4eefbac9c3a7c49e62c73e624b932023eb
+        node-date: 2025-02-27T16:18:39-05:00
+        describe-name: v0.11.0
+        EOF
+        pip install --user .[test]
+  discover:
+    how: fmf
+    filter: "tag: pytest"
+  execute:
+    how: tmt

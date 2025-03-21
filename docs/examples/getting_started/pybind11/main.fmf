@@ -1,4 +1,4 @@
-summary: Pybind example project
+summary+: " (pybind11)"
 require+:
   - gcc-c++
   - python3dist(pybind11)
