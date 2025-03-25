@@ -223,6 +223,12 @@ wheel.build-tag = ""
 # Do automatic repairs of the compiled binaries and libraries.
 wheel.repair.enable = false
 
+# Patch the dynamic links to libraries installed in the current wheel.
+wheel.repair.in-wheel = true
+
+# Patch the dynamic links to libraries in other wheels.
+wheel.repair.cross-wheel = false
+
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 

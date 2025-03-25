@@ -577,6 +577,19 @@ print(mk_skbuild_docs())
 ## wheel.repair
 
 ```{eval-rst}
+.. confval:: wheel.repair.cross-wheel
+  :type: ``bool``
+  :default: false
+
+  Patch the dynamic links to libraries in other wheels.
+
+  .. note::
+     This may result in incompatible wheels. Use this only if the
+     wheels are strongly linked to each other and strict manylinux compliance is
+     not required.
+```
+
+```{eval-rst}
 .. confval:: wheel.repair.enable
   :type: ``bool``
   :default: false
@@ -585,6 +598,14 @@ print(mk_skbuild_docs())
 
   .. warning::
      This is an experimental feature gated by :confval:`experimental`
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.in-wheel
+  :type: ``bool``
+  :default: true
+
+  Patch the dynamic links to libraries installed in the current wheel.
 ```
 
 <!-- [[[end]]] -->
