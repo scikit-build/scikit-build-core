@@ -10,7 +10,7 @@ dependencies = ["base_project"]
 [tool.scikit-build]
 build.requires = ["base_project @ {root:uri}/extern"]
 wheel.install-dir = "repair_wheel"
-wheel.repair = true
+wheel.repair.enable = true
 experimental = true
 
 [project.scripts]
@@ -18,5 +18,5 @@ main = "repair_wheel.__main__:run"
 
 [[tool.scikit-build.overrides]]
 if.env.MANUAL = true
-wheel.repair = false
+wheel.repair.enable = false
 cmake.define.DO_MANUAL_REPAIR = true
