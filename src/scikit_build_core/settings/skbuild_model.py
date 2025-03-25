@@ -189,6 +189,19 @@ class WheelRepair:
     EXPERIMENTAL: Do automatic repairs of the compiled binaries and libraries.
     """
 
+    in_wheel: bool = True
+    """
+    Patch the dynamic links to libraries installed in the current wheel.
+    """
+
+    cross_wheel: bool = False
+    """
+    Patch the dynamic links to libraries in other wheels.
+    BEWARE that this may result in incompatible wheels. Use this only if the
+    wheels are strongly linked to each other and strict manylinux compliance is
+    not required.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
