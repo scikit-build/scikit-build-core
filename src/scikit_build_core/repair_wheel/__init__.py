@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..build._wheelfile import WheelWriter
     from ..builder.builder import Builder
     from ..file_api.model.codemodel import Configuration, Target
+    from ..settings.skbuild_model import ScikitBuildSettings
 
 
 __all__ = [
@@ -68,6 +69,10 @@ def _get_buildenv_platlib() -> str:
 class WheelRepairer(ABC):
     """Abstract wheel repairer."""
 
+    name: str
+    """Normalized project name."""
+    settings: ScikitBuildSettings
+    """Pyproject settings."""
     wheel: WheelWriter
     """The current wheel creator."""
     builder: Builder
@@ -225,6 +230,8 @@ class WheelRepairer(ABC):
     @classmethod
     def get_wheel_repairer(
         cls,
+        name: str,
+        settings: ScikitBuildSettings,
         wheel: WheelWriter,
         builder: Builder,
         install_dir: Path,
@@ -237,6 +244,8 @@ class WheelRepairer(ABC):
                 "Wheel repairer is implemented only if `wheel.platlib` is True."
             )
             return NoopWheelRepairer(
+                name=name,
+                settings=settings,
                 wheel=wheel,
                 builder=builder,
                 install_dir=install_dir,
@@ -248,12 +257,16 @@ class WheelRepairer(ABC):
             repairer_cls := WheelRepairer._platform_repairers.get(platform.system())
         ):
             return NoopWheelRepairer(
+                name=name,
+                settings=settings,
                 wheel=wheel,
                 builder=builder,
                 install_dir=install_dir,
                 wheel_dirs=wheel_dirs,
             )
         return repairer_cls(
+            name=name,
+            settings=settings,
             wheel=wheel,
             builder=builder,
             install_dir=install_dir,
