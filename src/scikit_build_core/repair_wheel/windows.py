@@ -211,8 +211,15 @@ class WindowsWheelRepairer(WheelRepairer):
 
     def patch_target(self, target: Target) -> None:
         # Here we just gather all dll paths needed for each target
-        package_dlls = self.get_package_dll(target)
-        dependency_dlls = self.get_dependency_dll(target)
+        if self.settings.wheel.repair.in_wheel:
+            dependency_dlls = self.get_dependency_dll(target)
+        else:
+            dependency_dlls = []
+        if self.settings.wheel.repair.cross_wheel:
+            package_dlls = self.get_package_dll(target)
+        else:
+            package_dlls = []
+
         if not package_dlls and not dependency_dlls:
             logger.warning(
                 "No dll files found for target {target}",

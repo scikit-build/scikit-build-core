@@ -167,8 +167,14 @@ class RpathWheelRepairer(WheelRepairer, ABC):
         for install_path in target_install_paths:
             target_path = self.install_dir / install_path
             artifact_path = target_path / artifact.path.name
-            dependency_rpaths = self.get_dependency_rpaths(target, install_path)
-            package_rpaths = self.get_package_rpaths(target, install_path)
+            if self.settings.wheel.repair.in_wheel:
+                dependency_rpaths = self.get_dependency_rpaths(target, install_path)
+            else:
+                dependency_rpaths = []
+            if self.settings.wheel.repair.cross_wheel:
+                package_rpaths = self.get_package_rpaths(target, install_path)
+            else:
+                package_rpaths = []
             existing_rpaths = self.get_existing_rpaths(artifact_path)
             logger.debug(
                 "Patching rpaths for artifact {artifact}\n"

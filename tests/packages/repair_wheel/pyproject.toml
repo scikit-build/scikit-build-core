@@ -11,6 +11,7 @@ dependencies = ["base_project"]
 build.requires = ["base_project @ {root:uri}/extern"]
 wheel.install-dir = "repair_wheel"
 wheel.repair.enable = true
+wheel.repair.cross-wheel = true
 experimental = true
 
 [project.scripts]

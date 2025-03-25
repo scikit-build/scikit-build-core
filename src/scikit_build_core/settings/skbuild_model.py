@@ -232,6 +232,21 @@ class WheelRepair:
        This is an experimental feature gated by :confval:`experimental`
     """
 
+    in_wheel: bool = True
+    """
+    Patch the dynamic links to libraries installed in the current wheel.
+    """
+
+    cross_wheel: bool = False
+    """
+    Patch the dynamic links to libraries in other wheels.
+
+    .. note::
+       This may result in incompatible wheels. Use this only if the
+       wheels are strongly linked to each other and strict manylinux compliance is
+       not required.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
