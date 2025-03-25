@@ -258,7 +258,7 @@ wheel.exclude = []
 wheel.build-tag = ""
 
 # EXPERIMENTAL: Do automatic repairs of the compiled binaries and libraries.
-wheel.repair = false
+wheel.repair.enable = false
 
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
