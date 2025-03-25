@@ -28,8 +28,10 @@ those libraries. The most common tools for these are [auditwheel] for Linux,
 [delocate] for MacOS and [delvewheel] for Windows. [cibuildwheel] incorporates
 these tools in its [repair wheel] feature.
 
-One downside of these tools is that all dependencies are duplicated and bundled
-in each project.
+These tools also rename the library with a unique hash to avoid any potential
+name collision if the same library is being bundled by a different package, and
+check if the packages confirm to standards like [PEP600] (`manylinux_X_Y`).
+These tools do not allow to have cross wheel library dependency.
 
 [auditwheel]: https://pypi.org/project/auditwheel/
 [delocate]: https://pypi.org/project/delocate/
@@ -37,6 +39,7 @@ in each project.
 [cibuildwheel]: https://cibuildwheel.pypa.io/en/stable/
 [repair wheel]:
   https://cibuildwheel.pypa.io/en/stable/options/#repair-wheel-command
+[PEP600]: https://peps.python.org/pep-0600
 
 ## Manual patching
 
