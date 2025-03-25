@@ -147,7 +147,7 @@ class GetRequires:
                 )
             )
 
-        if self.settings.wheel.repair:
+        if self.settings.wheel.repair.enable:
             platform_system = platform.system()
             if platform_system == "Linux":
                 yield "auditwheel"
