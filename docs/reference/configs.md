@@ -574,8 +574,10 @@ print(mk_skbuild_docs())
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
 ```
 
+## wheel.repair
+
 ```{eval-rst}
-.. confval:: wheel.repair
+.. confval:: wheel.repair.enable
   :type: ``bool``
   :default: false
 

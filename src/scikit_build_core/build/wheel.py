@@ -496,7 +496,11 @@ def _build_wheel_impl_impl(
             ),
             wheel_dirs["metadata"],
         ) as wheel:
-            if cmake is not None and settings.wheel.repair and settings.experimental:
+            if (
+                cmake is not None
+                and settings.wheel.repair.enable
+                and settings.experimental
+            ):
                 repairer = WheelRepairer.get_wheel_repairer(
                     wheel=wheel,
                     builder=builder,

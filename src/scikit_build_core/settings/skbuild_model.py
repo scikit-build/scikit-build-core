@@ -223,6 +223,17 @@ class SDistSettings:
 
 
 @dataclasses.dataclass
+class WheelRepair:
+    enable: bool = False
+    """
+    Do automatic repairs of the compiled binaries and libraries.
+
+    .. warning::
+       This is an experimental feature gated by :confval:`experimental`
+    """
+
+
+@dataclasses.dataclass
 class WheelSettings:
     packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
         default=None,
@@ -314,12 +325,9 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
-    repair: bool = False
+    repair: WheelRepair = dataclasses.field(default_factory=WheelRepair)
     """
-    Do automatic repairs of the compiled binaries and libraries.
-
-    .. warning::
-       This is an experimental feature gated by :confval:`experimental`
+    Wheel repair options
     """
 
 
