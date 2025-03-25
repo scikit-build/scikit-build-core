@@ -502,6 +502,8 @@ def _build_wheel_impl_impl(
                 and settings.experimental
             ):
                 repairer = WheelRepairer.get_wheel_repairer(
+                    name=normalized_name,
+                    settings=settings,
                     wheel=wheel,
                     builder=builder,
                     install_dir=install_dir,
