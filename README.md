@@ -268,6 +268,12 @@ wheel.repair.in-wheel = true
 # to each other and strict manylinux compliance is not required.
 wheel.repair.cross-wheel = false
 
+# A list of external library files that will be bundled in the wheel. Each entry
+# is treated as a regex pattern, and only the filenames are considered for the
+# match. The libraries are taken from the CMake dependency. The bundled
+# libraries are under `site-packages/${name}.libs`
+wheel.repair.bundle-external = []
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"

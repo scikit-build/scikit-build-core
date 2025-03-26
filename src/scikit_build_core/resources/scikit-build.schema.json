@@ -258,6 +258,13 @@
               "type": "boolean",
               "default": false,
               "description": "Patch the dynamic links to libraries in other wheels. BEWARE that this may result in incompatible wheels. Use this only if the wheels are strongly linked to each other and strict manylinux compliance is not required."
+            },
+            "bundle-external": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of external library files that will be bundled in the wheel. Each entry is treated as a regex pattern, and only the filenames are considered for the match. The libraries are taken from the CMake dependency. The bundled libraries are under `site-packages/${name}.libs`"
             }
           },
           "description": "Wheel repair options"
