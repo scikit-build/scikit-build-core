@@ -257,6 +257,17 @@ wheel.exclude = []
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
 
+# EXPERIMENTAL: Do automatic repairs of the compiled binaries and libraries.
+wheel.repair.enable = false
+
+# Patch the dynamic links to libraries installed in the current wheel.
+wheel.repair.in-wheel = true
+
+# Patch the dynamic links to libraries in other wheels. BEWARE that this may
+# result in incompatible wheels. Use this only if the wheels are strongly linked
+# to each other and strict manylinux compliance is not required.
+wheel.repair.cross-wheel = false
+
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
 backport.find-python = "3.26.1"
