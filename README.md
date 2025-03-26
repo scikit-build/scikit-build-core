@@ -229,6 +229,9 @@ wheel.repair.in-wheel = true
 # Patch the dynamic links to libraries in other wheels.
 wheel.repair.cross-wheel = false
 
+# A list of external library files that will be bundled in the wheel.
+wheel.repair.bundle-external = []
+
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 

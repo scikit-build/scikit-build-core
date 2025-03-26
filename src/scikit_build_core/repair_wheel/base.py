@@ -8,6 +8,8 @@ import dataclasses
 import functools
 import os
 import platform
+import re
+import shutil
 import sysconfig
 import typing
 from abc import ABC, abstractmethod
@@ -98,6 +100,28 @@ class WheelRepairer(ABC):
     def __init_subclass__(cls) -> None:
         if cls._platform:
             WheelRepairer._platform_repairers[cls._platform] = cls
+
+    @functools.cached_property
+    def bundled_libs_path(self) -> Path:
+        """Staging path for the bundled library directory."""
+        return Path(self.wheel_dirs["platlib"]) / f"{self.name}.libs"
+
+    @functools.cached_property
+    def bundle_external(self) -> list[re.Pattern[str]]:
+        """List of compiled regex patterns of the library files to bundle."""
+        patterns = []
+        for pattern_str in self.settings.wheel.repair.bundle_external:
+            try:
+                pattern = re.compile(pattern_str)
+            except re.error as exc:
+                logger.warning(
+                    'Skipping "{pattern}" as an invalid pattern',
+                    pattern=pattern_str,
+                )
+                logger.debug(str(exc))
+                continue
+            patterns.append(pattern)
+        return patterns
 
     @functools.cached_property
     def configuration(self) -> Configuration:
@@ -203,8 +227,91 @@ class WheelRepairer(ABC):
             dependencies.append(dep_target)
         return dependencies
 
+    def try_bundle(self, external_lib: Path) -> Path | None:
+        """
+        Try to bundle an external library file.
+
+        :param external_lib: path to actual external library to bundle
+        :returns: ``None`` if the library is not bundled, otherwise the path
+          to the bundled file
+        """
+        assert external_lib.is_absolute()
+        if not external_lib.exists():
+            logger.warning(
+                "External library file does not exist: {external_lib}",
+                external_lib=external_lib,
+            )
+            return None
+        if external_lib.is_dir():
+            logger.debug(
+                "Skip bundling directory: {external_lib}",
+                external_lib=external_lib,
+            )
+            return None
+        libname = external_lib.name
+        bundled_lib = self.bundled_libs_path / libname
+        if bundled_lib.exists():
+            # If we have already bundled the library no need to do it again
+            return bundled_lib
+        for pattern in self.bundle_external:
+            if pattern.match(libname):
+                logger.debug(
+                    'Bundling library matching "{pattern}": {external_lib}',
+                    external_lib=external_lib,
+                    pattern=pattern.pattern,
+                )
+                shutil.copy(external_lib, bundled_lib)
+                return bundled_lib
+        logger.debug(
+            "Skip bundling: {external_lib}",
+            external_lib=external_lib,
+        )
+        return None
+
+    def get_package_lib_path(
+        self, original_lib: Path, relative_to: Path | None = None
+    ) -> Path | None:
+        """
+        Get the file path of a library to be used.
+
+        This checks for the settings in ``settings.wheel.repair`` returning either:
+         - If the dependency should be skipped: ``None``
+         - If ``original_lib`` is a library in another wheel: a relative path to the original library file
+         - If ``original_lib`` is a library to be bundled: a relative path to the bundled library file
+
+        The relative paths are relative to ``relative_to`` or the ``platlib`` wheel path if not passed.
+        """
+        if not original_lib.is_absolute() or not original_lib.exists():
+            logger.debug(
+                "Could not handle {original_lib} because it is either relative or does not exist.",
+                original_lib=original_lib,
+            )
+            return None
+        if self.path_is_in_site_packages(original_lib):
+            # The other library is in another wheel
+            if not self.settings.wheel.repair.cross_wheel:
+                logger.debug(
+                    "Skipping {original_lib} because it is in another wheel.",
+                    original_lib=original_lib,
+                )
+                return None
+            final_lib = original_lib
+        # Otherwise, check if we need to bundle the external library
+        elif not self.bundle_external or not (
+            final_lib := self.try_bundle(original_lib)  # type: ignore[assignment]
+        ):
+            logger.debug(
+                "Skipping {original_lib} because it is not being bundled.",
+                original_lib=original_lib,
+            )
+            return None
+        return self.path_relative_site_packages(final_lib, relative_to=relative_to)
+
     def repair_wheel(self) -> None:
         """Repair the current wheel."""
+        if self.bundle_external:
+            self.bundled_libs_path.mkdir(exist_ok=True)
+
         for target in self.targets:
             if self._filter_targets:
                 if target.type == "STATIC_LIBRARY":

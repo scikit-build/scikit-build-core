@@ -94,11 +94,16 @@ class RpathWheelRepairer(WheelRepairer, ABC):
                             # Skip empty rpaths. Most likely will have on at the end
                             continue
                         rpath = Path(rpath_str)
-                        if not self.path_is_in_site_packages(rpath):
-                            # Skip any paths that cannot be handled. We do not check for paths in
-                            # the build directory, it should be covered by `get_dependency_rpaths`
+                        # Relative paths should be covered by `get_dependency_rpaths` so we skip them.
+                        if not rpath.is_absolute():
                             continue
-                        rpath = self.path_relative_site_packages(rpath, install_path)
+                        # Get the relative rpath to either the cross-wheel or bundled file
+                        if not (
+                            rpath := self.get_package_lib_path(  # type: ignore[assignment]
+                                rpath, relative_to=install_path
+                            )
+                        ):
+                            continue
                         new_rpath_str = f"{self._origin_symbol}/{rpath}"
                         rpaths.append(new_rpath_str)
                     continue
@@ -106,12 +111,6 @@ class RpathWheelRepairer(WheelRepairer, ABC):
                 try:
                     # TODO: how to best catch if a string is a valid path?
                     rpath = Path(link_part)
-                    if not rpath.is_absolute():
-                        # Relative paths should be handled by `get_dependency_rpaths`
-                        continue
-                    rpath = self.path_relative_site_packages(rpath, install_path)
-                    new_rpath_str = f"{self._origin_symbol}/{rpath.parent}"
-                    rpaths.append(new_rpath_str)
                 except Exception as exc:
                     logger.warning(
                         "Could not parse link-library as a path: {fragment}\nexc = {exc}",
@@ -119,6 +118,16 @@ class RpathWheelRepairer(WheelRepairer, ABC):
                         exc=exc,
                     )
                     continue
+                if not rpath.is_absolute():
+                    # Relative paths should be covered by `get_dependency_rpaths` so we skip them.
+                    continue
+                # Get the relative rpath to either the cross-wheel or bundled file
+                if not (
+                    rpath := self.get_package_lib_path(rpath, relative_to=install_path)  # type: ignore[assignment]
+                ):
+                    continue
+                new_rpath_str = f"{self._origin_symbol}/{rpath.parent}"
+                rpaths.append(new_rpath_str)
         return rpaths
 
     def get_existing_rpaths(self, artifact: Path) -> list[str]:
@@ -171,10 +180,7 @@ class RpathWheelRepairer(WheelRepairer, ABC):
                 dependency_rpaths = self.get_dependency_rpaths(target, install_path)
             else:
                 dependency_rpaths = []
-            if self.settings.wheel.repair.cross_wheel:
-                package_rpaths = self.get_package_rpaths(target, install_path)
-            else:
-                package_rpaths = []
+            package_rpaths = self.get_package_rpaths(target, install_path)
             existing_rpaths = self.get_existing_rpaths(artifact_path)
             logger.debug(
                 "Patching rpaths for artifact {artifact}\n"

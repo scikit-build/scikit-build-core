@@ -5,6 +5,7 @@ Repair Windows dll path
 from __future__ import annotations
 
 import dataclasses
+import functools
 import os.path
 import textwrap
 from pathlib import Path
@@ -14,6 +15,8 @@ from .._logging import logger
 from .base import WheelRepairer, _get_buildenv_platlib
 
 if TYPE_CHECKING:
+    import re
+
     from ..file_api.model.codemodel import Target
 
 __all__ = ["WindowsWheelRepairer"]
@@ -52,8 +55,20 @@ class WindowsWheelRepairer(WheelRepairer):
     dll_dirs: set[Path] = dataclasses.field(default_factory=set, init=False)
     """All dll paths used relative to ``platlib``."""
 
+    @functools.cached_property
+    def bundle_external(self) -> list[re.Pattern[str]]:
+        if self.settings.wheel.repair.bundle_external:
+            logger.warning("Bundling Windows dll files is not supported yet.")
+        return []
+
+    def try_bundle(self, external_lib: Path) -> Path | None:
+        # Everything should be gated by `bundle_external` so this should not be called
+        # TODO: figure out a better way to find the corresponding dll file of the linked lib file
+        raise NotImplementedError
+
     def get_dll_path_from_lib(self, lib_path: Path) -> Path | None:
         """Guess the dll path from lib path."""
+        # TODO: rework the logic of this to work with `try_bundle`
         dll_path = None
         platlib = Path(_get_buildenv_platlib())
         lib_path = lib_path.relative_to(platlib)
@@ -181,25 +196,6 @@ class WindowsWheelRepairer(WheelRepairer):
             try:
                 # TODO: how to best catch if a string is a valid path?
                 lib_path = Path(link_command.fragment)
-                if not lib_path.is_absolute():
-                    # If the link_command is a space-separated list of libraries, this should be skipped
-                    logger.debug(
-                        "Skipping non-absolute-path library: {fragment}",
-                        fragment=link_command.fragment,
-                    )
-                    continue
-                try:
-                    self.path_relative_site_packages(lib_path)
-                except ValueError:
-                    logger.debug(
-                        "Skipping library outside site-package path: {lib_path}",
-                        lib_path=lib_path,
-                    )
-                    continue
-                dll_path = self.get_dll_path_from_lib(lib_path)
-                if not dll_path:
-                    continue
-                dll_paths.append(dll_path.parent)
             except Exception as exc:
                 logger.warning(
                     "Could not parse link-library as a path: {fragment}\nexc = {exc}",
@@ -207,6 +203,20 @@ class WindowsWheelRepairer(WheelRepairer):
                     exc=exc,
                 )
                 continue
+            if not lib_path.is_absolute():
+                # If the link_command is a space-separated list of libraries, this should be skipped
+                logger.debug(
+                    "Skipping non-absolute-path library: {fragment}",
+                    fragment=link_command.fragment,
+                )
+                continue
+            # TODO: Handle this better when revisiting `try_bundle`
+            if not self.get_package_lib_path(lib_path):
+                continue
+            dll_path = self.get_dll_path_from_lib(lib_path)
+            if not dll_path:
+                continue
+            dll_paths.append(dll_path.parent)
         return dll_paths
 
     def patch_target(self, target: Target) -> None:
@@ -215,10 +225,7 @@ class WindowsWheelRepairer(WheelRepairer):
             dependency_dlls = self.get_dependency_dll(target)
         else:
             dependency_dlls = []
-        if self.settings.wheel.repair.cross_wheel:
-            package_dlls = self.get_package_dll(target)
-        else:
-            package_dlls = []
+        package_dlls = self.get_package_dll(target)
 
         if not package_dlls and not dependency_dlls:
             logger.warning(

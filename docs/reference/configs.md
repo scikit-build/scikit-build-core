@@ -577,6 +577,17 @@ print(mk_skbuild_docs())
 ## wheel.repair
 
 ```{eval-rst}
+.. confval:: wheel.repair.bundle-external
+  :type: ``list[str]``
+
+  A list of external library files that will be bundled in the wheel.
+
+  Each entry is treated as a regex pattern, and only the filenames are considered
+  for the match. The libraries are taken from the CMake dependency during the CMake
+  build. The bundled libraries are installed under ``site-packages/${name}.libs``
+```
+
+```{eval-rst}
 .. confval:: wheel.repair.cross-wheel
   :type: ``bool``
   :default: false

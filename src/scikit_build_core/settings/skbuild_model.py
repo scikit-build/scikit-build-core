@@ -247,6 +247,15 @@ class WheelRepair:
        not required.
     """
 
+    bundle_external: List[str] = dataclasses.field(default_factory=list)
+    """
+    A list of external library files that will be bundled in the wheel.
+
+    Each entry is treated as a regex pattern, and only the filenames are considered
+    for the match. The libraries are taken from the CMake dependency during the CMake
+    build. The bundled libraries are installed under ``site-packages/${name}.libs``
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
