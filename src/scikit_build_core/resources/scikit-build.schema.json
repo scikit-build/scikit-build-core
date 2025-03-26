@@ -258,6 +258,13 @@
               "type": "boolean",
               "default": false,
               "description": "Patch the dynamic links to libraries in other wheels."
+            },
+            "bundle-external": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of external library files that will be bundled in the wheel."
             }
           },
           "description": "Wheel repair options"
