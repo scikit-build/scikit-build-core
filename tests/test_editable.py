@@ -1,3 +1,4 @@
+import platform
 import sys
 import textwrap
 from pathlib import Path
@@ -156,3 +157,128 @@ def test_install_dir(isolated):
     assert "Running cmake" in out
     assert c_module.exists()
     assert not failed_c_module.exists()
+
+
+def _setup_package_for_editable_layout_tests(
+    monkeypatch, tmp_path, editable, editable_mode, isolated
+):
+    editable_flag = ["-e"] if editable else []
+
+    config_mode_flags = []
+    if editable:
+        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
+    if editable_mode != "inplace":
+        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
+
+    # Use a context so that we only change into the directory up until the point where
+    # we run the editable install. We do not want to be in that directory when importing
+    # to avoid importing the source directory instead of the installed package.
+    with monkeypatch.context() as m:
+        package = PackageInfo("importlib_editable")
+        process_package(package, tmp_path, m)
+
+        ninja = [
+            "ninja"
+            for f in isolated.wheelhouse.iterdir()
+            if f.name.startswith("ninja-")
+        ]
+        cmake = [
+            "cmake"
+            for f in isolated.wheelhouse.iterdir()
+            if f.name.startswith("cmake-")
+        ]
+
+        isolated.install("pip>23")
+        isolated.install("scikit-build-core", *ninja, *cmake)
+
+        isolated.install(
+            "-v",
+            *config_mode_flags,
+            "--no-build-isolation",
+            *editable_flag,
+            ".",
+        )
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
+)
+def test_direct_import(monkeypatch, tmp_path, editable, editable_mode, isolated):
+    # TODO: Investigate these failures
+    if platform.system() == "Windows" and editable_mode == "inplace":
+        pytest.xfail("Windows fails to import the top-level extension module")
+
+    _setup_package_for_editable_layout_tests(  # type: ignore[no-untyped-call]
+        monkeypatch, tmp_path, editable, editable_mode, isolated
+    )
+    isolated.execute("import pkg")
+    isolated.execute("import pmod")
+    isolated.execute("import emod")
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("editable", "editable_mode"),
+    [
+        (False, ""),
+        pytest.param(
+            True,
+            "redirect",
+            marks=pytest.mark.xfail,
+        ),
+        (True, "inplace"),
+    ],
+)
+def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, isolated):
+    if sys.version_info < (3, 9):
+        pytest.skip("importlib.resources.files is introduced in Python 3.9")
+
+    # TODO: Investigate these failures
+    if editable_mode == "redirect":
+        pytest.xfail("Redirect mode is at navigating importlib.resources.files")
+    if platform.system() == "Windows" and editable_mode == "inplace":
+        pytest.xfail("Windows fails to import the top-level extension module")
+
+    _setup_package_for_editable_layout_tests(
+        monkeypatch, tmp_path, editable, editable_mode, isolated
+    )
+
+    isolated.execute(
+        textwrap.dedent(
+            """
+            from importlib import import_module
+            from importlib.resources import files
+            from pathlib import Path
+            
+            def is_extension(path):
+                for ext in (".so", ".pyd"):
+                    if ext in path.suffixes:
+                        return True
+                return False
+            
+            def check_pkg(pkg_name):
+                try:
+                    pkg = import_module(pkg_name)
+                    pkg_root = files(pkg)
+                    print(f"pkg_root: [{type(pkg_root)}] {pkg_root}")
+                    pkg_files = list(pkg_root.iterdir())
+                    for path in pkg_files:
+                        print(f"path: [{type(path)}] {path}")
+                    assert any(is_extension(path) for path in pkg_files if isinstance(path, Path))
+                except Exception as err:
+                    msg = f"Failed in {str(pkg)}"
+                    raise RuntimeError(msg) from err
+            
+            check_pkg("pkg")
+            check_pkg("pkg.sub_a")
+            check_pkg("pkg.sub_b")
+            check_pkg("pkg.sub_b.sub_c")
+            check_pkg("pkg.sub_b.sub_d")
+            """
+        )
+    )
