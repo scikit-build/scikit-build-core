@@ -337,6 +337,9 @@ build-dir = ""
 # Immediately fail the build. This is only useful in overrides.
 fail = false
 
+# EXPERIMENTAL: Additional ``project.scripts`` entry-points.
+scripts = {}
+
 ```
 
 <!-- [[[end]]] -->
