@@ -26,7 +26,7 @@ from ._init import setup_logging
 from ._pathutil import (
     packages_to_file_mapping,
 )
-from ._scripts import process_script_dir
+from ._scripts import add_dynamic_scripts, process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
@@ -371,6 +371,14 @@ def _build_wheel_impl_impl(
                 ),
                 wheel_dirs["metadata"],
             )
+            add_dynamic_scripts(
+                metadata=wheel.metadata,
+                settings=settings,
+                builder=None,
+                wheel_dirs=wheel_dirs,
+                install_dir=install_dir,
+                create_files=False,
+            )
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
             dist_info.mkdir(parents=True)
@@ -487,6 +495,15 @@ def _build_wheel_impl_impl(
             ),
             wheel_dirs["metadata"],
         ) as wheel:
+            add_dynamic_scripts(
+                metadata=wheel.metadata,
+                settings=settings,
+                builder=builder if cmake else None,
+                wheel_dirs=wheel_dirs,
+                install_dir=install_dir,
+                create_files=True,
+            )
+
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 
             str_pkgs = (
