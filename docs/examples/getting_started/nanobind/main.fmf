@@ -1,6 +1,8 @@
-summary: Nanobind example project
+summary+: " (nanobind)"
+require+:
+  # TODO: These don't make sense to be packaged in a different package
+  - python3-nanobind-devel
 adjust:
+  when: distro < fedora-41 or distro == centos-stream
   enabled: false
-  because: Nanobind is not yet packaged on Fedora
-#require+:
-#  - python3dist(nanobind)
+  because: They have not packaged nanobind there

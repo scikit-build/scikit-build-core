@@ -8,7 +8,7 @@ rlJournalStart
         rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
 		    rlRun "rsync -r .$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
         if [ "${HAS_PYTEST}" != True ]; then
-		      rlRun "rsync -r ./examples/getting_started/test.py $tmp" 0 "Copy test.py file"
+		      rlRun "rsync -r ./docs/examples/getting_started/test.py $tmp" 0 "Copy test.py file"
         fi
         rlRun "pushd $tmp"
         rlRun "tree" 0 "Show directory tree"
@@ -18,7 +18,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "pip install . -v --config-settings=build.verbose=true --no-index --no-build-isolation" 0 "Build the python project"
+        rlRun "pip install . -v --no-index --no-build-isolation" 0 "Build the python project"
         if [ "${HAS_PYTEST}" == True ]; then
           rlRun "python3 -m pytest" 0 "Run built-in pytest"
         else

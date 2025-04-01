@@ -331,9 +331,12 @@ jobs:
       - uses: hynek/build-and-inspect-python-package@v2
 
   docs:
-    name: Docs on ubuntu-latest
-    runs-on: ubuntu-latest
+    name: Docs on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 15
+    strategy:
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -348,12 +351,14 @@ jobs:
           python-versions: "3.12"
 
       - name: Linkcheck
+        if: runner.os == 'Linux'
         run: nox -s docs -- -b linkcheck
 
       - name: Manpage
         run: nox -s docs -- -b man -W
 
       - name: Build docs with warnings as errors
+        if: runner.os == 'Linux'
         run: nox -s docs -- -W
 
       - name: Check examples
