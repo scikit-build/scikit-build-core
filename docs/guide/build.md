@@ -209,7 +209,7 @@ them redistributable depends on platform:
   tag, and can be uploaded to PyPI.
 - macOS: The wheels should be build with the official CPython releases, and
   target a reasonable `MACOSX_DEPLOYMENT_TARGET` value (10.9 or newer). You
-  should run the wheels through `develocate` to bundle external dependencies.
+  should run the wheels through `delocate` to bundle external dependencies.
   You'll also want to (carefully) cross compile for Apple Silicon or build on
   Apple Silicon runners (`macos-14`+ on GHA).
 - Windows: this is the easiest, usually, as the wheels don't have special rules
