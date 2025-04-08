@@ -147,7 +147,7 @@ filterwarnings = [
     "ignore::scikit_build_core._vendor.pyproject_metadata.errors.ConfigurationWarning",
     "ignore:'_UnionGenericAlias' is deprecated and slated for removal in Python 3.17:DeprecationWarning",  # From cattrs 24.1.2 and other?
 ]
-log_cli_level = "info"
+log_cli_level = "INFO"
 pythonpath = ["tests/utils"]
 testpaths = ["tests"]
 markers = [
