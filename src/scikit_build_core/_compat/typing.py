@@ -19,7 +19,7 @@ if sys.version_info < (3, 11):
             raise AssertionError(msg)
 
 else:
-    from typing import Self, assert_never
+    from typing_extensions import Self, assert_never
 
 __all__ = [
     "Annotated",
