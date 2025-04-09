@@ -70,7 +70,7 @@ test-meta = [
     "setuptools-scm",
 ]
 test-numpy = [
-    "numpy; python_version<'3.13' and platform_python_implementation!='PyPy'",
+    "numpy; python_version<'3.14' and platform_python_implementation!='PyPy'",
     "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
     "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
 ]
@@ -127,7 +127,6 @@ build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 [tool.uv]
 dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
-pip.reinstall-package = ["scikit-build-core"]
 workspace.members = ["tmp/hello/hello"]
 
 
@@ -146,8 +145,9 @@ filterwarnings = [
     "default:check_home argument is deprecated and ignored.:DeprecationWarning",  # Caused by setuptools sometimes
     "ignore::scikit_build_core._vendor.pyproject_metadata.errors.ConfigurationWarning",
     "ignore:'_UnionGenericAlias' is deprecated and slated for removal in Python 3.17:DeprecationWarning",  # From cattrs 24.1.2 and other?
+    "ignore:The 'wheel.metadata' package has been made private:DeprecationWarning",
 ]
-log_cli_level = "info"
+log_cli_level = "INFO"
 pythonpath = ["tests/utils"]
 testpaths = ["tests"]
 markers = [
