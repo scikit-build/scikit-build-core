@@ -231,6 +231,9 @@ class Builder:
         python_include_dir = get_python_include_dir()
         numpy_include_dir = get_numpy_include_dir()
 
+        if self.settings.cmake.toolchain_file:
+            cache_config["CMAKE_TOOLCHAIN_FILE"] = self.settings.cmake.toolchain_file
+
         # Classic Find Python
         cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
         cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir

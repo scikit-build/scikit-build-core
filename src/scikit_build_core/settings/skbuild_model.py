@@ -111,6 +111,11 @@ class CMakeSettings:
     DEPRECATED in 0.10; use build.targets instead.
     """
 
+    toolchain_file: Optional[Path] = None
+    """
+    The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+    """
+
 
 @dataclasses.dataclass
 class SearchSettings:

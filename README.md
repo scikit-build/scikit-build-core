@@ -181,6 +181,9 @@ cmake.source-dir = "."
 # DEPRECATED in 0.10; use build.targets instead.
 cmake.targets = ""
 
+# The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+cmake.toolchain-file = ""
+
 # The versions of Ninja to allow. If Ninja is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.
