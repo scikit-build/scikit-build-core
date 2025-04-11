@@ -216,6 +216,13 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.toolchain-file
+  :type: ``Path``
+
+  The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+```
+
+```{eval-rst}
 .. confval:: cmake.verbose
   :type: ``bool``
 

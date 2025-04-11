@@ -102,6 +102,10 @@
           },
           "description": "DEPRECATED in 0.10; use build.targets instead.",
           "deprecated": true
+        },
+        "toolchain-file": {
+          "type": "string",
+          "description": "The CMAKE_TOOLCHAIN_FILE used for cross-compilation."
         }
       }
     },

@@ -172,6 +172,9 @@ cmake.build-type = "Release"
 # The source directory to use when building the project.
 cmake.source-dir = "."
 
+# The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+cmake.toolchain-file = ""
+
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 
