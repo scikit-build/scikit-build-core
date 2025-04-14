@@ -35,8 +35,8 @@ These tools do not allow to have cross wheel library dependency.
 
 ## Manual patching
 
-You can manually make a relative RPath. This has the benefit of working
-when not running scikit-build-core, as well.
+You can manually make a relative RPath. This has the benefit of working when not
+running scikit-build-core, as well.
 
 The `RPATH` patching can be done as
 
