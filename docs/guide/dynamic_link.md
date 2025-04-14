@@ -43,9 +43,8 @@ These tools do not allow to have cross wheel library dependency.
 
 ## Manual patching
 
-For maximum control, you can do the equivalent patching inside CMake manually.
-This is not recommended because it does not have access to the python
-environment metadata.
+You can manually make a relative RPath. This has the benefit of working
+when not running scikit-build-core, as well.
 
 The `RPATH` patching can be done as
 
