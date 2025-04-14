@@ -33,18 +33,10 @@ name collision if the same library is being bundled by a different package, and
 check if the packages confirm to standards like [PEP600] (`manylinux_X_Y`).
 These tools do not allow to have cross wheel library dependency.
 
-[auditwheel]: https://pypi.org/project/auditwheel/
-[delocate]: https://pypi.org/project/delocate/
-[delvewheel]: https://pypi.org/project/delvewheel/
-[cibuildwheel]: https://cibuildwheel.pypa.io/en/stable/
-[repair wheel]:
-  https://cibuildwheel.pypa.io/en/stable/options/#repair-wheel-command
-[PEP600]: https://peps.python.org/pep-0600
-
 ## Manual patching
 
-You can manually make a relative RPath. This has the benefit of working when not
-running scikit-build-core, as well.
+You can manually make a relative RPath. This has the benefit of working
+when not running scikit-build-core, as well.
 
 The `RPATH` patching can be done as
 
@@ -70,3 +62,14 @@ from pathlib import Path
 dependency_dll_path = Path(__file__).parent / "install_path/to/dynamic_library"
 os.add_dll_directory(str(dependency_dll_path))
 ```
+
+<!-- prettier-ignore-start -->
+
+[auditwheel]: https://pypi.org/project/auditwheel/
+[delocate]: https://pypi.org/project/delocate/
+[delvewheel]: https://pypi.org/project/delvewheel/
+[cibuildwheel]: https://cibuildwheel.pypa.io/en/stable/
+[repair wheel]: https://cibuildwheel.pypa.io/en/stable/options/#repair-wheel-command
+[PEP600]: https://peps.python.org/pep-0600
+
+<!-- prettier-ignore-end -->
