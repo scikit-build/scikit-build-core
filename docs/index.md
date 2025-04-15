@@ -29,6 +29,7 @@ first Friday of every month at the same time. Our past meeting minutes are
 
 guide/getting_started
 guide/cmakelists
+guide/dynamic_link
 guide/crosscompile
 guide/migration_guide
 guide/build
