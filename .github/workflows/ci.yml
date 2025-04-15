@@ -102,6 +102,9 @@ jobs:
           - python-version: "3.14"
             runs-on: ubuntu-latest
             cmake-version: "3.30.x"
+          - python-version: "3.12"
+            runs-on: windows-11-arm
+            cmake-version: "4.0"
 
     steps:
       - uses: actions/checkout@v4
