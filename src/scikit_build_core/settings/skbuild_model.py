@@ -173,6 +173,35 @@ class SDistSettings:
 
 
 @dataclasses.dataclass
+class WheelRepair:
+    enable: bool = False
+    """
+    EXPERIMENTAL: Do automatic repairs of the compiled binaries and libraries.
+    """
+
+    in_wheel: bool = True
+    """
+    Patch the dynamic links to libraries installed in the current wheel.
+    """
+
+    cross_wheel: bool = False
+    """
+    Patch the dynamic links to libraries in other wheels.
+    BEWARE that this may result in incompatible wheels. Use this only if the
+    wheels are strongly linked to each other and strict manylinux compliance is
+    not required.
+    """
+
+    bundle_external: List[str] = dataclasses.field(default_factory=list)
+    """
+    A list of external library files that will be bundled in the wheel. Each entry
+    is treated as a regex pattern, and only the filenames are considered for the match.
+    The libraries are taken from the CMake dependency. The bundled libraries are under
+    `site-packages/${name}.libs`
+    """
+
+
+@dataclasses.dataclass
 class WheelSettings:
     packages: Optional[Union[List[str], Dict[str, str]]] = None
     """
@@ -237,6 +266,11 @@ class WheelSettings:
     build_tag: str = ""
     """
     The build tag to use for the wheel. If empty, no build tag is used.
+    """
+
+    repair: WheelRepair = dataclasses.field(default_factory=WheelRepair)
+    """
+    Wheel repair options
     """
 
 
