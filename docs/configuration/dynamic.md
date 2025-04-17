@@ -130,8 +130,8 @@ result = {"dev" = ["subpackage=={project.version}"]}
 
 You can specify `needs` to ensure other metadata is computed before this one.
 You can use `result` to specify the output. The result must match the type of
-the metadata field you are writing to. You can use `project` to access the current
-metadata values.
+the metadata field you are writing to. You can use `project` to access the
+current metadata values.
 
 ```{versionadded} 0.11.2
 
