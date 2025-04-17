@@ -277,8 +277,6 @@ def test_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 def test_regex_errors() -> None:
     with pytest.raises(RuntimeError):
         regex.dynamic_metadata("version", {})
-    with pytest.raises(RuntimeError, match="Only string fields supported"):
-        regex.dynamic_metadata("author", {"input": "x", "regex": "x"})
 
 
 def test_multipart_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

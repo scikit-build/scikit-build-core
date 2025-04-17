@@ -183,7 +183,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv", "graphlib_backport"]
+module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv", "graphlib"]
 ignore_missing_imports = true
 
 
@@ -302,7 +302,6 @@ known-local-folder = ["pathutils"]
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
-"graphlib".msg = "Use scikit_build_core._compat.graphlib instead."
 
 
 [tool.ruff.lint.per-file-ignores]

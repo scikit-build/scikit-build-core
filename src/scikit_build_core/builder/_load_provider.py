@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, Union, runtime_checkable
 
-from .._compat.graphlib import TopologicalSorter
+from graphlib import TopologicalSorter
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping
