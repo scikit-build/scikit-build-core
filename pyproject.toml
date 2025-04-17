@@ -39,6 +39,7 @@ dependencies = [
     "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
     "typing-extensions >=3.10.0; python_version<'3.9'",
+    "graphlib_backport >=1; python_version<'3.9'",
 ]
 # Note: cmake and possibly ninja are also required if those are not already
 # present (user controllable) - but a system version is fine.
@@ -182,7 +183,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv", "graphlib_backport"]
 ignore_missing_imports = true
 
 
@@ -301,6 +302,7 @@ known-local-folder = ["pathutils"]
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
+"graphlib".msg = "Use scikit_build_core._compat.graphlib instead."
 
 
 [tool.ruff.lint.per-file-ignores]

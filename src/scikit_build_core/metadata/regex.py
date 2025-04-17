@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from . import _STR_FIELDS
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
@@ -22,7 +24,7 @@ def dynamic_metadata(
     settings: Mapping[str, Any],
 ) -> str:
     # Input validation
-    if field not in {"version", "description", "requires-python"}:
+    if field not in _STR_FIELDS:
         msg = "Only string fields supported by this plugin"
         raise RuntimeError(msg)
     if settings.keys() > KEYS:

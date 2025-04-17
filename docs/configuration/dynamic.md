@@ -52,7 +52,7 @@ dynamic_version()
 project(MyPackage VERSION ${PROJECT_VERSION})
 ```
 
-## `version`: Regex
+## Regex
 
 If you want to pull a string-valued expression (usually version) from an
 existing file, you can the integrated `regex` plugin to pull the information.
@@ -110,6 +110,31 @@ dynamic = ["readme"]
 metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
+```
+
+```{versionchanged} 0.11.2
+
+The version number feature now works.
+```
+
+## Template
+
+You can access other metadata fields and produce templated outputs.
+
+```toml
+[tool.scikit-build.metadata.optional-dependencies]
+provider = "scikit_build_core.metadata.template"
+needs = ["version"]
+result = {"dev" = ["subpackage=={project.version}"]}
+```
+
+You can specify `needs` to ensure other metadata is computed before this one.
+You can use `result` to specify the output. The result must match the type of
+the metadata field you are writing to. You can use `project` to access the current
+metadata values.
+
+```{versionadded} 0.11.2
+
 ```
 
 ## `build-system.requires`: Scikit-build-core's `build.requires`
