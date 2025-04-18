@@ -10,6 +10,8 @@ from graphlib import TopologicalSorter
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping
 
+from ..metadata import _ALL_FIELDS
+
 __all__ = ["load_dynamic_metadata", "load_provider"]
 
 
@@ -80,6 +82,9 @@ def _load_dynamic_metadata(
 ]:
     for field, orig_config in metadata.items():
         if "provider" in orig_config:
+            if field not in _ALL_FIELDS:
+                msg = f"{field} is not a valid field"
+                raise KeyError(msg)
             config = dict(orig_config)
             provider = config.pop("provider")
             provider_path = config.pop("provider-path", None)
@@ -89,6 +94,9 @@ def _load_dynamic_metadata(
                 if isinstance(loaded_provider, DynamicMetadataNeeds)
                 else []
             )
+            if needs > _ALL_FIELDS:
+                msg = f"Invalid dyanmic_metada_needs: {needs - _ALL_FIELDS}"
+                raise KeyError(msg)
             yield field, loaded_provider, config, needs
         else:
             yield field, None, dict(orig_config), frozenset()
@@ -98,6 +106,10 @@ def load_dynamic_metadata(
     metadata: Mapping[str, Mapping[str, str]],
 ) -> list[tuple[str, DMProtocols | None, dict[str, str]]]:
     initial = {f: (p, c, n) for (f, p, c, n) in _load_dynamic_metadata(metadata)}
-    sorter = TopologicalSorter({f: n for f, (_, _, n) in initial.items()})
+
+    dynamic_fields = initial.keys()
+    sorter = TopologicalSorter(
+        {f: n & dynamic_fields for f, (_, _, n) in initial.items()}
+    )
     order = sorter.static_order()
     return [(f, *initial[f][:2]) for f in order]

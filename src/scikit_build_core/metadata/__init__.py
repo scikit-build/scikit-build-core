@@ -6,7 +6,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Callable
 
 
-__all__: list[str] = ["_process_dynamic_metadata"]
+__all__: list[str] = ["_ALL_FIELDS", "_process_dynamic_metadata"]
 
 
 # Name is not dynamically settable, so not in this list
@@ -29,6 +29,27 @@ _LIST_STR_FIELDS = frozenset(
     ]
 )
 
+_DICT_STR_FIELDS = frozenset(
+    [
+        "urls",
+        "authors",
+        "maintainers",
+    ]
+)
+
+# "dynamic" and "name" can't be set or requested
+_ALL_FIELDS = (
+    _STR_FIELDS
+    | _LIST_STR_FIELDS
+    | _DICT_STR_FIELDS
+    | frozenset(
+        [
+            "optional-dependencies",
+            "readme",
+        ]
+    )
+)
+
 T = typing.TypeVar("T", bound="str | list[str] | dict[str, str] | dict[str, list[str]]")
 
 
@@ -47,11 +68,11 @@ def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: 
             msg = f"Field {field!r} must be a list of strings"
             raise RuntimeError(msg)
         return [action(r) for r in result]  # type: ignore[return-value]
-    if field == "urls":
+    if field in _DICT_STR_FIELDS:
         if not isinstance(result, dict) or not all(
             isinstance(v, str) for v in result.values()
         ):
-            msg = "Field 'urls' must be a dictionary of strings"
+            msg = f"Field {field!r} must be a dictionary of strings"
             raise RuntimeError(msg)
         return {k: action(v) for k, v in result.items()}  # type: ignore[return-value]
     if field == "optional-dependencies":
