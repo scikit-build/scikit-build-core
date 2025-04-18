@@ -19,8 +19,8 @@ from ..program_search import (
     get_ninja_programs,
 )
 from ..resources import resources
-from ..settings._load_provider import load_provider
 from ..settings.skbuild_read_settings import SettingsReader
+from ._load_provider import load_provider
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
