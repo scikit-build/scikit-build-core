@@ -184,6 +184,11 @@ cmake.targets = ""
 # The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
 cmake.toolchain-file = ""
 
+# Do not pass the current environment's python hints such as
+# ``Python_EXECUTABLE``. Primarily used for cross-compilation where the
+# CMAKE_TOOLCHAIN_FILE should handle it instead.
+cmake.no-python-hints = false
+
 # The versions of Ninja to allow. If Ninja is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.

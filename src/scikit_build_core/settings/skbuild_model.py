@@ -116,6 +116,13 @@ class CMakeSettings:
     The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
     """
 
+    no_python_hints: bool = False
+    """
+    Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+    Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
+    instead.
+    """
+
 
 @dataclasses.dataclass
 class SearchSettings:
