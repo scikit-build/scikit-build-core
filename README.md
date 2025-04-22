@@ -175,6 +175,9 @@ cmake.source-dir = "."
 # The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
 cmake.toolchain-file = ""
 
+# Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+cmake.python-hints = true
+
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 

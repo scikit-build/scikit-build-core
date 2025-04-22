@@ -199,6 +199,16 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.python-hints
+  :type: ``bool``
+  :default: true
+
+  Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+  Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
+  instead.
+```
+
+```{eval-rst}
 .. confval:: cmake.source-dir
   :type: ``Path``
   :default: "."
