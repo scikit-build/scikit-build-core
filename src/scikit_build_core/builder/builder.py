@@ -251,7 +251,7 @@ class Builder:
         # Modern Find Python
         for prefix in ("Python", "Python3"):
             cache_config[f"{prefix}_EXECUTABLE"] = Path(sys.executable)
-            cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.prefix)
+            cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.base_exec_prefix)
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
             # FindPython may break if this is set - only useful on Windows
