@@ -177,6 +177,14 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.python-hints
+  :type: ``bool``
+  :default: true
+
+  Do not pass the current environment's python hints such as ``Python_EXECUTABLE``. Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it instead.
+```
+
+```{eval-rst}
 .. confval:: cmake.source-dir
   :type: ``Path``
   :default: "."
@@ -189,6 +197,13 @@ print(mk_skbuild_docs())
   :type: ``list[str]``
 
   DEPRECATED in 0.10; use build.targets instead.
+```
+
+```{eval-rst}
+.. confval:: cmake.toolchain-file
+  :type: ``Path``
+
+  The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
 ```
 
 ```{eval-rst}
@@ -438,6 +453,13 @@ print(mk_skbuild_docs())
   :type: ``str``
 
   The Python tags. The default (empty string) will use the default Python version. You can also set this to "cp38" to enable the CPython 3.8+ Stable ABI / Limited API (only on CPython and if the version is sufficient, otherwise this has no effect). Or you can set it to "py3" or "py2.py3" to ignore Python ABI compatibility. The ABI tag is inferred from this tag.
+```
+
+```{eval-rst}
+.. confval:: wheel.tags
+  :type: ``list[str]``
+
+  Manually specify the wheel tags to use, ignoring other inputs such as ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}. If not specified, these tags are automatically calculated.
 ```
 
 <!-- [[[end]]] -->
