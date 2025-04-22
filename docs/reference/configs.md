@@ -580,4 +580,13 @@ print(mk_skbuild_docs())
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
 ```
 
+```{eval-rst}
+.. confval:: wheel.tags
+  :type: ``list[str]``
+
+  Manually specify the wheel tags to use, ignoring other inputs such as
+  ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}.
+  If not specified, these tags are automatically calculated.
+```
+
 <!-- [[[end]]] -->

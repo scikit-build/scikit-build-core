@@ -323,6 +323,13 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
+    tags: List[str] = dataclasses.field(default_factory=list)
+    """
+    Manually specify the wheel tags to use, ignoring other inputs such as
+    ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}.
+    If not specified, these tags are automatically calculated.
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:
