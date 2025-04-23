@@ -134,6 +134,9 @@ class DynamicSettings(StrMapping):
     def __len__(self) -> int:
         return len(self.project) + len(self.providers)
 
+    def __contains__(self, key: object) -> bool:
+        return key in self.project or key in self.providers
+
 
 def load_dynamic_metadata(
     project: Mapping[str, Any],
