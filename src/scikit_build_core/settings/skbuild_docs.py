@@ -13,14 +13,12 @@ def __dir__() -> list[str]:
 
 version = ".".join(__version__.split(".")[:2])
 
-INV = {"cmake.minimum-version", "ninja.minimum-version"}
-
 
 def mk_skbuild_docs() -> str:
     """
     Makes documentation for the skbuild model.
     """
-    items = [x for x in mk_docs(ScikitBuildSettings) if x.name not in INV]
+    items = [x for x in mk_docs(ScikitBuildSettings) if not x.deprecated]
     for item in items:
         if item.name == "minimum-version":
             item.default = f'"{version}"  # current version'

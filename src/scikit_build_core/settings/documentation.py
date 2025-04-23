@@ -54,6 +54,7 @@ class DCDoc:
     name: str
     default: str
     docs: str
+    deprecated: bool = False
 
     def __str__(self) -> str:
         docs = "\n".join(f"# {s}" for s in textwrap.wrap(self.docs, width=78))
@@ -107,4 +108,5 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             name=f"{prefix}{field.name}".replace("_", "-"),
             default=sanitize_default_field(default),
             docs=docs[field.name],
+            deprecated=get_metadata_field(field, "deprecated", False),  # noqa: FBT003
         )

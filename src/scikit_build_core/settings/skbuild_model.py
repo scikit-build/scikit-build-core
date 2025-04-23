@@ -36,6 +36,8 @@ class SettingsFieldMetadata(Mapping):  # type: ignore[type-arg]
     Convenience dataclass to store field metadata for documentation.
     """
 
+    deprecated: bool = False
+
     def __contains__(self, key: Any) -> bool:
         return any(key == field.name for field in dataclasses.fields(self))
 
@@ -74,7 +76,9 @@ class CMakeSettingsDefine(str):
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.8; use version instead.
     """
@@ -135,7 +139,9 @@ class SearchSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.8; use version instead.
     """
