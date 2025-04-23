@@ -5,7 +5,7 @@ import dataclasses
 import inspect
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -14,6 +14,10 @@ from .._compat.typing import get_args, get_origin
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 __all__ = ["pull_docs"]
 
@@ -56,6 +60,19 @@ class DCDoc:
         return f"{docs}\n{self.name} = {self.default}\n"
 
 
+def get_metadata_field(field: dataclasses.Field[U], field_name: str, default: T) -> T:
+    if field_name in field.metadata:
+        return cast("T", field.metadata[field_name])
+    return default
+
+
+def sanitize_default_field(text: str) -> str:
+    text = text.replace("'", '"')
+    text = text.replace("True", "true")
+    text = text.replace("False", "false")
+    return text  # noqa: RET504
+
+
 def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
     """
     Makes documentation for a dataclass.
@@ -87,7 +104,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             default = '""'
 
         yield DCDoc(
-            f"{prefix}{field.name}".replace("_", "-"),
-            default.replace("'", '"').replace("True", "true").replace("False", "false"),
-            docs[field.name],
+            name=f"{prefix}{field.name}".replace("_", "-"),
+            default=sanitize_default_field(default),
+            docs=docs[field.name],
         )

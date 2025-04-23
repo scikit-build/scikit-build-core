@@ -1,4 +1,5 @@
 import dataclasses
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -27,6 +28,26 @@ __all__ = [
 
 def __dir__() -> List[str]:
     return __all__
+
+
+@dataclasses.dataclass
+class SettingsFieldMetadata(Mapping):  # type: ignore[type-arg]
+    """
+    Convenience dataclass to store field metadata for documentation.
+    """
+
+    def __contains__(self, key: Any) -> bool:
+        return any(key == field.name for field in dataclasses.fields(self))
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+    def __len__(self) -> int:
+        return len(dataclasses.fields(self))
+
+    def __iter__(self) -> "Iterator[str]":
+        for field in dataclasses.fields(self):
+            yield field.name
 
 
 class CMakeSettingsDefine(str):
