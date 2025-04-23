@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import dataclasses
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Literal, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Annotated
+if TYPE_CHECKING:
+    from .._compat.typing import Annotated, Self
 
 __all__ = [
     "BackportSettings",
@@ -25,7 +28,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -37,7 +40,7 @@ class CMakeSettingsDefine(str):
 
     json_schema = Union[str, bool, List[str]]
 
-    def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
+    def __new__(cls, raw: str | bool | list[str]) -> Self:
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
 
@@ -53,12 +56,12 @@ class CMakeSettingsDefine(str):
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Version | None = None
     """
     DEPRECATED in 0.8; use version instead.
     """
 
-    version: Optional[SpecifierSet] = None
+    version: SpecifierSet | None = None
     """
     The versions of CMake to allow. If CMake is not present on the system or
     does not pass this specifier, it will be downloaded via PyPI if possible. An
@@ -67,20 +70,20 @@ class CMakeSettings:
     or ">=3.15" if unreadable or <0.10.
     """
 
-    args: List[str] = dataclasses.field(default_factory=list)
+    args: list[str] = dataclasses.field(default_factory=list)
     """
     A list of args to pass to CMake when configuring the project. Setting this
     in config or envvar will override toml. See also ``cmake.define``.
     """
 
-    define: Annotated[Dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
+    define: Annotated[dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
         default_factory=dict
     )
     """
     A table of defines to pass to CMake when configuring the project. Additive.
     """
 
-    verbose: Optional[bool] = None
+    verbose: bool | None = None
     """
     DEPRECATED in 0.10, use build.verbose instead.
     """
@@ -98,7 +101,7 @@ class CMakeSettings:
     affects the native builder (not the setuptools plugin).
     """
 
-    targets: Optional[List[str]] = None
+    targets: list[str] | None = None
     """
     DEPRECATED in 0.10; use build.targets instead.
     """
@@ -114,7 +117,7 @@ class SearchSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Version | None = None
     """
     DEPRECATED in 0.8; use version instead.
     """
@@ -146,14 +149,14 @@ class LoggingSettings:
 
 @dataclasses.dataclass
 class SDistSettings:
-    include: List[str] = dataclasses.field(default_factory=list)
+    include: list[str] = dataclasses.field(default_factory=list)
     """
     Files to include in the SDist even if they are skipped by default.
     Supports gitignore syntax.
 
     """
 
-    exclude: List[str] = dataclasses.field(default_factory=list)
+    exclude: list[str] = dataclasses.field(default_factory=list)
     """
     Files to exclude from the SDist even if they are included by default.
     Supports gitignore syntax.
@@ -174,7 +177,7 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[Union[List[str], Dict[str, str]]] = None
+    packages: list[str] | dict[str, str] | None = None
     """
     A list of packages to auto-copy into the wheel. If this is not set, it will
     default to the first of ``src/<package>``, ``python/<package>``, or
@@ -208,7 +211,7 @@ class WheelSettings:
     root, giving access to "/platlib", "/data", "/headers", and "/scripts".
     """
 
-    license_files: Optional[List[str]] = None
+    license_files: list[str] | None = None
     """
     A list of license files to include in the wheel. Supports glob patterns.
     The default is ``["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]``.
@@ -220,13 +223,13 @@ class WheelSettings:
     If set to True (the default), CMake will be run before building the wheel.
     """
 
-    platlib: Optional[bool] = None
+    platlib: bool | None = None
     """
     Target the platlib or the purelib. If not set, the default is to target the
     platlib if wheel.cmake is true, and the purelib otherwise.
     """
 
-    exclude: List[str] = dataclasses.field(default_factory=list)
+    exclude: list[str] = dataclasses.field(default_factory=list)
     """
     A set of patterns to exclude from the wheel. This is additive to the SDist
     exclude patterns. This applies to the final paths in the wheel, and can
@@ -270,12 +273,12 @@ class EditableSettings:
 
 @dataclasses.dataclass
 class BuildSettings:
-    tool_args: List[str] = dataclasses.field(default_factory=list)
+    tool_args: list[str] = dataclasses.field(default_factory=list)
     """
     Extra args to pass directly to the builder in the build step.
     """
 
-    targets: List[str] = dataclasses.field(default_factory=list)
+    targets: list[str] = dataclasses.field(default_factory=list)
     """
     The build targets to use when building the project. Empty builds the
     default target.
@@ -286,7 +289,7 @@ class BuildSettings:
     Verbose printout when building.
     """
 
-    requires: List[str] = dataclasses.field(default_factory=list)
+    requires: list[str] = dataclasses.field(default_factory=list)
     """
     Additional ``build-system.requires``. Intended to be used in combination
     with ``overrides``.
@@ -295,12 +298,12 @@ class BuildSettings:
 
 @dataclasses.dataclass
 class InstallSettings:
-    components: List[str] = dataclasses.field(default_factory=list)
+    components: list[str] = dataclasses.field(default_factory=list)
     """
     The components to install. If empty, all default components are installed.
     """
 
-    strip: Optional[bool] = None
+    strip: bool | None = None
     """
     Whether to strip the binaries. True for release builds on scikit-build-core
     0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
@@ -320,7 +323,7 @@ class GenerateSettings:
     placeholders for all the metadata. If empty, a template-path must be set.
     """
 
-    template_path: Optional[Path] = None
+    template_path: Path | None = None
     """
     The path to the template file. If empty, a template must be set.
     """
@@ -362,11 +365,11 @@ class ScikitBuildSettings:
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
-    generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
+    generate: list[GenerateSettings] = dataclasses.field(default_factory=list)
     messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
     search: SearchSettings = dataclasses.field(default_factory=SearchSettings)
 
-    metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
+    metadata: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.
     """
@@ -382,7 +385,7 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
-    minimum_version: Optional[Version] = None
+    minimum_version: Version | None = None
     """
     If set, this will provide a method for backward compatibility.
     """
