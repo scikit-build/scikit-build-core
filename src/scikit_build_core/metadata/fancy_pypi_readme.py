@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .._compat import tomllib
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 __all__ = [
     "dynamic_metadata",
-    "dynamic_requires_needs",
     "get_requires_for_dynamic_metadata",
 ]
 
@@ -19,7 +21,7 @@ def __dir__() -> list[str]:
 def dynamic_metadata(
     field: str,
     settings: dict[str, list[str] | str],
-    metadata: dict[str, Any],
+    metadata: Mapping[str, Any],
 ) -> str | dict[str, str]:
     from hatch_fancy_pypi_readme._builder import build_text
     from hatch_fancy_pypi_readme._config import load_and_validate_config
@@ -64,10 +66,3 @@ def get_requires_for_dynamic_metadata(
     _settings: dict[str, object] | None = None,
 ) -> list[str]:
     return ["hatch-fancy-pypi-readme>=22.3"]
-
-
-def dynamic_requires_needs(
-    _field: str,
-    _settings: dict[str, object],
-) -> list[str]:
-    return ["version"]

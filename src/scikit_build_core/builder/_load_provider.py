@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import dataclasses
 import importlib
+import inspect
 import sys
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, Union, runtime_checkable
 
-from graphlib import TopologicalSorter
-
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Mapping
+    from collections.abc import Generator, Iterable
+
+    StrMapping = Mapping[str, Any]
+else:
+    StrMapping = Mapping
 
 from ..metadata import _ALL_FIELDS
 
@@ -22,7 +27,10 @@ def __dir__() -> list[str]:
 @runtime_checkable
 class DynamicMetadataProtocol(Protocol):
     def dynamic_metadata(
-        self, fields: Iterable[str], settings: dict[str, Any], metadata: dict[str, Any]
+        self,
+        fields: Iterable[str],
+        settings: dict[str, Any],
+        metadata: Mapping[str, Any],
     ) -> dict[str, Any]: ...
 
 
@@ -40,20 +48,10 @@ class DynamicMetadataWheelProtocol(DynamicMetadataProtocol, Protocol):
     ) -> bool: ...
 
 
-@runtime_checkable
-class DynamicMetadataNeeds(DynamicMetadataProtocol, Protocol):
-    def dynamic_metadata_needs(
-        self,
-        field: str,
-        settings: Mapping[str, object] | None = None,
-    ) -> list[str]: ...
-
-
 DMProtocols = Union[
     DynamicMetadataProtocol,
     DynamicMetadataRequirementsProtocol,
     DynamicMetadataWheelProtocol,
-    DynamicMetadataNeeds,
 ]
 
 
@@ -77,39 +75,76 @@ def load_provider(
 
 def _load_dynamic_metadata(
     metadata: Mapping[str, Mapping[str, str]],
-) -> Generator[
-    tuple[str, DMProtocols | None, dict[str, str], frozenset[str]], None, None
-]:
+) -> Generator[tuple[str, DMProtocols, dict[str, str]], None, None]:
     for field, orig_config in metadata.items():
-        if "provider" in orig_config:
-            if field not in _ALL_FIELDS:
-                msg = f"{field} is not a valid field"
-                raise KeyError(msg)
-            config = dict(orig_config)
-            provider = config.pop("provider")
-            provider_path = config.pop("provider-path", None)
-            loaded_provider = load_provider(provider, provider_path)
-            needs = frozenset(
-                loaded_provider.dynamic_metadata_needs(field, config)
-                if isinstance(loaded_provider, DynamicMetadataNeeds)
-                else []
+        if "provider" not in orig_config:
+            msg = "Missing provider in dynamic metadata"
+            raise KeyError(msg)
+
+        if field not in _ALL_FIELDS:
+            msg = f"{field} is not a valid field"
+            raise KeyError(msg)
+        config = dict(orig_config)
+        provider = config.pop("provider")
+        provider_path = config.pop("provider-path", None)
+        loaded_provider = load_provider(provider, provider_path)
+        yield field, loaded_provider, config
+
+
+@dataclasses.dataclass
+class DynamicSettings(StrMapping):
+    settings: dict[str, dict[str, Any]]
+    project: dict[str, Any]
+    providers: dict[str, DMProtocols]
+
+    def __getitem__(self, key: str) -> Any:
+        # Try to get the settings from either the static file or dynamic metadata provider
+        if key in self.project:
+            return self.project[key]
+
+        # Check if we are in a loop, i.e. something else is already requesting
+        # this key while trying to get another key
+        if key not in self.providers:
+            dep_type = "missing" if key in self.settings else "circular"
+            msg = f"Encountered a {dep_type} dependency at {key}"
+            raise ValueError(msg)
+
+        provider = self.providers.pop(key)
+        sig = inspect.signature(provider.dynamic_metadata)
+        if len(sig.parameters) < 3:
+            # Backcompat for dynamic_metadata without metadata dict
+            self.project[key] = provider.dynamic_metadata(  # type: ignore[call-arg]
+                key, self.settings[key]
             )
-            if needs > _ALL_FIELDS:
-                msg = f"Invalid dyanmic_metada_needs: {needs - _ALL_FIELDS}"
-                raise KeyError(msg)
-            yield field, loaded_provider, config, needs
         else:
-            yield field, None, dict(orig_config), frozenset()
+            self.project[key] = provider.dynamic_metadata(
+                key, self.settings[key], self.project
+            )
+        self.project["dynamic"].remove(key)
+
+        return self.project[key]
+
+    def __iter__(self) -> Iterator[str]:
+        # Iterate over the keys of the static settings
+        yield from self.project
+
+        # Iterate over the keys of the dynamic metadata providers
+        yield from self.providers
+
+    def __len__(self) -> int:
+        return len(self.project) + len(self.providers)
 
 
 def load_dynamic_metadata(
+    project: Mapping[str, Any],
     metadata: Mapping[str, Mapping[str, str]],
-) -> list[tuple[str, DMProtocols | None, dict[str, str]]]:
-    initial = {f: (p, c, n) for (f, p, c, n) in _load_dynamic_metadata(metadata)}
+) -> dict[str, Any]:
+    initial = {f: (p, c) for (f, p, c) in _load_dynamic_metadata(metadata)}
 
-    dynamic_fields = initial.keys()
-    sorter = TopologicalSorter(
-        {f: n & dynamic_fields for f, (_, _, n) in initial.items()}
+    settings = DynamicSettings(
+        settings={f: c for f, (v, c) in initial.items()},
+        project=dict(project),
+        providers={k: v for k, (v, _) in initial.items()},
     )
-    order = sorter.static_order()
-    return [(f, *initial[f][:2]) for f in order]
+
+    return dict(settings)

@@ -7,14 +7,14 @@ if TYPE_CHECKING:
 
 from . import _process_dynamic_metadata
 
-__all__ = ["dynamic_metadata", "dynamic_metadata_needs"]
+__all__ = ["dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-KEYS = {"needs", "result"}
+KEYS = {"result"}
 
 
 def dynamic_metadata(
@@ -34,13 +34,6 @@ def dynamic_metadata(
 
     return _process_dynamic_metadata(
         field,
-        lambda r: r.format(**metadata),
+        lambda r: r.format(project=metadata),
         result,
     )
-
-
-def dynamic_metadata_needs(
-    field: str,  # noqa: ARG001
-    settings: Mapping[str, Any],
-) -> list[str]:
-    return settings.get("needs", [])

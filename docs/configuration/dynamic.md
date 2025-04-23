@@ -124,14 +124,13 @@ You can access other metadata fields and produce templated outputs.
 ```toml
 [tool.scikit-build.metadata.optional-dependencies]
 provider = "scikit_build_core.metadata.template"
-needs = ["version"]
-result = {"dev" = ["subpackage=={project.version}"]}
+result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-You can specify `needs` to ensure other metadata is computed before this one.
-You can use `result` to specify the output. The result must match the type of
-the metadata field you are writing to. You can use `project` to access the
-current metadata values.
+You can use `project` to access the current metadata values. You can reference
+other dynamic metadata fields, and they will be computed before this one. You
+can use `result` to specify the output. The result must match the type of the
+metadata field you are writing to.
 
 ```{versionadded} 0.11.2
 

@@ -159,6 +159,9 @@ def test_plugin_metadata():
 
 @pytest.mark.usefixtures("package_dynamic_metadata")
 def test_faulty_metadata():
+    reason_msg = "install hatch-fancy-pypi-readme to test the dynamic metadata plugins"
+    pytest.importorskip("hatch_fancy_pypi_readme", reason=reason_msg)
+
     with Path("faulty_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")

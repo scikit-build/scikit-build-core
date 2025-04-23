@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import inspect
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -39,28 +38,12 @@ def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
 ) -> StandardMetadata:
-    new_pyproject_dict = copy.deepcopy(pyproject_dict)
+    new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
 
     # Handle any dynamic metadata
-    for field, provider, config in load_dynamic_metadata(settings.metadata):
-        if provider is None:
-            msg = f"{field} is missing provider"
-            raise KeyError(msg)
-        if field not in pyproject_dict.get("project", {}).get("dynamic", []):
-            msg = f"{field} is not in project.dynamic"
-            raise KeyError(msg)
-
-        sig = inspect.signature(provider.dynamic_metadata)
-        if len(sig.parameters) < 3:
-            # Backcompat for dynamic_metadata without metadata dict
-            new_pyproject_dict["project"][field] = provider.dynamic_metadata(  # type: ignore[call-arg]
-                field, config
-            )
-        else:
-            new_pyproject_dict["project"][field] = provider.dynamic_metadata(
-                field, config, new_pyproject_dict["project"].copy()
-            )
-        new_pyproject_dict["project"]["dynamic"].remove(field)
+    new_pyproject_dict["project"] = load_dynamic_metadata(
+        new_pyproject_dict["project"], settings.metadata
+    )
 
     if settings.strict_config:
         extra_keys_top = extras_top_level(new_pyproject_dict)
