@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, TypeVar, cast
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from .. import __version__
 from .._compat.typing import get_args, get_origin
 
 if TYPE_CHECKING:
@@ -24,6 +25,9 @@ __all__ = ["pull_docs"]
 
 def __dir__() -> list[str]:
     return __all__
+
+
+version_display = ".".join(__version__.split(".")[:2])
 
 
 def _get_value(value: ast.expr) -> str:
@@ -93,7 +97,12 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
                 yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
                 continue
 
-        if field.default is not dataclasses.MISSING and field.default is not None:
+        if default_before_format := get_metadata_field(field, "display_default", None):
+            assert isinstance(default_before_format, str)
+            default = default_before_format.format(
+                version=version_display,
+            )
+        elif field.default is not dataclasses.MISSING and field.default is not None:
             default = repr(
                 str(field.default)
                 if isinstance(field.default, (Path, Version, SpecifierSet))

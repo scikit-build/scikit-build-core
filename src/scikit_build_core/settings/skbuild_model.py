@@ -36,6 +36,7 @@ class SettingsFieldMetadata(Mapping):  # type: ignore[type-arg]
     Convenience dataclass to store field metadata for documentation.
     """
 
+    display_default: Optional[str] = None
     deprecated: bool = False
 
     def __contains__(self, key: Any) -> bool:
@@ -201,7 +202,12 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[Union[List[str], Dict[str, str]]] = None
+    packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            display_default='["src/<package>", "python/<package>", "<package>"]'
+        ),
+    )
     """
     A list of packages to auto-copy into the wheel. If this is not set, it will
     default to the first of ``src/<package>``, ``python/<package>``, or
@@ -327,7 +333,9 @@ class InstallSettings:
     The components to install. If empty, all default components are installed.
     """
 
-    strip: Optional[bool] = None
+    strip: Optional[bool] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(display_default="true")
+    )
     """
     Whether to strip the binaries. True for release builds on scikit-build-core
     0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
@@ -409,7 +417,12 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            display_default='"{version}"  # current version'
+        ),
+    )
     """
     If set, this will provide a method for backward compatibility.
     """
