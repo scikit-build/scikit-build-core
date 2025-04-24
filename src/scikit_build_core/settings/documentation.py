@@ -53,7 +53,7 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
     }
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class DCDoc:
     name: str
     default: str
@@ -72,10 +72,7 @@ def get_metadata_field(field: dataclasses.Field[U], field_name: str, default: T)
 
 
 def sanitize_default_field(text: str) -> str:
-    text = text.replace("'", '"')
-    text = text.replace("True", "true")
-    text = text.replace("False", "false")
-    return text  # noqa: RET504
+    return text.replace("'", '"').replace("True", "true").replace("False", "false")
 
 
 def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
