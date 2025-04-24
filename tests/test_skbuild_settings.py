@@ -624,27 +624,6 @@ def test_backcompat_cmake_build_env(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert settings_reader.settings.build.targets == ["a", "b"]
 
 
-def test_backcompat_cmake_build_both_specified(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
-    monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
-    )
-    pyproject_toml = tmp_path / "pyproject.toml"
-    pyproject_toml.write_text(
-        textwrap.dedent(
-            """\
-            [tool.scikit-build]
-            cmake.verbose = true
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(SystemExit):
-        SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})
-
-
 def test_auto_minimum_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
@@ -813,3 +792,135 @@ def test_skbuild_settings_cmake_define_list():
         "NESTED_LIST": r"Apple;Lemon\;Lime;Banana",
         "ONE_LEVEL_LIST": "Foo;Bar;ExceptionallyLargeListEntryThatWouldOverflowTheLine;Baz",
     }
+
+
+def test_skbuild_override_renamed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.7"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})
+    assert settings_reader.settings.build.verbose
+
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, env={"SKBUILD_BUILD_VERBOSE": "TRUE"}
+    )
+    assert settings_reader.settings.build.verbose
+
+
+def test_skbuild_override_renamed_fail(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.7"
+            build.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml)
+
+
+def test_skbuild_override_static(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.7"
+            build.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml)
+
+
+def test_backcompat_cmake_build_both_specified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"build.verbose": "1"})
+    assert settings_reader.settings.build.verbose
+
+
+def test_backcompat_cmake_build_both_specified_static(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            build.verbose = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"cmake.verbose": "1"})
+    assert settings_reader.settings.build.verbose
+
+
+def test_backcompat_cmake_build_targets_both_specified(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.targets = ["a", "b"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"build.targets": "c;d"})
+    assert settings_reader.settings.build.targets == ["c", "d"]

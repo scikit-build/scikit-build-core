@@ -92,12 +92,18 @@ def _handle_move(
     after: T,
     minimum_version: Version | None,
     introduced_in: Version,
+    *,
+    static: bool,
 ) -> T:
     """
     Backward_compat for moving names around. The default must be false-like.
     """
-
-    if after and minimum_version is not None and minimum_version < introduced_in:
+    if (
+        static
+        and after
+        and minimum_version is not None
+        and minimum_version < introduced_in
+    ):
         rich_error(
             f"Cannot set {after_name} if minimum-version is set to less than {introduced_in} (which is where it was introduced)"
         )
@@ -112,6 +118,8 @@ def _handle_move(
         )
 
     if before is not None and after:
+        if not static:
+            return after
         rich_error(f"Cannot set {before_name} and {after_name} at the same time")
 
     if before is None:
@@ -190,13 +198,17 @@ class SettingsReader:
             k: v for k, v in config_settings.items() if not k.startswith("skbuild.")
         }
         self.sources = SourceChain(
-            EnvSource("SKBUILD"),
+            EnvSource("SKBUILD", env=env),
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
             ConfSource(settings=remaining, verify=verify_conf),
             *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+
+        static_settings = SourceChain(
+            *toml_srcs, prefixes=["tool", "scikit-build"]
+        ).convert_target(ScikitBuildSettings)
 
         if self.settings.minimum_version:
             current_version = Version(__version__)
@@ -285,6 +297,8 @@ class SettingsReader:
             self.settings.build.verbose,
             self.settings.minimum_version,
             Version("0.10"),
+            static=static_settings.cmake.verbose == self.settings.cmake.verbose
+            and static_settings.build.verbose == self.settings.build.verbose,
         )
         self.settings.build.targets = _handle_move(
             "cmake.targets",
@@ -293,6 +307,8 @@ class SettingsReader:
             self.settings.build.targets,
             self.settings.minimum_version,
             Version("0.10"),
+            static=static_settings.cmake.targets == self.settings.cmake.targets
+            and static_settings.build.targets == self.settings.build.targets,
         )
 
     def unrecognized_options(self) -> Generator[str, None, None]:
