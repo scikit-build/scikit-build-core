@@ -1,7 +1,6 @@
 import dataclasses
-from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -22,6 +21,7 @@ __all__ = [
     "SDistSettings",
     "ScikitBuildSettings",
     "SearchSettings",
+    "SettingsFieldMetadata",
     "WheelSettings",
 ]
 
@@ -30,27 +30,26 @@ def __dir__() -> List[str]:
     return __all__
 
 
-@dataclasses.dataclass
-class SettingsFieldMetadata(Mapping):  # type: ignore[type-arg]
+class SettingsFieldMetadataInner(TypedDict):
+    display_default: Optional[str]
+    deprecated: bool
+
+
+class SettingsFieldMetadata(TypedDict, total=False):
+    skbuild: SettingsFieldMetadataInner
+
+
+def mk_metadata(
+    *, display_default: Optional[str] = None, deprecated: bool = False
+) -> SettingsFieldMetadata:
     """
-    Convenience dataclass to store field metadata for documentation.
+    A helper function to create metadata for a field.
     """
-
-    display_default: Optional[str] = None
-    deprecated: bool = False
-
-    def __contains__(self, key: Any) -> bool:
-        return any(key == field.name for field in dataclasses.fields(self))
-
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
-
-    def __len__(self) -> int:
-        return len(dataclasses.fields(self))
-
-    def __iter__(self) -> "Iterator[str]":
-        for field in dataclasses.fields(self):
-            yield field.name
+    return SettingsFieldMetadata(
+        skbuild=SettingsFieldMetadataInner(
+            display_default=display_default, deprecated=deprecated
+        )
+    )
 
 
 class CMakeSettingsDefine(str):
@@ -78,7 +77,7 @@ class CMakeSettingsDefine(str):
 @dataclasses.dataclass
 class CMakeSettings:
     minimum_version: Optional[Version] = dataclasses.field(
-        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+        default=None, metadata=mk_metadata(deprecated=True)
     )
     """
     DEPRECATED in 0.8; use version instead.
@@ -141,7 +140,7 @@ class SearchSettings:
 @dataclasses.dataclass
 class NinjaSettings:
     minimum_version: Optional[Version] = dataclasses.field(
-        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+        default=None, metadata=mk_metadata(deprecated=True)
     )
     """
     DEPRECATED in 0.8; use version instead.
@@ -204,7 +203,7 @@ class SDistSettings:
 class WheelSettings:
     packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(
+        metadata=mk_metadata(
             display_default='["src/<package>", "python/<package>", "<package>"]'
         ),
     )
@@ -334,7 +333,7 @@ class InstallSettings:
     """
 
     strip: Optional[bool] = dataclasses.field(
-        default=None, metadata=SettingsFieldMetadata(display_default="true")
+        default=None, metadata=mk_metadata(display_default="true")
     )
     """
     Whether to strip the binaries. True for release builds on scikit-build-core
@@ -419,9 +418,7 @@ class ScikitBuildSettings:
 
     minimum_version: Optional[Version] = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(
-            display_default='"{version}"  # current version'
-        ),
+        metadata=mk_metadata(display_default='"{version}"  # current version'),
     )
     """
     If set, this will provide a method for backward compatibility.

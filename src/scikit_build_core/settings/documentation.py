@@ -4,8 +4,8 @@ import ast
 import dataclasses
 import inspect
 import textwrap
+import typing
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar, cast
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -13,11 +13,8 @@ from packaging.version import Version
 from .. import __version__
 from .._compat.typing import get_args, get_origin
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from collections.abc import Generator
-
-T = TypeVar("T")
-U = TypeVar("U")
 
 
 __all__ = ["pull_docs"]
@@ -65,12 +62,6 @@ class DCDoc:
         return f"{docs}\n{self.name} = {self.default}\n"
 
 
-def get_metadata_field(field: dataclasses.Field[U], field_name: str, default: T) -> T:
-    if field_name in field.metadata:
-        return cast("T", field.metadata[field_name])
-    return default
-
-
 def sanitize_default_field(text: str) -> str:
     return text.replace("'", '"').replace("True", "true").replace("False", "false")
 
@@ -94,7 +85,9 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
                 yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
                 continue
 
-        if default_before_format := get_metadata_field(field, "display_default", None):
+        if default_before_format := field.metadata.get("skbuild", {}).get(
+            "display_default", None
+        ):
             assert isinstance(default_before_format, str)
             default = default_before_format.format(
                 version=version_display,
@@ -114,5 +107,5 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             name=f"{prefix}{field.name}".replace("_", "-"),
             default=sanitize_default_field(default),
             docs=docs[field.name],
-            deprecated=get_metadata_field(field, "deprecated", False),  # noqa: FBT003
+            deprecated=field.metadata.get("skbuild", {}).get("deprecated", False),
         )
