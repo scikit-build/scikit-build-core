@@ -85,9 +85,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
                 yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
                 continue
 
-        if default_before_format := field.metadata.get("skbuild", {}).get(
-            "display_default", None
-        ):
+        if default_before_format := field.metadata.get("display_default", None):
             assert isinstance(default_before_format, str)
             default = default_before_format.format(
                 version=version_display,
@@ -107,5 +105,5 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             name=f"{prefix}{field.name}".replace("_", "-"),
             default=sanitize_default_field(default),
             docs=docs[field.name],
-            deprecated=field.metadata.get("skbuild", {}).get("deprecated", False),
+            deprecated=field.metadata.get("deprecated", False),
         )

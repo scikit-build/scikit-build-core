@@ -30,26 +30,9 @@ def __dir__() -> List[str]:
     return __all__
 
 
-class SettingsFieldMetadataInner(TypedDict):
+class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
-
-
-class SettingsFieldMetadata(TypedDict, total=False):
-    skbuild: SettingsFieldMetadataInner
-
-
-def mk_metadata(
-    *, display_default: Optional[str] = None, deprecated: bool = False
-) -> SettingsFieldMetadata:
-    """
-    A helper function to create metadata for a field.
-    """
-    return SettingsFieldMetadata(
-        skbuild=SettingsFieldMetadataInner(
-            display_default=display_default, deprecated=deprecated
-        )
-    )
 
 
 class CMakeSettingsDefine(str):
@@ -77,7 +60,7 @@ class CMakeSettingsDefine(str):
 @dataclasses.dataclass
 class CMakeSettings:
     minimum_version: Optional[Version] = dataclasses.field(
-        default=None, metadata=mk_metadata(deprecated=True)
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
     DEPRECATED in 0.8; use version instead.
@@ -140,7 +123,7 @@ class SearchSettings:
 @dataclasses.dataclass
 class NinjaSettings:
     minimum_version: Optional[Version] = dataclasses.field(
-        default=None, metadata=mk_metadata(deprecated=True)
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
     DEPRECATED in 0.8; use version instead.
@@ -203,7 +186,7 @@ class SDistSettings:
 class WheelSettings:
     packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
         default=None,
-        metadata=mk_metadata(
+        metadata=SettingsFieldMetadata(
             display_default='["src/<package>", "python/<package>", "<package>"]'
         ),
     )
@@ -333,7 +316,7 @@ class InstallSettings:
     """
 
     strip: Optional[bool] = dataclasses.field(
-        default=None, metadata=mk_metadata(display_default="true")
+        default=None, metadata=SettingsFieldMetadata(display_default="true")
     )
     """
     Whether to strip the binaries. True for release builds on scikit-build-core
@@ -418,7 +401,9 @@ class ScikitBuildSettings:
 
     minimum_version: Optional[Version] = dataclasses.field(
         default=None,
-        metadata=mk_metadata(display_default='"{version}"  # current version'),
+        metadata=SettingsFieldMetadata(
+            display_default='"{version}"  # current version'
+        ),
     )
     """
     If set, this will provide a method for backward compatibility.
