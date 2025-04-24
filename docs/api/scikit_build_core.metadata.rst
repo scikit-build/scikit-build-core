@@ -32,3 +32,11 @@ scikit\_build\_core.metadata.setuptools\_scm module
    :members:
    :show-inheritance:
    :undoc-members:
+
+scikit\_build\_core.metadata.template module
+--------------------------------------------
+
+.. automodule:: scikit_build_core.metadata.template
+   :members:
+   :show-inheritance:
+   :undoc-members:

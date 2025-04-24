@@ -13,7 +13,7 @@ from .._vendor.pyproject_metadata import (
     extras_build_system,
     extras_top_level,
 )
-from ..settings._load_provider import load_dynamic_metadata
+from ..builder._load_provider import process_dynamic_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -34,23 +34,16 @@ if sys.version_info < (3, 11):
     errors.ExceptionGroup = ExceptionGroup  # type: ignore[misc, assignment]
 
 
-# If pyproject-metadata eventually supports updates, this can be simplified
 def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
 ) -> StandardMetadata:
-    new_pyproject_dict = copy.deepcopy(pyproject_dict)
+    new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
 
     # Handle any dynamic metadata
-    for field, provider, config in load_dynamic_metadata(settings.metadata):
-        if provider is None:
-            msg = f"{field} is missing provider"
-            raise KeyError(msg)
-        if field not in pyproject_dict.get("project", {}).get("dynamic", []):
-            msg = f"{field} is not in project.dynamic"
-            raise KeyError(msg)
-        new_pyproject_dict["project"][field] = provider.dynamic_metadata(field, config)
-        new_pyproject_dict["project"]["dynamic"].remove(field)
+    new_pyproject_dict["project"] = process_dynamic_metadata(
+        new_pyproject_dict["project"], settings.metadata
+    )
 
     if settings.strict_config:
         extra_keys_top = extras_top_level(new_pyproject_dict)

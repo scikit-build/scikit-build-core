@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import functools
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from . import _process_dynamic_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -17,14 +20,18 @@ def __dir__() -> list[str]:
 KEYS = {"input", "regex", "result", "remove"}
 
 
+def _process(match: re.Match[str], remove: str, result: str) -> str:
+    retval = result.format(*match.groups(), **match.groupdict())
+    if remove:
+        retval = re.sub(remove, "", retval)
+    return retval
+
+
 def dynamic_metadata(
     field: str,
     settings: Mapping[str, Any],
 ) -> str:
     # Input validation
-    if field not in {"version", "description", "requires-python"}:
-        msg = "Only string fields supported by this plugin"
-        raise RuntimeError(msg)
     if settings.keys() > KEYS:
         msg = f"Only {KEYS} settings allowed by this plugin"
         raise RuntimeError(msg)
@@ -55,7 +62,6 @@ def dynamic_metadata(
         msg = f"Couldn't find {regex!r} in {input_filename}"
         raise RuntimeError(msg)
 
-    retval = result.format(*match.groups(), **match.groupdict())
-    if remove:
-        retval = re.sub(remove, "", retval)
-    return retval
+    return _process_dynamic_metadata(
+        field, functools.partial(_process, match, remove), result
+    )

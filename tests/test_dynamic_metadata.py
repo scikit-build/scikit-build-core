@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from packaging.requirements import Requirement
 from packaging.version import Version
 
 from scikit_build_core._compat import tomllib
@@ -145,7 +146,7 @@ def test_plugin_metadata():
 
     assert str(metadata.version) == "0.1.0"
     assert metadata.readme == pyproject_metadata.Readme(
-        "Fragment #1Fragment #2", None, "text/x-rst"
+        "Fragment #1Fragment #2 -- 0.1.0", None, "text/x-rst"
     )
 
     assert set(GetRequires().dynamic_metadata()) == {
@@ -153,9 +154,14 @@ def test_plugin_metadata():
         "setuptools-scm",
     }
 
+    assert metadata.optional_dependencies == {"dev": [Requirement("fancy==0.1.0")]}
+
 
 @pytest.mark.usefixtures("package_dynamic_metadata")
 def test_faulty_metadata():
+    reason_msg = "install hatch-fancy-pypi-readme to test the dynamic metadata plugins"
+    pytest.importorskip("hatch_fancy_pypi_readme", reason=reason_msg)
+
     with Path("faulty_project.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
     settings_reader = SettingsReader(pyproject, {}, state="metadata_wheel")
@@ -274,8 +280,6 @@ def test_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 def test_regex_errors() -> None:
     with pytest.raises(RuntimeError):
         regex.dynamic_metadata("version", {})
-    with pytest.raises(RuntimeError, match="Only string fields supported"):
-        regex.dynamic_metadata("author", {"input": "x", "regex": "x"})
 
 
 def test_multipart_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
