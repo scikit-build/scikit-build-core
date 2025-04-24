@@ -17,7 +17,7 @@ else:
 
 from ..metadata import _ALL_FIELDS
 
-__all__ = ["load_dynamic_metadata", "load_provider"]
+__all__ = ["load_provider", "process_dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -30,7 +30,7 @@ class DynamicMetadataProtocol(Protocol):
         self,
         fields: Iterable[str],
         settings: dict[str, Any],
-        metadata: Mapping[str, Any],
+        project: Mapping[str, Any],
     ) -> dict[str, Any]: ...
 
 
@@ -43,9 +43,7 @@ class DynamicMetadataRequirementsProtocol(DynamicMetadataProtocol, Protocol):
 
 @runtime_checkable
 class DynamicMetadataWheelProtocol(DynamicMetadataProtocol, Protocol):
-    def dynamic_wheel(
-        self, field: str, settings: Mapping[str, Any] | None = None
-    ) -> bool: ...
+    def dynamic_wheel(self, field: str, settings: Mapping[str, Any]) -> bool: ...
 
 
 DMProtocols = Union[
@@ -75,7 +73,7 @@ def load_provider(
 
 def _load_dynamic_metadata(
     metadata: Mapping[str, Mapping[str, str]],
-) -> Generator[tuple[str, DMProtocols, dict[str, str]], None, None]:
+) -> Generator[tuple[str, DMProtocols, dict[str, Any]], None, None]:
     for field, orig_config in metadata.items():
         if "provider" not in orig_config:
             msg = "Missing provider in dynamic metadata"
@@ -92,7 +90,7 @@ def _load_dynamic_metadata(
 
 
 @dataclasses.dataclass
-class DynamicSettings(StrMapping):
+class DynamicPyProject(StrMapping):
     settings: dict[str, dict[str, Any]]
     project: dict[str, Any]
     providers: dict[str, DMProtocols]
@@ -117,9 +115,7 @@ class DynamicSettings(StrMapping):
                 key, self.settings[key]
             )
         else:
-            self.project[key] = provider.dynamic_metadata(
-                key, self.settings[key], self.project
-            )
+            self.project[key] = provider.dynamic_metadata(key, self.settings[key], self)
         self.project["dynamic"].remove(key)
 
         return self.project[key]
@@ -138,14 +134,14 @@ class DynamicSettings(StrMapping):
         return key in self.project or key in self.providers
 
 
-def load_dynamic_metadata(
+def process_dynamic_metadata(
     project: Mapping[str, Any],
-    metadata: Mapping[str, Mapping[str, str]],
+    metadata: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
     initial = {f: (p, c) for (f, p, c) in _load_dynamic_metadata(metadata)}
 
-    settings = DynamicSettings(
-        settings={f: c for f, (v, c) in initial.items()},
+    settings = DynamicPyProject(
+        settings={f: c for f, (_, c) in initial.items()},
         project=dict(project),
         providers={k: v for k, (v, _) in initial.items()},
     )

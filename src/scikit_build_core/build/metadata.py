@@ -13,7 +13,7 @@ from .._vendor.pyproject_metadata import (
     extras_build_system,
     extras_top_level,
 )
-from ..builder._load_provider import load_dynamic_metadata
+from ..builder._load_provider import process_dynamic_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -41,7 +41,7 @@ def get_standard_metadata(
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
 
     # Handle any dynamic metadata
-    new_pyproject_dict["project"] = load_dynamic_metadata(
+    new_pyproject_dict["project"] = process_dynamic_metadata(
         new_pyproject_dict["project"], settings.metadata
     )
 
