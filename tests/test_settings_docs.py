@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from scikit_build_core.settings.documentation import DCDoc, mk_docs
-from scikit_build_core.settings.skbuild_docs import mk_skbuild_docs
+from scikit_build_core.settings.skbuild_docs_readme import mk_skbuild_docs
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 

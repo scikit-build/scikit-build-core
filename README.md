@@ -144,7 +144,7 @@ as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
 below:
 
 <!-- [[[cog
-from scikit_build_core.settings.skbuild_docs import mk_skbuild_docs
+from scikit_build_core.settings.skbuild_docs_readme import mk_skbuild_docs
 
 print("\n```toml\n[tool.scikit-build]")
 print(mk_skbuild_docs())

@@ -41,10 +41,10 @@ scikit\_build\_core.settings.json\_schema module
    :show-inheritance:
    :undoc-members:
 
-scikit\_build\_core.settings.skbuild\_docs module
--------------------------------------------------
+scikit\_build\_core.settings.skbuild\_docs\_readme module
+---------------------------------------------------------
 
-.. automodule:: scikit_build_core.settings.skbuild_docs
+.. automodule:: scikit_build_core.settings.skbuild_docs_readme
    :members:
    :show-inheritance:
    :undoc-members:
