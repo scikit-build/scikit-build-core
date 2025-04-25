@@ -49,6 +49,14 @@ scikit\_build\_core.settings.skbuild\_docs\_readme module
    :show-inheritance:
    :undoc-members:
 
+scikit\_build\_core.settings.skbuild\_docs\_sphinx module
+---------------------------------------------------------
+
+.. automodule:: scikit_build_core.settings.skbuild_docs_sphinx
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.settings.skbuild\_model module
 --------------------------------------------------
 

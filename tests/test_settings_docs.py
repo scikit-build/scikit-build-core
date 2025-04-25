@@ -21,6 +21,7 @@ def test_mk_docs() -> None:
     assert (
         DCDoc(
             name="cmake.minimum-version",
+            type="Version",
             default='""',
             docs="DEPRECATED in 0.8; use version instead.",
             deprecated=True,
@@ -30,6 +31,7 @@ def test_mk_docs() -> None:
     assert (
         DCDoc(
             name="install.strip",
+            type="bool",
             default="true",
             docs="Whether to strip the binaries. True for release builds on scikit-build-core 0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).",
             deprecated=False,

@@ -11,7 +11,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .. import __version__
-from .._compat.typing import get_args, get_origin
+from .._compat.typing import Annotated, get_args, get_origin
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator
@@ -53,6 +53,7 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
 @dataclasses.dataclass(frozen=True)
 class DCDoc:
     name: str
+    type: str
     default: str
     docs: str
     deprecated: bool = False
@@ -64,6 +65,36 @@ class DCDoc:
 
 def sanitize_default_field(text: str) -> str:
     return text.replace("'", '"').replace("True", "true").replace("False", "false")
+
+
+def is_optional(field: type) -> bool:
+    return get_origin(field) is typing.Union and type(None) in get_args(field)
+
+
+def get_display_type(field_type: type | str) -> str:
+    if isinstance(field_type, str):
+        return field_type
+    if is_optional(field_type):
+        # Special case for optional, we just take the first part
+        return get_display_type(get_args(field_type)[0])
+    # Handle built-ins
+    if get_origin(field_type) is dict:
+        key_display = get_display_type(get_args(field_type)[0])
+        val_display = get_display_type(get_args(field_type)[1])
+        return f"dict[{key_display},{val_display}]"
+    if get_origin(field_type) is list:
+        return f"list[{get_display_type(get_args(field_type)[0])}]"
+    # Handle other typing specials
+    if get_origin(field_type) is typing.Literal:
+        return " | ".join(f'"{x}"' for x in get_args(field_type))
+    if get_origin(field_type) is Annotated:
+        # For annotated assume we always want the second item
+        return get_display_type(get_args(field_type)[1])
+    if field_type is typing.Any:  # type: ignore[comparison-overlap]
+        # Workaround for python<3.10 where typing.Any.__name__ does not evaluate
+        return "Any"
+    # Otherwise just get the formatted form of the `type` object
+    return field_type.__name__
 
 
 def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
@@ -103,6 +134,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
 
         yield DCDoc(
             name=f"{prefix}{field.name}".replace("_", "-"),
+            type=field.metadata.get("display_type", get_display_type(field.type)),
             default=sanitize_default_field(default),
             docs=docs[field.name],
             deprecated=field.metadata.get("deprecated", False),
