@@ -1,5 +1,54 @@
 # Config Reference
 
+The following are the available configurations in `pyproject.toml` for the
+`[tool.scikit-build]` table. These can be passed in one of the following ways
+
+````{tab} pyproject.toml
+
+```toml
+[tool.scikit-build]
+build.verbose = true
+```
+
+````
+
+`````{tab} config-settings
+
+````{tab} pip
+
+```console
+$ pip install . --config-settings=build.verbose=true
+```
+
+````
+
+````{tab} build
+
+```console
+$ pipx run build --wheel -Cbuild.verbose=true
+```
+
+````
+
+````{tab} cibuildwheel
+
+```toml
+[tool.cibuildwheel.config-settings]
+"build.verbose" = true
+```
+
+````
+
+`````
+
+````{tab} Environment
+
+```console
+$ export SKBUILD_BUILD_VERBOSE="true"
+```
+
+````
+
 <!-- [[[cog
 from scikit_build_core.settings.skbuild_docs_sphinx import mk_skbuild_docs
 
