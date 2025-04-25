@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -21,12 +21,18 @@ __all__ = [
     "SDistSettings",
     "ScikitBuildSettings",
     "SearchSettings",
+    "SettingsFieldMetadata",
     "WheelSettings",
 ]
 
 
 def __dir__() -> List[str]:
     return __all__
+
+
+class SettingsFieldMetadata(TypedDict, total=False):
+    display_default: Optional[str]
+    deprecated: bool
 
 
 class CMakeSettingsDefine(str):
@@ -53,7 +59,9 @@ class CMakeSettingsDefine(str):
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.8; use version instead.
     """
@@ -114,7 +122,9 @@ class SearchSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.8; use version instead.
     """
@@ -174,7 +184,12 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[Union[List[str], Dict[str, str]]] = None
+    packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            display_default='["src/<package>", "python/<package>", "<package>"]'
+        ),
+    )
     """
     A list of packages to auto-copy into the wheel. If this is not set, it will
     default to the first of ``src/<package>``, ``python/<package>``, or
@@ -300,7 +315,9 @@ class InstallSettings:
     The components to install. If empty, all default components are installed.
     """
 
-    strip: Optional[bool] = None
+    strip: Optional[bool] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(display_default="true")
+    )
     """
     Whether to strip the binaries. True for release builds on scikit-build-core
     0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
@@ -382,7 +399,12 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
-    minimum_version: Optional[Version] = None
+    minimum_version: Optional[Version] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            display_default='"{version}"  # current version'
+        ),
+    )
     """
     If set, this will provide a method for backward compatibility.
     """
