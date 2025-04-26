@@ -314,6 +314,7 @@ known-local-folder = ["pathutils"]
 "docs/conf.py" = ["TID251"]
 "docs/examples/**" = ["ANN"]
 "src/scikit_build_core/file_api/model/*.py" = ["N"]
+"**/__main__.py" = ["T20"]
 
 
 [tool.check-sdist]

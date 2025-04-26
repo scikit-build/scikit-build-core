@@ -345,9 +345,16 @@ def rich_warning(
     color: Literal[
         "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
     ] = "yellow",
+    file: object = None,
     **kwargs: object,
 ) -> None:
-    rich_print("{bold.yellow}WARNING:", *args, color=color, **kwargs)  # type: ignore[arg-type]
+    rich_print(
+        "{bold.yellow}WARNING:",
+        *args,
+        color=color,
+        file=file or sys.stderr,
+        **kwargs,  # type: ignore[arg-type]
+    )
 
 
 def rich_error(
@@ -355,7 +362,14 @@ def rich_error(
     color: Literal[
         "", "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"
     ] = "red",
+    file: object = None,
     **kwargs: object,
 ) -> NoReturn:
-    rich_print("{bold.red}ERROR:", *args, color=color, **kwargs)  # type: ignore[arg-type]
+    rich_print(
+        "{bold.red}ERROR:",
+        *args,
+        color=color,
+        file=file or sys.stderr,
+        **kwargs,  # type: ignore[arg-type]
+    )
     raise SystemExit(7)

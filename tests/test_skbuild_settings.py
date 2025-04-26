@@ -746,7 +746,7 @@ def test_skbuild_settings_auto_cmake_warning(
 
     assert settings_reader.settings.cmake.version == SpecifierSet(">=3.15")
 
-    ex = capsys.readouterr().out
+    ex = capsys.readouterr().err
     ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
     print(ex)
     assert ex.split() == [
