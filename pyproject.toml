@@ -160,6 +160,7 @@ markers = [
     "isolated: Needs an isolated virtualenv",
     "network: Needs a network connection to setup or run",
     "setuptools: Tests setuptools integration",
+    "upstream: Intended to check our own development",
     "virtualenv: Needs a virtualenv",
 ]
 norecursedirs = ["tests/packages/**"]

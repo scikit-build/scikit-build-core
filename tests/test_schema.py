@@ -13,6 +13,8 @@ from scikit_build_core.settings.skbuild_schema import (
 
 DIR = Path(__file__).parent.resolve()
 
+pytestmark = pytest.mark.upstream
+
 
 def test_compare_schemas():
     """
