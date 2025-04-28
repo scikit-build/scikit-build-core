@@ -13,6 +13,8 @@ from scikit_build_core.settings.skbuild_schema import (
 
 DIR = Path(__file__).parent.resolve()
 
+pytestmark = pytest.mark.upstream
+
 
 def test_compare_schemas():
     """
@@ -28,7 +30,9 @@ SCHEMAS = [
 ]
 
 
-@pytest.mark.parametrize("filepath", SCHEMAS)
+@pytest.mark.parametrize(
+    "filepath", SCHEMAS, ids=lambda x: str(x.relative_to(DIR.parent).parent)
+)
 def test_valid_schemas_files(filepath: Path) -> None:
     api = pytest.importorskip("validate_pyproject.api")
 

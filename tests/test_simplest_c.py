@@ -45,7 +45,12 @@ def test_pep517_sdist(tmp_path, monkeypatch):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize(
-    "component", [[], ["PythonModule"], ["PythonModule", "Generated"]]
+    "component",
+    [
+        pytest.param([], id="all"),
+        pytest.param(["PythonModule"], id="one"),
+        pytest.param(["PythonModule", "Generated"], id="two"),
+    ],
 )
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
     dist = tmp_path / "dist"
