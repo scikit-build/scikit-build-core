@@ -28,7 +28,9 @@ SCHEMAS = [
 ]
 
 
-@pytest.mark.parametrize("filepath", SCHEMAS)
+@pytest.mark.parametrize(
+    "filepath", SCHEMAS, ids=lambda x: str(x.relative_to(DIR.parent).parent)
+)
 def test_valid_schemas_files(filepath: Path) -> None:
     api = pytest.importorskip("validate_pyproject.api")
 
