@@ -11,3 +11,5 @@ set(Python_SOABI ${SKBUILD_SOABI})
 python_add_library(_module MODULE src/module.c WITH_SOABI)
 
 install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
+install(
+  CODE "execute_process(COMMAND ${Python_EXECUTABLE} -V COMMAND_ECHO STDOUT)")
