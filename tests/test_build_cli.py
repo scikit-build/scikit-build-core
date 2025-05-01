@@ -84,7 +84,7 @@ result = ["self=={project[version]}"]
 def test_metadata_command(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(sys, "argv", ["scikit_build_core.build", "metadata"])
+    monkeypatch.setattr(sys, "argv", ["scikit_build_core.build", "project-table"])
     monkeypatch.setattr(shutil, "which", lambda _: None)
     (tmp_path / "pyproject.toml").write_text(PYPROJECT_2)
     (tmp_path / "version.py").write_text("version = '0.1.3'")

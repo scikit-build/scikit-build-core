@@ -13,8 +13,8 @@ from . import (
 )
 
 
-def main_metadata(_args: argparse.Namespace, /) -> None:
-    """Get the full metadata, including dynamic metadata."""
+def main_project_table(_args: argparse.Namespace, /) -> None:
+    """Get the full project table, including dynamic metadata."""
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
@@ -65,12 +65,13 @@ def main() -> None:
         default="wheel",
         help="The build mode to get the requirements for",
     )
-    metadata = subparsers.add_parser(
-        "metadata",
-        help="Get the full metadata, including dynamic metadata",
+
+    project_table = subparsers.add_parser(
+        "project-table",
+        help="Get the full project table, including dynamic metadata",
         description="Processes static and dynamic metadata without triggering the backend, only handles scikit-build-core's dynamic metadata.",
     )
-    metadata.set_defaults(func=main_metadata)
+    project_table.set_defaults(func=main_project_table)
 
     args = parser.parse_args()
     args.func(args)
