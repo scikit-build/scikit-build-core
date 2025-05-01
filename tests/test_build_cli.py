@@ -28,16 +28,22 @@ provider = "scikit_build_core.metadata.setuptools_scm"
 
 
 @pytest.mark.parametrize("mode", ["sdist", "wheel", "editable"])
+@pytest.mark.parametrize("force_make", [False, True])
 def test_requires_command(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     mode: str,
+    force_make: bool,
 ) -> None:
     monkeypatch.setattr(
         sys, "argv", ["scikit_build_core.build", "requires", f"--mode={mode}"]
     )
     monkeypatch.setattr(shutil, "which", lambda _: None)
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    if force_make:
+        monkeypatch.setenv("CMAKE_GENERATOR", "Makefiles")
     (tmp_path / "pyproject.toml").write_text(PYPROJECT_1)
     monkeypatch.chdir(tmp_path)
 
@@ -48,7 +54,7 @@ def test_requires_command(
     jout = json.loads(out)
     if mode == "sdist":
         assert frozenset(jout) == {"scikit-build-core", "setuptools-scm"}
-    elif sysconfig.get_platform().startswith("win-"):
+    elif sysconfig.get_platform().startswith("win-") or force_make:
         assert frozenset(jout) == {
             "cmake>=3.15",
             "scikit-build-core",
