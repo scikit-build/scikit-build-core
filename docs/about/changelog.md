@@ -1,5 +1,39 @@
 # Changelog
 
+## Version 0.11.2
+
+This release allows dynamic-metadata to reference other fields, which enables a
+new plugin, "template", and enables the fancy readme plugin to include the
+version. There are also a few fixes; `Python_EXECUTABLE` is now a proper CMake
+path, and using a renamed option from the command line or environment variable
+no longer triggers an error when the min required version is from before that
+was introduced.
+
+Features:
+
+- Add template dynamic-metadata plugin and support requesting other fields by
+  @henryiii in #1047
+- Parse the CMake file-api during configuration by @LecrisUT in #1016
+- Add a couple of build commands by @henryiii in #1055
+
+Fixes:
+
+- Make sure all paths are CMake paths by @henryiii in #1063
+- Support overriding renamed options by @henryiii in #1054
+
+CI and testing:
+
+- Add Windows ARM by @henryiii in #1046
+- Add more tests of package traversal by @vyasr in #906
+- A few better ids by @henryiii in #1058
+
+Docs:
+
+- Fix community meeting link by @jcfr in #1049
+- Add a field metadata to the setting fields by @LecrisUT in #1051
+- Document how to deal with dynamic linking by @LecrisUT in #1022
+- Fix typo in macOS repair wheel tool name by @burgholzer in #1042
+
 ## Version 0.11.1
 
 This release contains two small fixes for edge case issues.
