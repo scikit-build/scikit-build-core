@@ -50,8 +50,8 @@ def test_fail_setting(
         build_wheel("dist")
 
     assert exc.value.code == 7
-    out, _ = capsys.readouterr()
-    assert "fail setting was enabled" in out
+    _, err = capsys.readouterr()
+    assert "fail setting was enabled" in err
 
 
 @pytest.mark.usefixtures("broken_fallback")
