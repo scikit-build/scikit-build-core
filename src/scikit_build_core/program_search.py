@@ -129,7 +129,7 @@ def get_cmake_program(cmake_path: Path) -> Program:
 def get_cmake_programs(*, module: bool = True) -> Generator[Program, None, None]:
     """
     Get the path and version for CMake. If the version cannot be determined,
-    yiels (path, None). Otherwise, yields (path, version). Best matches are
+    yields (path, None). Otherwise, yields (path, version). Best matches are
     yielded first.
     """
     for cmake_path in _get_cmake_path(module=module):
