@@ -68,7 +68,7 @@ test-hatchling = [
 test-meta = [
     "hatch-fancy-pypi-readme>=22.3",
     "setuptools-scm",
-    "auditwheel; platform_system=='Linux'",
+    "lief; platform_system=='Linux'",
     "delocate; platform_system=='Darwin'",
 ]
 test-numpy = [
@@ -191,8 +191,8 @@ module = [
     "setuptools_scm",
     "hatch_fancy_pypi_readme",
     "virtualenv",
-    "auditwheel.*",
     "delocate.*",
+    "lief.*",
 ]
 ignore_missing_imports = true
 
@@ -329,3 +329,6 @@ known-local-folder = ["pathutils"]
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+[tool.codespell]
+ignore-words-list = "lief"
