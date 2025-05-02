@@ -45,8 +45,7 @@ def test_full_build(
 
     if not with_isolation:
         isolated.install("scikit-build-core")
-        if platform.system() in ("Linux", "Darwin"):
-            isolated.install("lief")
+        isolated.install("lief")
         isolated.install("./extern", isolated=with_isolation)
 
     if backend == "pip":

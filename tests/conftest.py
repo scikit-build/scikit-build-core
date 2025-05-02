@@ -4,7 +4,6 @@ import contextlib
 import dataclasses
 import importlib.util
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -53,9 +52,8 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "setuptools",
         "virtualenv",
         "wheel",
+        "lief",
     ]
-    if platform.system() in ("Linux", "Darwin"):
-        packages.append("lief")
 
     if importlib.util.find_spec("cmake") is not None:
         packages.append("cmake")

@@ -4,7 +4,6 @@ import dataclasses
 import functools
 import importlib.util
 import os
-import platform
 import sysconfig
 from typing import TYPE_CHECKING, Literal
 
@@ -147,9 +146,7 @@ class GetRequires:
             )
 
         if self.settings.wheel.repair.enable:
-            platform_system = platform.system()
-            if platform_system in ("Linux", "Darwin"):
-                yield "lief"
+            yield "lief"
 
     def dynamic_metadata(self) -> Generator[str, None, None]:
         if self.settings.fail:
