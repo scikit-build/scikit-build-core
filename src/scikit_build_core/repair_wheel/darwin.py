@@ -29,16 +29,28 @@ class MacOSWheelRepairer(RpathWheelRepairer):
     _origin_symbol = "@loader_path"
 
     def get_library_rpath(self, artifact: Path) -> list[str]:
-        from delocate.tools import get_rpaths
+        import lief.MachO
 
-        # Using the deprecated method here in order to support python 3.8
-        return list(get_rpaths(str(artifact)))
+        rpaths = []
+        fat_macho = lief.MachO.parse(artifact)
+        for macho_it in range(fat_macho.size):
+            macho = fat_macho.at(macho_it)
+            if not macho.has_rpath:
+                continue
+            for macho_rpath in macho.rpaths:
+                rpaths.extend(macho_rpath.path)
+        return rpaths
 
     def patch_library_rpath(self, artifact: Path, rpaths: list[str]) -> None:
-        from delocate.tools import _delete_rpaths, add_rpath
-
-        original_rpaths = self.get_library_rpath(artifact)
-        _delete_rpaths(str(artifact), set(original_rpaths))
         final_rpaths = set(rpaths)
-        for rpath in final_rpaths:
-            add_rpath(str(artifact), rpath)
+        if final_rpaths:
+            import lief.MachO
+
+            fat_macho = lief.MachO.parse(artifact)
+            for macho_it in range(fat_macho.size):
+                macho = fat_macho.at(macho_it)
+                macho.remove(lief.MachO.LoadCommand.TYPE.RPATH)
+                for rpath in final_rpaths:
+                    macho_rpath = lief.MachO.RPathCommand.create(rpath)
+                    macho.add(macho_rpath)
+            fat_macho.write(str(artifact))

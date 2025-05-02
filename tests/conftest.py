@@ -54,10 +54,8 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "virtualenv",
         "wheel",
     ]
-    if platform.system() == "Linux":
+    if platform.system() in ("Linux", "Darwin"):
         packages.append("lief")
-    if platform.system() == "Darwin":
-        packages.append("delocate")
 
     if importlib.util.find_spec("cmake") is not None:
         packages.append("cmake")
