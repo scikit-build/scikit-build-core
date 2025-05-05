@@ -82,7 +82,7 @@ def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: 
         if not isinstance(result, dict) or not all(
             isinstance(d, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in d.items()) for d in result.values()
         ):
-             msg = f"Field 'entry-points' must be a dictionary of dictionary of strings"
+            msg = f"Field 'entry-points' must be a dictionary of dictionary of strings"
             raise RuntimeError(msg)
     if field == "optional-dependencies":
         if not isinstance(result, dict) or not all(
