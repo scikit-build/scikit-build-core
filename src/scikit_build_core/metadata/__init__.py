@@ -35,6 +35,7 @@ _DICT_STR_FIELDS = frozenset(
         "authors",
         "maintainers",
         "scripts",
+        "gui-scripts",
     ]
 )
 
