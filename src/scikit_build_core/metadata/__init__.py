@@ -36,7 +36,6 @@ _DICT_STR_FIELDS = frozenset(
         "maintainers",
         "scripts",
         "gui-scripts",
-        "entry-points",
     ]
 )
 
@@ -49,6 +48,7 @@ _ALL_FIELDS = (
         [
             "optional-dependencies",
             "readme",
+            "entry-points",
         ]
     )
 )
@@ -78,6 +78,12 @@ def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: 
             msg = f"Field {field!r} must be a dictionary of strings"
             raise RuntimeError(msg)
         return {k: action(v) for k, v in result.items()}  # type: ignore[return-value]
+    if field == "entry-points":
+        if not isinstance(result, dict) or not all(
+            isinstance(d, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in d.items()) for d in result.values()
+        ):
+             msg = f"Field 'entry-points' must be a dictionary of dictionary of strings"
+            raise RuntimeError(msg)
     if field == "optional-dependencies":
         if not isinstance(result, dict) or not all(
             isinstance(v, list) for v in result.values()
