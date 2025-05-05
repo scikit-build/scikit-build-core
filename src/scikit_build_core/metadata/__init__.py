@@ -36,6 +36,7 @@ _DICT_STR_FIELDS = frozenset(
         "maintainers",
         "scripts",
         "gui-scripts",
+        "entry-points",
     ]
 )
 
