@@ -34,6 +34,7 @@ _DICT_STR_FIELDS = frozenset(
         "urls",
         "authors",
         "maintainers",
+        "scripts",
     ]
 )
 
