@@ -22,9 +22,12 @@ else:
 
 import pytest
 from packaging.requirements import Requirement
+from packaging.version import Version
 
 DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent
+
+VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
 @pytest.fixture(scope="session")
@@ -78,7 +81,9 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 class VEnv:
     def __init__(self, env_dir: Path, *, wheelhouse: Path | None = None) -> None:
-        cmd = [str(env_dir), "--no-setuptools", "--no-wheel", "--activators", ""]
+        cmd = [str(env_dir), "--no-setuptools", "--activators", ""]
+        if Version("20.31.0") > VIRTUALENV_VERSION:
+            cmd.append("--no-wheel")
         result = _virtualenv.cli_run(cmd, setup_logging=False)
         self.wheelhouse = wheelhouse
         self.executable = Path(result.creator.exe)
