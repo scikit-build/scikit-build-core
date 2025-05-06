@@ -73,6 +73,7 @@ about/changelog
 
 api/scikit_build_core
 schema
+reference/configs
 ```
 
 ## Indices and tables
