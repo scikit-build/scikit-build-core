@@ -72,6 +72,7 @@ def _run_tests(
     if "--cov" in posargs:
         _extras.append("cov")
         posargs.append("--cov-config=pyproject.toml")
+        env["COVERAGE_CORE"] = "sysmon"
 
     install_arg = f"-e.[{','.join(_extras)}]"
     session.install(install_arg, *install_args, silent=False)
