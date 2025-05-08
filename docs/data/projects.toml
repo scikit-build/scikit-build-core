@@ -75,3 +75,75 @@ github = "njzjz/nodejs-wheel"
 [[project]]
 pypi = "pygram11"
 github = "douglasdavis/pygram11"
+
+[[project]]
+pypi = "manifold3d"
+github = "elalish/manifold"
+
+[[project]]
+pypi = "highspy"
+github = "ERGO-Code/HiGHS"
+
+[[project]]
+pypi = "laszip"
+github = "tmontaigu/laszip-python"
+
+[[project]]
+pypi = "imgui-bundle"
+github = "pthom/imgui_bundle"
+
+[[project]]
+pypi = "pyopencl"
+github = "inducer/pyopencl"
+
+[[project]]
+pypi = "pylibmagic"
+github = "kratsg/pylibmagic"
+
+[[project]]
+pypi = "gemmi"
+github = "project-gemmi/gemmi"
+
+[[project]]
+pypi = "gdstk"
+github = "heitzmann/gdstk"
+
+[[project]]
+pypi = "symusic"
+github = "Yikai-Liao/symusic"
+
+[[project]]
+pypi = "s5cmd"
+github = "jcfr/s5cmd-python-distributions"
+
+[[project]]
+pypi = "pyslang"
+github = "MikePopoloski/slang"
+
+#[[project]]
+#pypi = "pytango"
+#gitlab = "https://gitlab.com/tango-controls/pytango"
+
+[[project]]
+pypi = "librapid"
+github = "LibRapid/librapid"
+
+[[project]]
+pypi = "pyresidfp"
+github = "pyresidfp/pyresidfp"
+
+[[project]]
+pypi = "kiss-icp"
+github = "https://github.com/PRBonn/kiss-icp"
+
+[[project]]
+pypi = "simsopt"
+github = "hiddenSymmetries/simsopt"
+
+#[[project]]
+#pypi = "networkx-graph"
+#github = "?"
+
+[[project]]
+pypi = "mqt-core"
+github = "munich-quantum-toolkit/core"
