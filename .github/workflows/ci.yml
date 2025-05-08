@@ -115,6 +115,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          check-latest: ${{ matrix.python-version == '3.14' }}
 
       - uses: astral-sh/setup-uv@v6
         if: matrix.python-version != 'pypy-3.8'
