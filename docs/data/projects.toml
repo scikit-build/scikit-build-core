@@ -135,6 +135,7 @@ github = "pyresidfp/pyresidfp"
 [[project]]
 pypi = "kiss-icp"
 github = "PRBonn/kiss-icp"
+path = "python/pyproject.toml"
 
 [[project]]
 pypi = "simsopt"
