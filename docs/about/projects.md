@@ -3,9 +3,9 @@
 There are over 600 projects using scikit-build-core on PyPI (as of May 2025).
 This is a selection of some of the projects. Feel free to add your own project
 to `docs/data/projects.toml`. The following selection was primarily constructed
-by looking at the [top 15,000](https://hugovk.github.io/top-pypi-packages/)
-most downloaded projects on PyPI for top-level pyproject.toml's in SDists that
-use scikit-build-core.
+by looking at the [top 15,000](https://hugovk.github.io/top-pypi-packages/) most
+downloaded projects on PyPI for top-level pyproject.toml's in SDists that use
+scikit-build-core.
 
 <!-- prettier-ignore-start -->
 
