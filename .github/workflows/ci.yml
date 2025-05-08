@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "pypy-3.10", "3.13", "3.14-beta.1"]
+        python-version: ["3.8", "pypy-3.10", "3.13", "3.14"]
         runs-on: [ubuntu-latest, macos-14]
         cmake-version: ["3.15.x"]
 
@@ -90,7 +90,7 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-latest
             cmake-version: "3.26.x"
-          - python-version: "3.14-beta.1"
+          - python-version: "3.14"
             runs-on: windows-latest
             cmake-version: "4.0.x"
           - python-version: "3.13"
