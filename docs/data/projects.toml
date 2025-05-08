@@ -134,7 +134,7 @@ github = "pyresidfp/pyresidfp"
 
 [[project]]
 pypi = "kiss-icp"
-github = "https://github.com/PRBonn/kiss-icp"
+github = "PRBonn/kiss-icp"
 
 [[project]]
 pypi = "simsopt"
