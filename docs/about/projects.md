@@ -67,10 +67,10 @@ for project in projects["project"]:
 * [pyslang](https://pypi.org/project/pyslang) ([source](https://github.com/MikePopoloski/slang/blob/HEAD/pyproject.toml))
 * [librapid](https://pypi.org/project/librapid) ([source](https://github.com/LibRapid/librapid/blob/HEAD/pyproject.toml))
 * [pyresidfp](https://pypi.org/project/pyresidfp) ([source](https://github.com/pyresidfp/pyresidfp/blob/HEAD/pyproject.toml))
-* [kiss-icp](https://pypi.org/project/kiss-icp) ([source](https://github.com/https://github.com/PRBonn/kiss-icp/blob/HEAD/pyproject.toml))
+* [kiss-icp](https://pypi.org/project/kiss-icp) ([source](https://github.com/PRBonn/kiss-icp/blob/HEAD/pyproject.toml))
 * [simsopt](https://pypi.org/project/simsopt) ([source](https://github.com/hiddenSymmetries/simsopt/blob/HEAD/pyproject.toml))
 * [mqt-core](https://pypi.org/project/mqt-core) ([source](https://github.com/munich-quantum-toolkit/core/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (checksum: 1d77daf8c20f5dbf77669e17c1862c6c)-->
+<!--[[[end]]] (checksum: c7aae817bc44655392f8599ad196fe71)-->
 
 <!-- prettier-ignore-end -->
 
