@@ -58,10 +58,6 @@ class DCDoc:
     docs: str
     deprecated: bool = False
 
-    def __str__(self) -> str:
-        docs = "\n".join(f"# {s}" for s in textwrap.wrap(self.docs, width=78))
-        return f"{docs}\n{self.name} = {self.default}\n"
-
 
 def sanitize_default_field(text: str) -> str:
     return text.replace("'", '"').replace("True", "true").replace("False", "false")
