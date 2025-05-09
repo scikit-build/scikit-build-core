@@ -28,16 +28,16 @@ class Document:
 @dataclasses.dataclass
 class Item:
     TEMPLATE: typing.ClassVar[str] = textwrap.dedent("""\
-    {docs}
+    {summary}
     {item.name} = {item.default}
     """)
     item: DCDoc
 
     def format(self) -> str:
-        docs = "\n".join(f"# {s}" for s in textwrap.wrap(self.item.docs, width=78))
+        summary = self.item.docs.split("\n", maxsplit=1)[0]
         return self.TEMPLATE.format(
             item=self.item,
-            docs=docs,
+            summary=f"# {summary}",
         )
 
 

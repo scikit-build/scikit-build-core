@@ -57,7 +57,7 @@ class Item:
     .. confval:: {item.name}
       :type: ``{item.type}``{sphinx_default}
 
-      {item.docs}
+      {docs}
     ```
     """)
     item: DCDoc
@@ -77,9 +77,14 @@ class Item:
         return f"\n  :default: {self.item.default}"
 
     def format(self) -> str:
+        # Replace all new-lines with appropriately rst indented lines
+        docs = self.item.docs.replace("\n", "\n  ")
+        # Replace all lines with pure whitespace to satisfy pre-commit
+        docs = docs.replace("\n  \n", "\n\n")
         return self.TEMPLATE.format(
             item=self.item,
             sphinx_default=self.default(),
+            docs=docs,
         )
 
 

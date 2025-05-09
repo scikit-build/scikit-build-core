@@ -42,9 +42,7 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
     assert isinstance(obody, ast.ClassDef)
     body = obody.body
     return {
-        assign.target.id: textwrap.dedent(_get_value(expr.value))  # type: ignore[union-attr]
-        .strip()
-        .replace("\n", " ")
+        assign.target.id: textwrap.dedent(_get_value(expr.value)).strip()  # type: ignore[union-attr]
         for assign, expr in zip(body[:-1], body[1:])
         if isinstance(assign, ast.AnnAssign) and isinstance(expr, ast.Expr)
     }

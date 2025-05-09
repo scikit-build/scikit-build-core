@@ -94,7 +94,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
     for field in dataclasses.fields(dclass):
         if field.name not in docs:
             continue
-        props[field.name]["description"] = docs[field.name]
+        props[field.name]["description"] = docs[field.name].split("\n", maxsplit=1)[0]
         if field.metadata.get("deprecated"):
             props[field.name]["deprecated"] = True
 
