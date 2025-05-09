@@ -56,6 +56,7 @@ class DCDoc:
     type: str
     default: str
     docs: str
+    field: dataclasses.Field[typing.Any]
     deprecated: bool = False
 
 
@@ -133,5 +134,6 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             type=field.metadata.get("display_type", get_display_type(field.type)),
             default=sanitize_default_field(default),
             docs=docs[field.name],
+            field=field,
             deprecated=field.metadata.get("deprecated", False),
         )
