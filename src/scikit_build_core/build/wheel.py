@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from packaging.requirements import Requirement
+from packaging.tags import Tag
 from packaging.utils import canonicalize_name
 
 from .._compat import tomllib
@@ -260,6 +261,10 @@ def _build_wheel_impl_impl(
         f"{{red}}({state})",
     )
 
+    override_wheel_tags = None
+    if settings.wheel.tags:
+        override_wheel_tags = {Tag(*tag.split("-")) for tag in settings.wheel.tags}
+
     with tempfile.TemporaryDirectory() as tmpdir:
         build_tmp_folder = Path(tmpdir)
         wheel_dir = build_tmp_folder / "wheel"
@@ -364,7 +369,7 @@ def _build_wheel_impl_impl(
             wheel = WheelWriter(
                 metadata,
                 Path(metadata_directory),
-                tags.as_tags_set(),
+                override_wheel_tags or tags.as_tags_set(),
                 WheelMetadata(
                     root_is_purelib=targetlib == "purelib",
                     build_tag=settings.wheel.build_tag,
@@ -480,7 +485,7 @@ def _build_wheel_impl_impl(
         with WheelWriter(
             metadata,
             Path(wheel_directory),
-            tags.as_tags_set(),
+            override_wheel_tags or tags.as_tags_set(),
             WheelMetadata(
                 root_is_purelib=targetlib == "purelib",
                 build_tag=settings.wheel.build_tag,

@@ -111,6 +111,18 @@ class CMakeSettings:
     DEPRECATED in 0.10; use build.targets instead.
     """
 
+    toolchain_file: Optional[Path] = None
+    """
+    The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+    """
+
+    no_python_hints: bool = False
+    """
+    Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+    Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
+    instead.
+    """
+
 
 @dataclasses.dataclass
 class SearchSettings:
@@ -252,6 +264,13 @@ class WheelSettings:
     build_tag: str = ""
     """
     The build tag to use for the wheel. If empty, no build tag is used.
+    """
+
+    tags: List[str] = dataclasses.field(default_factory=list)
+    """
+    Manually specify the wheel tags to use, ignoring other inputs such as
+    ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}.
+    If not specified, these tags are automatically calculated.
     """
 
 
