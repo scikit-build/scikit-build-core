@@ -337,6 +337,18 @@ build-dir = ""
 # Immediately fail the build. This is only useful in overrides.
 fail = false
 
+# Entry-point name.
+scripts[].name = ""
+
+# Entry-point path.
+scripts[].path = ""
+
+# CMake executable target being wrapped.
+scripts[].target = ""
+
+# Expose the wrapper file as a module.
+scripts[].as-module = false
+
 ```
 
 <!-- [[[end]]] -->
