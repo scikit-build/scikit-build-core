@@ -1,5 +1,9 @@
 %global debug_package %{nil}
 
+# On epel python hatch/trove classifier check may fail because of old package
+# Fedora checks should be sufficient though.
+%bcond no_classifier_check 0%{?rhel}
+
 Name:           python-scikit-build-core
 Version:        0.0.0
 Release:        %autorelease
@@ -46,10 +50,16 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 
 %generate_buildrequires
+%if %{with no_classifier_check}
+export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
+%endif
 %pyproject_buildrequires -x test,test-meta,test-numpy
 
 
 %build
+%if %{with no_classifier_check}
+export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
+%endif
 %pyproject_wheel
 
 
