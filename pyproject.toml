@@ -68,6 +68,7 @@ test-hatchling = [
 test-meta = [
     "hatch-fancy-pypi-readme>=22.3",
     "setuptools-scm",
+    "lief",
 ]
 test-numpy = [
     "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
@@ -183,7 +184,14 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = [
+    "numpy",
+    "pathspec",
+    "setuptools_scm",
+    "hatch_fancy_pypi_readme",
+    "virtualenv",
+    "lief.*",
+]
 ignore_missing_imports = true
 
 
@@ -322,3 +330,6 @@ known-local-folder = ["pathutils"]
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+[tool.codespell]
+ignore-words-list = "lief"

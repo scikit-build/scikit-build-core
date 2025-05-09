@@ -137,16 +137,20 @@ class GetRequires:
             return
         yield f"ninja{ninja_verset}"
 
-    def dynamic_metadata(self) -> Generator[str, None, None]:
-        if self.settings.fail:
-            return
-
+    def other_dynamic_requires(self) -> Generator[str, None, None]:
         for build_require in self.settings.build.requires:
             yield build_require.format(
                 **pyproject_format(
                     settings=self.settings,
                 )
             )
+
+        if self.settings.wheel.repair.enable:
+            yield "lief"
+
+    def dynamic_metadata(self) -> Generator[str, None, None]:
+        if self.settings.fail:
+            return
 
         for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:

@@ -55,6 +55,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "setuptools",
         "virtualenv",
         "wheel",
+        "lief",
     ]
 
     if importlib.util.find_spec("cmake") is not None:
@@ -341,6 +342,15 @@ def package_simple_purelib_package(
 def package_pep639_pure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "pep639_pure",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture
+def repair_wheel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "repair_wheel",
     )
     process_package(package, tmp_path, monkeypatch)
     return package
