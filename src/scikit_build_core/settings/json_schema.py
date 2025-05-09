@@ -91,10 +91,12 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         raise ExceptionGroup(msg, errs)
 
     docs = pull_docs(dclass)
-    for k, v in docs.items():
-        props[k]["description"] = v
-        if "DEPRECATED" in v:
-            props[k]["deprecated"] = True
+    for field in dataclasses.fields(dclass):
+        if field.name not in docs:
+            continue
+        props[field.name]["description"] = docs[field.name]
+        if field.metadata.get("deprecated"):
+            props[field.name]["deprecated"] = True
 
     if normalize_keys:
         props = {k.replace("_", "-"): v for k, v in props.items()}

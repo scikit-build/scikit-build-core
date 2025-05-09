@@ -167,9 +167,6 @@ cmake.args = []
 # A table of defines to pass to CMake when configuring the project. Additive.
 cmake.define = {}
 
-# DEPRECATED in 0.10, use build.verbose instead.
-cmake.verbose = ""
-
 # The build type to use when building the project. Valid options are: "Debug",
 # "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
 cmake.build-type = "Release"
@@ -177,9 +174,6 @@ cmake.build-type = "Release"
 # The source directory to use when building the project. Currently only affects
 # the native builder (not the setuptools plugin).
 cmake.source-dir = "."
-
-# DEPRECATED in 0.10; use build.targets instead.
-cmake.targets = ""
 
 # The versions of Ninja to allow. If Ninja is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty

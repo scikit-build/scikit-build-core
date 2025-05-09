@@ -88,7 +88,9 @@ class CMakeSettings:
     A table of defines to pass to CMake when configuring the project. Additive.
     """
 
-    verbose: Optional[bool] = None
+    verbose: Optional[bool] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.10, use build.verbose instead.
     """
@@ -106,7 +108,9 @@ class CMakeSettings:
     affects the native builder (not the setuptools plugin).
     """
 
-    targets: Optional[List[str]] = None
+    targets: Optional[List[str]] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(deprecated=True)
+    )
     """
     DEPRECATED in 0.10; use build.targets instead.
     """
