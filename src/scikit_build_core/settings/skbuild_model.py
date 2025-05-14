@@ -33,6 +33,8 @@ def __dir__() -> List[str]:
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
+    disallow_hard_code: bool
+    """Do not allow the field to be hard-coded in the pyproject table."""
 
 
 class CMakeSettingsDefine(str):
