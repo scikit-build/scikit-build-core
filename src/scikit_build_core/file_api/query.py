@@ -23,9 +23,9 @@ def stateless_query(build_dir: Path) -> Path:
 
 
 if __name__ == "__main__":
-    import argparse
+    from .._compat.argparse import ArgumentParser
 
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser(allow_abbrev=False)
     parser.add_argument("build_dir", type=Path, help="Path to the build directory")
     args = parser.parse_args()
 

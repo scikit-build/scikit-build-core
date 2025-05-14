@@ -61,7 +61,7 @@ def load_reply_dir(reply_dir: Path) -> Index:
 
 
 if __name__ == "__main__":
-    import argparse
+    from .._compat.argparse import ArgumentParser
 
     rich_print: Callable[[object], None]
     try:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         rich_print = builtins.print
 
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser(allow_abbrev=False)
     parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
     args = parser.parse_args()
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 from .._compat import tomllib
+from .._compat.argparse import ArgumentParser
 from .._logging import rich_warning
 from ..builder._load_provider import process_dynamic_metadata
 from . import (
@@ -48,7 +49,8 @@ def get_requires(mode: Literal["sdist", "wheel", "editable"]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
+        allow_abbrev=False,
         description="Build backend utilities",
     )
 
