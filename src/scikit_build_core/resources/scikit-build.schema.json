@@ -491,7 +491,6 @@
     },
     "fail": {
       "type": "boolean",
-      "default": false,
       "description": "Immediately fail the build. This is only useful in overrides."
     },
     "overrides": {

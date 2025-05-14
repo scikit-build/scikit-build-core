@@ -509,7 +509,12 @@ class ScikitBuildSettings:
     This can be set to reuse the build directory from previous runs.
     """
 
-    fail: bool = False
+    fail: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            disallow_hard_code=True,
+        ),
+    )
     """
     Immediately fail the build. This is only useful in overrides.
     """
