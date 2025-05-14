@@ -287,7 +287,7 @@ minimum-version = "0.11"  # current version
 build-dir = ""
 
 # Immediately fail the build. This is only useful in overrides.
-fail = false
+fail = ""
 
 ```
 
