@@ -140,8 +140,12 @@ More examples are in the
 All configuration options can be placed in `pyproject.toml`, passed via
 `-C`/`--config-setting` in build or `-C`/`--config-settings` in `pip` , or set
 as environment variables. `tool.scikit-build` is used in toml, `skbuild.` for
-`-C` options, or `SKBUILD_*` for environment variables. The defaults are listed
-below:
+`-C` options, or `SKBUILD_*` for environment variables.
+
+For a full reference and explanation of the variables see the [online
+documentation][conf-ref]
+
+A quick summary and some defaults are listed below:
 
 <!-- [[[cog
 from scikit_build_core.settings.skbuild_docs_readme import mk_skbuild_docs
@@ -334,6 +338,7 @@ Science Foundation.
 [codecov-link]:             https://codecov.io/gh/scikit-build/scikit-build-core
 [conda-badge]:              https://img.shields.io/conda/vn/conda-forge/scikit-build-core
 [conda-link]:               https://github.com/conda-forge/scikit-build-core-feedstock
+[conf-ref]:                 https://scikit-build-core.readthedocs.io/en/latest/reference/configs.html
 [discord-badge]:            https://img.shields.io/discord/803025117553754132?label=Discord%20chat%20%23scikit-build
 [discord-link]:             https://discord.gg/pypa
 [download-badge]:           https://static.pepy.tech/badge/scikit-build-core/month
