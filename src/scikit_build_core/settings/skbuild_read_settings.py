@@ -151,7 +151,7 @@ class SettingsReader:
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        self.overrides = process_overrides(
+        self.overrides, self.overriden_items = process_overrides(
             pyproject.get("tool", {}).get("scikit-build", {}),
             state=state,
             env=env,
