@@ -416,7 +416,12 @@ class ScikitBuildSettings:
     The build directory. Defaults to a temporary directory, but can be set.
     """
 
-    fail: bool = False
+    fail: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            disallow_hard_code=True,
+        ),
+    )
     """
     Immediately fail the build. This is only useful in overrides.
     """

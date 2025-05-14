@@ -12,7 +12,6 @@ def test_skbuild_docs() -> None:
         in docs
     )
     assert "DEPRECATED in 0.10, use build.verbose instead." in docs
-    assert "fail = false" in docs
 
 
 def test_mk_docs() -> None:
