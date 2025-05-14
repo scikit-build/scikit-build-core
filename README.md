@@ -153,106 +153,70 @@ print("```\n")
 
 ```toml
 [tool.scikit-build]
-# The versions of CMake to allow. If CMake is not present on the system or does
-# not pass this specifier, it will be downloaded via PyPI if possible. An empty
-# string will disable this check. The default on 0.10+ is "CMakeLists.txt",
-# which will read it from the project's CMakeLists.txt file, or ">=3.15" if
-# unreadable or <0.10.
+# The versions of CMake to allow as a python-compatible specifier.
 cmake.version = ""
 
-# A list of args to pass to CMake when configuring the project. Setting this in
-# config or envvar will override toml. See also ``cmake.define``.
+# A list of args to pass to CMake when configuring the project.
 cmake.args = []
 
 # A table of defines to pass to CMake when configuring the project. Additive.
 cmake.define = {}
 
-# The build type to use when building the project. Valid options are: "Debug",
-# "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
+# The build type to use when building the project.
 cmake.build-type = "Release"
 
-# The source directory to use when building the project. Currently only affects
-# the native builder (not the setuptools plugin).
+# The source directory to use when building the project.
 cmake.source-dir = "."
 
-# The versions of Ninja to allow. If Ninja is not present on the system or does
-# not pass this specifier, it will be downloaded via PyPI if possible. An empty
-# string will disable this check.
+# The versions of Ninja to allow.
 ninja.version = ">=1.5"
 
-# If Ninja is not present on the system or is older than required, it will be
-# downloaded via PyPI if this is false.
+# Use Make as a fallback if a suitable Ninja executable is not found.
 ninja.make-fallback = true
 
-# The logging level to display, "DEBUG", "INFO", "WARNING", and "ERROR" are
-# possible options.
+# The logging level to display.
 logging.level = "WARNING"
 
-# Files to include in the SDist even if they are skipped by default. Supports
-# gitignore syntax.
+# Files to include in the SDist even if they are skipped by default. Supports gitignore syntax.
 sdist.include = []
 
-# Files to exclude from the SDist even if they are included by default. Supports
-# gitignore syntax.
+# Files to exclude from the SDist even if they are included by default. Supports gitignore syntax.
 sdist.exclude = []
 
-# If set to True, try to build a reproducible distribution (Unix and Python 3.9+
-# recommended).  ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed
-# value if not set.
+# Try to build a reproducible distribution.
 sdist.reproducible = true
 
 # If set to True, CMake will be run before building the SDist.
 sdist.cmake = false
 
-# A list of packages to auto-copy into the wheel. If this is not set, it will
-# default to the first of ``src/<package>``, ``python/<package>``, or
-# ``<package>`` if they exist.  The prefix(s) will be stripped from the package
-# name inside the wheel. If a dict, provides a mapping of package name to source
-# directory.
+# A list of packages to auto-copy into the wheel.
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 
-# The Python tags. The default (empty string) will use the default Python
-# version. You can also set this to "cp38" to enable the CPython 3.8+ Stable ABI
-# / Limited API (only on CPython and if the version is sufficient, otherwise
-# this has no effect). Or you can set it to "py3" or "py2.py3" to ignore Python
-# ABI compatibility. The ABI tag is inferred from this tag.
+# The Python version tag used in the wheel file.
 wheel.py-api = ""
 
-# Fill out extra tags that are not required. This adds "x86_64" and "arm64" to
-# the list of platforms when "universal2" is used, which helps older Pip's
-# (before 21.0.1) find the correct wheel.
+# Fill out extra tags that are not required.
 wheel.expand-macos-universal-tags = false
 
-# The install directory for the wheel. This is relative to the platlib root. You
-# might set this to the package name. The original dir is still at
-# SKBUILD_PLATLIB_DIR (also SKBUILD_DATA_DIR, etc. are available). EXPERIMENTAL:
-# An absolute path will be one level higher than the platlib root, giving access
-# to "/platlib", "/data", "/headers", and "/scripts".
+# The CMake install prefix relative to the platlib wheel path.
 wheel.install-dir = ""
 
-# A list of license files to include in the wheel. Supports glob patterns. The
-# default is ``["LICEN[CS]E*", "COPYING*", "NOTICE*", "AUTHORS*"]``. Must not be
-# set if ``project.license-files`` is set.
+# A list of license files to include in the wheel. Supports glob patterns.
 wheel.license-files = ""
 
-# If set to True (the default), CMake will be run before building the wheel.
+# Run CMake as part of building the wheel.
 wheel.cmake = true
 
-# Target the platlib or the purelib. If not set, the default is to target the
-# platlib if wheel.cmake is true, and the purelib otherwise.
+# Target the platlib or the purelib.
 wheel.platlib = ""
 
-# A set of patterns to exclude from the wheel. This is additive to the SDist
-# exclude patterns. This applies to the final paths in the wheel, and can
-# exclude files from CMake output as well.  Editable installs may not respect
-# this exclusion.
+# A set of patterns to exclude from the wheel.
 wheel.exclude = []
 
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
 
-# If CMake is less than this value, backport a copy of FindPython. Set to 0
-# disable this, or the empty string.
+# If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 
 # Select the editable mode to use. Can be "redirect" (default) or "inplace".
@@ -261,45 +225,37 @@ editable.mode = "redirect"
 # Turn on verbose output for the editable mode rebuilds.
 editable.verbose = true
 
-# Rebuild the project when the package is imported. The build-directory must be
-# set.
+# Rebuild the project when the package is imported.
 editable.rebuild = false
 
 # Extra args to pass directly to the builder in the build step.
 build.tool-args = []
 
-# The build targets to use when building the project. Empty builds the default
-# target.
+# The build targets to use when building the project.
 build.targets = []
 
 # Verbose printout when building.
 build.verbose = false
 
-# Additional ``build-system.requires``. Intended to be used in combination with
-# ``overrides``.
+# Additional ``build-system.requires``.
 build.requires = []
 
-# The components to install. If empty, all default components are installed.
+# The components to install.
 install.components = []
 
-# Whether to strip the binaries. True for release builds on scikit-build-core
-# 0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).
+# Whether to strip the binaries.
 install.strip = true
 
 # The path (relative to platlib) for the file to generate.
 generate[].path = ""
 
-# The template to use for the file. This includes string.Template style
-# placeholders for all the metadata. If empty, a template-path must be set.
+# The template string to use for the file.
 generate[].template = ""
 
 # The path to the template file. If empty, a template must be set.
 generate[].template-path = ""
 
-# The place to put the generated file. The "build" directory is useful for CMake
-# files, and the "install" directory is useful for Python files, usually. You
-# can also write directly to the "source" directory, will overwrite existing
-# files & remember to gitignore the file.
+# The place to put the generated file.
 generate[].location = "install"
 
 # A message to print after a build failure.
@@ -308,15 +264,13 @@ messages.after-failure = ""
 # A message to print after a successful build.
 messages.after-success = ""
 
-# Add the python build environment site_packages folder to the CMake prefix
-# paths.
+# Add the python build environment site_packages folder to the CMake prefix paths.
 search.site-packages = true
 
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 
-# Strictly check all config options. If False, warnings will be printed for
-# unknown options. If True, an error will be raised.
+# Strictly check all config options.
 strict-config = true
 
 # Enable early previews of features not finalized yet.
@@ -325,7 +279,7 @@ experimental = false
 # If set, this will provide a method for backward compatibility.
 minimum-version = "0.11"  # current version
 
-# The build directory. Defaults to a temporary directory, but can be set.
+# The CMake build directory. Defaults to a unique temporary directory.
 build-dir = ""
 
 # Immediately fail the build. This is only useful in overrides.
