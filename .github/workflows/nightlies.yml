@@ -25,9 +25,9 @@ jobs:
 
   upload_nightly_wheels:
     name: Upload nightly wheels to Anaconda Cloud
+    if: github.repository_owner == 'scikit-build'
     needs: [build_wheel]
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/download-artifact@v4
         with:
