@@ -19,6 +19,7 @@ Documentation:
 
 - Generate config value reference by @LecrisUT in #1052
 - Update and fix projects list by @henryiii in #1075
+- Document CLI utilities by @henryiii in #1080
 
 ## Version 0.11.2
 
