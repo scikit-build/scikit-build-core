@@ -1,6 +1,8 @@
 # CLI Reference
 
-Scikit-build-core has a few integrated CLI tools. These are not guaranteed to be stable between releases yet, but can still be useful to investigate your environment.
+Scikit-build-core has a few integrated CLI tools. These are not guaranteed to be
+stable between releases yet, but can still be useful to investigate your
+environment.
 
 ## Build utilities
 
@@ -22,7 +24,6 @@ Example:
 ```
 
 ### Project table
-
 
 ```{program-output} python -m scikit_build_core.build project-table --help
 

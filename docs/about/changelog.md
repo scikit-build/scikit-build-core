@@ -1,24 +1,24 @@
 # Changelog
 
-
 ## Version 0.11.3
 
 Fixes:
 
-* fix: add scripts to `_DICT_STR_FIELDS` for dynamic metadata. by @bilke in #1070
+- fix: add scripts to `_DICT_STR_FIELDS` for dynamic metadata. by @bilke in
+  #1070
 
 CI and testing:
 
-* Officially support Python 3.14, color help @henryiii in #1074
-* Remove no-wheel based on virtualenv version by @henryiii in #1071
-* Work when `CMAKE_GENERATOR` is set by @henryiii in #1066
-* Try a workaround for packit `propose-downstream` by @LecrisUT in #1067
-* Update coverage a bit by @henryiii in #1073
+- Officially support Python 3.14, color help @henryiii in #1074
+- Remove no-wheel based on virtualenv version by @henryiii in #1071
+- Work when `CMAKE_GENERATOR` is set by @henryiii in #1066
+- Try a workaround for packit `propose-downstream` by @LecrisUT in #1067
+- Update coverage a bit by @henryiii in #1073
 
 Documentation:
 
-* Generate config value reference by @LecrisUT in #1052
-* Update and fix projects list by @henryiii in #1075
+- Generate config value reference by @LecrisUT in #1052
+- Update and fix projects list by @henryiii in #1075
 
 ## Version 0.11.2
 
