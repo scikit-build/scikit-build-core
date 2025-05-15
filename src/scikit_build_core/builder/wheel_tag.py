@@ -155,7 +155,7 @@ if __name__ == "__main__":
     from .._compat.argparse import ArgumentParser
 
     parser = ArgumentParser(
-        prog="scikit_build_core.builder.wheel_tag",
+        prog="python -m scikit_build_core.builder.wheel_tag",
         description="Get the computed wheel tag for the current environment.",
         allow_abbrev=False,
     )
