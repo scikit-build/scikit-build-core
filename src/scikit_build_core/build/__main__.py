@@ -50,8 +50,9 @@ def get_requires(mode: Literal["sdist", "wheel", "editable"]) -> None:
 
 def main() -> None:
     parser = ArgumentParser(
+        prog="python -m scikit_build_core.build",
         allow_abbrev=False,
-        description="Build backend utilities",
+        description="Build backend utilities.",
     )
 
     subparsers = parser.add_subparsers(help="Commands")

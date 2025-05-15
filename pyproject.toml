@@ -101,6 +101,7 @@ docs = [
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
     "sphinx-tippy",
+    "sphinxcontrib-programoutput",
 ]
 wheel-free-setuptools = [
     'setuptools>=70.1; python_version>="3.8"',
