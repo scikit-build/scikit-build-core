@@ -12,7 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   build_wheel:
     name: Build and upload wheel
     if: github.repository_owner == 'scikit-build'
@@ -42,4 +41,5 @@ jobs:
         uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf # 0.6.2
         with:
           artifacts_path: dist
-          anaconda_nightly_upload_token: ${{ secrets.ANACONDA_ORG_UPLOAD_TOKEN }}
+          anaconda_nightly_upload_token:
+            ${{ secrets.ANACONDA_ORG_UPLOAD_TOKEN }}
