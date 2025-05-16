@@ -612,11 +612,33 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: wheel.repair.imports-file
+  :type: ``Path``
+
+  The generated file containing any necessary top-level imports.
+
+  This files should be imported as early as possible in all top-level modules and packages.
+
+  On Windows wheels, this file contains all ``os.add_dll_directory`` needed in the current wheel.
+  On other OS, this is an empty file.
+```
+
+```{eval-rst}
 .. confval:: wheel.repair.in-wheel
   :type: ``bool``
   :default: true
 
   Patch the dynamic links to libraries installed in the current wheel.
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.patch-imports
+  :type: ``bool``
+  :default: true
+
+  Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+
+  Alternatively, set this to ``false`` and use :confval:`wheel.repair.imports-file` instead.
 ```
 
 <!-- [[[end]]] -->

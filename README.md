@@ -232,6 +232,12 @@ wheel.repair.cross-wheel = false
 # A list of external library files that will be bundled in the wheel.
 wheel.repair.bundle-external = []
 
+# Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+wheel.repair.patch-imports = true
+
+# The generated file containing any necessary top-level imports.
+wheel.repair.imports-file = ""
+
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 
