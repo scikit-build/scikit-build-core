@@ -395,7 +395,7 @@ Science Foundation.
 [github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
 [hatchling]:                https://hatch.pypa.io/latest
 [maturin]:                  https://www.maturin.rs
-[meson-python]:             https://meson-python.readthedocs.io
+[meson-python]:             https://mesonbuild.com/meson-python
 [py-build-cmake]:           https://tttapa.github.io/py-build-cmake
 [pypi-link]:                https://pypi.org/project/scikit-build-core/
 [pypi-platforms]:           https://img.shields.io/pypi/pyversions/scikit-build-core

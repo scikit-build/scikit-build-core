@@ -116,6 +116,9 @@ linkcheck_anchors_ignore = [
     "default-versioning-scheme",
     "git-archives",
 ]
+linkcheck_ignore = [
+    r"https://github.com/search\?.*",
+]
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
