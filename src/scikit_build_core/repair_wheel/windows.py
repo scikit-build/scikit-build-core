@@ -281,17 +281,20 @@ class WindowsWheelRepairer(WheelRepairer):
             "Patching dll directories: {dll_dirs}",
             dll_dirs=self.dll_dirs,
         )
-        # TODO: Not handling namespace packages with this
-        for path in platlib.iterdir():
-            assert isinstance(path, Path)
-            if path.is_dir():
-                pkg_file = path / "__init__.py"
-                if not pkg_file.exists():
-                    logger.debug(
-                        "Ignoring non-python package: {pkg_file}",
-                        pkg_file=pkg_file,
-                    )
-                    continue
-                self.patch_python_file(pkg_file)
-            elif path.suffix == ".py":
-                self.patch_python_file(path)
+        if self.settings.wheel.repair.imports_file:
+            imports_file = platlib / self.settings.wheel.repair.imports_file
+            self.patch_python_file(imports_file)
+        else:
+            for path in platlib.iterdir():
+                assert isinstance(path, Path)
+                if path.is_dir():
+                    pkg_file = path / "__init__.py"
+                    if not pkg_file.exists():
+                        logger.debug(
+                            "Ignoring non-python package: {pkg_file}",
+                            pkg_file=pkg_file,
+                        )
+                        continue
+                    self.patch_python_file(pkg_file)
+                elif path.suffix == ".py":
+                    self.patch_python_file(path)

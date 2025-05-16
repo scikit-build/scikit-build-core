@@ -256,6 +256,23 @@ class WheelRepair:
     build. The bundled libraries are installed under ``site-packages/${name}.libs``
     """
 
+    patch_imports: bool = True
+    """
+    Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+
+    Alternatively, set this to ``false`` and use :confval:`wheel.repair.imports-file` instead.
+    """
+
+    imports_file: Optional[Path] = None
+    """
+    The generated file containing any necessary top-level imports.
+
+    This files should be imported as early as possible in all top-level modules and packages.
+
+    On Windows wheels, this file contains all ``os.add_dll_directory`` needed in the current wheel.
+    On other OS, this is an empty file.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
