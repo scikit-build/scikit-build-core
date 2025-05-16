@@ -2,9 +2,13 @@
 
 ## Version 0.11.3
 
+This release fixes some fields in the expanded supported dynamic-metadata
+fields from 0.11.2. It also now is tested on Python 3.14, including adding
+color to `--help` on the experimental commands (now documented).
+
 Fixes:
 
-- fix: add scripts to `_DICT_STR_FIELDS` for dynamic metadata. by @bilke in
+- fix: add scripts to `_DICT_STR_FIELDS` for dynamic metadata by @bilke in
   #1070
 
 CI and testing:
