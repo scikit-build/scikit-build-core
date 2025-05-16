@@ -33,6 +33,8 @@ def __dir__() -> List[str]:
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
+    disallow_hard_code: bool
+    """Do not allow the field to be hard-coded in the pyproject table."""
 
 
 class CMakeSettingsDefine(str):
@@ -414,7 +416,12 @@ class ScikitBuildSettings:
     The build directory. Defaults to a temporary directory, but can be set.
     """
 
-    fail: bool = False
+    fail: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(
+            disallow_hard_code=True,
+        ),
+    )
     """
     Immediately fail the build. This is only useful in overrides.
     """
