@@ -114,7 +114,7 @@ github = "Yikai-Liao/symusic"
 
 [[project]]
 pypi = "s5cmd"
-github = "jcfr/s5cmd-python-distributions"
+github = "ImagingDataCommons/s5cmd-python-distributions"
 
 [[project]]
 pypi = "pyslang"

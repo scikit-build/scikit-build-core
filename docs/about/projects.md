@@ -63,14 +63,14 @@ for project in projects["project"]:
 * [gemmi](https://pypi.org/project/gemmi) ([source](https://github.com/project-gemmi/gemmi/blob/HEAD/pyproject.toml))
 * [gdstk](https://pypi.org/project/gdstk) ([source](https://github.com/heitzmann/gdstk/blob/HEAD/pyproject.toml))
 * [symusic](https://pypi.org/project/symusic) ([source](https://github.com/Yikai-Liao/symusic/blob/HEAD/pyproject.toml))
-* [s5cmd](https://pypi.org/project/s5cmd) ([source](https://github.com/jcfr/s5cmd-python-distributions/blob/HEAD/pyproject.toml))
+* [s5cmd](https://pypi.org/project/s5cmd) ([source](https://github.com/ImagingDataCommons/s5cmd-python-distributions/blob/HEAD/pyproject.toml))
 * [pyslang](https://pypi.org/project/pyslang) ([source](https://github.com/MikePopoloski/slang/blob/HEAD/pyproject.toml))
 * [librapid](https://pypi.org/project/librapid) ([source](https://github.com/LibRapid/librapid/blob/HEAD/pyproject.toml))
 * [pyresidfp](https://pypi.org/project/pyresidfp) ([source](https://github.com/pyresidfp/pyresidfp/blob/HEAD/pyproject.toml))
 * [kiss-icp](https://pypi.org/project/kiss-icp) ([source](https://github.com/PRBonn/kiss-icp/blob/HEAD/python/pyproject.toml))
 * [simsopt](https://pypi.org/project/simsopt) ([source](https://github.com/hiddenSymmetries/simsopt/blob/HEAD/pyproject.toml))
 * [mqt-core](https://pypi.org/project/mqt-core) ([source](https://github.com/munich-quantum-toolkit/core/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (checksum: 02f85758156e39de6e127e2b5ce0f9bc)-->
+<!--[[[end]]] (checksum: a798ae9bb220ab16cfe9402431cde0cf)-->
 
 <!-- prettier-ignore-end -->
 

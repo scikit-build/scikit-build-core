@@ -69,7 +69,10 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         rich_print = builtins.print
 
-    parser = ArgumentParser(allow_abbrev=False)
+    parser = ArgumentParser(
+        allow_abbrev=False,
+        description="This runs cattrs (required) instead of the built-in converter, for comparison.",
+    )
     parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
     args = parser.parse_args()
 
