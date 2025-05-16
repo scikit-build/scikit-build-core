@@ -181,6 +181,14 @@ cmake.source-dir = "."
 # DEPRECATED in 0.10; use build.targets instead.
 cmake.targets = ""
 
+# The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+cmake.toolchain-file = ""
+
+# Do not pass the current environment's python hints such as
+# ``Python_EXECUTABLE``. Primarily used for cross-compilation where the
+# CMAKE_TOOLCHAIN_FILE should handle it instead.
+cmake.python-hints = true
+
 # The versions of Ninja to allow. If Ninja is not present on the system or does
 # not pass this specifier, it will be downloaded via PyPI if possible. An empty
 # string will disable this check.
@@ -256,6 +264,12 @@ wheel.exclude = []
 
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
+
+# Manually specify the wheel tags to use, ignoring other inputs such as
+# ``wheel.py-api``. Each tag must be of the format
+# {interpreter}-{abi}-{platform}. If not specified, these tags are automatically
+# calculated.
+wheel.tags = []
 
 # If CMake is less than this value, backport a copy of FindPython. Set to 0
 # disable this, or the empty string.
