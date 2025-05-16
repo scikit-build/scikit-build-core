@@ -340,7 +340,7 @@ jobs:
     timeout-minutes: 25
     strategy:
       matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on: [ubuntu-latest, macos-latest]  # Windows command output issue (wrong Python selected)
 
     steps:
       - uses: actions/checkout@v4
