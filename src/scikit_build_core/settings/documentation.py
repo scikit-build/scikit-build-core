@@ -42,9 +42,7 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
     assert isinstance(obody, ast.ClassDef)
     body = obody.body
     return {
-        assign.target.id: textwrap.dedent(_get_value(expr.value))  # type: ignore[union-attr]
-        .strip()
-        .replace("\n", " ")
+        assign.target.id: textwrap.dedent(_get_value(expr.value)).strip()  # type: ignore[union-attr]
         for assign, expr in zip(body[:-1], body[1:])
         if isinstance(assign, ast.AnnAssign) and isinstance(expr, ast.Expr)
     }
@@ -56,11 +54,8 @@ class DCDoc:
     type: str
     default: str
     docs: str
+    field: dataclasses.Field[typing.Any]
     deprecated: bool = False
-
-    def __str__(self) -> str:
-        docs = "\n".join(f"# {s}" for s in textwrap.wrap(self.docs, width=78))
-        return f"{docs}\n{self.name} = {self.default}\n"
 
 
 def sanitize_default_field(text: str) -> str:
@@ -137,5 +132,6 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             type=field.metadata.get("display_type", get_display_type(field.type)),
             default=sanitize_default_field(default),
             docs=docs[field.name],
+            field=field,
             deprecated=field.metadata.get("deprecated", False),
         )

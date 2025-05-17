@@ -1,40 +1,58 @@
 from __future__ import annotations
 
-from scikit_build_core.settings.documentation import DCDoc, mk_docs
-from scikit_build_core.settings.skbuild_docs_readme import mk_skbuild_docs
+import textwrap
+
+from scikit_build_core.settings.documentation import mk_docs
+from scikit_build_core.settings.skbuild_docs_readme import (
+    mk_skbuild_docs as mk_skbuild_docs_readme,
+)
+from scikit_build_core.settings.skbuild_docs_sphinx import (
+    mk_skbuild_docs as mk_skbuild_docs_sphinx,
+)
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 
-def test_skbuild_docs() -> None:
-    docs = mk_skbuild_docs()
+def test_skbuild_docs_readme() -> None:
+    docs = mk_skbuild_docs_readme()
     assert (
         "A table of defines to pass to CMake when configuring the project. Additive."
         in docs
     )
-    assert "DEPRECATED in 0.10, use build.verbose instead." in docs
     assert "fail = false" in docs
+    # Deprecated items are not included here
+    assert "ninja.minimum-version" not in docs
+
+
+def test_skbuild_docs_sphinx() -> None:
+    docs = mk_skbuild_docs_sphinx()
+    assert (
+        textwrap.dedent("""\
+    .. confval:: cmake.define
+      :type: ``EnvVar``
+    
+      A table of defines to pass to CMake when configuring the project. Additive.
+    """)
+        in docs
+    )
+    assert (
+        textwrap.dedent("""\
+    .. confval:: ninja.minimum-version
+      :type: ``Version``
+
+      DEPRECATED in 0.8; use version instead.
+    """)
+        in docs
+    )
 
 
 def test_mk_docs() -> None:
     docs = set(mk_docs(ScikitBuildSettings))
 
+    dcdoc = next(item for item in docs if item.name == "cmake.define")
+    assert dcdoc.type == "EnvVar"
+    assert dcdoc.default == "{}"
     assert (
-        DCDoc(
-            name="cmake.minimum-version",
-            type="Version",
-            default='""',
-            docs="DEPRECATED in 0.8; use version instead.",
-            deprecated=True,
-        )
-        in docs
+        dcdoc.docs
+        == "A table of defines to pass to CMake when configuring the project. Additive."
     )
-    assert (
-        DCDoc(
-            name="install.strip",
-            type="bool",
-            default="true",
-            docs="Whether to strip the binaries. True for release builds on scikit-build-core 0.5+ (0.5-0.10.5 also incorrectly set this for debug builds).",
-            deprecated=False,
-        )
-        in docs
-    )
+    assert dcdoc.deprecated is False
