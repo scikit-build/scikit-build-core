@@ -25,7 +25,7 @@ _LIST_STR_FIELDS = frozenset(
         "classifiers",
         "keywords",
         "dependencies",
-        "license_files",
+        "license-files",
     ]
 )
 
