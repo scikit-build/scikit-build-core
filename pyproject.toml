@@ -170,6 +170,11 @@ norecursedirs = ["tests/packages/**"]
 
 [tool.mypy]
 files = ["src", "tests", "noxfile.py"]
+exclude = [
+    '^tests/packages/simplest_c/src/simplest/__init__.py',
+    '^tests/packages/dynamic_metadata/src/dynamic/__init__.py',
+    '^tests/packages/.*/setup.py',
+]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src", "$MYPY_CONFIG_FILE_DIR/tests/utils"]
 python_version = "3.8"
 warn_unused_configs = true
