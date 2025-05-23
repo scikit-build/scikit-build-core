@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.8
+    rev: v0.11.11
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
@@ -131,7 +131,7 @@ repos:
         additional_dependencies: [cogapp]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.04.28
+    rev: 2025.05.12
     hooks:
       - id: validate-pyproject
 

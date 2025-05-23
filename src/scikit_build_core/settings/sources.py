@@ -158,7 +158,7 @@ def _nested_dataclass_to_names(
     Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
     """
 
-    if isinstance(target, type) and dataclasses.is_dataclass(target):
+    if dataclasses.is_dataclass(target) and isinstance(target, type):
         for field in dataclasses.fields(target):
             yield from _nested_dataclass_to_names(field.type, *inner, field.name)
     else:
@@ -324,7 +324,7 @@ def _unrecognized_dict(
             continue
         (inner_option_field,) = matches
         inner_option = inner_option_field.type
-        if isinstance(inner_option, type) and dataclasses.is_dataclass(inner_option):
+        if dataclasses.is_dataclass(inner_option) and isinstance(inner_option, type):
             yield from _unrecognized_dict(
                 settings[keystr], inner_option, (*above, keystr)
             )
@@ -492,7 +492,7 @@ class TOMLSource:
         """
         target, annotations = _process_annotated(target)
         raw_target = _get_target_raw_type(target)
-        if isinstance(raw_target, type) and dataclasses.is_dataclass(raw_target):
+        if dataclasses.is_dataclass(raw_target) and isinstance(raw_target, type):
             fields = dataclasses.fields(raw_target)
             values = ((k.replace("-", "_"), v) for k, v in item.items())
             return raw_target(
@@ -581,7 +581,7 @@ class SourceChain:
         errors = []
         prep: dict[str, Any] = {}
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
-            if isinstance(field.type, type) and dataclasses.is_dataclass(field.type):
+            if dataclasses.is_dataclass(field.type) and isinstance(field.type, type):
                 try:
                     prep[field.name] = self.convert_target(
                         field.type, *prefixes, field.name

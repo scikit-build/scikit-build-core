@@ -93,7 +93,7 @@ class Converter:
     def _convert_any(self, item: Any, target: Any) -> Any: ...
 
     def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
-        if isinstance(target, type) and dataclasses.is_dataclass(target):
+        if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)
         origin = get_origin(target)
@@ -103,7 +103,7 @@ class Converter:
             if origin is Union:
                 return self._convert_any(item, get_args(target)[0])
 
-        return target(item)
+        return target(item)  # type: ignore[call-arg]
 
 
 def load_reply_dir(path: Path) -> Index:
