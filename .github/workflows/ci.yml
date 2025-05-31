@@ -141,7 +141,7 @@ jobs:
 
       - name: Test package (two attempts)
         uses: nick-fields/retry@v3
-        if: "contains(matrix.python_version, 'pypy')"
+        if: "contains(matrix.python-version, 'pypy')"
         with:
           max_attempts: 2
           retry_on: error
@@ -151,13 +151,13 @@ jobs:
             --durations=20 -n auto
 
       - name: Test package (serial)
-        if: "contains(matrix.python_version, 'graalpy')"
+        if: "contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
           --durations=20
 
       - name: Test package
-        if: "!contains(matrix.python_version, 'py')"
+        if: "!contains(matrix.python-version, 'py')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
