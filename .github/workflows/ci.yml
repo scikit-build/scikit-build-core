@@ -128,10 +128,9 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
-      #          --only-binary=numpy
-      #          --extra-index-url=https://www.graalvm.org/python/wheels/simple
-      #          --index-strategy=unsafe-best-match
+          --system --only-binary=numpy
+          --extra-index-url=https://www.graalvm.org/python/wheels/
+          --index-strategy=unsafe-best-match
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
@@ -139,22 +138,12 @@ jobs:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
-      - name: Test package (two attempts)
-        uses: nick-fields/retry@v3
-        if: "contains(matrix.python-version, 'pypy')"
-        with:
-          max_attempts: 2
-          retry_on: error
-          command: >-
-            pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-            --durations=20 -n auto
-
       - name: Test package (serial)
         if: "contains(matrix.python-version, 'graalpy')"
         run: pytest -ra --showlocals --durations=20
 
       - name: Test package
-        if: "!contains(matrix.python-version, 'py')"
+        if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
