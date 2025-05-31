@@ -21,6 +21,9 @@ SYSCONFIGPLAT = sysconfig.get_platform()
     sys.implementation.name == "pypy", reason="pypy does not support abi3"
 )
 @pytest.mark.skipif(
+    sys.implementation.name == "graalpy", reason="graalpy does not support abi3"
+)
+@pytest.mark.skipif(
     sysconfig.get_config_var("Py_GIL_DISABLED"),
     reason="Free-threaded Python does not support abi3",
 )

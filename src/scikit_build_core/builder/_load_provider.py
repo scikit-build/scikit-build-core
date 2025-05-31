@@ -125,7 +125,8 @@ class DynamicPyProject(StrMapping):
         yield from self.project
 
         # Iterate over the keys of the dynamic metadata providers
-        yield from self.providers
+        # GraalPy needs it to be a copy
+        yield from list(self.providers)
 
     def __len__(self) -> int:
         return len(self.project) + len(self.providers)
