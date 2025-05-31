@@ -48,7 +48,7 @@ jobs:
       🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
       matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 40
+    timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
@@ -90,7 +90,6 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-latest
             cmake-version: "3.26.x"
-          # TODO: CMake doesn't work with beta 1 on Windows
           - python-version: "3.14"
             runs-on: windows-latest
             cmake-version: "4.0.x"
@@ -109,6 +108,11 @@ jobs:
           - python-version: "graalpy-24.2"
             runs-on: ubuntu-latest
             cmake-version: "4.0"
+        exclude:
+          # No NumPy PyPy for ARM
+          - python-version: "pypy-3.10"
+            runs-on: macos-14
+            cmake-version: "3.15.x"
 
     steps:
       - uses: actions/checkout@v4
@@ -138,12 +142,12 @@ jobs:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
-      - name: Test package (serial)
-        if: "contains(matrix.python-version, 'graalpy')"
-        run: pytest -ra --showlocals --durations=20
+      #- name: Test package (serial)
+      #  if: "contains(matrix.python-version, 'graalpy')"
+      #  run: pytest -ra --showlocals --durations=20
 
       - name: Test package
-        if: "!contains(matrix.python-version, 'graalpy')"
+        # if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
