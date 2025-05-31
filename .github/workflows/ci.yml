@@ -128,8 +128,7 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
-          --only-binary=numpy
+          --system --only-binary=numpy
           --extra-index-url=https://www.graalvm.org/python/wheels/simple
           --index-strategy=unsafe-best-match
 
