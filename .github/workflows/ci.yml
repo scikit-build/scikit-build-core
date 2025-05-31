@@ -91,9 +91,9 @@ jobs:
             runs-on: windows-latest
             cmake-version: "3.26.x"
           # TODO: CMake doesn't work with beta 1 on Windows
-          # - python-version: "3.14"
-          #   runs-on: windows-latest
-          #   cmake-version: "4.0.x"
+          - python-version: "3.14"
+            runs-on: windows-latest
+            cmake-version: "4.0.x"
           - python-version: "3.13"
             runs-on: windows-latest
             cmake-version: "3.26.x"
@@ -105,6 +105,9 @@ jobs:
             cmake-version: "3.31.x"
           - python-version: "3.12"
             runs-on: windows-11-arm
+            cmake-version: "4.0"
+          - python-version: "graalpy-24.2"
+            runs-on: ubuntu-latest
             cmake-version: "4.0"
 
     steps:
