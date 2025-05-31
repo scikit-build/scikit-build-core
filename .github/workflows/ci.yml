@@ -128,21 +128,16 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system --only-binary=numpy
-          --extra-index-url=https://www.graalvm.org/python/wheels/simple
-          --index-strategy=unsafe-best-match
+          --system
+      #          --only-binary=numpy
+      #          --extra-index-url=https://www.graalvm.org/python/wheels/simple
+      #          --index-strategy=unsafe-best-match
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
         run:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
-
-      - name: Test package
-        if: "!contains(matrix.python_version, 'py')"
-        run: >-
-          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
-          auto --durations=20
 
       - name: Test package (two attempts)
         uses: nick-fields/retry@v3
@@ -160,6 +155,12 @@ jobs:
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
           --durations=20
+
+      - name: Test package
+        if: "!contains(matrix.python_version, 'py')"
+        run: >-
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
+          auto --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5
