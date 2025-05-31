@@ -128,7 +128,9 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
+          --system --only-binary=numpy
+          --extra-index-url=https://www.graalvm.org/python/wheels/simple
+          --index-strategy=unsafe-best-match
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
