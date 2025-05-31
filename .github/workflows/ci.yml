@@ -137,7 +137,7 @@ jobs:
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
       - name: Test package
-        if: "!contains(matrix.python_version, 'pypy')"
+        if: "!contains(matrix.python_version, 'py')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
@@ -152,6 +152,12 @@ jobs:
           command: >-
             pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
             --durations=20 -n auto
+
+      - name: Test package (serial)
+        if: "contains(matrix.python_version, 'graalpy')"
+        run: >-
+          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
+          --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5
