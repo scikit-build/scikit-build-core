@@ -145,16 +145,13 @@ jobs:
         with:
           max_attempts: 2
           retry_on: error
-          timeout_seconds: 5
           command: >-
             pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
             --durations=20 -n auto
 
       - name: Test package (serial)
         if: "contains(matrix.python-version, 'graalpy')"
-        run: >-
-          pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-          --durations=20
+        run: pytest -ra --showlocals --durations=20
 
       - name: Test package
         if: "!contains(matrix.python-version, 'py')"
