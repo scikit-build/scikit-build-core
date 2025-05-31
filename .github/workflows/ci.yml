@@ -147,7 +147,7 @@ jobs:
       #  run: pytest -ra --showlocals --durations=20
 
       - name: Test package
-       # if: "!contains(matrix.python-version, 'graalpy')"
+        # if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
