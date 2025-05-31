@@ -48,7 +48,6 @@ jobs:
       🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
       matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
@@ -142,12 +141,12 @@ jobs:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
-      #- name: Test package (serial)
-      #  if: "contains(matrix.python-version, 'graalpy')"
-      #  run: pytest -ra --showlocals --durations=20
+      - name: Test package (serial)
+        if: "contains(matrix.python-version, 'graalpy')"
+        run: pytest -ra -v --showlocals --durations=20
 
       - name: Test package
-        # if: "!contains(matrix.python-version, 'graalpy')"
+        if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
