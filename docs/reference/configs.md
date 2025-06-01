@@ -249,7 +249,7 @@ print(mk_skbuild_docs())
 
 ```{eval-rst}
 .. confval:: editable.mode
-  :type: ``"redirect" | "inplace"``
+  :type: ``"redirect" | "inplace" | "build-dir"``
   :default: "redirect"
 
   Select the editable mode to use. Can be "redirect" (default) or "inplace".
