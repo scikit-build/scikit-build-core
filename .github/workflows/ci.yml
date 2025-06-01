@@ -144,6 +144,10 @@ jobs:
       - name: Test package (serial)
         if: "contains(matrix.python-version, 'graalpy')"
         run: pytest -ra -v --showlocals --durations=20
+        env:
+          PIP_ONLY_BINARY: numpy
+          PIP_EXTRA_INDEX_URL: https://www.graalvm.org/python/wheels/
+
 
       - name: Test package
         if: "!contains(matrix.python-version, 'graalpy')"
@@ -153,6 +157,7 @@ jobs:
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5
+        if: "!contains(matrix.python-version, 'graalpy')"
         with:
           name:
             ${{ runner.os }}-${{ matrix.python-version }}-${{
