@@ -148,7 +148,6 @@ jobs:
           PIP_ONLY_BINARY: numpy
           PIP_EXTRA_INDEX_URL: https://www.graalvm.org/python/wheels/
 
-
       - name: Test package
         if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
