@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 0.11.4
+
+This release improves support for GraalPy and fixes a few other minor issues.
+
+Fixes:
+
+- Typo in license-files by @henryiii in #1084
+- Fix dynamic-metadata iteration (only affected GraalPy) by @henryiii in #1092
+- Better abiflags implementation, uses ABIFLAGS on 3.14+, supports GraalPy by @henryiii in #1092
+- File API `commandFragments` is optional by @henryiii in #1092
+- Add `python -m scikit_build_core` printout and a few CLI issues by @henryiii in #1091
+- Add some platform info to logging by @henryiii in #1094
+
+Internal:
+
+- Explicit mypy ignores by @henryiii in #1087
+- Adjust typing to be ready for next mypy release by @henryiii in #1088
+
+Documentation:
+
+- Refactor the documentation to use single-line summaries by @LecrisUT in #1079
+
 ## Version 0.11.3
 
 This release fixes some fields in the expanded supported dynamic-metadata fields
