@@ -305,8 +305,7 @@ def rich_print(
     ``color=`` argument will set a default color to apply to every argument, and
     is available to arguments as ``{color}``.
     """
-    if color:
-        kwargs["color"] = _style[color]
+    kwargs["color"] = _style[color] if color else ""
 
     args_1 = tuple(str(arg) for arg in args)
     args_1_gen = (
