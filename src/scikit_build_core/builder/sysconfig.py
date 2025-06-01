@@ -193,12 +193,18 @@ def get_abi_flags() -> str:
     Return the ABI flags for the current Python interpreter. Derived from
     ``packaging.tags.sys_tags()`` since that works on Windows.
     """
+    abi_flags: str | None = sysconfig.get_config_var("ABIFLAGS")
+    if abi_flags:
+        return abi_flags
 
-    most_compatible = next(iter(packaging.tags.sys_tags()))
-    full_abi = most_compatible.abi
-    vers = packaging.tags.interpreter_version()
-    abi_flags = full_abi[full_abi.find(vers) + len(vers) :]
-    return "".join(sorted(abi_flags))
+    if sys.implementation.name == "cpython" and sys.platform.startswith("win32"):
+        most_compatible = next(iter(packaging.tags.sys_tags()))
+        full_abi = most_compatible.abi
+        vers = packaging.tags.interpreter_version()
+        abi_flags = full_abi[full_abi.find(vers) + len(vers) :]
+        return "".join(sorted(abi_flags))
+
+    return ""
 
 
 def info_print(
