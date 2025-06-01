@@ -55,7 +55,7 @@ def main() -> None:
         description="Build backend utilities.",
     )
 
-    subparsers = parser.add_subparsers(help="Commands")
+    subparsers = parser.add_subparsers(required=True, help="Commands")
     requires = subparsers.add_parser(
         "requires",
         help="Get the build requirements",
