@@ -8,9 +8,11 @@ Fixes:
 
 - Typo in license-files by @henryiii in #1084
 - Fix dynamic-metadata iteration (only affected GraalPy) by @henryiii in #1092
-- Better abiflags implementation, uses ABIFLAGS on 3.14+, supports GraalPy by @henryiii in #1092
+- Better abiflags implementation, uses ABIFLAGS on 3.14+, supports GraalPy by
+  @henryiii in #1092
 - File API `commandFragments` is optional by @henryiii in #1092
-- Add `python -m scikit_build_core` printout and a few CLI issues by @henryiii in #1091
+- Add `python -m scikit_build_core` printout and a few CLI issues by @henryiii
+  in #1091
 - Add some platform info to logging by @henryiii in #1094
 
 Internal:
