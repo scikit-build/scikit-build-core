@@ -18,7 +18,7 @@ from ..cmake import CMake
 from ..errors import CMakeNotFoundError
 from ..resources import resources
 
-__all__ = ["process_overides", "regex_match"]
+__all__ = ["process_overrides", "regex_match"]
 
 
 def __dir__() -> list[str]:
@@ -257,7 +257,7 @@ def inherit_join(
     raise TypeError(msg)
 
 
-def process_overides(
+def process_overrides(
     tool_skb: dict[str, Any],
     *,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],

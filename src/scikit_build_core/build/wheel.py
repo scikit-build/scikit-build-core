@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import dataclasses
 import os
+import platform
 import shutil
+import sys
 import sysconfig
 import tempfile
 from collections.abc import Mapping
@@ -258,6 +260,12 @@ def _build_wheel_impl_impl(
         "{green}*** {bold}scikit-build-core {__version__}",
         *cmake_msg,
         f"{{red}}({state})",
+    )
+    logger.info(
+        "Implementation: {} {} on {}",
+        sys.implementation.name,
+        sys.platform,
+        platform.machine(),
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:

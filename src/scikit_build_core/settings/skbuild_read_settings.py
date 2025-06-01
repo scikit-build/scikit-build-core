@@ -17,7 +17,7 @@ from ..errors import CMakeConfigError
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
-from .skbuild_overrides import process_overides
+from .skbuild_overrides import process_overrides
 from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
 
 if TYPE_CHECKING:
@@ -151,7 +151,7 @@ class SettingsReader:
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        self.overrides = process_overides(
+        self.overrides = process_overrides(
             pyproject.get("tool", {}).get("scikit-build", {}),
             state=state,
             env=env,
@@ -188,7 +188,7 @@ class SettingsReader:
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
-            process_overides(extra_skb, state=state, env=env, retry=retry)
+            process_overrides(extra_skb, state=state, env=env, retry=retry)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
 
         prefixed = {
