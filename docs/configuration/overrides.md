@@ -78,17 +78,17 @@ cmake.version = ">=3.18"
 
 The value of `platform.machine()`. Takes a regex. A few sample values:
 
-| OS      | Machine      | `platform-machine` |
-| ------- | ------------ | ------------------ |
-| Unix    | Intel 64-bit | `x86_64`           |
-| Linux   | Intel 32-bit | `i686`             |
-| macOS   | ARM          | `arm64`            |
-| Linux   | ARM          | `aarch64`          |
-| Linux   | Power PC     | `ppc64le`          |
-| Linux   | s390x        | `s390x`            |
-| Windows | Intel 64-bit | `AMD64`            |
-| Windows | Intel 32-bit | `x86`              |
-| Windows | ARM          | `ARM64`            |
+| OS      | Machine          | `platform-machine` |
+| ------- | ---------------- | ------------------ |
+| Unix    | Intel/AMD 64-bit | `x86_64`           |
+| Linux   | Intel 32-bit     | `i686`             |
+| macOS   | ARM              | `arm64`            |
+| Linux   | ARM              | `aarch64`          |
+| Linux   | Power PC         | `ppc64le`          |
+| Linux   | s390x            | `s390x`            |
+| Windows | Intel 64-bit     | `AMD64`            |
+| Windows | Intel 32-bit     | `x86`              |
+| Windows | ARM              | `ARM64`            |
 
 ### `abi-flags` (string)
 
