@@ -81,7 +81,7 @@ The value of `platform.machine()`. Takes a regex. A few sample values:
 | OS      | Machine          | `platform-machine` |
 | ------- | ---------------- | ------------------ |
 | Unix    | Intel/AMD 64-bit | `x86_64`           |
-| Linux   | Intel 32-bit     | `i686`             |
+| Linux   | Intel/AMD 32-bit | `i686`             |
 | macOS   | ARM              | `arm64`            |
 | Linux   | ARM              | `aarch64`          |
 | Linux   | Power PC         | `ppc64le`          |
