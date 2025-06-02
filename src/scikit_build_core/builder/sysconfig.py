@@ -47,7 +47,7 @@ def __dir__() -> list[str]:
 
 # Adapted from scikit-build by removing few checks that have already been earlier
 # https://github.com/scikit-build/scikit-build/blob/master/skbuild/cmaker.py#L514
-def _try_to_find_python_library() -> Path | None:
+def _try_to_find_python_library(*, abi3: bool = False) -> Path | None:
     candidate_lib_prefixes = ["", "lib"]
     candidate_suffixes = [""]
     candidate_implementations = ["python"]
@@ -71,6 +71,10 @@ def _try_to_find_python_library() -> Path | None:
         f"{sys.version_info.major}",
         "",
     ]
+
+    # Don't consider minor version if abi3
+    if abi3:
+        candidate_versions.pop(0)
 
     abiflags = getattr(sys, "abiflags", "")
     candidate_abiflags = [abiflags]
@@ -187,7 +191,7 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
         if libpath.is_file():
             return libpath
 
-    lib_path: Path | None = _try_to_find_python_library()
+    lib_path: Path | None = _try_to_find_python_library(abi3=abi3)
     if lib_path:
         return lib_path
 
