@@ -85,7 +85,7 @@ def get_display_type(field_type: type | str) -> str:
     if get_origin(field_type) is Annotated:
         # For annotated assume we always want the second item
         return get_display_type(get_args(field_type)[1])
-    if field_type is typing.Any:  # type: ignore[comparison-overlap]
+    if field_type is typing.Any:
         # Workaround for python<3.10 where typing.Any.__name__ does not evaluate
         return "Any"
     # Otherwise just get the formatted form of the `type` object
