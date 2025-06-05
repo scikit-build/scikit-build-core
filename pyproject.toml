@@ -226,6 +226,7 @@ run.omit = ["src/scikit_build_core/_vendor"]
 run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",
+  "couldnt-parse",  # site-customize is unparsable on latest GHA windows versions
 ]
 report.exclude_also = [
     '\.\.\.',
