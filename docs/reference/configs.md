@@ -574,4 +574,71 @@ print(mk_skbuild_docs())
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
 ```
 
+## wheel.repair
+
+```{eval-rst}
+.. confval:: wheel.repair.bundle-external
+  :type: ``list[str]``
+
+  A list of external library files that will be bundled in the wheel.
+
+  Each entry is treated as a regex pattern, and only the filenames are considered
+  for the match. The libraries are taken from the CMake dependency during the CMake
+  build. The bundled libraries are installed under ``site-packages/${name}.libs``
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.cross-wheel
+  :type: ``bool``
+  :default: false
+
+  Patch the dynamic links to libraries in other wheels.
+
+  .. note::
+     This may result in incompatible wheels. Use this only if the
+     wheels are strongly linked to each other and strict manylinux compliance is
+     not required.
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.enable
+  :type: ``bool``
+  :default: false
+
+  Do automatic repairs of the compiled binaries and libraries.
+
+  .. warning::
+     This is an experimental feature gated by :confval:`experimental`
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.imports-file
+  :type: ``Path``
+
+  The generated file containing any necessary top-level imports.
+
+  This files should be imported as early as possible in all top-level modules and packages.
+
+  On Windows wheels, this file contains all ``os.add_dll_directory`` needed in the current wheel.
+  On other OS, this is an empty file.
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.in-wheel
+  :type: ``bool``
+  :default: true
+
+  Patch the dynamic links to libraries installed in the current wheel.
+```
+
+```{eval-rst}
+.. confval:: wheel.repair.patch-imports
+  :type: ``bool``
+  :default: true
+
+  Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+
+  Alternatively, set this to ``false`` and use :confval:`wheel.repair.imports-file` instead.
+```
+
 <!-- [[[end]]] -->

@@ -31,7 +31,12 @@ def main() -> None:
 
     if Path("pyproject.toml").is_file():
         req = GetRequires()
-        all_req = [*req.cmake(), *req.ninja(), *req.dynamic_metadata()]
+        all_req = [
+            *req.cmake(),
+            *req.ninja(),
+            *req.dynamic_metadata(),
+            *req.other_dynamic_requires(),
+        ]
         rich_print(f"{{bold.red}}Get Requires:{{normal}} {all_req!r}")
 
     ip_program_search(color="magenta")
