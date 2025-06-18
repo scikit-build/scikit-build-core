@@ -231,6 +231,17 @@ class Builder:
         python_include_dir = get_python_include_dir()
         numpy_include_dir = get_numpy_include_dir()
 
+        # Warning for CPython 3.13.4 Windows bug
+        if (
+            sys.implementation.name == "CPython"
+            and sys.version_info[:3] == (3, 13, 4)
+            and sys.platform.startswith("win32")
+            and not sysconfig.get_config_var("Py_GIL_DISABLED")
+        ):  # pragma: nocover
+            logger.warning(
+                "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
+            )
+
         # Classic Find Python
         cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
         cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir

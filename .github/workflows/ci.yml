@@ -116,6 +116,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          # Python 3.13.4 broken on Windows
+          check-latest: >-
+            ${{ matrix.python-version == '3.13' && runner.os == 'Windows' }}
 
       - uses: astral-sh/setup-uv@v6
         if: matrix.python-version != 'pypy-3.8'
