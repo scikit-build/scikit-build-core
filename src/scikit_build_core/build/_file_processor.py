@@ -46,11 +46,12 @@ def each_unignored_file(
             global_exclude_lines += f.readlines()
 
     nested_excludes = {
-        p.parent: pathspec.GitIgnoreSpec.from_lines(
-            p.read_text(encoding="utf-8").splitlines()
+        Path(dirpath): pathspec.GitIgnoreSpec.from_lines(
+            (Path(dirpath) / filename).read_text(encoding="utf-8").splitlines()
         )
-        for p in Path().rglob("**/.gitignore")
-        if p != Path(".gitignore")
+        for dirpath, _, filenames in os.walk(".")
+        for filename in filenames
+        if filename == ".gitignore" and dirpath != "."
     }
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
