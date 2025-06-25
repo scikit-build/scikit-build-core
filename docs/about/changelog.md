@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 0.11.5
+
+This release speeds up large directories (more directory changes/optimization
+planned for 0.12), and adds a warning about 3.13.4 being broken on Windows.
+
+Fixes:
+
+- Improve `.gitignore` iteration speed by @silversquirl in #1103
+- Warn on 3.13.4 on Windows by @henryiii in #1104
+
+Documentation:
+
+- Fix a typo in a column-name of the `platform-machine` table by @mabruzzo in
+  #1096
+
 ## Version 0.11.4
 
 This release improves support for GraalPy and fixes a few other minor issues.
