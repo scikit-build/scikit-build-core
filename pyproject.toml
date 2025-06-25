@@ -227,7 +227,6 @@ run.disable_warnings = [
   "module-not-measured",  # Triggers in multithreaded context on build
   "no-sysmon",
   "couldnt-parse",  # site-customize is unparsable on latest GHA windows versions
-  "no-ctracer",     # Not available on Python 3.14, for example
 ]
 report.exclude_also = [
     '\.\.\.',
