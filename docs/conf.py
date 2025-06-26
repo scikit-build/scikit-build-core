@@ -117,7 +117,8 @@ linkcheck_anchors_ignore = [
     "git-archives",
 ]
 linkcheck_ignore = [
-    r"https://github.com/search\?.*",
+    # Rate limited
+    r"https://github.com/?.*",
 ]
 # -- Options for HTML output -------------------------------------------------
 
