@@ -9,7 +9,8 @@ Fixes:
 
 - Improve `.gitignore` iteration speed by @silversquirl in #1103
 - Warn on 3.13.4 on Windows by @henryiii in #1104
-- Add logging explaining why a file is included/excluded by @henryiii in #1110
+- Add debug logging explaining why a file is included/excluded by @henryiii in
+  #1110
 
 Documentation:
 

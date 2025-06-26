@@ -73,20 +73,20 @@ def each_unignored_file(
         for p in all_paths:
             # Always include something included
             if include_spec.match_file(p):
-                logger.info("Including {} because it is explicitly included.", p)
+                logger.debug("Including {} because it is explicitly included.", p)
                 yield p
                 continue
 
             # Always exclude something excluded
             if user_exclude_spec.match_file(p):
-                logger.info(
+                logger.debug(
                     "Excluding {} because it is explicitly excluded by the user.", p
                 )
                 continue
 
             # Ignore from global ignore
             if global_exclude_spec.match_file(p):
-                logger.info(
+                logger.debug(
                     "Excluding {} because it is explicitly excluded by the global ignore.",
                     p,
                 )
@@ -94,7 +94,7 @@ def each_unignored_file(
 
             # Ignore built-in patterns
             if builtin_exclude_spec.match_file(p):
-                logger.info(
+                logger.debug(
                     "Excluding {} because it is excluded by the built-in ignore patterns.",
                     p,
                 )
@@ -106,8 +106,8 @@ def each_unignored_file(
                 for np, nex in nested_excludes.items()
                 if dirpath == np or np in dirpath.parents
             ):
-                logger.info(
-                    "Excluding {} because it is explicitly included by nested ignore.",
+                logger.debug(
+                    "Excluding {} because it is explicitly excluded by nested ignore.",
                     p,
                 )
                 continue
