@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 import pathspec
 
-from scikit_build_core.format import pyproject_format
+from .._logging import logger
+from ..format import pyproject_format
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
@@ -72,19 +73,31 @@ def each_unignored_file(
         for p in all_paths:
             # Always include something included
             if include_spec.match_file(p):
+                logger.info("Including {} because it is explicitly included.", p)
                 yield p
                 continue
 
             # Always exclude something excluded
             if user_exclude_spec.match_file(p):
+                logger.info(
+                    "Excluding {} because it is explicitly excluded by the user.", p
+                )
                 continue
 
             # Ignore from global ignore
             if global_exclude_spec.match_file(p):
+                logger.info(
+                    "Excluding {} because it is explicitly excluded by the global ignore.",
+                    p,
+                )
                 continue
 
             # Ignore built-in patterns
             if builtin_exclude_spec.match_file(p):
+                logger.info(
+                    "Excluding {} because it is excluded by the built-in ignore patterns.",
+                    p,
+                )
                 continue
 
             # Check relative ignores (Python 3.9's is_relative_to workaround)
@@ -93,6 +106,10 @@ def each_unignored_file(
                 for np, nex in nested_excludes.items()
                 if dirpath == np or np in dirpath.parents
             ):
+                logger.info(
+                    "Excluding {} because it is explicitly included by nested ignore.",
+                    p,
+                )
                 continue
 
             yield p
