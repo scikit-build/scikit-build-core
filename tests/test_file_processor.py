@@ -139,33 +139,36 @@ def test_include_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     _setup_test_filesystem(tmp_path)
 
     # Test including only Python files
-    result = {str(s) for s in each_unignored_file(Path(), include=["*.py"])}
+    result = set(each_unignored_file(Path(), include=["*.py"]))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
-        "tests/tmp.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+            "tests/tmp.py",
+        ]
     }
     assert result == expected
 
     # Test including specific files
-    result = {str(s) for s in each_unignored_file(Path(), include=["tests/tmp.py"])}
-    assert result == expected | {"tests/tmp.py"}
+    result = set(each_unignored_file(Path(), include=["tests/tmp.py"]))
+    assert result == expected | {Path("tests/tmp.py")}
 
     # Test including with wildcards
-    result = {str(s) for s in each_unignored_file(Path(), include=["tests/*"])}
-    expected = expected | {"tests/tmp.py"}
+    result = set(each_unignored_file(Path(), include=["tests/*"]))
+    expected = expected | {Path("tests/tmp.py")}
     assert result == expected
 
 
@@ -177,53 +180,62 @@ def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     _setup_test_filesystem(tmp_path)
 
     # Test excluding specific file types
-    result = {str(s) for s in each_unignored_file(Path(), exclude=["*.tmp", "*.log"])}
+    result = set(each_unignored_file(Path(), exclude=["*.tmp", "*.log"]))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+        ]
     }
     assert result == expected
 
     # Test excluding directories
-    result = {str(s) for s in each_unignored_file(Path(), exclude=["tests/"])}
+    result = set(each_unignored_file(Path(), exclude=["tests/"]))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+        ]
     }
     assert result == expected
 
     # Test excluding with wildcards
-    result = {str(s) for s in each_unignored_file(Path(), exclude=["*.py"])}
+    result = set(each_unignored_file(Path(), exclude=["*.py"]))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+        ]
     }
     assert result == expected
 
@@ -238,23 +250,19 @@ def test_include_overrides_exclude(
     _setup_test_filesystem(tmp_path)
 
     # Exclude all files but include specific ones
-    result = {
-        str(s)
-        for s in each_unignored_file(
+    result = set(
+        each_unignored_file(
             Path(), include=["src/main.py", "tests/test_main.py"], exclude=["*"]
         )
-    }
-    expected = {"src/main.py", "tests/test_main.py"}
+    )
+    expected = {Path(s) for s in ["src/main.py", "tests/test_main.py"]}
     assert result == expected
 
     # Exclude everything but include a file from inside a directory
-    result = {
-        str(s)
-        for s in each_unignored_file(
-            Path(), include=["tests/test_main.py"], exclude=["*"]
-        )
-    }
-    expected = {"tests/test_main.py"}
+    result = set(
+        each_unignored_file(Path(), include=["tests/test_main.py"], exclude=["*"])
+    )
+    expected = {Path(s) for s in ["tests/test_main.py"]}
     assert result == expected
 
 
@@ -270,27 +278,30 @@ def test_gitignore_interaction(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     gitignore.write_text("*.tmp\n*.log\n/cache.db\n")
 
     # Test that gitignore is respected by default
-    result = {str(s) for s in each_unignored_file(Path())}
+    result = set(each_unignored_file(Path()))
     expected = {
-        ".gitignore",
-        "README.md",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
-        "tests/tmp.py",
-        "docs/index.md",
-        "docs/api.rst",
-        "nested_dir/not_ignored.txt",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+            "tests/tmp.py",
+            "docs/index.md",
+            "docs/api.rst",
+            "nested_dir/not_ignored.txt",
+        ]
     }
     assert result == expected
 
     # Test that include can override gitignore
-    result = {str(s) for s in each_unignored_file(Path(), include=["*.tmp"])}
-    assert result == expected | {"temp.tmp"}
+    result = set(each_unignored_file(Path(), include=["*.tmp"]))
+    assert result == expected | {Path("temp.tmp")}
 
 
 def test_nested_gitignore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -305,28 +316,31 @@ def test_nested_gitignore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     src_gitignore.write_text("utils.py\n")
 
     # Test that nested gitignore is respected
-    result = {str(s) for s in each_unignored_file(Path())}
+    result = set(each_unignored_file(Path()))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/.gitignore",
-        "src/__init__.py",
-        "src/main.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/.gitignore",
+            "src/__init__.py",
+            "src/main.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+        ]
     }
     assert result == expected
 
     # Test that include can override nested gitignore
-    result = {str(s) for s in each_unignored_file(Path(), include=["src/utils.py"])}
-    assert result == expected | {"src/utils.py"}
+    result = set(each_unignored_file(Path(), include=["src/utils.py"]))
+    assert result == expected | {Path("src/utils.py")}
 
 
 def test_build_dir_exclusion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -343,32 +357,32 @@ def test_build_dir_exclusion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     build_file.write_text("compiled output")
 
     # Test that build directory is excluded when specified
-    result = {str(s) for s in each_unignored_file(Path(), build_dir="build")}
+    result = set(each_unignored_file(Path(), build_dir="build"))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+        ]
     }
     assert result == expected
-    assert str(build_file.relative_to(tmp_path)) not in result
+    assert build_file.relative_to(tmp_path) not in result
 
     # Test that include can override build_dir exclusion
-    result = {
-        str(s)
-        for s in each_unignored_file(Path(), include=["build/*"], build_dir="build")
-    }
-    assert result == expected | {"build/output.so"}
+    result = set(each_unignored_file(Path(), include=["build/*"], build_dir="build"))
+    assert result == expected | {Path("build/output.so")}
 
 
 def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -388,9 +402,8 @@ def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     build_file.write_text("build output")
 
     # Complex pattern: exclude tests, include specific test, respect gitignore, exclude build
-    result = {
-        str(s)
-        for s in each_unignored_file(
+    result = set(
+        each_unignored_file(
             Path(),
             include=[
                 "tests/test_main.py",
@@ -399,9 +412,11 @@ def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
             exclude=["*"],  # Exclude tests dir and rst files
             build_dir="_build",
         )
-    }
+    )
 
-    expected = {"tests/test_main.py", "temp.tmp"}  # Only these should match
+    expected = {
+        Path(s) for s in ["tests/test_main.py", "temp.tmp"]
+    }  # Only these should match
     assert result == expected
 
 
@@ -435,23 +450,24 @@ def test_nonexistent_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     assert include_result == []
 
     # Exclude pattern that matches nothing
-    exclude_result = {
-        str(s) for s in each_unignored_file(Path(), exclude=["*.nonexistent"])
-    }
+    exclude_result = set(each_unignored_file(Path(), exclude=["*.nonexistent"]))
     expected = {
-        ".gitignore",
-        "README.md",
-        "cache.db",
-        "debug.log",
-        "docs/api.rst",
-        "docs/index.md",
-        "nested_dir/not_ignored.txt",
-        "pyproject.toml",
-        "setup.py",
-        "src/__init__.py",
-        "src/main.py",
-        "src/utils.py",
-        "tests/test_main.py",
-        "tests/test_utils.py",
+        Path(s)
+        for s in [
+            ".gitignore",
+            "README.md",
+            "cache.db",
+            "debug.log",
+            "docs/api.rst",
+            "docs/index.md",
+            "nested_dir/not_ignored.txt",
+            "pyproject.toml",
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+        ]
     }
     assert exclude_result == expected
