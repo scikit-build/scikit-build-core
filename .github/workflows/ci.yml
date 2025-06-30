@@ -48,7 +48,6 @@ jobs:
       🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
       matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -90,10 +89,9 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-latest
             cmake-version: "3.26.x"
-          # TODO: CMake doesn't work with beta 1 on Windows
-          # - python-version: "3.14"
-          #   runs-on: windows-latest
-          #   cmake-version: "4.0.x"
+          - python-version: "3.14"
+            runs-on: windows-latest
+            cmake-version: "4.0.x"
           - python-version: "3.13"
             runs-on: windows-latest
             cmake-version: "3.26.x"
@@ -106,6 +104,14 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-11-arm
             cmake-version: "4.0"
+          - python-version: "graalpy-24.2"
+            runs-on: ubuntu-latest
+            cmake-version: "4.0"
+        exclude:
+          # No NumPy PyPy for ARM
+          - python-version: "pypy-3.10"
+            runs-on: macos-14
+            cmake-version: "3.15.x"
 
     steps:
       - uses: actions/checkout@v4
@@ -128,7 +134,9 @@ jobs:
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
+          --system --only-binary=numpy
+          --extra-index-url=https://www.graalvm.org/python/wheels/
+          --index-strategy=unsafe-best-match
 
       - name: Install package (pip)
         if: matrix.python-version == 'pypy-3.8'
@@ -136,25 +144,22 @@ jobs:
           pip install
           -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
+      - name: Test package (serial)
+        if: "contains(matrix.python-version, 'graalpy')"
+        run: pytest -ra -v --showlocals --durations=20
+        env:
+          PIP_ONLY_BINARY: numpy
+          PIP_EXTRA_INDEX_URL: https://www.graalvm.org/python/wheels/
+
       - name: Test package
-        if: "!contains(matrix.python_version, 'pypy')"
+        if: "!contains(matrix.python-version, 'graalpy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
 
-      - name: Test package (two attempts)
-        uses: nick-fields/retry@v3
-        if: "contains(matrix.python_version, 'pypy')"
-        with:
-          max_attempts: 2
-          retry_on: error
-          timeout_seconds: 5
-          command: >-
-            pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-            --durations=20 -n auto
-
       - name: Upload coverage report
         uses: codecov/codecov-action@v5
+        if: "!contains(matrix.python-version, 'graalpy')"
         with:
           name:
             ${{ runner.os }}-${{ matrix.python-version }}-${{
