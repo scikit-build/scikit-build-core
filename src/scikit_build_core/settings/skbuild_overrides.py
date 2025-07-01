@@ -19,8 +19,7 @@ from ..cmake import CMake
 from ..errors import CMakeNotFoundError
 from ..resources import resources
 
-
-__all__ = ["OverrideRecord", "process_overrides", "regex_match"] 
+__all__ = ["OverrideRecord", "process_overrides", "regex_match"]
 
 
 def __dir__() -> list[str]:
