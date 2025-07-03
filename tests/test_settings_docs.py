@@ -18,7 +18,7 @@ def test_skbuild_docs_readme() -> None:
         "A table of defines to pass to CMake when configuring the project. Additive."
         in docs
     )
-    assert "fail = false" in docs
+    assert "fail = " not in docs
     # Deprecated items are not included here
     assert "ninja.minimum-version" not in docs
 
