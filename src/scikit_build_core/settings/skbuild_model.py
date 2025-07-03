@@ -33,8 +33,8 @@ def __dir__() -> List[str]:
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
-    disallow_hard_code: bool
-    """Do not allow the field to be hard-coded in the pyproject table."""
+    override_only: bool
+    """Do not allow the field to be a top-level  table."""
 
 
 class CMakeSettingsDefine(str):
@@ -512,7 +512,7 @@ class ScikitBuildSettings:
     fail: Optional[bool] = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(
-            disallow_hard_code=True,
+            override_only=True,
         ),
     )
     """

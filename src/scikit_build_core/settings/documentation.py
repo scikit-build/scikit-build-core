@@ -56,6 +56,7 @@ class DCDoc:
     docs: str
     field: dataclasses.Field[typing.Any]
     deprecated: bool = False
+    override_only: bool = False
 
 
 def sanitize_default_field(text: str) -> str:
@@ -134,4 +135,5 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             docs=docs[field.name],
             field=field,
             deprecated=field.metadata.get("deprecated", False),
+            override_only=field.metadata.get("override_only", False),
         )

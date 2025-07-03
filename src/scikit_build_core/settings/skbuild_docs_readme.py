@@ -46,7 +46,11 @@ def mk_skbuild_docs() -> str:
     Makes documentation for the skbuild model.
     """
     doc = Document(
-        [Item(item) for item in mk_docs(ScikitBuildSettings) if not item.deprecated]
+        [
+            Item(item)
+            for item in mk_docs(ScikitBuildSettings)
+            if not item.deprecated and not item.override_only
+        ]
     )
     return doc.format()
 
