@@ -40,16 +40,20 @@ class OverrideRecord:
 
     key: str
     """Settings key that is overridden."""
+
     original_value: Any | None
     """
     Original value in the pyproject table.
 
     If the pyproject table did not have the key, this is a ``None``.
     """
+
     value: Any
     """Final value."""
+
     passed_all: dict[str, str] | None
     """All if statements that passed (except the effective ``match_any``)."""
+
     passed_any: dict[str, str] | None
     """All if.any statements that passed."""
 

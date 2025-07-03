@@ -150,7 +150,7 @@ def _validate_overrides(
         """Do the actual validation."""
         # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
-        if field.metadata.get("disallow_hard_code", False):
+        if field.metadata.get("override_only", False):
             original_value = record.original_value if record else value
             if original_value is not None:
                 msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
