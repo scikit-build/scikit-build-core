@@ -1,4 +1,4 @@
-# ruff: noqa: I001, F401
+# ruff: noqa: F401
 # mypy: ignore-errors
 
 # Level one import sibling
