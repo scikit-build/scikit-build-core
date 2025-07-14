@@ -57,7 +57,7 @@ jobs:
         cmake-version: ["3.15.x"]
 
         include:
-          - python-version: "pypy-3.8"
+          - python-version: "pypy-3.9"
             runs-on: windows-2022
             cmake-version: "3.21.x"
           - python-version: "3.11"
@@ -85,7 +85,7 @@ jobs:
             runs-on: ubuntu-latest
             cmake-version: "3.26.x"
           - python-version: "3.8"
-            runs-on: windows-2019
+            runs-on: windows-2022
             cmake-version: "3.24.x"
           - python-version: "3.12"
             runs-on: windows-latest
@@ -121,20 +121,12 @@ jobs:
             ${{ matrix.python-version == '3.13' && runner.os == 'Windows' }}
 
       - uses: astral-sh/setup-uv@v6
-        if: matrix.python-version != 'pypy-3.8'
 
       - name: Install package (uv)
-        if: matrix.python-version != 'pypy-3.8'
         run:
           uv pip install
           -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
           --system
-
-      - name: Install package (pip)
-        if: matrix.python-version == 'pypy-3.8'
-        run:
-          pip install
-          -e.[test,test-meta,test-numpy,test-schema,wheels,cov,wheel-free-setuptools]
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"

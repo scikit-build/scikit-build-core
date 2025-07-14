@@ -1,5 +1,4 @@
 # Comparison with empty strings okay for symmetry
-# ruff: noqa: PLC1901
 
 from __future__ import annotations
 
