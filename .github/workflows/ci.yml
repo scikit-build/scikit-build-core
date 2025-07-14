@@ -85,7 +85,7 @@ jobs:
             runs-on: ubuntu-latest
             cmake-version: "3.26.x"
           - python-version: "3.8"
-            runs-on: windows-2019
+            runs-on: windows-2022
             cmake-version: "3.24.x"
           - python-version: "3.12"
             runs-on: windows-latest
