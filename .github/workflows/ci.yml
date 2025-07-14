@@ -234,7 +234,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: cygwin/cygwin-install-action@v5
+      - uses: cygwin/cygwin-install-action@v6
         with:
           platform: x86_64
           packages:
