@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import configparser
+import itertools
 import os
 import sys
 import sysconfig
@@ -42,6 +43,88 @@ PLAT_TO_CMAKE = {
 
 def __dir__() -> list[str]:
     return __all__
+
+
+# Adapted from scikit-build by removing few checks that have already been earlier
+# https://github.com/scikit-build/scikit-build/blob/master/skbuild/cmaker.py#L514
+def _try_to_find_python_library(*, abi3: bool = False) -> Path | None:
+    candidate_lib_prefixes = ["", "lib"]
+    candidate_suffixes = [""]
+    candidate_implementations = ["python"]
+    if hasattr(sys, "pypy_version_info"):
+        candidate_implementations = ["pypy-c", "pypy3-c", "pypy"]
+        candidate_suffixes.append("-c")
+
+    candidate_extensions = [".lib", ".so", ".a"]
+    # On pypy + MacOS, the variable WITH_DYLD is not set. It would
+    # actually be possible to determine the python library there using
+    # LDLIBRARY + LIBDIR. As a simple fix, we check if the LDLIBRARY
+    # ends with .dylib and add it to the candidate matrix in this case.
+    with_ld = sysconfig.get_config_var("WITH_DYLD")
+    ld_lib = sysconfig.get_config_var("LDLIBRARY")
+    if with_ld or (ld_lib and ld_lib.endswith(".dylib")):
+        candidate_extensions.insert(0, ".dylib")
+
+    # Check the specific version first, e.g ["312", "3", ""]
+    candidate_versions = [
+        f"{sys.version_info.major}{sys.version_info.minor}",
+        f"{sys.version_info.major}",
+        "",
+    ]
+
+    # Don't consider minor version if abi3
+    if abi3:
+        candidate_versions.pop(0)
+
+    abiflags = getattr(sys, "abiflags", "")
+    candidate_abiflags = [abiflags]
+    if abiflags:
+        candidate_abiflags.append("")
+
+    candidate_libdirs = []
+
+    # Look at install base if available
+    install_base = sysconfig.get_config_var("installed_base")
+    if install_base:
+        candidate_libdirs.append(Path.resolve(Path(install_base) / "libs"))
+
+    # Look at libdist if available
+    libdest = sysconfig.get_config_var("LIBDEST")
+    if libdest:
+        candidate_libdirs.append(Path.resolve(Path(install_base) / ".." / "libs"))
+
+    # Check multiarch
+    candidate_multiarc_libdirs = []
+    multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
+    masd: str | None = sysconfig.get_config_var("multiarchsubdir")
+    for libdir in candidate_libdirs:
+        if multiarch and masd:
+            if masd.startswith(os.sep):
+                masd = masd[len(os.sep) :]
+            libdir_masd = libdir / masd
+            candidate_multiarc_libdirs.append(libdir_masd)
+
+    candidates = (
+        libdir / f"{pre}{impl}{ver}{abi}{suf}{ext}"
+        for (libdir, pre, impl, ext, ver, abi, suf) in itertools.product(
+            candidate_libdirs + candidate_multiarc_libdirs,
+            candidate_lib_prefixes,
+            candidate_implementations,
+            candidate_extensions,
+            candidate_versions,
+            candidate_abiflags,
+            candidate_suffixes,
+        )
+    )
+
+    python_library = None
+
+    for candidate in candidates:
+        if Path.exists(candidate):
+            python_library = candidate
+            break
+
+    return python_library
 
 
 def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | None:
@@ -107,6 +190,10 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
         libpath = Path(framework_prefix) / ldlibrary
         if libpath.is_file():
             return libpath
+
+    lib_path: Path | None = _try_to_find_python_library(abi3=abi3)
+    if lib_path:
+        return lib_path
 
     log_func(
         "Can't find a Python library, got libdir={}, ldlibrary={}, multiarch={}, masd={}",
