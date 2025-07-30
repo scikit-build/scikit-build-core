@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     import os
     from collections.abc import Generator, Mapping
 
+    from .skbuild_overrides import OverrideRecord
+
 
 __all__ = ["SettingsReader"]
 
@@ -133,6 +135,57 @@ def _handle_move(
     return before
 
 
+def _validate_overrides(
+    settings: ScikitBuildSettings,
+    overrides: dict[str, OverrideRecord],
+) -> None:
+    """Validate all fields with any override information."""
+
+    def validate_field(
+        field: dataclasses.Field[Any],
+        value: Any,
+        prefix: str = "",
+        record: OverrideRecord | None = None,
+    ) -> None:
+        """Do the actual validation."""
+        # Check if we had a hard-coded value in the record
+        conf_key = field.name.replace("_", "-")
+        if field.metadata.get("override_only", False):
+            original_value = record.original_value if record else value
+            if original_value is not None:
+                msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
+                if settings.strict_config:
+                    sys.stdout.flush()
+                    rich_print(f"{{bold.red}}ERROR:{{normal}} {msg}")
+                    raise SystemExit(7)
+                logger.warning(msg)
+
+    def validate_field_recursive(
+        obj: Any,
+        record: OverrideRecord | None = None,
+        prefix: str = "",
+    ) -> None:
+        """Navigate through all the keys and validate each field."""
+        for field in dataclasses.fields(obj):
+            conf_key = field.name.replace("_", "-")
+            closest_record = overrides.get(f"{prefix}{conf_key}", record)
+            value = getattr(obj, field.name)
+            # Do the validation of the current field
+            validate_field(
+                field=field,
+                value=value,
+                prefix=prefix,
+                record=closest_record,
+            )
+            if dataclasses.is_dataclass(value):
+                validate_field_recursive(
+                    obj=value, record=closest_record, prefix=f"{prefix}{conf_key}."
+                )
+
+    # Navigate all fields starting from the top-level
+    validate_field_recursive(obj=settings)
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -151,7 +204,7 @@ class SettingsReader:
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        self.overrides = process_overrides(
+        self.overrides, self.overriden_items = process_overrides(
             pyproject.get("tool", {}).get("scikit-build", {}),
             state=state,
             env=env,
@@ -352,6 +405,7 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
+        _validate_overrides(self.settings, self.overriden_items)
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:

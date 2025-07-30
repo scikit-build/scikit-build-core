@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sysconfig
 import typing
 from pathlib import Path
@@ -20,6 +21,53 @@ class VersionInfo(typing.NamedTuple):
     minor: int
     micro: int
     releaselevel: str = "final"
+
+
+def test_disallow_hardcoded(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+):
+    caplog.set_level(logging.WARNING)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    template = dedent(
+        """\
+        [tool.scikit-build]
+        strict-config = {strict_config}
+        fail = false
+        """
+    )
+
+    # First check without strict-config to make sure all fields are disallowed
+    strict_config = "false"
+    pyproject_toml.write_text(
+        template.format(strict_config=strict_config),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings_reader.validate_may_exit()
+    assert caplog.records
+    for idx, key in enumerate(["fail"]):
+        assert (
+            f"{key} is not allowed to be hard-coded in the pyproject.toml file"
+            in str(caplog.records[idx].msg)
+        )
+
+    # Next check that this exits if string-config is set
+    strict_config = "true"
+    pyproject_toml.write_text(
+        template.format(strict_config=strict_config),
+        encoding="utf-8",
+    )
+    # Flush the capsys just in case
+    capsys.readouterr()
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit) as exc:
+        settings_reader.validate_may_exit()
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "is not allowed to be hard-coded in the pyproject.toml file" in out
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
