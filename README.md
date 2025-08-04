@@ -35,7 +35,7 @@ here:
 - Great support for or by most OSs, compilers, IDEs, and libraries
 - Support for C++ features and other languages like Fortran
 - Support for multithreaded builds
-- Simple CMakeFiles.txt instead of up to thousands of lines of fragile
+- Simple CMakeLists.txt files instead of up to thousands of lines of fragile
   setuptools/distutils code
 - Cross-compile support for Apple Silicon and Windows ARM
 
