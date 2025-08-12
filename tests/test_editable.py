@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import platform
 import sys
 import textwrap
 from pathlib import Path
 
 import pytest
-from conftest import PackageInfo, process_package
+from conftest import PackageInfo, VEnv, process_package
 
 
 @pytest.mark.compile
@@ -160,8 +162,12 @@ def test_install_dir(isolated):
 
 
 def _setup_package_for_editable_layout_tests(
-    monkeypatch, tmp_path, editable, editable_mode, isolated
-):
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    editable: bool,
+    editable_mode: str,
+    isolated: VEnv,
+) -> None:
     editable_flag = ["-e"] if editable else []
 
     config_mode_flags = []
@@ -176,6 +182,8 @@ def _setup_package_for_editable_layout_tests(
     with monkeypatch.context() as m:
         package = PackageInfo("importlib_editable")
         process_package(package, tmp_path, m)
+
+        assert isolated.wheelhouse
 
         ninja = [
             "ninja"
@@ -211,7 +219,7 @@ def test_direct_import(monkeypatch, tmp_path, editable, editable_mode, isolated)
     if platform.system() == "Windows" and editable_mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")
 
-    _setup_package_for_editable_layout_tests(  # type: ignore[no-untyped-call]
+    _setup_package_for_editable_layout_tests(
         monkeypatch, tmp_path, editable, editable_mode, isolated
     )
     isolated.execute("import pkg")

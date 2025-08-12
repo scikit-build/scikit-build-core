@@ -177,7 +177,7 @@ exclude = [
     '^tests/packages/extensionlib/*',
 ]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src", "$MYPY_CONFIG_FILE_DIR/tests/utils"]
-python_version = "3.8"
+python_version = "3.9"
 warn_unused_configs = true
 warn_unreachable = false
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
