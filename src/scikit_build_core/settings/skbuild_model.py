@@ -1,4 +1,5 @@
 import dataclasses
+from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
@@ -305,6 +306,18 @@ class WheelSettings:
     A set of patterns to exclude from the wheel.
 
     This is additive to the SDist exclude patterns. This applies to the final paths
+    in the wheel, and can exclude files from CMake output as well.  Editable installs
+    may not respect this exclusion.
+    """
+
+    exclude_exts: List[str] = dataclasses.field(
+        default_factory=lambda: [".pyc", ".pyo"],
+        metadata=SettingsFieldMetadata(display_default="true"),
+    )
+    """
+    A set of file extensions to exclude from the wheel.
+
+    This is additive to the SDist/Wheel exclude patterns. This applies to the final paths
     in the wheel, and can exclude files from CMake output as well.  Editable installs
     may not respect this exclusion.
     """

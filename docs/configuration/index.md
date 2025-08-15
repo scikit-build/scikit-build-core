@@ -329,6 +329,20 @@ wheel.exclude = ["**.pyx"]
 Previously these were matched on the source path, rather than the wheel path,
 and didn't apply to CMake output.
 
+You can exclude files from the built wheel based on file extension
+as well (not guaranteed to be respected by editable installs):
+
+```toml
+[tool.scikit-build]
+wheel.exclude-exts = [".c", ".cuh", ".h"]
+```
+
+Default value: `[".pyc", ".pyo"]`
+
+:::{versionadded} 0.12
+
+Support to exclude based on file extension.
+
 :::
 
 :::{note}

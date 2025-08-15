@@ -148,7 +148,7 @@ class WheelWriter:
         }
 
     def build(
-        self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = ()
+        self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = (), exclude_exts: Sequence[str] = ()
     ) -> None:
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
         assert {
@@ -175,7 +175,7 @@ class WheelWriter:
                     continue
                 if any(x.endswith(".dist-info") for x in filename.parts):
                     continue
-                if filename.suffix in {".pyc", ".pyo"}:
+                if filename.suffix in exclude_exts:
                     continue
                 relpath = filename.relative_to(path)
                 if exclude_spec.match_file(relpath):
