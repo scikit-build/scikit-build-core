@@ -1,5 +1,4 @@
 import dataclasses
-from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 

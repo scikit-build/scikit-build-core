@@ -148,7 +148,10 @@ class WheelWriter:
         }
 
     def build(
-        self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = (), exclude_exts: Sequence[str] = ()
+        self,
+        wheel_dirs: Mapping[str, Path],
+        exclude: Sequence[str] = (),
+        exclude_exts: Sequence[str] = (),
     ) -> None:
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
         assert {

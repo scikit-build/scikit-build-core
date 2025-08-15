@@ -495,7 +495,11 @@ def _build_wheel_impl_impl(
             ),
             wheel_dirs["metadata"],
         ) as wheel:
-            wheel.build(wheel_dirs, exclude=settings.wheel.exclude, exclude_exts=settings.wheel.exclude_exts)
+            wheel.build(
+                wheel_dirs,
+                exclude=settings.wheel.exclude,
+                exclude_exts=settings.wheel.exclude_exts,
+            )
 
             str_pkgs = (
                 str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()
