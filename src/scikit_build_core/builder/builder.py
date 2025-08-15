@@ -7,7 +7,7 @@ import shlex
 import sys
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .. import __version__
 from .._compat.importlib import metadata, resources
@@ -85,7 +85,7 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, No
             yield arg
 
 
-def _sanitize_path(path: os.PathLike[str]) -> list[Path]:
+def _sanitize_path(path: Any) -> list[Path]:
     # This handles classes like:
     # MultiplexedPath from importlib.resources.readers (3.11+)
     # MultiplexedPath from importlib.readers (3.10)
