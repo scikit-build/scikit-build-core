@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -33,12 +35,53 @@ def __dir__() -> list[str]:
     return __all__
 
 
-# Make sure we don't wait forever for programs to respond
-# CI services can be really slow under load
-if os.environ.get("CI", ""):
-    TIMEOUT = 20
-else:
-    TIMEOUT = 10 if sys.platform.startswith("win") else 5
+BASE_TIMEOUT = 5
+
+
+def _macos_binary_is_x86(path: Path) -> bool:
+    """
+    Returns True if the binary is x86. Only run on macOS.
+    """
+    try:
+        # lipo gives clean output like: "Architectures in the fat file: ... are: x86_64 arm64"
+        out = subprocess.check_output(["lipo", "-info", path], text=True)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        # Fallback to 'file' if lipo not available or fails
+        try:
+            out = subprocess.check_output(["file", path], text=True)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            return False  # unknown, assume not x86
+
+    # Ignore native or fat binaries
+    if "arm64" in out:
+        return False
+
+    return "x86_64" in out or "i386" in out
+
+
+@functools.lru_cache(None)
+def compute_timeout(executable: Path) -> int:
+    """
+    Compute a recommended timeout. Takes the base timeout and
+    multiplies it based on various factors:
+
+    * Is on CI: quadruples it
+    * Is windows: doubles it
+    * Runs with Rosetta: triples it
+
+    These do not stack.
+    """
+
+    if os.environ.get("CI", ""):
+        return BASE_TIMEOUT * 4
+
+    if sys.platform.startswith("win"):
+        return BASE_TIMEOUT * 2
+
+    if sys.platform == "darwin" and platform.machine() == "arm64":
+        return BASE_TIMEOUT * 3 if _macos_binary_is_x86(executable) else BASE_TIMEOUT
+
+    return BASE_TIMEOUT
 
 
 class Program(NamedTuple):
@@ -89,7 +132,9 @@ def get_cmake_program(cmake_path: Path) -> Program:
     None if it cannot be determined.
     """
     try:
-        result = Run(timeout=TIMEOUT).capture(cmake_path, "-E", "capabilities")
+        result = Run(timeout=compute_timeout(cmake_path)).capture(
+            cmake_path, "-E", "capabilities"
+        )
         try:
             version = Version(
                 json.loads(result.stdout)["version"]["string"].split("-")[0]
@@ -100,7 +145,9 @@ def get_cmake_program(cmake_path: Path) -> Program:
             logger.warning("Could not determine CMake version, got {!r}", result.stdout)
     except subprocess.CalledProcessError:
         try:
-            result = Run(timeout=TIMEOUT).capture(cmake_path, "--version")
+            result = Run(timeout=compute_timeout(cmake_path)).capture(
+                cmake_path, "--version"
+            )
             try:
                 version = Version(
                     result.stdout.splitlines()[0].split()[-1].split("-")[0]
@@ -144,7 +191,9 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
     """
     for ninja_path in _get_ninja_path(module=module):
         try:
-            result = Run(timeout=TIMEOUT).capture(ninja_path, "--version")
+            result = Run(timeout=compute_timeout(ninja_path)).capture(
+                ninja_path, "--version"
+            )
         except (
             subprocess.CalledProcessError,
             PermissionError,
