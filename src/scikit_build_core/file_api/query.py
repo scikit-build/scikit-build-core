@@ -23,9 +23,9 @@ def stateless_query(build_dir: Path) -> Path:
 
 
 if __name__ == "__main__":
-    from .._compat.argparse import ArgumentParser
+    import argparse
 
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="python -m scikit_build_core.file_api.query",
         allow_abbrev=False,
         description="Write a stateless query to a build directory",

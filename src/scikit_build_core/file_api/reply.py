@@ -111,7 +111,7 @@ def load_reply_dir(path: Path) -> Index:
 
 
 if __name__ == "__main__":
-    from .._compat.argparse import ArgumentParser
+    import argparse
 
     rich_print: Callable[[object], None]
     try:
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         rich_print = builtins.print
 
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="python -m scikit_build_core.file_api.reply",
         allow_abbrev=False,
         description="Read a query written out to a build directory.",

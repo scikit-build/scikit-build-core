@@ -61,7 +61,7 @@ def load_reply_dir(reply_dir: Path) -> Index:
 
 
 if __name__ == "__main__":
-    from .._compat.argparse import ArgumentParser
+    import argparse
 
     rich_print: Callable[[object], None]
     try:
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         rich_print = builtins.print
 
-    parser = ArgumentParser(
+    parser = argparse.ArgumentParser(
         allow_abbrev=False,
         description="This runs cattrs (required) instead of the built-in converter, for comparison.",
     )
