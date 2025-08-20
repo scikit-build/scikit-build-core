@@ -4,6 +4,7 @@ import contextlib
 import dataclasses
 import importlib.util
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -56,6 +57,11 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "virtualenv",
         "wheel",
     ]
+    if platform.system() == "Linux":
+        packages.append("auditwheel")
+        packages.append("patchelf")
+    if platform.system() == "Darwin":
+        packages.append("delocate")
 
     if importlib.util.find_spec("cmake") is not None:
         packages.append("cmake")
@@ -341,6 +347,15 @@ def package_simple_purelib_package(
 def package_pep639_pure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
     package = PackageInfo(
         "pep639_pure",
+    )
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture
+def repair_wheel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
+    package = PackageInfo(
+        "repair_wheel",
     )
     process_package(package, tmp_path, monkeypatch)
     return package

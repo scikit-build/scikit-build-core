@@ -375,18 +375,18 @@ def test_build_requires_field(override, monkeypatch) -> None:
     settings_reader.validate_may_exit()
 
     if override is None:
-        assert set(GetRequires().dynamic_metadata()) == {
+        assert set(GetRequires().other_dynamic_requires()) == {
             "foo",
         }
     elif override == "env":
         # evaluate ../foo as uri
         foo_path = pyproject_path.absolute().parent.parent / "foo"
         foo_path = foo_path.absolute()
-        assert set(GetRequires().dynamic_metadata()) == {
+        assert set(GetRequires().other_dynamic_requires()) == {
             f"foo @ {foo_path.as_uri()}",
         }
     elif override == "sdist":
-        assert set(GetRequires().dynamic_metadata()) == {
+        assert set(GetRequires().other_dynamic_requires()) == {
             # TODO: Check if special handling should be done for sdist
             "foo",
         }

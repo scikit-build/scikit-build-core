@@ -69,6 +69,8 @@ test-hatchling = [
 test-meta = [
     "hatch-fancy-pypi-readme>=22.3",
     "setuptools-scm",
+    "auditwheel; platform_system=='Linux'",
+    "delocate; platform_system=='Darwin'",
 ]
 test-numpy = [
     "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
@@ -192,7 +194,15 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = [
+    "numpy",
+    "pathspec",
+    "setuptools_scm",
+    "hatch_fancy_pypi_readme",
+    "virtualenv",
+    "auditwheel.*",
+    "delocate.*",
+]
 ignore_missing_imports = true
 
 
