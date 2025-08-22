@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 0.11.6
+
+This release adds known wheels for the `riscv64` platform, and adjusts a command
+timeout to handle slow startup on Rosetta.
+
+Fixes:
+
+- Adjust the timeout when running on rosetta by @henryiii in #1131
+- Add known wheels for riscv64 by @mayeut in #1129
+
+Internal:
+
+- Argparse defaults in Python 3.14 updated by @henryiii in #1133
+
+CI and testing:
+
+- Ignore setuptools-scm warning for packages that don't use it by @henryiii in
+  #1126
+
+Documentation:
+
+- Fix small typo in docs introduction by @vepadulano in #1122
+
 ## Version 0.11.5
 
 This release speeds up large directories (more directory changes/optimization
