@@ -6,7 +6,7 @@ project(
 
 find_package(
   Python
-  COMPONENTS Interpreter Development.Module
+  COMPONENTS Development.Module
   REQUIRED)
 
 find_package(pybind11 CONFIG REQUIRED)

@@ -3,7 +3,7 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
 
 find_package(
   Python
-  COMPONENTS Interpreter Development.Module NumPy
+  COMPONENTS Development.Module NumPy
   REQUIRED)
 
 # F2PY headers

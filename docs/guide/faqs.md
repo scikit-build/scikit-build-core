@@ -42,14 +42,14 @@ is missing some value you need, please open an issue and let us know.
 
 ## Finding Python
 
-One common mistake when using FindPython is to forget to only request the
-`Development.Module` component. If you request `Development`, you will also
-require the `Development.Embed` component, which will require the Python
-libraries to be found for linking. When building a module on Unix, you do not
-link to Python - the Python symbols are already loaded in the interpreter.
-What's more, the manylinux image (which is used to make redistributable Linux
-wheels) does not have the Python libraries, both to avoid this mistake, and to
-reduce size.
+One common mistake when using FindPython is to request the `Development`
+component, which requires the `Development.Embed` component, which will require
+the Python libraries to be found for linking. When building a module on Unix,
+you do not link to Python - the Python symbols are already loaded in the
+interpreter. What's more, the manylinux image (which is used to make
+redistributable Linux wheels) does not have the Python libraries, both to avoid
+this mistake, and to reduce size. Instead, you should only request the
+`Development.Module` component.
 
 ## Cross compiling
 
