@@ -5,7 +5,7 @@ project(
   VERSION ${SKBUILD_PROJECT_VERSION}
   LANGUAGES CXX)
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python REQUIRED COMPONENTS Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
 python_add_library(_core MODULE src/main.cpp WITH_SOABI)

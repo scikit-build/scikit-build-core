@@ -52,7 +52,7 @@ correct suffix. These values are set by cibuildwheel when cross-compiling.
 
 It should be possible to cross-compile to Linux, but due to the challenges of
 getting the manylinux RHEL devtoolkit compilers, this is currently a TODO. See
-`py-build-cmake <https://tttapa.github.io/py-build-cmake/Cross-compilation.html>`\_
+[py-build-cmake](https://tttapa.github.io/py-build-cmake/Cross-compilation.html)
 for an alternative package's usage of toolchain files.
 
 ### Intel to Emscripten (Pyodide)
@@ -64,3 +64,16 @@ by setting `_PYTHON_SYSCONFIGDATA_NAME`. This causes values like `SOABI` and
 This is unfortunately incorrectly stripped from the cmake wrapper pyodide uses,
 so FindPython will report the wrong values, but pyodide-build will rename the
 .so's afterwards.
+
+## Android
+
+To build for Android, you'll need the following items, all of which will be
+provided automatically if you use cibuildwheel:
+
+- An Android
+  [toolchain file](https://cmake.org/cmake/help/latest/variable/CMAKE_TOOLCHAIN_FILE.html)
+  which adds the location of the Python headers and libraries to
+  `CMAKE_FIND_ROOT_PATH`.
+- Compiler paths and flags, either in the toolchain file or in environment
+  variables.
+- A Python environment which simulates Android.

@@ -254,11 +254,13 @@ class Builder:
             cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.prefix)
             cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
             cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
-            # FindPython may break if this is set - only useful on Windows
-            if python_library and sysconfig.get_platform().startswith("win"):
-                cache_config[f"{prefix}_LIBRARY"] = python_library
-            if python_sabi_library and sysconfig.get_platform().startswith("win"):
-                cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
+            # Setting the library location is only needed on some platforms - on
+            # other platforms it may break FindPython.
+            if sysconfig.get_platform().startswith(("win", "android")):
+                if python_library:
+                    cache_config[f"{prefix}_LIBRARY"] = python_library
+                if python_sabi_library:
+                    cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
             if numpy_include_dir:
                 cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 

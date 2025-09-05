@@ -5,7 +5,7 @@ project(
   LANGUAGES C
   VERSION ${SKBUILD_PROJECT_VERSION})
 
-find_package(Python COMPONENTS Interpreter Development.Module)
+find_package(Python COMPONENTS Development.Module)
 
 python_add_library(c_module MODULE src/shared_pkg/c_module.c WITH_SOABI)
 

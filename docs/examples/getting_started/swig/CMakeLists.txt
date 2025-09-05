@@ -3,7 +3,7 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(
   Python
-  COMPONENTS Interpreter Development.Module
+  COMPONENTS Development.Module
   REQUIRED)
 
 find_package(
