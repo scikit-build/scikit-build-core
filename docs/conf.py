@@ -93,15 +93,13 @@ exclude_patterns = [
 intersphinx_mapping = {
     "cmake": ("https://cmake.org/cmake/help/latest/", None),
     "python": ("https://docs.python.org/3", None),
-    "packaging": ("https://packaging.pypa.io/en/stable", None),
-    "setuptools": ("https://setuptools.pypa.io/en/latest", None),
+    "packaging": ("https://packaging.readthedocs.io/en/stable", None),
+    "setuptools": ("https://setuptools.readthedocs.io/en/latest", None),
     "hatchling": ("https://hatch.pypa.io/latest", None),
 }
 tippy_rtd_urls = [
-    val[0]
-    for key, val in intersphinx_mapping.items()
-    # Only works with RTD hosted intersphinx
-    if key not in ("hatchling", "python", "cmake")
+    "https://packaging.readthedocs.io/en/stable",
+    "https://setuptools.readthedocs.io/en/latest",
 ]
 
 nitpick_ignore = [
