@@ -70,10 +70,18 @@ so FindPython will report the wrong values, but pyodide-build will rename the
 To build for Android, you'll need the following items, all of which will be
 provided automatically if you use cibuildwheel:
 
-- An Android
-  [toolchain file](https://cmake.org/cmake/help/latest/variable/CMAKE_TOOLCHAIN_FILE.html)
-  which adds the location of the Python headers and libraries to
-  `CMAKE_FIND_ROOT_PATH`.
+- A Python environment in which `sys.platform`, `sysconfig`, etc. all simulate
+  Android.
+- A
+  [`CMAKE_TOOLCHAIN_FILE`](https://cmake.org/cmake/help/latest/envvar/CMAKE_TOOLCHAIN_FILE.html)
+  environment variable, pointing to a file which does at least the following:
+  - Set `CMAKE_SYSTEM_NAME`, `CMAKE_SYSTEM_PROCESSOR` and
+    `CMAKE_SYSTEM_VERSION`.
+  - Set `CMAKE_FIND_ROOT_PATH` to the location of the Python headers and
+    libraries.
+  - Set `CMAKE_CROSSCOMPILING_EMULATOR` to `/bin/sh -c [["$0" "$@"]]`. This
+    allows CMake to run Python in the simulated Android environment when policy
+    [CMP0190](https://cmake.org/cmake/help/latest/policy/CMP0190.html) is
+    active.
 - Compiler paths and flags, either in the toolchain file or in environment
   variables.
-- A Python environment which simulates Android.

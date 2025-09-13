@@ -30,7 +30,7 @@ endif()
 # Try to import all Python components potentially needed by nanobind
 find_package(
   Python 3.8 REQUIRED
-  COMPONENTS Development.Module
+  COMPONENTS Interpreter Development.Module
   OPTIONAL_COMPONENTS Development.SABIModule)
 
 # Import nanobind through CMake's find_package mechanism

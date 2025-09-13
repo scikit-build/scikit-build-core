@@ -53,7 +53,7 @@ python_extension_module(${LIBRARY})
 to
 
 ```cmake
-find_package(Python COMPONENTS Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 ```
 

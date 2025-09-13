@@ -26,13 +26,13 @@ Scikit-build-core provides several useful variables:
 You can directly use FindPython:
 
 ```cmake
-find_package(Python COMPONENTS Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 ```
 
-You always want to find at least the `Development.Module` component. You do not
-want to find the entire `Development` component, as that includes
-`Development.Embed`, which is not always present and is not related to making
-Python extension modules.
+You always want to find at least `Interpreter` and the `Module` component of the
+`Development` package. You do not want to find the entire `Development` package,
+as that include `Embed` component, which is not always present and is not
+related to making Python extension modules.
 
 If you are making a Limited API / Stable ABI package, you'll need the
 `Development.SABIModule` component instead (CMake 3.26+). You can use the
@@ -129,7 +129,7 @@ When you do that, `${SKBUILD_SABI_COMPONENT}` will be set to
 remain an empty string otherwise (PyPy). This allows the following idiom:
 
 ```cmake
-find_package(Python REQUIRED COMPONENTS Development.Module ${SKBUILD_SABI_COMPONENT})
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 ```
 
 This will require the `Development.SABIModule` component only if

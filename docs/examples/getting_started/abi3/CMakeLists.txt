@@ -3,7 +3,7 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(
   Python
-  COMPONENTS Development.SABIModule
+  COMPONENTS Interpreter Development.SABIModule
   REQUIRED)
 
 python_add_library(example MODULE example.c WITH_SOABI USE_SABI 3.8)

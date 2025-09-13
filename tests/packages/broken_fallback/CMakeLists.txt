@@ -7,7 +7,7 @@ endif()
 
 find_package(
   Python
-  COMPONENTS Development.Module
+  COMPONENTS Interpreter Development.Module
   REQUIRED)
 
 python_add_library(example MODULE main.c WITH_SOABI)

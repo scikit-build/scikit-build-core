@@ -7,7 +7,7 @@ project(
 
 find_package(
   Python
-  COMPONENTS Development.Module ${SKBUILD_SABI_COMPONENT}
+  COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT}
   REQUIRED)
 
 if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
