@@ -10,7 +10,7 @@ import sys
 import sysconfig
 from importlib import metadata
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import virtualenv as _virtualenv
 
@@ -19,6 +19,8 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
+if TYPE_CHECKING:
+    from pytest_subprocess import FakeProcess
 
 import pytest
 from packaging.requirements import Requirement
@@ -28,6 +30,14 @@ DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent
 
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
+
+
+@pytest.fixture
+def fp(fp: FakeProcess) -> FakeProcess:
+    # For program_search._macos_binary_is_x86
+    fp.register(["lipo", fp.any()], returncode=1)
+    fp.register(["file", fp.any()], returncode=1)
+    return fp
 
 
 @pytest.fixture(scope="session")
