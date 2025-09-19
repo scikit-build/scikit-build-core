@@ -133,6 +133,11 @@ class CMakeSettings:
     DEPRECATED in 0.10; use build.targets instead.
     """
 
+    cache_file: Optional[Path] = None
+    """
+    CMake cache file to be loaded.
+    """
+
 
 @dataclasses.dataclass
 class SearchSettings:
