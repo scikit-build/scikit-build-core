@@ -107,6 +107,7 @@ nitpick_ignore = [
     ("py:class", "T"),
     ("py:class", "scikit_build_core.settings.sources.T"),
     ("py:class", "scikit_build_core._vendor.pyproject_metadata.StandardMetadata"),
+    ("py:data", "typing.Union"),
 ]
 
 linkcheck_anchors_ignore = [

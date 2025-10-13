@@ -25,9 +25,9 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.11
+    rev: v0.13.3
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
@@ -39,7 +39,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.19.1
+    rev: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==24.*]
@@ -59,7 +59,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.18.2
     hooks:
       - id: mypy
         exclude: |
@@ -131,12 +131,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.08.29
+    rev: 2025.10.03
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.3
+    rev: 0.34.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -150,6 +150,6 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.05.02
+    rev: 2025.10.01
     hooks:
       - id: sp-repo-review
