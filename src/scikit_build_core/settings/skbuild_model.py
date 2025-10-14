@@ -34,7 +34,7 @@ class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
     override_only: bool
-    """Do not allow the field to be a top-level  table."""
+    """Do not allow the field to be a top-level table."""
 
 
 class CMakeSettingsDefine(str):
@@ -511,9 +511,7 @@ class ScikitBuildSettings:
 
     fail: Optional[bool] = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(
-            override_only=True,
-        ),
+        metadata=SettingsFieldMetadata(override_only=True),
     )
     """
     Immediately fail the build. This is only useful in overrides.
