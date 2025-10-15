@@ -21,9 +21,9 @@ if(DEFINED SKBUILD_EDITABLE_MODE AND SKBUILD_EDITABLE_MODE STREQUAL "inplace")
                        "${CMAKE_SOURCE_DIR}/src/${SKBUILD_PROJECT_NAME}$<0:>")
 elseif("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}"
        AND DEFINED SKBUILD)
-  # Editable in-place builds with an in-source build directory. The empty generator
-  # expression ensures multi-config generators keep us from having to set
-  # LIBRARY_OUTPUT_DIRECTORY_<CONFIG> too.
+  # Editable in-place builds with an in-source build directory. The empty
+  # generator expression ensures multi-config generators keep us from having to
+  # set LIBRARY_OUTPUT_DIRECTORY_<CONFIG> too.
   set_target_properties(
     _module PROPERTIES LIBRARY_OUTPUT_DIRECTORY
                        "${CMAKE_BINARY_DIR}/src/${SKBUILD_PROJECT_NAME}$<0:>")

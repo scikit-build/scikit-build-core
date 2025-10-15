@@ -289,9 +289,7 @@ def _build_wheel_impl_impl(
         log_build_dir = True
         if cmake is not None and editable and settings.editable.mode == "inplace":
             if settings.editable.build_dir:
-                build_dir = Path(
-                    settings.editable.build_dir.format(**format_data)
-                )
+                build_dir = Path(settings.editable.build_dir.format(**format_data))
             else:
                 build_dir = settings.cmake.source_dir
                 log_build_dir = False
