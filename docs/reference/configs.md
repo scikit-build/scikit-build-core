@@ -271,6 +271,15 @@ print(mk_skbuild_docs())
   :default: true
 
   Turn on verbose output for the editable mode rebuilds.
+
+```{eval-rst}
+.. confval:: editable.build-dir
+  :type: ``str``
+  :default: ""
+
+  Build directory to use when ``editable.mode`` is ``"inplace"``. If empty, the project
+  source directory is used.
+```
 ```
 
 ## generate[]

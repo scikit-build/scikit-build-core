@@ -64,11 +64,13 @@ def test_navigate_editable(isolated, isolate, package):
 def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
     editable_flag = ["-e"] if editable else []
 
-    config_mode_flags = []
+    config_mode_flags = ["--config-settings=build-dir=build/{wheel_tag}"]
     if editable:
         config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
-    if editable_mode != "inplace":
-        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
+    if editable_mode == "inplace":
+        config_mode_flags.append(
+            "--config-settings=editable.build-dir=build/{wheel_tag}/editable"
+        )
 
     package1 = PackageInfo(
         "cython_pxd_editable/pkg1",
@@ -170,11 +172,13 @@ def _setup_package_for_editable_layout_tests(
 ) -> None:
     editable_flag = ["-e"] if editable else []
 
-    config_mode_flags = []
+    config_mode_flags = ["--config-settings=build-dir=build/{wheel_tag}"]
     if editable:
         config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
-    if editable_mode != "inplace":
-        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
+    if editable_mode == "inplace":
+        config_mode_flags.append(
+            "--config-settings=editable.build-dir=build/{wheel_tag}/editable"
+        )
 
     # Use a context so that we only change into the directory up until the point where
     # we run the editable install. We do not want to be in that directory when importing
