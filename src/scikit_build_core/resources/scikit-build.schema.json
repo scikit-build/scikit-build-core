@@ -278,7 +278,7 @@
         "build-dir": {
           "type": "string",
           "default": "",
-          "description": "Build directory to use when ``editable.mode`` is \"inplace\". If empty, the project source directory is used."
+          "description": "Build directory to use when :confval:`editable.mode` is ``inplace``."
         }
       }
     },
