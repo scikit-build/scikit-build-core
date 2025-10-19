@@ -239,6 +239,44 @@
           "type": "string",
           "default": "",
           "description": "The build tag to use for the wheel. If empty, no build tag is used."
+        },
+        "repair": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "description": "Do automatic repairs of the compiled binaries and libraries."
+            },
+            "in-wheel": {
+              "type": "boolean",
+              "default": true,
+              "description": "Patch the dynamic links to libraries installed in the current wheel."
+            },
+            "cross-wheel": {
+              "type": "boolean",
+              "default": false,
+              "description": "Patch the dynamic links to libraries in other wheels."
+            },
+            "bundle-external": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of external library files that will be bundled in the wheel."
+            },
+            "patch-imports": {
+              "type": "boolean",
+              "default": true,
+              "description": "Automatically patch every top-level packages/modules to import the dlls on Windows wheels."
+            },
+            "imports-file": {
+              "type": "string",
+              "description": "The generated file containing any necessary top-level imports."
+            }
+          },
+          "description": "Wheel repair options"
         }
       }
     },
@@ -565,6 +603,9 @@
                     "$ref": "#/$defs/inherit"
                   },
                   "exclude": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "repair": {
                     "$ref": "#/$defs/inherit"
                   }
                 }

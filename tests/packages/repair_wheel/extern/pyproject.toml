@@ -1,0 +1,13 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "base_project"
+version = "0.1.0"
+
+[project.entry-points."cmake.root"]
+Base = "base_project"
+
+[tool.scikit-build]
+wheel.install-dir = "base_project"

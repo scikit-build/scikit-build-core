@@ -113,7 +113,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         # These are only injected if cmake is required
         cmake_requires = [*requires.cmake(), *requires.ninja()] if required else []
-        return [*cmake_requires, *requires.dynamic_metadata()]
+        return [
+            *cmake_requires,
+            *requires.dynamic_metadata(),
+            *requires.other_dynamic_requires(),
+        ]
 
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:
         if version == "editable":

@@ -223,6 +223,58 @@ class SDistSettings:
 
 
 @dataclasses.dataclass
+class WheelRepair:
+    enable: bool = False
+    """
+    Do automatic repairs of the compiled binaries and libraries.
+
+    .. warning::
+       This is an experimental feature gated by :confval:`experimental`
+    """
+
+    in_wheel: bool = True
+    """
+    Patch the dynamic links to libraries installed in the current wheel.
+    """
+
+    cross_wheel: bool = False
+    """
+    Patch the dynamic links to libraries in other wheels.
+
+    .. note::
+       This may result in incompatible wheels. Use this only if the
+       wheels are strongly linked to each other and strict manylinux compliance is
+       not required.
+    """
+
+    bundle_external: List[str] = dataclasses.field(default_factory=list)
+    """
+    A list of external library files that will be bundled in the wheel.
+
+    Each entry is treated as a regex pattern, and only the filenames are considered
+    for the match. The libraries are taken from the CMake dependency during the CMake
+    build. The bundled libraries are installed under ``site-packages/${name}.libs``
+    """
+
+    patch_imports: bool = True
+    """
+    Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+
+    Alternatively, set this to ``false`` and use :confval:`wheel.repair.imports-file` instead.
+    """
+
+    imports_file: Optional[Path] = None
+    """
+    The generated file containing any necessary top-level imports.
+
+    This files should be imported as early as possible in all top-level modules and packages.
+
+    On Windows wheels, this file contains all ``os.add_dll_directory`` needed in the current wheel.
+    On other OS, this is an empty file.
+    """
+
+
+@dataclasses.dataclass
 class WheelSettings:
     packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
         default=None,
@@ -312,6 +364,11 @@ class WheelSettings:
     build_tag: str = ""
     """
     The build tag to use for the wheel. If empty, no build tag is used.
+    """
+
+    repair: WheelRepair = dataclasses.field(default_factory=WheelRepair)
+    """
+    Wheel repair options
     """
 
 

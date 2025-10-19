@@ -220,6 +220,24 @@ wheel.exclude = []
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
 
+# Do automatic repairs of the compiled binaries and libraries.
+wheel.repair.enable = false
+
+# Patch the dynamic links to libraries installed in the current wheel.
+wheel.repair.in-wheel = true
+
+# Patch the dynamic links to libraries in other wheels.
+wheel.repair.cross-wheel = false
+
+# A list of external library files that will be bundled in the wheel.
+wheel.repair.bundle-external = []
+
+# Automatically patch every top-level packages/modules to import the dlls on Windows wheels.
+wheel.repair.patch-imports = true
+
+# The generated file containing any necessary top-level imports.
+wheel.repair.imports-file = ""
+
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 
