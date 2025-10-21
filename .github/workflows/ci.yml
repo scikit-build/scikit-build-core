@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "pypy-3.10", "3.13", "3.14"]
+        python-version: ["3.8", "pypy-3.11", "3.13", "3.14"]
         runs-on: [ubuntu-latest, macos-latest]
         cmake-version: ["3.15.x"]
 
@@ -72,6 +72,10 @@ jobs:
           - python-version: "3.9"
             runs-on: ubuntu-latest
             cmake-version: "3.20.x"
+          # TODO: investigate failure with pypy-3.9/macos-latest (#1166)
+          - python-version: "pypy-3.10"
+            runs-on: macos-latest
+            cmake-version: "3.15.x"
           - python-version: "3.9"
             runs-on: macos-15-intel
             cmake-version: "3.18.x"
