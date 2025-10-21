@@ -123,13 +123,15 @@ Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 "validate_pyproject.tool_schema".scikit-build = "scikit_build_core.settings.skbuild_schema:get_skbuild_schema"
 hatch.scikit-build = "scikit_build_core.hatch.hooks"
 
+[dependency-groups]
+dev = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
 [tool.uv]
-dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
 workspace.members = ["tmp/hello/hello"]
 
 
