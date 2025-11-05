@@ -41,6 +41,8 @@ class CMakeSettingsDefine(str):
     to the CMake representation in the `cmake.define` settings key.
     """
 
+    __slots__ = ()
+
     json_schema = Union[str, bool, List[str]]
 
     def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
