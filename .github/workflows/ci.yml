@@ -345,7 +345,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v7
 
-      - uses: wntrblm/nox@2025.05.01
+      - uses: wntrblm/nox@2025.10.16
         with:
           python-versions: "3.12"
 
