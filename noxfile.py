@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# dependencies = ["nox>=2404.4.15"]
+# dependencies = ["nox>=2024.4.15"]
 # ///
 
 """
