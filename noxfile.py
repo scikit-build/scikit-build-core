@@ -1,3 +1,9 @@
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# dependencies = ["nox>=2024.4.15"]
+# ///
+
 """
 Scikit-build-core's nox configuration.
 
@@ -339,3 +345,7 @@ def vendor_pyproject_metadata(session: nox.Session) -> None:
         ) as response:
             txt = response.read()
         local_path.write_bytes(txt)
+
+
+if __name__ == "__main__":
+    nox.main()
