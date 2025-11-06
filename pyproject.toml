@@ -276,21 +276,24 @@ extend-select = [
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
     "FURB",        # refurb
+    "SLOT",        # flake8-slots
+    "DTZ",         # flake8-datetimez
+    "FA",          # flake8-future-annotations
 ]
 ignore = [
-    "PLE1205", # Format check doesn't work with our custom logger
-    "PT013",   # It's correct to import classes for typing!
-    "RUF009",  # Too easy to get a false positive
-    "PYI025",  # Wants Set to be renamed AbstractSet
+    "ANN401",  # Disallow dynamically typed expressions
     "ISC001",  # Conflicts with formatter
+    "PLC0415", # Import should be at top of file
+    "PLE1205", # Format check doesn't work with our custom logger
     "PLR09",   # Too many ...
     "PLR2004", # Magic value used in comparison
-    "PLC0415", # Import should be at top of file
-    "ANN401",  # Disallow dynamically typed expressions
+    "PT013",   # It's correct to import classes for typing!
+    "PYI025",  # Wants Set to be renamed AbstractSet
+    "RUF009",  # Too easy to get a false positive
     "S101",    # Use of assert detected
+    "S404",    # subprocess module is possibly insecure
     "S603",    # subprocess untrusted input
     "S607",    # subprocess call
-    "S404",    # subprocess module is possibly insecure
 ]
 typing-modules = ["scikit_build_core._compat.typing"]
 
@@ -323,9 +326,11 @@ known-local-folder = ["pathutils"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
-"src/scikit_build_core/settings/**.py" = ["FBT001"]
+"src/scikit_build_core/settings/**.py" = ["FBT001", "FA"]
+"src/scikit_build_core/file_api/**.py" = ["FA"]
 "tests/conftest.py" = ["TID251"]
 "tests/packages/**.py" = ["TID251"]
+"tests/test_settings.py" = ["FA"]
 "docs/conf.py" = ["TID251"]
 "docs/examples/**" = ["ANN"]
 "src/scikit_build_core/file_api/model/*.py" = ["N"]
