@@ -47,7 +47,7 @@ def pylint(session: nox.Session) -> None:
     """
     # This needs to be installed into the package environment, and is slower
     # than a pre-commit check
-    session.install("-e.[dev,test,test-meta]", "pylint==3.3.*")
+    session.install("-e.", "--group=dev", "pylint==3.3.*")
     session.run("pylint", "--version")
     session.run("pylint", "scikit_build_core", *session.posargs)
 
@@ -80,8 +80,8 @@ def _run_tests(
         posargs.append("--cov-config=pyproject.toml")
         env["COVERAGE_CORE"] = "sysmon"
 
-    install_arg = f"-e.[{','.join(_extras)}]"
-    session.install(install_arg, *install_args, silent=False)
+    install_arg = ["-e.", *{" ".join(f"--group={e}" for e in _extras)}]
+    session.install(*install_arg, *install_args, silent=False)
     session.run("pytest", *run_args, *posargs, env=env)
 
 
@@ -104,7 +104,7 @@ def tests(session: nox.Session) -> None:
     """
     Run the unit and regular tests. Includes coverage if --cov passed.
     """
-    _run_tests(session, extras=["test-meta,test-numpy,test-schema,test-hatchling"])
+    _run_tests(session, extras=["dev"])
 
 
 @nox.session(reuse_venv=True, tags=["gen"])
@@ -158,7 +158,7 @@ def docs(session: nox.Session) -> None:
 
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
-    session.install("-e.[docs]", *extra_installs)
+    session.install("-e.", "--group=docs", *extra_installs)
 
     session.chdir("docs")
 

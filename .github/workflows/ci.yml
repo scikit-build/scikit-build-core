@@ -124,9 +124,7 @@ jobs:
 
       - name: Install package (uv)
         run:
-          uv pip install
-          -e.[test,test-meta,test-numpy,test-schema,test-hatchling,wheels,cov,wheel-free-setuptools]
-          --system
+          uv pip install -e.[wheels,wheel-free-setuptools] --group=dev --system
 
       - name: Test package
         if: "!contains(matrix.python_version, 'pypy')"
@@ -182,7 +180,7 @@ jobs:
 
       - name: Install min requirements
         run: |
-          uv pip install -e .[test,pyproject] --resolution=lowest-direct --system
+          uv pip install -e. --group=test --resolution=lowest-direct --system
 
       - name: Setup CMake 3.15
         uses: jwlawson/actions-setup-cmake@v2.0
@@ -218,7 +216,7 @@ jobs:
         run: python3.13t -m venv /venv
 
       - name: Install deps
-        run: /venv/bin/pip install -e .[test] ninja
+        run: /venv/bin/pip install -e . --group=test ninja
 
       - name: Test package
         run: /venv/bin/pytest
@@ -241,7 +239,7 @@ jobs:
             cmake ninja git make gcc-g++ python39 python39-devel python39-pip
 
       - name: Install
-        run: python3.9 -m pip install .[test]
+        run: python3.9 -m pip install . --group=test
 
       - name: Test package
         run:
@@ -274,7 +272,7 @@ jobs:
           persist-credentials: false
 
       - name: Install
-        run: python -m pip install .[test]
+        run: python -m pip install . --group=test
 
       - name: Test package
         run: >-
@@ -307,7 +305,7 @@ jobs:
           persist-credentials: false
 
       - name: Install
-        run: python -m pip install .[test]
+        run: python -m pip install . --group=test
 
       - name: Test package
         run: >-

@@ -47,61 +47,9 @@ dependencies = [
 [project.optional-dependencies]
 pyproject = [
 ]
-test = [
-    "build >=0.8",
-    "cattrs >=22.2.0",
-    "pip>=23; python_version<'3.13'",
-    "pip>=24.1; python_version>='3.13'",
-    "pybind11 >=2.11",
-    "pytest >=7.2",
-    "pytest-subprocess >=1.5",
-    'pytest-xdist >=3.1',
-    'setuptools >=43; python_version<"3.9"',
-    'setuptools >=45; python_version=="3.9"',
-    'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
-    'setuptools >=66.1; python_version>="3.12"',
-    "virtualenv >=20.20",
-    "wheel >=0.40",
-]
-test-hatchling = [
-    "hatchling >=1.24.0",
-]
-test-meta = [
-    "hatch-fancy-pypi-readme>=22.3",
-    "setuptools-scm",
-]
-test-numpy = [
-    "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
-    "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
-    "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
-    "numpy~=2.2.0; python_version=='3.10' and platform_python_implementation=='PyPy'",
-]
-test-schema = [
-    "fastjsonschema",
-    "validate-pyproject",
-]
-cov = [
-    "pytest-cov",
-]
 wheels = [
     "cmake",
     "ninja; sys_platform!='win32'",
-]
-dev = [
-    "rich",
-]
-docs = [
-    "furo",
-    "hatchling",
-    "myst-parser >=0.13",
-    "setuptools",
-    "sphinx >=7.0",
-    "sphinx-autodoc-typehints",
-    "sphinx-copybutton",
-    "sphinx-inline-tabs",
-    "sphinx-jsonschema",
-    "sphinx-tippy",
-    "sphinxcontrib-programoutput",
 ]
 wheel-free-setuptools = [
     'setuptools>=70.1; python_version>="3.8"',
@@ -123,13 +71,78 @@ Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 "validate_pyproject.tool_schema".scikit-build = "scikit_build_core.settings.skbuild_schema:get_skbuild_schema"
 hatch.scikit-build = "scikit_build_core.hatch.hooks"
 
+
+[dependency-groups]
+test = [
+    "build >=0.8",
+    "cattrs >=22.2.0",
+    "pip>=23; python_version<'3.13'",
+    "pip>=24.1; python_version>='3.13'",
+    "pybind11 >=2.11",
+    "pytest >=7.2",
+    "pytest-subprocess >=1.5",
+    'pytest-xdist >=3.1',
+    'setuptools >=43; python_version<"3.9"',
+    'setuptools >=45; python_version=="3.9"',
+    'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
+    'setuptools >=66.1; python_version>="3.12"',
+    "virtualenv >=20.20",
+    "wheel >=0.40",
+]
+test-hatchling = [
+    { include-group = "test" },
+    "hatchling >=1.24.0",
+]
+test-meta = [
+    { include-group = "test" },
+    "hatch-fancy-pypi-readme>=22.3",
+    "setuptools-scm",
+]
+test-numpy = [
+    { include-group = "test" },
+    "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
+    "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
+    "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
+    "numpy~=2.2.0; python_version=='3.10' and platform_python_implementation=='PyPy'",
+]
+test-schema = [
+    { include-group = "test" },
+    "fastjsonschema",
+    "validate-pyproject",
+]
+cov = [
+    { include-group = "test" },
+    "pytest-cov",
+]
+dev = [
+    { include-group = "cov" },
+    { include-group = "test-hatchling" },
+    { include-group = "test-meta" },
+    { include-group = "test-numpy" },
+    { include-group = "test-schema" },
+    "rich",
+]
+docs = [
+    "furo",
+    "hatchling",
+    "myst-parser >=0.13",
+    "setuptools",
+    "sphinx >=7.0",
+    "sphinx-autodoc-typehints",
+    "sphinx-copybutton",
+    "sphinx-inline-tabs",
+    "sphinx-jsonschema",
+    "sphinx-tippy",
+    "sphinxcontrib-programoutput",
+]
+
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
 [tool.uv]
-dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
 workspace.members = ["tmp/hello/hello"]
 
 
