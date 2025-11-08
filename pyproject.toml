@@ -250,13 +250,20 @@ extend-select = [
     "ANN",         # flake8-annotations
     "ARG",         # flake8-unused-arguments
     "B",           # flake8-bugbear
+    "BLE",         # flake8-blind-except
     "C4",          # flake8-comprehensions
+    "DTZ",         # flake8-datetimez
     "EM",          # flake8-errmsg
+    "EXE",         # flake8-executable
+    "FA",          # flake8-future-annotations
     "FBT",         # flake8-boolean-trap
     "FLY",         # flynt
+    "FURB",        # refurb
+    "G",           # flake8-logging-format
     "I",           # isort
     "ICN",         # flake8-import-conventions
     "ISC",         # flake8-implicit-str-concat
+    "LOG",         # flake8-logging
     "N",           # flake8-naming
     "PERF",        # perflint
     "PGH",         # pygrep-hooks
@@ -265,24 +272,23 @@ extend-select = [
     "PT",          # flake8-pytest-style
     "PTH",         # flake8-use-pathlib
     "PYI",         # flake8-pyi
+    "Q",           # flake8-quotes
     "RET",         # flake8-return
+    "RSE",         # flake8-raise
     "RUF",         # Ruff-specific
     "S",           # eval -> literal_eval
     "SIM",         # flake8-simplify
+    "SLOT",        # flake8-slots
+    "T10",         # flake8-debugger
     "T20",         # flake8-print
     "TC",          # flake8-type-checking
     "TID251",      # flake8-tidy-imports.banned-api
     "TRY",         # tryceratops
     "UP",          # pyupgrade
     "YTT",         # flake8-2020
-    "FURB",        # refurb
-    "SLOT",        # flake8-slots
-    "DTZ",         # flake8-datetimez
-    "FA",          # flake8-future-annotations
 ]
 ignore = [
     "ANN401",  # Disallow dynamically typed expressions
-    "ISC001",  # Conflicts with formatter
     "PLC0415", # Import should be at top of file
     "PLE1205", # Format check doesn't work with our custom logger
     "PLR09",   # Too many ...

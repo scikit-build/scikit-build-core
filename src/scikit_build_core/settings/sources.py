@@ -586,7 +586,7 @@ class SourceChain:
                     prep[field.name] = self.convert_target(
                         field.type, *prefixes, field.name
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     name = ".".join([*self.prefixes, *prefixes, field.name])
                     e.__notes__ = [*getattr(e, "__notes__", []), f"Field: {name}"]  # type: ignore[attr-defined]
                     errors.append(e)
@@ -599,7 +599,7 @@ class SourceChain:
                     simple = source.get_item(*prefixes, field.name, is_dict=is_dict)
                     try:
                         tmp = source.convert(simple, field.type)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         name = ".".join([*self.prefixes, *prefixes, field.name])
                         e.__notes__ = [*getattr(e, "__notes__", []), f"Field {name}"]  # type: ignore[attr-defined]
                         errors.append(e)
