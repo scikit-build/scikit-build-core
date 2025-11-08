@@ -69,8 +69,8 @@ def test_cmake_ast_parse_long():
         )
 
         # Add executable
-        add_executable(TokenizationExample 
-            src/main.cpp 
+        add_executable(TokenizationExample
+            src/main.cpp
             src/utils.cpp
         )
 

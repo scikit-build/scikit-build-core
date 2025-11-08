@@ -246,60 +246,29 @@ ignore = ["W002"]  # Triggers on __init__.py's
 exclude = ["src/scikit_build_core/_vendor/*"]
 
 [tool.ruff.lint]
-extend-select = [
-    "ANN",         # flake8-annotations
-    "ARG",         # flake8-unused-arguments
-    "B",           # flake8-bugbear
-    "BLE",         # flake8-blind-except
-    "C4",          # flake8-comprehensions
-    "DTZ",         # flake8-datetimez
-    "EM",          # flake8-errmsg
-    "EXE",         # flake8-executable
-    "FA",          # flake8-future-annotations
-    "FBT",         # flake8-boolean-trap
-    "FLY",         # flynt
-    "FURB",        # refurb
-    "G",           # flake8-logging-format
-    "I",           # isort
-    "ICN",         # flake8-import-conventions
-    "ISC",         # flake8-implicit-str-concat
-    "LOG",         # flake8-logging
-    "N",           # flake8-naming
-    "PERF",        # perflint
-    "PGH",         # pygrep-hooks
-    "PIE",         # flake8-pie
-    "PL",          # pylint
-    "PT",          # flake8-pytest-style
-    "PTH",         # flake8-use-pathlib
-    "PYI",         # flake8-pyi
-    "Q",           # flake8-quotes
-    "RET",         # flake8-return
-    "RSE",         # flake8-raise
-    "RUF",         # Ruff-specific
-    "S",           # eval -> literal_eval
-    "SIM",         # flake8-simplify
-    "SLOT",        # flake8-slots
-    "T10",         # flake8-debugger
-    "T20",         # flake8-print
-    "TC",          # flake8-type-checking
-    "TID251",      # flake8-tidy-imports.banned-api
-    "TRY",         # tryceratops
-    "UP",          # pyupgrade
-    "YTT",         # flake8-2020
-]
+select = ["ALL"]
 ignore = [
-    "ANN401",  # Disallow dynamically typed expressions
+    "A",       # Okay to shadow builtins
+    "ANN401",  # Disallow Any
+    "C90",     # Complexity
+    "COM",     # Trailing commas teach the formatter
+    "D",       # Too many doc requests
+    "E501",    # Line too long
+    "ERA",     # Commented out code
+    "FIX",     # Hacks and todos
     "PLC0415", # Import should be at top of file
     "PLE1205", # Format check doesn't work with our custom logger
     "PLR09",   # Too many ...
     "PLR2004", # Magic value used in comparison
     "PT013",   # It's correct to import classes for typing!
-    "PYI025",  # Wants Set to be renamed AbstractSet
-    "RUF009",  # Too easy to get a false positive
+    "RUF009",  # Too easy to get a false positive (function call in dataclass defaults)
     "S101",    # Use of assert detected
     "S404",    # subprocess module is possibly insecure
     "S603",    # subprocess untrusted input
     "S607",    # subprocess call
+    "SLF001",  # Private members are okay to access
+    "TD",      # Todo format
+    "TID252",  # Relative imports are fine
 ]
 typing-modules = ["scikit_build_core._compat.typing"]
 
@@ -328,7 +297,7 @@ known-local-folder = ["pathutils"]
 
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20", "ANN", "FBT001"]
+"tests/**" = ["T20", "ANN", "FBT001", "INP"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
@@ -337,6 +306,7 @@ known-local-folder = ["pathutils"]
 "tests/conftest.py" = ["TID251"]
 "tests/packages/**.py" = ["TID251"]
 "tests/test_settings.py" = ["FA"]
+"docs/**" = ["INP"]
 "docs/conf.py" = ["TID251"]
 "docs/examples/**" = ["ANN"]
 "src/scikit_build_core/file_api/model/*.py" = ["N"]

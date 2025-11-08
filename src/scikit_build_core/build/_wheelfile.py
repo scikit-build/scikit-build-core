@@ -20,7 +20,8 @@ import pathspec
 from .. import __version__
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence, Set
+    from collections.abc import Mapping, Sequence
+    from collections.abc import Set as AbstractSet
 
     from packaging.tags import Tag
 
@@ -48,7 +49,7 @@ class WheelMetadata:
     root_is_purelib: bool = False
     metadata_version: str = "1.0"
     generator: str = f"scikit-build-core {__version__}"
-    tags: Set[Tag] = dataclasses.field(default_factory=frozenset)
+    tags: AbstractSet[Tag] = dataclasses.field(default_factory=frozenset)
     build_tag: str = ""
 
     def as_bytes(self) -> bytes:
@@ -72,7 +73,7 @@ class WheelWriter:
 
     metadata: StandardMetadata
     folder: Path
-    tags: Set[Tag]
+    tags: AbstractSet[Tag]
     wheel_metadata: WheelMetadata
     metadata_dir: Path | None
     _zipfile: zipfile.ZipFile | None = None
