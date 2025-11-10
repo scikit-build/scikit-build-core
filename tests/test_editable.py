@@ -262,13 +262,13 @@ def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, iso
             from importlib import import_module
             from importlib.resources import files
             from pathlib import Path
-            
+
             def is_extension(path):
                 for ext in (".so", ".pyd"):
                     if ext in path.suffixes:
                         return True
                 return False
-            
+
             def check_pkg(pkg_name):
                 try:
                     pkg = import_module(pkg_name)
@@ -281,7 +281,7 @@ def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, iso
                 except Exception as err:
                     msg = f"Failed in {str(pkg)}"
                     raise RuntimeError(msg) from err
-            
+
             check_pkg("pkg")
             check_pkg("pkg.sub_a")
             check_pkg("pkg.sub_b")

@@ -29,7 +29,7 @@ def test_skbuild_docs_sphinx() -> None:
         textwrap.dedent("""\
     .. confval:: cmake.define
       :type: ``EnvVar``
-    
+
       A table of defines to pass to CMake when configuring the project. Additive.
     """)
         in docs

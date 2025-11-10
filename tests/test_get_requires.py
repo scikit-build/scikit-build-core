@@ -79,7 +79,7 @@ def test_get_requires_parts_pyproject_old(
     monkeypatch.chdir(tmp_path)
     tmp_path.joinpath("pyproject.toml").write_text(
         """
-        
+
         [tool.scikit-build]
         minimum-version = "0.0"
         cmake.minimum-version = "3.21"
