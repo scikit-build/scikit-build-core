@@ -82,7 +82,7 @@ repos:
           - nox
           - orjson
           - packaging>=24.2
-          - pytest<9  # pytest 9 requires Python 3.10+
+          - pytest<9 # pytest 9 requires Python 3.10+
           - pytest-subprocess
           - rich
           - setuptools-scm
