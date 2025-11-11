@@ -164,7 +164,7 @@ filterwarnings = [
     "ignore:The 'wheel.metadata' package has been made private:DeprecationWarning",
     "ignore:version of cmake-example already set:UserWarning",  # Caused by setuptoools-scm 9+ being installed
 ]
-log_cli_level = "INFO"
+log_level = "INFO"
 pythonpath = ["tests/utils"]
 testpaths = ["tests"]
 markers = [

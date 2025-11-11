@@ -42,7 +42,7 @@ repos:
     rev: 1.20.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==24.*]
+        additional_dependencies: [black==25.*]
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
@@ -82,7 +82,7 @@ repos:
           - nox
           - orjson
           - packaging>=24.2
-          - pytest
+          - pytest<9 # pytest 9 requires Python 3.10+
           - pytest-subprocess
           - rich
           - setuptools-scm
@@ -150,6 +150,6 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.10.20
+    rev: 2025.11.10
     hooks:
       - id: sp-repo-review
