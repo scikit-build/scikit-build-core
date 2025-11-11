@@ -163,7 +163,7 @@ jobs:
       matrix:
         python-version: ["3.8", "3.11"]
         # TODO: investigate failure with macos-latest (#1167)
-        runs-on: [ubuntu-latest, macos-14, windows-latest]
+        runs-on: [ubuntu-latest, macos-15-intel, windows-latest]
 
     steps:
       - uses: actions/checkout@v5
