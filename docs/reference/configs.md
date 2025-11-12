@@ -200,6 +200,17 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.preset
+  :type: ``str``
+
+  Configure preset to use. ``cmake.source-dir`` must still be appropriately defined
+  and it must contain a ``CMake(User)Presets.json``. The preset's ``binaryDir`` is
+  ignored and is always overwritten by the ``build-dir`` defined by scikit-build-core.
+  ``cmake.define``, generator values are still passed if defined and take precedence
+  over preset's value according to CMake logic.
+```
+
+```{eval-rst}
 .. confval:: cmake.source-dir
   :type: ``Path``
   :default: "."
