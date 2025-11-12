@@ -446,14 +446,14 @@ def test_skbuild_env_negative_bool(
 
 @pytest.mark.parametrize("foo", ["true", "false"])
 @pytest.mark.parametrize("bar", ["true", "false"])
-@pytest.mark.parametrize("any", [True, False])
+@pytest.mark.parametrize("use_any", [True, False])
 def test_skbuild_env_bool_all_any(
-    foo: str, bar: str, any: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    foo: str, bar: str, use_any: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     monkeypatch.setenv("FOO", foo)
     monkeypatch.setenv("BAR", bar)
 
-    any_str = ".any" if any else ""
+    any_str = ".any" if use_any else ""
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         dedent(
@@ -470,7 +470,9 @@ def test_skbuild_env_bool_all_any(
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
-    if (foo == "true" and bar == "true") or (any and (foo == "true" or bar == "true")):
+    if (foo == "true" and bar == "true") or (
+        use_any and (foo == "true" or bar == "true")
+    ):
         assert settings.sdist.cmake
     else:
         assert not settings.sdist.cmake

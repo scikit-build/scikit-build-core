@@ -89,8 +89,8 @@ def test_pep517_sdist_hash(monkeypatch, package_simple_pyproject_ext, tmp_path: 
     dist = tmp_path / "dist"
     out = build_sdist(str(dist))
     sdist = dist / out
-    hash = compute_uncompressed_hash(sdist)
-    assert hash == package_simple_pyproject_ext.sdist_hash
+    sdist_hash = compute_uncompressed_hash(sdist)
+    assert sdist_hash == package_simple_pyproject_ext.sdist_hash
     mode = sdist.stat().st_mode
     assert mode == 33188
     with gzip.open(sdist, "rb") as f:
@@ -160,8 +160,8 @@ def test_pep517_sdist_time_hash_set_epoch(
 
     out = build_sdist(str(dist), {"sdist.reproducible": "true"})
     sdist = dist / out
-    hash = compute_uncompressed_hash(sdist)
-    assert hash == package_simple_pyproject_ext.sdist_dated_hash
+    sdist_hash = compute_uncompressed_hash(sdist)
+    assert sdist_hash == package_simple_pyproject_ext.sdist_dated_hash
 
 
 @pytest.mark.compile

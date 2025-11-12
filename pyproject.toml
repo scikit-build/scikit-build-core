@@ -262,7 +262,6 @@ exclude = ["src/scikit_build_core/_vendor/*"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "A",       # Okay to shadow builtins
     "ANN401",  # Disallow Any
     "C90",     # Complexity
     "COM",     # Trailing commas teach the formatter
@@ -289,7 +288,7 @@ flake8-bugbear.extend-immutable-calls = [
   "packaging.version.Version",
   "packaging.specifiers.SpecifierSet",
 ]
-
+flake8-builtins.ignorelist = ["copyright", "license", "__doc__"]
 
 [tool.ruff.format]
 docstring-code-format = true
