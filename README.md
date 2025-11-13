@@ -172,6 +172,9 @@ cmake.build-type = "Release"
 # The source directory to use when building the project.
 cmake.source-dir = "."
 
+# CMake cache file to be loaded.
+cmake.cache-file = ""
+
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 

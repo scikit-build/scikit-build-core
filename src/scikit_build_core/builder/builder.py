@@ -281,6 +281,9 @@ class Builder:
             cache_config.update(cache_entries)
 
         self.config.init_cache(cache_config)
+        cache_file_args = []
+        if self.settings.cmake.cache_file:
+            cache_file_args.append(f"-C{self.settings.cmake.cache_file}")
 
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set
@@ -293,7 +296,11 @@ class Builder:
 
         self.config.configure(
             defines=cmake_defines,
-            cmake_args=[*self.get_cmake_args(), *configure_args],
+            cmake_args=[
+                *cache_file_args,
+                *self.get_cmake_args(),
+                *configure_args,
+            ],
         )
 
     def build(self, build_args: Sequence[str]) -> None:

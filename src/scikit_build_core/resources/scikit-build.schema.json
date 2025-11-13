@@ -102,6 +102,10 @@
           },
           "description": "DEPRECATED in 0.10; use build.targets instead.",
           "deprecated": true
+        },
+        "cache-file": {
+          "type": "string",
+          "description": "CMake cache file to be loaded."
         }
       }
     },
