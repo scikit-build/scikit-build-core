@@ -457,6 +457,29 @@ class MessagesSettings:
 
 
 @dataclasses.dataclass
+class ScriptSettings:
+    name: str
+    """
+    Entry-point name.
+    """
+
+    path: str
+    """
+    Entry-point path.
+    """
+
+    target: Optional[str] = None
+    """
+    CMake executable target being wrapped.
+    """
+
+    as_module: bool = False
+    """
+    Expose the wrapper file as a module.
+    """
+
+
+@dataclasses.dataclass
 class ScikitBuildSettings:
     cmake: CMakeSettings = dataclasses.field(default_factory=CMakeSettings)
     ninja: NinjaSettings = dataclasses.field(default_factory=NinjaSettings)
@@ -510,4 +533,9 @@ class ScikitBuildSettings:
     fail: bool = False
     """
     Immediately fail the build. This is only useful in overrides.
+    """
+
+    scripts: List[ScriptSettings] = dataclasses.field(default_factory=list)
+    """
+    EXPERIMENTAL: Additional ``project.scripts`` entry-points.
     """

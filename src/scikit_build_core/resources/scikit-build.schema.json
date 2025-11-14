@@ -494,6 +494,37 @@
       "default": false,
       "description": "Immediately fail the build. This is only useful in overrides."
     },
+    "scripts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Entry-point name."
+          },
+          "path": {
+            "type": "string",
+            "description": "Entry-point path."
+          },
+          "target": {
+            "type": "string",
+            "description": "CMake executable target being wrapped."
+          },
+          "as-module": {
+            "type": "boolean",
+            "default": false,
+            "description": "Expose the wrapper file as a module."
+          }
+        }
+      },
+      "description": "EXPERIMENTAL: Additional ``project.scripts`` entry-points."
+    },
     "overrides": {
       "type": "array",
       "description": "A list of overrides to apply to the settings, based on the `if` selector.",
@@ -649,6 +680,9 @@
           },
           "fail": {
             "$ref": "#/properties/fail"
+          },
+          "scripts": {
+            "$ref": "#/properties/scripts"
           }
         }
       }
