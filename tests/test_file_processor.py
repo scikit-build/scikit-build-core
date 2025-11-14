@@ -76,17 +76,17 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     gitignore = Path(".gitignore")
     gitignore.write_text("/hidden_dir")
     # Create a directory with a symlink to a file in the same directory
-    dir_dir = Path("dir")
-    dir_dir.mkdir()
-    file1 = dir_dir / "file"
+    pkg_dir = Path("pkg")
+    pkg_dir.mkdir()
+    file1 = pkg_dir / "file"
     file1.write_text("content")
-    file2 = dir_dir / "link"
+    file2 = pkg_dir / "link"
     file2.symlink_to("file")
     hidden_dir = Path("hidden_dir")
     hidden_dir.mkdir()
     hidden_file = hidden_dir / "file2"
     hidden_file.write_text("content2")
-    exposed_symlink = dir_dir / "exposed_symlink"
+    exposed_symlink = pkg_dir / "exposed_symlink"
     exposed_symlink.symlink_to("../hidden_dir")
 
     local_ignored_file = Path("local_ignored_file.txt")
