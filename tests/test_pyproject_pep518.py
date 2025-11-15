@@ -45,8 +45,8 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
 
     if not sys.platform.startswith(("win", "cygwin")):
-        hash = compute_uncompressed_hash(sdist)
-        assert hash == package_simple_pyproject_ext.sdist_hash
+        sdist_hash = compute_uncompressed_hash(sdist)
+        assert sdist_hash == package_simple_pyproject_ext.sdist_hash
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
