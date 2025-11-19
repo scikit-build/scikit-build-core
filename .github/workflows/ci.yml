@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - uses: astral-sh/setup-uv@v7
       - name: Install nox
         run: uv tool install nox
@@ -94,10 +94,9 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-latest
             cmake-version: "3.26.x"
-          # TODO: CMake doesn't work with beta 1 on Windows
-          # - python-version: "3.14"
-          #   runs-on: windows-latest
-          #   cmake-version: "4.0.x"
+          - python-version: "3.14"
+            runs-on: windows-latest
+            cmake-version: "4.0.x"
           - python-version: "3.13"
             runs-on: windows-latest
             cmake-version: "3.26.x"
@@ -120,9 +119,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-          # Python 3.13.4 broken on Windows
-          check-latest: >-
-            ${{ matrix.python-version == '3.13' && runner.os == 'Windows' }}
 
       - uses: astral-sh/setup-uv@v7
 

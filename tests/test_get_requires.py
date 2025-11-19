@@ -31,6 +31,10 @@ def test_get_requires_parts(fp: FakeProcess):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     assert set(GetRequires().cmake()) == {"cmake>=3.15"}
     assert set(GetRequires().ninja()) == {*ninja}
 
@@ -40,6 +44,10 @@ def test_get_requires_parts_uneeded(fp: FakeProcess):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     assert set(GetRequires().cmake()) == set()
     assert set(GetRequires().ninja()) == {*ninja}
 
@@ -48,6 +56,10 @@ def test_get_requires_parts_settings(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
     )
     config = {"cmake.version": ">=3.20"}
     assert set(GetRequires.from_config_settings(config).cmake()) == {"cmake>=3.20"}
@@ -67,6 +79,10 @@ def test_get_requires_parts_pyproject(
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
     )
 
     assert set(GetRequires().cmake()) == {"cmake>=3.21"}
@@ -89,6 +105,10 @@ def test_get_requires_parts_pyproject_old(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
 
     assert set(GetRequires().cmake()) == {"cmake>=3.21"}
     assert set(GetRequires().ninja()) == {*ninja}
@@ -99,6 +119,10 @@ def test_get_requires_for_build_sdist(fp: FakeProcess):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     assert set(get_requires_for_build_sdist({})) == set()
 
 
@@ -107,6 +131,10 @@ def test_get_requires_for_build_sdist_cmake(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
     )
     assert set(get_requires_for_build_sdist({"sdist.cmake": "True"})) == expected
 
@@ -117,6 +145,10 @@ def test_get_requires_for_build_wheel(fp: FakeProcess):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     assert set(get_requires_for_build_wheel({})) == expected
 
 
@@ -124,6 +156,10 @@ def test_get_requires_for_build_wheel_pure(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
     )
     assert set(get_requires_for_build_wheel({"wheel.cmake": "False"})) == set()
 
@@ -134,6 +170,10 @@ def test_get_requires_for_build_editable(fp: FakeProcess):
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     assert set(get_requires_for_build_editable({})) == expected
 
 
@@ -141,5 +181,9 @@ def test_get_requires_for_build_editable_pure(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
     )
     assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == set()

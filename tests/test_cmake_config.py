@@ -245,6 +245,10 @@ def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
     fp.register(
         [cmake_path, "-E", "capabilities"], stdout='{"version":{"string":"3.20.0"}}'
     )
+    fp.register(
+        ["lipo", "-info", "some-prog"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     monkeypatch.setenv("CMAKE_EXECUTABLE", str(cmake_path))
     result = CMake.default_search(env=os.environ)
     assert result.cmake_path == cmake_path
