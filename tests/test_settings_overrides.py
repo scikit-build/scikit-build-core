@@ -54,7 +54,7 @@ def test_disallow_hardcoded(
             in str(caplog.records[idx].msg)
         )
 
-    # Next check that this exits if string-config is set
+    # Next check that this exits if strict-config is set
     strict_config = "true"
     pyproject_toml.write_text(
         template.format(strict_config=strict_config),

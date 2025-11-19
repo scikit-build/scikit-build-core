@@ -489,10 +489,6 @@
       "default": "",
       "description": "The CMake build directory. Defaults to a unique temporary directory."
     },
-    "fail": {
-      "type": "boolean",
-      "description": "Immediately fail the build. This is only useful in overrides."
-    },
     "overrides": {
       "type": "array",
       "description": "A list of overrides to apply to the settings, based on the `if` selector.",
@@ -647,7 +643,8 @@
             "$ref": "#/properties/build-dir"
           },
           "fail": {
-            "$ref": "#/properties/fail"
+            "type": "boolean",
+            "description": "Immediately fail the build. This is only useful in overrides."
           }
         }
       }
