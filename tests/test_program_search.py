@@ -49,6 +49,14 @@ def test_get_cmake_programs_all(monkeypatch, fp):
         [cmake3_path, "-E", "capabilities"],
         stdout='{"version":{"string":"3.19.0"}}',
     )
+    fp.register(
+        ["lipo", "-info", cmake_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
+    fp.register(
+        ["lipo", "-info", cmake3_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     programs = list(get_cmake_programs(module=False))
     assert len(programs) == 2
     assert programs[0].path.name == "cmake3"
@@ -71,6 +79,14 @@ def test_get_ninja_programs_all(monkeypatch, fp):
     ninja_build_path = Path("ninja-build")
     fp.register([ninja_path, "--version"], stdout="1.10.1.git.kitware.jobserver-1")
     fp.register([ninja_build_path, "--version"], stdout="1.8.2")
+    fp.register(
+        ["lipo", "-info", ninja_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
+    fp.register(
+        ["lipo", "-info", ninja_build_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     programs = list(get_ninja_programs(module=False))
     assert len(programs) == 2
     assert programs[0].path.name == "ninja-build"
@@ -94,6 +110,14 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
     cmake3_path = Path("cmake3")
     fp.register([cmake_path, "-E", "capabilities"], stdout="scrambled output\n")
     fp.register([cmake3_path, "-E", "capabilities"], stdout="{}")
+    fp.register(
+        ["lipo", "-info", cmake_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
+    fp.register(
+        ["lipo", "-info", cmake3_path],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
     programs = list(get_cmake_programs(module=False))
     assert caplog.records
     assert "Could not determine CMake version" in str(caplog.records[0].msg)
