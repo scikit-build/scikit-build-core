@@ -25,7 +25,13 @@ def editable_mode(request: pytest.FixtureRequest) -> str:
 @pytest.mark.usefixtures("package_simplest_c")
 def test_pep660_wheel(editable_mode: str, tmp_path: Path):
     dist = tmp_path / "dist"
-    out = build_editable(str(dist), {"editable.mode": editable_mode})
+    config_settings = {
+        "build-dir": "build/{wheel_tag}",
+        "editable.mode": editable_mode,
+    }
+    if editable_mode == "inplace":
+        config_settings["editable.build-dir"] = "build/{wheel_tag}/editable"
+    out = build_editable(str(dist), config_settings)
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
     assert wheel == dist / out
 
@@ -61,12 +67,17 @@ def test_pep660_pip_isolated(isolated, isolate, editable_mode: str):
     if not isolate:
         isolated.install("scikit-build-core")
 
-    build_dir = "" if editable_mode == "inplace" else "build/{wheel_tag}"
-
+    config_flags = [
+        "--config-settings=build-dir=build/{wheel_tag}",
+        f"--config-settings=editable.mode={editable_mode}",
+    ]
+    if editable_mode == "inplace":
+        config_flags.append(
+            "--config-settings=editable.build-dir=build/{wheel_tag}/editable"
+        )
     isolated.install(
         "-v",
-        f"--config-settings=build-dir={build_dir}",
-        f"--config-settings=editable.mode={editable_mode}",
+        *config_flags,
         *isolate_args,
         "-e",
         ".",
