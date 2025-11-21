@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import os
 import platform
 import re
@@ -18,7 +19,7 @@ from ..cmake import CMake
 from ..errors import CMakeNotFoundError
 from ..resources import resources
 
-__all__ = ["process_overrides", "regex_match"]
+__all__ = ["OverrideRecord", "process_overrides", "regex_match"]
 
 
 def __dir__() -> list[str]:
@@ -27,6 +28,34 @@ def __dir__() -> list[str]:
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+
+@dataclasses.dataclass
+class OverrideRecord:
+    """
+    Record of the override action.
+
+    Saves the original and final values, and the override reasons.
+    """
+
+    key: str
+    """Settings key that is overridden."""
+
+    original_value: Any | None
+    """
+    Original value in the pyproject table.
+
+    If the pyproject table did not have the key, this is a ``None``.
+    """
+
+    value: Any
+    """Final value."""
+
+    passed_all: dict[str, str] | None
+    """All if statements that passed (except the effective ``match_any``)."""
+
+    passed_any: dict[str, str] | None
+    """All if.any statements that passed."""
 
 
 def strtobool(value: str) -> bool:
@@ -257,20 +286,72 @@ def inherit_join(
     raise TypeError(msg)
 
 
+def record_override(
+    *keys: str,
+    value: Any,
+    tool_skb: dict[str, Any],
+    overriden_items: dict[str, OverrideRecord],
+    passed_all: dict[str, str] | None,
+    passed_any: dict[str, str] | None,
+) -> None:
+    full_key = ".".join(keys)
+    # Get the original_value to construct the record
+    if full_key in overriden_items:
+        # We found the original value from a previous override record
+        original_value = overriden_items[full_key].original_value
+    else:
+        # Otherwise navigate the original pyproject table until we resolved all keys
+        _dict_or_value = tool_skb
+        keys_list = [*keys]
+        while keys_list:
+            k = keys_list.pop(0)
+            if k not in _dict_or_value:
+                # We hit a dead end so we imply the original_value was not set (`None`)
+                original_value = None
+                break
+            _dict_or_value = _dict_or_value[k]
+            if isinstance(_dict_or_value, dict):
+                # If the value is a dict it is either the final value or we continue
+                # to navigate it
+                continue
+            # Otherwise it should be the final value
+            original_value = _dict_or_value
+            if keys_list:
+                msg = f"Could not navigate to the key {full_key} because {k} is a {type(_dict_or_value)}"
+                raise TypeError(msg)
+            break
+        else:
+            # We exhausted all keys so the current value should be the table key we are
+            # interested in
+            original_value = _dict_or_value
+    # Now save the override record
+    overriden_items[full_key] = OverrideRecord(
+        key=keys[-1],
+        original_value=original_value,
+        value=value,
+        passed_any=passed_any,
+        passed_all=passed_all,
+    )
+
+
 def process_overrides(
     tool_skb: dict[str, Any],
     *,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
     retry: bool,
     env: Mapping[str, str] | None = None,
-) -> set[str]:
+) -> tuple[set[str], dict[str, OverrideRecord]]:
     """
     Process overrides into the main dictionary if they match. Modifies the input
     dictionary. Must be run from the package directory.
+
+    :return: A tuple of the set of matching overrides and a dict of changed keys and
+      override record
     """
     has_dist_info = Path("PKG-INFO").is_file()
 
     global_matched: set[str] = set()
+    overriden_items: dict[str, OverrideRecord] = {}
     for override in tool_skb.pop("overrides", []):
         passed_any: dict[str, str] | None = None
         passed_all: dict[str, str] | None = None
@@ -354,6 +435,14 @@ def process_overrides(
                 inherit1 = inherit_override.get(key, {})
                 if isinstance(value, dict):
                     for key2, value2 in value.items():
+                        record_override(
+                            *[key, key2],
+                            value=value2,
+                            tool_skb=tool_skb,
+                            overriden_items=overriden_items,
+                            passed_all=passed_all,
+                            passed_any=passed_any,
+                        )
                         inherit2 = inherit1.get(key2, "none")
                         inner = tool_skb.get(key, {})
                         inner[key2] = inherit_join(
@@ -361,10 +450,18 @@ def process_overrides(
                         )
                         tool_skb[key] = inner
                 else:
+                    record_override(
+                        key,
+                        value=value,
+                        tool_skb=tool_skb,
+                        overriden_items=overriden_items,
+                        passed_all=passed_all,
+                        passed_any=passed_any,
+                    )
                     inherit_override_tmp = inherit_override or "none"
                     if isinstance(inherit_override_tmp, dict):
                         assert not inherit_override_tmp
                     tool_skb[key] = inherit_join(
                         value, tool_skb.get(key), inherit_override_tmp
                     )
-    return global_matched
+    return global_matched, overriden_items

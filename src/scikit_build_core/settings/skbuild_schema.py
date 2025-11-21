@@ -82,7 +82,21 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         m: {"$ref": "#/$defs/metadata"} for m in METADATA
     }
 
+    inherit_only_props = {
+        k: v
+        for k, v in schema["properties"].items()
+        if v.get("scikit-build:override-only")
+    }
+    schema["properties"] = {
+        k: v
+        for k, v in schema["properties"].items()
+        if not v.get("scikit-build:override-only")
+    }
+    for v in inherit_only_props.values():
+        del v["scikit-build:override-only"]
     props = {k: {"$ref": f"#/properties/{k}"} for k in schema["properties"]}
+    props.update(inherit_only_props)
+
     schema["$defs"]["if_overrides"] = {
         "type": "object",
         "minProperties": 1,

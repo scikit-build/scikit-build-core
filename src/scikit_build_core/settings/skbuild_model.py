@@ -33,6 +33,8 @@ def __dir__() -> List[str]:
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
+    override_only: bool
+    """Do not allow the field to be a top-level table."""
 
 
 class CMakeSettingsDefine(str):
@@ -507,7 +509,10 @@ class ScikitBuildSettings:
     This can be set to reuse the build directory from previous runs.
     """
 
-    fail: bool = False
+    fail: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
     """
     Immediately fail the build. This is only useful in overrides.
     """

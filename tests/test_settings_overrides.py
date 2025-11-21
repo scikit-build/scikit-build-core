@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sysconfig
 import typing
 from pathlib import Path
@@ -20,6 +21,53 @@ class VersionInfo(typing.NamedTuple):
     minor: int
     micro: int
     releaselevel: str = "final"
+
+
+def test_disallow_hardcoded(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+):
+    caplog.set_level(logging.WARNING)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    template = dedent(
+        """\
+        [tool.scikit-build]
+        strict-config = {strict_config}
+        fail = false
+        """
+    )
+
+    # First check without strict-config to make sure all fields are disallowed
+    strict_config = "false"
+    pyproject_toml.write_text(
+        template.format(strict_config=strict_config),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings_reader.validate_may_exit()
+    assert caplog.records
+    for idx, key in enumerate(["fail"]):
+        assert (
+            f"{key} is not allowed to be hard-coded in the pyproject.toml file"
+            in str(caplog.records[idx].msg)
+        )
+
+    # Next check that this exits if strict-config is set
+    strict_config = "true"
+    pyproject_toml.write_text(
+        template.format(strict_config=strict_config),
+        encoding="utf-8",
+    )
+    # Flush the capsys just in case
+    capsys.readouterr()
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit) as exc:
+        settings_reader.validate_may_exit()
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "is not allowed to be hard-coded in the pyproject.toml file" in out
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
@@ -50,10 +98,12 @@ def test_skbuild_overrides_pyver(
         assert settings.cmake.define == {"SPAM": "EGGS"}
         assert settings.experimental
         assert settings.sdist.cmake
+        assert len(settings_reader.overriden_items) == 4
     else:
         assert not settings.cmake.args
         assert not settings.cmake.define
         assert not settings.experimental
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("implementation_version", ["7.3.14", "7.3.15"])
@@ -83,8 +133,19 @@ def test_skbuild_overrides_implver(
 
     if implementation_version == "7.3.15":
         assert settings.experimental
+        assert len(settings_reader.overriden_items) == 1
+        override_item = settings_reader.overriden_items["experimental"]
+        assert override_item.original_value is None
+        assert isinstance(override_item.value, bool)
+        assert override_item.value
+        assert override_item.passed_any is None
+        assert override_item.passed_all
+        assert len(override_item.passed_all) == 2
+        assert "implementation-name" in override_item.passed_all
+        assert "implementation-version" in override_item.passed_all
     else:
         assert not settings.experimental
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
@@ -125,12 +186,18 @@ def test_skbuild_overrides_dual(
     if implementation_name == "pypy" and platform_system == "darwin":
         assert not settings.editable.verbose
         assert settings.install.components == ["headers"]
+        assert len(settings_reader.overriden_items) == 2
+        assert "editable.verbose" in settings_reader.overriden_items
+        assert "install.components" in settings_reader.overriden_items
     elif implementation_name == "cpython" and platform_system == "darwin":
         assert settings.editable.verbose
         assert settings.install.components == ["bindings"]
+        assert len(settings_reader.overriden_items) == 1
+        assert "install.components" in settings_reader.overriden_items
     else:
         assert settings.editable.verbose
         assert not settings.install.components
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
@@ -178,6 +245,7 @@ def test_skbuild_overrides_any(
     else:
         assert settings.editable.verbose
         assert not settings.install.components
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
@@ -221,6 +289,7 @@ def test_skbuild_overrides_any_mixed(
     else:
         assert settings.editable.verbose
         assert not settings.install.components
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("platform_node", ["thismatch", "matchthat"])
@@ -247,6 +316,7 @@ def test_skbuild_overrides_platnode(
         assert settings.experimental
     else:
         assert not settings.experimental
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("platform_machine", ["x86_64", "x86_32", "other"])
@@ -278,13 +348,25 @@ def test_skbuild_overrides_regex(
 
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
+    overriden_item = settings_reader.overriden_items.get("install.components")
 
     if platform_machine == "x86_64":
         assert settings.install.components == ["headers"]
+        assert len(settings_reader.overriden_items) == 1
+        assert overriden_item
+        assert overriden_item.key == "components"
+        assert overriden_item.original_value == ["default"]
+        assert overriden_item.value == ["headers"]
     elif platform_machine == "x86_32":
         assert settings.install.components == ["headers_32"]
+        assert len(settings_reader.overriden_items) == 1
+        assert overriden_item
+        assert overriden_item.key == "components"
+        assert overriden_item.original_value == ["default"]
+        assert overriden_item.value == ["headers_32"]
     else:
         assert settings.install.components == ["default"]
+        assert not settings_reader.overriden_items
 
 
 def test_skbuild_overrides_no_if(
@@ -476,6 +558,7 @@ def test_skbuild_env_bool_all_any(
         assert settings.sdist.cmake
     else:
         assert not settings.sdist.cmake
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("state", ["wheel", "sdist"])
@@ -499,6 +582,7 @@ def test_skbuild_overrides_state(state: str, tmp_path: Path):
         assert settings.experimental
     else:
         assert not settings.experimental
+        assert not settings_reader.overriden_items
 
 
 @pytest.mark.parametrize("inherit", ["none", "append", "prepend"])

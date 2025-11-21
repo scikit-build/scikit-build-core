@@ -78,7 +78,6 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: fail
   :type: ``bool``
-  :default: false
 
   Immediately fail the build. This is only useful in overrides.
 ```
