@@ -265,7 +265,7 @@ class CMaker:
             if self._file_api_query.exists():
                 self.file_api = load_reply_dir(self._file_api_query)
         except ExceptionGroup as exc:
-            logger.warning("Could not parse CMake file-api")
+            logger.debug("Could not parse CMake file-api")
             logger.debug(str(exc))
 
     def _compute_build_args(
