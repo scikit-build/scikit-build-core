@@ -437,7 +437,7 @@ def process_overrides(
                     for key2, value2 in value.items():
                         record_override(
                             *[key, key2],
-                            value=value,
+                            value=value2,
                             tool_skb=tool_skb,
                             overriden_items=overriden_items,
                             passed_all=passed_all,
