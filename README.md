@@ -172,6 +172,9 @@ cmake.build-type = "Release"
 # The source directory to use when building the project.
 cmake.source-dir = "."
 
+# Configure preset to use. ``cmake.source-dir`` must still be appropriately defined
+cmake.preset = ""
+
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 
