@@ -25,6 +25,7 @@ def compute_uncompressed_hash(inp: Path):
 
 @pytest.mark.network
 @pytest.mark.integration
+@pytest.mark.usefixtures("pybind11")
 def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
@@ -167,7 +168,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
@@ -212,7 +213,7 @@ def test_pep518_wheel(isolated, build_args, tmp_path: Path):
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
     isolated.install("build[virtualenv]")
 
@@ -257,7 +258,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")
 
