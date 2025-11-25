@@ -18,6 +18,7 @@ pytestmark = pytest.mark.setuptools
     strict=False,
 )
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.usefixtures("pybind11")
 def test_pep518_wheel(isolated, tmp_path: Path):
     dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
@@ -56,6 +57,7 @@ def test_pep518_wheel(isolated, tmp_path: Path):
     strict=False,
 )
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.usefixtures("pybind11")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")
 
