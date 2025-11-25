@@ -69,6 +69,7 @@ def test_pep517_sdist(tmp_path: Path):
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
 @pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.usefixtures("pybind11")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
@@ -149,6 +150,7 @@ def test_toml_sdist(tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_toml_setuptools_ext")
+@pytest.mark.usefixtures("pybind11")
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
@@ -183,6 +185,7 @@ def test_toml_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.usefixtures("package_mixed_setuptools")
+@pytest.mark.usefixtures("pybind11")
 def test_mixed_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))

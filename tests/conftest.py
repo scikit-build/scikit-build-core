@@ -51,7 +51,6 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "cython",
         "hatchling",
         "pip",
-        "pybind11",
         "setuptools",
         "virtualenv",
         "wheel",
@@ -62,6 +61,9 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
     if importlib.util.find_spec("ninja") is not None:
         packages.append("ninja")
+
+    if importlib.util.find_spec("pybind11") is not None:
+        packages.append("pybind11")
 
     subprocess.run(
         [
@@ -372,6 +374,11 @@ def protect_get_requires(fp, monkeypatch):
         return orig_find_spec(name, package)
 
     monkeypatch.setattr(importlib.util, "find_spec", find_spec)
+
+
+@pytest.fixture
+def pybind11():
+    return pytest.importorskip("pybind11")
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

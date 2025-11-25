@@ -79,7 +79,6 @@ test = [
     "cattrs >=22.2.0",
     "pip>=23; python_version<'3.13'",
     "pip>=24.1; python_version>='3.13'",
-    "pybind11 >=2.11",
     "pytest >=7.2",
     "pytest-subprocess >=1.5",
     'pytest-xdist >=3.1',
@@ -111,6 +110,10 @@ test-schema = [
     "fastjsonschema",
     "validate-pyproject",
 ]
+test-pybind11 = [
+    { include-group = "test" },
+    "pybind11 >=2.11",
+]
 cov = [
     { include-group = "test" },
     "pytest-cov",
@@ -120,6 +123,7 @@ dev = [
     { include-group = "test-hatchling" },
     { include-group = "test-meta" },
     { include-group = "test-numpy" },
+    { include-group = "test-pybind11" },
     { include-group = "test-schema" },
     "rich",
 ]
