@@ -348,6 +348,13 @@ class EditableSettings:
     :confval:`build-dir` must be set.
     """
 
+    build_dir: str = ""
+    """
+    Build directory to use when :confval:`editable.mode` is ``inplace``.
+
+    If empty, the project source directory is used (the historical behaviour).
+    """
+
 
 @dataclasses.dataclass
 class BuildSettings:

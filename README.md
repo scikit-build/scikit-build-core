@@ -232,6 +232,9 @@ editable.verbose = true
 # Rebuild the project when the package is imported.
 editable.rebuild = false
 
+# Build directory to use when :confval:`editable.mode` is ``inplace``.
+editable.build-dir = ""
+
 # Extra args to pass directly to the builder in the build step.
 build.tool-args = []
 
@@ -281,7 +284,7 @@ strict-config = true
 experimental = false
 
 # If set, this will provide a method for backward compatibility.
-minimum-version = "0.11"  # current version
+minimum-version = "0.1"  # current version
 
 # The CMake build directory. Defaults to a unique temporary directory.
 build-dir = ""

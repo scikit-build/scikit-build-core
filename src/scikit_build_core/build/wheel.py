@@ -279,24 +279,27 @@ def _build_wheel_impl_impl(
             root_is_purelib=targetlib == "purelib",
             build_tag=settings.wheel.build_tag,
         )
+        format_data = pyproject_format(
+            settings=settings,
+            tags=tags,
+            state=state,
+        )
 
         # A build dir can be specified, otherwise use a temporary directory
+        log_build_dir = True
         if cmake is not None and editable and settings.editable.mode == "inplace":
-            build_dir = settings.cmake.source_dir
+            if settings.editable.build_dir:
+                build_dir = Path(settings.editable.build_dir.format(**format_data))
+            else:
+                build_dir = settings.cmake.source_dir
+                log_build_dir = False
         else:
             build_dir = (
-                Path(
-                    settings.build_dir.format(
-                        **pyproject_format(
-                            settings=settings,
-                            tags=tags,
-                            state=state,
-                        )
-                    )
-                )
+                Path(settings.build_dir.format(**format_data))
                 if settings.build_dir
                 else build_tmp_folder / "build"
             )
+        if log_build_dir:
             logger.info("Build directory: {}", build_dir.resolve())
 
         wheel_dirs = {
@@ -426,6 +429,12 @@ def _build_wheel_impl_impl(
                 f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
             }
             cache_entries["SKBUILD_STATE"] = state
+            if editable:
+                cache_entries["SKBUILD_EDITABLE_MODE"] = settings.editable.mode
+                if settings.editable.build_dir:
+                    cache_entries["SKBUILD_EDITABLE_BUILD_DIR"] = os.fspath(
+                        build_dir.resolve()
+                    )
             builder.configure(
                 defines=defines,
                 cache_entries=cache_entries,
