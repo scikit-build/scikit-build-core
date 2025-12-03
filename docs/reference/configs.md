@@ -185,6 +185,13 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.cache-file
+  :type: ``Path``
+
+  CMake cache file to be loaded.
+```
+
+```{eval-rst}
 .. confval:: cmake.define
   :type: ``EnvVar``
 
