@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.3
+    rev: v0.14.7
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
@@ -51,7 +51,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.6.2"
+    rev: "v3.7.3"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -59,7 +59,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v1.19.0
     hooks:
       - id: mypy
         exclude: |
@@ -90,7 +90,7 @@ repos:
           - types-setuptools>=70.1
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.2.0"
+    rev: "v1.3.0"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -131,12 +131,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.11.02
+    rev: 2025.11.21
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.1
+    rev: 0.35.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -150,6 +150,6 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.11.10
+    rev: 2025.11.21
     hooks:
       - id: sp-repo-review
