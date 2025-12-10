@@ -247,6 +247,15 @@ print(mk_skbuild_docs())
 ## editable
 
 ```{eval-rst}
+.. confval:: editable.build-dir
+  :type: ``str``
+
+  Build directory to use when :confval:`editable.mode` is ``inplace``.
+
+  If empty, the project source directory is used (the historical behaviour).
+```
+
+```{eval-rst}
 .. confval:: editable.mode
   :type: ``"redirect" | "inplace"``
   :default: "redirect"

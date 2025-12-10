@@ -274,6 +274,11 @@
           "type": "boolean",
           "default": false,
           "description": "Rebuild the project when the package is imported."
+        },
+        "build-dir": {
+          "type": "string",
+          "default": "",
+          "description": "Build directory to use when :confval:`editable.mode` is ``inplace``."
         }
       }
     },
