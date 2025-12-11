@@ -25,7 +25,9 @@ We test access
 
 Question: Do we want to test both relative and absolute imports or just one or the other?
 """
-from importlib.resources import files
+import ctypes
+import sys
+from importlib.resources import files, as_file
 
 try:
     from ._version import __version__
@@ -45,3 +47,13 @@ assert files("cmake_generated").joinpath("static_data").read_text().rstrip() == 
 def get_namespace_static_data():
     # Ref https://github.com/python/importlib_resources/issues/262
     return files().joinpath("namespace1").joinpath("static_data").read_text().rstrip()
+
+def ctypes_function():
+    # Question: can anyone think of a clever way to embed the actual library name in some other package metadata?
+    if sys.platform == "win32":
+        lib_suffix = "dll"
+    else:
+        lib_suffix = "so"
+    with as_file(files().joinpath(f"pkg.{lib_suffix}")) as lib_path:
+        lib = ctypes.cdll.LoadLibrary(str(lib_path))
+        return lib.func

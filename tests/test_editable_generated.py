@@ -96,3 +96,27 @@ def test_basic_data_resources(monkeypatch, tmp_path, editable, editable_mode, bu
 
     value = isolated.execute("import cmake_generated; print(cmake_generated.get_namespace_static_data())")
     assert value == "static value in namespace package"
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("editable", "editable_mode"),
+    [
+        (False, ""),
+        (True, "redirect"),
+        (True, "inplace"),
+    ],
+)
+@pytest.mark.parametrize(
+    "build_isolation",
+    [True, False],
+)
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="importlib.resources.files is introduced in Python 3.9")
+def test_compiled_ctypes_resource(monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated):
+    _setup_package_for_editable_layout_tests(
+        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    )
+
+    value = isolated.execute("import cmake_generated; print(cmake_generated.ctypes_function()())")
+    assert value == str(42)
