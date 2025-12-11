@@ -1,0 +1,24 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cmake_generated"
+dynamic = ["version"]
+
+[tool.scikit-build]
+# Bundling a generated file in the sdist is not supported at this time.
+# sdist.cmake = false
+wheel.license-files = []
+wheel.exclude = ["**.cpp", "**.in"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "CMakeLists.txt"
+regex = 'project\([^)]+ VERSION (?P<value>[0-9.]+)'
+
+[[tool.scikit-build.generate]]
+path = "cmake_generated/_version.py"
+template = '''
+version = "${version}"
+'''
