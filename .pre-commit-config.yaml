@@ -98,10 +98,11 @@ repos:
           - hatchling
           - hatch-vcs
 
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+  - repo: https://github.com/crate-ci/typos
+    rev: "v1.40.0"
     hooks:
-      - id: codespell
+      - id: typos
+        args: []
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py

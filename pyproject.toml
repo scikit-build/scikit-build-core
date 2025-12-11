@@ -332,3 +332,7 @@ docstring-code-format = true
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+
+[tool.typos.default.extend-words]
+delocate = "delocate"

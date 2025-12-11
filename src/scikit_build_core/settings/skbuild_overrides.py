@@ -141,8 +141,8 @@ def override_match(
             failed_set.add("python-version")
 
     if implementation_name is not None:
-        current_impementation_name = sys.implementation.name
-        match_msg = regex_match(current_impementation_name, implementation_name)
+        current_implementation_name = sys.implementation.name
+        match_msg = regex_match(current_implementation_name, implementation_name)
         if match_msg:
             passed_dict["implementation-name"] = match_msg
         else:
@@ -290,15 +290,15 @@ def record_override(
     *keys: str,
     value: Any,
     tool_skb: dict[str, Any],
-    overriden_items: dict[str, OverrideRecord],
+    overridden_items: dict[str, OverrideRecord],
     passed_all: dict[str, str] | None,
     passed_any: dict[str, str] | None,
 ) -> None:
     full_key = ".".join(keys)
     # Get the original_value to construct the record
-    if full_key in overriden_items:
+    if full_key in overridden_items:
         # We found the original value from a previous override record
-        original_value = overriden_items[full_key].original_value
+        original_value = overridden_items[full_key].original_value
     else:
         # Otherwise navigate the original pyproject table until we resolved all keys
         _dict_or_value = tool_skb
@@ -325,7 +325,7 @@ def record_override(
             # interested in
             original_value = _dict_or_value
     # Now save the override record
-    overriden_items[full_key] = OverrideRecord(
+    overridden_items[full_key] = OverrideRecord(
         key=keys[-1],
         original_value=original_value,
         value=value,
@@ -351,7 +351,7 @@ def process_overrides(
     has_dist_info = Path("PKG-INFO").is_file()
 
     global_matched: set[str] = set()
-    overriden_items: dict[str, OverrideRecord] = {}
+    overridden_items: dict[str, OverrideRecord] = {}
     for override in tool_skb.pop("overrides", []):
         passed_any: dict[str, str] | None = None
         passed_all: dict[str, str] | None = None
@@ -439,7 +439,7 @@ def process_overrides(
                             *[key, key2],
                             value=value2,
                             tool_skb=tool_skb,
-                            overriden_items=overriden_items,
+                            overridden_items=overridden_items,
                             passed_all=passed_all,
                             passed_any=passed_any,
                         )
@@ -454,7 +454,7 @@ def process_overrides(
                         key,
                         value=value,
                         tool_skb=tool_skb,
-                        overriden_items=overriden_items,
+                        overridden_items=overridden_items,
                         passed_all=passed_all,
                         passed_any=passed_any,
                     )
@@ -464,4 +464,4 @@ def process_overrides(
                     tool_skb[key] = inherit_join(
                         value, tool_skb.get(key), inherit_override_tmp
                     )
-    return global_matched, overriden_items
+    return global_matched, overridden_items

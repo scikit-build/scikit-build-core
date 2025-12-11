@@ -529,10 +529,10 @@ def _build_wheel_impl_impl(
         dist_info = Path(metadata_directory)
         for key, data in dist_info_contents.items():
             path = dist_info / key
-            prevous_data = path.read_bytes()
-            if prevous_data != data:
+            previous_data = path.read_bytes()
+            if previous_data != data:
                 msg = f"Metadata mismatch in {key}"
-                logger.error("{}: {!r} != {!r}", msg, prevous_data, data)
+                logger.error("{}: {!r} != {!r}", msg, previous_data, data)
                 raise AssertionError(msg)
 
     wheel_filename: str = wheel.wheelpath.name

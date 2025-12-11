@@ -39,7 +39,7 @@ def test_get_requires_parts(fp: FakeProcess):
     assert set(GetRequires().ninja()) == {*ninja}
 
 
-def test_get_requires_parts_uneeded(fp: FakeProcess):
+def test_get_requires_parts_unneeded(fp: FakeProcess):
     fp.register(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.18.0"}}',
