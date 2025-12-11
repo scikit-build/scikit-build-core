@@ -1,0 +1,27 @@
+"""Try to open both generated and static files from various parts of the package."""
+from importlib.resources import files, read_text
+
+from .. import __version__
+
+try:
+    from .. import nested2
+except ImportError:
+    nested2 = None
+
+def cmake_generated_static_data():
+    return read_text("cmake_generated", "static_data").rstrip()
+
+def cmake_generated_nested_static_data():
+    return files("cmake_generated.nested1").joinpath("static_data").read_text().rstrip()
+
+def get_configured_data():
+    return files("cmake_generated").joinpath("configured_file").read_text().rstrip()
+
+def cmake_generated_namespace_generated_data():
+    return read_text("cmake_generated.namespace1","generated_data").rstrip()
+
+nested_data = "success"
+
+def nested2_check():
+    if nested2 is not None:
+        return "success"

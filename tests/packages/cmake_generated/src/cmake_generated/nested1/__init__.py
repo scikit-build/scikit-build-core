@@ -1,4 +1,4 @@
-from importlib.resources import files
+from importlib.resources import read_text
 
 def get_static_data():
-    return files().joinpath("static_data").read_text().rstrip()
+    return read_text("cmake_generated.nested1","static_data").rstrip()
