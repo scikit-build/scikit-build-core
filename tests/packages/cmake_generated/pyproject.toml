@@ -20,5 +20,5 @@ regex = 'project\([^)]+ VERSION (?P<value>[0-9.]+)'
 [[tool.scikit-build.generate]]
 path = "cmake_generated/_version.py"
 template = '''
-version = "${version}"
+__version__ = "${version}"
 '''

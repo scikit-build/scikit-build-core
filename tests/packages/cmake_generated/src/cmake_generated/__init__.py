@@ -27,7 +27,7 @@ Question: Do we want to test both relative and absolute imports or just one or t
 """
 import ctypes
 import sys
-from importlib.resources import files, as_file
+from importlib.resources import files, as_file, read_text
 
 try:
     from ._version import __version__
@@ -35,18 +35,19 @@ except ImportError:
     __version__ = None
 
 def get_static_data():
-    return files().joinpath("static_data").read_text().rstrip()
+    return read_text("cmake_generated", "static_data").rstrip()
 
-# Access importlib resources as early as possible in the import process to check
-# for edge cases with import hooks.
-static_data = get_static_data()
-
-# Check consistency of various access modes (or describe unsupported access modes).
-assert files("cmake_generated").joinpath("static_data").read_text().rstrip() == static_data
+def get_configured_data():
+    return files().joinpath("configured_file").read_text().rstrip()
 
 def get_namespace_static_data():
+    # read_text is able to handle a namespace subpackage directly, though `files()` is not.
+    return read_text("cmake_generated.namespace1","static_data").rstrip()
+
+def get_namespace_generated_data():
+    # Note that `files("cmake_generated.namespace1")` doesn't work.
     # Ref https://github.com/python/importlib_resources/issues/262
-    return files().joinpath("namespace1").joinpath("static_data").read_text().rstrip()
+    return files().joinpath("namespace1").joinpath("generated_data").read_text().rstrip()
 
 def ctypes_function():
     # Question: can anyone think of a clever way to embed the actual library name in some other package metadata?
