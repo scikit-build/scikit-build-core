@@ -12,11 +12,18 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from packaging.version import Version
+
 from . import __version__
 from ._compat.builtins import ExceptionGroup
 from ._logging import logger
 from ._shutil import Run
-from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
+from .errors import (
+    CMakeConfigError,
+    CMakeNotFoundError,
+    CMakeVersionError,
+    FailedLiveProcessError,
+)
 from .file_api.query import stateless_query
 from .file_api.reply import load_reply_dir
 from .program_search import Program, best_program, get_cmake_program, get_cmake_programs
@@ -25,7 +32,6 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.specifiers import SpecifierSet
-    from packaging.version import Version
 
     from ._compat.typing import Self
     from .file_api.model.index import Index
@@ -242,11 +248,18 @@ class CMaker:
     def configure(
         self,
         *,
+        preset: str | None = None,
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
     ) -> None:
         _cmake_args = self._compute_cmake_args(defines or {})
         all_args = [*_cmake_args, *cmake_args]
+
+        if preset:
+            if self.cmake.version < Version("3.19"):
+                msg = f"CMake version ({self.cmake.version}) is too old to support presets."
+                raise CMakeVersionError(msg)
+            all_args.append(f"--preset={preset}")
 
         gen = self.get_generator(*all_args)
         if gen:
