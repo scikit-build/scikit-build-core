@@ -6,7 +6,6 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from conftest import PackageInfo, process_package
 
 
 @pytest.mark.compile
@@ -54,36 +53,22 @@ def test_navigate_editable(isolated, isolate, py_pkg):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("isolate", {False}, indirect=True)
-def test_cython_pxd(monkeypatch, tmp_path, editable, isolated, isolate):
+@pytest.mark.parametrize(
+    "multiple_packages",
+    [["cython_pxd_editable/pkg1", "cython_pxd_editable/pkg2"]],
+    indirect=True,
+)
+def test_cython_pxd(multiple_packages, editable, isolated, isolate):
     isolated.install("cython")
 
-    package1 = PackageInfo(
-        "cython_pxd_editable/pkg1",
-    )
-    tmp_path1 = tmp_path / "pkg1"
-    tmp_path1.mkdir()
-    process_package(package1, tmp_path1, monkeypatch)
-
-    isolated.install(
-        "-v",
-        *isolate.flags,
-        *editable.flags,
-        ".",
-    )
-
-    package2 = PackageInfo(
-        "cython_pxd_editable/pkg2",
-    )
-    tmp_path2 = tmp_path / "pkg2"
-    tmp_path2.mkdir()
-    process_package(package2, tmp_path2, monkeypatch)
-
-    isolated.install(
-        "-v",
-        *isolate.flags,
-        *editable.flags,
-        ".",
-    )
+    # install the packages in order with one dependent on the other
+    for package in multiple_packages:
+        isolated.install(
+            "-v",
+            *isolate.flags,
+            *editable.flags,
+            package.name,
+        )
 
 
 @pytest.mark.compile

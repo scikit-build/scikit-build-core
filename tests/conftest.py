@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+from collections.abc import Iterable
 from importlib import metadata
 from pathlib import Path
 from typing import Any, Literal, overload
@@ -207,9 +208,12 @@ class PackageInfo:
 
 
 def process_package(
-    package: PackageInfo, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    package: PackageInfo,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    pkg_path: str = "pkg",
 ) -> None:
-    package_dir = tmp_path / "pkg"
+    package_dir = tmp_path / pkg_path
     shutil.copytree(DIR / "packages" / package.name, package_dir)
     monkeypatch.chdir(package_dir)
 
@@ -224,6 +228,22 @@ def package(
     assert (DIR / "packages" / package.name).exists()
     process_package(package, tmp_path, monkeypatch)
     return package
+
+
+@pytest.fixture
+def multiple_packages(
+    request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> list[PackageInfo]:
+    package_names = request.param
+    assert isinstance(package_names, Iterable)
+    packages = []
+    for pkg_name in package_names:
+        pkg = PackageInfo(pkg_name)
+        assert (DIR / "packages" / pkg.name).exists()
+        process_package(pkg, tmp_path, monkeypatch, pkg_path=pkg.name)
+        packages.append(pkg)
+    monkeypatch.chdir(tmp_path)
+    return packages
 
 
 @pytest.fixture
