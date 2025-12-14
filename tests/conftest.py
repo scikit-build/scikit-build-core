@@ -200,6 +200,18 @@ def process_package(
 
 
 @pytest.fixture
+def package(
+    request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> PackageInfo:
+    pkg_name = request.param
+    assert isinstance(pkg_name, str)
+    package = PackageInfo(pkg_name)
+    assert (DIR / "packages" / package.name).exists()
+    process_package(package, tmp_path, monkeypatch)
+    return package
+
+
+@pytest.fixture
 def package_simple_pyproject_ext(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> PackageInfo:
