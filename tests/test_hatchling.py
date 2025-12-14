@@ -10,7 +10,8 @@ pytest.importorskip("hatchling")
 
 @pytest.mark.network
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_hatchling")
+@pytest.mark.parametrize("package", {"hatchling"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
@@ -34,7 +35,8 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_hatchling")
+@pytest.mark.parametrize("package", {"hatchling"}, indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )

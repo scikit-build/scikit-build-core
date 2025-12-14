@@ -14,7 +14,7 @@ from conftest import PackageInfo, VEnv, process_package
 @pytest.mark.integration
 @pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "notisolated"])
 @pytest.mark.parametrize(
-    "package",
+    "py_pkg",
     [
         pytest.param(
             True,
@@ -24,17 +24,18 @@ from conftest import PackageInfo, VEnv, process_package
         pytest.param(False, id="datafolder"),
     ],
 )
-@pytest.mark.usefixtures("navigate_editable")
+@pytest.mark.parametrize("package", {"navigate_editable"}, indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.xfail(
     sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
 )
-def test_navigate_editable(isolated, isolate, package):
+def test_navigate_editable(isolated, isolate, py_pkg):
     isolate_args = ["--no-build-isolation"] if not isolate else []
     isolated.install("pip>=23")
     if not isolate:
         isolated.install("scikit-build-core")
 
-    if package:
+    if py_pkg:
         init_py = Path("python/shared_pkg/data/__init__.py")
         init_py.touch()
 
@@ -114,7 +115,8 @@ def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_simplest_c")
+@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_install_dir(isolated):
     isolated.install("pip>=23")
     isolated.install("scikit-build-core")

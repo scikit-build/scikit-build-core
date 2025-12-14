@@ -17,7 +17,8 @@ pytestmark = pytest.mark.setuptools
     reason="Cygwin fails here with ld errors",
     strict=False,
 )
-@pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.parametrize("package", {"simple_setuptools_ext"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep518_wheel(isolated, tmp_path: Path):
     dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
@@ -55,7 +56,8 @@ def test_pep518_wheel(isolated, tmp_path: Path):
     reason="Cygwin fails here with ld errors",
     strict=False,
 )
-@pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.parametrize("package", {"simple_setuptools_ext"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")
 

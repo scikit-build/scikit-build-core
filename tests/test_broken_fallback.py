@@ -11,7 +11,8 @@ from scikit_build_core.build import (
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("broken_fallback")
+@pytest.mark.parametrize("package", {"broken_fallback"}, indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize("broken_define", ["BROKEN_CMAKE", "BROKEN_CODE"])
 def test_broken_code(
     broken_define: str, capfd: pytest.CaptureFixture[str], tmp_path: Path
@@ -39,7 +40,8 @@ def test_broken_code(
         assert "CMake build failed" in out
 
 
-@pytest.mark.usefixtures("broken_fallback")
+@pytest.mark.parametrize("package", {"broken_fallback"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_fail_setting(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ):
@@ -54,7 +56,8 @@ def test_fail_setting(
     assert "fail setting was enabled" in err
 
 
-@pytest.mark.usefixtures("broken_fallback")
+@pytest.mark.parametrize("package", {"broken_fallback"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_fail_setting_msg(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ):

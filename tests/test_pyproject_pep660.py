@@ -22,7 +22,8 @@ def editable_mode(request: pytest.FixtureRequest) -> str:
     strict=False,
     reason="No idea why this fails on Cygwin",
 )
-@pytest.mark.usefixtures("package_simplest_c")
+@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep660_wheel(editable_mode: str, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_editable(str(dist), {"editable.mode": editable_mode})
@@ -54,7 +55,8 @@ def test_pep660_wheel(editable_mode: str, tmp_path: Path):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "not_isolated"])
-@pytest.mark.usefixtures("package_simplest_c")
+@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep660_pip_isolated(isolated, isolate, editable_mode: str):
     isolate_args = ["--no-build-isolation"] if not isolate else []
     isolated.install("pip>=23")

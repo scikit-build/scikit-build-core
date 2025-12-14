@@ -15,7 +15,8 @@ from scikit_build_core.build.metadata import get_standard_metadata
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 
-@pytest.mark.usefixtures("package_simplest_c")
+@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize("editable", [True, False], ids=["editable", "wheel"])
 def test_prepare_metadata_for_build(fp, editable):
     # Old versions of packaging call mac_ver via subprocess
