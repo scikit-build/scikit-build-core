@@ -153,6 +153,21 @@ class VEnv:
         isolated_flags = "" if isolated else ["--no-build-isolation"]
         self.module("pip", "install", *isolated_flags, *args)
 
+    def prepare_no_build_isolation(self) -> None:
+        if not self.wheelhouse:
+            msg = "Wheelhouse was not setup."
+            raise ValueError(msg)
+
+        ninja = [
+            "ninja" for f in self.wheelhouse.iterdir() if f.name.startswith("ninja-")
+        ]
+        cmake = [
+            "cmake" for f in self.wheelhouse.iterdir() if f.name.startswith("cmake-")
+        ]
+
+        self.install("pip>23")
+        self.install("scikit-build-core", *ninja, *cmake)
+
 
 @pytest.fixture
 def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
