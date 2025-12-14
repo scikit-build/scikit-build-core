@@ -241,6 +241,55 @@ def package_simple_pyproject_ext(
     return package
 
 
+@dataclasses.dataclass(frozen=True)
+class Isolate:
+    state: bool
+    flags: list[str]
+
+
+@pytest.fixture(params=[True, False], ids=["isolated", "not_isolated"])
+def isolate(request: pytest.FixtureRequest, isolated: VEnv) -> Isolate:
+    isolate_request = request.param
+    assert isinstance(isolate_request, bool)
+    if not isolate_request:
+        isolated.prepare_no_build_isolation()
+    flags = []
+    if not isolate_request:
+        flags.append("--no-build-isolation")
+    return Isolate(
+        state=isolate_request,
+        flags=flags,
+    )
+
+
+@dataclasses.dataclass(frozen=True)
+class Editable:
+    mode: str | None
+    config_settings: list[str]
+
+    @property
+    def flags(self) -> list[str]:
+        if not self.mode:
+            return self.config_settings
+        return [*self.config_settings, "-e"]
+
+
+@pytest.fixture(params=[pytest.param(None, id="not_editable"), "redirect", "inplace"])
+def editable(request: pytest.FixtureRequest) -> Editable:
+    editable_mode = request.param
+    assert editable_mode is None or isinstance(editable_mode, str)
+    config_settings = []
+    if editable_mode:
+        config_settings.append(f"--config-settings=editable.mode={editable_mode}")
+        if editable_mode != "inplace":
+            build_dir = "build/{wheel_tag}"
+            config_settings.append(f"--config-settings=build-dir={build_dir}")
+    return Editable(
+        mode=editable_mode,
+        config_settings=config_settings,
+    )
+
+
 def which_mock(name: str) -> str | None:
     if name in {"ninja", "ninja-build", "cmake3", "samu", "gmake", "make"}:
         return None
