@@ -185,6 +185,7 @@ def virtualenv(tmp_path: Path) -> VEnv:
 @dataclasses.dataclass(frozen=True)
 class PackageInfo:
     name: str
+    workdir: Path
     sdist_hash38: str | None = None
     sdist_hash39: str | None = None
     sdist_dated_hash39: str | None = None
@@ -209,55 +210,59 @@ class PackageInfo:
 
 def process_package(
     package: PackageInfo,
-    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    pkg_path: str = "pkg",
 ) -> None:
-    package_dir = tmp_path / pkg_path
-    shutil.copytree(DIR / "packages" / package.name, package_dir)
-    monkeypatch.chdir(package_dir)
+    pkg_src = DIR / "packages" / package.name
+    assert pkg_src.exists()
+    shutil.copytree(pkg_src, package.workdir, dirs_exist_ok=True)
+    monkeypatch.chdir(package.workdir)
 
 
 @pytest.fixture
 def package(
-    request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> PackageInfo:
     pkg_name = request.param
     assert isinstance(pkg_name, str)
-    package = PackageInfo(pkg_name)
+    package = PackageInfo(pkg_name, tmp_path_factory.mktemp("pkg"))
     assert (DIR / "packages" / package.name).exists()
-    process_package(package, tmp_path, monkeypatch)
+    process_package(package, monkeypatch)
     return package
 
 
 @pytest.fixture
 def multiple_packages(
-    request: pytest.FixtureRequest, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> list[PackageInfo]:
     package_names = request.param
     assert isinstance(package_names, Iterable)
     packages = []
     for pkg_name in package_names:
-        pkg = PackageInfo(pkg_name)
-        assert (DIR / "packages" / pkg.name).exists()
-        process_package(pkg, tmp_path, monkeypatch, pkg_path=pkg.name)
+        pkg = PackageInfo(pkg_name, tmp_path_factory.mktemp("pkg"))
+        process_package(pkg, monkeypatch)
         packages.append(pkg)
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path_factory.getbasetemp())
     return packages
 
 
 @pytest.fixture
 def package_simple_pyproject_ext(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
+        tmp_path_factory.mktemp("pkg"),
         "71b4e95854ef8d04886758d24d18fe55ebe63648310acf58c7423387cca73508",
         "ed930179fbf5adc2e71a64a6f9686c61fdcce477c85bc94dd51598641be886a7",
         "0178462b64b4eb9c41ae70eb413a9cc111c340e431b240af1b218fe81b0c2ecb",
         "de79895a9d5c2112257715214ab419d3635e841716655e8a55390e5d52445819",
     )
-    process_package(package, tmp_path, monkeypatch)
+    process_package(package, monkeypatch)
     return package
 
 

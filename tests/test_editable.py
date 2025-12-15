@@ -67,7 +67,7 @@ def test_cython_pxd(multiple_packages, editable, isolated, isolate):
             "-v",
             *isolate.flags,
             *editable.flags,
-            package.name,
+            str(package.workdir),
         )
 
 
