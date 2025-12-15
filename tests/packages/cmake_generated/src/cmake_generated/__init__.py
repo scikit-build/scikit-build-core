@@ -58,7 +58,6 @@ def get_namespace_generated_data():
 
 
 def ctypes_function():
-    # Question: can anyone think of a clever way to embed the actual library name in some other package metadata?
     if sys.platform == "win32":
         lib_suffix = "dll"
     else:

@@ -33,10 +33,6 @@ def _setup_package_for_editable_layout_tests(
     if editable_mode != "inplace":
         config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
 
-    build_isolation_flags = []
-    if not build_isolation:
-        build_isolation_flags.append("--no-build-isolation")
-
     # Use a context so that we only change into the directory up until the point where
     # we run the editable install. We do not want to be in that directory when importing
     # to avoid importing the source directory instead of the installed package.
@@ -58,14 +54,15 @@ def _setup_package_for_editable_layout_tests(
         ]
 
         isolated.install("pip>23")
-        isolated.install("scikit-build-core", *ninja, *cmake)
+        if not build_isolation:
+            isolated.install("scikit-build-core", *ninja, *cmake)
 
         isolated.install(
             "-v",
             *config_mode_flags,
-            *build_isolation_flags,
             *editable_flag,
             ".",
+            isolated=build_isolation,
         )
 
 
