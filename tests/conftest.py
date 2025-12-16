@@ -20,6 +20,11 @@ if sys.version_info < (3, 11):
 else:
     import tomllib
 
+if sys.version_info < (3, 10):
+    from typing_extensions import TypeGuard
+else:
+    from typing import TypeGuard
+
 
 import pytest
 from packaging.requirements import Requirement
@@ -287,9 +292,13 @@ def isolate(request: pytest.FixtureRequest, isolated: VEnv) -> Isolate:
     )
 
 
+def is_editable_mode(maybe_mode: str) -> TypeGuard[Literal["redirect", "inplace"]]:
+    return maybe_mode in {"redirect", "inplace"}
+
+
 @dataclasses.dataclass(frozen=True)
 class Editable:
-    mode: str | None
+    mode: Literal["redirect", "inplace"] | None
     config_settings: list[str]
 
     @property
@@ -302,7 +311,7 @@ class Editable:
 @pytest.fixture(params=[pytest.param(None, id="not_editable"), "redirect", "inplace"])
 def editable(request: pytest.FixtureRequest) -> Editable:
     editable_mode = request.param
-    assert editable_mode is None or isinstance(editable_mode, str)
+    assert editable_mode is None or is_editable_mode(editable_mode)
     config_settings = []
     if editable_mode:
         config_settings.append(f"--config-settings=editable.mode={editable_mode}")
