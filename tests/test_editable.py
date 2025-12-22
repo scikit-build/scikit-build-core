@@ -22,7 +22,7 @@ import pytest
         pytest.param(False, id="datafolder"),
     ],
 )
-@pytest.mark.parametrize("package", {"navigate_editable"}, indirect=True)
+@pytest.mark.parametrize("package", ["navigate_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.xfail(
     sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
@@ -74,7 +74,7 @@ def test_cython_pxd(multiple_packages, editable, isolated, isolate):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
 @pytest.mark.parametrize("isolate", {False}, indirect=True)
 @pytest.mark.usefixtures("package")
 def test_install_dir(isolated, isolate):
@@ -123,7 +123,7 @@ def test_install_dir(isolated, isolate):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize("package", {"importlib_editable"}, indirect=True)
+@pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_direct_import(editable, isolated):
     # TODO: Investigate these failures
@@ -144,7 +144,7 @@ def test_direct_import(editable, isolated):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize("package", {"importlib_editable"}, indirect=True)
+@pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_importlib_resources(editable, isolated):
     if sys.version_info < (3, 9):

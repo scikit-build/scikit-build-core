@@ -7,7 +7,7 @@ from scikit_build_core.build import build_wheel
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.parametrize("package", {"simple_purelib_package"}, indirect=True)
+@pytest.mark.parametrize("package", ["simple_purelib_package"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"

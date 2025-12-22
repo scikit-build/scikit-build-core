@@ -99,7 +99,7 @@ def mock_entry_points(monkeypatch):
     monkeypatch.setattr(importlib, "import_module", special_loader)
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("mock_entry_points", "package")
 def test_dynamic_metadata():
     with Path("pyproject.toml").open("rb") as ft:
@@ -116,7 +116,7 @@ def test_dynamic_metadata():
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_plugin_metadata():
     reason_msg = (
@@ -159,7 +159,7 @@ def test_plugin_metadata():
     assert metadata.optional_dependencies == {"dev": [Requirement("fancy==0.1.0")]}
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_faulty_metadata():
     reason_msg = "install hatch-fancy-pypi-readme to test the dynamic metadata plugins"
@@ -176,7 +176,7 @@ def test_faulty_metadata():
         get_standard_metadata(pyproject, settings)
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_local_plugin_metadata():
     with Path("local_pyproject.toml").open("rb") as ft:
@@ -190,7 +190,7 @@ def test_local_plugin_metadata():
     assert metadata.version == Version("3.2.1")
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_warn_metadata():
     with Path("warn_project.toml").open("rb") as ft:
@@ -204,7 +204,7 @@ def test_warn_metadata():
         get_standard_metadata(pyproject, settings)
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_fail_experimental_metadata():
     with Path("warn_project.toml").open("rb") as ft:
@@ -219,7 +219,7 @@ def test_fail_experimental_metadata():
     assert value == 7
 
 
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("mock_entry_points", "package")
 def test_dual_metadata():
     with Path("dual_project.toml").open("rb") as ft:
@@ -246,7 +246,7 @@ def test_dual_metadata():
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("mock_entry_points", "package")
 def test_pep517_wheel(virtualenv, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
@@ -363,7 +363,7 @@ def test_regex_remove(
 
 
 @pytest.mark.parametrize("override", [None, "env", "sdist"])
-@pytest.mark.parametrize("package", {"dynamic_metadata"}, indirect=True)
+@pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_build_requires_field(override, monkeypatch) -> None:
     shutil.copy("build_requires_project.toml", "pyproject.toml")

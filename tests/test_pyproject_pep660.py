@@ -16,7 +16,7 @@ from scikit_build_core.build import build_editable
     strict=False,
     reason="No idea why this fails on Cygwin",
 )
-@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
 @pytest.mark.parametrize("editable", ["redirect", "inplace"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_pep660_wheel(editable, tmp_path: Path):
@@ -49,7 +49,7 @@ def test_pep660_wheel(editable, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize("package", {"simplest_c"}, indirect=True)
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
 @pytest.mark.parametrize("editable", ["redirect", "inplace"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_pep660_pip_isolated(isolated, isolate, editable):
