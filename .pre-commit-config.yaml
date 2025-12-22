@@ -87,7 +87,7 @@ repos:
           - rich
           - setuptools-scm
           - tomli
-          - types-setuptools>=70.1
+          - "types-setuptools>=70.1,!=80.9.0.20251221"
 
   - repo: https://github.com/henryiii/check-sdist
     rev: "v1.3.0"
