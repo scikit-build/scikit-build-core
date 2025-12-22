@@ -51,6 +51,8 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
             f"{BASE}",
         ],
         check=True,
+        capture_output=True,
+        text=True,
     )
     packages = [
         "build",
