@@ -69,7 +69,8 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
 @pytest.mark.network
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_sdist_config")
+@pytest.mark.parametrize("package", ["sdist_config"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: Path):
     cleanup_overwrite.write_text("set(MY_VERSION fiddlesticks)")
 
@@ -114,7 +115,8 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: P
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_sdist_config")
+@pytest.mark.parametrize("package", ["sdist_config"], indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )

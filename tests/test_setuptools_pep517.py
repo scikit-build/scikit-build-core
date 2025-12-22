@@ -13,7 +13,8 @@ pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
 
 
-@pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep517_sdist(tmp_path: Path):
     correct_metadata = textwrap.dedent(
         """\
@@ -68,7 +69,8 @@ def test_pep517_sdist(tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
-@pytest.mark.usefixtures("package_simple_setuptools_ext")
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
@@ -97,7 +99,8 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
     assert add.strip() == "3"
 
 
-@pytest.mark.usefixtures("package_toml_setuptools_ext")
+@pytest.mark.parametrize("package", ["toml_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
@@ -148,7 +151,8 @@ def test_toml_sdist(tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_toml_setuptools_ext")
+@pytest.mark.parametrize("package", ["toml_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
@@ -182,7 +186,8 @@ def test_toml_wheel(virtualenv, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_mixed_setuptools")
+@pytest.mark.parametrize("package", ["mixed_setuptools"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_mixed_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))

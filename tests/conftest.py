@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+from collections.abc import Iterable
 from importlib import metadata
 from pathlib import Path
 from typing import Any, Literal, overload
@@ -18,6 +19,11 @@ if sys.version_info < (3, 11):
     import tomli as tomllib
 else:
     import tomllib
+
+if sys.version_info < (3, 10):
+    from typing_extensions import TypeGuard
+else:
+    from typing import TypeGuard
 
 
 import pytest
@@ -153,6 +159,21 @@ class VEnv:
         isolated_flags = "" if isolated else ["--no-build-isolation"]
         self.module("pip", "install", *isolated_flags, *args)
 
+    def prepare_no_build_isolation(self) -> None:
+        if not self.wheelhouse:
+            msg = "Wheelhouse was not setup."
+            raise ValueError(msg)
+
+        ninja = [
+            "ninja" for f in self.wheelhouse.iterdir() if f.name.startswith("ninja-")
+        ]
+        cmake = [
+            "cmake" for f in self.wheelhouse.iterdir() if f.name.startswith("cmake-")
+        ]
+
+        self.install("pip>23")
+        self.install("scikit-build-core", *ninja, *cmake)
+
 
 @pytest.fixture
 def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
@@ -169,6 +190,7 @@ def virtualenv(tmp_path: Path) -> VEnv:
 @dataclasses.dataclass(frozen=True)
 class PackageInfo:
     name: str
+    workdir: Path
     sdist_hash38: str | None = None
     sdist_hash39: str | None = None
     sdist_dated_hash39: str | None = None
@@ -192,158 +214,114 @@ class PackageInfo:
 
 
 def process_package(
-    package: PackageInfo, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    package: PackageInfo,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    package_dir = tmp_path / "pkg"
-    shutil.copytree(DIR / "packages" / package.name, package_dir)
-    monkeypatch.chdir(package_dir)
+    pkg_src = DIR / "packages" / package.name
+    assert pkg_src.exists()
+    shutil.copytree(pkg_src, package.workdir, dirs_exist_ok=True)
+    monkeypatch.chdir(package.workdir)
+
+
+@pytest.fixture
+def package(
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> PackageInfo:
+    pkg_name = request.param
+    assert isinstance(pkg_name, str)
+    package = PackageInfo(pkg_name, tmp_path_factory.mktemp("pkg"))
+    assert (DIR / "packages" / package.name).exists()
+    process_package(package, monkeypatch)
+    return package
+
+
+@pytest.fixture
+def multiple_packages(
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> list[PackageInfo]:
+    package_names = request.param
+    assert isinstance(package_names, Iterable)
+    packages = []
+    for pkg_name in package_names:
+        pkg = PackageInfo(pkg_name, tmp_path_factory.mktemp("pkg"))
+        process_package(pkg, monkeypatch)
+        packages.append(pkg)
+    monkeypatch.chdir(tmp_path_factory.getbasetemp())
+    return packages
 
 
 @pytest.fixture
 def package_simple_pyproject_ext(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> PackageInfo:
     package = PackageInfo(
         "simple_pyproject_ext",
+        tmp_path_factory.mktemp("pkg"),
         "71b4e95854ef8d04886758d24d18fe55ebe63648310acf58c7423387cca73508",
         "ed930179fbf5adc2e71a64a6f9686c61fdcce477c85bc94dd51598641be886a7",
         "0178462b64b4eb9c41ae70eb413a9cc111c340e431b240af1b218fe81b0c2ecb",
         "de79895a9d5c2112257715214ab419d3635e841716655e8a55390e5d52445819",
     )
-    process_package(package, tmp_path, monkeypatch)
+    process_package(package, monkeypatch)
     return package
 
 
-@pytest.fixture
-def package_simple_pyproject_script_with_flags(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo(
-        "simple_pyproject_script_with_flags",
+@dataclasses.dataclass(frozen=True)
+class Isolate:
+    state: bool
+    flags: list[str]
+
+
+@pytest.fixture(params=[True, False], ids=["isolated", "not_isolated"])
+def isolate(request: pytest.FixtureRequest, isolated: VEnv) -> Isolate:
+    isolate_request = request.param
+    assert isinstance(isolate_request, bool)
+    if not isolate_request:
+        isolated.prepare_no_build_isolation()
+    flags = []
+    if not isolate_request:
+        flags.append("--no-build-isolation")
+    return Isolate(
+        state=isolate_request,
+        flags=flags,
     )
-    process_package(package, tmp_path, monkeypatch)
-    return package
 
 
-@pytest.fixture
-def package_simple_pyproject_source_dir(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo(
-        "simple_pyproject_source_dir",
+def is_editable_mode(maybe_mode: str) -> TypeGuard[Literal["redirect", "inplace"]]:
+    return maybe_mode in {"redirect", "inplace"}
+
+
+@dataclasses.dataclass(frozen=True)
+class Editable:
+    mode: Literal["redirect", "inplace"] | None
+    config_settings: list[str]
+
+    @property
+    def flags(self) -> list[str]:
+        if not self.mode:
+            return self.config_settings
+        return [*self.config_settings, "-e"]
+
+
+@pytest.fixture(params=[pytest.param(None, id="not_editable"), "redirect", "inplace"])
+def editable(request: pytest.FixtureRequest) -> Editable:
+    editable_mode = request.param
+    assert editable_mode is None or is_editable_mode(editable_mode)
+    config_settings = []
+    if editable_mode:
+        config_settings.append(f"--config-settings=editable.mode={editable_mode}")
+        if editable_mode != "inplace":
+            build_dir = "build/{wheel_tag}"
+            config_settings.append(f"--config-settings=build-dir={build_dir}")
+    return Editable(
+        mode=editable_mode,
+        config_settings=config_settings,
     )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_simple_setuptools_ext(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo("simple_setuptools_ext")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_toml_setuptools_ext(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo("toml_setuptools_ext")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_mixed_setuptools(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo("mixed_setuptools")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_filepath_pure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo("filepath_pure")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_dynamic_metadata(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo("dynamic_metadata")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_hatchling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
-    package = PackageInfo("hatchling")
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_simplest_c(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
-    package = PackageInfo(
-        "simplest_c",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def navigate_editable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
-    package = PackageInfo(
-        "navigate_editable",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def broken_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
-    package = PackageInfo(
-        "broken_fallback",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_sdist_config(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo(
-        "sdist_config",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_simple_purelib_package(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> PackageInfo:
-    package = PackageInfo(
-        "simple_purelib_package",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
-
-
-@pytest.fixture
-def package_pep639_pure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> PackageInfo:
-    package = PackageInfo(
-        "pep639_pure",
-    )
-    process_package(package, tmp_path, monkeypatch)
-    return package
 
 
 def which_mock(name: str) -> str | None:
