@@ -328,7 +328,7 @@ def test_pep517_wheel_time_hash(monkeypatch, tmp_path: Path):
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_prepare_metdata_for_build_wheel():
+def test_prepare_metadata_for_build_wheel():
     metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
         "Metadata-Version": "2.2",
@@ -346,7 +346,7 @@ def test_prepare_metdata_for_build_wheel():
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
+def test_prepare_metadata_for_build_wheel_by_hand(tmp_path):
     mddir = tmp_path / "dist"
     mddir.mkdir()
     out = prepare_metadata_for_build_wheel(str(mddir), {})
