@@ -64,3 +64,6 @@ by setting `_PYTHON_SYSCONFIGDATA_NAME`. This causes values like `SOABI` and
 This is unfortunately incorrectly stripped from the cmake wrapper pyodide uses,
 so FindPython will report the wrong values, but pyodide-build will rename the
 .so's afterwards.
+
+pyodide-build will also set `_PYTHON_HOST_PLATFORM` to the target Pyodide
+platform, so scikit-build-core can use that to compute the correct wheel name.
