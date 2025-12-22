@@ -26,6 +26,7 @@ else:
     from typing import TypeGuard
 
 
+import download_wheels
 import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -36,9 +37,11 @@ BASE = DIR.parent
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
-@pytest.fixture(scope="session")
-def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    wheelhouse = tmp_path_factory.mktemp("wheelhouse")
+def pytest_configure(config) -> None:
+    if hasattr(config, "workerinput"):
+        return  # Running in pytest-xdist worker
+
+    wheelhouse = config.cache.mkdir("wheelhouse")
 
     subprocess.run(
         [
@@ -46,6 +49,7 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
             "-m",
             "pip",
             "wheel",
+            "--no-build-isolation",
             "--wheel-dir",
             str(wheelhouse),
             f"{BASE}",
@@ -54,39 +58,9 @@ def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
         capture_output=True,
         text=True,
     )
-    packages = [
-        "build",
-        "cython",
-        "hatchling",
-        "pip",
-        "setuptools",
-        "virtualenv",
-        "wheel",
-    ]
 
-    if importlib.util.find_spec("cmake") is not None:
-        packages.append("cmake")
-
-    if importlib.util.find_spec("ninja") is not None:
-        packages.append("ninja")
-
-    if importlib.util.find_spec("pybind11") is not None:
-        packages.append("pybind11")
-
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "download",
-            "-q",
-            "-d",
-            str(wheelhouse),
-            *packages,
-        ],
-        check=True,
-    )
-    return wheelhouse
+    if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
+        download_wheels.prepare(wheelhouse)
 
 
 class VEnv:
@@ -180,9 +154,10 @@ class VEnv:
 
 
 @pytest.fixture
-def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
+def isolated(tmp_path: Path, pytestconfig: pytest.Config) -> VEnv:
     path = tmp_path / "venv"
-    return VEnv(path, wheelhouse=pep518_wheelhouse)
+    wheelhouse = pytestconfig.cache.mkdir("wheelhouse").resolve()
+    return VEnv(path, wheelhouse=wheelhouse)
 
 
 @pytest.fixture
@@ -372,7 +347,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.network)
 
 
-def pytest_report_header() -> str:
+def pytest_report_header(config: pytest.Config) -> str:
     with BASE.joinpath("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
     project = pyproject.get("project", {})
@@ -384,6 +359,9 @@ def pytest_report_header() -> str:
     interesting_packages = {Requirement(p).name for p in pkgs}
     interesting_packages.add("pip")
 
+    wheelhouse = config.cache.mkdir("wheelhouse")
+    pkgs = wheelhouse.glob("*.whl")
+
     valid = []
     for package in sorted(interesting_packages):
         with contextlib.suppress(ModuleNotFoundError):
@@ -392,5 +370,6 @@ def pytest_report_header() -> str:
     lines = [
         f"installed packages of interest: {reqs}",
         f"sysconfig platform: {sysconfig.get_platform()}",
+        f"wheelhouse: {' '.join('-'.join(p.name.split('-')[:2]) for p in pkgs)}",
     ]
     return "\n".join(lines)
