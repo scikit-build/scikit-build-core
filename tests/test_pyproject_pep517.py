@@ -199,7 +199,7 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(
@@ -252,7 +252,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["simple_pyproject_source_dir"], indirect=True)
-@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("package", "pybind11")
 def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), config_settings={"skbuild.wheel.build-tag": "1foo"})
