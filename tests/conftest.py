@@ -55,8 +55,6 @@ def pytest_configure(config) -> None:
             f"{BASE}",
         ],
         check=True,
-        capture_output=True,
-        text=True,
     )
 
     if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):

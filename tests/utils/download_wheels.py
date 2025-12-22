@@ -4,8 +4,8 @@
 
 """
 Download wheels into the pytest cache. Must be run from the pytest directory
-(project root, usually). If run manually via a script runner, will always
-include cmake/ninja. If run in an environment, requires pip.
+(project root, usually). If run in an environment, requires pip. Only downloads
+pybind11, ninja, or cmake if those are in the environment already.
 """
 
 import importlib.util
@@ -47,8 +47,6 @@ def prepare(wheelhouse: Path) -> None:
             *WHEELS,
         ],
         check=True,
-        capture_output=True,
-        text=True,
     )
     print(f"Downloaded wheels to {wheelhouse}")
 

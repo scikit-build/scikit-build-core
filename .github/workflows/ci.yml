@@ -223,7 +223,7 @@ jobs:
         run: python3.13t -m venv /venv
 
       - name: Install deps
-        run: /venv/bin/pip install -e . --group=test ninja
+        run: /venv/bin/pip install -e . --group=test ninja pybind11
 
       - name: Test package
         run: /venv/bin/pytest
