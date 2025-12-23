@@ -13,25 +13,28 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+EXTRA = []
+
+if importlib.util.find_spec("cmake") is not None:
+    EXTRA.append("cmake")
+
+if importlib.util.find_spec("ninja") is not None:
+    EXTRA.append("ninja")
+
+if importlib.util.find_spec("pybind11") is not None:
+    EXTRA.append("pybind11")
+
 WHEELS = [
     "build",
     "cython",
     "hatchling",
     "pip",
-    "pybind11",
     "setuptools",
     "virtualenv",
     "wheel",
+    *EXTRA,
 ]
-
-if importlib.util.find_spec("cmake") is not None:
-    WHEELS.append("cmake")
-
-if importlib.util.find_spec("ninja") is not None:
-    WHEELS.append("ninja")
-
-if importlib.util.find_spec("pybind11") is not None:
-    WHEELS.append("pybind11")
 
 
 def prepare(wheelhouse: Path) -> None:

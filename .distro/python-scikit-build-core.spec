@@ -22,7 +22,6 @@ BuildRequires:  ninja-build
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
 BuildRequires:  git
-BuildRequires:  python3-hatch-vcs
 
 %global _description %{expand:
 A next generation Python CMake adapter and Python API for plugins

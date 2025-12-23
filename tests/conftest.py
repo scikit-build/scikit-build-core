@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 import virtualenv as _virtualenv
+from filelock import FileLock
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -37,28 +38,34 @@ BASE = DIR.parent
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
-def pytest_configure(config) -> None:
-    if hasattr(config, "workerinput"):
-        return  # Running in pytest-xdist worker
+@pytest.fixture(scope="session")
+def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
+    wheelhouse = pytestconfig.cache.mkdir("wheelhouse")
 
-    wheelhouse = config.cache.mkdir("wheelhouse")
+    main_lock = FileLock(wheelhouse / "main.lock")
+    with main_lock:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "wheel",
+                "--wheel-dir",
+                str(wheelhouse),
+                "--no-build-isolation",
+                f"{BASE}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            "--no-build-isolation",
-            "--wheel-dir",
-            str(wheelhouse),
-            f"{BASE}",
-        ],
-        check=True,
-    )
+    wheels_lock = FileLock(wheelhouse / "wheels.lock")
+    with wheels_lock:
+        if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
+            download_wheels.prepare(wheelhouse)
 
-    if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
-        download_wheels.prepare(wheelhouse)
+    return wheelhouse
 
 
 class VEnv:
@@ -152,10 +159,9 @@ class VEnv:
 
 
 @pytest.fixture
-def isolated(tmp_path: Path, pytestconfig: pytest.Config) -> VEnv:
+def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
     path = tmp_path / "venv"
-    wheelhouse = pytestconfig.cache.mkdir("wheelhouse").resolve()
-    return VEnv(path, wheelhouse=wheelhouse)
+    return VEnv(path, wheelhouse=pep518_wheelhouse)
 
 
 @pytest.fixture
@@ -345,7 +351,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             item.add_marker(pytest.mark.network)
 
 
-def pytest_report_header(config: pytest.Config) -> str:
+def pytest_report_header() -> str:
     with BASE.joinpath("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
     project = pyproject.get("project", {})
@@ -357,9 +363,6 @@ def pytest_report_header(config: pytest.Config) -> str:
     interesting_packages = {Requirement(p).name for p in pkgs}
     interesting_packages.add("pip")
 
-    wheelhouse = config.cache.mkdir("wheelhouse")
-    pkgs = wheelhouse.glob("*.whl")
-
     valid = []
     for package in sorted(interesting_packages):
         with contextlib.suppress(ModuleNotFoundError):
@@ -368,6 +371,5 @@ def pytest_report_header(config: pytest.Config) -> str:
     lines = [
         f"installed packages of interest: {reqs}",
         f"sysconfig platform: {sysconfig.get_platform()}",
-        f"wheelhouse: {' '.join('-'.join(p.name.split('-')[:2]) for p in pkgs)}",
     ]
     return "\n".join(lines)

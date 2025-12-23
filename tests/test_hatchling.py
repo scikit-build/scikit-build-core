@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+import download_wheels
+
 pytest.importorskip("hatchling")
 
 
@@ -42,7 +44,7 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
 )
 def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
-    isolated.install("build[virtualenv]", "scikit-build-core", "hatchling", "pybind11")
+    isolated.install("build[virtualenv]", "scikit-build-core", "hatchling", *download_wheels.EXTRA)
     isolated.module("build", "--no-isolation", f"--outdir={dist}", *build_args)
     ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
