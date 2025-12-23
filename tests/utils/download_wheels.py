@@ -13,7 +13,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 EXTRA = []
 
 if importlib.util.find_spec("cmake") is not None:
