@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 import virtualenv as _virtualenv
+from filelock import FileLock
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -26,6 +27,7 @@ else:
     from typing import TypeGuard
 
 
+import download_wheels
 import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -37,53 +39,32 @@ VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
 @pytest.fixture(scope="session")
-def pep518_wheelhouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    wheelhouse = tmp_path_factory.mktemp("wheelhouse")
+def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
+    wheelhouse = pytestconfig.cache.mkdir("wheelhouse")
 
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            "--wheel-dir",
-            str(wheelhouse),
-            f"{BASE}",
-        ],
-        check=True,
-    )
-    packages = [
-        "build",
-        "cython",
-        "hatchling",
-        "pip",
-        "setuptools",
-        "virtualenv",
-        "wheel",
-    ]
+    main_lock = FileLock(wheelhouse / "main.lock")
+    with main_lock:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "wheel",
+                "--wheel-dir",
+                str(wheelhouse),
+                "--no-build-isolation",
+                f"{BASE}",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
-    if importlib.util.find_spec("cmake") is not None:
-        packages.append("cmake")
+    wheels_lock = FileLock(wheelhouse / "wheels.lock")
+    with wheels_lock:
+        if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
+            download_wheels.prepare(wheelhouse)
 
-    if importlib.util.find_spec("ninja") is not None:
-        packages.append("ninja")
-
-    if importlib.util.find_spec("pybind11") is not None:
-        packages.append("pybind11")
-
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "download",
-            "-q",
-            "-d",
-            str(wheelhouse),
-            *packages,
-        ],
-        check=True,
-    )
     return wheelhouse
 
 

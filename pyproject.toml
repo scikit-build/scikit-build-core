@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling >=1.24", "hatch-vcs >=0.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -77,6 +77,9 @@ hatch.scikit-build = "scikit_build_core.hatch.hooks"
 test = [
     "build >=0.8",
     "cattrs >=22.2.0",
+    "filelock >=3.8.0",
+    "hatchling >=1.24",
+    "hatch-vcs >=0.4",
     "pip>=23; python_version<'3.13'",
     "pip>=24.1; python_version>='3.13'",
     "pytest >=7.2",
@@ -88,10 +91,6 @@ test = [
     'setuptools >=66.1; python_version>="3.12"',
     "virtualenv >=20.20",
     "wheel >=0.40",
-]
-test-hatchling = [
-    { include-group = "test" },
-    "hatchling >=1.24.0",
 ]
 test-meta = [
     { include-group = "test" },
@@ -120,7 +119,6 @@ cov = [
 ]
 dev = [
     { include-group = "cov" },
-    { include-group = "test-hatchling" },
     { include-group = "test-meta" },
     { include-group = "test-numpy" },
     { include-group = "test-pybind11" },
