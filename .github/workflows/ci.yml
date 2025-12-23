@@ -187,7 +187,7 @@ jobs:
 
       - name: Install min requirements
         run: |
-          uv pip install -e. --group=test-pybind11 --resolution=lowest-direct --system
+          uv pip install -e. --group=test --resolution=lowest-direct --system
 
       - name: Setup CMake 3.15
         uses: jwlawson/actions-setup-cmake@v2.0
@@ -223,7 +223,7 @@ jobs:
         run: python3.13t -m venv /venv
 
       - name: Install deps
-        run: /venv/bin/pip install -e . --group=test-pybind11 ninja
+        run: /venv/bin/pip install -e . --group=test ninja
 
       - name: Test package
         run: /venv/bin/pytest
@@ -246,7 +246,7 @@ jobs:
             cmake ninja git make gcc-g++ python39 python39-devel python39-pip
 
       - name: Install
-        run: python3.9 -m pip install . --group=test-pybind11
+        run: python3.9 -m pip install . --group=test
 
       - name: Test package
         run:
@@ -279,7 +279,7 @@ jobs:
           persist-credentials: false
 
       - name: Install
-        run: python -m pip install . --group=test-pybind11
+        run: python -m pip install . --group=test
 
       - name: Test package
         run: >-
@@ -312,7 +312,7 @@ jobs:
           persist-credentials: false
 
       - name: Install
-        run: python -m pip install . --group=test-pybind11
+        run: python -m pip install . --group=test
 
       - name: Test package
         run: >-
