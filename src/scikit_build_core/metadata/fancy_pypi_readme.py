@@ -41,11 +41,20 @@ def dynamic_metadata(
         pyproject_dict["tool"]["hatch"]["metadata"]["hooks"]["fancy-pypi-readme"]
     )
 
-    text = build_text(
-        config.fragments,
-        getattr(config, "substitutions", []),
-        version=project["version"],
-    )
+    try:
+        text = build_text(
+            config.fragments,
+            getattr(config, "substitutions", []),
+            version=project["version"],
+            package_name=project["name"],
+        )
+    except TypeError:
+        # hatch-fancy-pypi-readme >=25.1 required for package name
+        text = build_text(
+            config.fragments,
+            getattr(config, "substitutions", []),
+            version=project["version"],
+        )
 
     return {
         "content-type": config.content_type,
