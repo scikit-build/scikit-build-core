@@ -156,7 +156,7 @@ def test_plugin_metadata():
         )
     else:
         assert metadata.readme == pyproject_metadata.Readme(
-            "Fragment #1Fragment #2 -- 0.1.0Fragment #3 -- #HFPR_PACKAGE_NAME",
+            "Fragment #1Fragment #2 -- 0.1.0Fragment #3 -- $HFPR_PACKAGE_NAME",
             None,
             "text/x-rst",
         )
