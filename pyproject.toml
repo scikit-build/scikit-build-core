@@ -40,7 +40,7 @@ dependencies = [
     "packaging >=23.2",
     "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
-    "typing-extensions >=3.10.0; python_version<'3.9'",
+    "typing-extensions >=3.10; python_version<'3.9'",
 ]
 # Note: cmake and possibly ninja are also required if those are not already
 # present (user controllable) - but a system version is fine.
@@ -76,8 +76,8 @@ hatch.scikit-build = "scikit_build_core.hatch.hooks"
 [dependency-groups]
 test = [
     "build >=0.8",
-    "cattrs >=22.2.0",
-    "filelock >=3.8.0",
+    "cattrs >=22.2",
+    "filelock >=3.8",
     "hatchling >=1.24",
     "hatch-vcs >=0.4",
     "pip>=23; python_version<'3.13'",
@@ -89,6 +89,7 @@ test = [
     'setuptools >=45; python_version=="3.9"',
     'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
     'setuptools >=66.1; python_version>="3.12"',
+    'typing-extensions >=3.10; python_version<"3.10"',
     "virtualenv >=20.20",
     "wheel >=0.40",
 ]
