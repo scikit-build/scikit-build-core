@@ -22,14 +22,30 @@ if sys.version_info < (3, 11):
         def assert_never(_: object) -> None:
             msg = "Expected code to be unreachable"
             raise AssertionError(msg)
-
 else:
     from typing import Self, assert_never
+
+if sys.version_info < (3, 13):
+    if typing.TYPE_CHECKING:
+        from typing_extensions import TypeVar
+    else:
+
+        # The final noqa is a false positive, see https://github.com/astral-sh/ruff/issues/22178
+        def TypeVar(  # noqa: N802
+            *args: object,
+            default: object = None,  # noqa: ARG001
+            **kwargs: object,  # noqa: ARG001
+        ) -> typing.TypeVar:
+            return typing.TypeVar(*args, **kwargs)
+else:
+    from typing import TypeVar
+
 
 __all__ = [
     "Annotated",
     "Self",
     "TypeAlias",
+    "TypeVar",
     "assert_never",
     "get_args",
     "get_origin",
