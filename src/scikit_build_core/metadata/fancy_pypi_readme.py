@@ -41,20 +41,11 @@ def dynamic_metadata(
         pyproject_dict["tool"]["hatch"]["metadata"]["hooks"]["fancy-pypi-readme"]
     )
 
-    if hasattr(config, "substitutions"):
-        try:
-            # We don't have access to the version at this point
-            text = build_text(
-                config.fragments, config.substitutions, version=project["version"]
-            )
-        except TypeError:
-            # Version 23.2.0 and before don't have a version field
-            # pylint: disable-next=no-value-for-parameter
-            text = build_text(config.fragments, config.substitutions)
-    else:
-        # Version 22.3 does not have fragment support
-        # pylint: disable-next=no-value-for-parameter
-        text = build_text(config.fragments)  # type: ignore[call-arg]
+    text = build_text(
+        config.fragments,
+        getattr(config, "substitutions", []),
+        version=project["version"],
+    )
 
     return {
         "content-type": config.content_type,
@@ -65,4 +56,4 @@ def dynamic_metadata(
 def get_requires_for_dynamic_metadata(
     _settings: dict[str, object] | None = None,
 ) -> list[str]:
-    return ["hatch-fancy-pypi-readme>=22.3"]
+    return ["hatch-fancy-pypi-readme>=23.2"]

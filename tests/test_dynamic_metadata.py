@@ -152,7 +152,7 @@ def test_plugin_metadata():
     )
 
     assert set(GetRequires().dynamic_metadata()) == {
-        "hatch-fancy-pypi-readme>=22.3",
+        "hatch-fancy-pypi-readme>=23.2",
         "setuptools-scm",
     }
 
