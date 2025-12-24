@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 import shutil
 import subprocess
 import textwrap
@@ -128,6 +129,8 @@ def test_plugin_metadata():
     if shutil.which("git") is None:
         pytest.skip("git is not installed")
 
+    hfpr_version = Version(importlib.metadata.version("hatch_fancy_pypi_readme"))
+
     shutil.copy("plugin_project.toml", "pyproject.toml")
 
     subprocess.run(["git", "init", "--initial-branch=main"], check=True)
@@ -147,12 +150,19 @@ def test_plugin_metadata():
     metadata = get_standard_metadata(pyproject, settings)
 
     assert str(metadata.version) == "0.1.0"
-    assert metadata.readme == pyproject_metadata.Readme(
-        "Fragment #1Fragment #2 -- 0.1.0", None, "text/x-rst"
-    )
+    if hfpr_version >= Version("25.1"):
+        assert metadata.readme == pyproject_metadata.Readme(
+            "Fragment #1Fragment #2 -- 0.1.0Fragment #3 -- fancy", None, "text/x-rst"
+        )
+    else:
+        assert metadata.readme == pyproject_metadata.Readme(
+            "Fragment #1Fragment #2 -- 0.1.0Fragment #3 -- $HFPR_PACKAGE_NAME",
+            None,
+            "text/x-rst",
+        )
 
     assert set(GetRequires().dynamic_metadata()) == {
-        "hatch-fancy-pypi-readme>=22.3",
+        "hatch-fancy-pypi-readme>=23.2",
         "setuptools-scm",
     }
 

@@ -75,7 +75,7 @@ repos:
           - cattrs
           - cmake
           - exceptiongroup
-          - hatch-fancy-pypi-readme>=24
+          - hatch-fancy-pypi-readme>=23.2
           - importlib-resources
           - markdown-it-py
           - ninja

@@ -95,7 +95,7 @@ test = [
 ]
 test-meta = [
     { include-group = "test" },
-    "hatch-fancy-pypi-readme>=22.3",
+    "hatch-fancy-pypi-readme>=23.2",
     "setuptools-scm",
 ]
 test-numpy = [

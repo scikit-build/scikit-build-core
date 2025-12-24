@@ -24,3 +24,6 @@ text = "Fragment #1"
 
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
 text = "Fragment #2 -- $HFPR_VERSION"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+text = "Fragment #3 -- $HFPR_PACKAGE_NAME"

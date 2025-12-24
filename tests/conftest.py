@@ -361,7 +361,7 @@ def pytest_report_header() -> str:
     if "name" in project:
         pkgs.append(project["name"])
     interesting_packages = {Requirement(p).name for p in pkgs}
-    interesting_packages.add("pip")
+    interesting_packages |= {"pip", "hatch-fancy-pypi-readme", "setuptools-scm"}
 
     valid = []
     for package in sorted(interesting_packages):
