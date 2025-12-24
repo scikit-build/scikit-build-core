@@ -29,7 +29,6 @@ if sys.version_info < (3, 13):
     if typing.TYPE_CHECKING:
         from typing_extensions import TypeVar
     else:
-
         # The final noqa is a false positive, see https://github.com/astral-sh/ruff/issues/22178
         def TypeVar(  # noqa: N802
             *args: object,
