@@ -246,7 +246,9 @@ jobs:
             cmake ninja git make gcc-g++ python39 python39-devel python39-pip
 
       - name: Install
-        run: python3.9 -m pip install . --group=test-core --group=test-pybind11 --group=test-parallel --group=test-schema --group=test-meta
+        run:
+          python3.9 -m pip install . --group=test-core --group=test-pybind11
+          --group=test-parallel --group=test-schema --group=test-meta
 
       - name: Test package
         run:
