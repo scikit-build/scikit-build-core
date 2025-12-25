@@ -27,7 +27,7 @@
         node-date: 2025-02-27T16:18:39-05:00
         describe-name: v0.11.0
         EOF
-        pip install --user . --group=test-pybind11
+        pip install --user . --group=test
   discover:
     how: fmf
     filter: "tag: pytest"

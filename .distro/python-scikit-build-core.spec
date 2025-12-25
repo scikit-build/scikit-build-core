@@ -50,7 +50,7 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 %generate_buildrequires
 export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
-%pyproject_buildrequires -g test%{?with_optional_tests:,test-meta,test-numpy,test-pybind11}
+%pyproject_buildrequires -g test-core%{?with_optional_tests:,test-parallel,test-meta,test-numpy,test-pybind11}
 
 
 %build
