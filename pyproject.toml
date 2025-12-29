@@ -124,7 +124,6 @@ test = [
     { include-group = "test-numpy" },
     { include-group = "test-parallel" },
     { include-group = "test-pybind11" },
-    { include-group = "test-schema" },
 ]
 cov = [
     { include-group = "test" },
@@ -133,6 +132,7 @@ cov = [
 dev = [
     { include-group = "cov" },
     { include-group = "test" },
+    { include-group = "test-schema" },
     "rich",
 ]
 docs = [
