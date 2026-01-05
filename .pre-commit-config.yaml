@@ -99,7 +99,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: "v1"
+    rev: "v1.41.0"
     hooks:
       - id: typos
         args: []
