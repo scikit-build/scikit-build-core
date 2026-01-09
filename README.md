@@ -172,9 +172,6 @@ cmake.build-type = "Release"
 # The source directory to use when building the project.
 cmake.source-dir = "."
 
-# The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
-cmake.toolchain-file = ""
-
 # Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
 cmake.python-hints = true
 
@@ -225,9 +222,6 @@ wheel.exclude = []
 
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
-
-# Manually specify the wheel tags to use, ignoring other inputs such as
-wheel.tags = []
 
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"

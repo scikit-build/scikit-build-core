@@ -79,7 +79,7 @@ print(mk_skbuild_docs())
 .. confval:: fail
   :type: ``bool``
 
-  Immediately fail the build. This is only useful in overrides.
+  Immediately fail the build. This is only allowed in overrides or config-settings.
 ```
 
 ```{eval-rst}
@@ -229,7 +229,9 @@ print(mk_skbuild_docs())
 .. confval:: cmake.toolchain-file
   :type: ``Path``
 
-  The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+  The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
+
+  This is only allowed in overrides or config-settings.
 ```
 
 ```{eval-rst}
@@ -594,9 +596,13 @@ print(mk_skbuild_docs())
 .. confval:: wheel.tags
   :type: ``list[str]``
 
+  Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
+
   Manually specify the wheel tags to use, ignoring other inputs such as
-  ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}.
-  If not specified, these tags are automatically calculated.
+  ``wheel.py-api``. Each tag must be of the format
+  {interpreter}-{abi}-{platform}.  If not specified, these tags are
+  automatically calculated. This is only allowed in overrides or
+  config-settings.
 ```
 
 <!-- [[[end]]] -->

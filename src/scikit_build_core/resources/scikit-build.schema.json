@@ -105,7 +105,8 @@
         },
         "toolchain-file": {
           "type": "string",
-          "description": "The CMAKE_TOOLCHAIN_FILE used for cross-compilation."
+          "description": "The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.",
+          "scikit-build:override-only": true
         },
         "python-hints": {
           "type": "boolean",
@@ -254,7 +255,8 @@
           "items": {
             "type": "string"
           },
-          "description": "Manually specify the wheel tags to use, ignoring other inputs such as"
+          "description": "Wheel tags to manually force, {interpreter}-{abi}-{platform} format.",
+          "scikit-build:override-only": true
         }
       }
     },
@@ -663,7 +665,7 @@
           },
           "fail": {
             "type": "boolean",
-            "description": "Immediately fail the build. This is only useful in overrides."
+            "description": "Immediately fail the build. This is only allowed in overrides or config-settings."
           }
         }
       }

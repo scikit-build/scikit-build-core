@@ -137,9 +137,13 @@ class CMakeSettings:
     DEPRECATED in 0.10; use build.targets instead.
     """
 
-    toolchain_file: Optional[Path] = None
+    toolchain_file: Optional[Path] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(override_only=True)
+    )
     """
-    The CMAKE_TOOLCHAIN_FILE used for cross-compilation.
+    The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
+
+    This is only allowed in overrides or config-settings.
     """
 
     python_hints: bool = True
@@ -330,11 +334,18 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
-    tags: List[str] = dataclasses.field(default_factory=list)
+    tags: Optional[List[str]] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
     """
+    Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
+
     Manually specify the wheel tags to use, ignoring other inputs such as
-    ``wheel.py-api``. Each tag must be of the format {interpreter}-{abi}-{platform}.
-    If not specified, these tags are automatically calculated.
+    ``wheel.py-api``. Each tag must be of the format
+    {interpreter}-{abi}-{platform}.  If not specified, these tags are
+    automatically calculated. This is only allowed in overrides or
+    config-settings.
     """
 
 
@@ -533,5 +544,5 @@ class ScikitBuildSettings:
         metadata=SettingsFieldMetadata(override_only=True),
     )
     """
-    Immediately fail the build. This is only useful in overrides.
+    Immediately fail the build. This is only allowed in overrides or config-settings.
     """
