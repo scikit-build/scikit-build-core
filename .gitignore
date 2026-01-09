@@ -173,3 +173,5 @@ Thumbs.db
 
 /docs/**/build
 .vscode/
+uv.lock
+*pylock
