@@ -242,9 +242,6 @@ class Builder:
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
             )
 
-        if self.settings.cmake.toolchain_file:
-            cache_config["CMAKE_TOOLCHAIN_FILE"] = self.settings.cmake.toolchain_file
-
         if self.settings.cmake.python_hints:
             # Classic Find Python
             cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
@@ -298,6 +295,7 @@ class Builder:
         self.config.configure(
             defines=cmake_defines,
             cmake_args=[*self.get_cmake_args(), *configure_args],
+            toolchain=self.settings.cmake.toolchain_file,
         )
 
     def build(self, build_args: Sequence[str]) -> None:
