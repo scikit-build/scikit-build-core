@@ -242,25 +242,26 @@ class Builder:
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
             )
 
-        # Classic Find Python
-        cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
-        cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir
-        if python_library:
-            cache_config["PYTHON_LIBRARY"] = python_library
+        if self.settings.cmake.python_hints:
+            # Classic Find Python
+            cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
+            cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir
+            if python_library:
+                cache_config["PYTHON_LIBRARY"] = python_library
 
-        # Modern Find Python
-        for prefix in ("Python", "Python3"):
-            cache_config[f"{prefix}_EXECUTABLE"] = Path(sys.executable)
-            cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.prefix)
-            cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
-            cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
-            # FindPython may break if this is set - only useful on Windows
-            if python_library and sysconfig.get_platform().startswith("win"):
-                cache_config[f"{prefix}_LIBRARY"] = python_library
-            if python_sabi_library and sysconfig.get_platform().startswith("win"):
-                cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
-            if numpy_include_dir:
-                cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
+            # Modern Find Python
+            for prefix in ("Python", "Python3"):
+                cache_config[f"{prefix}_EXECUTABLE"] = Path(sys.executable)
+                cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.base_exec_prefix)
+                cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
+                cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
+                # FindPython may break if this is set - only useful on Windows
+                if python_library and sysconfig.get_platform().startswith("win"):
+                    cache_config[f"{prefix}_LIBRARY"] = python_library
+                if python_sabi_library and sysconfig.get_platform().startswith("win"):
+                    cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
+                if numpy_include_dir:
+                    cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 
         cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_api)
 
@@ -294,6 +295,7 @@ class Builder:
         self.config.configure(
             defines=cmake_defines,
             cmake_args=[*self.get_cmake_args(), *configure_args],
+            toolchain=self.settings.cmake.toolchain_file,
         )
 
     def build(self, build_args: Sequence[str]) -> None:

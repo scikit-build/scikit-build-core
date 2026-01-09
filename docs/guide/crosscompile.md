@@ -1,5 +1,9 @@
 # Cross-compiling
 
+Generally scikit-build-core will try to account for environment variables that
+specify to CMake directly how to cross-compile. Alternatively, you can define
+manually how to cross-compile as detailed in [manual cross compilation] section.
+
 ## macOS
 
 Unlike the other platforms, macOS has the ability to target older operating
@@ -50,10 +54,7 @@ correct suffix. These values are set by cibuildwheel when cross-compiling.
 
 ## Linux
 
-It should be possible to cross-compile to Linux, but due to the challenges of
-getting the manylinux RHEL devtoolkit compilers, this is currently a TODO. See
-`py-build-cmake <https://tttapa.github.io/py-build-cmake/Cross-compilation.html>`\_
-for an alternative package's usage of toolchain files.
+See [manual cross compilation] section for the general approach.
 
 ### Intel to Emscripten (Pyodide)
 
@@ -67,3 +68,71 @@ so FindPython will report the wrong values, but pyodide-build will rename the
 
 pyodide-build will also set `_PYTHON_HOST_PLATFORM` to the target Pyodide
 platform, so scikit-build-core can use that to compute the correct wheel name.
+
+## Manual cross compilation
+
+The manual cross compilation assumes you have [toolchain file] prepared defining
+the cross-compilers and where to search for the target development files,
+including the python library. A simple setup of this is to use the clang
+compiler and point `CMAKE_SYSROOT` to a mounted copy of the target system's root
+
+```cmake
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
+
+set(triple aarch64-linux-gnu)
+
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_C_COMPILER_TARGET ${triple})
+set(CMAKE_CXX_COMPILER_TARGET ${triple})
+
+set(CMAKE_SYSROOT "/path/to/aarch64/mount/")
+```
+
+For more complex environments such as embedded devices, Android or iOS see
+CMake's guide on how to write the [toolchain file].
+
+You can pass the toolchain file using the environment variable
+`CMAKE_TOOLCHAIN_FILE`, or the `cmake.toolchain-file` pyproject option. You may
+also need to use `wheel.tags` to manually specify the wheel tags to use for the
+file and `cmake.no-python-hints` if the target python should be detected using
+the toolchain file instead.
+
+:::{note}
+
+Because most of the logic in [`FindPython`] is gated by the
+`CMAKE_CROSSCOMPILING`, you generally should _not_ include the `Interpreter`
+component in the `find_package` command or use the `Python_ARTIFACTS_PREFIX`
+feature to distinguish the system and target components.
+
+:::
+
+:::{versionadded} 0.11
+
+:::
+
+### Crossenv
+
+[Crossenv] cross compilation is supported in scikit-build-core. This tool
+creates a fake virtual environment where configuration hints such as
+`EXT_SUFFIX` are overwritten with the target's values. This should work without
+specifying `wheel.tags` overwrites manually.
+
+:::{note}
+
+Because the target Python executable is being faked, the usage of
+`CMAKE_CROSSCOMPILING_EMULATOR` for the `Interpreter` would not be correct in
+this case.
+
+:::
+
+:::{versionadded} 0.11
+
+:::
+
+[manual cross compilation]: #manual-cross-compilation
+[toolchain file]:
+  https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling
+[crossenv]: https://crossenv.readthedocs.io/en/latest/
+[`FindPython`]: https://cmake.org/cmake/help/git-master/module/FindPython.html

@@ -172,6 +172,9 @@ cmake.build-type = "Release"
 # The source directory to use when building the project.
 cmake.source-dir = "."
 
+# Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+cmake.python-hints = true
+
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 
