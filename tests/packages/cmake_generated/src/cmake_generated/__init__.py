@@ -53,7 +53,11 @@ def get_namespace_generated_data():
     # Note that `files("cmake_generated.namespace1")` doesn't work.
     # Ref https://github.com/python/importlib_resources/issues/262
     return (
-        files("cmake_generated").joinpath("namespace1").joinpath("generated_data").read_text().rstrip()
+        files("cmake_generated")
+        .joinpath("namespace1")
+        .joinpath("generated_data")
+        .read_text()
+        .rstrip()
     )
 
 
