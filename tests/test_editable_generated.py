@@ -6,6 +6,7 @@ Illustrate the supported and correct ways to use generated files
 Check a variety of scenarios in which package files (modules or data) are
 not present in the source tree to confirm that we can find resources as expected,
 either by ``import`` or with tools such as `importlib.resources.files()`.
+Note that `importlib.resources.files()` requires an argument before Python 3.12.
 """
 
 from __future__ import annotations
