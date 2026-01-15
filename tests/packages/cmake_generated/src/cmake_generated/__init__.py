@@ -31,7 +31,7 @@ import sys
 from importlib.resources import as_file, files, read_text
 
 try:
-    from ._version import __version__
+    from ._version import __version__  # type: ignore[import-not-found]
 except ImportError:
     __version__ = None
 
@@ -41,7 +41,7 @@ def get_static_data():
 
 
 def get_configured_data():
-    return files().joinpath("configured_file").read_text().rstrip()
+    return files("cmake_generated").joinpath("configured_file").read_text().rstrip()
 
 
 def get_namespace_static_data():
@@ -53,7 +53,7 @@ def get_namespace_generated_data():
     # Note that `files("cmake_generated.namespace1")` doesn't work.
     # Ref https://github.com/python/importlib_resources/issues/262
     return (
-        files().joinpath("namespace1").joinpath("generated_data").read_text().rstrip()
+        files("cmake_generated").joinpath("namespace1").joinpath("generated_data").read_text().rstrip()
     )
 
 
@@ -62,6 +62,6 @@ def ctypes_function():
         lib_suffix = "dll"
     else:
         lib_suffix = "so"
-    with as_file(files().joinpath(f"pkg.{lib_suffix}")) as lib_path:
+    with as_file(files("cmake_generated").joinpath(f"pkg.{lib_suffix}")) as lib_path:
         lib = ctypes.cdll.LoadLibrary(str(lib_path))
         return lib.func
