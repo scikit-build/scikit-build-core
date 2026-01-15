@@ -166,7 +166,10 @@ def test_pep517_sdist_time_hash_set_epoch(
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_simple_pyproject_script_with_flags")
+@pytest.mark.parametrize(
+    "package", ["simple_pyproject_script_with_flags"], indirect=True
+)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize(
     ("env_var", "setting"),
     [
@@ -196,7 +199,7 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(
@@ -248,7 +251,8 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.usefixtures("package_simple_pyproject_source_dir")
+@pytest.mark.parametrize("package", ["simple_pyproject_source_dir"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
 def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), config_settings={"skbuild.wheel.build-tag": "1foo"})
@@ -328,7 +332,7 @@ def test_pep517_wheel_time_hash(monkeypatch, tmp_path: Path):
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_prepare_metdata_for_build_wheel():
+def test_prepare_metadata_for_build_wheel():
     metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
         "Metadata-Version": "2.2",
@@ -346,7 +350,7 @@ def test_prepare_metdata_for_build_wheel():
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
+def test_prepare_metadata_for_build_wheel_by_hand(tmp_path):
     mddir = tmp_path / "dist"
     mddir.mkdir()
     out = prepare_metadata_for_build_wheel(str(mddir), {})
@@ -367,7 +371,8 @@ def test_prepare_metdata_for_build_wheel_by_hand(tmp_path):
     assert len(metadata) == len(answer)
 
 
-@pytest.mark.usefixtures("package_pep639_pure")
+@pytest.mark.parametrize("package", ["pep639_pure"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep639_license_files_metadata():
     metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
     answer = {
@@ -384,7 +389,8 @@ def test_pep639_license_files_metadata():
     assert len(metadata) == sum(len(v) for v in answer.values())
 
 
-@pytest.mark.usefixtures("package_pep639_pure")
+@pytest.mark.parametrize("package", ["pep639_pure"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep639_license_files_sdist(tmp_path: Path):
     expected_metadata = (
         inspect.cleandoc(
@@ -424,7 +430,8 @@ def test_pep639_license_files_sdist(tmp_path: Path):
         assert pkg_info_contents == expected_metadata
 
 
-@pytest.mark.usefixtures("package_pep639_pure")
+@pytest.mark.parametrize("package", ["pep639_pure"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_pep639_license_files_wheel(tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), {})

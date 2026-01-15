@@ -264,3 +264,22 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
 
     tags = WheelTag.compute_best(["x86_64"], py_api="py2.py3")
     assert str(tags) == "py2.py3-none-macosx_10_10_x86_64"
+
+
+def test_wheel_tag_host_platform_override(monkeypatch):
+    """Test that _PYTHON_HOST_PLATFORM environment variable overrides platform detection."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    monkeypatch.setenv("_PYTHON_HOST_PLATFORM", "macosx-11.0-arm64")
+    tags = WheelTag.compute_best(["x86_64"], py_api="py3")
+    assert str(tags) == "py3-none-macosx_11_0_arm64"
+
+    monkeypatch.setenv("_PYTHON_HOST_PLATFORM", "emscripten-4.0.9-wasm32")
+    tags = WheelTag.compute_best(["x86_64"], py_api="py3")
+    assert str(tags) == "py3-none-emscripten_4_0_9_wasm32"

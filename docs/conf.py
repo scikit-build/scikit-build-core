@@ -158,6 +158,7 @@ myst_enable_extensions = [
 myst_substitutions = {
     "version": version,
 }
+myst_heading_anchors = 2
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section)

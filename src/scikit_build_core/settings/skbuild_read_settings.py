@@ -204,7 +204,7 @@ class SettingsReader:
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
-        self.overrides, self.overriden_items = process_overrides(
+        self.overrides, self.overridden_items = process_overrides(
             pyproject.get("tool", {}).get("scikit-build", {}),
             state=state,
             env=env,
@@ -405,7 +405,7 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
-        _validate_overrides(self.settings, self.overriden_items)
+        _validate_overrides(self.settings, self.overridden_items)
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:

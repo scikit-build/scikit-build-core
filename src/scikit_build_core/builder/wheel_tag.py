@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import itertools
+import os
 import sys
 import sysconfig
 from typing import TYPE_CHECKING
@@ -60,7 +61,12 @@ class WheelTag:
         interp, abi, *plats = (best_tag.interpreter, best_tag.abi, best_tag.platform)
         pyvers = [interp]
 
-        if sys.platform.startswith("win") and archs:
+        # Check for _PYTHON_HOST_PLATFORM environment variable to override platform
+        host_platform = os.environ.get("_PYTHON_HOST_PLATFORM")
+        if host_platform:
+            # Convert sysconfig platform format to wheel platform tag format
+            plats = [host_platform.replace("-", "_").replace(".", "_")]
+        elif sys.platform.startswith("win") and archs:
             plats = [x.replace("-", "_") for x in archs]
         elif sys.platform.startswith("darwin"):
             pairs: Iterable[tuple[str | None, bool]]

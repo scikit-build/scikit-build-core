@@ -8,11 +8,20 @@ import setuptools
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
+from .._compat.typing import TypeVar
+
 __all__ = ["setup"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+_DistributionT = TypeVar(
+    "_DistributionT",
+    bound="setuptools._distutils.dist.Distribution",
+    default=setuptools.Distribution,
+)
 
 
 def setup(
@@ -25,8 +34,9 @@ def setup(
     cmake_minimum_required_version: str | None = None,
     cmake_process_manifest_hook: Callable[[list[str]], list[str]] | None = None,
     cmake_install_target: str = "install",
+    distclass: type[_DistributionT] = setuptools.Distribution,  # type: ignore[assignment]
     **kw: Any,
-) -> setuptools.Distribution:
+) -> _DistributionT:
     assert not cmake_install_dir, "cmake_install_dir not supported yet"
     assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
     assert cmake_process_manifest_hook is None, (
@@ -41,5 +51,8 @@ def setup(
         warnings.warn("Set via pyproject.toml", stacklevel=2)
 
     return setuptools.setup(
-        cmake_source_dir=cmake_source_dir, cmake_args=cmake_args, **kw
+        cmake_source_dir=cmake_source_dir,
+        cmake_args=cmake_args,
+        distclass=distclass,
+        **kw,
     )

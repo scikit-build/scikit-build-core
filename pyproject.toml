@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling >=1.24", "hatch-vcs >=0.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -40,7 +40,7 @@ dependencies = [
     "packaging >=23.2",
     "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
-    "typing-extensions >=3.10.0; python_version<'3.9'",
+    "typing-extensions >=3.10; python_version<'3.9'",
 ]
 # Note: cmake and possibly ninja are also required if those are not already
 # present (user controllable) - but a system version is fine.
@@ -74,42 +74,56 @@ hatch.scikit-build = "scikit_build_core.hatch.hooks"
 
 
 [dependency-groups]
-test = [
+test-core = [
     "build >=0.8",
-    "cattrs >=22.2.0",
+    "cattrs >=22.2",
+    "filelock >=3.8",
+    "hatchling >=1.24",
+    "hatch-vcs >=0.4",
     "pip>=23; python_version<'3.13'",
     "pip>=24.1; python_version>='3.13'",
-    "pybind11 >=2.11",
     "pytest >=7.2",
     "pytest-subprocess >=1.5",
-    'pytest-xdist >=3.1',
     'setuptools >=43; python_version<"3.9"',
     'setuptools >=45; python_version=="3.9"',
     'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
     'setuptools >=66.1; python_version>="3.12"',
+    'typing-extensions >=3.10; python_version<"3.10"',
     "virtualenv >=20.20",
     "wheel >=0.40",
 ]
-test-hatchling = [
-    { include-group = "test" },
-    "hatchling >=1.24.0",
+test-parallel = [
+    { include-group = "test-core" },
+    'pytest-xdist >=3.1',
 ]
 test-meta = [
-    { include-group = "test" },
-    "hatch-fancy-pypi-readme>=22.3",
-    "setuptools-scm",
+    { include-group = "test-core" },
+    "hatch-fancy-pypi-readme>=23.2",
+    "setuptools-scm>=5",
 ]
 test-numpy = [
-    { include-group = "test" },
-    "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
-    "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
-    "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
-    "numpy~=2.2.0; python_version=='3.10' and platform_python_implementation=='PyPy'",
+    { include-group = "test-core" },
+    "numpy>=1.24; python_version<'3.15' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
+    "numpy~=1.24; python_version=='3.8' and platform_python_implementation=='PyPy'",
+    "numpy~=2.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
+    "numpy~=2.2; python_version=='3.10' and platform_python_implementation=='PyPy'",
+    "numpy~=2.4; python_version=='3.11' and platform_python_implementation=='PyPy'",
+]
+test-pybind11 = [
+    { include-group = "test-core" },
+    "pybind11 >=2.11",
 ]
 test-schema = [
-    { include-group = "test" },
-    "fastjsonschema",
-    "validate-pyproject",
+    { include-group = "test-core" },
+    "fastjsonschema>=2.16.2",
+    "validate-pyproject>=0.21",
+]
+test = [
+    { include-group = "test-core" },
+    { include-group = "test-meta" },
+    { include-group = "test-numpy" },
+    { include-group = "test-parallel" },
+    { include-group = "test-pybind11" },
 ]
 cov = [
     { include-group = "test" },
@@ -117,9 +131,7 @@ cov = [
 ]
 dev = [
     { include-group = "cov" },
-    { include-group = "test-hatchling" },
-    { include-group = "test-meta" },
-    { include-group = "test-numpy" },
+    { include-group = "test" },
     { include-group = "test-schema" },
     "rich",
 ]
@@ -332,3 +344,7 @@ docstring-code-format = true
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+
+[tool.typos.default.extend-words]
+delocate = "delocate"
