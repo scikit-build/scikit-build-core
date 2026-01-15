@@ -19,11 +19,13 @@ import pytest
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_basic_data_resources(editable, isolate, isolated, package):
+def test_basic_data_resources(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
@@ -49,11 +51,13 @@ def test_basic_data_resources(editable, isolate, isolated, package):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_configure_time_generated_data(editable, isolate, isolated, package):
+def test_configure_time_generated_data(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
@@ -69,11 +73,13 @@ def test_configure_time_generated_data(editable, isolate, isolated, package):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_build_time_generated_data(editable, isolate, isolated, package):
+def test_build_time_generated_data(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
@@ -89,11 +95,13 @@ def test_build_time_generated_data(editable, isolate, isolated, package):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_compiled_ctypes_resource(editable, isolate, isolated, package):
+def test_compiled_ctypes_resource(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
@@ -109,11 +117,13 @@ def test_compiled_ctypes_resource(editable, isolate, isolated, package):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_configure_time_generated_module(editable, isolate, isolated, package):
+def test_configure_time_generated_module(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
@@ -159,11 +169,13 @@ def test_configure_time_generated_module(editable, isolate, isolated, package):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_build_time_generated_module(editable, isolate, isolated, package):
+def test_build_time_generated_module(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
