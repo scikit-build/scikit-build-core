@@ -24,6 +24,11 @@ import pytest
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_basic_data_resources(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_static_data())"
     )
@@ -49,6 +54,11 @@ def test_basic_data_resources(editable, isolate, isolated, package):
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_configure_time_generated_data(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_configured_data())"
     )
@@ -64,6 +74,11 @@ def test_configure_time_generated_data(editable, isolate, isolated, package):
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_build_time_generated_data(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_namespace_generated_data())"
     )
@@ -79,6 +94,11 @@ def test_build_time_generated_data(editable, isolate, isolated, package):
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_compiled_ctypes_resource(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.ctypes_function()())"
     )
@@ -94,6 +114,11 @@ def test_compiled_ctypes_resource(editable, isolate, isolated, package):
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_configure_time_generated_module(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     # Check that a generated module can access and be accessed by all parts of the package
 
     value = isolated.execute(
@@ -139,6 +164,11 @@ def test_configure_time_generated_module(editable, isolate, isolated, package):
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_build_time_generated_module(editable, isolate, isolated, package):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
     # Check generated _version module
     attr_value = isolated.execute(
         "import cmake_generated; print(cmake_generated.__version__)"
