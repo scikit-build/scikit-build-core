@@ -17,81 +17,17 @@ import pytest
 from conftest import PackageInfo, VEnv, process_package
 
 
-def _setup_package_for_editable_layout_tests(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    editable: bool,
-    editable_mode: str,
-    build_isolation: bool,
-    isolated: VEnv,
-) -> None:
-    editable_flag = ["-e"] if editable else []
-
-    config_mode_flags = []
-    if editable:
-        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
-    if editable_mode != "inplace":
-        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
-
-    # Use a context so that we only change into the directory up until the point where
-    # we run the editable install. We do not want to be in that directory when importing
-    # to avoid importing the source directory instead of the installed package.
-    with monkeypatch.context() as m:
-        package = PackageInfo("cmake_generated")
-        process_package(package, tmp_path, m)
-
-        assert isolated.wheelhouse
-
-        ninja = [
-            "ninja"
-            for f in isolated.wheelhouse.iterdir()
-            if f.name.startswith("ninja-")
-        ]
-        cmake = [
-            "cmake"
-            for f in isolated.wheelhouse.iterdir()
-            if f.name.startswith("cmake-")
-        ]
-
-        isolated.install("pip>23")
-        if not build_isolation:
-            isolated.install("scikit-build-core", *ninja, *cmake)
-
-        isolated.install(
-            "-v",
-            *config_mode_flags,
-            *editable_flag,
-            ".",
-            isolated=build_isolation,
-        )
-
-
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_basic_data_resources(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
-
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_static_data())"
     )
@@ -111,28 +47,14 @@ def test_basic_data_resources(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_configure_time_generated_data(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
 
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_configured_data())"
@@ -143,29 +65,14 @@ def test_configure_time_generated_data(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_build_time_generated_data(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
-
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_namespace_generated_data())"
     )
@@ -175,29 +82,14 @@ def test_build_time_generated_data(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_compiled_ctypes_resource(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
-
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.ctypes_function()())"
     )
@@ -207,28 +99,14 @@ def test_compiled_ctypes_resource(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_configure_time_generated_module(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
     # Check that a generated module can access and be accessed by all parts of the package
 
     value = isolated.execute(
@@ -268,28 +146,14 @@ def test_configure_time_generated_module(
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        (True, "redirect"),
-        (True, "inplace"),
-    ],
-)
-@pytest.mark.parametrize(
-    "build_isolation",
-    [True, False],
-)
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
 def test_build_time_generated_module(
-    monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
+    editable, isolate, isolated, package
 ):
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, build_isolation, isolated
-    )
     # Check generated _version module
     attr_value = isolated.execute(
         "import cmake_generated; print(cmake_generated.__version__)"
