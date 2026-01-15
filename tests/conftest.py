@@ -268,6 +268,7 @@ def package_simple_pyproject_ext(
 @dataclasses.dataclass(frozen=True)
 class Isolate:
     """Selection for build isolation."""
+
     state: bool
     flags: list[str]
 
