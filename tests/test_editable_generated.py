@@ -22,6 +22,18 @@ import pytest
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        "redirect",
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
@@ -54,6 +66,18 @@ def test_basic_data_resources(editable, isolated):
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
@@ -76,6 +100,18 @@ def test_configure_time_generated_data(editable, isolated):
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
@@ -98,6 +134,18 @@ def test_build_time_generated_data(editable, isolated):
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
@@ -120,6 +168,18 @@ def test_compiled_ctypes_resource(editable, isolated):
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        "redirect",
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
@@ -172,6 +232,18 @@ def test_configure_time_generated_module(editable, isolated):
 @pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
 @pytest.mark.usefixtures("package")
 @pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        "redirect",
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."))
+    ],
+    indirect=True
+)
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
