@@ -30,9 +30,11 @@ import pytest
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
@@ -70,13 +72,18 @@ def test_basic_data_resources(editable, isolated):
     "editable",
     [
         pytest.param(None, id="not_editable"),
-        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "redirect",
+            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
+        ),
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
@@ -104,13 +111,18 @@ def test_configure_time_generated_data(editable, isolated):
     "editable",
     [
         pytest.param(None, id="not_editable"),
-        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "redirect",
+            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
+        ),
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
@@ -138,13 +150,18 @@ def test_build_time_generated_data(editable, isolated):
     "editable",
     [
         pytest.param(None, id="not_editable"),
-        pytest.param("redirect", marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True)),
+        pytest.param(
+            "redirect",
+            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
+        ),
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
@@ -176,9 +193,11 @@ def test_compiled_ctypes_resource(editable, isolated):
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
@@ -240,9 +259,11 @@ def test_configure_time_generated_module(editable, isolated):
         pytest.param(
             "inplace",
             marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."))
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
     ],
-    indirect=True
+    indirect=True,
 )
 @pytest.mark.skipif(
     sys.version_info < (3, 9),
