@@ -606,7 +606,7 @@ example:
 
 ```toml
 [tool.scikit-build]
-messages.after-sucesss = "{green}Wheel successfully built"
+messages.after-success = "{green}Wheel successfully built"
 messages.after-failure = """
 {bold.red}Sorry{normal}, build failed. Your platform is {platform.platform}.
 """

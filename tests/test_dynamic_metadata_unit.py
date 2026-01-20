@@ -72,7 +72,7 @@ def test_regex() -> None:
 
 
 @pytest.mark.parametrize(
-    ("field", "input", "output"),
+    ("field", "input_", "output"),
     [
         pytest.param("version", "{sub}", "42", id="str"),
         pytest.param("classifiers", ["a", "{sub}"], ["a", "42"], id="list-str"),
@@ -100,6 +100,6 @@ def test_regex() -> None:
         ),
     ],
 )
-def test_actions(field: str, input: Any, output: Any) -> None:
-    result = _process_dynamic_metadata(field, lambda x: x.format(sub=42), input)
+def test_actions(field: str, input_: Any, output: Any) -> None:
+    result = _process_dynamic_metadata(field, lambda x: x.format(sub=42), input_)
     assert output == result

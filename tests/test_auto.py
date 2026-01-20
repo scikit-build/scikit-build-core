@@ -72,18 +72,18 @@ def test_auto_cmake_version(expr: str, answer: str):
 def test_auto_cmake_version_block(block: str):
     txt = textwrap.dedent(f"""\
         # cmake_minimum_version(VERSION 3.1)
-                          
+
         #[[
         cmake_minimum_required(VERSION 3.2)
         ]]
-        
+
         {block}()
-        cmake_minimum_required(VERSION 3.3) 
+        cmake_minimum_required(VERSION 3.3)
         end{block}()
 
         cmake_MINimum_required(VERSION 3.4)
 
-        cmake_minimum_required(VERSION 3.5) 
+        cmake_minimum_required(VERSION 3.5)
     """)
     res = find_min_cmake_version(txt)
     assert res == "3.4"

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling >=1.24", "hatch-vcs >=0.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -10,13 +10,13 @@ authors = [
 description = "Build backend for CMake based projects"
 readme = "README.md"
 requires-python = ">=3.8"
+license = "Apache-2.0"
 classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Build Tools",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Free Threading :: 4 - Resilient",
     "Development Status :: 4 - Beta",
     "Typing :: Typed",
 ]
@@ -39,7 +40,7 @@ dependencies = [
     "packaging >=23.2",
     "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
-    "typing-extensions >=3.10.0; python_version<'3.9'",
+    "typing-extensions >=3.10; python_version<'3.9'",
 ]
 # Note: cmake and possibly ninja are also required if those are not already
 # present (user controllable) - but a system version is fine.
@@ -47,61 +48,9 @@ dependencies = [
 [project.optional-dependencies]
 pyproject = [
 ]
-test = [
-    "build >=0.8",
-    "cattrs >=22.2.0",
-    "pip>=23; python_version<'3.13'",
-    "pip>=24.1; python_version>='3.13'",
-    "pybind11 >=2.11",
-    "pytest >=7.2",
-    "pytest-subprocess >=1.5",
-    'pytest-xdist >=3.1',
-    'setuptools >=43; python_version<"3.9"',
-    'setuptools >=45; python_version=="3.9"',
-    'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
-    'setuptools >=66.1; python_version>="3.12"',
-    "virtualenv >=20.20",
-    "wheel >=0.40",
-]
-test-hatchling = [
-    "hatchling >=1.24.0",
-]
-test-meta = [
-    "hatch-fancy-pypi-readme>=22.3",
-    "setuptools-scm",
-]
-test-numpy = [
-    "numpy; python_version<'3.14' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
-    "numpy~=1.24.0; python_version=='3.8' and platform_python_implementation=='PyPy'",
-    "numpy~=2.0.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
-    "numpy~=2.2.0; python_version=='3.10' and platform_python_implementation=='PyPy'",
-]
-test-schema = [
-    "fastjsonschema",
-    "validate-pyproject",
-]
-cov = [
-    "pytest-cov",
-]
 wheels = [
     "cmake",
     "ninja; sys_platform!='win32'",
-]
-dev = [
-    "rich",
-]
-docs = [
-    "furo",
-    "hatchling",
-    "myst-parser >=0.13",
-    "setuptools",
-    "sphinx >=7.0",
-    "sphinx-autodoc-typehints",
-    "sphinx-copybutton",
-    "sphinx-inline-tabs",
-    "sphinx-jsonschema",
-    "sphinx-tippy",
-    "sphinxcontrib-programoutput",
 ]
 wheel-free-setuptools = [
     'setuptools>=70.1; python_version>="3.8"',
@@ -123,13 +72,90 @@ Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 "validate_pyproject.tool_schema".scikit-build = "scikit_build_core.settings.skbuild_schema:get_skbuild_schema"
 hatch.scikit-build = "scikit_build_core.hatch.hooks"
 
+
+[dependency-groups]
+test-core = [
+    "build >=0.8",
+    "cattrs >=22.2",
+    "filelock >=3.8",
+    "hatchling >=1.24",
+    "hatch-vcs >=0.4",
+    "pip>=23; python_version<'3.13'",
+    "pip>=24.1; python_version>='3.13'",
+    "pytest >=7.2",
+    "pytest-subprocess >=1.5",
+    'setuptools >=43; python_version<"3.9"',
+    'setuptools >=45; python_version=="3.9"',
+    'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
+    'setuptools >=66.1; python_version>="3.12"',
+    'typing-extensions >=3.10; python_version<"3.10"',
+    "virtualenv >=20.20",
+    "wheel >=0.40",
+]
+test-parallel = [
+    { include-group = "test-core" },
+    'pytest-xdist >=3.1',
+]
+test-meta = [
+    { include-group = "test-core" },
+    "hatch-fancy-pypi-readme>=23.2",
+    "setuptools-scm>=5",
+]
+test-numpy = [
+    { include-group = "test-core" },
+    "numpy>=1.24; python_version<'3.15' and platform_python_implementation!='PyPy' and (platform_system != 'Windows' or platform_machine != 'ARM64')",
+    "numpy~=1.24; python_version=='3.8' and platform_python_implementation=='PyPy'",
+    "numpy~=2.0; python_version=='3.9' and platform_python_implementation=='PyPy'",
+    "numpy~=2.2; python_version=='3.10' and platform_python_implementation=='PyPy'",
+    "numpy~=2.4; python_version=='3.11' and platform_python_implementation=='PyPy'",
+]
+test-pybind11 = [
+    { include-group = "test-core" },
+    "pybind11 >=2.11",
+]
+test-schema = [
+    { include-group = "test-core" },
+    "fastjsonschema>=2.16.2",
+    "validate-pyproject>=0.21",
+]
+test = [
+    { include-group = "test-core" },
+    { include-group = "test-meta" },
+    { include-group = "test-numpy" },
+    { include-group = "test-parallel" },
+    { include-group = "test-pybind11" },
+]
+cov = [
+    { include-group = "test" },
+    "pytest-cov",
+]
+dev = [
+    { include-group = "cov" },
+    { include-group = "test" },
+    { include-group = "test-schema" },
+    "rich",
+]
+docs = [
+    "furo",
+    "hatchling",
+    "myst-parser >=0.13",
+    "setuptools",
+    "sphinx >=7.0",
+    "sphinx-autodoc-typehints",
+    "sphinx-copybutton",
+    "sphinx-inline-tabs",
+    "sphinx-jsonschema",
+    "sphinx-tippy",
+    "sphinxcontrib-programoutput",
+]
+
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
 
 
 [tool.uv]
-dev-dependencies = ["scikit-build-core[test,test-hatchling,test-meta,test-numpy,test-schema,cov,dev]"]
 workspace.members = ["tmp/hello/hello"]
 
 
@@ -151,7 +177,7 @@ filterwarnings = [
     "ignore:The 'wheel.metadata' package has been made private:DeprecationWarning",
     "ignore:version of cmake-example already set:UserWarning",  # Caused by setuptoools-scm 9+ being installed
 ]
-log_cli_level = "INFO"
+log_level = "INFO"
 pythonpath = ["tests/utils"]
 testpaths = ["tests"]
 markers = [
@@ -243,62 +269,43 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 
 [tool.ruff]
+show-fixes = true
 exclude = ["src/scikit_build_core/_vendor/*"]
 
 [tool.ruff.lint]
-extend-select = [
-    "ANN",         # flake8-annotations
-    "ARG",         # flake8-unused-arguments
-    "B",           # flake8-bugbear
-    "C4",          # flake8-comprehensions
-    "EM",          # flake8-errmsg
-    "FBT",         # flake8-boolean-trap
-    "FLY",         # flynt
-    "I",           # isort
-    "ICN",         # flake8-import-conventions
-    "ISC",         # flake8-implicit-str-concat
-    "N",           # flake8-naming
-    "PERF",        # perflint
-    "PGH",         # pygrep-hooks
-    "PIE",         # flake8-pie
-    "PL",          # pylint
-    "PT",          # flake8-pytest-style
-    "PTH",         # flake8-use-pathlib
-    "PYI",         # flake8-pyi
-    "RET",         # flake8-return
-    "RUF",         # Ruff-specific
-    "S",           # eval -> literal_eval
-    "SIM",         # flake8-simplify
-    "T20",         # flake8-print
-    "TC",          # flake8-type-checking
-    "TID251",      # flake8-tidy-imports.banned-api
-    "TRY",         # tryceratops
-    "UP",          # pyupgrade
-    "YTT",         # flake8-2020
-    "FURB",        # refurb
-]
+select = ["ALL"]
 ignore = [
+    "ANN401",  # Disallow Any
+    "C90",     # Complexity
+    "COM",     # Trailing commas teach the formatter
+    "D",       # Too many doc requests
+    "E501",    # Line too long
+    "ERA",     # Commented out code
+    "FIX",     # Hacks and todos
+    "PLC0415", # Import should be at top of file
     "PLE1205", # Format check doesn't work with our custom logger
-    "PT013",   # It's correct to import classes for typing!
-    "RUF009",  # Too easy to get a false positive
-    "PYI025",  # Wants Set to be renamed AbstractSet
-    "ISC001",  # Conflicts with formatter
     "PLR09",   # Too many ...
     "PLR2004", # Magic value used in comparison
-    "PLC0415", # Import should be at top of file
-    "ANN401",  # Disallow dynamically typed expressions
+    "PT013",   # It's correct to import classes for typing!
     "S101",    # Use of assert detected
+    "S404",    # subprocess module is possibly insecure
     "S603",    # subprocess untrusted input
     "S607",    # subprocess call
-    "S404",    # subprocess module is possibly insecure
+    "SLF001",  # Private members are okay to access
+    "TD",      # Todo format
+    "TID252",  # Relative imports are fine
 ]
 typing-modules = ["scikit_build_core._compat.typing"]
+isort.known-local-folder = ["pathutils"]
+flake8-bugbear.extend-immutable-calls = [
+  "packaging.version.Version",
+  "packaging.specifiers.SpecifierSet",
+]
+flake8-builtins.ignorelist = ["copyright", "license", "__doc__"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
-[tool.ruff.lint.isort]
-known-local-folder = ["pathutils"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.Callable".msg = "Use collections.abc.Callable instead."
@@ -319,13 +326,16 @@ known-local-folder = ["pathutils"]
 
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20", "ANN", "FBT001"]
+"tests/**" = ["T20", "ANN", "FBT001", "INP"]
 "noxfile.py" = ["T20", "TID251"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
-"src/scikit_build_core/settings/**.py" = ["FBT001"]
+"src/scikit_build_core/settings/**.py" = ["FBT001", "FA"]
+"src/scikit_build_core/file_api/**.py" = ["FA"]
 "tests/conftest.py" = ["TID251"]
 "tests/packages/**.py" = ["TID251"]
+"tests/test_settings.py" = ["FA"]
+"docs/**" = ["INP"]
 "docs/conf.py" = ["TID251"]
 "docs/examples/**" = ["ANN"]
 "src/scikit_build_core/file_api/model/*.py" = ["N"]
@@ -334,3 +344,7 @@ known-local-folder = ["pathutils"]
 
 [tool.check-sdist]
 sdist-only = ["src/scikit_build_core/_version.py"]
+
+
+[tool.typos.default.extend-words]
+delocate = "delocate"

@@ -10,5 +10,5 @@ if TYPE_CHECKING:
 
 def test_builder_printout(capsys: pytest.CaptureFixture[str]) -> None:
     main()
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
     assert "Detected Python Library" in out

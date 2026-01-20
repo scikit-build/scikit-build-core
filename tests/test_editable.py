@@ -6,15 +6,13 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from conftest import PackageInfo, VEnv, process_package
 
 
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize("isolate", [True, False], ids=["isolated", "notisolated"])
 @pytest.mark.parametrize(
-    "package",
+    "py_pkg",
     [
         pytest.param(
             True,
@@ -24,22 +22,18 @@ from conftest import PackageInfo, VEnv, process_package
         pytest.param(False, id="datafolder"),
     ],
 )
-@pytest.mark.usefixtures("navigate_editable")
+@pytest.mark.parametrize("package", ["navigate_editable"], indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.xfail(
     sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
 )
-def test_navigate_editable(isolated, isolate, package):
-    isolate_args = ["--no-build-isolation"] if not isolate else []
-    isolated.install("pip>=23")
-    if not isolate:
-        isolated.install("scikit-build-core")
-
-    if package:
+def test_navigate_editable(isolated, isolate, py_pkg):
+    if py_pkg:
         init_py = Path("python/shared_pkg/data/__init__.py")
         init_py.touch()
 
     isolated.install(
-        "-v", "--config-settings=build-dir=build/{wheel_tag}", *isolate_args, "-e", "."
+        "-v", "--config-settings=build-dir=build/{wheel_tag}", *isolate.flags, "-e", "."
     )
 
     value = isolated.execute("import shared_pkg; shared_pkg.call_c_method()")
@@ -58,67 +52,32 @@ def test_navigate_editable(isolated, isolate, package):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
+@pytest.mark.parametrize("isolate", {False}, indirect=True)
 @pytest.mark.parametrize(
-    ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
+    "multiple_packages",
+    [["cython_pxd_editable/pkg1", "cython_pxd_editable/pkg2"]],
+    indirect=True,
 )
-def test_cython_pxd(monkeypatch, tmp_path, editable, editable_mode, isolated):
-    editable_flag = ["-e"] if editable else []
+def test_cython_pxd(multiple_packages, editable, isolated, isolate):
+    isolated.install("cython")
 
-    config_mode_flags = []
-    if editable:
-        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
-    if editable_mode != "inplace":
-        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
-
-    package1 = PackageInfo(
-        "cython_pxd_editable/pkg1",
-    )
-    tmp_path1 = tmp_path / "pkg1"
-    tmp_path1.mkdir()
-    process_package(package1, tmp_path1, monkeypatch)
-
-    ninja = [
-        "ninja" for f in isolated.wheelhouse.iterdir() if f.name.startswith("ninja-")
-    ]
-    cmake = [
-        "cmake" for f in isolated.wheelhouse.iterdir() if f.name.startswith("cmake-")
-    ]
-
-    isolated.install("pip>23")
-    isolated.install("cython", "scikit-build-core", *ninja, *cmake)
-
-    isolated.install(
-        "-v",
-        *config_mode_flags,
-        "--no-build-isolation",
-        *editable_flag,
-        ".",
-    )
-
-    package2 = PackageInfo(
-        "cython_pxd_editable/pkg2",
-    )
-    tmp_path2 = tmp_path / "pkg2"
-    tmp_path2.mkdir()
-    process_package(package2, tmp_path2, monkeypatch)
-
-    isolated.install(
-        "-v",
-        *config_mode_flags,
-        "--no-build-isolation",
-        *editable_flag,
-        ".",
-    )
+    # install the packages in order with one dependent on the other
+    for package in multiple_packages:
+        isolated.install(
+            "-v",
+            *isolate.flags,
+            *editable.flags,
+            str(package.workdir),
+        )
 
 
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_simplest_c")
-def test_install_dir(isolated):
-    isolated.install("pip>=23")
-    isolated.install("scikit-build-core")
-
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
+@pytest.mark.parametrize("isolate", {False}, indirect=True)
+@pytest.mark.usefixtures("package")
+def test_install_dir(isolated, isolate):
     settings_overrides = {
         "build-dir": "build/{wheel_tag}",
         "wheel.install-dir": "other_pkg",
@@ -139,7 +98,7 @@ def test_install_dir(isolated):
     isolated.install(
         "-v",
         *[f"--config-settings={k}={v}" for k, v in settings_overrides.items()],
-        "--no-build-isolation",
+        *isolate.flags,
         "-e",
         ".",
     )
@@ -161,67 +120,22 @@ def test_install_dir(isolated):
     assert not failed_c_module.exists()
 
 
-def _setup_package_for_editable_layout_tests(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    editable: bool,
-    editable_mode: str,
-    isolated: VEnv,
-) -> None:
-    editable_flag = ["-e"] if editable else []
-
-    config_mode_flags = []
-    if editable:
-        config_mode_flags.append(f"--config-settings=editable.mode={editable_mode}")
-    if editable_mode != "inplace":
-        config_mode_flags.append("--config-settings=build-dir=build/{wheel_tag}")
-
-    # Use a context so that we only change into the directory up until the point where
-    # we run the editable install. We do not want to be in that directory when importing
-    # to avoid importing the source directory instead of the installed package.
-    with monkeypatch.context() as m:
-        package = PackageInfo("importlib_editable")
-        process_package(package, tmp_path, m)
-
-        assert isolated.wheelhouse
-
-        ninja = [
-            "ninja"
-            for f in isolated.wheelhouse.iterdir()
-            if f.name.startswith("ninja-")
-        ]
-        cmake = [
-            "cmake"
-            for f in isolated.wheelhouse.iterdir()
-            if f.name.startswith("cmake-")
-        ]
-
-        isolated.install("pip>23")
-        isolated.install("scikit-build-core", *ninja, *cmake)
-
-        isolated.install(
-            "-v",
-            *config_mode_flags,
-            "--no-build-isolation",
-            *editable_flag,
-            ".",
-        )
-
-
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"), [(False, ""), (True, "redirect"), (True, "inplace")]
-)
-def test_direct_import(monkeypatch, tmp_path, editable, editable_mode, isolated):
+@pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
+@pytest.mark.usefixtures("package")
+def test_direct_import(editable, isolated):
     # TODO: Investigate these failures
-    if platform.system() == "Windows" and editable_mode == "inplace":
+    if platform.system() == "Windows" and editable.mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")
 
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, isolated
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
     )
+
     isolated.execute("import pkg")
     isolated.execute("import pmod")
     isolated.execute("import emod")
@@ -230,30 +144,22 @@ def test_direct_import(monkeypatch, tmp_path, editable, editable_mode, isolated)
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    ("editable", "editable_mode"),
-    [
-        (False, ""),
-        pytest.param(
-            True,
-            "redirect",
-            marks=pytest.mark.xfail,
-        ),
-        (True, "inplace"),
-    ],
-)
-def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, isolated):
+@pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
+@pytest.mark.usefixtures("package")
+def test_importlib_resources(editable, isolated):
     if sys.version_info < (3, 9):
         pytest.skip("importlib.resources.files is introduced in Python 3.9")
 
     # TODO: Investigate these failures
-    if editable_mode == "redirect":
+    if editable.mode == "redirect":
         pytest.xfail("Redirect mode is at navigating importlib.resources.files")
-    if platform.system() == "Windows" and editable_mode == "inplace":
+    if platform.system() == "Windows" and editable.mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")
 
-    _setup_package_for_editable_layout_tests(
-        monkeypatch, tmp_path, editable, editable_mode, isolated
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
     )
 
     isolated.execute(
@@ -262,13 +168,13 @@ def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, iso
             from importlib import import_module
             from importlib.resources import files
             from pathlib import Path
-            
+
             def is_extension(path):
                 for ext in (".so", ".pyd"):
                     if ext in path.suffixes:
                         return True
                 return False
-            
+
             def check_pkg(pkg_name):
                 try:
                     pkg = import_module(pkg_name)
@@ -281,7 +187,7 @@ def test_importlib_resources(monkeypatch, tmp_path, editable, editable_mode, iso
                 except Exception as err:
                     msg = f"Failed in {str(pkg)}"
                     raise RuntimeError(msg) from err
-            
+
             check_pkg("pkg")
             check_pkg("pkg.sub_a")
             check_pkg("pkg.sub_b")

@@ -78,9 +78,8 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: fail
   :type: ``bool``
-  :default: false
 
-  Immediately fail the build. This is only useful in overrides.
+  Immediately fail the build. This is only allowed in overrides or config-settings.
 ```
 
 ```{eval-rst}
@@ -200,6 +199,16 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.python-hints
+  :type: ``bool``
+  :default: true
+
+  Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+  Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
+  instead.
+```
+
+```{eval-rst}
 .. confval:: cmake.source-dir
   :type: ``Path``
   :default: "."
@@ -214,6 +223,15 @@ print(mk_skbuild_docs())
   :type: ``list[str]``
 
   DEPRECATED in 0.10; use build.targets instead.
+```
+
+```{eval-rst}
+.. confval:: cmake.toolchain-file
+  :type: ``Path``
+
+  The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
+
+  This is only allowed in overrides or config-settings.
 ```
 
 ```{eval-rst}
@@ -572,6 +590,19 @@ print(mk_skbuild_docs())
   ignore Python ABI compatibility. The ABI tag is inferred from this tag.
 
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
+```
+
+```{eval-rst}
+.. confval:: wheel.tags
+  :type: ``list[str]``
+
+  Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
+
+  Manually specify the wheel tags to use, ignoring other inputs such as
+  ``wheel.py-api``. Each tag must be of the format
+  {interpreter}-{abi}-{platform}.  If not specified, these tags are
+  automatically calculated. This is only allowed in overrides or
+  config-settings.
 ```
 
 <!-- [[[end]]] -->

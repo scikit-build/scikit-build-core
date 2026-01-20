@@ -33,6 +33,8 @@ def __dir__() -> List[str]:
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
+    override_only: bool
+    """Do not allow the field to be a top-level table."""
 
 
 class CMakeSettingsDefine(str):
@@ -40,6 +42,8 @@ class CMakeSettingsDefine(str):
     A str subtype for automatically normalizing bool and list values
     to the CMake representation in the `cmake.define` settings key.
     """
+
+    __slots__ = ()
 
     json_schema = Union[str, bool, List[str]]
 
@@ -131,6 +135,22 @@ class CMakeSettings:
     )
     """
     DEPRECATED in 0.10; use build.targets instead.
+    """
+
+    toolchain_file: Optional[Path] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(override_only=True)
+    )
+    """
+    The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
+
+    This is only allowed in overrides or config-settings.
+    """
+
+    python_hints: bool = True
+    """
+    Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
+    Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
+    instead.
     """
 
 
@@ -312,6 +332,20 @@ class WheelSettings:
     build_tag: str = ""
     """
     The build tag to use for the wheel. If empty, no build tag is used.
+    """
+
+    tags: Optional[List[str]] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
+    """
+    Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
+
+    Manually specify the wheel tags to use, ignoring other inputs such as
+    ``wheel.py-api``. Each tag must be of the format
+    {interpreter}-{abi}-{platform}.  If not specified, these tags are
+    automatically calculated. This is only allowed in overrides or
+    config-settings.
     """
 
 
@@ -505,7 +539,10 @@ class ScikitBuildSettings:
     This can be set to reuse the build directory from previous runs.
     """
 
-    fail: bool = False
+    fail: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
     """
-    Immediately fail the build. This is only useful in overrides.
+    Immediately fail the build. This is only allowed in overrides or config-settings.
     """

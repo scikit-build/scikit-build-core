@@ -12,6 +12,8 @@ import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from packaging.version import Version
+
 from . import __version__
 from ._compat.builtins import ExceptionGroup
 from ._logging import logger
@@ -25,7 +27,6 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
     from packaging.specifiers import SpecifierSet
-    from packaging.version import Version
 
     from ._compat.typing import Self
     from .file_api.model.index import Index
@@ -211,10 +212,20 @@ class CMaker:
         )
 
     def _compute_cmake_args(
-        self, defines: Mapping[str, str | os.PathLike[str] | bool]
+        self,
+        defines: Mapping[str, str | os.PathLike[str] | bool],
+        toolchain: os.PathLike[str] | None,
     ) -> Generator[str, None, None]:
         yield f"-S{self.source_dir}"
         yield f"-B{self.build_dir}"
+
+        if toolchain is not None:
+            toolchain_str = str(toolchain).replace("\\", "/")
+            yield (
+                f"--toolchain={toolchain_str}"
+                if self.cmake.version >= Version("3.21")
+                else f"-DCMAKE_TOOLCHAIN_FILE:PATH={toolchain_str}"
+            )
 
         if self.init_cache_file.is_file():
             yield f"-C{self.init_cache_file}"
@@ -244,8 +255,9 @@ class CMaker:
         *,
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
+        toolchain: os.PathLike[str] | None = None,
     ) -> None:
-        _cmake_args = self._compute_cmake_args(defines or {})
+        _cmake_args = self._compute_cmake_args(defines or {}, toolchain)
         all_args = [*_cmake_args, *cmake_args]
 
         gen = self.get_generator(*all_args)
@@ -265,7 +277,7 @@ class CMaker:
             if self._file_api_query.exists():
                 self.file_api = load_reply_dir(self._file_api_query)
         except ExceptionGroup as exc:
-            logger.warning("Could not parse CMake file-api")
+            logger.debug("Could not parse CMake file-api")
             logger.debug(str(exc))
 
     def _compute_build_args(

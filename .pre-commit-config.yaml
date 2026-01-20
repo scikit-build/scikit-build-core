@@ -7,7 +7,7 @@ exclude: ^src/scikit_build_core/_vendor
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -25,9 +25,9 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.7
+    rev: v0.14.10
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
@@ -39,10 +39,10 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.19.1
+    rev: 1.20.0
     hooks:
       - id: blacken-docs
-        additional_dependencies: [black==24.*]
+        additional_dependencies: [black==25.*]
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
@@ -51,7 +51,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.6.2"
+    rev: "v3.7.4"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -59,7 +59,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.19.1
     hooks:
       - id: mypy
         exclude: |
@@ -75,22 +75,22 @@ repos:
           - cattrs
           - cmake
           - exceptiongroup
-          - hatch-fancy-pypi-readme>=24
+          - hatch-fancy-pypi-readme>=23.2
           - importlib-resources
           - markdown-it-py
           - ninja
           - nox
           - orjson
           - packaging>=24.2
-          - pytest
+          - pytest<9 # pytest 9 requires Python 3.10+
           - pytest-subprocess
           - rich
           - setuptools-scm
           - tomli
-          - types-setuptools>=70.1
+          - types-setuptools>=80.9
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.2.0"
+    rev: "v1.3.2"
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -98,14 +98,15 @@ repos:
           - hatchling
           - hatch-vcs
 
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+  - repo: https://github.com/crate-ci/typos
+    rev: "v1.41.0"
     hooks:
-      - id: codespell
+      - id: typos
+        args: []
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
 
@@ -131,12 +132,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.07.28
+    rev: 2026.01.02
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.2
+    rev: 0.36.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -150,6 +151,6 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.05.02
+    rev: 2025.11.21
     hooks:
       - id: sp-repo-review

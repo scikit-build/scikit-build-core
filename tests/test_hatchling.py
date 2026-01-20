@@ -3,6 +3,7 @@ import tarfile
 import zipfile
 from pathlib import Path
 
+import download_wheels
 import pytest
 
 pytest.importorskip("hatchling")
@@ -10,7 +11,8 @@ pytest.importorskip("hatchling")
 
 @pytest.mark.network
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_hatchling")
+@pytest.mark.parametrize("package", ["hatchling"], indirect=True)
+@pytest.mark.usefixtures("package")
 def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
@@ -34,13 +36,16 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.usefixtures("package_hatchling")
+@pytest.mark.parametrize("package", ["hatchling"], indirect=True)
+@pytest.mark.usefixtures("package")
 @pytest.mark.parametrize(
     "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
 )
 def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
-    isolated.install("build[virtualenv]", "scikit-build-core", "hatchling", "pybind11")
+    isolated.install(
+        "build[virtualenv]", "scikit-build-core", "hatchling", *download_wheels.EXTRA
+    )
     isolated.module("build", "--no-isolation", f"--outdir={dist}", *build_args)
     ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 

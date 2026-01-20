@@ -38,5 +38,5 @@ class Toolchain:
 @dataclasses.dataclass(frozen=True)
 class Toolchains:
     kind: str = "toolchains"
-    version: APIVersion = APIVersion(1, 0)
+    version: APIVersion = APIVersion(1, 0)  # noqa: RUF009
     toolchains: List[Toolchain] = dataclasses.field(default_factory=list)
