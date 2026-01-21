@@ -43,6 +43,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
     isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name == "cmake_example-0.0.1.tar.gz"
 
     if not sys.platform.startswith(("win", "cygwin")):
@@ -88,6 +89,7 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: P
     isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name == "sdist_config-0.1.0.tar.gz"
 
     with tarfile.open(sdist) as f:

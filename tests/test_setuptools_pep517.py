@@ -34,6 +34,7 @@ def test_pep517_sdist(tmp_path: Path):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name in {"cmake-example-0.0.1.tar.gz", "cmake_example-0.0.1.tar.gz"}
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
@@ -120,6 +121,7 @@ def test_toml_sdist(tmp_path: Path):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name in {"cmake-example-0.0.1.tar.gz", "cmake_example-0.0.1.tar.gz"}
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
