@@ -118,7 +118,9 @@ class Builder:
         return [*self.settings.cmake.args, *_filter_env_cmake_args(env_cmake_args)]
 
     def get_generator(self, *args: str) -> str | None:
-        return self.config.get_generator(*self.get_cmake_args(), *args)
+        return self.config.get_generator(
+            *self.get_cmake_args(), *args, defines=self.settings.cmake.define
+        )
 
     def _get_entry_point_search_path(self, entry_point: str) -> dict[str, list[Path]]:
         """Get the search path dict from the entry points"""
