@@ -43,6 +43,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     monkeypatch.chdir(FORTRAN_EXAMPLE)
     out = build_wheel(str(dist))
     (wheel,) = dist.glob("fibby-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:

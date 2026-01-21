@@ -143,6 +143,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
             assert "Using integrated pybind11" in out
 
     (wheel,) = dist.glob("sdist_config-0.1.0-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
 
     with zipfile.ZipFile(wheel) as zf:
         file_names = {Path(n).parts[0] for n in zf.namelist()}
@@ -184,6 +185,7 @@ def test_pep518_wheel(isolated, build_args, tmp_path: Path):
         *build_args,
     )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
 
     with zipfile.ZipFile(wheel) as zf:
         file_paths = {Path(n) for n in zf.namelist()}
@@ -235,6 +237,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
             f"--config-setting=build-dir={build_dir}",
         )
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
 
     with zipfile.ZipFile(wheel) as zf:
         file_paths = {Path(p) for p in zf.namelist()}

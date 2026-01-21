@@ -58,6 +58,7 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
     monkeypatch.chdir(SIMPLEST)
     out = build_wheel(str(dist), config_settings={"install.components": component})
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     virtualenv.install(wheel)
@@ -119,6 +120,7 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
     )
 
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     virtualenv.install(wheel)

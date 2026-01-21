@@ -30,6 +30,7 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv, capsys):
     stdout, _ = capsys.readouterr()
     assert "This is a message after success" in stdout
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
     abi3 = sys.implementation.name == "cpython" and not sysconfig.get_config_var(
         "Py_GIL_DISABLED"

@@ -184,6 +184,8 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
     dist = tmp_path / "dist"
     build_wheel(str(dist), {"cmake.targets": ["cmake_example"]})  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-py3-none-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
 
@@ -207,6 +209,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
         str(dist), {"cmake.targets": ["cmake_example"]}
     )  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:
@@ -258,6 +261,7 @@ def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), config_settings={"skbuild.wheel.build-tag": "1foo"})
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:
@@ -437,6 +441,7 @@ def test_pep639_license_files_wheel(tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), {})
     (wheel,) = dist.glob("pep639_pure-0.1.0-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:
