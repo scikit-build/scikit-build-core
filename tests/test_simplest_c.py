@@ -19,6 +19,7 @@ def test_pep517_sdist(tmp_path, monkeypatch):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name == "simplest-0.0.1.tar.gz"
     assert sdist == dist / out
 

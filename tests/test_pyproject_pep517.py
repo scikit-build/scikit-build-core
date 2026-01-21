@@ -415,6 +415,7 @@ def test_pep639_license_files_sdist(tmp_path: Path):
     out = build_sdist(str(dist))
 
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name == "pep639_pure-0.1.0.tar.gz"
     assert sdist == dist / out
 
