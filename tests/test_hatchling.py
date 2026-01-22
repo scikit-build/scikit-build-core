@@ -18,6 +18,7 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
     isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
+    sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
     assert sdist.name == "hatchling_example-0.1.0.tar.gz"
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
@@ -50,6 +51,7 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
     ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     (wheel,) = dist.glob("*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
     assert file_names == {
