@@ -256,13 +256,15 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             )
             raise ValueError(msg)
 
-        for path in wheel_dirs[targetlib].iterdir():
+        for raw_path in wheel_dirs[targetlib].iterdir():
+            path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
             build_data["force_include"][f"{path}"] = str(
                 settings.wheel.install_dir / path.relative_to(wheel_dirs[targetlib])
             )
 
         try:
-            for path in wheel_dirs["data"].iterdir():
+            for raw_path in wheel_dirs["data"].iterdir():
+                path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
                 build_data["shared_data"][f"{path.resolve()}"] = str(
                     path.relative_to(wheel_dirs["data"])
                 )
@@ -271,7 +273,8 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             raise
 
         try:
-            for path in wheel_dirs["scripts"].iterdir():
+            for raw_path in wheel_dirs["scripts"].iterdir():
+                path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
                 build_data["shared_scripts"][f"{path.resolve()}"] = str(
                     path.relative_to(wheel_dirs["scripts"])
                 )
@@ -279,11 +282,15 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             logger.error("SKBUILD_SCRIPTS_DIR not supported by Hatchling < 1.24.0")
             raise
 
-        for path_root in wheel_dirs["metadata"].iterdir():
+        for raw_path_root in wheel_dirs["metadata"].iterdir():
+            path_root = (
+                raw_path_root.resolve()
+            )  # Windows mingw64 and UCRT now requires this
             if path_root.name != "extra_metadata":
                 msg = f"Hatchling metadata must be in an extra_metadata folder, got {path_root}"
                 raise ValueError(msg)
-            for path in path_root.iterdir():
+            for raw_path in path_root.iterdir():
+                path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
                 location = path.relative_to(path_root)
                 try:
                     build_data["extra_metadata"][f"{path.resolve()}"] = str(location)
