@@ -13,6 +13,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), {})
     (wheel,) = dist.glob("purelib_example-0.0.1-*-none-any.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     virtualenv.install(wheel)

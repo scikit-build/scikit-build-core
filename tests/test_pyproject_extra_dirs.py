@@ -23,6 +23,7 @@ def test_pep517_wheel_extra_dirs(monkeypatch, tmp_path: Path):
         {"cmake.define.SOME_DEFINE2": "bar", "cmake.define.SOME_DEFINE3": "bar"},
     )
     (wheel,) = dist.glob("cmake_dirs-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:

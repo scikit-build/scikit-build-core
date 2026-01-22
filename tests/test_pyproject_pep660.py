@@ -23,6 +23,7 @@ def test_pep660_wheel(editable, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_editable(str(dist), {"editable.mode": editable.mode})
     (wheel,) = dist.glob("simplest-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     assert wheel == dist / out
 
     with zipfile.ZipFile(wheel) as zf:
