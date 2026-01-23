@@ -244,6 +244,7 @@ def test_configure_time_generated_module(editable, isolated):
     )
     assert value == "success"
 
+
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
@@ -258,8 +259,8 @@ def test_configure_time_generated_module(editable, isolated):
             "redirect",
             marks=pytest.mark.xfail(
                 sys.version_info[0:2] == (3, 9),
-                reason="Python 3.9 redirect doesn't work for generated data in a namespace subpackage from a generated module."
-            )
+                reason="Python 3.9 redirect doesn't work for generated data in a namespace subpackage from a generated module.",
+            ),
         ),
         pytest.param(
             "inplace",
@@ -286,6 +287,7 @@ def test_generated_module_generated_data(editable, isolated):
         "from cmake_generated.nested1.generated import cmake_generated_namespace_generated_data; print(cmake_generated_namespace_generated_data())"
     )
     assert value == "value written by cmake custom_command"
+
 
 @pytest.mark.compile
 @pytest.mark.configure

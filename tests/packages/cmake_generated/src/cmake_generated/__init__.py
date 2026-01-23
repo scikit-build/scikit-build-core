@@ -46,10 +46,14 @@ def get_configured_data():
 
 def get_namespace_static_data():
     if sys.version_info[0:2] == (3, 9):
-        return files("cmake_generated").joinpath("namespace1/static_data").read_text().rstrip()
-    else:
-        # (except in Python 3.9) read_text is able to handle a namespace subpackage directly, though `files()` is not.
-        return read_text("cmake_generated.namespace1", "static_data").rstrip()
+        return (
+            files("cmake_generated")
+            .joinpath("namespace1/static_data")
+            .read_text()
+            .rstrip()
+        )
+    # (except in Python 3.9) read_text is able to handle a namespace subpackage directly, though `files()` is not.
+    return read_text("cmake_generated.namespace1", "static_data").rstrip()
 
 
 def get_namespace_generated_data():

@@ -41,13 +41,15 @@ add_library(pkg MODULE src/cmake_generated/pkg.cpp)
 include(GenerateExportHeader)
 generate_export_header(pkg)
 target_sources(
-    pkg
-    PUBLIC
-      FILE_SET generated_headers
-      TYPE HEADERS
-      BASE_DIRS $<TARGET_PROPERTY:pkg,BINARY_DIR>
-      FILES ${CMAKE_CURRENT_BINARY_DIR}/pkg_export.h
-)
+  pkg
+  PUBLIC FILE_SET
+         generated_headers
+         TYPE
+         HEADERS
+         BASE_DIRS
+         $<TARGET_PROPERTY:pkg,BINARY_DIR>
+         FILES
+         ${CMAKE_CURRENT_BINARY_DIR}/pkg_export.h)
 target_include_directories(pkg PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT WIN32)
