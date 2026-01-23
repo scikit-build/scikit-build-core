@@ -227,9 +227,9 @@ def test_configure_time_generated_module(editable, isolated):
     assert value == "static value in subpackage 1"
 
     value = isolated.execute(
-        "from cmake_generated.nested1.generated import cmake_generated_namespace_generated_data; print(cmake_generated_namespace_generated_data())"
+        "from cmake_generated.nested1.generated import cmake_generated_namespace_static_data; print(cmake_generated_namespace_static_data())"
     )
-    assert value == "value written by cmake custom_command"
+    assert value == "static value in namespace package"
 
     value = isolated.execute(
         "from cmake_generated.nested1.generated import nested_data; print(nested_data)"
@@ -244,6 +244,48 @@ def test_configure_time_generated_module(editable, isolated):
     )
     assert value == "success"
 
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        pytest.param(
+            "redirect",
+            marks=pytest.mark.xfail(
+                sys.version_info[0:2] == (3, 9),
+                reason="Python 3.9 redirect doesn't work for generated data in a namespace subpackage from a generated module."
+            )
+        ),
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
+    ],
+    indirect=True,
+)
+@pytest.mark.skipif(
+    sys.version_info < (3, 9),
+    reason="importlib.resources.files is introduced in Python 3.9",
+)
+def test_generated_module_generated_data(editable, isolated):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
+    # Check that a generated module can access generated data in a namespace subpackage
+
+    value = isolated.execute(
+        "from cmake_generated.nested1.generated import cmake_generated_namespace_generated_data; print(cmake_generated_namespace_generated_data())"
+    )
+    assert value == "value written by cmake custom_command"
 
 @pytest.mark.compile
 @pytest.mark.configure

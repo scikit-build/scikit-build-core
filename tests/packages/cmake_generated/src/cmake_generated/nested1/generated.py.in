@@ -1,4 +1,5 @@
 """Try to open both generated and static files from various parts of the package."""
+import sys
 from importlib.resources import files, read_text
 
 from .. import __version__
@@ -14,11 +15,20 @@ def cmake_generated_static_data():
 def cmake_generated_nested_static_data():
     return files("cmake_generated.nested1").joinpath("static_data").read_text().rstrip()
 
+def cmake_generated_namespace_static_data():
+    # Note that `files("cmake_generated.namespace1")` doesn't work.
+    # Ref https://github.com/python/importlib_resources/issues/262
+    return files("cmake_generated").joinpath("namespace1/static_data").read_text().rstrip()
+
 def get_configured_data():
     return files("cmake_generated").joinpath("configured_file").read_text().rstrip()
 
 def cmake_generated_namespace_generated_data():
-    return read_text("cmake_generated.namespace1","generated_data").rstrip()
+    if sys.version_info[0:2] == (3, 9):
+        return files("cmake_generated").joinpath("namespace1/generated_data").read_text().rstrip()
+    else:
+        # (except in Python 3.9) read_text is able to handle a namespace subpackage directly, though `files()` is not.
+        return read_text("cmake_generated.namespace1","generated_data").rstrip()
 
 nested_data = "success"
 

@@ -45,8 +45,11 @@ def get_configured_data():
 
 
 def get_namespace_static_data():
-    # read_text is able to handle a namespace subpackage directly, though `files()` is not.
-    return read_text("cmake_generated.namespace1", "static_data").rstrip()
+    if sys.version_info[0:2] == (3, 9):
+        return files("cmake_generated").joinpath("namespace1/static_data").read_text().rstrip()
+    else:
+        # (except in Python 3.9) read_text is able to handle a namespace subpackage directly, though `files()` is not.
+        return read_text("cmake_generated.namespace1", "static_data").rstrip()
 
 
 def get_namespace_generated_data():
@@ -54,8 +57,7 @@ def get_namespace_generated_data():
     # Ref https://github.com/python/importlib_resources/issues/262
     return (
         files("cmake_generated")
-        .joinpath("namespace1")
-        .joinpath("generated_data")
+        .joinpath("namespace1/generated_data")
         .read_text()
         .rstrip()
     )
