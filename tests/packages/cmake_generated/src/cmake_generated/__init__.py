@@ -22,8 +22,6 @@ We test access
 * from modules at the same level as the files,
 * one level above and below, and
 * from parallel subpackages.
-
-Question: Do we want to test both relative and absolute imports or just one or the other?
 """
 
 import ctypes
