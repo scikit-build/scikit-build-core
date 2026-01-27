@@ -160,6 +160,10 @@ class VEnv:
 
 @pytest.fixture
 def isolated(tmp_path: Path, pep518_wheelhouse: Path) -> VEnv:
+    """Isolated virtual environment.
+
+    To control build isolation, see :py:func:`isolate`
+    """
     path = tmp_path / "venv"
     return VEnv(path, wheelhouse=pep518_wheelhouse)
 
@@ -212,6 +216,13 @@ def package(
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
 ) -> PackageInfo:
+    """Get the test package.
+
+    Parameterize this fixture with the package name in the tests/packages directory.
+    (Use ``indirect=True`` to pass the parameterization value to the fixture instead of
+    directly to the test function.)
+    https://docs.pytest.org/en/stable/example/parametrize.html#indirect-parametrization
+    """
     pkg_name = request.param
     assert isinstance(pkg_name, str)
     package = PackageInfo(pkg_name, tmp_path_factory.mktemp("pkg"))
@@ -256,12 +267,18 @@ def package_simple_pyproject_ext(
 
 @dataclasses.dataclass(frozen=True)
 class Isolate:
+    """Selection for build isolation."""
+
     state: bool
     flags: list[str]
 
 
 @pytest.fixture(params=[True, False], ids=["isolated", "not_isolated"])
 def isolate(request: pytest.FixtureRequest, isolated: VEnv) -> Isolate:
+    """Control build isolation.
+
+    For an isolated virtual environment, see :py:func:`isolated`
+    """
     isolate_request = request.param
     assert isinstance(isolate_request, bool)
     if not isolate_request:
