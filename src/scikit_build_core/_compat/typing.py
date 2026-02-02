@@ -33,7 +33,7 @@ if sys.version_info < (3, 13):
         def TypeVar(  # noqa: N802
             *args: object,
             default: object = None,  # noqa: ARG001
-            **kwargs: object,  # noqa: ARG001
+            **kwargs: object,
         ) -> typing.TypeVar:
             return typing.TypeVar(*args, **kwargs)
 else:
