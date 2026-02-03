@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Annotated
+from .._compat.typing import Annotated, Self
 
 __all__ = [
     "BackportSettings",
@@ -47,7 +47,7 @@ class CMakeSettingsDefine(str):
 
     json_schema = Union[str, bool, List[str]]
 
-    def __new__(cls, raw: Union[str, bool, List[str]]) -> "CMakeSettingsDefine":
+    def __new__(cls, raw: Union[str, bool, List[str]]) -> Self:
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
 

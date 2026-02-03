@@ -62,8 +62,10 @@ if typing.TYPE_CHECKING:
 # Runtime check for PEP 604 union syntax (A | B) support
 # types.UnionType only exists in Python 3.10+
 if sys.version_info >= (3, 10):
-    from types import UnionType as _UnionType  # type: ignore[attr-defined]
+    from types import NoneType
+    from types import UnionType as _UnionType
 else:
+    NoneType = type(None)
 
     class _UnionType:
         pass
@@ -113,7 +115,7 @@ def _process_union(target: Any, /) -> Any:
     origin = get_origin(target)
 
     if _is_union_type(origin):
-        non_none_args = [a for a in get_args(target) if a is not type(None)]
+        non_none_args = [a for a in get_args(target) if a is not NoneType]
         if len(non_none_args) == 1:
             return non_none_args[0]
         return Union[tuple(non_none_args)]
