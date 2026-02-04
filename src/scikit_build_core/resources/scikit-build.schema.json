@@ -172,6 +172,14 @@
           },
           "description": "Files to exclude from the SDist even if they are included by default. Supports gitignore syntax."
         },
+        "inclusion-mode": {
+          "enum": [
+            "classic",
+            "default",
+            "manual"
+          ],
+          "description": "Method to use to compute the files to include and exclude."
+        },
         "reproducible": {
           "type": "boolean",
           "default": true,

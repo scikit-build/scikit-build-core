@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pathspec
 
@@ -44,6 +44,7 @@ def packages_to_file_mapping(
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
     build_dir: str,
+    mode: Literal["classic", "default", "manual"],
 ) -> dict[str, str]:
     """
     This will output a mapping of source files to target files.
@@ -59,6 +60,7 @@ def packages_to_file_mapping(
             include=include,
             exclude=src_exclude,
             build_dir=build_dir,
+            mode=mode,
         ):
             rel_path = filepath.relative_to(source_dir)
             target_path = platlib_dir / package_dir / rel_path
