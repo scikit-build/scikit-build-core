@@ -240,7 +240,11 @@ class CMaker:
             else:
                 yield f"-D{key}={value}"
 
-    def get_generator(self, *args: str) -> str | None:
+    def get_generator(
+        self,
+        *args: str,
+        defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
+    ) -> str | None:
         """
         Try to get the generator that will be used to build the project. If it's
         not set, return None (default generator will be used).
@@ -248,6 +252,10 @@ class CMaker:
         generators = [g for g in args if g.startswith("-G")]
         if generators:
             return generators[-1][2:].strip()
+        if defines and "CMAKE_GENERATOR" in defines:
+            gen_value = defines["CMAKE_GENERATOR"]
+            assert isinstance(gen_value, str)
+            return gen_value
         return self.env.get("CMAKE_GENERATOR", None)
 
     def configure(
