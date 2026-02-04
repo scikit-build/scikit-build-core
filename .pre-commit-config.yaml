@@ -25,10 +25,10 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.15.0
     hooks:
       - id: ruff-check
-        args: ["--fix", "--show-fixes"]
+        args: ["--fix"]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pygrep-hooks
@@ -51,7 +51,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.7.4"
+    rev: "v3.8.1"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -99,7 +99,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: "v1.41.0"
+    rev: v1.43.1
     hooks:
       - id: typos
         args: []
@@ -132,12 +132,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.01.02
+    rev: 2026.01.22
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.36.0
+    rev: 0.36.1
     hooks:
       - id: check-dependabot
       - id: check-github-workflows

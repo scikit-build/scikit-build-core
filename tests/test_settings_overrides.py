@@ -520,7 +520,7 @@ def test_skbuild_env_negative_bool(
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings = settings_reader.settings
 
-    if envvar in {"random"}:
+    if envvar == "random":
         assert not settings.sdist.cmake
     else:
         assert settings.sdist.cmake
