@@ -149,12 +149,14 @@ def build_sdist(
         tar = stack.enter_context(
             tarfile.TarFile(fileobj=gzip_container, mode="w", format=tarfile.PAX_FORMAT)
         )
+        assert settings.sdist.inclusion_mode is not None
         paths = sorted(
             each_unignored_file(
                 Path(),
                 include=settings.sdist.include,
                 exclude=settings.sdist.exclude,
                 build_dir=settings.build_dir,
+                mode=settings.sdist.inclusion_mode,
             )
         )
         for filepath in paths:

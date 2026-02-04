@@ -190,6 +190,9 @@ sdist.include = []
 # Files to exclude from the SDist even if they are included by default. Supports gitignore syntax.
 sdist.exclude = []
 
+# Method to use to compute the files to include and exclude.
+sdist.inclusion-mode = ""
+
 # Try to build a reproducible distribution.
 sdist.reproducible = true
 

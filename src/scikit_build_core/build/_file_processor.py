@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pathspec
 
@@ -36,24 +36,31 @@ def each_unignored_file(
     include: Sequence[str] = (),
     exclude: Sequence[str] = (),
     build_dir: str = "",
+    *,
+    mode: Literal["classic", "default", "manual"],
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
     """
     global_exclude_lines = []
-    for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
-        ignore_errs = [FileNotFoundError, NotADirectoryError]
-        with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
-            global_exclude_lines += f.readlines()
+    if mode != "manual":
+        for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
+            ignore_errs = [FileNotFoundError, NotADirectoryError]
+            with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
+                global_exclude_lines += f.readlines()
 
-    nested_excludes = {
-        Path(dirpath): pathspec.GitIgnoreSpec.from_lines(
-            (Path(dirpath) / filename).read_text(encoding="utf-8").splitlines()
-        )
-        for dirpath, _, filenames in os.walk(".")
-        for filename in filenames
-        if filename == ".gitignore" and dirpath != "."
-    }
+    nested_excludes = (
+        {}
+        if mode == "manual"
+        else {
+            Path(dirpath): pathspec.GitIgnoreSpec.from_lines(
+                (Path(dirpath) / filename).read_text(encoding="utf-8").splitlines()
+            )
+            for dirpath, _, filenames in os.walk(".")
+            for filename in filenames
+            if filename == ".gitignore" and dirpath != "."
+        }
+    )
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
 
@@ -69,18 +76,22 @@ def each_unignored_file(
 
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
-        for dname in dirs:
-            if not match_path(
-                dirpath,
-                dirpath / dname,
-                include_spec,
-                global_exclude_spec,
-                builtin_exclude_spec,
-                user_exclude_spec,
-                nested_excludes,
-                is_path=True,
-            ):
-                dirs.remove(dname)
+        if mode != "classic":
+            for dname in dirs:
+                if not match_path(
+                    dirpath,
+                    dirpath / dname,
+                    include_spec,
+                    global_exclude_spec,
+                    builtin_exclude_spec,
+                    user_exclude_spec,
+                    nested_excludes,
+                    is_path=True,
+                ):
+                    # Check to see if any include rules start with this
+                    dstr = str(dirpath / dname).strip("/") + "/"
+                    if not any(p.lstrip("/").startswith(dstr) for p in include):
+                        dirs.remove(dname)
 
         for fn in filenames:
             path = dirpath / fn
