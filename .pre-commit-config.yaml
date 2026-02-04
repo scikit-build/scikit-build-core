@@ -25,10 +25,10 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.15.0
     hooks:
       - id: ruff-check
-        args: ["--fix", "--show-fixes"]
+        args: ["--fix"]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pygrep-hooks
@@ -99,7 +99,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: "v1.43.0"
+    rev: v1.43.1
     hooks:
       - id: typos
         args: []
