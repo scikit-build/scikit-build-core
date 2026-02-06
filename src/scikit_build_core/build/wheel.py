@@ -474,6 +474,7 @@ def _build_wheel_impl_impl(
             packages=settings.wheel.packages,
             name=normalized_name,
         )
+        assert settings.sdist.inclusion_mode is not None
         mapping = packages_to_file_mapping(
             packages=packages,
             platlib_dir=wheel_dirs[targetlib],
@@ -481,6 +482,7 @@ def _build_wheel_impl_impl(
             src_exclude=settings.sdist.exclude,
             target_exclude=settings.wheel.exclude,
             build_dir=settings.build_dir,
+            mode=settings.sdist.inclusion_mode,
         )
 
         if not editable:
