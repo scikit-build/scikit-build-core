@@ -227,7 +227,12 @@ class SDistSettings:
        :confval:`sdist.include`
     """
 
-    inclusion_mode: Optional[Literal["classic", "default", "manual"]] = None
+    inclusion_mode: Optional[Literal["classic", "default", "manual"]] = (
+        dataclasses.field(
+            default=None,
+            metadata=SettingsFieldMetadata(display_default='"default"  # "classic"'),
+        )
+    )
     """
     Method to use to compute the files to include and exclude.
 
@@ -236,6 +241,9 @@ class SDistSettings:
     * "default": Process the git ignore files. Shortcuts on ignored directories.
     * "classic": The behavior before 0.12, like "default" but does not shortcut directories.
     * "manual": No extra logic, based on include/exclude only.
+
+    If you don't set this, it will be "default" unless you set the minimum
+    version below 0.12, in which case it will be "classic".
 
     .. versionadded: 0.12
     """

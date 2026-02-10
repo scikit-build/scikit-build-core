@@ -69,7 +69,7 @@ def test_skbuild_settings_default(tmp_path: Path):
 
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.12.0"
     )
 
     monkeypatch.setenv("SKBUILD_NINJA_VERSION", ">=1.1")
@@ -94,7 +94,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
-    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.10")
+    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.12")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
     monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "False")
@@ -142,7 +142,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == Version("0.10")
+    assert settings.minimum_version == Version("0.12")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"

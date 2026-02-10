@@ -191,7 +191,7 @@ sdist.include = []
 sdist.exclude = []
 
 # Method to use to compute the files to include and exclude.
-sdist.inclusion-mode = ""
+sdist.inclusion-mode = "default"  # "classic"
 
 # Try to build a reproducible distribution.
 sdist.reproducible = true

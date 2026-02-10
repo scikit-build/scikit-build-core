@@ -364,14 +364,21 @@ class SettingsReader:
             and static_settings.build.targets == self.settings.build.targets,
         )
 
-        if self.settings.sdist.inclusion_mode is None:
+        if self.settings.sdist.inclusion_mode is not None:
             if (
                 self.settings.minimum_version is not None
                 and self.settings.minimum_version < Version("0.12")
             ):
-                self.settings.sdist.inclusion_mode = "classic"
-            else:
-                self.settings.sdist.inclusion_mode = "default"
+                rich_error(
+                    "minimum-version can't be less than 0.12 to use sdist.inclusion-mode"
+                )
+        elif (
+            self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("0.12")
+        ):
+            self.settings.sdist.inclusion_mode = "classic"
+        else:
+            self.settings.sdist.inclusion_mode = "default"
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

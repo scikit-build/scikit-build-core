@@ -164,7 +164,7 @@ def match_path(
         )
         return False
 
-    logger.info(
+    logger.debug(
         "Including {} {} because it exists (and isn't matched any other way).", ptype, p
     )
     return True

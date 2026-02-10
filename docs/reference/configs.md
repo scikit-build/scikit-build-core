@@ -465,6 +465,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.inclusion-mode
   :type: ``"classic" | "default" | "manual"``
+  :default: "default"  # "classic"
 
   Method to use to compute the files to include and exclude.
 
@@ -473,6 +474,9 @@ print(mk_skbuild_docs())
   * "default": Process the git ignore files. Shortcuts on ignored directories.
   * "classic": The behavior before 0.12, like "default" but does not shortcut directories.
   * "manual": No extra logic, based on include/exclude only.
+
+  If you don't set this, it will be "default" unless you set the minimum
+  version below 0.12, in which case it will be "classic".
 
   .. versionadded: 0.12
 ```
