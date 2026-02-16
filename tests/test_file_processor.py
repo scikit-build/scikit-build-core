@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 
@@ -12,10 +12,18 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
+@pytest.fixture(params=["default", "classic", "manual"])
+def mode(request: pytest.FixtureRequest) -> Literal["default", "classic", "manual"]:
+    """
+    Fixture to provide different modes for testing.
+    """
+    return request.param  # type: ignore[no-any-return]
+
+
 def _mk_files(tmp_path: Path, files: str) -> Generator[Path, None, None]:
     """
     Create a set of files in the given temporary path based on the provided string.
-    The string should contain file names
+    The string should contain file names and optional contents separated by a colon.
     """
     for line in files.splitlines():
         file_contents = line.strip()
@@ -67,7 +75,11 @@ def _setup_test_filesystem(tmp_path: Path) -> set[Path]:
     sys.implementation.name == "pypy" and sys.platform.startswith("win"),
     reason="PyPy on Windows does not support symlinks",
 )
-def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_on_each_with_symlink(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test that each_unignored_file() does not follow symlinks.
     """
@@ -108,17 +120,28 @@ def test_on_each_with_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
         pytest.skip("Windows symlink support not available")
 
     # Test that each_unignored_file() follows the symlink
-    assert set(each_unignored_file(Path())) == {
+    files = {
         gitignore,
-        exposed_symlink / "file2",
         file1,
         file2,
+        exposed_symlink / "file2",
         nested_dir / "not_ignored.txt",
         nested_dir / ".gitignore",
     }
+    if mode == "manual":
+        files |= {
+            hidden_file,
+            nested_dir.joinpath("ignored.txt"),
+            nested_dir.joinpath("more/ignored.txt"),
+        }
+    assert set(each_unignored_file(Path(), mode=mode)) == files
 
 
-def test_dot_git_is_a_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_dot_git_is_a_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test that each_unignored_file() does not crash when .git is a file (e.g.,
     if the build is being run in a submodule)
@@ -128,10 +151,14 @@ def test_dot_git_is_a_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> N
     git = Path(".git")
     git.write_text("gitdir: ../../.git/modules/foo")
     # If this throws an exception, the test will fail
-    assert list(each_unignored_file(Path())) == []
+    assert list(each_unignored_file(Path(), mode=mode)) == []
 
 
-def test_include_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_include_patterns(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test that include patterns work correctly and override excludes.
     """
@@ -139,7 +166,7 @@ def test_include_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     _setup_test_filesystem(tmp_path)
 
     # Test including only Python files
-    result = set(each_unignored_file(Path(), include=["*.py"]))
+    result = set(each_unignored_file(Path(), include=["*.py"], mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -160,19 +187,25 @@ def test_include_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "tests/tmp.py",
         ]
     }
+    if mode == "manual":
+        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
     assert result == expected
 
     # Test including specific files
-    result = set(each_unignored_file(Path(), include=["tests/tmp.py"]))
+    result = set(each_unignored_file(Path(), include=["tests/tmp.py"], mode=mode))
     assert result == expected | {Path("tests/tmp.py")}
 
     # Test including with wildcards
-    result = set(each_unignored_file(Path(), include=["tests/*"]))
+    result = set(each_unignored_file(Path(), include=["tests/*"], mode=mode))
     expected = expected | {Path("tests/tmp.py")}
     assert result == expected
 
 
-def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_exclude_patterns(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test that exclude patterns work correctly.
     """
@@ -180,7 +213,7 @@ def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     _setup_test_filesystem(tmp_path)
 
     # Test excluding specific file types
-    result = set(each_unignored_file(Path(), exclude=["*.tmp", "*.log"]))
+    result = set(each_unignored_file(Path(), exclude=["*.tmp", "*.log"], mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -199,10 +232,12 @@ def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "tests/test_utils.py",
         ]
     }
+    if mode == "manual":
+        expected |= {Path("tests/tmp.py"), Path("local_ignored_file.txt")}
     assert result == expected
 
     # Test excluding directories
-    result = set(each_unignored_file(Path(), exclude=["tests/"]))
+    result = set(each_unignored_file(Path(), exclude=["tests/"], mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -220,10 +255,12 @@ def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "src/utils.py",
         ]
     }
+    if mode == "manual":
+        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
     assert result == expected
 
     # Test excluding with wildcards
-    result = set(each_unignored_file(Path(), exclude=["*.py"]))
+    result = set(each_unignored_file(Path(), exclude=["*.py"], mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -237,11 +274,15 @@ def test_exclude_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "pyproject.toml",
         ]
     }
+    if mode == "manual":
+        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
     assert result == expected
 
 
 def test_include_overrides_exclude(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
 ) -> None:
     """
     Test that include patterns override exclude patterns.
@@ -252,7 +293,10 @@ def test_include_overrides_exclude(
     # Exclude all files but include specific ones
     result = set(
         each_unignored_file(
-            Path(), include=["src/main.py", "tests/test_main.py"], exclude=["*"]
+            Path(),
+            include=["src/main.py", "tests/test_main.py"],
+            exclude=["*"],
+            mode=mode,
         )
     )
     expected = {Path(s) for s in ["src/main.py", "tests/test_main.py"]}
@@ -260,13 +304,19 @@ def test_include_overrides_exclude(
 
     # Exclude everything but include a file from inside a directory
     result = set(
-        each_unignored_file(Path(), include=["tests/test_main.py"], exclude=["*"])
+        each_unignored_file(
+            Path(), include=["tests/test_main.py"], exclude=["*"], mode=mode
+        )
     )
     expected = {Path(s) for s in ["tests/test_main.py"]}
     assert result == expected
 
 
-def test_gitignore_interaction(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_gitignore_interaction(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test interaction between include/exclude and gitignore files.
     """
@@ -278,7 +328,7 @@ def test_gitignore_interaction(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
     gitignore.write_text("*.tmp\n*.log\n/cache.db\n")
 
     # Test that gitignore is respected by default
-    result = set(each_unignored_file(Path()))
+    result = set(each_unignored_file(Path(), mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -297,14 +347,25 @@ def test_gitignore_interaction(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
             "nested_dir/not_ignored.txt",
         ]
     }
+    if mode == "manual":
+        expected |= {
+            Path("cache.db"),
+            Path("debug.log"),
+            Path("local_ignored_file.txt"),
+            Path("temp.tmp"),
+        }
     assert result == expected
 
     # Test that include can override gitignore
-    result = set(each_unignored_file(Path(), include=["*.tmp"]))
+    result = set(each_unignored_file(Path(), include=["*.tmp"], mode=mode))
     assert result == expected | {Path("temp.tmp")}
 
 
-def test_nested_gitignore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_nested_gitignore(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test handling of nested .gitignore files.
     """
@@ -316,7 +377,7 @@ def test_nested_gitignore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     src_gitignore.write_text("utils.py\n")
 
     # Test that nested gitignore is respected
-    result = set(each_unignored_file(Path()))
+    result = set(each_unignored_file(Path(), mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -336,14 +397,25 @@ def test_nested_gitignore(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
             "tests/test_utils.py",
         ]
     }
+    if mode == "manual":
+        expected |= {
+            Path("local_ignored_file.txt"),
+            Path("src/utils.py"),
+            Path("temp.tmp"),
+            Path("tests/tmp.py"),
+        }
     assert result == expected
 
     # Test that include can override nested gitignore
-    result = set(each_unignored_file(Path(), include=["src/utils.py"]))
+    result = set(each_unignored_file(Path(), include=["src/utils.py"], mode=mode))
     assert result == expected | {Path("src/utils.py")}
 
 
-def test_build_dir_exclusion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_build_dir_exclusion(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test that build_dir parameter correctly excludes build directories.
     """
@@ -357,7 +429,7 @@ def test_build_dir_exclusion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     build_file.write_text("compiled output")
 
     # Test that build directory is excluded when specified
-    result = set(each_unignored_file(Path(), build_dir="build"))
+    result = set(each_unignored_file(Path(), build_dir="build", mode=mode))
     expected = {
         Path(s)
         for s in [
@@ -377,15 +449,27 @@ def test_build_dir_exclusion(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
             "tests/test_utils.py",
         ]
     }
+    if mode == "manual":
+        expected |= {
+            Path("local_ignored_file.txt"),
+            Path("temp.tmp"),
+            Path("tests/tmp.py"),
+        }
     assert result == expected
     assert build_file.relative_to(tmp_path) not in result
 
     # Test that include can override build_dir exclusion
-    result = set(each_unignored_file(Path(), include=["build/*"], build_dir="build"))
+    result = set(
+        each_unignored_file(Path(), include=["build/*"], build_dir="build", mode=mode)
+    )
     assert result == expected | {Path("build/output.so")}
 
 
-def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_complex_combinations(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test complex combinations of include, exclude, gitignore, and build_dir.
     """
@@ -411,6 +495,7 @@ def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
             ],  # Include specific test and override gitignore for .tmp
             exclude=["*"],  # Exclude tests dir and rst files
             build_dir="_build",
+            mode=mode,
         )
     )
 
@@ -420,23 +505,31 @@ def test_complex_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     assert result == expected
 
 
-def test_empty_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_empty_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test behavior with empty directory.
     """
     monkeypatch.chdir(tmp_path)
 
-    result = list(each_unignored_file(Path()))
+    result = list(each_unignored_file(Path(), mode=mode))
     assert result == []
 
-    result = list(each_unignored_file(Path(), include=["*.py"]))
+    result = list(each_unignored_file(Path(), include=["*.py"], mode=mode))
     assert result == []
 
-    result = list(each_unignored_file(Path(), exclude=["*.py"]))
+    result = list(each_unignored_file(Path(), exclude=["*.py"], mode=mode))
     assert result == []
 
 
-def test_nonexistent_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_nonexistent_patterns(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
     """
     Test behavior with patterns that don't match any files.
     """
@@ -445,12 +538,14 @@ def test_nonexistent_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
     # Include pattern that matches nothing
     include_result = list(
-        each_unignored_file(Path(), exclude=["*"], include=["*.nonexistent"])
+        each_unignored_file(Path(), exclude=["*"], include=["*.nonexistent"], mode=mode)
     )
     assert include_result == []
 
     # Exclude pattern that matches nothing
-    exclude_result = set(each_unignored_file(Path(), exclude=["*.nonexistent"]))
+    exclude_result = set(
+        each_unignored_file(Path(), exclude=["*.nonexistent"], mode=mode)
+    )
     expected = {
         Path(s)
         for s in [
@@ -470,4 +565,10 @@ def test_nonexistent_patterns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
             "tests/test_utils.py",
         ]
     }
+    if mode == "manual":
+        expected |= {
+            Path("local_ignored_file.txt"),
+            Path("temp.tmp"),
+            Path("tests/tmp.py"),
+        }
     assert exclude_result == expected

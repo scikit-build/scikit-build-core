@@ -40,6 +40,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
     assert settings.sdist.exclude == []
+    assert settings.sdist.inclusion_mode == "default"
     assert settings.sdist.reproducible
     assert not settings.sdist.cmake
     assert settings.wheel.packages is None
@@ -68,7 +69,7 @@ def test_skbuild_settings_default(tmp_path: Path):
 
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.12.0"
     )
 
     monkeypatch.setenv("SKBUILD_NINJA_VERSION", ">=1.1")
@@ -83,6 +84,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
     monkeypatch.setenv("SKBUILD_SDIST_REPRODUCIBLE", "OFF")
     monkeypatch.setenv("SKBUILD_SDIST_CMAKE", "ON")
+    monkeypatch.setenv("SKBUILD_SDIST_INCLUSION_MODE", "manual")
     monkeypatch.setenv("SKBUILD_WHEEL_PACKAGES", "j; k; l")
     monkeypatch.setenv("SKBUILD_WHEEL_PY_API", "cp39")
     monkeypatch.setenv("SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS", "True")
@@ -92,7 +94,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
-    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.10")
+    monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.12")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
     monkeypatch.setenv("SKBUILD_EDITABLE_VERBOSE", "False")
@@ -129,6 +131,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
     assert not settings.sdist.reproducible
+    assert settings.sdist.inclusion_mode == "manual"
     assert settings.sdist.cmake
     assert settings.wheel.packages == ["j", "k", "l"]
     assert settings.wheel.py_api == "cp39"
@@ -139,7 +142,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
-    assert settings.minimum_version == Version("0.10")
+    assert settings.minimum_version == Version("0.12")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
     assert settings.editable.mode == "redirect"
@@ -923,3 +926,24 @@ def test_backcompat_cmake_build_targets_both_specified(
 
     settings_reader = SettingsReader.from_file(pyproject_toml, {"build.targets": "c;d"})
     assert settings_reader.settings.build.targets == ["c", "d"]
+
+
+def test_backcompat_sdist_inclusion_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.12.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.11"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.sdist.inclusion_mode == "classic"
