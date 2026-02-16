@@ -146,7 +146,6 @@ docs = [
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
     "sphinx-tippy",
-    "sphinxcontrib-programoutput",
 ]
 
 
