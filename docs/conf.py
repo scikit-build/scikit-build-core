@@ -56,7 +56,9 @@ author = "Henry Schreiner"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "conftabs",
+    "erbsland.sphinx.ansi",
+    "conftabs",  # in /ext
+    "progout",  # in /ext
     "myst_parser",
     "sphinx-jsonschema",
     "sphinx.ext.autodoc",
@@ -68,7 +70,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_inline_tabs",
     "sphinx_tippy",
-    "sphinxcontrib.programoutput",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

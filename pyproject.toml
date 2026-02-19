@@ -136,6 +136,7 @@ dev = [
     "rich",
 ]
 docs = [
+    "erbsland-sphinx-ansi; python_version>='3.10'",
     "furo",
     "hatchling",
     "myst-parser >=0.13",
@@ -146,7 +147,6 @@ docs = [
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
     "sphinx-tippy",
-    "sphinxcontrib-programoutput",
 ]
 
 
