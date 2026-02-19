@@ -6,6 +6,16 @@ package in pure Python using modern tooling and configuration. Another great
 resource is the [Scientific Python Developer Guide][]. And a tutorial can be
 found at [INTERSECT Training: Packaging][].
 
+You can also find examples:
+
+- For pybind11, there's a example template at [pybind11/scikit_build_example][].
+  For nanobind, [nanobind example][] includes the Stable ABI on Python 3.12+!
+- There are several examples including scikit-build-core examples (including
+  free-threading) at [scikit-build-sample-projects][].
+
+We also keep
+[a list of some of the projects using scikit-build-core](../about/projects.md).
+
 ## Quick start
 
 There are several mechanisms to quickly get started with a package:
@@ -18,12 +28,8 @@ There are several mechanisms to quickly get started with a package:
   `buildgen new myext -r py/pybind11` (see all with `buildgen list`, includes
   pybind11, nanobind, Cython, and C extensions).
 
-You can also find examples:
-
-- For pybind11, there's a example template at [pybind11/scikit_build_example][].
-  For nanobind, [nanobind example][] includes the Stable ABI on Python 3.12+!
-- There are several examples including scikit-build-core examples (including
-  free-threading) at [scikit-build-sample-projects][].
+For the rest of this page, however, we will show you how to get set up from
+scratch.
 
 ## Writing an extension
 
