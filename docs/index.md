@@ -87,7 +87,7 @@ Generated using scikit-build-core {{ version }}.
 
 <!-- prettier-ignore-start -->
 
-[12:00 PM ET]: https://www.timeanddate.com/worldclock/fixedtime.html?iso=20260304T12&p1=179
+[12:00 PM ET]: https://howlonghowmany.com/my-time/eastern-time/12-pm
 
 <!-- prettier-ignore-end -->
 
@@ -99,31 +99,59 @@ function getThirdFriday(year, month) {
   return 1 + daysUntilFriday + 14;
 }
 
+const nyDateFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+});
+
+const nyOffsetFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  timeZoneName: "shortOffset"
+});
+
+function nyOffsetMinutes(date) {
+  const offset = nyOffsetFormat
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName").value;
+
+  if (offset === "GMT") {
+    return 0;
+  }
+
+  const match = offset.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+  if (!match) {
+    throw new Error(`Unexpected time zone offset: ${offset}`);
+  }
+
+  const sign = match[1] === "+" ? 1 : -1;
+  const hours = Number(match[2]);
+  const minutes = Number(match[3] || 0);
+  return sign * (hours * 60 + minutes);
+}
+
+function newYorkTimeToDate(year, month, day, hour, minute) {
+  const localAsUTC = Date.UTC(year, month, day, hour, minute, 0);
+  const offsetMinutes = nyOffsetMinutes(new Date(localAsUTC));
+  return new Date(localAsUTC - offsetMinutes * 60_000);
+}
+
 function nextThirdFridayET(hour, minute) {
   const now = new Date();
-
-  // Get current date in New York
-  const nyNow = new Date(
-    now.toLocaleString("en-US", { timeZone: "America/New_York" })
+  const nyNow = Object.fromEntries(
+    nyDateFormat
+      .formatToParts(now)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
   );
 
-  let year = nyNow.getFullYear();
-  let month = nyNow.getMonth();
+  let year = Number(nyNow.year);
+  let month = Number(nyNow.month) - 1;
 
   function buildMeeting(y, m) {
     const day = getThirdFriday(y, m);
-
-    // Construct a string interpreted in New York time
-    const localString =
-      `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")} ` +
-      `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
-
-    // Parse as New York time
-    const parts = new Date(
-      localString + " America/New_York"
-    );
-
-    return parts;
+    return newYorkTimeToDate(y, m, day, hour, minute);
   }
 
   let meeting = buildMeeting(year, month);

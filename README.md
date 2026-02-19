@@ -20,7 +20,7 @@
 > [available here](https://github.com/orgs/scikit-build/discussions/categories/community-meeting-notes).
 
 <!-- prettier-ignore-start -->
-[12:00 PM ET]: https://www.timeanddate.com/worldclock/fixedtime.html?iso=20260304T12&p1=179
+[12:00 PM ET]: https://howlonghowmany.com/my-time/eastern-time/12-pm
 <!-- prettier-ignore-end -->
 
 <!-- SPHINX-START -->
