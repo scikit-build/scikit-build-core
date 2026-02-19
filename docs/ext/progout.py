@@ -31,6 +31,9 @@ class ShowCliDirective(Directive):
         # Get the cwd option, defaulting to the current file's directory
         cwd_option = self.options.get("cwd")
         cwd = (current_dir / cwd_option).resolve() if cwd_option else current_dir
+        env = os.environ
+        env["FORCE_COLOR"] = "1"
+        env.pop("NO_COLOR", None)
 
         try:
             # Run the command and capture output
@@ -40,10 +43,10 @@ class ShowCliDirective(Directive):
                 check=True,
                 text=True,
                 cwd=str(cwd),
-                env={**os.environ, "FORCE_COLOR": "1"},
+                env=env,
             )
             output = result.stdout or result.stderr
-        except Exception as e:  # noqa: BLE001
+        except subprocess.CalledProcessError as e:
             return [
                 nodes.error(
                     None,
