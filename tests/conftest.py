@@ -71,7 +71,7 @@ def pep518_wheelhouse(
                 capture_output=True,
                 text=True,
             )
-            for wheel in tmp_path.glob("scikit_build_core-*.whl"):
+            for wheel in tmp_path.glob("*.whl"):
                 shutil.copy(wheel, wheelhouse)
 
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
