@@ -13,10 +13,10 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, Literal, overload
 
+import packaging.tags
+import packaging.utils
 import virtualenv as _virtualenv
 from filelock import FileLock
-import packaging.utils
-import packaging.tags
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -38,6 +38,7 @@ DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent
 
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
+
 
 def _is_valid_wheel(wheel: Path) -> bool:
     _, _, _, tags = packaging.utils.parse_wheel_filename(wheel.name)
@@ -73,10 +74,7 @@ def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
     with wheels_lock:
         if not all(
-            any(
-            _is_valid_wheel(whl)
-            for whl in wheelhouse.glob(f"{p}*.whl")
-            )
+            any(_is_valid_wheel(whl) for whl in wheelhouse.glob(f"{p}*.whl"))
             for p in download_wheels.WHEELS
         ):
             download_wheels.prepare(wheelhouse)
