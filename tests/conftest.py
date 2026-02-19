@@ -15,6 +15,8 @@ from typing import Any, Literal, overload
 
 import virtualenv as _virtualenv
 from filelock import FileLock
+import packaging.utils
+import packaging.tags
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -37,6 +39,11 @@ BASE = DIR.parent
 
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
+def _is_valid_wheel(wheel: Path) -> bool:
+    _, _, _, tags = packaging.utils.parse_wheel_filename(wheel.name)
+    supported = set(packaging.tags.sys_tags())
+    return any(tag in supported for tag in tags)
+
 
 @pytest.fixture(scope="session")
 def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
@@ -44,6 +51,9 @@ def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
 
     main_lock = FileLock(wheelhouse / "main.lock")
     with main_lock:
+        for wheel in wheelhouse.glob("scikit_build_core-*.whl"):
+            wheel.unlink()
+
         subprocess.run(
             [
                 sys.executable,
@@ -62,7 +72,13 @@ def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
 
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
     with wheels_lock:
-        if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
+        if not all(
+            any(
+            _is_valid_wheel(whl)
+            for whl in wheelhouse.glob(f"{p}*.whl")
+            )
+            for p in download_wheels.WHEELS
+        ):
             download_wheels.prepare(wheelhouse)
 
     return wheelhouse
