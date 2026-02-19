@@ -47,29 +47,32 @@ def _is_valid_wheel(wheel: Path) -> bool:
 
 
 @pytest.fixture(scope="session")
-def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
+def pep518_wheelhouse(
+    pytestconfig: pytest.Config, tmp_path_factory: pytest.TempPathFactory
+) -> Path:
     wheelhouse = pytestconfig.cache.mkdir("wheelhouse")
+    tmp_path = tmp_path_factory.mktemp("wheelhouse_tmp")
 
     main_lock = FileLock(wheelhouse / "main.lock")
     with main_lock:
-        for wheel in wheelhouse.glob("scikit_build_core-*.whl"):
-            wheel.unlink()
-
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "wheel",
-                "--wheel-dir",
-                str(wheelhouse),
-                "--no-build-isolation",
-                f"{BASE}",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        if not list(tmp_path.glob("scikit_build_core-*.whl")):
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "wheel",
+                    "--wheel-dir",
+                    tmp_path,
+                    "--no-build-isolation",
+                    f"{BASE}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            for wheel in tmp_path.glob("scikit_build_core-*.whl"):
+                shutil.copy(wheel, wheelhouse)
 
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
     with wheels_lock:
