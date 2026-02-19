@@ -1,6 +1,7 @@
 /pytest:
   summary: Run pytest tests
   tag: [ pytest ]
+  duration: 15m
   # TODO: filter only for network marked tests
   /all:
     summary: All pytest
