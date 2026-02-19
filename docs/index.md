@@ -92,33 +92,52 @@ Generated using scikit-build-core {{ version }}.
 <!-- prettier-ignore-end -->
 
 <script>
+function getThirdFriday(year, month) {
+  const first = new Date(year, month, 1);
+  const firstWeekday = first.getDay(); // 0=Sun ... 6=Sat
+  const daysUntilFriday = (5 - firstWeekday + 7) % 7;
+  return 1 + daysUntilFriday + 14;
+}
+
 function nextThirdFridayET(hour, minute) {
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "numeric"
-  });
 
-  const parts = formatter.formatToParts(now);
-  const year = parseInt(parts.find(p => p.type === "year").value);
-  const month = parseInt(parts.find(p => p.type === "month").value) - 1;
+  // Get current date in New York
+  const nyNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "America/New_York" })
+  );
 
-  function thirdFriday(y, m) {
-    const first = new Date(y, m, 1);
-    const firstWeekday = first.getDay();
-    const daysUntilFriday = (5 - firstWeekday + 7) % 7;
-    const day = 1 + daysUntilFriday + 14;
-    return new Date(y, m, day, hour, minute);
+  let year = nyNow.getFullYear();
+  let month = nyNow.getMonth();
+
+  function buildMeeting(y, m) {
+    const day = getThirdFriday(y, m);
+
+    // Construct a string interpreted in New York time
+    const localString =
+      `${y}-${String(m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")} ` +
+      `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+
+    // Parse as New York time
+    const parts = new Date(
+      localString + " America/New_York"
+    );
+
+    return parts;
   }
 
-  let candidate = thirdFriday(year, month);
-  if (candidate <= now) {
-    const nextMonth = new Date(year, month + 1, 1);
-    candidate = thirdFriday(nextMonth.getFullYear(), nextMonth.getMonth());
+  let meeting = buildMeeting(year, month);
+
+  if (meeting <= now) {
+    month += 1;
+    if (month === 12) {
+      month = 0;
+      year += 1;
+    }
+    meeting = buildMeeting(year, month);
   }
 
-  return candidate;
+  return meeting;
 }
 
 const meeting = nextThirdFridayET(12, 0);
