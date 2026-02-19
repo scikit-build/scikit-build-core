@@ -2,88 +2,13 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
 from docutils import nodes
-from docutils.parsers.rst import Directive
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
-
-ROOT = Path(__file__).parent.parent.parent.resolve()
-
-
-ANSI_ESCAPE = re.compile(r"\x1b\[([0-9;]*)m")
-
-ANSI_COLORS = {
-    "30": "#000000",  # black
-    "31": "#dc3545",  # red
-    "32": "#28a745",  # green
-    "33": "#ffc107",  # yellow
-    "34": "#007bff",  # blue
-    "35": "#6f42c1",  # magenta
-    "36": "#17a2b8",  # cyan
-    "37": "#f8f9fa",  # white
-    "90": "#6c757d",  # bright black (gray)
-    "91": "#ff6b6b",  # bright red
-    "92": "#51cf66",  # bright green
-    "93": "#ffd43b",  # bright yellow
-    "94": "#4d7fff",  # bright blue
-    "95": "#da77f2",  # bright magenta
-    "96": "#15aabf",  # bright cyan
-    "97": "#ffffff",  # bright white
-}
-
-
-class AnsiToHtmlConverter:
-    """Convert ANSI escape codes to HTML with state tracking."""
-
-    def __init__(self) -> None:
-        self.open_spans = 0
-
-    def process_codes(self, codes_str: str) -> Generator[str, None, None]:
-        """Process ANSI codes and yield corresponding HTML."""
-        codes = codes_str.split(";") if codes_str else ["0"]
-
-        for code in codes:
-            if code == "0":
-                # Reset - close all open spans
-                if self.open_spans > 0:
-                    yield "</span>" * self.open_spans
-                    self.open_spans = 0
-            elif code == "1":
-                # Bold
-                yield '<span style="font-weight: bold;">'
-                self.open_spans += 1
-            elif code in ANSI_COLORS:
-                # Foreground color
-                color = ANSI_COLORS[code]
-                yield f'<span style="color: {color};">'
-                self.open_spans += 1
-
-    def convert(self, text: str) -> str:
-        """Convert ANSI escape codes in text to HTML spans."""
-        last_end = 0
-        result: list[str] = []
-        for match in ANSI_ESCAPE.finditer(text):
-            # Add text before the match
-            result.append(text[last_end : match.start()])
-            # Process the ANSI code
-            result.extend(self.process_codes(match.group(1)))
-            last_end = match.end()
-
-        # Add remaining text
-        result.append(text[last_end:])
-
-        # Close any remaining open spans at the end
-        if self.open_spans > 0:
-            result.append("</span>" * self.open_spans)
-            self.open_spans = 0
-
-        return "".join(result)
+from docutils.parsers.rst import Directive, directives
 
 
 class ShowCliDirective(Directive):
@@ -110,7 +35,7 @@ class ShowCliDirective(Directive):
         try:
             # Run the command and capture output
             result = subprocess.run(
-                command.split(),
+                shlex.split(command),
                 capture_output=True,
                 check=True,
                 text=True,
@@ -126,27 +51,37 @@ class ShowCliDirective(Directive):
                 )
             ]
 
-        # Convert ANSI codes to HTML
-        html_output = AnsiToHtmlConverter().convert(output)
-
         # Add the run block if this was `command-output`
         if self.name == "command-output":
-            color = ANSI_COLORS["90"]
-            html_output = f'<span style="color: {color};">$</span> <span style="font-weight: bold;">{command}</span>\n{html_output}'
+            output = f"\x1b[90m$\x1b[0m \x1b[1m{command}\x1b[0m\n{output}"
 
-        # Create a raw HTML node with the colored output
-        raw_html = nodes.raw("", html_output, format="html")
-        literal_block = nodes.literal_block(output, raw_html)
-        literal_block["language"] = "text"
-
-        # Return as a container with pre styling
-        container = nodes.container()
-        container += nodes.raw(
-            "",
-            f'<div class="highlight-text notranslate"><div class="highlight"><pre>{html_output}</pre></div></div>',
-            format="html",
+        # Try to use the erbsland-ansi directive if available
+        ansi_directive_class, _ = directives.directive(
+            "erbsland-ansi", self.state.memo.language, self.state.document
         )
-        return [container]
+
+        if ansi_directive_class is not None:
+            ansi_directive = ansi_directive_class(
+                name="erbsland-ansi",
+                arguments=[],
+                options={},
+                content=output.splitlines(),
+                lineno=self.lineno,
+                content_offset=0,
+                block_text="",
+                state=self.state,
+                state_machine=self.state_machine,
+            )
+
+            return ansi_directive.run()
+
+        # Fall back to plain text with ANSI codes stripped
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+        plain_output = ansi_escape.sub("", output)
+
+        literal = nodes.literal_block(plain_output, plain_output)
+        literal["language"] = "text"
+        return [literal]
 
 
 def setup(app: Any) -> dict[str, Any]:
