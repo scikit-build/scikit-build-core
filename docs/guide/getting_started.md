@@ -14,6 +14,12 @@ There are several mechanisms to quickly get started with a package:
   your package and run: `uv init --lib --build-backend=scikit`.
 - [scientific-python/cookie][] has a cookiecutter/copier template for making a
   package with all the suggestions in the [Scientific Python Developer Guide][].
+- [buildgen][] can generate Python extensions with
+  `buildgen new myext -r py/pybind11` (see all with `buildgen list`, includes
+  pybind11, nanobind, Cython, and C extensions).
+
+You can also find examples:
+
 - For pybind11, there's a example template at [pybind11/scikit_build_example][].
   For nanobind, [nanobind example][] includes the Stable ABI on Python 3.12+!
 - There are several examples including scikit-build-core examples (including
@@ -423,12 +429,13 @@ $ pip install .
 That's it for a basic package!
 
 <!-- prettier-ignore-start -->
+[INTERSECT Training: Packaging]:     https://intersect-training.org/packaging
+[buildgen]:                          https://github.com/shakfu/buildgen
+[nanobind example]:                  https://github.com/wjakob/nanobind_example
+[packaging.python.org's tutorial]:   https://packaging.python.org/en/latest/tutorials/packaging-projects
+[pybind11/scikit_build_example]:     https://github.com/pybind/scikit_build_example
 [scientific python developer guide]: https://github.com/scikit-build/scikit-build-sample-projects
+[scientific-python/cookie]:          https://github.com/scientific-python/cookie
 [scikit-build-sample-projects]:      https://github.com/scikit-build/scikit-build-sample-projects
 [uv]:                                https://docs.astral.sh/uv/
-[scientific-python/cookie]:          https://github.com/scientific-python/cookie
-[pybind11/scikit_build_example]:     https://github.com/pybind/scikit_build_example
-[INTERSECT Training: Packaging]:     https://intersect-training.org/packaging
-[packaging.python.org's tutorial]:   https://packaging.python.org/en/latest/tutorials/packaging-projects
-[nanobind example]:                  https://github.com/wjakob/nanobind_example
 <!-- prettier-ignore-end -->
