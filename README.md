@@ -15,10 +15,13 @@
 > [!NOTE]
 >
 > We have a public Scikit-build community meeting every month!
-> [Join us on Google Meet](https://meet.google.com/hzu-znrd-uef) on the third
-> Friday of every month at 12:00 PM EST. We also have a developer's meeting on
-> the first Friday of every month at the same time. Our past meeting minutes are
+> [Join us on Google Meet](https://meet.google.com/tgz-umhu-onf) on the third
+> Friday of every month at [12:00 PM ET][]. Some of our past meeting minutes are
 > [available here](https://github.com/orgs/scikit-build/discussions/categories/community-meeting-notes).
+
+<!-- prettier-ignore-start -->
+[12:00 PM ET]: https://howlonghowmany.com/my-time/eastern-time/12-pm
+<!-- prettier-ignore-end -->
 
 <!-- SPHINX-START -->
 
