@@ -16,8 +16,12 @@
 >
 > We have a public Scikit-build community meeting every month!
 > [Join us on Google Meet](https://meet.google.com/tgz-umhu-onf) on the third
-> Friday of every month at 12:00 PM EST. Some of our past meeting minutes are
+> Friday of every month at [12:00 PM ET][]. Some of our past meeting minutes are
 > [available here](https://github.com/orgs/scikit-build/discussions/categories/community-meeting-notes).
+
+<!-- prettier-ignore-start -->
+[12:00 PM ET]: https://www.timeanddate.com/worldclock/fixedtime.html?iso=20260304T12&p1=179
+<!-- prettier-ignore-end -->
 
 <!-- SPHINX-START -->
 
