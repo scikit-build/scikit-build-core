@@ -13,6 +13,8 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, Literal, overload
 
+import packaging.tags
+import packaging.utils
 import virtualenv as _virtualenv
 from filelock import FileLock
 
@@ -38,31 +40,46 @@ BASE = DIR.parent
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
+def _is_valid_wheel(wheel: Path) -> bool:
+    _, _, _, tags = packaging.utils.parse_wheel_filename(wheel.name)
+    supported = set(packaging.tags.sys_tags())
+    return any(tag in supported for tag in tags)
+
+
 @pytest.fixture(scope="session")
-def pep518_wheelhouse(pytestconfig: pytest.Config) -> Path:
+def pep518_wheelhouse(
+    pytestconfig: pytest.Config, tmp_path_factory: pytest.TempPathFactory
+) -> Path:
     wheelhouse = pytestconfig.cache.mkdir("wheelhouse")
+    tmp_path = tmp_path_factory.mktemp("wheelhouse_tmp")
 
     main_lock = FileLock(wheelhouse / "main.lock")
     with main_lock:
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "wheel",
-                "--wheel-dir",
-                str(wheelhouse),
-                "--no-build-isolation",
-                f"{BASE}",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        if not list(tmp_path.glob("scikit_build_core-*.whl")):
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "wheel",
+                    "--wheel-dir",
+                    f"{tmp_path}",
+                    "--no-build-isolation",
+                    f"{BASE}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            for wheel in tmp_path.glob("*.whl"):
+                shutil.copy(wheel, wheelhouse)
 
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
     with wheels_lock:
-        if not all(list(wheelhouse.glob(f"{p}*.whl")) for p in download_wheels.WHEELS):
+        if not all(
+            any(_is_valid_wheel(whl) for whl in wheelhouse.glob(f"{p}*.whl"))
+            for p in download_wheels.WHEELS
+        ):
             download_wheels.prepare(wheelhouse)
 
     return wheelhouse
