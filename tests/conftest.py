@@ -63,7 +63,7 @@ def pep518_wheelhouse(
                     "pip",
                     "wheel",
                     "--wheel-dir",
-                    tmp_path,
+                    f"{tmp_path}",
                     "--no-build-isolation",
                     f"{BASE}",
                 ],
