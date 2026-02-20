@@ -56,9 +56,8 @@ author = "Henry Schreiner"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "erbsland.sphinx.ansi",
     "conftabs",  # in /ext
-    "progout",  # in /ext
+    "erbsland.sphinx.ansi",
     "myst_parser",
     "sphinx-jsonschema",
     "sphinx.ext.autodoc",
@@ -70,6 +69,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_inline_tabs",
     "sphinx_tippy",
+    "sphinxcontrib.programoutput",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -160,6 +160,13 @@ myst_substitutions = {
     "version": version,
 }
 myst_heading_anchors = 2
+
+programoutput_use_ansi = True
+
+# Needed to ensure color output
+# See https://github.com/OpenNTI/sphinxcontrib-programoutput/issues/77
+os.environ["FORCE_COLOR"] = "1"
+os.environ.pop("NO_COLOR", None)
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section)
