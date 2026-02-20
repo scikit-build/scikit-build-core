@@ -1,6 +1,6 @@
 # Scikit-build-core
 
-Scikit-build-core is a complete ground-up rewrite of scikit-build on top of
+[Scikit-build-core][] is a complete ground-up rewrite of scikit-build on top of
 modern packaging APIs. It provides a bridge between CMake and the Python build
 system, allowing you to make Python modules with CMake.
 
@@ -64,6 +64,7 @@ plugins/hatchling
 
 about/projects
 about/changelog
+GitHub repository <https://github.com/scikit-build/scikit-build-core>
 ```
 
 ```{toctree}
@@ -88,6 +89,7 @@ Generated using scikit-build-core {{ version }}.
 <!-- prettier-ignore-start -->
 
 [12:00 PM ET]: https://howlonghowmany.com/my-time/eastern-time/12-pm
+[scikit-build-core]: https://github.com/scikit-build/scikit-build-core
 
 <!-- prettier-ignore-end -->
 
