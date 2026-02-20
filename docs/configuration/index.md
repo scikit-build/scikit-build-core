@@ -193,6 +193,17 @@ sdist.include = ["src/some_generated_file.txt"]
 sdist.exclude = [".github"]
 ```
 
+You can select a couple of alternative modes, as well. If you want to manually
+control this, without reading `.gitignore`, use:
+
+```toml
+[tool.scikit-build]
+sdist.include-mode = "manual"
+```
+
+There's also a `"classic"` mode, which fully traverses all directories to check
+rules (default is using scikit-build-core less than 0.12).
+
 By default, scikit-build-core will respect `SOURCE_DATE_EPOCH`, and will lock
 the modification time to a reproducible value if it's not set. You can disable
 reproducible builds if you prefer, however:
