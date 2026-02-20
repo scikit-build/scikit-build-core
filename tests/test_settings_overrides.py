@@ -764,6 +764,10 @@ def test_system_cmake(
             [Path("cmake/path"), "-E", "capabilities"],
             stdout=f'{{"version":{{"string": "{cmake_version}"}}}}',
         )
+        fp.register(
+            ["lipo", "-info", Path("cmake/path")],
+            stdout="Non-fat file: cmake/path is architecture: arm64",
+        )
 
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
