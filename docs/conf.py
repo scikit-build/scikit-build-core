@@ -56,9 +56,10 @@ author = "Henry Schreiner"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "erbsland.sphinx.ansi",
     "conftabs",  # in /ext
     "progout",  # in /ext
+    "click_extra.sphinx",
+    "erbsland.sphinx.ansi",
     "myst_parser",
     "sphinx-jsonschema",
     "sphinx.ext.autodoc",
