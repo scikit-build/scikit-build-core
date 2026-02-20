@@ -354,7 +354,7 @@ def _build_wheel_impl_impl(
         for x in license_paths:
             path = wheel_dirs["metadata"] / "licenses" / x
             path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(x, path)
+            shutil.copy2(x, path)
 
         if (
             settings.wheel.license_files
@@ -488,7 +488,7 @@ def _build_wheel_impl_impl(
         if not editable:
             for filepath, package_dir in mapping.items():
                 Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
-                shutil.copyfile(filepath, package_dir)
+                shutil.copy2(filepath, package_dir)
 
             process_script_dir(wheel_dirs["scripts"])
 
