@@ -11,6 +11,7 @@ from .._compat.typing import get_args, get_origin
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
+from .model.codemodel import Directory as CodeModelDirectory
 from .model.directory import Directory
 from .model.index import Index
 
@@ -51,10 +52,14 @@ class Converter:
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles, Directory}
+            target in {CodeModel, Target, Cache, CMakeFiles, CodeModelDirectory}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
+            # Transform CodeModelDirectory to Directory object
+            # TODO: inherit the fields from CodeModel counterparts
+            if target is CodeModelDirectory:
+                target = Directory  # type: ignore[assignment]
             return self._load_from_json(Path(data["jsonFile"]), target)
 
         input_dict: Dict[str, Type[Any]] = {}
