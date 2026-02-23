@@ -24,8 +24,9 @@ def __dir__() -> list[str]:
     return __all__
 
 
-KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4"}
+KNOWN_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4", "2.5"}
 PRE_SPDX_METADATA_VERSIONS = {"2.1", "2.2", "2.3"}
+PRE_2_5_METADATA_VERSIONS = {"2.1", "2.2", "2.3", "2.4"}
 
 PROJECT_TO_METADATA = {
     "authors": frozenset(["Author", "Author-Email"]),
@@ -46,6 +47,8 @@ PROJECT_TO_METADATA = {
     "scripts": frozenset(),
     "urls": frozenset(["Project-URL"]),
     "version": frozenset(["Version"]),
+    "import-names": frozenset(["Import-Name"]),
+    "import-namespaces": frozenset(["Import-Namespaces"]),
 }
 
 KNOWN_TOPLEVEL_FIELDS = {"build-system", "project", "tool", "dependency-groups"}
@@ -83,6 +86,8 @@ KNOWN_METADATA_FIELDS = {
     "summary",
     "supported-platform",  # Not specified via pyproject standards
     "version",  # Can't be in dynamic
+    "import-name",
+    "import-namespace",
 }
 
 KNOWN_MULTIUSE = {
@@ -100,4 +105,6 @@ KNOWN_MULTIUSE = {
     "requires",  # Deprecated
     "obsoletes",  # Deprecated
     "provides",  # Deprecated
+    "import-name",
+    "import-namespace",
 }
