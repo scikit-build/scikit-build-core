@@ -128,6 +128,11 @@ jobs:
 
       - uses: astral-sh/setup-uv@v7
 
+      - name: Setup CMake ${{ matrix.cmake-version }}
+        uses: jwlawson/actions-setup-cmake@v2.1
+        with:
+          cmake-version: ${{ matrix.cmake-version }}
+
       - name: Install package (uv)
         run:
           uv pip install -e.[wheels,wheel-free-setuptools] --group=dev --system
