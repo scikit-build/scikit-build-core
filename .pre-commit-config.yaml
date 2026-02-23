@@ -72,7 +72,7 @@ repos:
         args: []
         additional_dependencies:
           - build
-          - cattrs
+          - cattrs<26.1 # Requires Python 3.10+
           - cmake
           - exceptiongroup
           - hatch-fancy-pypi-readme>=23.2

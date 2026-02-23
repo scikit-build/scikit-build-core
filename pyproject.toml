@@ -40,7 +40,7 @@ dependencies = [
     "packaging >=23.2",
     "pathspec >=0.10.1",
     "tomli >=1.2.2; python_version<'3.11'",
-    "typing-extensions >=3.10; python_version<'3.9'",
+    "typing-extensions >=4; python_version<'3.11'",
 ]
 # Note: cmake and possibly ninja are also required if those are not already
 # present (user controllable) - but a system version is fine.

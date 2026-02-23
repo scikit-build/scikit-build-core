@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 """
-This is pyproject_metadata, a library for working with PEP 621 metadata.
+This is pyproject_metadata, a library for working with metadata in the
+pyproject.toml project table.
 
 Example usage:
 
@@ -37,6 +38,8 @@ import dataclasses
 import email.message
 import email.policy
 import email.utils
+import itertools
+import keyword
 import os
 import os.path
 import pathlib
@@ -45,12 +48,13 @@ import typing
 import warnings
 
 # Build backends may vendor this package, so all imports are relative.
-from . import constants
+from . import constants, pyproject
 from .errors import ConfigurationError, ConfigurationWarning, ErrorCollector
-from .pyproject import License, PyProjectReader, Readme
+from .project_table import to_project_table
+from .pyproject import License, Readme
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Generator, Mapping
     from typing import Any
 
     from packaging.requirements import Requirement
@@ -60,7 +64,9 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import Dynamic, PyProjectTable
+    from .project_table import Dynamic
+
+import contextlib
 
 import packaging.markers
 import packaging.specifiers
@@ -74,7 +80,7 @@ if sys.version_info < (3, 12, 4):
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
 
 
-__version__ = "0.9.1"
+__version__ = "0.11.0"
 
 __all__ = [
     "ConfigurationError",
@@ -137,7 +143,7 @@ class _SmartMessageSetter:
     message: email.message.Message
 
     def __setitem__(self, name: str, value: str | None) -> None:
-        if not value:
+        if value is None:
             return
         self.message[name] = value
 
@@ -186,6 +192,9 @@ class RFC822Policy(email.policy.EmailPolicy):
     max_line_length = 0
 
     def header_store_parse(self, name: str, value: str) -> tuple[str, str]:
+        """
+        Require known headers, and replace newlines with spaces.
+        """
         if name.lower() not in constants.KNOWN_METADATA_FIELDS:
             msg = f"Unknown field {name!r}"
             raise ConfigurationError(msg, key=name)
@@ -196,7 +205,10 @@ class RFC822Policy(email.policy.EmailPolicy):
     if sys.version_info < (3, 12, 4):
         # Work around Python bug https://github.com/python/cpython/issues/117313
         def _fold(
-            self, name: str, value: Any, refold_binary: bool = False
+            self,
+            name: str,
+            value: Any,  # noqa: ANN401
+            refold_binary: bool = False,  # noqa: FBT001, FBT002
         ) -> str:  # pragma: no cover
             if hasattr(value, "name"):
                 return value.fold(policy=self)  # type: ignore[no-any-return]
@@ -205,7 +217,6 @@ class RFC822Policy(email.policy.EmailPolicy):
             # this is from the library version, and it improperly breaks on chars like 0x0c, treating
             # them as 'form feed' etc.
             # we need to ensure that only CR/LF is used as end of line
-            # lines = value.splitlines()
 
             # this is a workaround which splits only on CR/LF characters
             if isinstance(value, bytes):
@@ -220,9 +231,54 @@ class RFC822Policy(email.policy.EmailPolicy):
                     or any(len(x) > maxlen for x in lines[1:])
                 )
             )
-            if refold or (refold_binary and email.policy._has_surrogates(value)):  # type: ignore[attr-defined]
+            if refold or (
+                refold_binary and email.policy._has_surrogates(value)  # type: ignore[attr-defined] # noqa: SLF001
+            ):
                 return self.header_factory(name, "".join(lines)).fold(policy=self)  # type: ignore[arg-type,no-any-return]
             return name + ": " + self.linesep.join(lines) + self.linesep  # type: ignore[arg-type]
+
+
+def _validate_import_names(
+    names: list[str], key: str, *, errors: ErrorCollector
+) -> Generator[str, None, None]:
+    """
+    Return normalized names for comparisons.
+    """
+    if not isinstance(names, list):
+        return
+    for fullname in names:
+        if not isinstance(fullname, str):
+            continue
+        name, simicolon, private = fullname.partition(";")
+        if simicolon and private.lstrip() != "private":
+            msg = "{key} contains an ending tag other than '; private', got {value!r}"
+            errors.config_error(msg, key=key, value=fullname)
+        name = name.rstrip()
+
+        for ident in name.split("."):
+            if not ident.isidentifier():
+                msg = "{key} contains {value!r}, which is not a valid identifier"
+                errors.config_error(msg, key=key, value=fullname)
+
+            elif keyword.iskeyword(ident):
+                msg = "{key} contains a Python keyword, which is not a valid import name, got {value!r}"
+                errors.config_error(msg, key=key, value=fullname)
+
+        yield name
+
+
+def _validate_dotted_names(names: set[str], *, errors: ErrorCollector) -> None:
+    """
+    Check to make sure every name is accounted for. Takes the union of de-tagged names.
+    """
+    for name in names:
+        for parent in itertools.accumulate(
+            name.split(".")[:-1], lambda a, b: f"{a}.{b}"
+        ):
+            if parent not in names:
+                msg = "{key} is missing {value!r}, but submodules are present elsewhere"
+                errors.config_error(msg, key="project.import-namespaces", value=parent)
+                continue
 
 
 class RFC822Message(email.message.EmailMessage):
@@ -233,13 +289,18 @@ class RFC822Message(email.message.EmailMessage):
     """
 
     def __init__(self) -> None:
+        """
+        Create a new message with RFC822Policy.
+        """
         super().__init__(policy=RFC822Policy())
 
     def as_bytes(
-        self, unixfrom: bool = False, policy: email.policy.Policy | None = None
+        self,
+        unixfrom: bool = False,  # noqa: FBT001, FBT002
+        policy: email.policy.Policy | None = None,
     ) -> bytes:
         """
-        This handles unicode encoding.
+        Will always handle unicode encoding.
         """
         return self.as_string(unixfrom, policy=policy).encode("utf-8")
 
@@ -271,6 +332,8 @@ class StandardMetadata:
     keywords: list[str] = dataclasses.field(default_factory=list)
     scripts: dict[str, str] = dataclasses.field(default_factory=dict)
     gui_scripts: dict[str, str] = dataclasses.field(default_factory=dict)
+    import_names: list[str] | None = None
+    import_namespaces: list[str] | None = None
     dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
     This field is used to track dynamic fields. You can't set a field not in this list.
@@ -290,6 +353,9 @@ class StandardMetadata:
     """
 
     def __post_init__(self) -> None:
+        """
+        Validate the fields on construction.
+        """
         self.validate()
 
     @property
@@ -301,6 +367,8 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
+        if self.import_names is not None or self.import_namespaces is not None:
+            return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
             return "2.4"
         if self.dynamic_metadata:
@@ -332,17 +400,19 @@ class StandardMetadata:
         present in the pyproject table, and ``all_errors``, to  raise all errors
         in an ExceptionGroup instead of raising the first one.
         """
-        pyproject = PyProjectReader(collect_errors=all_errors)
-
-        pyproject_table: PyProjectTable = data  # type: ignore[assignment]
-        if "project" not in pyproject_table:
+        error_collector = ErrorCollector(collect_errors=all_errors)
+        if "project" not in data:
             msg = "Section {key} missing in pyproject.toml"
-            pyproject.config_error(msg, key="project")
-            pyproject.finalize("Failed to parse pyproject.toml")
+            error_collector.config_error(msg, key="project")
+            error_collector.finalize("Failed to parse pyproject.toml")
             msg = "Unreachable code"  # pragma: no cover
             raise AssertionError(msg)  # pragma: no cover
 
-        project = pyproject_table["project"]
+        with error_collector.collect():
+            to_project_table(dict(data), collect_errors=all_errors)
+
+        assert "project" in data
+        project = data["project"]
         project_dir = pathlib.Path(project_dir)
 
         if not allow_extra_keys:
@@ -350,58 +420,45 @@ class StandardMetadata:
             if extra_keys:
                 extra_keys_str = ", ".join(sorted(f"{k!r}" for k in extra_keys))
                 msg = "Extra keys present in {key}: {extra_keys}"
-                pyproject.config_error(
+                error_collector.config_error(
                     msg,
                     key="project",
                     extra_keys=extra_keys_str,
                     warn=allow_extra_keys is None,
                 )
 
-        dynamic = pyproject.get_dynamic(project)
+        dynamic = project.get("dynamic", [])
 
         for field in dynamic:
-            if field in data["project"]:
+            if field in data["project"] and field != "name":
                 msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                pyproject.config_error(msg, key=f"project.{field}")
+                error_collector.config_error(msg, key=f"project.{field}")
 
-        raw_name = project.get("name")
-        name = "UNKNOWN"
-        if raw_name is None:
-            msg = "Field {key} missing"
-            pyproject.config_error(msg, key="project.name")
-        else:
-            tmp_name = pyproject.ensure_str(raw_name, "project.name")
-            if tmp_name is not None:
-                name = tmp_name
+        name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
         version: packaging.version.Version | None = packaging.version.Version("0.0.0")
         raw_version = project.get("version")
         if raw_version is not None:
-            version_string = pyproject.ensure_str(raw_version, "project.version")
+            version_string = pyproject.ensure_str(raw_version)
             if version_string is not None:
-                try:
+                with contextlib.suppress(packaging.version.InvalidVersion):
                     version = (
                         packaging.version.Version(version_string)
                         if version_string
                         else None
                     )
-                except packaging.version.InvalidVersion:
-                    msg = "Invalid {key} value, expecting a valid PEP 440 version"
-                    pyproject.config_error(
-                        msg, key="project.version", got=version_string
-                    )
         elif "version" not in dynamic:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
             )
-            pyproject.config_error(msg, key="project.version")
+            error_collector.config_error(msg, key="project.version")
 
         # Description fills Summary, which cannot be multiline
         # However, throwing an error isn't backward compatible,
         # so leave it up to the users for now.
         project_description_raw = project.get("description")
         description = (
-            pyproject.ensure_str(project_description_raw, "project.description")
+            pyproject.ensure_str(project_description_raw)
             if project_description_raw is not None
             else None
         )
@@ -409,64 +466,53 @@ class StandardMetadata:
         requires_python_raw = project.get("requires-python")
         requires_python = None
         if requires_python_raw is not None:
-            requires_python_string = pyproject.ensure_str(
-                requires_python_raw, "project.requires-python"
-            )
+            requires_python_string = pyproject.ensure_str(requires_python_raw)
             if requires_python_string is not None:
-                try:
+                with contextlib.suppress(packaging.specifiers.InvalidSpecifier):
                     requires_python = packaging.specifiers.SpecifierSet(
                         requires_python_string
                     )
-                except packaging.specifiers.InvalidSpecifier:
-                    msg = "Invalid {key} value, expecting a valid specifier set"
-                    pyproject.config_error(
-                        msg, key="project.requires-python", got=requires_python_string
-                    )
+
+        authors = pyproject.ensure_people(project.get("authors", []))
+        maintainers = pyproject.ensure_people(project.get("maintainers", []))
+        license = pyproject.get_license(project, project_dir, error_collector)
+        license_files = pyproject.get_license_files(
+            project, project_dir, error_collector
+        )
+        readme = pyproject.get_readme(project, project_dir, error_collector)
+        dependencies = pyproject.get_dependencies(project)
+        optional_dependencies = pyproject.get_optional_dependencies(project)
+        entrypoints = pyproject.get_entrypoints(project)
 
         self = None
-        with pyproject.collect():
+        with error_collector.collect():
             self = cls(
                 name=name,
                 version=version,
                 description=description,
-                license=pyproject.get_license(project, project_dir),
-                license_files=pyproject.get_license_files(project, project_dir),
-                readme=pyproject.get_readme(project, project_dir),
+                license=license,
+                license_files=license_files,
+                readme=readme,
                 requires_python=requires_python,
-                dependencies=pyproject.get_dependencies(project),
-                optional_dependencies=pyproject.get_optional_dependencies(project),
-                entrypoints=pyproject.get_entrypoints(project),
-                authors=pyproject.ensure_people(
-                    project.get("authors", []), "project.authors"
-                ),
-                maintainers=pyproject.ensure_people(
-                    project.get("maintainers", []), "project.maintainers"
-                ),
-                urls=pyproject.ensure_dict(project.get("urls", {}), "project.urls")
-                or {},
-                classifiers=pyproject.ensure_list(
-                    project.get("classifiers", []), "project.classifiers"
-                )
-                or [],
-                keywords=pyproject.ensure_list(
-                    project.get("keywords", []), "project.keywords"
-                )
-                or [],
-                scripts=pyproject.ensure_dict(
-                    project.get("scripts", {}), "project.scripts"
-                )
-                or {},
-                gui_scripts=pyproject.ensure_dict(
-                    project.get("gui-scripts", {}), "project.gui-scripts"
-                )
-                or {},
+                dependencies=dependencies,
+                optional_dependencies=optional_dependencies,
+                entrypoints=entrypoints,
+                authors=authors,
+                maintainers=maintainers,
+                urls=project.get("urls", {}),
+                classifiers=project.get("classifiers", []),
+                keywords=project.get("keywords", []),
+                scripts=project.get("scripts", {}),
+                gui_scripts=project.get("gui-scripts", {}),
+                import_names=project.get("import-names", None),
+                import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
             )
 
-        pyproject.finalize("Failed to parse pyproject.toml")
+        error_collector.finalize("Failed to parse pyproject.toml")
         assert self is not None
         return self
 
@@ -490,9 +536,11 @@ class StandardMetadata:
 
     def validate(self, *, warn: bool = True) -> None:  # noqa: C901
         """
-        Validate metadata for consistency and correctness. Will also produce
-        warnings if ``warn`` is given. Respects ``all_errors``. This is called
-        when loading a pyproject.toml, and when making metadata. Checks:
+        Validate metadata for consistency and correctness.
+
+        Will also produce warnings if ``warn`` is given. Respects
+        ``all_errors``. This is called when loading a pyproject.toml, and when
+        making metadata. Checks:
 
         - ``metadata_version`` is a known version or None
         - ``name`` is a valid project name
@@ -504,6 +552,9 @@ class StandardMetadata:
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
         - ``license_files`` is supported only for metadata_version >= 2.4
         - ``project_url`` can't contain keys over 32 characters
+        - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
+        - ``import-name(space)s`` must be valid names, optionally with ``; private``
+        - ``import-names`` and ``import-namespaces`` cannot overlap.
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -555,20 +606,51 @@ class StandardMetadata:
             isinstance(self.license, str)
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "Setting {key} to an SPDX license expression is supported only when emitting metadata version >= 2.4"
+            msg = "Setting {key} to an SPDX license expression is only supported when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license")
 
         if (
             self.license_files is not None
             and self.auto_metadata_version in constants.PRE_SPDX_METADATA_VERSIONS
         ):
-            msg = "{key} is supported only when emitting metadata version >= 2.4"
+            msg = "{key} is only supported when emitting metadata version >= 2.4"
             errors.config_error(msg, key="project.license-files")
 
         for name in self.urls:
             if len(name) > 32:
                 msg = "{key} names cannot be more than 32 characters long"
                 errors.config_error(msg, key="project.urls", got=name)
+
+        if (
+            self.import_names is not None
+            and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
+        ):
+            msg = "{key} is only supported when emitting metadata version >= 2.5"
+            errors.config_error(msg, key="project.import-names")
+
+        if (
+            self.import_namespaces is not None
+            and self.auto_metadata_version in constants.PRE_2_5_METADATA_VERSIONS
+        ):
+            msg = "{key} is only supported when emitting metadata version >= 2.5"
+            errors.config_error(msg, key="project.import-namespaces")
+
+        import_names = set(
+            _validate_import_names(
+                self.import_names or [], "import-names", errors=errors
+            )
+        )
+        import_namespaces = set(
+            _validate_import_names(
+                self.import_namespaces or [], "import-namespaces", errors=errors
+            )
+        )
+        in_both = import_names & import_namespaces
+        if in_both:
+            msg = "{key} overlaps with 'project.import-namespaces': {in_both}"
+            errors.config_error(msg, key="project.import-names", in_both=in_both)
+
+        _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
         errors.finalize("Metadata validation failed")
 
@@ -634,9 +716,16 @@ class StandardMetadata:
                     _build_extra_req(norm_extra, requirement)
                 )
         if self.readme:
-            if self.readme.content_type:
-                smart_message["Description-Content-Type"] = self.readme.content_type
+            assert self.readme.content_type  # verified earlier
+            smart_message["Description-Content-Type"] = self.readme.content_type
             smart_message.set_payload(self.readme.text)
+        for import_name in self.import_names or []:
+            smart_message["Import-Name"] = import_name
+        for import_namespace in self.import_namespaces or []:
+            smart_message["Import-Namespace"] = import_namespace
+        # Special case for empty import-names
+        if self.import_names is not None and not self.import_names:
+            smart_message["Import-Name"] = ""
         # Core Metadata 2.2
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
@@ -679,7 +768,7 @@ def _build_extra_req(
     """
     requirement = copy.copy(requirement)
     if requirement.marker:
-        if "or" in requirement.marker._markers:
+        if "or" in requirement.marker._markers:  # noqa: SLF001
             requirement.marker = packaging.markers.Marker(
                 f"({requirement.marker}) and extra == {extra!r}"
             )
