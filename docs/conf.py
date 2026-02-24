@@ -57,6 +57,7 @@ author = "Henry Schreiner"
 # ones.
 extensions = [
     "conftabs",  # in /ext
+    "click_extra.sphinx",
     "erbsland.sphinx.ansi",
     "myst_parser",
     "sphinx-jsonschema",
