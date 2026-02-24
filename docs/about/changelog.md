@@ -1,5 +1,7 @@
 # Changelog
 
+## Version 0.12.0
+
 This release adds a new `sdist.inclusion-mode` setting, with a new default:
 ignored directories are no longer traversed unless a file is specifically
 allowed inside of it via the base path. This should be faster and less
