@@ -43,9 +43,11 @@ CI and testing:
 - Rework downloading the wheelhouse for isolation tests by @henryiii in #1199
 - Stale downloads could break tests by @henryiii in #1223
 - Test-core, pybind11 in full test by @henryiii in #1200
+- cmake-version was missing by @henryiii in #1231
 
 Internal:
 
+- Bumped internal pyproject-metadata to 0.11 by @henryiii in #1230
 - Avoid a numpy yanked warning by @henryiii in #1222
 - Break the circular dependency in pybind11 by @LecrisUT in #1188
 - Bump PyPy to currently supported 3.11 by @DimitriPapadopoulos in #1164
