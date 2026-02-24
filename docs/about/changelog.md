@@ -1,5 +1,74 @@
 # Changelog
 
+This release adds a new `sdist.inclusion-mode` setting, with a new default:
+ignored directories are no longer traversed unless a file is specifically
+allowed inside of it via the base path. This should be faster and less
+surprising. The old behavior ("classic") and no gitignore ("manual") are also
+provided.
+
+Features:
+
+- `sdist.inclusion-mode` by @henryiii in #1048
+- Better support for cross-compilation by @LecrisUT in #1050
+- Support fancy-pypi-readme 25.1's package name, bump, drop workarounds by
+  @henryiii in #1201
+
+Fixes:
+
+- Add a setting to disallow hard-coding some setting keys in the
+  `pyproject.toml` - currently applied to `fail`, by @LecrisUT in #1078
+- Respect`_PYTHON_HOST_PLATFORM` env variable by @ryanking13 in #1196
+- Better support for ninja on Windows by @henryiii in #1209
+- Move the file-api parsing to a debug message by @LecrisUT in #1184
+- (Hatchling) Path issue on Windows mingw64 and UCRT by @henryiii in #1210
+- (Setuptools) handle generic setup return type by @henryiii in #1202
+
+Documentation:
+
+- Add buildgen to list in quickstart by @henryiii in #1220
+- Improve links back to GitHub by @henryiii in #1181
+- Mention Android support by @mhsmith in #1142
+- Move community meeting link by @henryiii in #1221
+- Source link by @henryiii in #1224
+- Color CLI on Python 3.14+ by @henryiii in #1218
+- Use `sphinx-programoutput` with new ANSI support by @henryiii in #1226
+
+CI and testing:
+
+- Test on 3.14t in CI by @henryiii in #1185
+- Cases for different use cases of generated files by @eirrgang in #1193
+- Consolidate editable and isolated fixtures by @LecrisUT in #1194
+- Fix Apple Silicon isolation check by @henryiii in #1227
+- Fix local runs on AS macOS by @henryiii in #1182
+- Rework downloading the wheelhouse for isolation tests by @henryiii in #1199
+- Stale downloads could break tests by @henryiii in #1223
+- Test-core, pybind11 in full test by @henryiii in #1200
+- cmake-version was missing by @henryiii in #1231
+
+Internal:
+
+- Bumped internal pyproject-metadata to 0.11 by @henryiii in #1230
+- Avoid a numpy yanked warning by @henryiii in #1222
+- Break the circular dependency in pybind11 by @LecrisUT in #1188
+- Bump PyPy to currently supported 3.11 by @DimitriPapadopoulos in #1164
+- Bump macOS by @DimitriPapadopoulos in #1165
+- Fix a broken line in the noxfile by @henryiii in #1208
+- Ignore lock files too by @henryiii in #1206
+- Increase test duration for pytest by @LecrisUT in #1219
+- Move extras to groups by @henryiii in #1177
+- pytest `log_level` is better than `log_cli_level` by @henryiii in #1178
+- Support PEP 604 unions in sources (#1213) by @martinezlc99 in #1214
+- Switch to `typos` by @henryiii in #1192
+- Tests expect typing extensions on 3.9 by @henryiii in #1203
+- Use SPDX license for our license by @henryiii in #1183
+
+Internal (ruff linting):
+
+- Add a few ruff checks by @henryiii in #1174
+- Add even more ruff by @henryiii in #1175
+- Enable more ruff using config by @henryiii in #1179
+- Set ruff to ALL by @henryiii in #1176
+
 ## Version 0.11.6
 
 This release adds known wheels for the `riscv64` platform, and adjusts a command
