@@ -92,7 +92,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: minimum-version
   :type: ``Version``
-  :default: "0.11"  # current version
+  :default: "0.12"  # current version
 
   If set, this will provide a method for backward compatibility.
 ```

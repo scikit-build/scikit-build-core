@@ -290,7 +290,7 @@ strict-config = true
 experimental = false
 
 # If set, this will provide a method for backward compatibility.
-minimum-version = "0.11"  # current version
+minimum-version = "0.12"  # current version
 
 # The CMake build directory. Defaults to a unique temporary directory.
 build-dir = ""
