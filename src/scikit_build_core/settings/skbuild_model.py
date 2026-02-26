@@ -382,7 +382,7 @@ class BackportSettings:
 
 @dataclasses.dataclass
 class EditableSettings:
-    mode: Literal["redirect", "inplace"] = "redirect"
+    mode: Literal["redirect", "inplace", "build-dir"] = "redirect"
     """
     Select the editable mode to use. Can be "redirect" (default) or "inplace".
     """

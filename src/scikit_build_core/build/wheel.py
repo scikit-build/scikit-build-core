@@ -24,7 +24,12 @@ from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
-from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
+from ._editable import (
+    editable_build_dir,
+    editable_redirect,
+    libdir_to_installed,
+    mapping_to_modules,
+)
 from ._init import setup_logging
 from ._pathutil import (
     packages_to_file_mapping,
@@ -57,22 +62,36 @@ def _make_editable(
     settings: ScikitBuildSettings,
     wheel: WheelWriter,
     packages: Iterable[str],
+    mode: Literal["redirect", "inplace", "build-dir"],
 ) -> None:
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
     if settings.wheel.install_dir.startswith("/"):
         msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
         raise AssertionError(msg)
-    editable_txt = editable_redirect(
-        modules=modules,
-        installed=installed,
-        reload_dir=reload_dir,
-        rebuild=settings.editable.rebuild,
-        verbose=settings.editable.verbose,
-        build_options=build_options,
-        install_options=install_options,
-        install_dir=settings.wheel.install_dir,
-    )
+    if mode == "redirect":
+        editable_txt = editable_redirect(
+            modules=modules,
+            installed=installed,
+            reload_dir=reload_dir,
+            rebuild=settings.editable.rebuild,
+            verbose=settings.editable.verbose,
+            build_options=build_options,
+            install_options=install_options,
+            install_dir=settings.wheel.install_dir,
+        )
+    elif mode == "build-dir":
+        if not settings.build_dir:
+            msg = "Editable mode build-dir must have the build-dir option set."
+            raise ValueError(msg)
+        source_files = modules
+        # TODO: get the source files from the build-dir
+        editable_txt = editable_build_dir(
+            source_files=source_files,
+        )
+    else:
+        msg = f"Unexpected editable mode used: {mode}"
+        raise NotImplementedError(msg)
 
     wheel.writestr(
         f"_{name}_editable.py",
@@ -507,7 +526,7 @@ def _build_wheel_impl_impl(
             str_pkgs = (
                 str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()
             )
-            if editable and settings.editable.mode == "redirect":
+            if editable and settings.editable.mode in ("redirect", "build-dir"):
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 
                 _make_editable(
@@ -520,6 +539,7 @@ def _build_wheel_impl_impl(
                     wheel=wheel,
                     name=normalized_name,
                     packages=str_pkgs,
+                    mode=settings.editable.mode,
                 )
             elif editable and settings.editable.mode == "inplace":
                 if not packages:
