@@ -102,7 +102,7 @@ def set_environment_for_gen(
 
     if sysconfig.get_platform().startswith("win") and "Visual Studio" in generator:
         # This ensures we default to the correct platform for Python, can be overridden
-        return {"CMAKE_VS_PLATFORM_NAME_DEFAULT": get_cmake_platform(env)}
+        return {"CMAKE_VS_PLATFORM_NAME": get_cmake_platform(env)}
 
     # Set Python's recommended CC and CXX if not already set by the user
     if "CC" not in env:
