@@ -2,15 +2,22 @@
 
 import builtins
 import json
+from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
+from typing import Any, Callable, Dict, Type, TypeVar, Union  # noqa: TID251
 
 import cattr
 import cattr.preconf.json
+from cattrs import ClassValidationError
+from packaging.version import Version
 
+from .._compat.typing import get_args
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
+from .model.codemodel import Directory as CodeModelDirectory
+from .model.common import Paths
+from .model.directory import Directory
 from .model.index import Index, Reply
 
 T = TypeVar("T")
@@ -37,16 +44,33 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Reply, st_hook)
 
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
+        if "jsonFile" not in with_path and t is CodeModelDirectory:
+            return converter.structure_attrs_fromdict(with_path, t)
         if with_path["jsonFile"] is None:
             return converter.structure_attrs_fromdict({}, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
+        if t is CodeModelDirectory:
+            t = Directory  # type: ignore[assignment]
         return converter.structure_attrs_fromdict(raw, t)
+
+    def from_union(obj: Dict[str, Any], t: Type[T]) -> T:
+        for try_type in get_args(t):
+            try:
+                return converter.structure(obj, try_type)  # type: ignore[no-any-return]
+            except ClassValidationError:  # noqa: PERF203
+                continue
+        msg = f"Could not convert {obj} into {t}"
+        raise TypeError(msg)
 
     converter.register_structure_hook(CodeModel, from_json_file)
     converter.register_structure_hook(Target, from_json_file)
     converter.register_structure_hook(Cache, from_json_file)
     converter.register_structure_hook(CMakeFiles, from_json_file)
+    converter.register_structure_hook(CodeModelDirectory, from_json_file)
+    # Workaround for cattrs < 23.2.0 not handling Union with dataclass properly
+    if Version(version("cattrs")) < Version("23.2.0"):
+        converter.register_structure_hook(Union[str, Paths], from_union)
     return converter
 
 
