@@ -54,7 +54,7 @@ def test_requires_command(
     jout = json.loads(out)
     if mode == "sdist":
         assert frozenset(jout) == {"scikit-build-core", "setuptools-scm"}
-    elif sysconfig.get_platform().startswith("win-") or force_make:
+    elif sysconfig.get_platform().startswith("win") or force_make:
         assert frozenset(jout) == {
             "cmake>=3.15",
             "scikit-build-core",
