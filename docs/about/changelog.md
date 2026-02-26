@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.12.1
+
+This fixes a regression on Windows when targeting 32-bit wheels on a 64-bit
+host. This reverts part of #1209. We have added 32-bit testing on Windows to
+our CI.
+
+Fixes:
+
+- Use `CMAKE_GENERATOR`(`_PLATFORM`) on Windows again by @henryiii in #1235
+
 ## Version 0.12.0
 
 This release adds a new `sdist.inclusion-mode` setting, with a new default:
@@ -20,7 +30,7 @@ Fixes:
 - Add a setting to disallow hard-coding some setting keys in the
   `pyproject.toml` - currently applied to `fail`, by @LecrisUT in #1078
 - Respect`_PYTHON_HOST_PLATFORM` env variable by @ryanking13 in #1196
-- Better support for ninja on Windows by @henryiii in #1209
+- Better support for ninja on Windows by @henryiii in #1209 (partially reverted in 0.12.1)
 - Move the file-api parsing to a debug message by @LecrisUT in #1184
 - (Hatchling) Path issue on Windows mingw64 and UCRT by @henryiii in #1210
 - (Setuptools) handle generic setup return type by @henryiii in #1202
