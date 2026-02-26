@@ -337,7 +337,7 @@ Science Foundation.
 
 <!-- prettier-ignore-start -->
 [OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
-[actions-badge]:            https://github.com/scikit-build/scikit-build-core/workflows/CI/badge.svg?branch=main
+[actions-badge]:            https://github.com/scikit-build/scikit-build-core/actions/workflows/ci.yml/badge.svg
 [actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
 [cmeel]:                    https://github.com/cmake-wheel/cmeel
 [codecov-badge]:            https://codecov.io/gh/scikit-build/scikit-build-core/branch/main/graph/badge.svg?token=ZLbQzIvyG8
