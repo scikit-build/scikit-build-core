@@ -493,6 +493,30 @@ class GenerateSettings:
 
 
 @dataclasses.dataclass
+class ForceIncludeSettings:
+    source: Path
+    """
+    Source path to include.
+
+    Can be a file or a directory, and may point outside the project root.
+    """
+
+    sdist: str = ""
+    """
+    Destination path inside the SDist.
+
+    Leave empty to skip adding this source to the SDist.
+    """
+
+    wheel: str = ""
+    """
+    Destination path inside the wheel's purelib/platlib area.
+
+    Leave empty to skip adding this source to the wheel.
+    """
+
+
+@dataclasses.dataclass
 class MessagesSettings:
     """
     Settings for messages.
@@ -520,6 +544,7 @@ class ScikitBuildSettings:
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
+    force_include: List[ForceIncludeSettings] = dataclasses.field(default_factory=list)
     generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
     messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
     search: SearchSettings = dataclasses.field(default_factory=SearchSettings)
