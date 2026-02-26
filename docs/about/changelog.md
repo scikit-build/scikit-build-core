@@ -10,6 +10,11 @@ Fixes:
 
 - Use `CMAKE_GENERATOR`(`_PLATFORM`) on Windows again by @henryiii in #1235
 
+Documentation:
+
+- Use newly fixed `click-extra` for admonitions by @henryiii in #1232
+- show CI state of the main branch in the badge by @LecrisUT in #1236
+
 ## Version 0.12.0
 
 This release adds a new `sdist.inclusion-mode` setting, with a new default:
