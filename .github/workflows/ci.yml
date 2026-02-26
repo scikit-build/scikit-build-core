@@ -46,7 +46,7 @@ jobs:
   checks:
     name:
       🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
-      matrix.runs-on }}
+      matrix.runs-on }} ${{ matrix.architecture }}
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 40
     strategy:
@@ -103,6 +103,7 @@ jobs:
           - python-version: "3.12"
             runs-on: windows-latest
             cmake-version: "3.26.x"
+            architecture: x86
           - python-version: "3.14"
             runs-on: windows-latest
             cmake-version: "4.0.x"
@@ -128,6 +129,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          architecture: ${{ matrix.architecture }}
 
       - uses: astral-sh/setup-uv@v7
 
