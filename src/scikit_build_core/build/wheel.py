@@ -25,6 +25,7 @@ from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
+from ._force_include import copy_force_include
 from ._init import setup_logging
 from ._pathutil import (
     packages_to_file_mapping,
@@ -489,6 +490,15 @@ def _build_wheel_impl_impl(
             for filepath, package_dir in mapping.items():
                 Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
                 shutil.copy2(filepath, package_dir)
+
+            for force_include in settings.force_include:
+                if not force_include.wheel:
+                    continue
+
+                copy_force_include(
+                    force_include.source,
+                    wheel_dirs[targetlib] / force_include.wheel,
+                )
 
             process_script_dir(wheel_dirs["scripts"])
 

@@ -17,6 +17,7 @@ from .._compat import tomllib
 from .._logging import rich_print
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
+from ._force_include import force_include_files
 from ._init import setup_logging
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
@@ -165,6 +166,21 @@ def build_sdist(
                 arcname=srcdirname / filepath,
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
+
+        for force_include in settings.force_include:
+            if not force_include.sdist:
+                continue
+
+            source = force_include.source
+            destination = Path(force_include.sdist)
+            for source_file, destination_file in force_include_files(
+                source, destination
+            ):
+                tar.add(
+                    source_file,
+                    arcname=srcdirname / destination_file,
+                    filter=normalize_tar_info if reproducible else lambda x: x,
+                )
 
         add_bytes_to_tar(
             tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible
