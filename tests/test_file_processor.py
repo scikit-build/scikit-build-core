@@ -201,6 +201,30 @@ def test_include_patterns(
     assert result == expected
 
 
+def test_include_pattern_with_nested_path_and_broad_exclude(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Test that nested include patterns are not pruned by directory traversal,
+    even when exclude patterns match all paths.
+    """
+    monkeypatch.chdir(tmp_path)
+    nested_file = Path("a") / "b" / "c.txt"
+    nested_file.parent.mkdir(parents=True)
+    nested_file.write_text("content")
+
+    result = set(
+        each_unignored_file(
+            Path(),
+            include=["a/b/c.txt"],
+            exclude=["*"],
+            mode="manual",
+        )
+    )
+    assert result == {nested_file}
+
+
 def test_exclude_patterns(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
