@@ -89,7 +89,7 @@ def each_unignored_file(
                     is_path=True,
                 ):
                     # Check to see if any include rules start with this
-                    dstr = str(dirpath / dname).strip("/") + "/"
+                    dstr = (dirpath / dname).as_posix().strip("/") + "/"
                     if not any(p.lstrip("/").startswith(dstr) for p in include):
                         dirs.remove(dname)
 
