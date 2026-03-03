@@ -213,7 +213,9 @@ class SDistSettings:
     """
     Files to include in the SDist even if they are skipped by default. Supports gitignore syntax.
 
-    Always takes precedence over :confval:`sdist.exclude`
+    In ``"default"`` and ``"classic"``, this takes precedence over
+    :confval:`sdist.exclude`. In ``"manual"``, files must be included first,
+    then exclude rules are applied.
 
     .. seealso::
        :confval:`sdist.exclude`
@@ -240,7 +242,8 @@ class SDistSettings:
 
     * "default": Process the git ignore files. Shortcuts on ignored directories.
     * "classic": The behavior before 0.12, like "default" but does not shortcut directories.
-    * "manual": No extra logic, based on include/exclude only.
+        * "manual": Explicit allowlist mode; files must match ``include`` and then
+            are filtered by ``exclude``.
 
     If you don't set this, it will be "default" unless you set the minimum
     version below 0.12, in which case it will be "classic".
