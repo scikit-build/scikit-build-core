@@ -1,5 +1,8 @@
 %global debug_package %{nil}
 
+# Tests require virtualenv and pytest-* extensions not included in RHEL
+%bcond tests %[0%{?fedora} || 0%{?epel}]
+
 # Whether to run additional tests, enabled by default
 %bcond optional_tests 1
 
@@ -50,7 +53,7 @@ cp -p src/scikit_build_core/_vendor/pyproject_metadata/LICENSE LICENSE-pyproject
 
 %generate_buildrequires
 export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
-%pyproject_buildrequires -g test-core%{?with_optional_tests:,test}
+%pyproject_buildrequires %{?with_tests:-g test-core%{?with_optional_tests:,test}}
 
 
 %build
@@ -65,9 +68,11 @@ export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
 
 %check
 %pyproject_check_import
+%if %{with tests}
 # Additional tests from optional_tests are automatically skipped/picked-up by pytest
 %pytest \
     -m "not network"
+%endif
 
 
 %files -n python3-scikit-build-core -f %{pyproject_files}
