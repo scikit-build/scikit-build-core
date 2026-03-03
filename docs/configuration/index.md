@@ -127,14 +127,21 @@ The `"build-system.requires"` option was added.
 
 The following behaviors are affected by `minimum-version`:
 
-- `minimum-version` 0.5+ (or unset) provides the original name in metadata and
-  properly normalized SDist names.
 - `minimum-version` 0.5+ (or unset) strips binaries by default.
 - `minimum-version` 0.8+ (or unset) `cmake.minimum-version` and
   `ninja.minimum-version` are replaced with `cmake.version` and `ninja.version`.
 - `minimum-version` 0.10+ (or unset) `cmake.targets` and `cmake.verbose` are
   replaced with `build.targets` and `build.verbose`. The CMake minimum version
   will be detected if not given.
+- `minimum-version` 0.12+ (or unset) uses `"default"` instead of `"classic"` as the
+  default for `sdist.include-mode`.
+
+:::
+
+:::{versionchanged} 0.12.2
+
+Non-normalized SDist names used to be enabled when set to below 0.5. This is no
+longer supported on PyPI, so this back-compat feature was removed.
 
 :::
 

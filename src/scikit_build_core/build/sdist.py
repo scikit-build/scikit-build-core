@@ -115,16 +115,8 @@ def build_sdist(
     # https://github.com/FFY00/python-pyproject-metadata/pull/49
     pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
 
-    # Only normalize SDist name if 0.5+ is requested for backwards compat
-    should_normalize_name = (
-        settings.minimum_version is None or settings.minimum_version >= Version("0.5")
-    )
-
-    sdist_name = (
-        canonicalize_name(metadata.name).replace("-", "_")
-        if should_normalize_name
-        else metadata.name
-    )
+    # Names must be normalized per PEP 625
+    sdist_name = canonicalize_name(metadata.name).replace("-", "_")
     srcdirname = f"{sdist_name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
 
