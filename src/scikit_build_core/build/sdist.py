@@ -10,7 +10,6 @@ import tarfile
 from pathlib import Path
 
 from packaging.utils import canonicalize_name
-from packaging.version import Version
 
 from .. import __version__
 from .._compat import tomllib

@@ -133,8 +133,8 @@ The following behaviors are affected by `minimum-version`:
 - `minimum-version` 0.10+ (or unset) `cmake.targets` and `cmake.verbose` are
   replaced with `build.targets` and `build.verbose`. The CMake minimum version
   will be detected if not given.
-- `minimum-version` 0.12+ (or unset) uses `"default"` instead of `"classic"` as the
-  default for `sdist.include-mode`.
+- `minimum-version` 0.12+ (or unset) uses `"default"` instead of `"classic"` as
+  the default for `sdist.include-mode`.
 
 :::
 
