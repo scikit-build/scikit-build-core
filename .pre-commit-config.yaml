@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.4
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -99,7 +99,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.43.1
+    rev: v1.44.0
     hooks:
       - id: typos
         args: []
@@ -132,12 +132,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.01.22
+    rev: 2026.03.02
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.36.1
+    rev: 0.37.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -151,6 +151,6 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.11.21
+    rev: 2026.03.02
     hooks:
       - id: sp-repo-review
