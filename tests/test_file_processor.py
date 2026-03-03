@@ -129,11 +129,7 @@ def test_on_each_with_symlink(
         nested_dir / ".gitignore",
     }
     if mode == "manual":
-        files |= {
-            hidden_file,
-            nested_dir.joinpath("ignored.txt"),
-            nested_dir.joinpath("more/ignored.txt"),
-        }
+        files = set()
     assert set(each_unignored_file(Path(), mode=mode)) == files
 
 
@@ -188,17 +184,37 @@ def test_include_patterns(
         ]
     }
     if mode == "manual":
-        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
+        expected = {
+            Path(s)
+            for s in [
+                "setup.py",
+                "src/__init__.py",
+                "src/main.py",
+                "src/utils.py",
+                "tests/test_main.py",
+                "tests/test_utils.py",
+                "tests/tmp.py",
+            ]
+        }
     assert result == expected
 
     # Test including specific files
     result = set(each_unignored_file(Path(), include=["tests/tmp.py"], mode=mode))
-    assert result == expected | {Path("tests/tmp.py")}
+    if mode == "manual":
+        assert result == {Path("tests/tmp.py")}
+    else:
+        assert result == expected | {Path("tests/tmp.py")}
 
     # Test including with wildcards
     result = set(each_unignored_file(Path(), include=["tests/*"], mode=mode))
-    expected = expected | {Path("tests/tmp.py")}
-    assert result == expected
+    if mode == "manual":
+        expected = {
+            Path(s)
+            for s in ["tests/test_main.py", "tests/test_utils.py", "tests/tmp.py"]
+        }
+        assert result == expected
+    else:
+        assert result == expected | {Path("tests/tmp.py")}
 
 
 def test_include_pattern_with_nested_path_and_broad_exclude(
@@ -206,8 +222,8 @@ def test_include_pattern_with_nested_path_and_broad_exclude(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
-    Test that nested include patterns are not pruned by directory traversal,
-    even when exclude patterns match all paths.
+    Test that nested include patterns are not pruned by directory traversal.
+    In manual mode, excludes are applied after includes.
     """
     monkeypatch.chdir(tmp_path)
     nested_file = Path("a") / "b" / "c.txt"
@@ -222,7 +238,7 @@ def test_include_pattern_with_nested_path_and_broad_exclude(
             mode="manual",
         )
     )
-    assert result == {nested_file}
+    assert result == set()
 
 
 def test_exclude_patterns(
@@ -257,7 +273,7 @@ def test_exclude_patterns(
         ]
     }
     if mode == "manual":
-        expected |= {Path("tests/tmp.py"), Path("local_ignored_file.txt")}
+        expected = set()
     assert result == expected
 
     # Test excluding directories
@@ -280,7 +296,7 @@ def test_exclude_patterns(
         ]
     }
     if mode == "manual":
-        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
+        expected = set()
     assert result == expected
 
     # Test excluding with wildcards
@@ -299,7 +315,7 @@ def test_exclude_patterns(
         ]
     }
     if mode == "manual":
-        expected |= {Path("temp.tmp"), Path("local_ignored_file.txt")}
+        expected = set()
     assert result == expected
 
 
@@ -324,6 +340,8 @@ def test_include_overrides_exclude(
         )
     )
     expected = {Path(s) for s in ["src/main.py", "tests/test_main.py"]}
+    if mode == "manual":
+        expected = set()
     assert result == expected
 
     # Exclude everything but include a file from inside a directory
@@ -333,6 +351,8 @@ def test_include_overrides_exclude(
         )
     )
     expected = {Path(s) for s in ["tests/test_main.py"]}
+    if mode == "manual":
+        expected = set()
     assert result == expected
 
 
@@ -372,17 +392,15 @@ def test_gitignore_interaction(
         ]
     }
     if mode == "manual":
-        expected |= {
-            Path("cache.db"),
-            Path("debug.log"),
-            Path("local_ignored_file.txt"),
-            Path("temp.tmp"),
-        }
+        expected = set()
     assert result == expected
 
     # Test that include can override gitignore
     result = set(each_unignored_file(Path(), include=["*.tmp"], mode=mode))
-    assert result == expected | {Path("temp.tmp")}
+    if mode == "manual":
+        assert result == {Path("temp.tmp")}
+    else:
+        assert result == expected | {Path("temp.tmp")}
 
 
 def test_nested_gitignore(
@@ -422,17 +440,15 @@ def test_nested_gitignore(
         ]
     }
     if mode == "manual":
-        expected |= {
-            Path("local_ignored_file.txt"),
-            Path("src/utils.py"),
-            Path("temp.tmp"),
-            Path("tests/tmp.py"),
-        }
+        expected = set()
     assert result == expected
 
     # Test that include can override nested gitignore
     result = set(each_unignored_file(Path(), include=["src/utils.py"], mode=mode))
-    assert result == expected | {Path("src/utils.py")}
+    if mode == "manual":
+        assert result == {Path("src/utils.py")}
+    else:
+        assert result == expected | {Path("src/utils.py")}
 
 
 def test_build_dir_exclusion(
@@ -474,11 +490,7 @@ def test_build_dir_exclusion(
         ]
     }
     if mode == "manual":
-        expected |= {
-            Path("local_ignored_file.txt"),
-            Path("temp.tmp"),
-            Path("tests/tmp.py"),
-        }
+        expected = set()
     assert result == expected
     assert build_file.relative_to(tmp_path) not in result
 
@@ -486,7 +498,10 @@ def test_build_dir_exclusion(
     result = set(
         each_unignored_file(Path(), include=["build/*"], build_dir="build", mode=mode)
     )
-    assert result == expected | {Path("build/output.so")}
+    if mode == "manual":
+        assert result == set()
+    else:
+        assert result == expected | {Path("build/output.so")}
 
 
 def test_complex_combinations(
@@ -526,6 +541,8 @@ def test_complex_combinations(
     expected = {
         Path(s) for s in ["tests/test_main.py", "temp.tmp"]
     }  # Only these should match
+    if mode == "manual":
+        expected = set()
     assert result == expected
 
 
@@ -590,9 +607,5 @@ def test_nonexistent_patterns(
         ]
     }
     if mode == "manual":
-        expected |= {
-            Path("local_ignored_file.txt"),
-            Path("temp.tmp"),
-            Path("tests/tmp.py"),
-        }
+        expected = set()
     assert exclude_result == expected

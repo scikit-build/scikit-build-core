@@ -76,7 +76,7 @@ def each_unignored_file(
 
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
-        if mode != "classic":
+        if mode == "default":
             for dname in dirs:
                 if not match_path(
                     dirpath,
@@ -86,6 +86,7 @@ def each_unignored_file(
                     builtin_exclude_spec,
                     user_exclude_spec,
                     nested_excludes,
+                    manual_mode=False,
                     is_path=True,
                 ):
                     # Check to see if any include rules start with this
@@ -103,6 +104,7 @@ def each_unignored_file(
                 builtin_exclude_spec,
                 user_exclude_spec,
                 nested_excludes,
+                manual_mode=mode == "manual",
                 is_path=False,
             ):
                 yield path
@@ -117,12 +119,22 @@ def match_path(
     user_exclude_spec: pathspec.GitIgnoreSpec,
     nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
     *,
+    manual_mode: bool,
     is_path: bool,
 ) -> bool:
     ptype = "directory" if is_path else "file"
 
-    # Always include something included
-    if include_spec.match_file(p):
+    included = include_spec.match_file(p)
+
+    # In manual mode, an item must be explicitly included first.
+    if manual_mode and not included:
+        logger.debug(
+            "Excluding {} {} because manual mode requires explicit include.", ptype, p
+        )
+        return False
+
+    # Always include something included in non-manual modes
+    if not manual_mode and included:
         logger.debug("Including {} {} because it is explicitly included.", ptype, p)
         return True
 
