@@ -82,6 +82,7 @@ repos:
           - nox
           - orjson
           - packaging>=24.2
+          - pathspec
           - pytest<9 # pytest 9 requires Python 3.10+
           - pytest-subprocess
           - rich
