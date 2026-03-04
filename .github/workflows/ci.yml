@@ -352,6 +352,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 25
     strategy:
+      fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-latest] # Windows command output issue (wrong Python selected)
 
