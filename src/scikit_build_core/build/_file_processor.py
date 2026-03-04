@@ -122,47 +122,57 @@ def match_path(
     ptype = "directory" if is_path else "file"
 
     # Always include something included
-    if include_spec.match_file(p):
-        logger.debug("Including {} {} because it is explicitly included.", ptype, p)
+    if (c := include_spec.check_file(p)).include:
+        logger.debug(
+            "Including {} {} because it is explicitly included by rule {!r}.",
+            ptype,
+            p,
+            include_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+        )
         return True
 
     # Always exclude something excluded
-    if user_exclude_spec.match_file(p):
+    if (c := user_exclude_spec.check_file(p)).include:
         logger.debug(
-            "Excluding {} {} because it is explicitly excluded by the user.", ptype, p
+            "Excluding {} {} because it is explicitly excluded by the user with {!r}.",
+            ptype,
+            p,
+            user_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
         )
         return False
 
     # Ignore from global ignore
-    if global_exclude_spec.match_file(p):
+    if (c := global_exclude_spec.check_file(p)).include:
         logger.debug(
-            "Excluding {} {} because it is explicitly excluded by the global ignore.",
+            "Excluding {} {} because it is explicitly excluded by the global ignore with {!r}.",
             ptype,
             p,
+            global_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
         )
         return False
 
     # Ignore built-in patterns
-    if builtin_exclude_spec.match_file(p):
+    if (c := builtin_exclude_spec.check_file(p)).include:
         logger.debug(
-            "Excluding {} {} because it is explicitly excluded by the built-in ignore.",
+            "Excluding {} {} because it is explicitly excluded by the built-in ignore with {!r}.",
             ptype,
             p,
+            builtin_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
         )
         return False
 
     # Check relative ignores (Python 3.9's is_relative_to workaround)
-    if any(
-        nex.match_file(p.relative_to(np))
-        for np, nex in nested_excludes.items()
-        if dirpath == np or np in dirpath.parents
-    ):
-        logger.debug(
-            "Excluding {} {} because it is explicitly excluded by nested ignore.",
-            ptype,
-            p,
-        )
-        return False
+    for np, nex in nested_excludes.items():
+        if (dirpath == np or np in dirpath.parents) and (
+            c := nex.check_file(p.relative_to(np))
+        ).include:
+            logger.debug(
+                "Excluding {} {} because it is explicitly excluded by nested ignore with {!r}.",
+                ptype,
+                p,
+                nex.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+            )
+            return False
 
     logger.debug(
         "Including {} {} because it exists (and isn't matched any other way).", ptype, p
