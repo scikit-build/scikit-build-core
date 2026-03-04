@@ -143,7 +143,7 @@ docs = [
     "myst-parser >=0.13",
     "setuptools",
     "sphinx >=7.0",
-    "sphinx-autodoc-typehints != 3.9.*",
+    "sphinx-autodoc-typehints != 3.9.6",
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
