@@ -149,6 +149,7 @@ def docs(session: nox.Session) -> None:
     """
     Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
     """
+    uv_pip = ["uv", "pip"] if session.venv_backend == "uv" else ["pip"]
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -159,6 +160,7 @@ def docs(session: nox.Session) -> None:
     serve = args.builder == "html" and session.interactive
     extra_installs = ["sphinx-autobuild"] if serve else []
     session.install("-e.", "--group=docs", *extra_installs)
+    session.run(*uv_pip, "list")
 
     session.chdir("docs")
 
