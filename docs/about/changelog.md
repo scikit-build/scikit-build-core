@@ -1,5 +1,26 @@
 # Changelog
 
+## Version 0.12.2
+
+We've fixed another issue in the new file inclusion mode on Windows. We now
+always normalize SDist names, even if `minimum-version` is set to 0.4 or older,
+due to the fact PyPI no longer accepts non-normalized SDist names. Please
+increase your `minimum-version` anyway, though! Finally, the debug logging for
+file inclusion now displays the exact rule that triggered the include/exclude
+behavior.
+
+Fixes:
+
+- Use `as_posix` for prefix matching for better Windows support by @henryiii in
+  #1246
+- Always normalize SDist names, even in `<0.5` compat mode by @henryiii in #1247
+- Better logging on why something fails/passes file inclusion check by @henryiii
+  in #1250
+
+Internal:
+
+- Backport downstream RHEL patch to disable tests by @LecrisUT in #1244
+
 ## Version 0.12.1
 
 This fixes a regression on Windows when targeting 32-bit wheels on a 64-bit
