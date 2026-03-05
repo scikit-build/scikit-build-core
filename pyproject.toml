@@ -38,7 +38,7 @@ dependencies = [
     "exceptiongroup >=1.0; python_version<'3.11'",
     "importlib-resources >=1.3; python_version<'3.9'",
     "packaging >=23.2",
-    "pathspec >=0.10.1",
+    "pathspec >=0.12.0",
     "tomli >=1.2.2; python_version<'3.11'",
     "typing-extensions >=4; python_version<'3.11'",
 ]
@@ -143,7 +143,7 @@ docs = [
     "myst-parser >=0.13",
     "setuptools",
     "sphinx >=7.0",
-    "sphinx-autodoc-typehints",
+    "sphinx-autodoc-typehints != 3.9.6",
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
@@ -220,7 +220,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "pathspec", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = ["numpy", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
 ignore_missing_imports = true
 
 
