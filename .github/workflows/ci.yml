@@ -134,7 +134,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
 
       - name: Setup CMake ${{ matrix.cmake-version }}
-        uses: jwlawson/actions-setup-cmake@v2.1
+        uses: jwlawson/actions-setup-cmake@v2.2
         with:
           cmake-version: ${{ matrix.cmake-version }}
 
@@ -149,7 +149,7 @@ jobs:
           auto --durations=20
 
       - name: Test package (two attempts)
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         if: "contains(matrix.python_version, 'pypy')"
         with:
           max_attempts: 2
@@ -200,14 +200,14 @@ jobs:
           uv pip install -e. --group=test --group=test-schema --resolution=lowest-direct --system
 
       - name: Setup CMake 3.15
-        uses: jwlawson/actions-setup-cmake@v2.1
+        uses: jwlawson/actions-setup-cmake@v2.2
         if: runner.os != 'Windows'
         with:
           cmake-version: "3.15.x"
 
         # First version to support VS 17.0
       - name: Setup CMake 3.21
-        uses: jwlawson/actions-setup-cmake@v2.1
+        uses: jwlawson/actions-setup-cmake@v2.2
         if: runner.os == 'Windows'
         with:
           cmake-version: "3.21.x"
