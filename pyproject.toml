@@ -220,7 +220,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [[tool.mypy.overrides]]
-module = ["numpy", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv"]
+module = ["numpy", "setuptools_scm", "hatch_fancy_pypi_readme", "virtualenv", "vcs_versioning.*"]
 ignore_missing_imports = true
 
 
