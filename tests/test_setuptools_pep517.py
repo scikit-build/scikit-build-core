@@ -9,8 +9,23 @@ from packaging.version import Version
 
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
+try:
+    from vcs_versioning.overrides import GlobalOverrides
+except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing dependency
+    GlobalOverrides = None
+
 pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
+
+
+@pytest.fixture(autouse=True)
+def setuptools_scm_overrides():
+    if GlobalOverrides is None:
+        yield
+        return
+
+    with GlobalOverrides.from_env("SETUPTOOLS_SCM"):
+        yield
 
 
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
