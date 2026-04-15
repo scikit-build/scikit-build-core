@@ -8,41 +8,43 @@ import pytest
 from scikit_build_core.build import build_sdist
 
 
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_sdist_symlink(tmp_path: Path):
-    # Attempt to create a symlink in the current working directory
+@pytest.fixture
+def can_symlink() -> None:
+    """Skip the test if symlinks are not supported on this OS."""
     try:
-        Path("CMakeLists_link.txt").symlink_to("CMakeLists.txt")
+        Path("_symlink_check").symlink_to("_symlink_check_target")
     except OSError:
         pytest.skip(
             "Creating symlinks is not supported/allowed on this OS without privileges"
         )
+    else:
+        Path("_symlink_check").unlink(missing_ok=True)
 
-    out = build_sdist(str(tmp_path))
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+@pytest.mark.parametrize(
+    ("config_settings", "expected_type"),
+    [
+        pytest.param({}, "reg", id="dereference_default"),
+        pytest.param({"sdist.resolve-symlinks": "false"}, "sym", id="no_dereference"),
+    ],
+)
+def test_pep517_sdist_symlink(
+    tmp_path: Path,
+    config_settings: dict[str, list[str] | str],
+    expected_type: str,
+) -> None:
+    Path("CMakeLists_link.txt").symlink_to("CMakeLists.txt")
+
+    out = build_sdist(str(tmp_path), config_settings=config_settings or None)
 
     with tarfile.open(tmp_path / out, "r:gz") as tar:
-        # Check that the symlink file is actually dereferenced into a regular file
         link_member = tar.getmember("cmake_example-0.0.1/CMakeLists_link.txt")
-        assert link_member.isreg(), (
-            "The symlink should have been stored as a regular file"
-        )
-
-
-@pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_pep517_sdist_symlink_no_dereference(tmp_path: Path):
-    try:
-        Path("CMakeLists_link_no_deref.txt").symlink_to("CMakeLists.txt")
-    except OSError:
-        pytest.skip(
-            "Creating symlinks is not supported/allowed on this OS without privileges"
-        )
-
-    out = build_sdist(
-        str(tmp_path),
-        config_settings={"sdist.dereference": "False"},
-    )
-
-    with tarfile.open(tmp_path / out, "r:gz") as tar:
-        # Check that the symlink file is actually NOT dereferenced
-        link_member = tar.getmember("cmake_example-0.0.1/CMakeLists_link_no_deref.txt")
-        assert link_member.issym(), "The symlink should have been stored as a symlink"
+        if expected_type == "reg":
+            assert link_member.isreg(), (
+                "The symlink should have been stored as a regular file"
+            )
+        else:
+            assert link_member.issym(), (
+                "The symlink should have been stored as a symlink"
+            )
