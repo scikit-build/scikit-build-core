@@ -441,6 +441,16 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: sdist.dereference
+  :type: ``bool``
+  :default: true
+
+  If set to True, symlinks in the SDist will be dereferenced and their contents
+  will be copied into the archive. This ensures the source distribution remains
+  usable across different machines and environments.
+```
+
+```{eval-rst}
 .. confval:: sdist.exclude
   :type: ``list[str]``
 

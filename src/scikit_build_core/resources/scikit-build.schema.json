@@ -189,6 +189,11 @@
           "type": "boolean",
           "default": false,
           "description": "If set to True, CMake will be run before building the SDist."
+        },
+        "dereference": {
+          "type": "boolean",
+          "default": true,
+          "description": "If set to True, symlinks in the SDist will be dereferenced and their contents"
         }
       }
     },
