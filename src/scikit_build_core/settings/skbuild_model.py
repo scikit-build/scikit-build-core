@@ -262,6 +262,13 @@ class SDistSettings:
     If set to True, CMake will be run before building the SDist.
     """
 
+    dereference: bool = True
+    """
+    If set to True, symlinks in the SDist will be dereferenced and their contents
+    will be copied into the archive. This ensures the source distribution remains
+    usable across different machines and environments.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
