@@ -441,16 +441,6 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
-.. confval:: sdist.dereference
-  :type: ``bool``
-  :default: true
-
-  If set to True, symlinks in the SDist will be dereferenced and their contents
-  will be copied into the archive. This ensures the source distribution remains
-  usable across different machines and environments.
-```
-
-```{eval-rst}
 .. confval:: sdist.exclude
   :type: ``list[str]``
 
@@ -501,6 +491,14 @@ print(mk_skbuild_docs())
   Unix and Python 3.9+ recommended.
 
   ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set.
+```
+
+```{eval-rst}
+.. confval:: sdist.resolve-symlinks
+  :type: ``bool``
+  :default: true
+
+  Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
 ```
 
 ## search
