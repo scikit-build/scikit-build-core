@@ -70,7 +70,8 @@ for project in projects["project"]:
 * [kiss-icp](https://pypi.org/project/kiss-icp) ([source](https://github.com/PRBonn/kiss-icp/blob/HEAD/python/pyproject.toml))
 * [simsopt](https://pypi.org/project/simsopt) ([source](https://github.com/hiddenSymmetries/simsopt/blob/HEAD/pyproject.toml))
 * [mqt-core](https://pypi.org/project/mqt-core) ([source](https://github.com/munich-quantum-toolkit/core/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (sum: p5ium7Igqx)-->
+* [pyarrow](https://pypi.org/project/pyarrow) ([source](https://github.com/apache/arrow/blob/HEAD/python/pyproject.toml))
+<!--[[[end]]] (sum: M+iKao/rWk)-->
 
 <!-- prettier-ignore-end -->
 
