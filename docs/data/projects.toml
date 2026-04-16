@@ -148,3 +148,8 @@ github = "hiddenSymmetries/simsopt"
 [[project]]
 pypi = "mqt-core"
 github = "munich-quantum-toolkit/core"
+
+[[project]]
+pypi = "pyarrow"
+github = "apache/arrow"
+path = "python/pyproject.toml"
