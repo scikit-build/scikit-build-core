@@ -197,7 +197,6 @@
         },
         "resolve-symlinks": {
           "type": "boolean",
-          "default": true,
           "description": "Resolve symlinks in the SDist, copying file contents instead of storing symlinks."
         }
       }
