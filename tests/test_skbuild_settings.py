@@ -43,6 +43,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.sdist.inclusion_mode == "default"
     assert settings.sdist.reproducible
     assert not settings.sdist.cmake
+    assert settings.sdist.resolve_symlinks
     assert settings.wheel.packages is None
     assert settings.wheel.py_api == ""
     assert not settings.wheel.expand_macos_universal_tags
@@ -947,3 +948,37 @@ def test_backcompat_sdist_inclusion_mode(
 
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
     assert settings_reader.settings.sdist.inclusion_mode == "classic"
+
+
+def test_backcompat_sdist_resolve_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.13.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.12"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert not settings_reader.settings.sdist.resolve_symlinks
+
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.13"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.sdist.resolve_symlinks

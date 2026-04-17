@@ -380,6 +380,22 @@ class SettingsReader:
         else:
             self.settings.sdist.inclusion_mode = "default"
 
+        if self.settings.sdist.resolve_symlinks is not None:
+            if (
+                self.settings.minimum_version is not None
+                and self.settings.minimum_version < Version("0.13")
+            ):
+                rich_error(
+                    "minimum-version can't be less than 0.13 to use sdist.resolve-symlinks"
+                )
+        elif (
+            self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("0.13")
+        ):
+            self.settings.sdist.resolve_symlinks = False
+        else:
+            self.settings.sdist.resolve_symlinks = True
+
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 
