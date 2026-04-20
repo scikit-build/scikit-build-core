@@ -21,6 +21,7 @@ Subpackages
    scikit_build_core.resources
    scikit_build_core.settings
    scikit_build_core.setuptools
+   scikit_build_core.utils
 
 Submodules
 ----------
