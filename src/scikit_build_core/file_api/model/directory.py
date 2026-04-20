@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional, Union
 
-from .common import Paths
+from ._common import Paths
 
 __all__ = ["BacktraceGraph", "Directory", "InstallRule", "Node", "Target"]
 

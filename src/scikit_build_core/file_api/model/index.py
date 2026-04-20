@@ -2,10 +2,10 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
+from ._common import APIVersion
 from .cache import Cache
 from .cmakefiles import CMakeFiles
 from .codemodel import CodeModel
-from .common import APIVersion
 from .toolchains import Toolchains
 
 __all__ = [
