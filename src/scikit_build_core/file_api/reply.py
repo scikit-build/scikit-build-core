@@ -13,6 +13,7 @@ from ..utils.typing import (
     is_union_type,
     process_union,
 )
+from .model._common import ObjectKind
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
@@ -56,6 +57,7 @@ class Converter:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
+        # TODO: remove this special handling once everything is registered in `ObjectKind`
         if (
             target in {CodeModel, Target, Cache, CMakeFiles, Directory, Toolchains}
             and "jsonFile" in data
@@ -91,6 +93,27 @@ class Converter:
 
         return target(**input_dict)
 
+    def _convert_object_kind(self, data: Any) -> Any:
+        """
+        Special handling for ``ObjectKind`` types:
+          * this gets the data from the file defined in ``jsonFile`` field instead
+          * the actual type to use is defined in the ``kind``, ``version``
+        """
+        assert isinstance(data, dict)
+        index_kind = data.pop("kind")
+        index_version = data.pop("version")
+        json_file = data.pop("jsonFile")
+        with self.base_dir.joinpath(json_file).open(encoding="utf-8") as f:
+            actual_data = json.load(f)
+        kind = actual_data.pop("kind")
+        version = actual_data.pop("version")
+        if not (kind == index_kind and version == index_version):
+            msg = f"Indexed object kind ({index_kind},{index_version}) does not match actual one ({kind},{version}) from {json_file}"
+            raise ValueError(msg)
+        # TODO: refine the type annotations
+        target = ObjectKind.get_object_kind(kind=index_kind, version=index_version)
+        return self.make_class(actual_data, target)
+
     @typing.overload
     def _convert_any(self, item: Any, target: Type[T]) -> T: ...
     @typing.overload
@@ -98,12 +121,21 @@ class Converter:
 
     def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
         target = process_union(target)
+        if isinstance(target, type) and issubclass(target, ObjectKind):
+            # Special handling for ObjectKind, see inner comment
+            return self._convert_object_kind(item)
         if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)
         raw_target = get_target_raw_type(target)
         # For generic Unions we try each type on at a time
         if is_union_type(raw_target):
+            if all(
+                isinstance(t, type) and issubclass(t, ObjectKind)
+                for t in get_args(target)
+            ):
+                # Special handling for ObjectKind, see inner comment
+                return self._convert_object_kind(item)
             last_err: Exception = AssertionError("Failed for unknown reason")
             for maybe_target in get_args(target):
                 try:
