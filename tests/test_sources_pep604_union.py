@@ -4,7 +4,7 @@ from typing import Union, get_origin
 
 import pytest
 
-from scikit_build_core.settings.sources import _is_union_type, _process_union
+from scikit_build_core.utils.typing import _is_union_type, _process_union
 
 
 class TestUnionTypeDetection:
