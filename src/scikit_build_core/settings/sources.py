@@ -55,11 +55,11 @@ from typing import Any, Literal, Protocol, TypeVar
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import get_args
 from ..utils.typing import (
-    _get_inner_type,
-    _get_target_raw_type,
-    _is_union_type,
-    _process_annotated,
-    _process_union,
+    get_inner_type,
+    get_target_raw_type,
+    is_union_type,
+    process_annotated,
+    process_union,
 )
 
 if typing.TYPE_CHECKING:
@@ -203,45 +203,43 @@ class EnvSource:
         """
         Convert an item from the environment (always a string) into a target type.
         """
-        target, _ = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, _ = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
         if raw_target is list:
             return [
-                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+                cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
             items = (i.strip().split("=") for i in item.split(";"))
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in items}
 
         if raw_target is bool:
             return _process_bool(item)
 
-        if _is_union_type(raw_target) and str in get_args(target):
+        if is_union_type(raw_target) and str in get_args(target):
             return item
 
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if str in args:
                 return item
             if dict in args and "=" in item:
                 items = (i.strip().split("=") for i in item.split(";"))
-                return {
-                    k: cls.convert(v, _get_inner_type(args[dict])) for k, v in items
-                }
+                return {k: cls.convert(v, get_inner_type(args[dict])) for k, v in items}
             if list in args:
                 return [
-                    cls.convert(i.strip(), _get_inner_type(args[list]))
+                    cls.convert(i.strip(), get_inner_type(args[list]))
                     for i in item.split(";")
                 ]
             msg = f"Can't convert into {target}"
             raise TypeError(msg)
 
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
 
@@ -341,34 +339,34 @@ class ConfSource:
     def convert(
         cls, item: str | list[str] | dict[str, str] | bool, target: type[Any] | Any
     ) -> object:
-        target, _ = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, _ = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
         if raw_target is list:
             if isinstance(item, list):
-                return [cls.convert(i, _get_inner_type(target)) for i in item]
+                return [cls.convert(i, get_inner_type(target)) for i in item]
             if isinstance(item, (dict, bool)):
                 msg = f"Expected {target}, got {type(item)}"
                 raise TypeError(msg)
             return [
-                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+                cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
             assert not isinstance(item, (str, list, bool))
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if str in args:
                 return item
             if dict in args and isinstance(item, dict):
                 return {
-                    k: cls.convert(v, _get_inner_type(args[dict]))
+                    k: cls.convert(v, get_inner_type(args[dict]))
                     for k, v in item.items()
                 }
             if list in args and isinstance(item, list):
-                return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+                return [cls.convert(i, get_inner_type(args[list])) for i in item]
             msg = f"Can't convert into {target}"
             raise TypeError(msg)
         if isinstance(item, (list, dict)):
@@ -377,8 +375,8 @@ class ConfSource:
         if raw_target is bool:
             return item if isinstance(item, bool) else _process_bool(item)
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
         if callable(raw_target):
@@ -402,7 +400,7 @@ class ConfSource:
                 except KeyError:
                     yield keystr
                     continue
-            if _get_target_raw_type(outer_option) is dict:
+            if get_target_raw_type(outer_option) is dict:
                 continue
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
@@ -441,8 +439,8 @@ class TOMLSource:
         """
         Convert an ``item`` from TOML into a ``target`` type.
         """
-        target, annotations = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, annotations = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target) and isinstance(raw_target, type):
             fields = dataclasses.fields(raw_target)
             values = ((k.replace("-", "_"), v) for k, v in item.items())
@@ -456,34 +454,34 @@ class TOMLSource:
             if not isinstance(item, list):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
-            return [cls.convert(it, _get_inner_type(target)) for it in item]
+            return [cls.convert(it, get_inner_type(target)) for it in item]
         if raw_target is dict:
             if not isinstance(item, dict):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             if annotations == ("EnvVar",):
                 return {
-                    k: cls.convert(_dict_with_envvar(v), _get_inner_type(target))
+                    k: cls.convert(_dict_with_envvar(v), get_inner_type(target))
                     for k, v in item.items()
                     if _dict_with_envvar(v) is not None
                 }
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
             return item
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if type(item) in args:
                 if isinstance(item, dict):
                     return {
-                        k: cls.convert(v, _get_inner_type(args[dict]))
+                        k: cls.convert(v, get_inner_type(args[dict]))
                         for k, v in item.items()
                     }
                 if isinstance(item, list):
-                    return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+                    return [cls.convert(i, get_inner_type(args[list])) for i in item]
                 return item
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
         if callable(raw_target):
@@ -543,7 +541,7 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            is_dict = _get_target_raw_type(field.type) is dict
+            is_dict = get_target_raw_type(field.type) is dict
 
             for source in self.sources:
                 if source.has_item(*prefixes, field.name, is_dict=is_dict):
