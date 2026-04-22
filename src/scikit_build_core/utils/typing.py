@@ -81,8 +81,8 @@ def is_union_type(raw_target: Any) -> bool:
 
 def get_inner_type(_target: type[Any], /) -> type[Any]:
     """
-    Takes a types like ``List[str]`` and returns str,
-    or ``Dict[str, int]`` and returns int.
+    Takes a type like ``list[str]`` and returns str,
+    or ``dict[str, int]`` and returns int.
     """
 
     raw_target = get_target_raw_type(_target)
