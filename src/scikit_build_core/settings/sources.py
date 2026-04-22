@@ -49,26 +49,21 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import sys
 import typing
-from typing import Any, Literal, Protocol, TypeVar, Union
+from typing import Any, Literal, Protocol, TypeVar
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Annotated, get_args, get_origin
+from .._compat.typing import get_args
+from ..utils.typing import (
+    get_inner_type,
+    get_target_raw_type,
+    is_union_type,
+    process_annotated,
+    process_union,
+)
 
 if typing.TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
-
-# Runtime check for PEP 604 union syntax (A | B) support
-# types.UnionType only exists in Python 3.10+
-if sys.version_info >= (3, 10):
-    from types import NoneType
-    from types import UnionType as _UnionType
-else:
-    NoneType = type(None)
-
-    class _UnionType:
-        pass
 
 
 T = TypeVar("T")
@@ -105,71 +100,6 @@ def _dig_fields(opt: Any, /, *names: str) -> Any:
             raise KeyError(msg)
         (opt,) = types
     return opt
-
-
-def _process_union(target: Any, /) -> Any:
-    """
-    Filters None out of Unions. If a Union only has one item, return that item.
-    """
-
-    origin = get_origin(target)
-
-    if _is_union_type(origin):
-        non_none_args = [a for a in get_args(target) if a is not NoneType]
-        if len(non_none_args) == 1:
-            return non_none_args[0]
-        return Union[tuple(non_none_args)]
-
-    return target
-
-
-def _process_annotated(target: type[Any], /) -> tuple[Any, tuple[Any, ...]]:
-    """
-    Splits annotated into raw type and annotations. If not annotated, the annotations will be empty.
-    """
-
-    origin = get_origin(target)
-    if origin is Annotated:
-        return get_args(target)[0], get_args(target)[1:]
-
-    return target, ()
-
-
-def _get_target_raw_type(target: type[Any] | Any, /) -> Any:
-    """
-    Takes a type like ``Optional[str]`` and returns str, or ``Optional[Dict[str,
-    int]]`` and returns dict. Returns Union for a Union with more than one
-    non-none type. Literal is also a valid return. Works through Annotated.
-    """
-
-    target, _ = _process_annotated(target)
-    target = _process_union(target)
-    origin = get_origin(target)
-    return origin or target
-
-
-def _is_union_type(raw_target: Any) -> bool:
-    """
-    Check if raw_target is a Union type (either ``typing.Union`` or ``types.UnionType``).
-    Handles both ``typing.Union[A, B]`` and PEP 604 syntax (``A | B``).
-    """
-    return raw_target is Union or raw_target is _UnionType
-
-
-def _get_inner_type(_target: type[Any], /) -> type[Any]:
-    """
-    Takes a types like ``List[str]`` and returns str,
-    or ``Dict[str, int]`` and returns int.
-    """
-
-    raw_target = _get_target_raw_type(_target)
-    target = _process_union(_target)
-    if raw_target is list:
-        return get_args(target)[0]  # type: ignore[no-any-return]
-    if raw_target is dict:
-        return get_args(target)[1]  # type: ignore[no-any-return]
-    msg = f"Expected a list or dict, got {target!r}"
-    raise AssertionError(msg)
 
 
 def _nested_dataclass_to_names(
@@ -273,45 +203,43 @@ class EnvSource:
         """
         Convert an item from the environment (always a string) into a target type.
         """
-        target, _ = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, _ = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
         if raw_target is list:
             return [
-                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+                cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
             items = (i.strip().split("=") for i in item.split(";"))
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in items}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in items}
 
         if raw_target is bool:
             return _process_bool(item)
 
-        if _is_union_type(raw_target) and str in get_args(target):
+        if is_union_type(raw_target) and str in get_args(target):
             return item
 
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if str in args:
                 return item
             if dict in args and "=" in item:
                 items = (i.strip().split("=") for i in item.split(";"))
-                return {
-                    k: cls.convert(v, _get_inner_type(args[dict])) for k, v in items
-                }
+                return {k: cls.convert(v, get_inner_type(args[dict])) for k, v in items}
             if list in args:
                 return [
-                    cls.convert(i.strip(), _get_inner_type(args[list]))
+                    cls.convert(i.strip(), get_inner_type(args[list]))
                     for i in item.split(";")
                 ]
             msg = f"Can't convert into {target}"
             raise TypeError(msg)
 
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
 
@@ -411,34 +339,34 @@ class ConfSource:
     def convert(
         cls, item: str | list[str] | dict[str, str] | bool, target: type[Any] | Any
     ) -> object:
-        target, _ = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, _ = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target):
             msg = f"Array of dataclasses are not supported in configuration settings ({raw_target})"
             raise TypeError(msg)
         if raw_target is list:
             if isinstance(item, list):
-                return [cls.convert(i, _get_inner_type(target)) for i in item]
+                return [cls.convert(i, get_inner_type(target)) for i in item]
             if isinstance(item, (dict, bool)):
                 msg = f"Expected {target}, got {type(item)}"
                 raise TypeError(msg)
             return [
-                cls.convert(i.strip(), _get_inner_type(target)) for i in item.split(";")
+                cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
             assert not isinstance(item, (str, list, bool))
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if str in args:
                 return item
             if dict in args and isinstance(item, dict):
                 return {
-                    k: cls.convert(v, _get_inner_type(args[dict]))
+                    k: cls.convert(v, get_inner_type(args[dict]))
                     for k, v in item.items()
                 }
             if list in args and isinstance(item, list):
-                return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+                return [cls.convert(i, get_inner_type(args[list])) for i in item]
             msg = f"Can't convert into {target}"
             raise TypeError(msg)
         if isinstance(item, (list, dict)):
@@ -447,8 +375,8 @@ class ConfSource:
         if raw_target is bool:
             return item if isinstance(item, bool) else _process_bool(item)
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
         if callable(raw_target):
@@ -472,7 +400,7 @@ class ConfSource:
                 except KeyError:
                     yield keystr
                     continue
-            if _get_target_raw_type(outer_option) is dict:
+            if get_target_raw_type(outer_option) is dict:
                 continue
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
@@ -511,8 +439,8 @@ class TOMLSource:
         """
         Convert an ``item`` from TOML into a ``target`` type.
         """
-        target, annotations = _process_annotated(target)
-        raw_target = _get_target_raw_type(target)
+        target, annotations = process_annotated(target)
+        raw_target = get_target_raw_type(target)
         if dataclasses.is_dataclass(raw_target) and isinstance(raw_target, type):
             fields = dataclasses.fields(raw_target)
             values = ((k.replace("-", "_"), v) for k, v in item.items())
@@ -526,34 +454,34 @@ class TOMLSource:
             if not isinstance(item, list):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
-            return [cls.convert(it, _get_inner_type(target)) for it in item]
+            return [cls.convert(it, get_inner_type(target)) for it in item]
         if raw_target is dict:
             if not isinstance(item, dict):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             if annotations == ("EnvVar",):
                 return {
-                    k: cls.convert(_dict_with_envvar(v), _get_inner_type(target))
+                    k: cls.convert(_dict_with_envvar(v), get_inner_type(target))
                     for k, v in item.items()
                     if _dict_with_envvar(v) is not None
                 }
-            return {k: cls.convert(v, _get_inner_type(target)) for k, v in item.items()}
+            return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
             return item
-        if _is_union_type(raw_target):
-            args = {_get_target_raw_type(t): t for t in get_args(target)}
+        if is_union_type(raw_target):
+            args = {get_target_raw_type(t): t for t in get_args(target)}
             if type(item) in args:
                 if isinstance(item, dict):
                     return {
-                        k: cls.convert(v, _get_inner_type(args[dict]))
+                        k: cls.convert(v, get_inner_type(args[dict]))
                         for k, v in item.items()
                     }
                 if isinstance(item, list):
-                    return [cls.convert(i, _get_inner_type(args[list])) for i in item]
+                    return [cls.convert(i, get_inner_type(args[list])) for i in item]
                 return item
         if raw_target is Literal:
-            if item not in get_args(_process_union(target)):
-                msg = f"{item!r} not in {get_args(_process_union(target))!r}"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
             return item
         if callable(raw_target):
@@ -613,7 +541,7 @@ class SourceChain:
                     errors.append(e)
                 continue
 
-            is_dict = _get_target_raw_type(field.type) is dict
+            is_dict = get_target_raw_type(field.type) is dict
 
             for source in self.sources:
                 if source.has_item(*prefixes, field.name, is_dict=is_dict):
