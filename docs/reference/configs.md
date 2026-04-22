@@ -605,8 +605,11 @@ print(mk_skbuild_docs())
 
   You can also set this to "cp38" to enable the CPython 3.8+ Stable
   ABI / Limited API (only on CPython and if the version is sufficient,
-  otherwise this has no effect). Or you can set it to "py3" or "py2.py3" to
-  ignore Python ABI compatibility. The ABI tag is inferred from this tag.
+  otherwise this has no effect). For free-threaded Python, you can use
+  "cp315t" to enable the free-threaded stable ABI (only on CPython
+  free-threaded builds and if the version is sufficient). Or you can set
+  it to "py3" or "py2.py3" to ignore Python ABI compatibility. The ABI
+  tag is inferred from this tag.
 
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
 ```

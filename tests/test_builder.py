@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import platform
 import pprint
@@ -95,6 +97,10 @@ library_dirs=C:\\Python\\libs
     lib2 = get_python_library(env, abi3=True)
     assert lib2
     assert lib2 == Path("C:\\Python\\libs\\python3.lib")
+
+    lib3 = get_python_library(env, abi3t=True)
+    assert lib3
+    assert lib3 == Path("C:\\Python\\libs\\python3t.lib")
 
 
 @pytest.mark.parametrize("archs", [["x86_64"], ["arm64", "universal2"]])
@@ -269,6 +275,68 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     assert str(tags) == "py2.py3-none-macosx_10_10_x86_64"
 
 
+def test_wheel_tag_with_abi3t_darwin(monkeypatch):
+    """Test cp315t free-threaded stable ABI tag."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    class VersionInfo:
+        def __init__(
+            self,
+            major: int,
+            minor: int,
+            micro: int = 0,
+            releaselevel: str = "final",
+            serial: int = 0,
+        ) -> None:
+            self.major = major
+            self.minor = minor
+            self.micro = micro
+            self.releaselevel = releaselevel
+            self.serial = serial
+
+        def __getitem__(self, index: int) -> int | str:
+            return (self.major, self.minor, self.micro, self.releaselevel, self.serial)[
+                index
+            ]
+
+        def __ge__(self, other: tuple[int, ...]) -> bool:
+            return (self.major, self.minor, self.micro) >= other[:3]
+
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
+    assert str(tags) == "cp315t-abi3t-macosx_10_10_x86_64"
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp316t")
+    assert "abi3t" not in str(tags)
+    assert "cp316t" not in str(tags)
+
+
+def test_wheel_tag_with_abi3t_invalid_on_classic(monkeypatch):
+    """Test cp315t is rejected on classic (non-free-threaded) Python."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    with pytest.raises(AssertionError, match="Unexpected py-api"):
+        WheelTag.compute_best(["x86_64"], py_api="cp315t")
+
+
 def test_wheel_tag_host_platform_override(monkeypatch):
     """Test that _PYTHON_HOST_PLATFORM environment variable overrides platform detection."""
     get_config_var = sysconfig.get_config_var
@@ -286,6 +354,24 @@ def test_wheel_tag_host_platform_override(monkeypatch):
     monkeypatch.setenv("_PYTHON_HOST_PLATFORM", "emscripten-4.0.9-wasm32")
     tags = WheelTag.compute_best(["x86_64"], py_api="py3")
     assert str(tags) == "py3-none-emscripten_4_0_9_wasm32"
+
+
+def test_get_soabi_abi3t(monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+
+    from scikit_build_core.builder.sysconfig import get_soabi
+
+    assert get_soabi({}, abi3t=True) == (
+        "" if sysconfig.get_platform().startswith("win") else "abi3t"
+    )
+    assert get_soabi({}, abi3=True) == (
+        "" if sysconfig.get_platform().startswith("win") else "abi3"
+    )
 
 
 def test_generator_args(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

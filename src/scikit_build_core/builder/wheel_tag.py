@@ -99,30 +99,69 @@ class WheelTag:
 
         if py_api:
             pyvers_new = py_api.split(".")
-            if all(x.startswith("cp3") and x[3:].isdecimal() for x in pyvers_new):
-                if len(pyvers_new) != 1:
-                    msg = "Unexpected py-api, must be a single cp version (e.g. cp39), not {py_api}"
-                    raise AssertionError(msg)
+            if all(
+                (
+                    x.startswith("cp3")
+                    and x[3:].isdecimal()
+                    and not sysconfig.get_config_var("Py_GIL_DISABLED")
+                )
+                or (
+                    x.startswith("cp3")
+                    and len(x) > 4
+                    and x[3:-1].isdecimal()
+                    and x.endswith("t")
+                    and sysconfig.get_config_var("Py_GIL_DISABLED")
+                )
+                for x in pyvers_new
+            ):
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
                     raise AssertionError(msg)
 
-                minor = int(pyvers_new[0][3:])
-                if (
-                    sys.implementation.name == "cpython"
-                    and minor <= sys.version_info.minor
-                    and not sysconfig.get_config_var("Py_GIL_DISABLED")
+                # Separate classic and free-threaded tags
+                classic_tags = [
+                    x for x in pyvers_new if x.startswith("cp3") and x[3:].isdecimal()
+                ]
+                ft_tags = [
+                    x
+                    for x in pyvers_new
+                    if x.startswith("cp3")
+                    and len(x) > 4
+                    and x[3:-1].isdecimal()
+                    and x.endswith("t")
+                ]
+
+                if sys.implementation.name == "cpython" and sysconfig.get_config_var(
+                    "Py_GIL_DISABLED"
                 ):
-                    pyvers = pyvers_new
-                    abi = "abi3"
-                else:
-                    msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high or free-threaded"
-                    logger.debug(msg, sys.implementation.name, minor)
+                    # Free-threaded: only accept cp3XXt tags
+                    if ft_tags:
+                        target = ft_tags[0]
+                        minor = int(target[3:-1])
+                        if minor <= sys.version_info.minor:
+                            pyvers = [target]
+                            abi = "abi3t"
+                        else:
+                            msg = "Ignoring py-api, version (3.{}) is too high"
+                            logger.debug(msg, minor)
+                # Classic CPython
+                elif classic_tags:
+                    target = classic_tags[0]
+                    minor = int(target[3:])
+                    if (
+                        sys.implementation.name == "cpython"
+                        and minor <= sys.version_info.minor
+                    ):
+                        pyvers = [target]
+                        abi = "abi3"
+                    else:
+                        msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high"
+                        logger.debug(msg, sys.implementation.name, minor)
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
                 abi = "none"
             else:
-                msg = f"Unexpected py-api, must be abi3 (e.g. cp39) or Pythonless (e.g. py2.py3), not {py_api}"
+                msg = f"Unexpected py-api, must be abi3 (e.g. cp39), abi3t (e.g. cp315t), or Pythonless (e.g. py2.py3), not {py_api}"
                 raise AssertionError(msg)
 
         return cls(pyvers=pyvers, abis=[abi], archs=plats, build_tag=build_tag)
@@ -174,7 +213,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--abi",
         default="",
-        help="Specify py-api, like 'cp38' or 'py3'",
+        help="Specify py-api, like 'cp38', 'cp315t', or 'py3'",
     )
     parser.add_argument(
         "--purelib",

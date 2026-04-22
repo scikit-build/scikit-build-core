@@ -209,27 +209,41 @@ class Builder:
             )
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
+        py_api = self.settings.wheel.py_api
+        ft_abi = False
         if limited_api is None:
-            if self.settings.wheel.py_api.startswith("cp3"):
-                target_minor_version = int(self.settings.wheel.py_api[3:])
+            if py_api.startswith("cp3") and py_api.endswith("t"):
+                target_minor_version = int(py_api[3:-1])
+                ft_abi = (
+                    sys.implementation.name == "cpython"
+                    and sysconfig.get_config_var("Py_GIL_DISABLED")
+                    and target_minor_version <= sys.version_info.minor
+                )
+                limited_api = ft_abi
+            elif py_api.startswith("cp3"):
+                target_minor_version = int(py_api[3:])
                 limited_api = target_minor_version <= sys.version_info.minor
             else:
                 limited_api = False
 
         if limited_api and sys.implementation.name != "cpython":
             limited_api = False
+            ft_abi = False
             logger.info("PyPy doesn't support the Limited API, ignoring")
 
-        if limited_api and sysconfig.get_config_var("Py_GIL_DISABLED"):
+        if limited_api and sysconfig.get_config_var("Py_GIL_DISABLED") and not ft_abi:
             limited_api = False
             logger.info(
-                "Free-threaded Python doesn't support the Limited API currently, ignoring"
+                "Free-threaded Python doesn't support the classic Limited API, ignoring"
             )
 
         python_library = get_python_library(self.config.env, abi3=False)
-        python_sabi_library = (
-            get_python_library(self.config.env, abi3=True) if limited_api else None
-        )
+        python_sabi_library = None
+        if limited_api:
+            if ft_abi:
+                python_sabi_library = get_python_library(self.config.env, abi3t=True)
+            else:
+                python_sabi_library = get_python_library(self.config.env, abi3=True)
         python_include_dir = get_python_include_dir()
         numpy_include_dir = get_numpy_include_dir()
 
@@ -265,7 +279,9 @@ class Builder:
                 if numpy_include_dir:
                     cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 
-        cache_config["SKBUILD_SOABI"] = get_soabi(self.config.env, abi3=limited_api)
+        cache_config["SKBUILD_SOABI"] = get_soabi(
+            self.config.env, abi3=(limited_api and not ft_abi), abi3t=ft_abi
+        )
 
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
         cache_config["SKBUILD_SABI_COMPONENT"] = (
@@ -273,12 +289,16 @@ class Builder:
         )
 
         # Allow users to detect the version requested in settings
-        py_api = self.settings.wheel.py_api
-        cache_config["SKBUILD_SABI_VERSION"] = (
-            f"{py_api[2]}.{py_api[3:]}"
-            if limited_api and py_api.startswith("cp")
-            else ""
-        )
+        if limited_api and py_api.startswith("cp"):
+            version_str = py_api[2:]
+            if version_str.endswith("t"):
+                version_str = version_str[:-1]
+            cache_config["SKBUILD_SABI_VERSION"] = f"{version_str[0]}.{version_str[1:]}"
+        else:
+            cache_config["SKBUILD_SABI_VERSION"] = ""
+
+        if ft_abi:
+            cache_config["Py_TARGET_ABI3T"] = "1"
 
         if cache_entries:
             cache_config.update(cache_entries)

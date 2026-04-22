@@ -189,7 +189,8 @@ The three new items here (compared to SDists) are the [compatibility tags][]:
   `py3` for pure Python wheels, or `py312` (etc) for compiled wheels.
 - `abi tag`: The interpreter ABI this was built for. `none` for pure Python
   wheels or compiled wheels that don't use the Python API, `abi3` for stable ABI
-  / limited API wheels, and `cp312` (etc) for normal compiled wheels.
+  / limited API wheels, `abi3t` for free-threaded stable ABI wheels, and `cp312`
+  (etc) for normal compiled wheels.
 - `platform tag`: This is the platform the wheel is valid on, such as `any`,
   `linux_x86_64`, or `manylinux_2_17_x86_64`.
 
