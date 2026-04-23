@@ -18,7 +18,6 @@ from .model.cache import Cache
 from .model.codemodel import CodeModel
 from .model.directory import Directory
 from .model.index import Index
-from .model.toolchains import Toolchains
 
 __all__ = ["load_reply_dir"]
 
@@ -58,7 +57,7 @@ class Converter:
         """
         # TODO: remove this special handling once everything is registered in `ObjectKind`
         if (
-            target in {CodeModel, Cache, Directory, Toolchains}
+            target in {CodeModel, Cache, Directory}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):

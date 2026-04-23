@@ -1,10 +1,16 @@
+"""
+.. seealso::
+   - https://cmake.org/cmake/help/latest/manual/cmake-file-api.7.html#object-kind-toolchains
+"""
+
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from ._common import APIVersion
+from ..._compat.typing import TypeAlias
+from ._common import APIVersion, ObjectKind
 
-__all__ = ["Compiler", "Implicit", "Toolchain", "Toolchains"]
+__all__ = ["Toolchains"]
 
 
 def __dir__() -> List[str]:
@@ -20,7 +26,7 @@ class Implicit:
 
 
 @dataclasses.dataclass(frozen=True)
-class Compiler:
+class Compiler_1_0:
     implicit: Implicit
     path: Optional[Path] = None
     id: Optional[str] = None
@@ -29,14 +35,53 @@ class Compiler:
 
 
 @dataclasses.dataclass(frozen=True)
-class Toolchain:
+class Toolchain_1_0:
+    """
+    ..versionadded:: 3.20.0
+    """
+
     language: str  # Unique, since CMake supports one toolchain per language
-    compiler: Compiler
+    compiler: Compiler_1_0
     sourceFileExtensions: List[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
-class Toolchains:
-    kind: str = "toolchains"
-    version: APIVersion = APIVersion(1, 0)  # noqa: RUF009
-    toolchains: List[Toolchain] = dataclasses.field(default_factory=list)
+class Toolchains_1_0(ObjectKind):
+    """
+    ..versionadded:: 3.20.0
+    """
+
+    kind = "toolchains"
+    version = APIVersion(1, 0)
+    toolchains: List[Toolchain_1_0] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass(frozen=True)
+class Compiler_1_1(Compiler_1_0):
+    """
+    ..versionadded:: 4.3.0
+    """
+
+    commandFragment: Optional[str] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class Toolchain_1_1(Toolchain_1_0):
+    """
+    ..versionadded:: 4.3.0
+    """
+
+    compiler: Compiler_1_1
+
+
+@dataclasses.dataclass(frozen=True)
+class Toolchains_1_1(Toolchains_1_0):
+    """
+    ..versionadded:: 4.3.0
+    """
+
+    version = APIVersion(1, 1)
+    toolchains: List[Toolchain_1_1] = dataclasses.field(default_factory=list)  # type: ignore[assignment]
+
+
+Toolchains: TypeAlias = Union[Toolchains_1_0, Toolchains_1_1]
