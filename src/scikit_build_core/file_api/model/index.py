@@ -59,7 +59,7 @@ class CMake:
 class Reply:
     codemodel_v2: Optional[CodeModel]
     cache_v2: Optional[Cache]
-    cmakefiles_v1: Optional[CMakeFiles]
+    cmakeFiles_v1: Optional[CMakeFiles]
     toolchains_v1: Optional[Toolchains]
 
 

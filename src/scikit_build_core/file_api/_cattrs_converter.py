@@ -2,6 +2,7 @@
 
 import builtins
 import json
+from dataclasses import fields
 from pathlib import Path
 from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
 
@@ -29,10 +30,13 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     st_hook = cattr.gen.make_dict_structure_fn(
         Reply,
         converter,
-        codemodel_v2=cattr.gen.override(rename="codemodel-v2"),
-        cache_v2=cattr.gen.override(rename="cache-v2"),
-        cmakefiles_v1=cattr.gen.override(rename="cmakeFiles-v1"),
-        toolchains_v1=cattr.gen.override(rename="toolchains-v1"),
+        # mypy fails over here for some reason, but this approach is as documented
+        **{  # type: ignore[arg-type]
+            # TODO: the object kind and version is specified in the file, use that to
+            #  narrow the type
+            f.name: cattr.gen.override(rename=f.name.replace("_", "-"))
+            for f in fields(Reply)
+        },
     )
     converter.register_structure_hook(Reply, st_hook)
 
@@ -43,10 +47,9 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
         raw = json.loads(path.read_text(encoding="utf-8"))
         return converter.structure_attrs_fromdict(raw, t)
 
-    converter.register_structure_hook(CodeModel, from_json_file)
-    converter.register_structure_hook(Target, from_json_file)
-    converter.register_structure_hook(Cache, from_json_file)
-    converter.register_structure_hook(CMakeFiles, from_json_file)
+    # TODO: Get this list of functions more programmatically
+    for object_kind_type in (CodeModel, Target, Cache, CMakeFiles):
+        converter.register_structure_hook(object_kind_type, from_json_file)
     return converter
 
 

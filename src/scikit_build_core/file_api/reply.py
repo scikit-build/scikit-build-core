@@ -62,9 +62,7 @@ class Converter:
 
         # We don't have DataclassInstance exposed in typing yet
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
-            json_field = field.name.replace("_v", "-v").replace(
-                "cmakefiles", "cmakeFiles"
-            )
+            json_field = field.name.replace("_v", "-v")
             if json_field in data:
                 field_type = field.type
                 try:
