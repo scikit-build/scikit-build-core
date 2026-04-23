@@ -57,10 +57,10 @@ class CMake:
 
 @dataclasses.dataclass(frozen=True)
 class Reply:
-    codemodel_v2: Optional[CodeModel]
-    cache_v2: Optional[Cache]
-    cmakeFiles_v1: Optional[CMakeFiles]
-    toolchains_v1: Optional[Toolchains]
+    codemodel_v2: Optional[CodeModel] = None
+    cache_v2: Optional[Cache] = None
+    cmakeFiles_v1: Optional[CMakeFiles] = None
+    toolchains_v1: Optional[Toolchains] = None
 
 
 @dataclasses.dataclass(frozen=True)
