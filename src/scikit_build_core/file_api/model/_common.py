@@ -72,3 +72,10 @@ class ObjectKind(ABC):
         )
         logger.debug("Using best guess {}", object_kind.__name__)
         return object_kind
+
+
+class ObjectKindSubType:
+    _registrar: ClassVar[set[type["ObjectKindSubType"]]] = set()
+
+    def __init_subclass__(cls) -> None:
+        cls._registrar.add(cls)
