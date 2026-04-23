@@ -8,6 +8,11 @@ from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID2
 
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import get_args, get_origin
+from ..utils.typing import (
+    get_target_raw_type,
+    is_union_type,
+    process_union,
+)
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
@@ -92,17 +97,27 @@ class Converter:
     def _convert_any(self, item: Any, target: Any) -> Any: ...
 
     def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
+        target = process_union(target)
         if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)
-        origin = get_origin(target)
-        if origin is not None:
-            if origin is list:
-                return [self._convert_any(i, get_args(target)[0]) for i in item]
-            if origin is Union:
-                return self._convert_any(item, get_args(target)[0])
+        raw_target = get_target_raw_type(target)
+        # For generic Unions we try each type on at a time
+        if is_union_type(raw_target):
+            last_err: Exception = AssertionError("Failed for unknown reason")
+            for maybe_target in get_args(target):
+                try:
+                    return self._convert_any(item, maybe_target)
+                except ExceptionGroup as err:  # noqa: PERF203
+                    last_err = err
+                    continue
+            raise last_err
 
-        return target(item)  # type: ignore[call-arg]
+        origin = get_origin(target)
+        if origin is not None and origin is list:
+            return [self._convert_any(i, get_args(target)[0]) for i in item]
+
+        return target(item)
 
 
 def load_reply_dir(path: Path) -> Index:
