@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 from ._common import Paths
+from .backtrace_graph import BacktraceGraph
 
-__all__ = ["BacktraceGraph", "Directory", "InstallRule", "Node", "Target"]
+__all__ = ["Directory", "InstallRule", "Target"]
 
 
 def __dir__() -> List[str]:
@@ -40,21 +41,6 @@ class InstallRule:
     fileSetTarget: Optional[Target] = None
     scriptFile: Optional[Path] = None
     backtrace: Optional[int] = None
-
-
-@dataclasses.dataclass(frozen=True)
-class Node:
-    file: int
-    line: Optional[int] = None
-    command: Optional[int] = None
-    parent: Optional[int] = None
-
-
-@dataclasses.dataclass(frozen=True)
-class BacktraceGraph:
-    nodes: List[Node]
-    commands: List[str]
-    files: List[Path]
 
 
 @dataclasses.dataclass(frozen=True)

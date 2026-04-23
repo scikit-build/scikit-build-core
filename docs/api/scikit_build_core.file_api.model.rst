@@ -9,6 +9,14 @@ scikit\_build\_core.file\_api.model package
 Submodules
 ----------
 
+scikit\_build\_core.file\_api.model.backtrace\_graph module
+-----------------------------------------------------------
+
+.. automodule:: scikit_build_core.file_api.model.backtrace_graph
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.file\_api.model.cache module
 ------------------------------------------------
 
@@ -33,10 +41,10 @@ scikit\_build\_core.file\_api.model.codemodel module
    :show-inheritance:
    :undoc-members:
 
-scikit\_build\_core.file\_api.model.common module
--------------------------------------------------
+scikit\_build\_core.file\_api.model.configurelog module
+-------------------------------------------------------
 
-.. automodule:: scikit_build_core.file_api.model.common
+.. automodule:: scikit_build_core.file_api.model.configurelog
    :members:
    :show-inheritance:
    :undoc-members:
@@ -53,6 +61,14 @@ scikit\_build\_core.file\_api.model.index module
 ------------------------------------------------
 
 .. automodule:: scikit_build_core.file_api.model.index
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+scikit\_build\_core.file\_api.model.target module
+-------------------------------------------------
+
+.. automodule:: scikit_build_core.file_api.model.target
    :members:
    :show-inheritance:
    :undoc-members:
