@@ -6,16 +6,16 @@ scikit\_build\_core.file\_api.model package
    :show-inheritance:
    :undoc-members:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   scikit_build_core.file_api.model.codemodel
+
 Submodules
 ----------
-
-scikit\_build\_core.file\_api.model.backtrace\_graph module
------------------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.backtrace_graph
-   :members:
-   :show-inheritance:
-   :undoc-members:
 
 scikit\_build\_core.file\_api.model.cache module
 ------------------------------------------------
@@ -33,14 +33,6 @@ scikit\_build\_core.file\_api.model.cmakefiles module
    :show-inheritance:
    :undoc-members:
 
-scikit\_build\_core.file\_api.model.codemodel module
-----------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.codemodel
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 scikit\_build\_core.file\_api.model.configurelog module
 -------------------------------------------------------
 
@@ -49,26 +41,10 @@ scikit\_build\_core.file\_api.model.configurelog module
    :show-inheritance:
    :undoc-members:
 
-scikit\_build\_core.file\_api.model.directory module
-----------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.directory
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 scikit\_build\_core.file\_api.model.index module
 ------------------------------------------------
 
 .. automodule:: scikit_build_core.file_api.model.index
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-scikit\_build\_core.file\_api.model.target module
--------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.target
    :members:
    :show-inheritance:
    :undoc-members:

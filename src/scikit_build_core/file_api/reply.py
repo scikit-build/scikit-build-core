@@ -15,7 +15,7 @@ from ..utils.typing import (
 )
 from .model._common import ObjectKind, ObjectKindSubType
 from .model.codemodel import CodeModel
-from .model.directory import Directory
+from .model.codemodel.directory import Directory
 from .model.index import Index
 
 __all__ = ["load_reply_dir"]

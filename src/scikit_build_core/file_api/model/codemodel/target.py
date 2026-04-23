@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
-from ._common import ObjectKindSubType, Paths
+from .._common import ObjectKindSubType, Paths
 
 __all__ = ["Target"]
 

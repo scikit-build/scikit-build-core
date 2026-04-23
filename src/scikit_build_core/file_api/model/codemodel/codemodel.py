@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
-from ._common import APIVersion, Paths
+from .._common import APIVersion, Paths
 from .target import Target
 
 __all__ = [
