@@ -24,6 +24,35 @@ def __dir__() -> list[str]:
     return __all__
 
 
+class _PyTag:
+    """Helper for interrogating a single Python ABI tag like 'cp39' or 'cp315t'."""
+
+    def __init__(self, tag: str) -> None:
+        self._tag = tag
+
+    @property
+    def is_classic_abi3(self) -> bool:
+        return self._tag.startswith("cp3") and self._tag[3:].isdecimal()
+
+    @property
+    def is_ft_abi3(self) -> bool:
+        return (
+            self._tag.startswith("cp3")
+            and self._tag.endswith("t")
+            and len(self._tag) > 4
+            and self._tag[3:-1].isdecimal()
+        )
+
+    @property
+    def minor(self) -> int:
+        if self.is_ft_abi3:
+            return int(self._tag[3:-1])
+        return int(self._tag[3:])
+
+    def __str__(self) -> str:
+        return self._tag
+
+
 @dataclasses.dataclass(frozen=True)
 class WheelTag:
     pyvers: list[str]
@@ -99,64 +128,47 @@ class WheelTag:
 
         if py_api:
             pyvers_new = py_api.split(".")
+            pytags = [_PyTag(x) for x in pyvers_new]
+            gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
             if all(
-                (
-                    x.startswith("cp3")
-                    and x[3:].isdecimal()
-                    and not sysconfig.get_config_var("Py_GIL_DISABLED")
-                )
-                or (
-                    x.startswith("cp3")
-                    and len(x) > 4
-                    and x[3:-1].isdecimal()
-                    and x.endswith("t")
-                    and sysconfig.get_config_var("Py_GIL_DISABLED")
-                )
-                for x in pyvers_new
+                (t.is_classic_abi3 and not gil_disabled)
+                or (t.is_ft_abi3 and gil_disabled)
+                for t in pytags
             ):
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
                     raise AssertionError(msg)
 
-                # Separate classic and free-threaded tags
-                classic_tags = [
-                    x for x in pyvers_new if x.startswith("cp3") and x[3:].isdecimal()
-                ]
-                ft_tags = [
-                    x
-                    for x in pyvers_new
-                    if x.startswith("cp3")
-                    and len(x) > 4
-                    and x[3:-1].isdecimal()
-                    and x.endswith("t")
-                ]
+                classic_tags = [t for t in pytags if t.is_classic_abi3]
+                ft_tags = [t for t in pytags if t.is_ft_abi3]
 
-                if sys.implementation.name == "cpython" and sysconfig.get_config_var(
-                    "Py_GIL_DISABLED"
-                ):
+                if sys.implementation.name == "cpython" and gil_disabled:
                     # Free-threaded: only accept cp3XXt tags
                     if ft_tags:
                         target = ft_tags[0]
-                        minor = int(target[3:-1])
-                        if minor <= sys.version_info.minor:
-                            pyvers = [target]
+                        if target.minor <= sys.version_info.minor:
+                            pyvers = [str(target)]
                             abi = "abi3t"
                         else:
-                            msg = "Ignoring py-api, version (3.{}) is too high"
-                            logger.debug(msg, minor)
+                            logger.debug(
+                                "Ignoring py-api, version (3.{}) is too high",
+                                target.minor,
+                            )
                 # Classic CPython
                 elif classic_tags:
                     target = classic_tags[0]
-                    minor = int(target[3:])
                     if (
                         sys.implementation.name == "cpython"
-                        and minor <= sys.version_info.minor
+                        and target.minor <= sys.version_info.minor
                     ):
-                        pyvers = [target]
+                        pyvers = [str(target)]
                         abi = "abi3"
                     else:
-                        msg = "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high"
-                        logger.debug(msg, sys.implementation.name, minor)
+                        logger.debug(
+                            "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high",
+                            sys.implementation.name,
+                            target.minor,
+                        )
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
                 abi = "none"
@@ -221,5 +233,5 @@ if __name__ == "__main__":
         help="Specify a non-platlib (pure) tag",
     )
     args = parser.parse_args()
-    tag = WheelTag.compute_best(args.archs, args.abi, root_is_purelib=args.purelib)
-    print(tag)  # noqa: T201
+    comp_tag = WheelTag.compute_best(args.archs, args.abi, root_is_purelib=args.purelib)
+    print(comp_tag)  # noqa: T201

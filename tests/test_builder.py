@@ -30,6 +30,38 @@ from scikit_build_core.settings.skbuild_model import (
 )
 
 
+class VersionInfo:
+    """Minimal sys.version_info replacement for monkeypatching in tests."""
+
+    def __init__(
+        self,
+        major: int,
+        minor: int,
+        micro: int = 0,
+        releaselevel: str = "final",
+        serial: int = 0,
+    ) -> None:
+        self.major = major
+        self.minor = minor
+        self.micro = micro
+        self.releaselevel = releaselevel
+        self.serial = serial
+
+    @classmethod
+    def from_str(cls, version: str) -> VersionInfo:
+        major, minor, *rest = (int(x) for x in version.split("."))
+        micro = rest[0] if rest else 0
+        return cls(major, minor, micro)
+
+    def __getitem__(self, index: int) -> int | str:
+        return (self.major, self.minor, self.micro, self.releaselevel, self.serial)[
+            index
+        ]
+
+    def __ge__(self, other: tuple[int, ...]) -> bool:
+        return (self.major, self.minor, self.micro) >= other[:3]
+
+
 # The envvar_higher case shouldn't happen, but the compiler should cause the
 # correct failure
 @pytest.mark.parametrize(
@@ -287,29 +319,6 @@ def test_wheel_tag_with_abi3t_darwin(monkeypatch):
     monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
-
-    class VersionInfo:
-        def __init__(
-            self,
-            major: int,
-            minor: int,
-            micro: int = 0,
-            releaselevel: str = "final",
-            serial: int = 0,
-        ) -> None:
-            self.major = major
-            self.minor = minor
-            self.micro = micro
-            self.releaselevel = releaselevel
-            self.serial = serial
-
-        def __getitem__(self, index: int) -> int | str:
-            return (self.major, self.minor, self.micro, self.releaselevel, self.serial)[
-                index
-            ]
-
-        def __ge__(self, other: tuple[int, ...]) -> bool:
-            return (self.major, self.minor, self.micro) >= other[:3]
 
     monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
 

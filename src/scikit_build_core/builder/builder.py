@@ -212,20 +212,41 @@ class Builder:
         py_api = self.settings.wheel.py_api
         ft_abi = False
         if limited_api is None:
-            if py_api.startswith("cp3") and py_api.endswith("t"):
-                target_minor_version = int(py_api[3:-1])
-                ft_abi = (
-                    sys.implementation.name == "cpython"
-                    and sysconfig.get_config_var("Py_GIL_DISABLED")
-                    and target_minor_version <= sys.version_info.minor
-                )
-                limited_api = ft_abi
-            elif py_api.startswith("cp3"):
-                target_minor_version = int(py_api[3:])
-                limited_api = target_minor_version <= sys.version_info.minor
+            if py_api.startswith("cp3"):
+                if py_api.endswith("t"):
+                    # Free-threaded stable ABI (PEP 803 / abi3t)
+                    target_minor_version = int(py_api[3:-1])
+                    if (
+                        sys.implementation.name == "cpython"
+                        and sysconfig.get_config_var("Py_GIL_DISABLED")
+                        and target_minor_version <= sys.version_info.minor
+                    ):
+                        ft_abi = True
+                        limited_api = True
+                    else:
+                        limited_api = False
+                        logger.info(
+                            "py-api {} requires free-threaded CPython >= 3.{}, ignoring",
+                            py_api,
+                            target_minor_version,
+                        )
+                else:
+                    # Classic stable ABI (abi3)
+                    target_minor_version = int(py_api[3:])
+                    if sys.implementation.name != "cpython":
+                        limited_api = False
+                        logger.info("PyPy doesn't support the Limited API, ignoring")
+                    elif sysconfig.get_config_var("Py_GIL_DISABLED"):
+                        limited_api = False
+                        logger.info(
+                            "Free-threaded Python doesn't support the classic Limited API, ignoring"
+                        )
+                    else:
+                        limited_api = target_minor_version <= sys.version_info.minor
             else:
                 limited_api = False
 
+        # Handle externally-set limited_api (e.g. from setuptools)
         if (limited_api or ft_abi) and sys.implementation.name != "cpython":
             limited_api = False
             ft_abi = False
