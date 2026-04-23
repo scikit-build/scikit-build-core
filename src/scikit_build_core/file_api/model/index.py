@@ -6,6 +6,7 @@ from ._common import APIVersion
 from .cache import Cache
 from .cmakefiles import CMakeFiles
 from .codemodel import CodeModel
+from .configurelog import ConfigureLog
 from .toolchains import Toolchains
 
 __all__ = [
@@ -61,6 +62,7 @@ class Reply:
     cache_v2: Optional[Cache] = None
     cmakeFiles_v1: Optional[CMakeFiles] = None
     toolchains_v1: Optional[Toolchains] = None
+    configureLog_v1: Optional[ConfigureLog] = None
 
 
 @dataclasses.dataclass(frozen=True)
