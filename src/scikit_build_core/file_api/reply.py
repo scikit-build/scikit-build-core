@@ -13,6 +13,7 @@ from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.directory import Directory
 from .model.index import Index
+from .model.toolchains import Toolchains
 
 __all__ = ["load_reply_dir"]
 
@@ -51,7 +52,7 @@ class Converter:
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles, Directory}
+            target in {CodeModel, Target, Cache, CMakeFiles, Directory, Toolchains}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
