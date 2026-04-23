@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
-from ._common import APIVersion, Paths
+from ._common import APIVersion, ObjectKindSubType, Paths
 
 __all__ = [
     "Archive",
@@ -123,7 +123,7 @@ class Source:
 
 
 @dataclasses.dataclass(frozen=True)
-class Target:
+class Target(ObjectKindSubType):
     name: str
     id: str
     type: str

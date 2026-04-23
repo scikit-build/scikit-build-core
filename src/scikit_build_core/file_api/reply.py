@@ -16,7 +16,7 @@ from ..utils.typing import (
 from .model._common import ObjectKind, ObjectKindSubType
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
-from .model.codemodel import CodeModel, Target
+from .model.codemodel import CodeModel
 from .model.directory import Directory
 from .model.index import Index
 from .model.toolchains import Toolchains
@@ -59,7 +59,7 @@ class Converter:
         """
         # TODO: remove this special handling once everything is registered in `ObjectKind`
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles, Directory, Toolchains}
+            target in {CodeModel, Cache, CMakeFiles, Directory, Toolchains}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
