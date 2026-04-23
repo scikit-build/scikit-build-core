@@ -10,7 +10,7 @@ import cattr
 import cattr.preconf.json
 
 from ..utils.typing import get_target_raw_type, is_union_type, process_union
-from .model._common import ObjectKind
+from .model._common import ObjectKind, ObjectKindSubType
 from .model.codemodel import Target
 from .model.index import Index, Reply
 
@@ -80,8 +80,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
         ),
     )
     # Other indirectly `jsonFile` loadable fields
-    # TODO: Get this list of functions more programmatically
-    for object_kind_type in (Target,):
+    for object_kind_type in [*ObjectKindSubType._registrar, Target]:
         converter.register_structure_hook(object_kind_type, from_json_file_old)
     return converter
 
