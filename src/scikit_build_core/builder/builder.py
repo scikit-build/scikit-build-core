@@ -226,7 +226,7 @@ class Builder:
             else:
                 limited_api = False
 
-        if limited_api and sys.implementation.name != "cpython":
+        if (limited_api or ft_abi) and sys.implementation.name != "cpython":
             limited_api = False
             ft_abi = False
             logger.info("PyPy doesn't support the Limited API, ignoring")
