@@ -9,9 +9,8 @@ from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
 import cattr
 import cattr.preconf.json
 
-from .model.cache import Cache
-from .model.cmakefiles import CMakeFiles
-from .model.codemodel import CodeModel, Target
+from ..utils.typing import process_union
+from .model.codemodel import Target
 from .model.index import Index, Reply
 
 T = TypeVar("T")
@@ -27,28 +26,38 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter = cattr.preconf.json.make_converter()
     converter.register_structure_hook(Path, to_path)
 
-    st_hook = cattr.gen.make_dict_structure_fn(
-        Reply,
-        converter,
-        # mypy fails over here for some reason, but this approach is as documented
-        **{  # type: ignore[arg-type]
-            # TODO: the object kind and version is specified in the file, use that to
-            #  narrow the type
-            f.name: cattr.gen.override(rename=f.name.replace("_", "-"))
-            for f in fields(Reply)
-        },
-    )
-    converter.register_structure_hook(Reply, st_hook)
-
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
+        t = process_union(t)
         if with_path["jsonFile"] is None:
             return converter.structure_attrs_fromdict({}, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
         return converter.structure_attrs_fromdict(raw, t)
 
+    overrides = {}
+    for f in fields(Reply):
+        # TODO: handle multi-versioned object kind in the struct_hook
+        #  the object kind and version is specified in the file, use that to
+        #  narrow the type
+        # Previous default handling that does not read the kind and version
+        type_override = cattr.gen.override(
+            rename=f.name.replace("_", "-"),
+            struct_hook=from_json_file,
+        )
+        overrides[f.name] = type_override
+
+    converter.register_structure_hook(
+        Reply,
+        cattr.gen.make_dict_structure_fn(
+            Reply,
+            converter,
+            # mypy fails over here for some reason, but this approach is as documented
+            **overrides,  # type: ignore[arg-type]
+        ),
+    )
+    # Other indirectly `jsonFile` loadable fields
     # TODO: Get this list of functions more programmatically
-    for object_kind_type in (CodeModel, Target, Cache, CMakeFiles):
+    for object_kind_type in (Target,):
         converter.register_structure_hook(object_kind_type, from_json_file)
     return converter
 
