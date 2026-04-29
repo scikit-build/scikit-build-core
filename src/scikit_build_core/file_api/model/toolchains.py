@@ -1,22 +1,22 @@
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from .common import APIVersion
 
 __all__ = ["Compiler", "Implicit", "Toolchain", "Toolchains"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
 @dataclasses.dataclass(frozen=True)
 class Implicit:
-    includeDirectories: List[Path] = dataclasses.field(default_factory=list)
-    linkDirectories: List[Path] = dataclasses.field(default_factory=list)
-    linkFrameworkDirectories: List[Path] = dataclasses.field(default_factory=list)
-    linkLibraries: List[Path] = dataclasses.field(default_factory=list)
+    includeDirectories: list[Path] = dataclasses.field(default_factory=list)
+    linkDirectories: list[Path] = dataclasses.field(default_factory=list)
+    linkFrameworkDirectories: list[Path] = dataclasses.field(default_factory=list)
+    linkLibraries: list[Path] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -32,11 +32,11 @@ class Compiler:
 class Toolchain:
     language: str  # Unique, since CMake supports one toolchain per language
     compiler: Compiler
-    sourceFileExtensions: List[str] = dataclasses.field(default_factory=list)
+    sourceFileExtensions: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
 class Toolchains:
     kind: str = "toolchains"
     version: APIVersion = APIVersion(1, 0)  # noqa: RUF009
-    toolchains: List[Toolchain] = dataclasses.field(default_factory=list)
+    toolchains: list[Toolchain] = dataclasses.field(default_factory=list)

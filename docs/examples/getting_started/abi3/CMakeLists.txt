@@ -6,6 +6,6 @@ find_package(
   COMPONENTS Interpreter Development.SABIModule
   REQUIRED)
 
-python_add_library(example MODULE example.c WITH_SOABI USE_SABI 3.8)
+python_add_library(example MODULE example.c WITH_SOABI USE_SABI 3.9)
 
 install(TARGETS example DESTINATION .)

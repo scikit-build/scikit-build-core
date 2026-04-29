@@ -35,7 +35,7 @@ def test_pep517_sdist(tmp_path: Path):
         """\
         Name: cmake-example
         Version: 0.0.1
-        Requires-Python: >=3.8
+        Requires-Python: >=3.9
         Provides-Extra: test
         """
         # TODO: why is this missing?
@@ -126,7 +126,7 @@ def test_toml_sdist(tmp_path: Path):
         """\
         Name: cmake-example
         Version: 0.0.1
-        Requires-Python: >=3.8
+        Requires-Python: >=3.9
         """
         # This was removed in https://github.com/pypa/setuptools/pull/4698 as part of 2.2 support:
         # Metadata-Version: 2.1

@@ -86,22 +86,13 @@ def test_pep660_pip_isolated(isolated, isolate, editable):
         "import simplest._module; print(simplest._module.__file__)"
     )
 
-    if sys.version_info < (3, 8, 7):
-        import distutils.sysconfig  # pylint: disable=deprecated-module
-
-        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
-    else:
-        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     module_source = python_source if editable.mode == "inplace" else cmake_install
     module_file = module_source / f"_module{ext_suffix}"
 
     # Windows FindPython may produce the wrong extension
-    if (
-        sys.version_info < (3, 8, 7)
-        and sys.platform.startswith("win")
-        and not module_file.is_file()
-    ):
+    if sys.platform.startswith("win") and not module_file.is_file():
         module_file = module_source / "_module.pyd"
 
     assert module_file.samefile(Path(location).resolve())

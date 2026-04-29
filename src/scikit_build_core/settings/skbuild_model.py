@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, Optional, TypedDict, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -45,9 +45,9 @@ class CMakeSettingsDefine(str):
 
     __slots__ = ()
 
-    json_schema = Union[str, bool, List[str]]
+    json_schema = Union[str, bool, list[str]]
 
-    def __new__(cls, raw: Union[str, bool, List[str]]) -> Self:
+    def __new__(cls, raw: Union[str, bool, list[str]]) -> Self:
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
 
@@ -90,7 +90,7 @@ class CMakeSettings:
        :confval:`ninja.version`
     """
 
-    args: List[str] = dataclasses.field(default_factory=list)
+    args: list[str] = dataclasses.field(default_factory=list)
     """
     A list of args to pass to CMake when configuring the project.
 
@@ -100,7 +100,7 @@ class CMakeSettings:
        :confval:`cmake.define`
     """
 
-    define: Annotated[Dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
+    define: Annotated[dict[str, CMakeSettingsDefine], "EnvVar"] = dataclasses.field(
         default_factory=dict
     )
     """
@@ -130,7 +130,7 @@ class CMakeSettings:
     Currently only affects the native builder (not the setuptools plugin).
     """
 
-    targets: Optional[List[str]] = dataclasses.field(
+    targets: Optional[list[str]] = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
@@ -209,7 +209,7 @@ class LoggingSettings:
 
 @dataclasses.dataclass
 class SDistSettings:
-    include: List[str] = dataclasses.field(default_factory=list)
+    include: list[str] = dataclasses.field(default_factory=list)
     """
     Files to include in the SDist even if they are skipped by default. Supports gitignore syntax.
 
@@ -219,7 +219,7 @@ class SDistSettings:
        :confval:`sdist.exclude`
     """
 
-    exclude: List[str] = dataclasses.field(default_factory=list)
+    exclude: list[str] = dataclasses.field(default_factory=list)
     """
     Files to exclude from the SDist even if they are included by default. Supports gitignore syntax.
 
@@ -265,7 +265,7 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[Union[List[str], Dict[str, str]]] = dataclasses.field(
+    packages: Optional[Union[list[str], dict[str, str]]] = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(
             display_default='["src/<package>", "python/<package>", "<package>"]'
@@ -287,7 +287,7 @@ class WheelSettings:
 
     The default (empty string) will use the default Python version.
 
-    You can also set this to "cp38" to enable the CPython 3.8+ Stable
+    You can also set this to "cp39" to enable the CPython 3.9+ Stable
     ABI / Limited API (only on CPython and if the version is sufficient,
     otherwise this has no effect). Or you can set it to "py3" or "py2.py3" to
     ignore Python ABI compatibility. The ABI tag is inferred from this tag.
@@ -318,7 +318,7 @@ class WheelSettings:
        root, giving access to "/platlib", "/data", "/headers", and "/scripts".
     """
 
-    license_files: Optional[List[str]] = None
+    license_files: Optional[list[str]] = None
     """
     A list of license files to include in the wheel. Supports glob patterns.
 
@@ -341,7 +341,7 @@ class WheelSettings:
     and the purelib otherwise.
     """
 
-    exclude: List[str] = dataclasses.field(default_factory=list)
+    exclude: list[str] = dataclasses.field(default_factory=list)
     """
     A set of patterns to exclude from the wheel.
 
@@ -355,7 +355,7 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
-    tags: Optional[List[str]] = dataclasses.field(
+    tags: Optional[list[str]] = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(override_only=True),
     )
@@ -402,12 +402,12 @@ class EditableSettings:
 
 @dataclasses.dataclass
 class BuildSettings:
-    tool_args: List[str] = dataclasses.field(default_factory=list)
+    tool_args: list[str] = dataclasses.field(default_factory=list)
     """
     Extra args to pass directly to the builder in the build step.
     """
 
-    targets: List[str] = dataclasses.field(default_factory=list)
+    targets: list[str] = dataclasses.field(default_factory=list)
     """
     The build targets to use when building the project.
 
@@ -421,7 +421,7 @@ class BuildSettings:
     Equivalent to ``CMAKE_VERBOSE_MAKEFILE``.
     """
 
-    requires: List[str] = dataclasses.field(default_factory=list)
+    requires: list[str] = dataclasses.field(default_factory=list)
     """
     Additional ``build-system.requires``.
 
@@ -431,7 +431,7 @@ class BuildSettings:
 
 @dataclasses.dataclass
 class InstallSettings:
-    components: List[str] = dataclasses.field(default_factory=list)
+    components: list[str] = dataclasses.field(default_factory=list)
     """
     The components to install.
 
@@ -520,11 +520,11 @@ class ScikitBuildSettings:
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
-    generate: List[GenerateSettings] = dataclasses.field(default_factory=list)
+    generate: list[GenerateSettings] = dataclasses.field(default_factory=list)
     messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
     search: SearchSettings = dataclasses.field(default_factory=SearchSettings)
 
-    metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
+    metadata: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.
     """

@@ -338,7 +338,7 @@ def rich_print(
     print(*args_2, flush=True, sep=sep, end=end, file=file)  # type: ignore[call-overload]
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def rich_warning(
     *args: str,
     color: Literal[

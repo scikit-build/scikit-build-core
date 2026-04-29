@@ -84,8 +84,7 @@ def get_python_library(env: Mapping[str, str], *, abi3: bool = False) -> Path | 
             return None
         if libdir_is_dir:
             if multiarch and masd:
-                if masd.startswith(os.sep):
-                    masd = masd[len(os.sep) :]
+                masd = masd.removeprefix(os.sep)
                 libdir_masd = libdir / masd
                 if libdir_masd.is_dir():
                     libdir = libdir_masd
@@ -167,13 +166,7 @@ def get_soabi(env: Mapping[str, str], *, abi3: bool = False) -> str:
     if setuptools_ext_suffix:
         return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
-    if sys.version_info < (3, 8, 7):
-        # See https://github.com/python/cpython/issues/84006
-        import distutils.sysconfig  # pylint: disable=deprecated-module
-
-        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
-    else:
-        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     assert isinstance(ext_suffix, str)
     return ext_suffix.rsplit(".", 1)[0].lstrip(".")
