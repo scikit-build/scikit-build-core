@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import setuptools.build_meta
 from setuptools.build_meta import (
     build_sdist,
@@ -10,14 +12,44 @@ from setuptools.build_meta import (
 )
 
 from ..builder.get_requires import GetRequires
+from ..settings.skbuild_read_settings import SettingsReader
+from .build_cmake import _validate_settings
 
 if hasattr(setuptools.build_meta, "build_editable"):
-    from setuptools.build_meta import build_editable
+
+    def _validate_editable_settings(
+        config_settings: dict[str, str | list[str]] | None = None,
+        *,
+        state: Literal["editable", "metadata_editable"] = "editable",
+    ) -> None:
+        settings = SettingsReader.from_file(
+            "pyproject.toml",
+            config_settings,
+            state=state,
+        ).settings
+        _validate_settings(settings, editable_mode=True)
+
+    def build_editable(
+        wheel_directory: str,
+        config_settings: dict[str, str | list[str]] | None = None,
+        metadata_directory: str | None = None,
+    ) -> str:
+        _validate_editable_settings(config_settings, state="editable")
+        return setuptools.build_meta.build_editable(
+            wheel_directory, config_settings, metadata_directory
+        )
+
 
 if hasattr(setuptools.build_meta, "prepare_metadata_for_build_editable"):
-    from setuptools.build_meta import (
-        prepare_metadata_for_build_editable,
-    )
+
+    def prepare_metadata_for_build_editable(
+        metadata_directory: str,
+        config_settings: dict[str, str | list[str]] | None = None,
+    ) -> str:
+        _validate_editable_settings(config_settings, state="metadata_editable")
+        return setuptools.build_meta.prepare_metadata_for_build_editable(
+            metadata_directory, config_settings
+        )
 
 
 __all__ = [

@@ -118,8 +118,8 @@ class BuildCMake(setuptools.Command):
     cmake_args: list[str] | str | None = None
     cmake_install_dir: str | None = None
     cmake_install_target: str | None = None
-    _editable_install_dir: Path | None = None
-    _installed_files: list[Path] = []
+    _editable_install_dir: Path | None
+    _installed_files: list[Path]
 
     build_lib: str | None
     build_temp: str | None
@@ -150,6 +150,8 @@ class BuildCMake(setuptools.Command):
         self.cmake_args = None
         self.cmake_install_dir = None
         self.cmake_install_target = None
+        self._editable_install_dir = None
+        self._installed_files = []
 
     def finalize_options(self) -> None:
         self.set_undefined_options(
