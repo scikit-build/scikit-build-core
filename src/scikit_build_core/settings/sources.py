@@ -294,7 +294,7 @@ class EnvSource(Source):
         raise TypeError(msg)
 
     @staticmethod
-    def unrecognized_options( # pylint: disable=arguments-differ
+    def unrecognized_options(  # pylint: disable=arguments-differ
         options: object,  # noqa: ARG004
     ) -> Generator[str, None, None]:
         yield from ()
