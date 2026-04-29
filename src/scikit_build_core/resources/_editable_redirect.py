@@ -83,7 +83,7 @@ class _SkbuildMultiplexedPath:
 
     Used to combine source-tree and CMake-install-tree paths so that
     importlib.resources.files() can see files from both locations.
-    Works on Python 3.8+ without requiring importlib.resources.readers.
+    Fallback for Python < 3.11, which lacks importlib.resources.readers.MultiplexedPath.
     """
 
     def __init__(self, *paths: str) -> None:
@@ -168,6 +168,10 @@ class _ScikitBuildEditableReader:
             return Path(self._paths[0]) if self._paths else Path(".")
         if len(existing) == 1:
             return Path(existing[0])
+        if sys.version_info >= (3, 11):
+            from importlib.resources.readers import MultiplexedPath
+
+            return MultiplexedPath(*existing)
         return _SkbuildMultiplexedPath(*existing)
 
 
