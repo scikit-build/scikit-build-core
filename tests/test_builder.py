@@ -330,8 +330,25 @@ def test_wheel_tag_with_abi3t_darwin(monkeypatch):
     assert "cp316t" not in str(tags)
 
 
-def test_wheel_tag_with_abi3t_invalid_on_classic(monkeypatch):
-    """Test cp315t is rejected on classic (non-free-threaded) Python."""
+def test_wheel_tag_with_classic_abi3_ignored_on_free_threaded(monkeypatch):
+    """Test classic abi3 requests fall back to default tags on free-threaded Python."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    default_tags = WheelTag.compute_best(["x86_64"])
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp38")
+    assert tags == default_tags
+
+
+def test_wheel_tag_with_abi3t_ignored_on_classic(monkeypatch):
+    """Test cp315t falls back to default tags on classic (non-free-threaded) Python."""
     get_config_var = sysconfig.get_config_var
     monkeypatch.setattr(
         sysconfig,
@@ -342,8 +359,9 @@ def test_wheel_tag_with_abi3t_invalid_on_classic(monkeypatch):
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
-    with pytest.raises(AssertionError, match="Unexpected py-api"):
-        WheelTag.compute_best(["x86_64"], py_api="cp315t")
+    default_tags = WheelTag.compute_best(["x86_64"])
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
+    assert tags == default_tags
 
 
 def test_wheel_tag_host_platform_override(monkeypatch):

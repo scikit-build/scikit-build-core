@@ -130,11 +130,7 @@ class WheelTag:
             pyvers_new = py_api.split(".")
             pytags = [_PyTag(x) for x in pyvers_new]
             gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
-            if all(
-                (t.is_classic_abi3 and not gil_disabled)
-                or (t.is_ft_abi3 and gil_disabled)
-                for t in pytags
-            ):
+            if all(t.is_classic_abi3 or t.is_ft_abi3 for t in pytags):
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
                     raise AssertionError(msg)
@@ -154,6 +150,10 @@ class WheelTag:
                                 "Ignoring py-api, version (3.{}) is too high",
                                 target.minor,
                             )
+                    elif classic_tags:
+                        logger.debug(
+                            "Ignoring py-api, free-threaded Python doesn't support the classic Stable ABI"
+                        )
                 # Classic CPython
                 elif classic_tags:
                     target = classic_tags[0]
@@ -169,6 +169,10 @@ class WheelTag:
                             sys.implementation.name,
                             target.minor,
                         )
+                elif ft_tags:
+                    logger.debug(
+                        "Ignoring py-api, free-threaded CPython is required for abi3t"
+                    )
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
                 abi = "none"
