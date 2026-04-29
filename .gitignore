@@ -175,6 +175,3 @@ Thumbs.db
 .vscode/
 uv.lock
 *pylock
-
-# Git worktrees
-.git
