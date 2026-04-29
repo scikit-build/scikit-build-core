@@ -298,6 +298,25 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 if not os.path.isabs(parent_path):
                     parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
+        # Second pass: propagate build-tree paths from parent packages to
+        # sub-packages.  This covers the case where a Python package (with
+        # __init__.py) lives in a directory that also contains CMake-generated
+        # data files but has no Python modules of its own in the build tree, so
+        # the first pass never registers the build-tree directory for it.
+        # Processing in depth order ensures parents are resolved before children.
+        for pkg in sorted(pkgs, key=lambda p: p.count(".")):
+            parent = ".".join(pkg.split(".")[:-1])
+            last = pkg.split(".")[-1]
+            if not parent or parent not in submodule_search_locations:
+                continue
+            for parent_path in sorted(submodule_search_locations[parent]):
+                sub_path = os.path.join(parent_path, last)
+                if (
+                    os.path.isdir(sub_path)
+                    and sub_path not in submodule_search_locations[pkg]
+                ):
+                    submodule_search_locations[pkg].add(sub_path)
+
 
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = frozenset(pkgs)

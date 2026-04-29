@@ -37,6 +37,19 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/generate_file.cmake"
 add_custom_target(generate_file ALL DEPENDS "${OUTPUT_FILE}")
 install(FILES "${OUTPUT_FILE}" DESTINATION ${SKBUILD_PROJECT_NAME}/namespace1)
 
+# Generated data placed into a *regular* subpackage (nested2 has an __init__.py
+# in the source tree) that has no Python module of its own in the build tree.
+# The file name is deliberately not a valid module name (the hyphen), so it is
+# not registered as an installed module and the build-tree directory for nested2
+# is only discoverable by propagating the parent package's build-tree path down
+# to nested2.
+file(
+  GENERATE
+  OUTPUT "nested2-generated-data.txt"
+  CONTENT "value written into a regular subpackage")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/nested2-generated-data.txt"
+        DESTINATION ${SKBUILD_PROJECT_NAME}/nested2)
+
 add_library(pkg MODULE src/cmake_generated/pkg.cpp)
 include(GenerateExportHeader)
 generate_export_header(pkg)
