@@ -29,11 +29,12 @@ Naming conventions:
 
 Source representations:
 
-- :class:`EnvSource`: stores values in environment variables. Lists are encoded
+- :class:`EnvSource`: reads values in environment variables. Lists are encoded
   as ``"a;b"`` and dicts as ``"key=value;other=value"``.
-- :class:`ConfSource`: stores values in a flat mapping keyed by dotted option
-  names.
-- :class:`TOMLSource`: stores values in a nested TOML mapping.
+- :class:`ConfSource`: reads values in a flat mapping keyed by dotted option
+  names from the command line, like ``-Ca.b=c`.
+- :class:`TOMLSource`: reads values in a nested TOML mapping, like in
+  ``pyproject.toml``.
 - :class:`SourceChain`: queries sources in order and asks the first matching
   source to convert its native value into the requested dataclass field type.
 
