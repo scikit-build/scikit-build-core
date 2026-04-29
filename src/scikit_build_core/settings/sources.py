@@ -1,12 +1,12 @@
 """
-This is the configuration tooling for scikit-build-core. This is built around
-the :class:`Source` Protocol. Sources are created with some input (like a toml
-file for the :class:`TOMLSource`). Sources also usually have some prefix (like
-``tool.scikit-build``) as well. The :class:`SourceChain` holds a collection of
-Sources, and is the primary way to use them.
+This module implements the configuration sources used by scikit-build-core.
+Each concrete :class:`Source` adapts one input representation, such as
+environment variables, PEP 517 ``config-settings``, or nested TOML tables, into
+the same nested dataclass model. :class:`SourceChain` combines those sources and
+applies them in precedence order when building the final settings object.
 
-An end user interacts with :class:`SourceChain` via ``.convert_target``, which
-takes a Dataclass class and returns an instance with fields populated.
+An end user usually interacts with :class:`SourceChain`, which takes a
+dataclass type and returns an instance with fields populated.
 
 Example of usage::
 
@@ -27,20 +27,15 @@ Naming conventions:
 - ``fields`` are the tuple of strings describing a nested field in the
   ``model``.
 
-Source-native value shapes:
+Source representations:
 
-- :class:`EnvSource`: ``get_item`` returns the raw environment variable string.
-  Lists are encoded as ``"a;b"`` and dicts as ``"key=value;other=value"``.
-- :class:`ConfSource`: ``settings`` is a flat mapping keyed by dotted option
-  names. ``get_item`` returns a string/list/bool for scalar options, or builds
-  a ``dict[str, str]`` from ``option.key=value`` entries when the target field
-  is a dict.
-- :class:`TOMLSource`: ``settings`` is a nested mapping. ``get_item`` returns
-  the native TOML value at that path, such as a string, bool, list, dict, or a
-  nested table.
-- :class:`SourceChain`: reads a source-native value via ``get_item`` and then
-  immediately hands it back to that same source's ``convert`` method to produce
-  the final dataclass field value.
+- :class:`EnvSource`: stores values in environment variables. Lists are encoded
+  as ``"a;b"`` and dicts as ``"key=value;other=value"``.
+- :class:`ConfSource`: stores values in a flat mapping keyed by dotted option
+  names.
+- :class:`TOMLSource`: stores values in a nested TOML mapping.
+- :class:`SourceChain`: queries sources in order and asks the first matching
+  source to convert its native value into the requested dataclass field type.
 
 When setting up your dataclasses, these types are handled:
 
@@ -94,8 +89,9 @@ def _dig_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
     """
     Walk a nested mapping and return the value at ``names``.
 
-    Each input ``name`` is one nesting level. Missing keys propagate the
-    underlying ``KeyError``.
+    Each input ``name`` is one nesting level.
+
+    :raises KeyError: when ``names`` is missing
     """
     for name in names:
         _dict = _dict[name]
@@ -108,8 +104,8 @@ def _process_bool(value: str) -> bool:
 
 def _dig_not_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
     """
-    Walk a nested mapping like :func:`_dig_strict`, but stop missing branches
-    by returning ``{}`` for the rest of the walk.
+    Walk a nested mapping like :func:`_dig_strict`, but return an empty dict
+    ``{}`` if any name in ``names`` is missing.
     """
     for name in names:
         _dict = _dict.get(name, {})
@@ -215,16 +211,13 @@ class Source(Protocol):
         ...
 
 
-class EnvSource:
+class EnvSource(Source):
     """
     Source backed by environment variables.
 
-    Native representation:
-
-    - ``has_item("a", "b")`` looks for ``PREFIX_A_B``.
-    - ``get_item`` always returns the raw environment variable string.
-    - ``convert`` is responsible for parsing that string into the requested
-      field type.
+    Nested field paths are represented by uppercased underscore-separated names
+    such as ``PREFIX_A_B``. Values remain raw strings in the environment until
+    they are converted into the requested field type.
     """
 
     def __init__(self, prefix: str, *, env: Mapping[str, str] | None = None) -> None:
@@ -301,7 +294,7 @@ class EnvSource:
         raise TypeError(msg)
 
     @staticmethod
-    def unrecognized_options(
+    def unrecognized_options( # pylint: disable=arguments-differ
         options: object,  # noqa: ARG004
     ) -> Generator[str, None, None]:
         yield from ()
@@ -338,22 +331,31 @@ def _unrecognized_dict(
             )
 
 
-class ConfSource:
+class ConfSource(Source):
     """
     Source for PEP 517 ``config-settings``.
 
-    ``settings`` is the flat mapping passed to the backend, where keys are
-    dotted option names like ``"cmake.args"``. Scalar values are stored
-    directly. Dict-typed target fields are represented by multiple flat entries
-    such as ``"sdist.include.foo" = "bar"``, and ``get_item(..., is_dict=True)``
-    reconstructs those suffixes into ``{"foo": "bar"}``.
-
-    ``verify`` controls whether unrecognized dotted keys should be reported.
-    Only disable it when this source intentionally shares a namespace with
-    unrelated config keys.
-
     While most mechanisms (pip, uv, build) only support text, gpep517 allows an
     arbitrary json input, so this currently also handles bools.
+    """
+
+    prefixes: tuple[str, ...]
+    """Dotted option-name segments prepended to every lookup."""
+
+    settings: Mapping[str, str | list[str] | bool]
+    """
+    Flat backend ``config-settings`` mapping keyed by dotted option names.
+
+    Scalar values are stored directly. Dict-typed target fields are represented
+    by multiple flat entries such as ``"sdist.include.foo" = "bar"``.
+    """
+
+    verify: bool
+    """
+    Whether to report unrecognized dotted keys from this source.
+
+    Only disable this when the source intentionally shares a namespace with
+    unrelated config keys.
     """
 
     def __init__(
@@ -474,7 +476,7 @@ class ConfSource:
             yield ".".join((*self.prefixes, *dash_names))
 
 
-class TOMLSource:
+class TOMLSource(Source):
     """
     Source backed by a nested TOML mapping.
 
@@ -667,9 +669,3 @@ class SourceChain:
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         for source in self.sources:
             yield from source.unrecognized_options(options)
-
-
-if typing.TYPE_CHECKING:
-    _: Source = typing.cast("EnvSource", None)
-    _ = typing.cast("ConfSource", None)
-    _ = typing.cast("TOMLSource", None)
