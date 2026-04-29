@@ -17,7 +17,6 @@ import pytest
         pytest.param(
             True,
             id="package",
-            marks=[pytest.mark.xfail(reason="Only data folders supported currently")],
         ),
         pytest.param(False, id="datafolder"),
     ],
@@ -151,8 +150,6 @@ def test_importlib_resources(editable, isolated):
         pytest.skip("importlib.resources.files is introduced in Python 3.9")
 
     # TODO: Investigate these failures
-    if editable.mode == "redirect":
-        pytest.xfail("Redirect mode is at navigating importlib.resources.files")
     if platform.system() == "Windows" and editable.mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")
 
