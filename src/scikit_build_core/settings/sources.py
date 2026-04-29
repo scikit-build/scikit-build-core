@@ -1,5 +1,5 @@
 """
-This is the configuration tooling for scikit-build-core. This is build around
+This is the configuration tooling for scikit-build-core. This is built around
 the :class:`Source` Protocol. Sources are created with some input (like a toml
 file for the :class:`TOMLSource`). Sources also usually have some prefix (like
 ``tool.scikit-build``) as well. The :class:`SourceChain` holds a collection of
@@ -13,7 +13,7 @@ Example of usage::
     sources = SourceChain(TOMLSource("tool", "mypackage", settings=pyproject_dict), ...)
     settings = sources.convert_target(SomeSettingsModel)
 
-    unrecognized_options = list(source.unrecognized_options(SomeSettingsModel)
+    unrecognized_options = list(sources.unrecognized_options(SomeSettingsModel))
 
 
 Naming conventions:
@@ -26,6 +26,21 @@ Naming conventions:
   style of the current Source.
 - ``fields`` are the tuple of strings describing a nested field in the
   ``model``.
+
+Source-native value shapes:
+
+- :class:`EnvSource`: ``get_item`` returns the raw environment variable string.
+  Lists are encoded as ``"a;b"`` and dicts as ``"key=value;other=value"``.
+- :class:`ConfSource`: ``settings`` is a flat mapping keyed by dotted option
+  names. ``get_item`` returns a string/list/bool for scalar options, or builds
+  a ``dict[str, str]`` from ``option.key=value`` entries when the target field
+  is a dict.
+- :class:`TOMLSource`: ``settings`` is a nested mapping. ``get_item`` returns
+  the native TOML value at that path, such as a string, bool, list, dict, or a
+  nested table.
+- :class:`SourceChain`: reads a source-native value via ``get_item`` and then
+  immediately hands it back to that same source's ``convert`` method to produce
+  the final dataclass field value.
 
 When setting up your dataclasses, these types are handled:
 
@@ -76,6 +91,12 @@ def __dir__() -> list[str]:
 
 
 def _dig_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
+    """
+    Walk a nested mapping and return the value at ``names``.
+
+    Each input ``name`` is one nesting level. Missing keys propagate the
+    underlying ``KeyError``.
+    """
     for name in names:
         _dict = _dict[name]
     return _dict
@@ -86,12 +107,22 @@ def _process_bool(value: str) -> bool:
 
 
 def _dig_not_strict(_dict: Mapping[str, Any], /, *names: str) -> Any:
+    """
+    Walk a nested mapping like :func:`_dig_strict`, but stop missing branches
+    by returning ``{}`` for the rest of the walk.
+    """
     for name in names:
         _dict = _dict.get(name, {})
     return _dict
 
 
 def _dig_fields(opt: Any, /, *names: str) -> Any:
+    """
+    Walk dataclass field annotations and return the annotation at ``names``.
+
+    ``opt`` is a dataclass type, and each entry in ``names`` is a nested field
+    name to follow.
+    """
     for name in names:
         fields = dataclasses.fields(opt)
         types = [x.type for x in fields if x.name == name]
@@ -106,7 +137,9 @@ def _nested_dataclass_to_names(
     target: type[Any] | Any, /, *inner: str
 ) -> Iterator[list[str]]:
     """
-    Yields each entry, like ``("a", "b", "c")`` for ``a.b.c``.
+    Yield field-name paths for every leaf in a nested dataclass model.
+
+    For example, a nested field ``a.b.c`` is yielded as ``["a", "b", "c"]``.
     """
 
     if dataclasses.is_dataclass(target) and isinstance(target, type):
@@ -118,7 +151,11 @@ def _nested_dataclass_to_names(
 
 def _dict_with_envvar(target: Any, /) -> Any:
     """
-    This produces values. Supports "env" and "default" keys.
+    Resolve ``{"env": ..., "default": ...}`` dict entries into a final value.
+
+    The input is either a literal value or a small config dict used by the
+    ``Annotated[..., "EnvVar"]`` TOML form. The return value is the resolved
+    envvar/default value, with bool defaults preserving bool conversion.
     """
     if not isinstance(target, dict):
         return target
@@ -133,24 +170,32 @@ def _dict_with_envvar(target: Any, /) -> Any:
 class Source(Protocol):
     def has_item(self, *fields: str, is_dict: bool) -> bool:
         """
-        Check if the source contains a chain of fields. For example, ``fields =
-        [Field(name="a"), Field(name="b")]`` will check if the source contains the
-        key "a.b". ``is_dict`` should be set if it can be nested.
+        Check whether the source contains a field path.
+
+        For example, ``fields=("a", "b")`` asks whether the source has a value
+        for the nested model field ``a.b``. ``is_dict`` is set for dict-typed
+        targets, because some sources represent dict entries as nested keys.
         """
         ...
 
     def get_item(self, *fields: str, is_dict: bool) -> Any:
         """
-        Select an item from a chain of fields. Raises KeyError if
-        the there is no item. ``is_dict`` should be set if it can be nested.
+        Return the source-native value for a field path.
+
+        The return type depends on the source: env returns a raw string,
+        config-settings returns a string/list/bool or reconstructed dict, and
+        TOML returns the native TOML object. Raises ``KeyError`` if the value is
+        missing. ``is_dict`` is set for dict-typed targets, because some
+        sources represent dict entries as nested keys.
         """
         ...
 
     @classmethod
     def convert(cls, item: Any, target: type[Any] | Any) -> object:
         """
-        Convert an ``item`` from the base representation of the source's source
-        into a ``target`` type. Raises TypeError if the conversion fails.
+        Convert a source-native ``item`` into the requested ``target`` type.
+
+        Raises ``TypeError`` if the conversion fails.
         """
         ...
 
@@ -172,7 +217,14 @@ class Source(Protocol):
 
 class EnvSource:
     """
-    This is a source using environment variables.
+    Source backed by environment variables.
+
+    Native representation:
+
+    - ``has_item("a", "b")`` looks for ``PREFIX_A_B``.
+    - ``get_item`` always returns the raw environment variable string.
+    - ``convert`` is responsible for parsing that string into the requested
+      field type.
     """
 
     def __init__(self, prefix: str, *, env: Mapping[str, str] | None = None) -> None:
@@ -263,6 +315,13 @@ class EnvSource:
 def _unrecognized_dict(
     settings: Mapping[str, Any], options: Any, above: Sequence[str]
 ) -> Generator[str, None, None]:
+    """
+    Compare a nested TOML-style mapping against a dataclass model.
+
+    ``settings`` is the current nested dict to inspect, ``options`` is the
+    dataclass type for that level, and ``above`` is the already-traversed key
+    path used when yielding fully qualified option names.
+    """
     for keystr in settings:
         # We don't have DataclassInstance exposed in typing yet
         matches = [
@@ -281,11 +340,17 @@ def _unrecognized_dict(
 
 class ConfSource:
     """
-    This is a source for the PEP 517 configuration settings.
-    You should initialize it with a dict from PEP 517. a.b will be treated as
-    nested dicts. "verify" is a boolean that determines whether unrecognized
-    options should be checked for. Only set this to false if this might be sharing
-    config options at the same level.
+    Source for PEP 517 ``config-settings``.
+
+    ``settings`` is the flat mapping passed to the backend, where keys are
+    dotted option names like ``"cmake.args"``. Scalar values are stored
+    directly. Dict-typed target fields are represented by multiple flat entries
+    such as ``"sdist.include.foo" = "bar"``, and ``get_item(..., is_dict=True)``
+    reconstructs those suffixes into ``{"foo": "bar"}``.
+
+    ``verify`` controls whether unrecognized dotted keys should be reported.
+    Only disable it when this source intentionally shares a namespace with
+    unrelated config keys.
 
     While most mechanisms (pip, uv, build) only support text, gpep517 allows an
     arbitrary json input, so this currently also handles bools.
@@ -410,6 +475,15 @@ class ConfSource:
 
 
 class TOMLSource:
+    """
+    Source backed by a nested TOML mapping.
+
+    After applying any constructor prefixes, ``self.settings`` is the nested
+    table for that subtree. ``get_item`` returns the native TOML value found at
+    the requested field path, and ``convert`` turns that TOML value into the
+    target dataclass field type.
+    """
+
     def __init__(self, *prefixes: str, settings: Mapping[str, Any]) -> None:
         self.prefixes = prefixes
         self.settings = _dig_not_strict(settings, *prefixes)
@@ -523,8 +597,14 @@ class SourceChain:
 
     def convert_target(self, target: type[T], *prefixes: str) -> T:
         """
-        Given a dataclass type, create an object of that dataclass filled
-        with the values in the sources.
+        Build a dataclass instance from the chained sources.
+
+        For each field, this first asks each source whether it has a native
+        value for the current path. The first matching source returns that raw
+        value via ``get_item``, and that same source then normalizes it with
+        ``convert`` into the dataclass field type. Nested dataclasses recurse
+        into ``convert_target``. Dict fields are special: later sources extend
+        the dict assembled so far instead of replacing it outright.
         """
 
         errors = []
@@ -556,6 +636,8 @@ class SourceChain:
                         break
 
                     if is_dict:
+                        # Dict sources merge by precedence: later matching sources
+                        # add missing keys without erasing higher-priority ones.
                         assert isinstance(tmp, dict), f"{field.name} must be a dict"
                         prep[field.name] = {**tmp, **prep.get(field.name, {})}
                         continue
