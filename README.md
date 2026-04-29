@@ -336,7 +336,7 @@ those of the author(s) and do not necessarily reflect the views of the National
 Science Foundation.
 
 <!-- prettier-ignore-start -->
-[OAC-2209877]:              https://www.nsf.gov/awardsearch/showAward?AWD_ID=2209877&HistoricalAwards=false
+[OAC-2209877]:              https://www.nsf.gov/awardsearch/show-award?AWD_ID=2209877&HistoricalAwards=false
 [actions-badge]:            https://github.com/scikit-build/scikit-build-core/actions/workflows/ci.yml/badge.svg
 [actions-link]:             https://github.com/scikit-build/scikit-build-core/actions
 [cmeel]:                    https://github.com/cmake-wheel/cmeel

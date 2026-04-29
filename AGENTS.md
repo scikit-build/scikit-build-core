@@ -12,8 +12,8 @@ It is built with **hatchling** and stored under `src/scikit_build_core/`.
 - `nox` is the task runner.
   - `nox -s tests` — run tests with xdist (`-n auto`).
   - `nox -s tests -- -k test_foo` — single test runner.
-  - `nox -s docs` — build Sphinx docs (serve with `nox -s docs -- serve`;
-    non-interactive with `nox -s docs -- --non-interactive`).
+  - `nox -s docs` — serve the HTML docs in interactive mode.
+  - `nox --non-interactive -s docs` — build the HTML docs without serving them.
   - `nox -t gen` — run all code generators (cog for README + schema + config
     reference + API docs).
   - `nox -s minimums` — lowest-direct dependency tests.
