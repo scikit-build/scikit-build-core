@@ -123,41 +123,45 @@ def match_path(
 
     # Always include something included
     if (c := include_spec.check_file(p)).include:
+        assert c.index is not None
         logger.debug(
             "Including {} {} because it is explicitly included by rule {!r}.",
             ptype,
             p,
-            include_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+            include_spec.patterns[c.index].pattern,
         )
         return True
 
     # Always exclude something excluded
     if (c := user_exclude_spec.check_file(p)).include:
+        assert c.index is not None
         logger.debug(
             "Excluding {} {} because it is explicitly excluded by the user with {!r}.",
             ptype,
             p,
-            user_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+            user_exclude_spec.patterns[c.index].pattern,
         )
         return False
 
     # Ignore from global ignore
     if (c := global_exclude_spec.check_file(p)).include:
+        assert c.index is not None
         logger.debug(
             "Excluding {} {} because it is explicitly excluded by the global ignore with {!r}.",
             ptype,
             p,
-            global_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+            global_exclude_spec.patterns[c.index].pattern,
         )
         return False
 
     # Ignore built-in patterns
     if (c := builtin_exclude_spec.check_file(p)).include:
+        assert c.index is not None
         logger.debug(
             "Excluding {} {} because it is explicitly excluded by the built-in ignore with {!r}.",
             ptype,
             p,
-            builtin_exclude_spec.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+            builtin_exclude_spec.patterns[c.index].pattern,
         )
         return False
 
@@ -166,11 +170,12 @@ def match_path(
         if (dirpath == np or np in dirpath.parents) and (
             c := nex.check_file(p.relative_to(np))
         ).include:
+            assert c.index is not None
             logger.debug(
                 "Excluding {} {} because it is explicitly excluded by nested ignore with {!r}.",
                 ptype,
                 p,
-                nex.patterns[c.index].pattern,  # type: ignore[attr-defined, index]
+                nex.patterns[c.index].pattern,
             )
             return False
 
