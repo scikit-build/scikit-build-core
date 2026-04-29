@@ -74,7 +74,6 @@ def test_basic_data_resources(editable, isolated):
         pytest.param(None, id="not_editable"),
         pytest.param(
             "redirect",
-            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
         ),
         pytest.param(
             "inplace",
@@ -113,7 +112,6 @@ def test_configure_time_generated_data(editable, isolated):
         pytest.param(None, id="not_editable"),
         pytest.param(
             "redirect",
-            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
         ),
         pytest.param(
             "inplace",
@@ -152,7 +150,6 @@ def test_build_time_generated_data(editable, isolated):
         pytest.param(None, id="not_editable"),
         pytest.param(
             "redirect",
-            marks=pytest.mark.xfail(reason="Redirection requires #808", strict=True),
         ),
         pytest.param(
             "inplace",
