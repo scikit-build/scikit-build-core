@@ -67,3 +67,23 @@ All other configuration is available as normal `tool.scikit-build` in
 _not_ supported, as setuptools has very poor support for config-settings.
 Eventually, the build hook might pre-process options, but it's tricky to pass
 them through, so it will probably require use cases to be presented.
+
+## Editable installs
+
+PEP 660 editable installs (`pip install -e .`) are supported when the active
+setuptools version provides `build_editable`.
+
+Setuptools editable installs require:
+
+```toml
+[tool.scikit-build]
+editable.mode = "inplace"
+```
+
+The setuptools plugin follows setuptools' editable-wheel mechanism, so editable
+builds place CMake-installed extension modules into the source layout that
+setuptools exposes via its `.pth` file. This is effectively the setuptools
+equivalent of scikit-build-core's `inplace` editable mode, so redirect mode is
+not supported here.
+
+Because of that, `editable.rebuild` is not supported in setuptools mode.

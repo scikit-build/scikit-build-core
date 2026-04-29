@@ -38,7 +38,9 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _validate_settings(settings: ScikitBuildSettings) -> None:
+def _validate_settings(
+    settings: ScikitBuildSettings, *, editable_mode: bool = False
+) -> None:
     assert not settings.wheel.expand_macos_universal_tags, (
         "wheel.expand_macos_universal_tags is not supported in setuptools mode"
     )
@@ -48,6 +50,13 @@ def _validate_settings(settings: ScikitBuildSettings) -> None:
     assert not settings.wheel.py_api, (
         "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
     )
+    if editable_mode:
+        assert settings.editable.mode == "inplace", (
+            "setuptools editable installs require editable.mode = 'inplace'"
+        )
+        assert not settings.editable.rebuild, (
+            "editable.rebuild is not supported in setuptools mode"
+        )
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:
@@ -109,6 +118,8 @@ class BuildCMake(setuptools.Command):
     cmake_args: list[str] | str | None = None
     cmake_install_dir: str | None = None
     cmake_install_target: str | None = None
+    _editable_install_dir: Path | None = None
+    _installed_files: list[Path] = []
 
     build_lib: str | None
     build_temp: str | None
@@ -155,16 +166,41 @@ class BuildCMake(setuptools.Command):
                 b.strip() for a in self.cmake_args.split() for b in a.split(";")
             ]
 
+    def _get_install_dir(self) -> Path:
+        assert self.build_lib is not None
+
+        if not self.editable_mode:
+            return Path(self.build_lib).resolve()
+
+        package_dir = getattr(self.distribution, "package_dir", {}) or {}
+        source_root = package_dir.get("", ".")
+        return Path(source_root).resolve()
+
+    def _record_installed_files(self, build_dir: Path, install_dir: Path) -> None:
+        manifest = build_dir / "install_manifest.txt"
+        self._editable_install_dir = install_dir
+        if not manifest.is_file():
+            self._installed_files = []
+            return
+
+        self._installed_files = [
+            Path(line).resolve()
+            for line in manifest.read_text(encoding="utf-8").splitlines()
+            if line
+        ]
+
     def run(self) -> None:
         assert self.build_lib is not None
         assert self.build_temp is not None
         assert self.plat_name is not None
 
         settings = SettingsReader.from_file("pyproject.toml").settings
-        _validate_settings(settings)
+        _validate_settings(settings, editable_mode=self.editable_mode)
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"
+        self._installed_files = []
+        self._editable_install_dir = None
 
         dist = self.distribution
         dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
@@ -207,19 +243,22 @@ class BuildCMake(setuptools.Command):
 
         builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
 
-        dist_cmake_install_dir = (
-            getattr(self.distribution, "cmake_install_dir", "") or ""
-        )
-        if getattr(dist, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
-            install_subdir = _translate_wrapper_install_dir(
-                dist, dist_cmake_install_dir
-            )
+        if self.editable_mode:
+            install_dir = self._get_install_dir()
         else:
-            install_subdir = Path(dist_cmake_install_dir)
+            dist_cmake_install_dir = (
+                getattr(self.distribution, "cmake_install_dir", "") or ""
+            )
+            if getattr(dist, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
+                install_subdir = _translate_wrapper_install_dir(
+                    dist, dist_cmake_install_dir
+                )
+            else:
+                install_subdir = Path(dist_cmake_install_dir)
 
-        # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
-        # Otherwise `cmake --install --prefix` would work by itself
-        install_dir = Path(self.build_lib) / install_subdir
+            # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
+            # Otherwise `cmake --install --prefix` would work by itself
+            install_dir = Path(self.build_lib) / install_subdir
         defines = {"CMAKE_INSTALL_PREFIX": install_dir}
 
         builder.configure(
@@ -241,15 +280,35 @@ class BuildCMake(setuptools.Command):
 
         builder.build(build_args=build_args)
         builder.install(install_dir=install_dir)
+        self._record_installed_files(build_temp, install_dir)
 
-    # def "get_source_file"(self) -> list[str]:
-    #    return ["CMakeLists.txt"]
+    def get_outputs(self) -> list[str]:
+        if self.editable_mode:
+            return sorted(self.get_output_mapping())
+        return sorted(os.fspath(path) for path in self._installed_files)
 
-    # def get_outputs(self) -> list[str]:
-    #    return []
+    def get_output_mapping(self) -> dict[str, str]:
+        if (
+            not self.editable_mode
+            or self._editable_install_dir is None
+            or self.build_lib is None
+        ):
+            return {}
 
-    # def get_output_mapping(self) -> dict[str, str]:
-    #    return {}
+        project_root = Path.cwd().resolve()
+        mapping: dict[str, str] = {}
+        for path in self._installed_files:
+            try:
+                relative_output = path.relative_to(self._editable_install_dir)
+                relative_source = path.relative_to(project_root)
+            except ValueError:
+                continue
+
+            mapping[os.fspath(Path(self.build_lib, relative_output))] = os.fspath(
+                relative_source
+            )
+
+        return mapping
 
 
 def _has_cmake(dist: Distribution) -> bool:
