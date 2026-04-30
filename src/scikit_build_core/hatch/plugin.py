@@ -133,14 +133,16 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             raise
 
     def _initialize(self, *, version: str, build_data: dict[str, Any]) -> None:
-        state = (
+        requested_state = (
             "editable"
             if version == "editable"
             else typing.cast("typing.Literal['sdist', 'wheel']", self.target_name)
         )
-        settings_reader = self._read_config(state=state)
+        settings_reader = self._read_config(state=requested_state)
         settings = settings_reader.settings
-        state = settings_reader.state
+        state = typing.cast(
+            "typing.Literal['editable', 'sdist', 'wheel']", settings_reader.state
+        )
         editable = state == "editable"
 
         self._validate(settings_reader)
