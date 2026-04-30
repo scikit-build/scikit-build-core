@@ -26,6 +26,7 @@ from scikit_build_core.settings.skbuild_model import (
     CMakeSettings,
     CMakeSettingsDefine,
     ScikitBuildSettings,
+    SearchSettings,
     WheelSettings,
 )
 
@@ -185,6 +186,101 @@ def test_build_tool_args():
     config.build.assert_called_once_with(
         build_args=["a", "--", "b"], targets=[], verbose=settings.build.verbose
     )
+
+
+def configure_builder_with_limited_api(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    limited_api: bool | None,
+    py_api: str = "",
+) -> str:
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    monkeypatch.setattr(config, "configure", unittest.mock.Mock())
+
+    builder = Builder(
+        settings=ScikitBuildSettings(
+            search=SearchSettings(site_packages=False),
+            wheel=WheelSettings(py_api=py_api),
+        ),
+        config=config,
+    )
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+
+    builder.configure(defines={}, limited_api=limited_api)
+    return config.init_cache_file.read_text(encoding="utf-8")
+
+
+def patch_cpython_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    implementation = vars(sys.implementation).copy()
+    implementation["name"] = "cpython"
+    monkeypatch.setattr(
+        sys,
+        "implementation",
+        SimpleNamespace(**implementation),
+    )
+
+
+def test_builder_limited_api_override_classic(tmp_path, monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+
+    cache = configure_builder_with_limited_api(tmp_path, monkeypatch, limited_api=True)
+
+    expected_soabi = "" if sysconfig.get_platform().startswith("win") else "abi3"
+    assert "Development.SABIModule" in cache
+    assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
+    assert "Py_TARGET_ABI3T" not in cache
+
+
+def test_builder_limited_api_override_free_threaded(tmp_path, monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+
+    cache = configure_builder_with_limited_api(tmp_path, monkeypatch, limited_api=True)
+
+    expected_soabi = "" if sysconfig.get_platform().startswith("win") else "abi3t"
+    assert "Development.SABIModule" in cache
+    assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
+    assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
+
+
+def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api="cp315t"
+    )
+
+    expected_soabi = "" if sysconfig.get_platform().startswith("win") else "abi3t"
+    assert "Development.SABIModule" in cache
+    assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
+    assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
 
 
 @pytest.mark.parametrize(

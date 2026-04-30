@@ -210,7 +210,8 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
         py_api = self.settings.wheel.py_api
-        ft_abi = False
+        gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+        ft_abi = limited_api is True and gil_disabled
         if limited_api is None:
             if py_api.startswith("cp3"):
                 if py_api.endswith("t"):
@@ -218,7 +219,7 @@ class Builder:
                     target_minor_version = int(py_api[3:-1])
                     if (
                         sys.implementation.name == "cpython"
-                        and sysconfig.get_config_var("Py_GIL_DISABLED")
+                        and gil_disabled
                         and target_minor_version <= sys.version_info.minor
                     ):
                         ft_abi = True
@@ -236,7 +237,7 @@ class Builder:
                     if sys.implementation.name != "cpython":
                         limited_api = False
                         logger.info("PyPy doesn't support the Limited API, ignoring")
-                    elif sysconfig.get_config_var("Py_GIL_DISABLED"):
+                    elif gil_disabled:
                         limited_api = False
                         logger.info(
                             "Free-threaded Python doesn't support the classic Limited API, ignoring"
@@ -252,7 +253,7 @@ class Builder:
             ft_abi = False
             logger.info("PyPy doesn't support the Limited API, ignoring")
 
-        if limited_api and sysconfig.get_config_var("Py_GIL_DISABLED") and not ft_abi:
+        if limited_api and gil_disabled and not ft_abi:
             limited_api = False
             logger.info(
                 "Free-threaded Python doesn't support the classic Limited API, ignoring"
