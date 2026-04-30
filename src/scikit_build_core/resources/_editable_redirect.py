@@ -235,7 +235,7 @@ def _patch_importlib_resources_for_python39() -> None:
         return original_fallback_resources(spec)
 
     _common.fallback_resources = fallback_resources
-    _common._skbuild_editable_patched = True
+    _common._skbuild_editable_patched = True  # pylint: disable=protected-access
 
 
 class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
@@ -263,7 +263,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
 
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
-        submodule_search_locations: dict[str, list[str]] = {}
+        submodule_search_locations: dict[str, set[str]] = {}
         pkgs: list[str] = []
         # Loop over both python native source files and cmake installed ones
         for tree in (known_source_files, known_wheel_files):
@@ -278,7 +278,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 if not parent:
                     continue
                 # Initialize the tree element if needed
-                submodule_search_locations.setdefault(parent, [])
+                submodule_search_locations.setdefault(parent, set())
                 # Add the parent path to the dictionary values
                 parent_path = os.path.dirname(file)
                 if not parent_path:
@@ -287,8 +287,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     raise ImportError(msg)
                 if not os.path.isabs(parent_path):
                     parent_path = os.path.join(self.dir, parent_path)
-                if parent_path not in submodule_search_locations[parent]:
-                    submodule_search_locations[parent].append(parent_path)
+                submodule_search_locations[parent].add(parent_path)
         # Second pass: propagate build-tree paths from parent packages to
         # sub-packages.  This covers the case where a Python package (with
         # __init__.py) lives in a directory that also contains CMake-generated
@@ -299,13 +298,13 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             last = pkg.split(".")[-1]
             if not parent or parent not in submodule_search_locations:
                 continue
-            for parent_path in submodule_search_locations[parent]:
+            for parent_path in sorted(submodule_search_locations[parent]):
                 sub_path = os.path.join(parent_path, last)
                 if (
                     os.path.isdir(sub_path)
                     and sub_path not in submodule_search_locations[pkg]
                 ):
-                    submodule_search_locations[pkg].append(sub_path)
+                    submodule_search_locations[pkg].add(sub_path)
 
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = pkgs
