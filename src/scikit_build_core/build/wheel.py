@@ -7,7 +7,6 @@ import shutil
 import sys
 import sysconfig
 import tempfile
-from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -24,7 +23,7 @@ from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
-from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
+from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
 from ._pathutil import (
     packages_to_file_mapping,
@@ -58,61 +57,17 @@ def _make_editable(
     wheel: WheelWriter,
     packages: Iterable[str],
 ) -> None:
-    modules = mapping_to_modules(mapping, libdir)
-    installed = libdir_to_installed(libdir)
-    if settings.wheel.install_dir.startswith("/"):
-        msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
-        raise AssertionError(msg)
-    editable_txt = editable_redirect(
-        modules=modules,
-        installed=installed,
-        reload_dir=reload_dir,
-        rebuild=settings.editable.rebuild,
-        verbose=settings.editable.verbose,
+    for filename, contents in editable_redirect_files(
         build_options=build_options,
         install_options=install_options,
-        install_dir=settings.wheel.install_dir,
-    )
-
-    wheel.writestr(
-        f"_{name}_editable.py",
-        editable_txt.encode(),
-    )
-    # Support Cython by adding the source directory directly to the path.
-    # This is necessary because Cython does not support sys.meta_path for
-    # cimports (as of 3.0.5).
-    import_strings = [f"import _{name}_editable", *packages, ""]
-    pth_import_paths = "\n".join(import_strings)
-    wheel.writestr(
-        f"_{name}_editable.pth",
-        pth_import_paths.encode(),
-    )
-
-
-def _get_packages(
-    *,
-    packages: Sequence[str] | Mapping[str, str] | None,
-    name: str,
-) -> dict[str, str]:
-    if packages is not None:
-        if isinstance(packages, Mapping):
-            return dict(packages)
-        return {str(Path(p).name): p for p in packages}
-
-    # Auto package discovery
-    packages = {}
-    for base_path in (Path("src"), Path("python"), Path()):
-        path = base_path / name
-        if path.is_dir() and (
-            (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
-        ):
-            logger.info("Discovered Python package at {}", path)
-            packages[name] = str(path)
-            break
-    else:
-        logger.debug("Didn't find a Python package for {}", name)
-
-    return packages
+        libdir=libdir,
+        mapping=mapping,
+        name=name,
+        packages=packages,
+        reload_dir=reload_dir,
+        settings=settings,
+    ).items():
+        wheel.writestr(filename, contents)
 
 
 @dataclasses.dataclass
@@ -470,7 +425,7 @@ def _build_wheel_impl_impl(
         assert wheel_directory is not None
 
         rich_print("{green}***", f"{{bold}}Making {state}...")
-        packages = _get_packages(
+        packages = get_packages(
             packages=settings.wheel.packages,
             name=normalized_name,
         )
@@ -526,10 +481,11 @@ def _build_wheel_impl_impl(
                     msg = "Editable inplace mode requires at least one package"
                     raise AssertionError(msg)
 
-                wheel.writestr(
-                    f"_{normalized_name}_editable.pth",
-                    "\n".join(str_pkgs).encode(),
-                )
+                for filename, contents in editable_inplace_files(
+                    name=normalized_name,
+                    packages=str_pkgs,
+                ).items():
+                    wheel.writestr(filename, contents)
 
     if metadata_directory is not None:
         dist_info_contents = wheel.dist_info_contents()
