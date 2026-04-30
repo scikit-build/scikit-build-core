@@ -52,6 +52,10 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.backport.find_python == Version("3.26.1")
     assert settings.strict_config
     assert not settings.experimental
+    assert settings.variant == []
+    assert settings.variant_name == []
+    assert settings.variant_label is None
+    assert not settings.null_variant
     assert settings.minimum_version is None
     assert settings.build_dir == ""
     assert settings.metadata == {}
@@ -94,6 +98,9 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BACKPORT_FIND_PYTHON", "0")
     monkeypatch.setenv("SKBUILD_STRICT_CONFIG", "0")
     monkeypatch.setenv("SKBUILD_EXPERIMENTAL", "1")
+    monkeypatch.setenv("SKBUILD_VARIANT", "cpu :: abi :: cp313;gpu :: cuda :: 12.0")
+    monkeypatch.setenv("SKBUILD_VARIANT_NAME", "blas :: impl :: openblas")
+    monkeypatch.setenv("SKBUILD_VARIANT_LABEL", "cpu")
     monkeypatch.setenv("SKBUILD_MINIMUM_VERSION", "0.12")
     monkeypatch.setenv("SKBUILD_BUILD_DIR", "a/b/c")
     monkeypatch.setenv("SKBUILD_EDITABLE_REBUILD", "True")
@@ -142,6 +149,10 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
+    assert settings.variant == ["cpu :: abi :: cp313", "gpu :: cuda :: 12.0"]
+    assert settings.variant_name == ["blas :: impl :: openblas"]
+    assert settings.variant_label == "cpu"
+    assert not settings.null_variant
     assert settings.minimum_version == Version("0.12")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
@@ -192,6 +203,9 @@ def test_skbuild_settings_config_settings(
         "backport.find-python": "0",
         "strict-config": "false",
         "experimental": "1",
+        "variant": ["cpu :: abi :: cp313", "gpu :: cuda :: 12.0"],
+        "variant-name": "blas :: impl :: openblas",
+        "variant-label": "cpu",
         "minimum-version": "0.10",
         "build-dir": "a/b/c",
         "editable.mode": "redirect",
@@ -236,6 +250,10 @@ def test_skbuild_settings_config_settings(
     assert settings.backport.find_python == Version("0")
     assert not settings.strict_config
     assert settings.experimental
+    assert settings.variant == ["cpu :: abi :: cp313", "gpu :: cuda :: 12.0"]
+    assert settings.variant_name == ["blas :: impl :: openblas"]
+    assert settings.variant_label == "cpu"
+    assert not settings.null_variant
     assert settings.minimum_version == Version("0.10")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
@@ -415,6 +433,32 @@ def test_skbuild_settings_pyproject_toml_broken(
         "tool.scikit-build.generate,",
         "tool.scikit-build.search?",
     ]
+
+
+def test_skbuild_settings_variant_requires_experimental(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(
+            pyproject_toml,
+            {"variant": "cpu :: abi :: cp313"},
+        )
+
+
+def test_skbuild_settings_null_variant_conflicts(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(
+            pyproject_toml,
+            {
+                "experimental": "true",
+                "null-variant": "true",
+                "variant": "cpu :: abi :: cp313",
+            },
+        )
 
 
 def test_skbuild_settings_pyproject_conf_broken(
