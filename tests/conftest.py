@@ -75,7 +75,6 @@ def pep518_wheelhouse(
         # Only build the scikit-build-core wheel when the current version is not
         # already present; this avoids a redundant pip-wheel invocation on every
         # worker while still catching version changes between runs.
-        # Wheel filenames normalize the local version label by replacing '+' with '_'.
         skbuild_version = metadata.version("scikit-build-core")
         if not any(
             whl.name.startswith(f"scikit_build_core-{skbuild_version}-")
