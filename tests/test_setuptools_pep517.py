@@ -9,10 +9,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+import setuptools
+import setuptools.errors
 from conftest import VEnv
 from packaging.version import Version
 
-from scikit_build_core.setuptools import build_meta as setuptools_build_meta
+from scikit_build_core.setuptools import build_cmake, build_meta as setuptools_build_meta, wrapper
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
 try:
@@ -386,3 +388,58 @@ def test_cmake_install_dir_editable(
     )
     assert Path(module_dir) == (package.workdir / case.editable_dir).resolve()
     _assert_extension_import(venv, case.module)
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_manifest_hook_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
+    (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
+    assert wheel == dist / out
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = set(zf.namelist())
+
+    assert "LICENSE" not in file_names
+    assert any(Path(name).stem.startswith("cmake_example") for name in file_names)
+
+    virtualenv.install(wheel)
+    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+def test_manifest_hook_must_be_callable():
+    with pytest.raises(
+        setuptools.errors.SetupError,
+        match="cmake_process_manifest_hook must be callable",
+    ):
+        build_cmake.cmake_process_manifest_hook(
+            setuptools.Distribution(),
+            "cmake_process_manifest_hook",
+            object(),  # type: ignore[arg-type]
+        )
+
+
+def test_wrapper_forwards_manifest_hook(monkeypatch: pytest.MonkeyPatch):
+    dist = setuptools.Distribution()
+
+    def passthrough_hook(cmake_manifest: list[str]) -> list[str]:
+        return cmake_manifest
+
+    def fake_setup(**kwargs: object) -> setuptools.Distribution:
+        assert kwargs["cmake_process_manifest_hook"] is passthrough_hook
+        return dist
+
+    monkeypatch.setattr(setuptools, "setup", fake_setup)
+
+    assert (
+        wrapper.setup(
+            cmake_source_dir=".",
+            cmake_process_manifest_hook=passthrough_hook,
+        )
+        is dist
+    )

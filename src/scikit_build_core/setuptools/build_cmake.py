@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal
 
@@ -18,6 +19,8 @@ from ..cmake import CMake, CMaker
 from ..settings.skbuild_read_settings import SettingsReader
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from setuptools.dist import Distribution
 
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -27,6 +30,7 @@ __all__ = [
     "cmake_args",
     "cmake_install_dir",
     "cmake_install_target",
+    "cmake_process_manifest_hook",
     "cmake_source_dir",
     "finalize_distribution_options",
 ]
@@ -111,6 +115,118 @@ def _translate_wrapper_install_dir(dist: Distribution, install_dir: str) -> Path
         return translated.relative_to(package_base_dir)
     except ValueError:
         return translated
+
+
+def _collect_recursive_files(root: Path) -> set[str]:
+    if not root.exists():
+        return set()
+
+    return {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*")
+        if path.is_file() or path.is_symlink()
+    }
+
+
+def _read_cmake_install_manifests(
+    build_dir: Path, install_dir: Path
+) -> list[str] | None:
+    manifests = sorted(build_dir.glob("install_manifest*.txt"))
+    if not manifests:
+        return None
+
+    install_root = install_dir.resolve()
+    files: list[str] = []
+    for manifest in manifests:
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            if not line:
+                continue
+
+            installed_path = Path(line)
+            if not installed_path.is_absolute():
+                installed_path = (build_dir / installed_path).resolve()
+
+            try:
+                relpath = installed_path.relative_to(install_root)
+            except ValueError:
+                msg = (
+                    "CMake-installed files must stay within the setuptools build "
+                    f"directory, got: {installed_path}"
+                )
+                raise setuptools.errors.SetupError(msg) from None
+
+            files.append(relpath.as_posix())
+
+    return sorted(dict.fromkeys(files))
+
+
+def _process_manifest(
+    cmake_manifest: list[str],
+    process_manifest: Callable[[list[str]], object] | None,
+) -> list[str]:
+    if process_manifest is None:
+        return cmake_manifest
+
+    if not callable(process_manifest):
+        msg = "cmake_process_manifest_hook must be callable"
+        raise setuptools.errors.SetupError(msg)
+
+    processed_manifest = process_manifest(cmake_manifest)
+    if processed_manifest is None or isinstance(processed_manifest, (str, bytes)):
+        msg = (
+            "cmake_process_manifest_hook must return an iterable of manifest paths, "
+            f"got {type(processed_manifest).__name__}"
+        )
+        raise setuptools.errors.SetupError(msg)
+
+    if not isinstance(processed_manifest, Iterable):
+        msg = (
+            "cmake_process_manifest_hook must return an iterable of manifest paths, "
+            f"got {type(processed_manifest).__name__}"
+        )
+        raise setuptools.errors.SetupError(msg)
+
+    processed_list: list[str] = []
+    for path in processed_manifest:
+        if not isinstance(path, str):
+            msg = "cmake_process_manifest_hook must return manifest paths as strings"
+            raise setuptools.errors.SetupError(msg)
+        processed_list.append(path)
+
+    invalid_paths = sorted(set(processed_list) - set(cmake_manifest))
+    if invalid_paths:
+        msg = (
+            "cmake_process_manifest_hook must return a subset of installed files, "
+            f"got unexpected path: {invalid_paths[0]}"
+        )
+        raise setuptools.errors.SetupError(msg)
+
+    return processed_list
+
+
+def _remove_empty_parents(path: Path, root: Path) -> None:
+    for parent in path.parents:
+        if parent == root:
+            break
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+
+
+def _prune_manifest(
+    install_dir: Path, original: list[str], selected: list[str]
+) -> None:
+    omitted = set(original) - set(selected)
+    for relative_path in sorted(
+        omitted, key=lambda path: (path.count("/"), path), reverse=True
+    ):
+        path = install_dir / relative_path
+        if not path.exists() and not path.is_symlink():
+            continue
+
+        path.unlink()
+        _remove_empty_parents(path.parent, install_dir)
 
 
 class BuildCMake(setuptools.Command):
@@ -267,6 +383,7 @@ class BuildCMake(setuptools.Command):
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
         install_dir = self._get_install_dir()
+        installed_before = _collect_recursive_files(install_dir)
         defines = {"CMAKE_INSTALL_PREFIX": install_dir}
 
         builder.configure(
@@ -290,10 +407,22 @@ class BuildCMake(setuptools.Command):
         builder.install(install_dir=install_dir)
         self._record_installed_files(build_temp, install_dir)
 
+        cmake_manifest = _read_cmake_install_manifests(build_temp, install_dir)
+        if cmake_manifest is None:
+            installed_after = _collect_recursive_files(install_dir)
+            cmake_manifest = sorted(installed_after - installed_before)
+
+        process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
+        processed_manifest = _process_manifest(cmake_manifest, process_manifest)
+        _prune_manifest(install_dir, cmake_manifest, processed_manifest)
+
     def get_outputs(self) -> list[str]:
         if self.editable_mode:
             return sorted(self.get_output_mapping())
         return sorted(os.fspath(path) for path in self._installed_files)
+
+    # def "get_source_file"(self) -> list[str]:
+    #    return ["CMakeLists.txt"]
 
     def get_output_mapping(self) -> dict[str, str]:
         if (
@@ -424,4 +553,4 @@ def cmake_with_sdist(
     assert attr == "cmake_with_sdist"
     if value:
         msg = "cmake_with_sdist must not be set to True"
-        raise SetupError(msg)
+        raise setuptools.errors.SetupError(msg)
