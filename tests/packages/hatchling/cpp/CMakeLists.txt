@@ -7,9 +7,8 @@ find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(_core MODULE example.cpp)
 if(SKBUILD_STATE STREQUAL "editable")
   set_target_properties(
-    _core
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-               "${CMAKE_CURRENT_LIST_DIR}/../src/hatchling_example")
+    _core PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+                     "${CMAKE_CURRENT_LIST_DIR}/../src/hatchling_example")
 endif()
 install(TARGETS _core DESTINATION .)
 
