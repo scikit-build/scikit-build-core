@@ -97,9 +97,9 @@ def pep518_wheelhouse(
             )
             for wheel in tmp_path.glob("*.whl"):
                 target = wheelhouse / wheel.name
-                tmp_target = target.with_suffix(".whl.tmp")
-                shutil.copy(wheel, tmp_target)
-                tmp_target.replace(target)
+                if _is_valid_wheel(target):
+                    continue  # already present and valid; skip to avoid PermissionError on Windows
+                shutil.copy(wheel, target)
 
             # Remove stale scikit-build-core wheels that weren't just copied
             copied = {f.name for f in tmp_path.glob("scikit_build_core-*.whl")}
