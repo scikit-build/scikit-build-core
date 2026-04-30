@@ -168,11 +168,24 @@ class _ScikitBuildEditableReader:
             return Path(self._paths[0]) if self._paths else Path(".")
         if len(existing) == 1:
             return Path(existing[0])
-        if sys.version_info >= (3, 11):
-            from importlib.resources.readers import MultiplexedPath
-
-            return MultiplexedPath(*existing)
         return _SkbuildMultiplexedPath(*existing)
+
+    def open_resource(self, resource: str) -> object:
+        return self.files().joinpath(resource).open("rb")  # type: ignore[attr-defined]
+
+    def resource_path(self, resource: str) -> str:
+        path = self.files().joinpath(resource)  # type: ignore[attr-defined]
+        if hasattr(path, "__fspath__"):
+            return str(path)
+        msg = f"{resource!r} is not available as a concrete file path"
+        raise FileNotFoundError(msg)
+
+    def is_resource(self, name: str) -> bool:
+        path = self.files().joinpath(name)  # type: ignore[attr-defined]
+        return hasattr(path, "is_file") and path.is_file()
+
+    def contents(self) -> object:
+        return (item.name for item in self.files().iterdir())  # type: ignore[attr-defined]
 
 
 class _ScikitBuildResourceLoaderWrapper:
@@ -220,7 +233,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
 
         # Construct the __path__ of all resource files
         # I.e. the paths of all package-like objects
-        submodule_search_locations: dict[str, set[str]] = {}
+        submodule_search_locations: dict[str, list[str]] = {}
         pkgs: list[str] = []
         # Loop over both python native source files and cmake installed ones
         for tree in (known_source_files, known_wheel_files):
@@ -235,7 +248,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 if not parent:
                     continue
                 # Initialize the tree element if needed
-                submodule_search_locations.setdefault(parent, set())
+                submodule_search_locations.setdefault(parent, [])
                 # Add the parent path to the dictionary values
                 parent_path = os.path.dirname(file)
                 if not parent_path:
@@ -244,7 +257,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     raise ImportError(msg)
                 if not os.path.isabs(parent_path):
                     parent_path = os.path.join(self.dir, parent_path)
-                submodule_search_locations[parent].add(parent_path)
+                if parent_path not in submodule_search_locations[parent]:
+                    submodule_search_locations[parent].append(parent_path)
         # Second pass: propagate build-tree paths from parent packages to
         # sub-packages.  This covers the case where a Python package (with
         # __init__.py) lives in a directory that also contains CMake-generated
@@ -257,8 +271,11 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 continue
             for parent_path in submodule_search_locations[parent]:
                 sub_path = os.path.join(parent_path, last)
-                if os.path.isdir(sub_path):
-                    submodule_search_locations[pkg].add(sub_path)
+                if (
+                    os.path.isdir(sub_path)
+                    and sub_path not in submodule_search_locations[pkg]
+                ):
+                    submodule_search_locations[pkg].append(sub_path)
 
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = pkgs

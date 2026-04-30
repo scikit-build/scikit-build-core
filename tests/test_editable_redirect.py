@@ -9,8 +9,8 @@ def process_dict(d: dict[str, str]) -> dict[str, str]:
     return {k: str(Path(v)) for k, v in d.items()}
 
 
-def process_dict_set(d: dict[str, set[str]]) -> dict[str, set[str]]:
-    return {k: {str(Path(x)) for x in v} for k, v in d.items()}
+def process_dict_set(d: dict[str, set[str]]) -> dict[str, list[str]]:
+    return {k: sorted(str(Path(x)) for x in v) for k, v in d.items()}
 
 
 def test_editable_redirect():
@@ -47,7 +47,9 @@ def test_editable_redirect():
         install_dir="",
     )
 
-    assert finder.submodule_search_locations == process_dict_set(
+    assert {
+        k: sorted(v) for k, v in finder.submodule_search_locations.items()
+    } == process_dict_set(
         {
             "pkg": {
                 "/sitepackages/pkg",
