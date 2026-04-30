@@ -1,3 +1,4 @@
+import sys
 import sysconfig
 import tarfile
 import zipfile
@@ -80,6 +81,11 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["hatchling"], indirect=True)
 @pytest.mark.parametrize("editable_mode", ["redirect", "inplace"])
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails editable pybind11 link",
+    strict=False,
+)
 @pytest.mark.usefixtures("package")
 def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     set_hatchling_editable_mode(editable_mode)
@@ -111,6 +117,11 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["hatchling"], indirect=True)
 @pytest.mark.parametrize("editable_mode", ["redirect", "inplace"])
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails editable pybind11 link",
+    strict=False,
+)
 @pytest.mark.usefixtures("package")
 def test_hatchling_editable_install(isolated, editable_mode: str) -> None:
     set_hatchling_editable_mode(editable_mode)
