@@ -64,6 +64,9 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
     wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
+        wheel_metadata = f.read("hatchling_example-0.1.0.dist-info/WHEEL").decode(
+            "utf-8"
+        )
     assert file_names == {
         "hatchling_example-0.1.0.data/data/data_file.txt",
         "hatchling_example-0.1.0.data/scripts/myscript",
@@ -75,6 +78,7 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
         "hatchling_example/_core.pyi",
         f"hatchling_example/hatchling_example/_core{ext_suffix}",
     }
+    assert "Root-Is-Purelib: false" in wheel_metadata
 
 
 @pytest.mark.compile
@@ -99,9 +103,13 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
         pth_contents = f.read("_hatchling_example_editable.pth").decode("utf-8")
+        wheel_metadata = f.read("hatchling_example-0.1.0.dist-info/WHEEL").decode(
+            "utf-8"
+        )
 
     assert "hatchling_example-0.1.0.dist-info/METADATA" in file_names
     assert "_hatchling_example_editable.pth" in file_names
+    assert "Root-Is-Purelib: false" in wheel_metadata
     if editable_mode == "redirect":
         assert "_hatchling_example_editable.py" in file_names
         assert f"hatchling_example/_core{ext_suffix}" in file_names

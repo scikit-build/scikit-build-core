@@ -171,8 +171,13 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             expand_macos=settings.wheel.expand_macos_universal_tags,
             build_tag=settings.wheel.build_tag,
         )
+        if settings.wheel.platlib is None:
+            targetlib = "platlib" if settings.wheel.cmake else "purelib"
+        else:
+            targetlib = "platlib" if settings.wheel.platlib else "purelib"
+
         build_data["tag"] = str(tags)
-        build_data["pure_python"] = not settings.wheel.platlib
+        build_data["pure_python"] = targetlib == "purelib"
 
         if editable and settings.editable.mode == "inplace":
             build_dir = Path(settings.cmake.source_dir)
@@ -191,8 +196,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 else self.__tmp_dir / "build"
             )
         logger.info("Build directory: {}", build_dir.resolve())
-
-        targetlib = "platlib"
 
         wheel_dirs = {
             targetlib: wheel_dir / targetlib,
