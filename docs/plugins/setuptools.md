@@ -43,12 +43,16 @@ These are the currently supported `setup.py` options:
 
 - `cmake_source_dir`: The location of your `CMakeLists.txt`. Required.
 - `cmake_args`: Arguments to include when configuring.
+- `cmake_install_dir`: Supported. In direct setuptools-plugin usage, this is
+  interpreted relative to setuptools' `build_lib` staging directory. When using
+  `scikit_build_core.setuptools.wrapper.setup`, the value follows classic
+  scikit-build compatibility semantics instead, so source-root-prefixed values
+  like `src` continue to work there.
 
 These options from scikit-build (classic) are not currently supported:
-`cmake_install_dir`, `cmake_with_sdist`, `cmake_process_manifest_hook`, and
-`cmake_install_target`. `cmake_languages` has no effect. And
-`cmake_minimum_requires_version` is now specified via `pyproject.toml` config,
-so has no effect here.
+`cmake_with_sdist`, `cmake_process_manifest_hook`, and `cmake_install_target`.
+`cmake_languages` has no effect. And `cmake_minimum_requires_version` is now
+specified via `pyproject.toml` config, so has no effect here.
 
 A compatibility shim, `scikit_build_core.setuptools.wrapper.setup` is provided;
 it will eventually behave as close to scikit-build (classic)'s `skbuild.setup`
