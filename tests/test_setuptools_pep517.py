@@ -5,7 +5,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from conftest import enable_inplace_editable
 from packaging.version import Version
 
 from scikit_build_core.setuptools import build_meta as setuptools_build_meta
@@ -128,7 +127,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 @pytest.mark.usefixtures("package", "pybind11")
 def test_pep517_editable(virtualenv, tmp_path: Path):
-    enable_inplace_editable()
+    assert build_editable is not None
     dist = tmp_path / "dist"
     out = build_editable(str(dist))
     (wheel,) = dist.glob("cmake_example-0.0.1-0.editable-*.whl")
@@ -157,18 +156,6 @@ def test_pep517_editable(virtualenv, tmp_path: Path):
 
     add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add.strip() == "3"
-
-
-@pytest.mark.configure
-@pytest.mark.skipif(
-    build_editable is None, reason="Requires setuptools editable support"
-)
-@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package")
-def test_pep517_editable_requires_inplace_mode(tmp_path: Path):
-    dist = tmp_path / "dist"
-    with pytest.raises(AssertionError, match=r"editable\.mode = 'inplace'"):
-        build_editable(str(dist))
 
 
 @pytest.mark.parametrize("package", ["toml_setuptools_ext"], indirect=True)

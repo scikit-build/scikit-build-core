@@ -71,7 +71,7 @@ them through, so it will probably require use cases to be presented.
 ## Editable installs
 
 PEP 660 editable installs (`pip install -e .`) are supported when the active
-setuptools version provides `build_editable`.
+setuptools version provides `build_editable` (setuptools 63+).
 
 Setuptools editable installs require:
 

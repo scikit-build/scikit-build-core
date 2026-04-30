@@ -3,7 +3,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from conftest import enable_inplace_editable
 
 from scikit_build_core.setuptools import build_meta as setuptools_build_meta
 
@@ -91,7 +90,6 @@ def test_pep518_pip(isolated):
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 @pytest.mark.usefixtures("package", "pybind11")
 def test_pep518_pip_editable(isolated):
-    enable_inplace_editable()
     isolated.install("-v", "-e", ".")
 
     module_dir = isolated.execute(
