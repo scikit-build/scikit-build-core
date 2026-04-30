@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+import zipfile
 from collections.abc import Iterable
 from importlib import metadata
 from pathlib import Path
@@ -41,9 +42,22 @@ VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
 
 def _is_valid_wheel(wheel: Path) -> bool:
-    _, _, _, tags = packaging.utils.parse_wheel_filename(wheel.name)
+    if not zipfile.is_zipfile(wheel):
+        return False
+    try:
+        _, _, _, tags = packaging.utils.parse_wheel_filename(wheel.name)
+    except ValueError:
+        return False
     supported = set(packaging.tags.sys_tags())
     return any(tag in supported for tag in tags)
+
+
+def _clean_wheelhouse(wheelhouse: Path) -> None:
+    for whl in wheelhouse.glob("*.whl"):
+        if not _is_valid_wheel(whl):
+            whl.unlink()
+    for tmpf in wheelhouse.glob("*.whl.tmp"):
+        tmpf.unlink()
 
 
 @pytest.fixture(scope="session")
@@ -72,15 +86,37 @@ def pep518_wheelhouse(
                 text=True,
             )
             for wheel in tmp_path.glob("*.whl"):
-                shutil.copy(wheel, wheelhouse)
+                target = wheelhouse / wheel.name
+                tmp_target = target.with_suffix(".whl.tmp")
+                shutil.copy(wheel, tmp_target)
+                tmp_target.replace(target)
+
+            # Remove stale scikit-build-core wheels that weren't just copied
+            copied = {f.name for f in tmp_path.glob("scikit_build_core-*.whl")}
+            for stale in wheelhouse.glob("scikit_build_core-*.whl"):
+                if stale.name not in copied:
+                    stale.unlink()
+
+        # Clean up any invalid or orphaned wheels (including deps-of-deps that
+        # may have been fetched or corrupted previously).  We only remove
+        # invalid files here so that valid dependency wheels remain available
+        # to other xdist workers.
+        _clean_wheelhouse(wheelhouse)
 
     wheels_lock = FileLock(wheelhouse / "wheels.lock")
     with wheels_lock:
+        # Remove stale/invalid wheels that could falsely satisfy the check.
+        _clean_wheelhouse(wheelhouse)
+
         if not all(
             any(_is_valid_wheel(whl) for whl in wheelhouse.glob(f"{p}*.whl"))
             for p in download_wheels.WHEELS
         ):
             download_wheels.prepare(wheelhouse)
+
+            # Re-validate after downloading, in case a partially-written wheel
+            # was cached from an interrupted run.
+            _clean_wheelhouse(wheelhouse)
 
     return wheelhouse
 
