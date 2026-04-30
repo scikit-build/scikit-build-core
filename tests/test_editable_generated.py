@@ -254,10 +254,6 @@ def test_configure_time_generated_module(editable, isolated):
         pytest.param(None, id="not_editable"),
         pytest.param(
             "redirect",
-            marks=pytest.mark.xfail(
-                sys.version_info[0:2] == (3, 9),
-                reason="Python 3.9 redirect doesn't work for generated data in a namespace subpackage from a generated module.",
-            ),
         ),
         pytest.param(
             "inplace",
