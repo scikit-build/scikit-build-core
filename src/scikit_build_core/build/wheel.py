@@ -481,11 +481,11 @@ def _build_wheel_impl_impl(
                     msg = "Editable inplace mode requires at least one package"
                     raise AssertionError(msg)
 
-                for filename, contents in editable_inplace_files(
+                for filename, editable_contents in editable_inplace_files(
                     name=normalized_name,
                     packages=str_pkgs,
                 ).items():
-                    wheel.writestr(filename, contents)
+                    wheel.writestr(filename, editable_contents)
 
     if metadata_directory is not None:
         dist_info_contents = wheel.dist_info_contents()
