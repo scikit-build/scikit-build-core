@@ -162,11 +162,18 @@ class BuildCMake(setuptools.Command):
             ("parallel", "parallel"),
             ("plat_name", "plat_name"),
         )
+        self.editable_mode = self._get_editable_mode()
 
         if isinstance(self.cmake_args, str):
             self.cmake_args = [
                 b.strip() for a in self.cmake_args.split() for b in a.split(";")
             ]
+
+    def _get_editable_mode(self) -> bool:
+        build_ext = self.distribution.get_command_obj("build_ext")
+        return bool(
+            getattr(build_ext, "editable_mode", getattr(build_ext, "inplace", False))
+        )
 
     def _get_install_dir(self) -> Path:
         assert self.build_lib is not None
@@ -196,6 +203,7 @@ class BuildCMake(setuptools.Command):
         assert self.build_temp is not None
         assert self.plat_name is not None
 
+        self.editable_mode = self._get_editable_mode()
         settings = SettingsReader.from_file("pyproject.toml").settings
         _validate_settings(settings, editable_mode=self.editable_mode)
 

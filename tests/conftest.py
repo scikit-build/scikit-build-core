@@ -352,6 +352,43 @@ def is_editable_mode(maybe_mode: str) -> TypeGuard[Literal["redirect", "inplace"
     return maybe_mode in {"redirect", "inplace"}
 
 
+def enable_inplace_editable() -> None:
+    pyproject = Path("pyproject.toml")
+    lines = pyproject.read_text(encoding="utf-8").splitlines()
+    section_header = "[tool.scikit-build]"
+
+    for _section_start, line in enumerate(lines):
+        if line.strip() == section_header:
+            section_start = _section_start
+            break
+    else:
+        if lines and lines[-1].strip():
+            lines.append("")
+        lines.extend([section_header, 'editable.mode = "inplace"'])
+        pyproject.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return
+
+    section_end = len(lines)
+    for idx in range(section_start + 1, len(lines)):
+        if lines[idx].lstrip().startswith("["):
+            section_end = idx
+            break
+
+    section_body = [
+        line
+        for line in lines[section_start + 1 : section_end]
+        if line.strip() != 'editable.mode = "inplace"'
+        and not line.strip().startswith("editable.mode")
+    ]
+    lines = [
+        *lines[: section_start + 1],
+        'editable.mode = "inplace"',
+        *section_body,
+        *lines[section_end:],
+    ]
+    pyproject.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 @dataclasses.dataclass(frozen=True)
 class Editable:
     mode: Literal["redirect", "inplace"] | None

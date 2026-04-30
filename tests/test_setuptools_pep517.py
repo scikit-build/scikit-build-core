@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from conftest import enable_inplace_editable
 from packaging.version import Version
 
 from scikit_build_core.setuptools import build_meta as setuptools_build_meta
@@ -18,14 +19,6 @@ except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing depende
 pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
 build_editable = getattr(setuptools_build_meta, "build_editable", None)
-
-
-def enable_inplace_editable() -> None:
-    pyproject = Path("pyproject.toml")
-    pyproject.write_text(
-        f'{pyproject.read_text(encoding="utf-8")}\n[tool.scikit-build]\neditable.mode = "inplace"\n',
-        encoding="utf-8",
-    )
 
 
 @pytest.fixture(autouse=True)
@@ -135,7 +128,6 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 @pytest.mark.usefixtures("package", "pybind11")
 def test_pep517_editable(virtualenv, tmp_path: Path):
-    assert build_editable is not None
     enable_inplace_editable()
     dist = tmp_path / "dist"
     out = build_editable(str(dist))
@@ -174,7 +166,6 @@ def test_pep517_editable(virtualenv, tmp_path: Path):
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_pep517_editable_requires_inplace_mode(tmp_path: Path):
-    assert build_editable is not None
     dist = tmp_path / "dist"
     with pytest.raises(AssertionError, match=r"editable\.mode = 'inplace'"):
         build_editable(str(dist))

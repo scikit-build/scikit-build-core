@@ -3,19 +3,12 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from conftest import enable_inplace_editable
 
 from scikit_build_core.setuptools import build_meta as setuptools_build_meta
 
 pytestmark = pytest.mark.setuptools
 build_editable = getattr(setuptools_build_meta, "build_editable", None)
-
-
-def enable_inplace_editable() -> None:
-    pyproject = Path("pyproject.toml")
-    pyproject.write_text(
-        f'{pyproject.read_text(encoding="utf-8")}\n[tool.scikit-build]\neditable.mode = "inplace"\n',
-        encoding="utf-8",
-    )
 
 
 # TODO: work out why this fails on Cygwin
