@@ -12,7 +12,9 @@ def test_wrapper_basic():
     with patch("setuptools.setup") as mock_setup:
         setup(cmake_source_dir=".")
     mock_setup.assert_called_once_with(
-        cmake_source_dir=".", cmake_args=(), distclass=pytest.importorskip("setuptools").Distribution
+        cmake_source_dir=".",
+        cmake_args=(),
+        distclass=pytest.importorskip("setuptools").Distribution,
     )
 
 
@@ -27,7 +29,9 @@ def test_wrapper_unsupported_cmake_with_sdist():
 
 
 def test_wrapper_unsupported_manifest_hook():
-    with pytest.raises(AssertionError, match="cmake_process_manifest_hook not supported"):
+    with pytest.raises(
+        AssertionError, match="cmake_process_manifest_hook not supported"
+    ):
         setup(cmake_process_manifest_hook=lambda f: f)
 
 

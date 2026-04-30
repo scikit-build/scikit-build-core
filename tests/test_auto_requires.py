@@ -48,7 +48,10 @@ def test_get_min_requires_not_found():
 def test_get_min_requires_with_markers():
     result = get_min_requires(
         "cmake",
-        ['cmake>=3.15; python_version >= "3.10"', 'cmake>=3.20; python_version < "3.10"'],
+        [
+            'cmake>=3.15; python_version >= "3.10"',
+            'cmake>=3.20; python_version < "3.10"',
+        ],
     )
     # At least one should match
     assert result is not None

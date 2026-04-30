@@ -7,13 +7,12 @@ import pytest
 from scikit_build_core.format import RootPathResolver, pyproject_format
 
 
-class FakeSettings:
-    class cmake:  # noqa: N801
-        build_type = "Release"
-
-
 def test_pyproject_format_basic():
-    fmt = pyproject_format(settings=FakeSettings(), state="wheel")
+    class FakeSettings:
+        class cmake:  # noqa: N801
+            build_type = "Release"
+
+    fmt = pyproject_format(settings=FakeSettings(), state="wheel")  # type: ignore[call-overload]
     assert fmt["build_type"] == "Release"
     assert fmt["state"] == "wheel"
     assert "cache_tag" in fmt
@@ -25,11 +24,15 @@ def test_pyproject_format_dummy():
 
 
 def test_pyproject_format_with_tags():
+    class FakeSettings:
+        class cmake:  # noqa: N801
+            build_type = "Release"
+
     class FakeTag:
         def __str__(self):
             return "cp313-cp313-macosx_14_0_arm64"
 
-    fmt = pyproject_format(settings=FakeSettings(), tags=FakeTag())
+    fmt = pyproject_format(settings=FakeSettings(), tags=FakeTag())  # type: ignore[call-overload]
     assert fmt["wheel_tag"] == "cp313-cp313-macosx_14_0_arm64"
 
 

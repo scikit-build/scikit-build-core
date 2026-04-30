@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from pathlib import Path  # noqa: TC003
+from pathlib import Path
 
 import pytest
 
@@ -19,43 +19,37 @@ def fake_metadata():
 
 
 def test_generate_from_template(fake_metadata) -> None:
-    gen = type(
-        "Gen",
-        (),
-        {
-            "template": "name=$name, version=$version",
-            "template_path": None,
-            "path": "out.txt",
-        },
+    class Gen:
+        template = "name=$name, version=$version"
+        template_path = None
+        path = Path("out.txt")
+
+    assert (
+        generate_file_contents(Gen(), fake_metadata)  # type: ignore[arg-type]
+        == "name=test_pkg, version=1.2.3"
     )
-    assert generate_file_contents(gen, fake_metadata) == "name=test_pkg, version=1.2.3"
 
 
 def test_generate_from_template_path(tmp_path: Path, fake_metadata) -> None:
     template_file = tmp_path / "template.txt"
     template_file.write_text("version=$version")
 
-    gen = type(
-        "Gen",
-        (),
-        {
-            "template": None,
-            "template_path": template_file,
-            "path": "out.txt",
-        },
+    class Gen:
+        template = None
+        template_path = template_file
+        path = Path("out.txt")
+
+    assert (
+        generate_file_contents(Gen(), fake_metadata)  # type: ignore[arg-type]
+        == "version=1.2.3"
     )
-    assert generate_file_contents(gen, fake_metadata) == "version=1.2.3"
 
 
 def test_generate_missing_template(fake_metadata) -> None:
-    gen = type(
-        "Gen",
-        (),
-        {
-            "template": None,
-            "template_path": None,
-            "path": "out.txt",
-        },
-    )
+    class Gen:
+        template = None
+        template_path = None
+        path = Path("out.txt")
+
     with pytest.raises(AssertionError):
-        generate_file_contents(gen, fake_metadata)
+        generate_file_contents(Gen(), fake_metadata)  # type: ignore[arg-type]

@@ -9,9 +9,7 @@ def test_find_cmake_version_found():
 
 
 def test_find_cmake_version_with_fatal_error():
-    result = find_min_cmake_version(
-        "cmake_minimum_required(VERSION 3.15 FATAL_ERROR)"
-    )
+    result = find_min_cmake_version("cmake_minimum_required(VERSION 3.15 FATAL_ERROR)")
     assert result == "3.15"
 
 

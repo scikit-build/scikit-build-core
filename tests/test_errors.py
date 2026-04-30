@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+
 from scikit_build_core.errors import (
     CMakeAccessError,
     CMakeConfigError,
@@ -14,16 +16,21 @@ from scikit_build_core.errors import (
 )
 
 
-class FakeCalledProcessError(Exception):
-    def __init__(self, returncode: int, cmd: list[str], stdout: bytes = b"", stderr: bytes = b"") -> None:
-        self.returncode = returncode
-        self.cmd = cmd
+class FakeCalledProcessError(subprocess.CalledProcessError):
+    """Simple re-implementation to avoid subprocess internals."""
+
+    def __init__(
+        self, returncode: int, cmd: list[str], stdout: bytes = b"", stderr: bytes = b""
+    ) -> None:
+        super().__init__(returncode, cmd)
         self.stdout = stdout
         self.stderr = stderr
 
 
 def test_failed_process_error_str():
-    exc = FakeCalledProcessError(1, ["cmake", "--version"], stdout=b"out\n", stderr=b"err\n")
+    exc = FakeCalledProcessError(
+        1, ["cmake", "--version"], stdout=b"out\n", stderr=b"err\n"
+    )
     err = FailedProcessError(exc, "Build failed")
     msg = str(err)
     assert "Build failed" in msg

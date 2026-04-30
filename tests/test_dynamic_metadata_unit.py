@@ -103,3 +103,54 @@ def test_regex() -> None:
 def test_actions(field: str, input_: Any, output: Any) -> None:
     result = _process_dynamic_metadata(field, lambda x: x.format(sub=42), input_)
     assert output == result
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_input", "match"),
+    [
+        pytest.param(
+            "version",
+            ["not", "a", "string"],
+            "must be a string",
+            id="str-field-not-str",
+        ),
+        pytest.param(
+            "classifiers",
+            "not-a-list",
+            "must be a list of strings",
+            id="list-str-field-not-list",
+        ),
+        pytest.param(
+            "scripts",
+            "not-a-dict",
+            "must be a dictionary of strings",
+            id="dict-str-field-not-dict",
+        ),
+        pytest.param(
+            "authors",
+            "not-a-list",
+            "must be a dictionary of strings",
+            id="list-dict-field-not-list",
+        ),
+        pytest.param(
+            "entry-points",
+            "not-a-dict",
+            "must be a dictionary of dictionary of strings",
+            id="entry-points-not-dict",
+        ),
+        pytest.param(
+            "optional-dependencies",
+            "not-a-dict",
+            "must be a dictionary of lists",
+            id="optional-deps-not-dict",
+        ),
+    ],
+)
+def test_actions_type_errors(field: str, bad_input: Any, match: str) -> None:
+    with pytest.raises(RuntimeError, match=match):
+        _process_dynamic_metadata(field, lambda x: x, bad_input)
+
+
+def test_actions_unsupported_field() -> None:
+    with pytest.raises(RuntimeError, match="Unsupported field"):
+        _process_dynamic_metadata("not-a-real-field", lambda x: x, "anything")

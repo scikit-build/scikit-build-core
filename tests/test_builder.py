@@ -533,3 +533,65 @@ def test_generator_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         ),
     )
     assert builder.get_generator() == "Anything"
+
+
+def test_wheel_tag_invalid_build_tag_no_digit():
+    with pytest.raises(AssertionError, match="must start with a digit"):
+        WheelTag.compute_best([], build_tag="abc")
+
+
+def test_wheel_tag_invalid_build_tag_with_dash():
+    with pytest.raises(AssertionError, match="cannot contain dashes"):
+        WheelTag.compute_best([], build_tag="1-invalid")
+
+
+def test_wheel_tag_tags_dict():
+    tag = WheelTag(pyvers=["cp311"], abis=["cp311"], archs=["linux_x86_64"])
+    assert tag.tags_dict() == {
+        "pyver": ["cp311"],
+        "abi": ["cp311"],
+        "arch": ["linux_x86_64"],
+    }
+
+
+def test_wheel_tag_as_tags_set():
+    tag = WheelTag(pyvers=["py3"], abis=["none"], archs=["any"])
+    tag_set = tag.as_tags_set()
+    assert len(tag_set) == 1
+    (t,) = tag_set
+    assert str(t) == "py3-none-any"
+
+
+def test_wheel_tag_py_api_multiple_cp_versions():
+    with pytest.raises(AssertionError, match="must be a single cp version"):
+        WheelTag.compute_best([], py_api="cp39.cp310")
+
+
+def test_wheel_tag_py_api_cp_with_purelib():
+    with pytest.raises(AssertionError, match="platlib is set to false"):
+        WheelTag.compute_best([], py_api="cp39", root_is_purelib=True)
+
+
+def test_wheel_tag_py_api_version_too_high():
+    """When cp version is higher than current Python, the py_api is silently ignored."""
+    tag = WheelTag.compute_best([], py_api="cp3999")
+    # Should not be abi3 since version is too high; falls back to normal tag
+    assert "abi3" not in str(tag)
+    assert "cp3999" not in str(tag)
+
+
+def test_wheel_tag_py_api_invalid_format():
+    with pytest.raises(AssertionError, match="Unexpected py-api"):
+        WheelTag.compute_best([], py_api="invalid_format")
+
+
+def test_wheel_tag_windows_archs(monkeypatch):
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "win32")
+    tag = WheelTag.compute_best(["x86_64"])
+    assert "x86_64" in tag.arch

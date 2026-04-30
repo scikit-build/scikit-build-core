@@ -1,4 +1,27 @@
-from scikit_build_core.builder.generator import parse_help_default
+from __future__ import annotations
+
+import subprocess
+import sys
+import sysconfig
+from pathlib import Path
+from types import SimpleNamespace
+from typing import TYPE_CHECKING
+
+import pytest
+
+from scikit_build_core.builder.generator import (
+    get_default,
+    get_default_from_cmake,
+    parse_help_default,
+    set_environment_for_gen,
+)
+from scikit_build_core.errors import NinjaNotFoundError
+from scikit_build_core.settings.skbuild_model import NinjaSettings
+
+if TYPE_CHECKING:
+    from scikit_build_core.cmake import CMake
+
+_FAKE_CMAKE: CMake = SimpleNamespace(cmake_path=Path("/fake/cmake"))  # type: ignore[assignment]
 
 UNIX_OUTPUT = """\
 Usage
@@ -269,3 +292,132 @@ def test_best_gen_windows():
 def test_best_gen_older_windows():
     """Test best_gen() on older Windows."""
     assert parse_help_default(OLDER_WINDOWS_OUTPUT) == "Visual Studio 15 2017"
+
+
+def test_parse_help_default_no_match():
+    """parse_help_default returns None when no default generator is marked."""
+    assert parse_help_default("No generators listed here") is None
+    assert parse_help_default("") is None
+
+
+NINJA_MC_OUTPUT = """\
+Generators
+
+The following generators are available on this platform (* marks default):
+* Ninja Multi-Config             = Generates build-<Config>.ninja files.
+  Ninja                          = Generates build.ninja files.
+"""
+
+
+def test_get_default_non_unix_makefiles(monkeypatch):
+    """get_default returns a non-Unix-Makefiles generator as-is."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "linux-x86_64")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *_a, **_kw: SimpleNamespace(returncode=0, stdout=NINJA_MC_OUTPUT),
+    )
+    result = get_default(_FAKE_CMAKE)
+    assert result == "Ninja Multi-Config"
+
+
+def test_get_default_from_cmake_failure(monkeypatch):
+    """get_default_from_cmake returns None when cmake exits non-zero."""
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *_a, **_kw: SimpleNamespace(returncode=1, stdout=""),
+    )
+    result = get_default_from_cmake(_FAKE_CMAKE)
+    assert result is None
+
+
+def test_get_default_non_msvc_windows(monkeypatch):
+    """On Windows with a non-MSVC Python platform, Ninja is always required."""
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "linux-x86_64")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *_a, **_kw: SimpleNamespace(returncode=0, stdout=UNIX_OUTPUT),
+    )
+    result = get_default(_FAKE_CMAKE)
+    assert result == "Ninja"
+
+
+def test_set_env_explicit_generator_no_ninja(monkeypatch):
+    """Explicit 'Ninja' generator with no ninja binary raises NinjaNotFoundError."""
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "linux-x86_64")
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.best_program", lambda *_a, **_kw: None
+    )
+    env: dict[str, str] = {}
+    with pytest.raises(NinjaNotFoundError):
+        set_environment_for_gen(
+            "Ninja",
+            _FAKE_CMAKE,
+            env,
+            NinjaSettings(make_fallback=True),
+        )
+
+
+def test_set_env_make_fallback(monkeypatch):
+    """When no ninja is found and make_fallback=True, make is used."""
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "linux-x86_64")
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.best_program", lambda *_a, **_kw: None
+    )
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.get_make_programs",
+        lambda: iter([Path("/usr/bin/make")]),
+    )
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.get_default", lambda _cmake: None
+    )
+    env: dict[str, str] = {}
+    result = set_environment_for_gen(
+        None,
+        _FAKE_CMAKE,
+        env,
+        NinjaSettings(make_fallback=True),
+    )
+    assert result.get("CMAKE_MAKE_PROGRAM") == "/usr/bin/make"
+    assert env.get("CMAKE_GENERATOR") == "Unix Makefiles"
+
+
+def test_set_env_no_ninja_no_make(monkeypatch):
+    """When no ninja or make is available and make_fallback=True, raise NinjaNotFoundError."""
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "linux-x86_64")
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.best_program", lambda *_a, **_kw: None
+    )
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.get_make_programs", lambda: iter([])
+    )
+    monkeypatch.setattr(
+        "scikit_build_core.builder.generator.get_default", lambda _cmake: None
+    )
+    env: dict[str, str] = {}
+    with pytest.raises(NinjaNotFoundError):
+        set_environment_for_gen(
+            None,
+            _FAKE_CMAKE,
+            env,
+            NinjaSettings(make_fallback=True),
+        )
+
+
+def test_set_env_visual_studio(monkeypatch):
+    """Visual Studio generator is set directly via env vars, not cmake_make_program."""
+    monkeypatch.setattr(sysconfig, "get_platform", lambda: "win-amd64")
+    env: dict[str, str] = {}
+    result = set_environment_for_gen(
+        "Visual Studio 17 2022",
+        _FAKE_CMAKE,
+        env,
+        NinjaSettings(),
+    )
+    assert env.get("CMAKE_GENERATOR") == "Visual Studio 17 2022"
+    assert "CMAKE_GENERATOR_PLATFORM" in env
+    assert result == {}

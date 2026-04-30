@@ -30,7 +30,9 @@ def test_get_requires_for_build_sdist_no_cmake(monkeypatch):
     monkeypatch.setattr(
         bm,
         "GetRequires",
-        type("GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}),
+        type(
+            "GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}
+        ),
     )
     reqs = bm.get_requires_for_build_sdist()
     assert "cmake>=3.15" not in reqs
@@ -57,7 +59,9 @@ def test_get_requires_for_build_sdist_with_cmake(monkeypatch):
     monkeypatch.setattr(
         bm,
         "GetRequires",
-        type("GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}),
+        type(
+            "GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}
+        ),
     )
     reqs = bm.get_requires_for_build_sdist()
     assert "cmake>=3.15" in reqs
@@ -84,7 +88,9 @@ def test_get_requires_for_build_wheel(monkeypatch):
     monkeypatch.setattr(
         bm,
         "GetRequires",
-        type("GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}),
+        type(
+            "GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}
+        ),
     )
     reqs = bm.get_requires_for_build_wheel()
     assert "wheel" in reqs
@@ -115,7 +121,9 @@ def test_get_requires_for_build_editable(monkeypatch):
     monkeypatch.setattr(
         bm,
         "GetRequires",
-        type("GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}),
+        type(
+            "GR", (), {"from_config_settings": staticmethod(lambda _cs: FakeRequires())}
+        ),
     )
     reqs = bm.get_requires_for_build_editable()
     assert "wheel" in reqs

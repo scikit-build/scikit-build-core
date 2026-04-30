@@ -18,7 +18,7 @@ def test_process_union_basic():
 
 
 def test_process_union_with_none():
-    assert process_union(Optional[str]) is str  # type: ignore[comparison-overlap]
+    assert process_union(Optional[str]) is str
 
 
 def test_process_union_only_none():
@@ -26,7 +26,7 @@ def test_process_union_only_none():
 
 
 def test_process_annotated_basic():
-    assert process_annotated(Annotated[str, "meta"]) == (str, ("meta",))
+    assert process_annotated(Annotated[str, "meta"]) == (str, ("meta",))  # type: ignore[arg-type]
 
 
 def test_process_annotated_not_annotated():
