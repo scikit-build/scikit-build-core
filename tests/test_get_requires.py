@@ -139,6 +139,39 @@ def test_get_requires_for_build_sdist_cmake(fp: FakeProcess):
     assert set(get_requires_for_build_sdist({"sdist.cmake": "True"})) == expected
 
 
+@pytest.mark.parametrize(
+    ("hook", "config"),
+    [
+        (
+            get_requires_for_build_sdist,
+            {"experimental": "true", "variant": "cpu :: abi :: cp313"},
+        ),
+        (
+            get_requires_for_build_wheel,
+            {"experimental": "true", "variant": "cpu :: abi :: cp313"},
+        ),
+        (
+            get_requires_for_build_editable,
+            {"experimental": "true", "variant-name": "cpu :: abi :: cp313"},
+        ),
+    ],
+)
+def test_get_requires_for_build_with_variant(
+    fp: FakeProcess,
+    hook,
+    config: dict[str, str],
+):
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
+    fp.register(
+        ["lipo", "-info", "cmake/path"],
+        stdout="Architectures in the fat file: ... are: x86_64 arm64",
+    )
+    assert "variantlib" in hook(config)
+
+
 def test_get_requires_for_build_wheel(fp: FakeProcess):
     expected = {"cmake>=3.15", *ninja}
     fp.register(

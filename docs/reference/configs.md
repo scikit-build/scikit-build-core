@@ -98,6 +98,16 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: null-variant
+  :type: ``bool``
+  :default: false
+
+  Experimental PEP 817 null-variant selector.
+
+  This is only allowed in overrides or config-settings.
+```
+
+```{eval-rst}
 .. confval:: strict-config
   :type: ``bool``
   :default: true
@@ -107,6 +117,33 @@ print(mk_skbuild_docs())
   If False, warnings will be printed for unknown options.
 
   If True, an error will be raised.
+```
+
+```{eval-rst}
+.. confval:: variant
+  :type: ``list[str]``
+
+  Experimental PEP 817 variant properties.
+
+  This is only allowed in overrides or config-settings.
+```
+
+```{eval-rst}
+.. confval:: variant-label
+  :type: ``str``
+
+  Experimental PEP 817 wheel variant label override.
+
+  This is only allowed in overrides or config-settings.
+```
+
+```{eval-rst}
+.. confval:: variant-name
+  :type: ``list[str]``
+
+  Experimental PEP 817 variant properties used for wheel metadata selection.
+
+  This is only allowed in overrides or config-settings.
 ```
 
 ## backport
