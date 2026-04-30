@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import enum
 import os
 import re
 import shlex
@@ -33,6 +34,12 @@ if TYPE_CHECKING:
 __all__ = ["Builder", "archs_to_tags", "get_archs"]
 
 DIR = Path(__file__).parent.resolve()
+
+
+class _SabiMode(enum.Enum):
+    NONE = enum.auto()
+    ABI3 = enum.auto()
+    ABI3T = enum.auto()
 
 
 def __dir__() -> list[str]:
@@ -211,61 +218,46 @@ class Builder:
 
         py_api = self.settings.wheel.py_api
         gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
-        ft_abi = limited_api is True and gil_disabled
-        if limited_api is None:
-            if py_api.startswith("cp3"):
-                if py_api.endswith("t"):
-                    # Free-threaded stable ABI (PEP 803 / abi3t)
-                    target_minor_version = int(py_api[3:-1])
-                    if (
-                        sys.implementation.name == "cpython"
-                        and gil_disabled
-                        and target_minor_version <= sys.version_info.minor
-                    ):
-                        ft_abi = True
-                        limited_api = True
-                    else:
-                        limited_api = False
-                        logger.info(
-                            "py-api {} requires free-threaded CPython >= 3.{}, ignoring",
-                            py_api,
-                            target_minor_version,
-                        )
-                else:
-                    # Classic stable ABI (abi3)
-                    target_minor_version = int(py_api[3:])
-                    if sys.implementation.name != "cpython":
-                        limited_api = False
-                        logger.info("PyPy doesn't support the Limited API, ignoring")
-                    elif gil_disabled:
-                        limited_api = False
-                        logger.info(
-                            "Free-threaded Python doesn't support the classic Limited API, ignoring"
-                        )
-                    else:
-                        limited_api = target_minor_version <= sys.version_info.minor
+
+        sabi = _SabiMode.NONE
+        if limited_api is True:
+            # Handle externally-set limited_api (e.g. from setuptools)
+            if sys.implementation.name != "cpython":
+                logger.info("PyPy doesn't support the Limited API, ignoring")
+            elif gil_disabled:
+                sabi = _SabiMode.ABI3T
             else:
-                limited_api = False
-
-        # Handle externally-set limited_api (e.g. from setuptools)
-        if (limited_api or ft_abi) and sys.implementation.name != "cpython":
-            limited_api = False
-            ft_abi = False
-            logger.info("PyPy doesn't support the Limited API, ignoring")
-
-        if limited_api and gil_disabled and not ft_abi:
-            limited_api = False
-            logger.info(
-                "Free-threaded Python doesn't support the classic Limited API, ignoring"
-            )
+                sabi = _SabiMode.ABI3
+        elif limited_api is None and py_api.startswith("cp3"):
+            target_minor_version = int(py_api[3:].rstrip("t"))
+            if sys.implementation.name != "cpython":
+                logger.info("py-api {} requires CPython, ignoring")
+            elif py_api.endswith("t"):
+                # Free-threaded stable ABI (PEP 803 / abi3t)
+                if gil_disabled and target_minor_version <= sys.version_info.minor:
+                    sabi = _SabiMode.ABI3T
+                else:
+                    logger.info(
+                        "py-api {} requires free-threaded CPython >= 3.{}, ignoring",
+                        py_api,
+                        target_minor_version,
+                    )
+            else:
+                # Classic stable ABI (abi3)
+                target_minor_version = int(py_api[3:])
+                if gil_disabled:
+                    logger.info(
+                        "Free-threaded Python doesn't support the classic Limited API, ignoring"
+                    )
+                elif target_minor_version <= sys.version_info.minor:
+                    sabi = _SabiMode.ABI3
 
         python_library = get_python_library(self.config.env, abi3=False)
         python_sabi_library = None
-        if limited_api:
-            if ft_abi:
-                python_sabi_library = get_python_library(self.config.env, abi3t=True)
-            else:
-                python_sabi_library = get_python_library(self.config.env, abi3=True)
+        if sabi == _SabiMode.ABI3T:
+            python_sabi_library = get_python_library(self.config.env, abi3t=True)
+        elif sabi == _SabiMode.ABI3:
+            python_sabi_library = get_python_library(self.config.env, abi3=True)
         python_include_dir = get_python_include_dir()
         numpy_include_dir = get_numpy_include_dir()
 
@@ -302,16 +294,18 @@ class Builder:
                     cache_config[f"{prefix}_NumPy_INCLUDE_DIR"] = numpy_include_dir
 
         cache_config["SKBUILD_SOABI"] = get_soabi(
-            self.config.env, abi3=(limited_api and not ft_abi), abi3t=ft_abi
+            self.config.env,
+            abi3=(sabi == _SabiMode.ABI3),
+            abi3t=(sabi == _SabiMode.ABI3T),
         )
 
         # Allow CMakeLists to detect this is supposed to be a limited ABI build
         cache_config["SKBUILD_SABI_COMPONENT"] = (
-            "Development.SABIModule" if limited_api else ""
+            "Development.SABIModule" if sabi != _SabiMode.NONE else ""
         )
 
         # Allow users to detect the version requested in settings
-        if limited_api and py_api.startswith("cp"):
+        if sabi != _SabiMode.NONE and py_api.startswith("cp"):
             version_str = py_api[2:]
             if version_str.endswith("t"):
                 version_str = version_str[:-1]
@@ -319,7 +313,7 @@ class Builder:
         else:
             cache_config["SKBUILD_SABI_VERSION"] = ""
 
-        if ft_abi:
+        if sabi == _SabiMode.ABI3T:
             cache_config["Py_TARGET_ABI3T"] = "1"
 
         if cache_entries:
