@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scikit_build_core.resources._editable_redirect import ScikitBuildRedirectingFinder
+import pytest
+
+from scikit_build_core.resources._editable_redirect import (
+    FileLockIfUnix,
+    ScikitBuildRedirectingFinder,
+    install,
+)
 
 
 def process_dict(d: dict[str, str]) -> dict[str, str]:
@@ -68,3 +74,113 @@ def test_editable_redirect():
         }
     )
     assert finder.pkgs == ["pkg", "pkg.subpkg"]
+
+
+def test_find_spec_source():
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"mod": "/src/mod.py"},
+        known_wheel_files={},
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir="/sp",
+        install_dir="",
+    )
+    spec = finder.find_spec("mod")
+    assert spec is not None
+    assert spec.origin == "/src/mod.py"
+
+
+def test_find_spec_wheel():
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={"mod": "mod.py"},
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir="/sp",
+        install_dir="",
+    )
+    spec = finder.find_spec("mod")
+    assert spec is not None
+    assert spec.origin == str(Path("/sp/mod.py"))
+
+
+def test_find_spec_package():
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg": "/src/pkg/__init__.py"},
+        known_wheel_files={},
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir="/sp",
+        install_dir="",
+    )
+    spec = finder.find_spec("pkg")
+    assert spec is not None
+    assert spec.submodule_search_locations is not None
+
+
+def test_find_spec_unknown():
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={},
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir="/sp",
+        install_dir="",
+    )
+    assert finder.find_spec("unknown") is None
+
+
+def test_install_inserts_meta_path():
+    import sys
+
+    before = len(sys.meta_path)
+    install(
+        known_source_files={"mod": "/src/mod.py"},
+        known_wheel_files={},
+        path=None,
+    )
+    assert len(sys.meta_path) == before + 1
+    # clean up
+    sys.meta_path.pop(0)
+
+
+def test_filelock_if_unix_no_fcntl(tmp_path):
+    # Skip on Windows where fcntl isn't available
+    pytest.importorskip("fcntl")
+
+    lock = FileLockIfUnix(str(tmp_path / "editable_rebuild.lock"))
+    lock.acquire()
+    assert lock.lock_file_fd is not None
+    lock.release()
+
+
+def test_filelock_if_unix_missing_fcntl(monkeypatch, tmp_path):
+    import builtins
+
+    real_import = builtins.__import__
+    fcntl_msg = "No module named 'fcntl'"
+
+    def fake_import(name, *args, **kwargs):
+        if name == "fcntl":
+            raise ModuleNotFoundError(fcntl_msg)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    lock = FileLockIfUnix(str(tmp_path / "editable_rebuild.lock"))
+    lock.acquire()
+    assert lock.lock_file_fd is None
+    lock.release()
+    # Should not raise
