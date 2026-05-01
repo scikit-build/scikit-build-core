@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Annotated, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import pytest
 
+from scikit_build_core._compat.typing import Annotated
 from scikit_build_core.utils.typing import (
     get_inner_type,
     get_target_raw_type,
