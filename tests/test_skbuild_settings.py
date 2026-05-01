@@ -968,7 +968,7 @@ def test_backcompat_sdist_resolve_symlinks(
     )
 
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
-    assert not settings_reader.settings.sdist.resolve_symlinks
+    assert settings_reader.settings.sdist.resolve_symlinks is False
 
     pyproject_toml.write_text(
         textwrap.dedent(
@@ -981,4 +981,4 @@ def test_backcompat_sdist_resolve_symlinks(
     )
 
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
-    assert settings_reader.settings.sdist.resolve_symlinks
+    assert settings_reader.settings.sdist.resolve_symlinks is True
