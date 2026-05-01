@@ -67,9 +67,19 @@ def pep518_wheelhouse(
     wheelhouse = pytestconfig.cache.mkdir("wheelhouse")
     tmp_path = tmp_path_factory.mktemp("wheelhouse_tmp")
 
-    main_lock = FileLock(wheelhouse / "main.lock")
-    with main_lock:
-        if not list(tmp_path.glob("scikit_build_core-*.whl")):
+    # A single lock for all wheelhouse mutations prevents cross-lock races on
+    # Windows where concurrent readers (zipfile.is_zipfile) and writers
+    # (unlink/replace) on different locks would cause PermissionError (WinError 5).
+    wheelhouse_lock = FileLock(wheelhouse / "wheels.lock")
+    with wheelhouse_lock:
+        # Only build the scikit-build-core wheel when the current version is not
+        # already present; this avoids a redundant pip-wheel invocation on every
+        # worker while still catching version changes between runs.
+        skbuild_version = metadata.version("scikit-build-core")
+        if not any(
+            whl.name.startswith(f"scikit_build_core-{skbuild_version}-")
+            for whl in wheelhouse.glob("scikit_build_core-*.whl")
+        ):
             subprocess.run(
                 [
                     sys.executable,
@@ -87,9 +97,9 @@ def pep518_wheelhouse(
             )
             for wheel in tmp_path.glob("*.whl"):
                 target = wheelhouse / wheel.name
-                tmp_target = target.with_suffix(".whl.tmp")
-                shutil.copy(wheel, tmp_target)
-                tmp_target.replace(target)
+                if _is_valid_wheel(target):
+                    continue  # already present and valid; skip to avoid PermissionError on Windows
+                shutil.copy(wheel, target)
 
             # Remove stale scikit-build-core wheels that weren't just copied
             copied = {f.name for f in tmp_path.glob("scikit_build_core-*.whl")}
@@ -97,15 +107,8 @@ def pep518_wheelhouse(
                 if stale.name not in copied:
                     stale.unlink()
 
-        # Clean up any invalid or orphaned wheels (including deps-of-deps that
-        # may have been fetched or corrupted previously).  We only remove
-        # invalid files here so that valid dependency wheels remain available
-        # to other xdist workers.
-        _clean_wheelhouse(wheelhouse)
-
-    wheels_lock = FileLock(wheelhouse / "wheels.lock")
-    with wheels_lock:
-        # Remove stale/invalid wheels that could falsely satisfy the check.
+        # Clean up any invalid or orphaned wheels.  Because we hold the single
+        # shared lock here, there are no concurrent readers to race against.
         _clean_wheelhouse(wheelhouse)
 
         if not all(
