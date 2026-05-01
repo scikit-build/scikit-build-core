@@ -73,11 +73,8 @@ def test_editable_redirect():
 def test_editable_redirect_pxd():
     """Test that .pxd/.pyx __init__ files are recognized as packages.
 
-    This mirrors real-world Cython projects (e.g. cuVS) where packages have
-    both __init__.py and __init__.pxd, and where the file scanner may pick up
-    the .pxd as the representative file for the package init.
-    The key fix: the parent package's __path__ must NOT be polluted with the
-    child package's directory.
+    If packages have both __init__.py and __init__.pxd, the file scanner may pick up the
+    .pxd as the representative file for the package init and produce the wrong __path__.
     """
     known_source_files = process_dict(
         {
@@ -107,15 +104,15 @@ def test_editable_redirect_pxd():
         install_dir="",
     )
 
-    # Fix A: .pxd/.pyx init files should be recognized as packages
+    # .pxd/.pyx init files should be recognized as packages
     assert "pkg.cython_subpkg" in finder.pkgs
     assert "pkg.pyx_subpkg" in finder.pkgs
 
-    # Fix A: Cython subpackages must have their OWN search locations
+    # Cython subpackages must have their OWN search locations
     assert "pkg.cython_subpkg" in finder.submodule_search_locations
     assert "pkg.pyx_subpkg" in finder.submodule_search_locations
 
-    # Critical: parent pkg.__path__ must NOT be polluted with child package dirs
+    # parent pkg.__path__ must NOT be polluted with child package dirs
     pkg_paths = finder.submodule_search_locations.get("pkg", set())
     assert not any("cython_subpkg" in p for p in pkg_paths), (
         f"pkg.__path__ is polluted with cython_subpkg: {pkg_paths}"
