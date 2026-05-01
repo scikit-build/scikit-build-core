@@ -58,11 +58,16 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
     """
     Convert a mapping of files to modules to a mapping of modules to installed files.
     """
-    return {
-        path_to_module(Path(v).relative_to(libdir)): str(Path(k).resolve())
-        for k, v in mapping.items()
-        if is_valid_module(Path(v).relative_to(libdir))
-    }
+    result: dict[str, str] = {}
+    for k, v in mapping.items():
+        rel = Path(v).relative_to(libdir)
+        if not is_valid_module(rel):
+            continue
+        module = path_to_module(rel)
+        # Prefer .py/.pyc over other extensions (e.g. .pxd, .pyx) for the same module
+        if module not in result or rel.suffix in (".py", ".pyc"):
+            result[module] = str(Path(k).resolve())
+    return result
 
 
 def libdir_to_installed(libdir: Path) -> dict[str, str]:

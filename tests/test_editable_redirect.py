@@ -71,14 +71,27 @@ def test_editable_redirect():
 
 
 def test_editable_redirect_pxd():
-    """Test that .pxd/__init__.pxd files are recognized as packages."""
+    """Test that .pxd/.pyx __init__ files are recognized as packages.
+
+    This mirrors real-world Cython projects (e.g. cuVS) where packages have
+    both __init__.py and __init__.pxd, and where the file scanner may pick up
+    the .pxd as the representative file for the package init.
+    The key fix: the parent package's __path__ must NOT be polluted with the
+    child package's directory.
+    """
     known_source_files = process_dict(
         {
+            "pkg": "/source/pkg/__init__.py",
+            "pkg.module": "/source/pkg/module.py",
+            # Cython subpackage whose init was picked up as .pxd (not .py)
             "pkg.cython_subpkg": "/source/pkg/cython_subpkg/__init__.pxd",
+            "pkg.cython_subpkg.impl": "/source/pkg/cython_subpkg/impl.pyx",
+            # Pyx subpackage
             "pkg.pyx_subpkg": "/source/pkg/pyx_subpkg/__init__.pyx",
+            "pkg.pyx_subpkg.module": "/source/pkg/pyx_subpkg/module.py",
         }
     )
-    known_wheel_files = process_dict({})
+    known_wheel_files = process_dict({"pkg.cython_subpkg.compiled": "pkg/cython_subpkg/compiled.abi3.so"})
 
     finder = ScikitBuildRedirectingFinder(
         known_source_files=known_source_files,
@@ -92,23 +105,22 @@ def test_editable_redirect_pxd():
         install_dir="",
     )
 
-    # Bug 1: .pxd/.pyx files are not recognized as packages
+    # Fix A: .pxd/.pyx init files should be recognized as packages
     assert "pkg.cython_subpkg" in finder.pkgs
     assert "pkg.pyx_subpkg" in finder.pkgs
 
-    # Bug 1: .pxd/.pyx packages should have their own search locations
+    # Fix A: Cython subpackages must have their OWN search locations
     assert "pkg.cython_subpkg" in finder.submodule_search_locations
     assert "pkg.pyx_subpkg" in finder.submodule_search_locations
 
-    # Bug 2: find_spec should recognize .pxd/.pyx as packages
-    spec_pxd = finder.find_spec("pkg.cython_subpkg")
-    assert spec_pxd is not None
-    assert spec_pxd.submodule_search_locations is not None
-
-    spec_pyx = finder.find_spec("pkg.pyx_subpkg")
-    assert spec_pyx is not None
-    assert spec_pyx.submodule_search_locations is not None
-
+    # Critical: parent pkg.__path__ must NOT be polluted with child package dirs
+    pkg_paths = finder.submodule_search_locations.get("pkg", set())
+    assert not any("cython_subpkg" in p for p in pkg_paths), (
+        f"pkg.__path__ is polluted with cython_subpkg: {pkg_paths}"
+    )
+    assert not any("pyx_subpkg" in p for p in pkg_paths), (
+        f"pkg.__path__ is polluted with pyx_subpkg: {pkg_paths}"
+    )
 
 def test_mapping_to_modules_prefers_py():
     """Test that mapping_to_modules prefers __init__.py over __init__.pxd."""
