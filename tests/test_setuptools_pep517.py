@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import sys
 import tarfile
 import textwrap
 import zipfile
@@ -314,6 +315,11 @@ def test_mixed_wheel(virtualenv, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
+)
 @pytest.mark.parametrize(
     ("package", "case"),
     [(case.package, case) for case in SETUPTOOLS_INSTALL_DIR_CASES],
@@ -348,6 +354,11 @@ def test_cmake_install_dir_wheel(
 @pytest.mark.configure
 @pytest.mark.skipif(
     build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
 )
 @pytest.mark.parametrize(
     ("package", "case"),
