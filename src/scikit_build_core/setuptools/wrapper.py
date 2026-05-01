@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import setuptools
 
@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
 from .._compat.typing import TypeVar
+from .build_cmake import WRAPPER_CMAKE_INSTALL_DIR_COMPAT
 
 __all__ = ["setup"]
 
@@ -37,7 +38,6 @@ def setup(
     distclass: type[_DistributionT] = setuptools.Distribution,  # type: ignore[assignment]
     **kw: Any,
 ) -> _DistributionT:
-    assert not cmake_install_dir, "cmake_install_dir not supported yet"
     assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
     assert cmake_process_manifest_hook is None, (
         "cmake_process_manifest_hook not supported yet"
@@ -50,9 +50,22 @@ def setup(
     if cmake_minimum_required_version is not None:
         warnings.warn("Set via pyproject.toml", stacklevel=2)
 
+    distribution_class = cast(
+        "type[_DistributionT]",
+        type(
+            "DistributionClass",
+            (distclass,),
+            {WRAPPER_CMAKE_INSTALL_DIR_COMPAT: True},
+        ),
+    )
+
+    if isinstance(cmake_args, str):
+        msg = "cmake_args must be a list, not a string"
+        raise TypeError(msg)
     return setuptools.setup(
         cmake_source_dir=cmake_source_dir,
-        cmake_args=cmake_args,
-        distclass=distclass,
+        cmake_args=list(cmake_args),
+        cmake_install_dir=cmake_install_dir,
+        distclass=distribution_class,
         **kw,
     )

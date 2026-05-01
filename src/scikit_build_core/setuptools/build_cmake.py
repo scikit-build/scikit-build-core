@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -24,10 +25,13 @@ if TYPE_CHECKING:
 __all__ = [
     "BuildCMake",
     "cmake_args",
+    "cmake_install_dir",
     "cmake_install_target",
     "cmake_source_dir",
     "finalize_distribution_options",
 ]
+
+WRAPPER_CMAKE_INSTALL_DIR_COMPAT = "_scikit_build_wrapper_cmake_install_dir_compat"
 
 
 def __dir__() -> list[str]:
@@ -57,9 +61,53 @@ def get_source_dir_from_pyproject_toml() -> str | None:
         return None
 
 
+def _package_source_dir(dist: Distribution, package: str) -> Path:
+    package_dir = getattr(dist, "package_dir", {}) or {}
+    package_path = Path(*package.split("."))
+    if package in package_dir:
+        return Path(package_dir[package])
+    if "" in package_dir:
+        return Path(package_dir[""]) / package_path
+    return package_path
+
+
+def _package_base_dir(dist: Distribution) -> Path:
+    packages = list(getattr(dist, "packages", None) or [])
+    package_dir = getattr(dist, "package_dir", {}) or {}
+
+    if not packages:
+        return Path(package_dir.get("", ""))
+
+    candidates: list[str] = []
+    for package in packages:
+        package_source_dir = _package_source_dir(dist, package)
+        package_parts = package.split(".")
+        if package_parts == list(package_source_dir.parts[-len(package_parts) :]):
+            base_dir = Path(*package_source_dir.parts[: -len(package_parts)])
+        else:
+            base_dir = package_source_dir.parent
+        candidates.append(str(base_dir))
+
+    common_base = os.path.commonpath(candidates)
+    return Path("" if common_base == "." else common_base)
+
+
+def _translate_wrapper_install_dir(dist: Distribution, install_dir: str) -> Path:
+    translated = Path(install_dir)
+    package_base_dir = _package_base_dir(dist)
+    if not package_base_dir.parts:
+        return translated
+
+    try:
+        return translated.relative_to(package_base_dir)
+    except ValueError:
+        return translated
+
+
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
     cmake_args: list[str] | str | None = None
+    cmake_install_dir: str | None = None
     cmake_install_target: str | None = None
 
     build_lib: str | None
@@ -89,6 +137,7 @@ class BuildCMake(setuptools.Command):
         self.plat_name = None
         self.source_dir = get_source_dir_from_pyproject_toml()
         self.cmake_args = None
+        self.cmake_install_dir = None
         self.cmake_install_target = None
 
     def finalize_options(self) -> None:
@@ -158,9 +207,19 @@ class BuildCMake(setuptools.Command):
 
         builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
 
+        dist_cmake_install_dir = (
+            getattr(self.distribution, "cmake_install_dir", "") or ""
+        )
+        if getattr(dist, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
+            install_subdir = _translate_wrapper_install_dir(
+                dist, dist_cmake_install_dir
+            )
+        else:
+            install_subdir = Path(dist_cmake_install_dir)
+
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
-        install_dir = Path(self.build_lib)
+        install_dir = Path(self.build_lib) / install_subdir
         defines = {"CMAKE_INSTALL_PREFIX": install_dir}
 
         builder.configure(
@@ -249,6 +308,21 @@ def cmake_args(
     _cmake_extension(dist)
     if not isinstance(value, list):
         msg = "cmake_args must be a list"
+        raise setuptools.errors.SetupError(msg)
+
+
+def cmake_install_dir(
+    dist: Distribution, attr: Literal["cmake_install_dir"], value: str
+) -> None:
+    assert attr == "cmake_install_dir"
+    _cmake_extension(dist)
+    if not isinstance(value, str):
+        msg = "cmake_install_dir must be a string"
+        raise setuptools.errors.SetupError(msg)
+    # Reject path traversal and drive components to prevent escaping build_lib
+    p = Path(value)
+    if p.is_absolute() or ".." in p.parts or p.drive:
+        msg = f"cmake_install_dir must be a relative path without '..' components, got: {value!r}"
         raise setuptools.errors.SetupError(msg)
 
 

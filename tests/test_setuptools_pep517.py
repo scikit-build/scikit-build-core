@@ -231,3 +231,48 @@ def test_mixed_wheel(virtualenv, tmp_path: Path):
         "import mixed_setuptools; print(mixed_setuptools.add(1, 2))"
     )
     assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.parametrize("package", ["plugin_setuptools_install_dir"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_plugin_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
+    wheel = (dist / out).resolve()
+    assert wheel.name.startswith("plugin_example-0.0.1-")
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = set(zf.namelist())
+
+    assert "plugin_example/__init__.py" in file_names
+    assert any(name.startswith("plugin_example/_core.") for name in file_names)
+
+    virtualenv.install(wheel)
+
+    add = virtualenv.execute("import plugin_example; print(plugin_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_wrapper_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
+    wheel = (dist / out).resolve()
+    assert wheel.name.startswith("wrapper_example-0.0.1-")
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = set(zf.namelist())
+
+    assert "wrapper_example/__init__.py" in file_names
+    assert "src/wrapper_example/__init__.py" not in file_names
+    assert any(name.startswith("wrapper_example/_core.") for name in file_names)
+
+    virtualenv.install(wheel)
+
+    add = virtualenv.execute("import wrapper_example; print(wrapper_example.add(1, 2))")
+    assert add.strip() == "3"
