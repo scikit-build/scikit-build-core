@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import importlib.metadata
 import tarfile
 import textwrap
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+from conftest import VEnv
 from packaging.version import Version
 
 from scikit_build_core.setuptools import build_meta as setuptools_build_meta
@@ -18,6 +22,39 @@ except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing depende
 pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
 build_editable = getattr(setuptools_build_meta, "build_editable", None)
+
+
+@dataclass(frozen=True)
+class SetuptoolsInstallDirCase:
+    package: str
+    module: str
+    wheel_prefix: str
+    editable_dir: Path
+    wheel_missing: str | None = None
+
+
+SETUPTOOLS_INSTALL_DIR_CASES = [
+    SetuptoolsInstallDirCase(
+        package="plugin_setuptools_install_dir",
+        module="plugin_example",
+        wheel_prefix="plugin_example",
+        editable_dir=Path("src/plugin_example"),
+    ),
+    SetuptoolsInstallDirCase(
+        package="wrapper_setuptools_install_dir",
+        module="wrapper_example",
+        wheel_prefix="wrapper_example",
+        editable_dir=Path("src/wrapper_example"),
+        wheel_missing="src/wrapper_example/__init__.py",
+    ),
+]
+
+SETUPTOOLS_INSTALL_DIR_CASE_IDS = ["plugin", "wrapper"]
+
+
+def _assert_extension_import(venv: VEnv, module: str) -> None:
+    add = venv.execute(f"import {module}; print({module}.add(1, 2))")
+    assert add.strip() == "3"
 
 
 @pytest.fixture(autouse=True)
@@ -277,24 +314,34 @@ def test_mixed_wheel(virtualenv, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
-@pytest.mark.parametrize("package", ["plugin_setuptools_install_dir"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
-def test_plugin_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
+@pytest.mark.parametrize(
+    ("package", "case"),
+    [(case.package, case) for case in SETUPTOOLS_INSTALL_DIR_CASES],
+    indirect=["package"],
+    ids=SETUPTOOLS_INSTALL_DIR_CASE_IDS,
+)
+@pytest.mark.usefixtures("pybind11")
+def test_cmake_install_dir_wheel(
+    package, case: SetuptoolsInstallDirCase, tmp_path: Path
+):
+    assert package.name == case.package
+
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
     wheel = (dist / out).resolve()
-    assert wheel.name.startswith("plugin_example-0.0.1-")
+    assert wheel.name.startswith(f"{case.wheel_prefix}-0.0.1-")
 
     with zipfile.ZipFile(wheel) as zf:
         file_names = set(zf.namelist())
 
-    assert "plugin_example/__init__.py" in file_names
-    assert any(name.startswith("plugin_example/_core.") for name in file_names)
+    assert f"{case.module}/__init__.py" in file_names
+    assert any(name.startswith(f"{case.module}/_core.") for name in file_names)
+    if case.wheel_missing is not None:
+        assert case.wheel_missing not in file_names
 
-    virtualenv.install(wheel)
-
-    add = virtualenv.execute("import plugin_example; print(plugin_example.add(1, 2))")
-    assert add.strip() == "3"
+    venv = VEnv(tmp_path / "wheel-venv")
+    venv.install(str(wheel))
+    _assert_extension_import(venv, case.module)
 
 
 @pytest.mark.compile
@@ -302,69 +349,29 @@ def test_plugin_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.skipif(
     build_editable is None, reason="Requires setuptools editable support"
 )
-@pytest.mark.parametrize("package", ["plugin_setuptools_install_dir"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
-def test_plugin_cmake_install_dir_editable(virtualenv, tmp_path: Path):
-    assert build_editable is not None
-    dist = tmp_path / "dist"
-    out = build_editable(str(dist))
-    wheel = (dist / out).resolve()
-    assert wheel.name.startswith("plugin_example-0.0.1-0.editable-")
-
-    virtualenv.install(wheel)
-
-    module_dir = virtualenv.execute(
-        "import pathlib, plugin_example; print(pathlib.Path(plugin_example.__file__).resolve().parent)"
-    )
-    assert Path(module_dir) == Path("src/plugin_example").resolve()
-
-    add = virtualenv.execute("import plugin_example; print(plugin_example.add(1, 2))")
-    assert add.strip() == "3"
-
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
-def test_wrapper_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
-    dist = tmp_path / "dist"
-    out = build_wheel(str(dist))
-    wheel = (dist / out).resolve()
-    assert wheel.name.startswith("wrapper_example-0.0.1-")
-
-    with zipfile.ZipFile(wheel) as zf:
-        file_names = set(zf.namelist())
-
-    assert "wrapper_example/__init__.py" in file_names
-    assert "src/wrapper_example/__init__.py" not in file_names
-    assert any(name.startswith("wrapper_example/_core.") for name in file_names)
-
-    virtualenv.install(wheel)
-
-    add = virtualenv.execute("import wrapper_example; print(wrapper_example.add(1, 2))")
-    assert add.strip() == "3"
-
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.skipif(
-    build_editable is None, reason="Requires setuptools editable support"
+@pytest.mark.parametrize(
+    ("package", "case"),
+    [(case.package, case) for case in SETUPTOOLS_INSTALL_DIR_CASES],
+    indirect=["package"],
+    ids=SETUPTOOLS_INSTALL_DIR_CASE_IDS,
 )
-@pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
-def test_wrapper_cmake_install_dir_editable(virtualenv, tmp_path: Path):
+@pytest.mark.usefixtures("pybind11")
+def test_cmake_install_dir_editable(
+    package, case: SetuptoolsInstallDirCase, tmp_path: Path
+):
     assert build_editable is not None
+    assert package.name == case.package
+
     dist = tmp_path / "dist"
     out = build_editable(str(dist))
     wheel = (dist / out).resolve()
-    assert wheel.name.startswith("wrapper_example-0.0.1-0.editable-")
+    assert wheel.name.startswith(f"{case.wheel_prefix}-0.0.1-0.editable-")
 
-    virtualenv.install(wheel)
+    venv = VEnv(tmp_path / "editable-venv")
+    venv.install(wheel)
 
-    module_dir = virtualenv.execute(
-        "import pathlib, wrapper_example; print(pathlib.Path(wrapper_example.__file__).resolve().parent)"
+    module_dir = venv.execute(
+        f"import pathlib, {case.module}; print(pathlib.Path({case.module}.__file__).resolve().parent)"
     )
-    assert Path(module_dir) == Path("src/wrapper_example").resolve()
-
-    add = virtualenv.execute("import wrapper_example; print(wrapper_example.add(1, 2))")
-    assert add.strip() == "3"
+    assert Path(module_dir) == (package.workdir / case.editable_dir).resolve()
+    _assert_extension_import(venv, case.module)

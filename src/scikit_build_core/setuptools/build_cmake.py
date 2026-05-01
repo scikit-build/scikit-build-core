@@ -176,7 +176,9 @@ class BuildCMake(setuptools.Command):
         )
 
     def _get_install_subdir(self) -> Path:
-        dist_cmake_install_dir = getattr(self.distribution, "cmake_install_dir", "") or ""
+        dist_cmake_install_dir = (
+            getattr(self.distribution, "cmake_install_dir", "") or ""
+        )
         if getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
             return _translate_wrapper_install_dir(
                 self.distribution, dist_cmake_install_dir
