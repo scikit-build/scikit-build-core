@@ -9,16 +9,16 @@ from scikit_build_core.build import build_sdist
 
 
 @pytest.fixture
-def can_symlink() -> None:
+def can_symlink(tmp_path: Path) -> None:
     """Skip the test if symlinks are not supported on this OS."""
+    target = tmp_path / "target"
+    target.touch()
     try:
-        Path("_symlink_check").symlink_to("_symlink_check_target")
+        tmp_path.joinpath("link").symlink_to(target)
     except OSError:
         pytest.skip(
             "Creating symlinks is not supported/allowed on this OS without privileges"
         )
-    else:
-        Path("_symlink_check").unlink(missing_ok=True)
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
