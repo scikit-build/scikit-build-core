@@ -55,6 +55,15 @@ wheels = [
 wheel-free-setuptools = [
     'setuptools>=70.1; python_version>="3.8"',
 ]
+setuptools = [
+    'setuptools >=43; python_version<"3.9"',
+    'setuptools >=45; python_version=="3.9"',
+    'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
+    'setuptools >=66.1; python_version>="3.12"',
+]
+hatchling = [
+    "hatchling >=1.24",
+]
 
 [project.urls]
 Changelog = "https://scikit-build-core.readthedocs.io/en/latest/changelog.html"

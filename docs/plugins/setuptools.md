@@ -5,8 +5,10 @@ enable scikit-build-core to be the build backend for scikit-build (classic).
 
 :::{warning}
 
-This plugin is experimental, and will probably be moved to a separate package.
-If using it, it is probably best to upper-cap scikit-build-core until it moves.
+Use the `[setuptools]` extra when using this plugin. It will ensure a proper
+version of setuptools, and will help protect you if the plugin moves to a
+separate package in the future. Use this even if you set a higher minimum
+version of setuptools (recommended!).
 
 :::
 

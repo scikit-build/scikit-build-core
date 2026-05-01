@@ -5,9 +5,9 @@ currently in a highly experimental state, but feedback is welcome.
 
 :::{warning}
 
-This plugin is experimental, and will probably be moved to a separate package.
-If using it, it is highly recommended to upper-cap scikit-build-core until it
-moves.
+Use the `[hatchling]` extra when using this plugin. It will ensure a proper
+version of hatchling, and will help protect you if the plugin moves to a
+separate package in the future.
 
 :::
 
