@@ -175,15 +175,24 @@ class BuildCMake(setuptools.Command):
             getattr(build_ext, "editable_mode", getattr(build_ext, "inplace", False))
         )
 
+    def _get_install_subdir(self) -> Path:
+        dist_cmake_install_dir = getattr(self.distribution, "cmake_install_dir", "") or ""
+        if getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
+            return _translate_wrapper_install_dir(
+                self.distribution, dist_cmake_install_dir
+            )
+        return Path(dist_cmake_install_dir)
+
     def _get_install_dir(self) -> Path:
         assert self.build_lib is not None
+        install_subdir = self._get_install_subdir()
 
         if not self.editable_mode:
-            return Path(self.build_lib).resolve()
+            return Path(self.build_lib).resolve() / install_subdir
 
         package_dir = getattr(self.distribution, "package_dir", {}) or {}
         source_root = package_dir.get("", ".")
-        return Path(source_root).resolve()
+        return Path(source_root).resolve() / install_subdir
 
     def _record_installed_files(self, build_dir: Path, install_dir: Path) -> None:
         manifest = build_dir / "install_manifest.txt"
@@ -253,22 +262,9 @@ class BuildCMake(setuptools.Command):
 
         builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
 
-        if self.editable_mode:
-            install_dir = self._get_install_dir()
-        else:
-            dist_cmake_install_dir = (
-                getattr(self.distribution, "cmake_install_dir", "") or ""
-            )
-            if getattr(dist, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
-                install_subdir = _translate_wrapper_install_dir(
-                    dist, dist_cmake_install_dir
-                )
-            else:
-                install_subdir = Path(dist_cmake_install_dir)
-
-            # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
-            # Otherwise `cmake --install --prefix` would work by itself
-            install_dir = Path(self.build_lib) / install_subdir
+        # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
+        # Otherwise `cmake --install --prefix` would work by itself
+        install_dir = self._get_install_dir()
         defines = {"CMAKE_INSTALL_PREFIX": install_dir}
 
         builder.configure(

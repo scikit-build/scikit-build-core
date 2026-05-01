@@ -5,3 +5,6 @@ requires = [
     "pybind11",
 ]
 build-backend = "scikit_build_core.setuptools.build_meta"
+
+[tool.scikit-build]
+editable.mode = "inplace"

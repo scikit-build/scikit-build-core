@@ -299,6 +299,31 @@ def test_plugin_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.parametrize("package", ["plugin_setuptools_install_dir"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_plugin_cmake_install_dir_editable(virtualenv, tmp_path: Path):
+    assert build_editable is not None
+    dist = tmp_path / "dist"
+    out = build_editable(str(dist))
+    wheel = (dist / out).resolve()
+    assert wheel.name.startswith("plugin_example-0.0.1-0.editable-")
+
+    virtualenv.install(wheel)
+
+    module_dir = virtualenv.execute(
+        "import pathlib, plugin_example; print(pathlib.Path(plugin_example.__file__).resolve().parent)"
+    )
+    assert Path(module_dir) == Path("src/plugin_example").resolve()
+
+    add = virtualenv.execute("import plugin_example; print(plugin_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
 @pytest.mark.usefixtures("package", "pybind11")
 def test_wrapper_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
@@ -315,6 +340,31 @@ def test_wrapper_cmake_install_dir_wheel(virtualenv, tmp_path: Path):
     assert any(name.startswith("wrapper_example/_core.") for name in file_names)
 
     virtualenv.install(wheel)
+
+    add = virtualenv.execute("import wrapper_example; print(wrapper_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_wrapper_cmake_install_dir_editable(virtualenv, tmp_path: Path):
+    assert build_editable is not None
+    dist = tmp_path / "dist"
+    out = build_editable(str(dist))
+    wheel = (dist / out).resolve()
+    assert wheel.name.startswith("wrapper_example-0.0.1-0.editable-")
+
+    virtualenv.install(wheel)
+
+    module_dir = virtualenv.execute(
+        "import pathlib, wrapper_example; print(pathlib.Path(wrapper_example.__file__).resolve().parent)"
+    )
+    assert Path(module_dir) == Path("src/wrapper_example").resolve()
 
     add = virtualenv.execute("import wrapper_example; print(wrapper_example.add(1, 2))")
     assert add.strip() == "3"
