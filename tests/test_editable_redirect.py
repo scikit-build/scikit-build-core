@@ -91,7 +91,9 @@ def test_editable_redirect_pxd():
             "pkg.pyx_subpkg.module": "/source/pkg/pyx_subpkg/module.py",
         }
     )
-    known_wheel_files = process_dict({"pkg.cython_subpkg.compiled": "pkg/cython_subpkg/compiled.abi3.so"})
+    known_wheel_files = process_dict(
+        {"pkg.cython_subpkg.compiled": "pkg/cython_subpkg/compiled.abi3.so"}
+    )
 
     finder = ScikitBuildRedirectingFinder(
         known_source_files=known_source_files,
@@ -121,6 +123,7 @@ def test_editable_redirect_pxd():
     assert not any("pyx_subpkg" in p for p in pkg_paths), (
         f"pkg.__path__ is polluted with pyx_subpkg: {pkg_paths}"
     )
+
 
 def test_mapping_to_modules_prefers_py():
     """Test that mapping_to_modules prefers __init__.py over __init__.pxd."""
