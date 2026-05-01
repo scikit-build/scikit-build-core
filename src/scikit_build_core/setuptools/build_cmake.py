@@ -319,8 +319,10 @@ def cmake_install_dir(
     if not isinstance(value, str):
         msg = "cmake_install_dir must be a string"
         raise setuptools.errors.SetupError(msg)
-    if Path(value).is_absolute():
-        msg = "cmake_install_dir must be a relative path"
+    # Reject path traversal and drive components to prevent escaping build_lib
+    p = Path(value)
+    if p.is_absolute() or ".." in p.parts or p.drive:
+        msg = f"cmake_install_dir must be a relative path without '..' components, got: {value!r}"
         raise setuptools.errors.SetupError(msg)
 
 

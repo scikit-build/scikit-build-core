@@ -59,6 +59,9 @@ def setup(
         ),
     )
 
+    if isinstance(cmake_args, str):
+        msg = "cmake_args must be a list, not a string"
+        raise TypeError(msg)
     return setuptools.setup(
         cmake_source_dir=cmake_source_dir,
         cmake_args=list(cmake_args),
