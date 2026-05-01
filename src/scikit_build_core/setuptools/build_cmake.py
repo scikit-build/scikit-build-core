@@ -11,7 +11,9 @@ import setuptools
 from packaging.version import Version
 
 from .._compat import tomllib
-from .._compat.setuptools.errors import SetupError
+
+from .._compat.setuptools_errors import SetupError
+
 from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
@@ -153,7 +155,7 @@ def _read_cmake_install_manifests(
                     "CMake-installed files must stay within the setuptools build "
                     f"directory, got: {installed_path}"
                 )
-                raise setuptools.errors.SetupError(msg) from None
+                raise SetupError(msg) from None
 
             files.append(relpath.as_posix())
 
@@ -169,7 +171,7 @@ def _process_manifest(
 
     if not callable(process_manifest):
         msg = "cmake_process_manifest_hook must be callable"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
     processed_manifest = process_manifest(cmake_manifest)
     if processed_manifest is None or isinstance(processed_manifest, (str, bytes)):
@@ -177,20 +179,20 @@ def _process_manifest(
             "cmake_process_manifest_hook must return an iterable of manifest paths, "
             f"got {type(processed_manifest).__name__}"
         )
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
     if not isinstance(processed_manifest, Iterable):
         msg = (
             "cmake_process_manifest_hook must return an iterable of manifest paths, "
             f"got {type(processed_manifest).__name__}"
         )
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
     processed_list: list[str] = []
     for path in processed_manifest:
         if not isinstance(path, str):
             msg = "cmake_process_manifest_hook must return manifest paths as strings"
-            raise setuptools.errors.SetupError(msg)
+            raise SetupError(msg)
         processed_list.append(path)
 
     invalid_paths = sorted(set(processed_list) - set(cmake_manifest))
@@ -199,7 +201,7 @@ def _process_manifest(
             "cmake_process_manifest_hook must return a subset of installed files, "
             f"got unexpected path: {invalid_paths[0]}"
         )
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
     return processed_list
 
@@ -554,3 +556,15 @@ def cmake_with_sdist(
     if value:
         msg = "cmake_with_sdist must not be set to True"
         raise setuptools.errors.SetupError(msg)
+
+
+def cmake_process_manifest_hook(
+    dist: Distribution,
+    attr: Literal["cmake_process_manifest_hook"],
+    value: Callable[[list[str]], list[str]] | None,
+) -> None:
+    assert attr == "cmake_process_manifest_hook"
+    _cmake_extension(dist)
+    if value is not None and not callable(value):
+        msg = "cmake_process_manifest_hook must be callable"
+        raise SetupError(msg)

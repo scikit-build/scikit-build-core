@@ -14,6 +14,7 @@ import setuptools.errors
 from conftest import VEnv
 from packaging.version import Version
 
+from scikit_build_core._compat.setuptools_errors import SetupError
 from scikit_build_core.setuptools import build_cmake, build_meta as setuptools_build_meta, wrapper
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
@@ -414,7 +415,7 @@ def test_manifest_hook_wheel(virtualenv, tmp_path: Path):
 
 def test_manifest_hook_must_be_callable():
     with pytest.raises(
-        setuptools.errors.SetupError,
+        SetupError,
         match="cmake_process_manifest_hook must be callable",
     ):
         build_cmake.cmake_process_manifest_hook(
