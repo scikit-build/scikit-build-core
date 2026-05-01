@@ -12,7 +12,7 @@ from packaging.version import Version
 
 from .._compat import tomllib
 
-from .._compat.setuptools_errors import SetupError
+from .._compat.setuptools.errors import SetupError
 
 from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs

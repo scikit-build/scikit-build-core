@@ -14,8 +14,9 @@ import setuptools.errors
 from conftest import VEnv
 from packaging.version import Version
 
-from scikit_build_core._compat.setuptools_errors import SetupError
-from scikit_build_core.setuptools import build_cmake, build_meta as setuptools_build_meta, wrapper
+from scikit_build_core._compat.setuptools.errors import SetupError
+from scikit_build_core.setuptools import build_cmake, wrapper
+from scikit_build_core.setuptools import build_meta as setuptools_build_meta
 from scikit_build_core.setuptools.build_meta import build_sdist, build_wheel
 
 try:
