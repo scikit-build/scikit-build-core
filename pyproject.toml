@@ -337,6 +337,7 @@ docstring-code-format = true
 "importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
+"setuptools.errors".msg = "Use scikit_build_core._compat.setuptools.errors instead."
 
 
 [tool.ruff.lint.per-file-ignores]
