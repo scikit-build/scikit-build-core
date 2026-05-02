@@ -167,13 +167,13 @@ def _process_manifest(
     process_manifest: Callable[[list[str]], object] | None,
 ) -> list[str]:
     if process_manifest is None:
-        return cmake_manifest
+        return list(cmake_manifest)
 
     if not callable(process_manifest):
         msg = "cmake_process_manifest_hook must be callable"
         raise SetupError(msg)
 
-    processed_manifest = process_manifest(cmake_manifest)
+    processed_manifest = process_manifest(list(cmake_manifest))
     if processed_manifest is None or isinstance(processed_manifest, (str, bytes)):
         msg = (
             "cmake_process_manifest_hook must return an iterable of manifest paths, "
@@ -207,11 +207,11 @@ def _process_manifest(
 
 
 def _remove_empty_parents(path: Path, root: Path) -> None:
-    for parent in path.parents:
-        if parent == root:
+    for candidate in [path.parent, *path.parent.parents]:
+        if candidate == root:
             break
         try:
-            parent.rmdir()
+            candidate.rmdir()
         except OSError:
             break
 
@@ -228,7 +228,7 @@ def _prune_manifest(
             continue
 
         path.unlink()
-        _remove_empty_parents(path.parent, install_dir)
+        _remove_empty_parents(path, install_dir)
 
 
 class BuildCMake(setuptools.Command):
@@ -314,9 +314,17 @@ class BuildCMake(setuptools.Command):
         source_root = package_dir.get("", ".")
         return Path(source_root).resolve() / install_subdir
 
-    def _record_installed_files(self, build_dir: Path, install_dir: Path) -> None:
-        manifest = build_dir / "install_manifest.txt"
+    def _record_installed_files(
+        self, build_dir: Path, install_dir: Path, manifest_files: list[str] | None = None
+    ) -> None:
         self._editable_install_dir = install_dir
+        if manifest_files is not None:
+            self._installed_files = [
+                (install_dir / Path(line)).resolve() for line in manifest_files if line
+            ]
+            return
+
+        manifest = build_dir / "install_manifest.txt"
         if not manifest.is_file():
             self._installed_files = []
             return
@@ -407,7 +415,6 @@ class BuildCMake(setuptools.Command):
 
         builder.build(build_args=build_args)
         builder.install(install_dir=install_dir)
-        self._record_installed_files(build_temp, install_dir)
 
         cmake_manifest = _read_cmake_install_manifests(build_temp, install_dir)
         if cmake_manifest is None:
@@ -417,6 +424,7 @@ class BuildCMake(setuptools.Command):
         process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
         processed_manifest = _process_manifest(cmake_manifest, process_manifest)
         _prune_manifest(install_dir, cmake_manifest, processed_manifest)
+        self._record_installed_files(build_temp, install_dir, processed_manifest)
 
     def get_outputs(self) -> list[str]:
         if self.editable_mode:

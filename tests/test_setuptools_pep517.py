@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 import setuptools
-import setuptools.errors
 from conftest import VEnv
 from packaging.version import Version
 
@@ -394,6 +393,7 @@ def test_cmake_install_dir_editable(
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.broken_on_urct
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 @pytest.mark.usefixtures("package", "pybind11")
 def test_manifest_hook_wheel(virtualenv, tmp_path: Path):

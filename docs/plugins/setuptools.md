@@ -44,7 +44,7 @@ setuptools plugin that it can activate for this package.
 These are the currently supported `setup.py` options:
 
 - `cmake_source_dir`: The location of your `CMakeLists.txt`. Required.
-- `cmake_args`: Arguments to include when configuring. <<<<<<< HEAD
+- `cmake_args`: Arguments to include when configuring.
 - `cmake_install_dir`: Supported. In direct setuptools-plugin usage, this is
   interpreted relative to setuptools' `build_lib` staging directory. When using
   `scikit_build_core.setuptools.wrapper.setup`, the value follows classic
@@ -52,7 +52,8 @@ These are the currently supported `setup.py` options:
   like `src` continue to work there.
 - `cmake_process_manifest_hook`: A callable that receives the list of files
   installed by CMake, relative to the setuptools build root, and returns the
-  subset that should be kept in the wheel.
+  subset that should be kept. For editable installs the omitted files are
+  removed from the source tree.
 
 These options from scikit-build (classic) are not currently supported:
 `cmake_with_sdist` and `cmake_install_target`. `cmake_languages` has no effect.
