@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from scikit_build_core.setuptools import build_meta as setuptools_build_meta
+
 pytestmark = pytest.mark.setuptools
+build_editable = getattr(setuptools_build_meta, "build_editable", None)
 
 
 # TODO: work out why this fails on Cygwin
@@ -60,6 +63,39 @@ def test_pep518_wheel(isolated, tmp_path: Path):
 @pytest.mark.usefixtures("package", "pybind11")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")
+
+    version = isolated.execute(
+        "import cmake_example; print(cmake_example.__version__)",
+    )
+    assert version == "0.0.1"
+
+    add = isolated.execute(
+        "import cmake_example; print(cmake_example.add(1, 2))",
+    )
+    assert add == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.broken_on_urct
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
+)
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_pep518_pip_editable(isolated):
+    isolated.install("-v", "-e", ".")
+
+    module_dir = isolated.execute(
+        "import pathlib, cmake_example; print(pathlib.Path(cmake_example.__file__).resolve().parent)"
+    )
+    assert Path(module_dir) == Path("src").resolve()
 
     version = isolated.execute(
         "import cmake_example; print(cmake_example.__version__)",

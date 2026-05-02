@@ -71,7 +71,7 @@ repos:
         files: ^(src|tests|noxfile.py)
         args: []
         additional_dependencies:
-          - build
+          - build<1.5 # Requires Python 3.10+
           - cattrs<26.1 # Requires Python 3.10+
           - cmake
           - exceptiongroup

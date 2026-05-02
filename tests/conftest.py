@@ -14,10 +14,14 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, Literal, overload
 
+import download_wheels
 import packaging.tags
 import packaging.utils
+import pytest
 import virtualenv as _virtualenv
 from filelock import FileLock
+from packaging.requirements import Requirement
+from packaging.version import Version
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -28,12 +32,6 @@ if sys.version_info < (3, 10):
     from typing_extensions import TypeGuard
 else:
     from typing import TypeGuard
-
-
-import download_wheels
-import pytest
-from packaging.requirements import Requirement
-from packaging.version import Version
 
 DIR = Path(__file__).parent.resolve()
 BASE = DIR.parent
@@ -348,10 +346,6 @@ def isolate(request: pytest.FixtureRequest, isolated: VEnv) -> Isolate:
     )
 
 
-def is_editable_mode(maybe_mode: str) -> TypeGuard[Literal["redirect", "inplace"]]:
-    return maybe_mode in {"redirect", "inplace"}
-
-
 @dataclasses.dataclass(frozen=True)
 class Editable:
     mode: Literal["redirect", "inplace"] | None
@@ -362,6 +356,12 @@ class Editable:
         if not self.mode:
             return self.config_settings
         return [*self.config_settings, "-e"]
+
+
+def is_editable_mode(
+    maybe_mode: str | None,
+) -> TypeGuard[Literal["redirect", "inplace"]]:
+    return maybe_mode in {"redirect", "inplace"}
 
 
 @pytest.fixture(params=[pytest.param(None, id="not_editable"), "redirect", "inplace"])

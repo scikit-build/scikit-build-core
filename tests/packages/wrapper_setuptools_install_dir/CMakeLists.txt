@@ -9,4 +9,4 @@ pybind11_add_module(_core src/main.cpp)
 
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
-install(TARGETS _core LIBRARY DESTINATION wrapper_example)
+install(TARGETS _core LIBRARY DESTINATION .)
