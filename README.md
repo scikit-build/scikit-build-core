@@ -202,6 +202,9 @@ sdist.reproducible = true
 # If set to True, CMake will be run before building the SDist.
 sdist.cmake = false
 
+# Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
+sdist.resolve-symlinks = true
+
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 

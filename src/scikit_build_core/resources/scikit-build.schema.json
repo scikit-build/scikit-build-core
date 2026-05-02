@@ -189,6 +189,10 @@
           "type": "boolean",
           "default": false,
           "description": "If set to True, CMake will be run before building the SDist."
+        },
+        "resolve-symlinks": {
+          "type": "boolean",
+          "description": "Resolve symlinks in the SDist, copying file contents instead of storing symlinks."
         }
       }
     },
