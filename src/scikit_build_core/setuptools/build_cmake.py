@@ -11,9 +11,7 @@ import setuptools
 from packaging.version import Version
 
 from .._compat import tomllib
-
 from .._compat.setuptools.errors import SetupError
-
 from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
@@ -315,7 +313,10 @@ class BuildCMake(setuptools.Command):
         return Path(source_root).resolve() / install_subdir
 
     def _record_installed_files(
-        self, build_dir: Path, install_dir: Path, manifest_files: list[str] | None = None
+        self,
+        build_dir: Path,
+        install_dir: Path,
+        manifest_files: list[str] | None = None,
     ) -> None:
         self._editable_install_dir = install_dir
         if manifest_files is not None:
@@ -563,7 +564,7 @@ def cmake_with_sdist(
     assert attr == "cmake_with_sdist"
     if value:
         msg = "cmake_with_sdist must not be set to True"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
 
 def cmake_process_manifest_hook(
