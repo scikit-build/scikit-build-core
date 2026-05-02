@@ -414,3 +414,14 @@ def cmake_install_target(
     _cmake_extension(dist)
     msg = "cmake_install_target is not supported - please use components and build targets instead"
     raise setuptools.errors.SetupError(msg)
+
+
+def cmake_with_sdist(
+    _dist: Distribution,
+    attr: Literal["cmake_with_sdist"],
+    value: bool,  # noqa: FBT001
+) -> None:
+    assert attr == "cmake_with_sdist"
+    if value:
+        msg = "cmake_with_sdist must not be set to True"
+        raise setuptools.errors.SetupError(msg)

@@ -38,7 +38,6 @@ def setup(
     distclass: type[_DistributionT] = setuptools.Distribution,  # type: ignore[assignment]
     **kw: Any,
 ) -> _DistributionT:
-    assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
     assert cmake_process_manifest_hook is None, (
         "cmake_process_manifest_hook not supported yet"
     )
@@ -62,8 +61,10 @@ def setup(
     if isinstance(cmake_args, str):
         msg = "cmake_args must be a list, not a string"
         raise TypeError(msg)
+
     return setuptools.setup(
         cmake_source_dir=cmake_source_dir,
+        cmake_with_sdist=cmake_with_sdist,
         cmake_args=list(cmake_args),
         cmake_install_dir=cmake_install_dir,
         distclass=distribution_class,

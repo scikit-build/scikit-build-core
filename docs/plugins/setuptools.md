@@ -52,7 +52,8 @@ These are the currently supported `setup.py` options:
   like `src` continue to work there.
 
 These options from scikit-build (classic) are not currently supported:
-`cmake_with_sdist`, `cmake_process_manifest_hook`, and `cmake_install_target`.
+`cmake_process_manifest_hook` and `cmake_install_target`. Setting
+`cmake_with_sdist` to `True` will raise an error as it is not supported.
 `cmake_languages` has no effect. And `cmake_minimum_required_version` is now
 specified via `pyproject.toml` config, so has no effect here.
 
