@@ -137,13 +137,16 @@ def _handle_move(
 
 def _validate_overrides(
     settings: ScikitBuildSettings,
+    static_settings: ScikitBuildSettings,
     overrides: dict[str, OverrideRecord],
+    config_setting_keys: set[str],
 ) -> None:
     """Validate all fields with any override information."""
 
     def validate_field(
         field: dataclasses.Field[Any],
         value: Any,
+        static_value: Any,
         prefix: str = "",
         record: OverrideRecord | None = None,
     ) -> None:
@@ -151,8 +154,11 @@ def _validate_overrides(
         # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
         if field.metadata.get("override_only", False):
-            original_value = record.original_value if record else value
-            if original_value is not None:
+            full_key = f"{prefix}{conf_key}"
+            original_value = record.original_value if record else static_value
+            if original_value is not None or (
+                value is not None and full_key not in config_setting_keys
+            ):
                 msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
                 if settings.strict_config:
                     sys.stdout.flush()
@@ -162,6 +168,7 @@ def _validate_overrides(
 
     def validate_field_recursive(
         obj: Any,
+        static_obj: Any,
         record: OverrideRecord | None = None,
         prefix: str = "",
     ) -> None:
@@ -170,20 +177,25 @@ def _validate_overrides(
             conf_key = field.name.replace("_", "-")
             closest_record = overrides.get(f"{prefix}{conf_key}", record)
             value = getattr(obj, field.name)
+            static_value = getattr(static_obj, field.name)
             # Do the validation of the current field
             validate_field(
                 field=field,
                 value=value,
+                static_value=static_value,
                 prefix=prefix,
                 record=closest_record,
             )
             if dataclasses.is_dataclass(value):
                 validate_field_recursive(
-                    obj=value, record=closest_record, prefix=f"{prefix}{conf_key}."
+                    obj=value,
+                    static_obj=static_value,
+                    record=closest_record,
+                    prefix=f"{prefix}{conf_key}.",
                 )
 
     # Navigate all fields starting from the top-level
-    validate_field_recursive(obj=settings)
+    validate_field_recursive(obj=settings, static_obj=static_settings)
 
 
 class SettingsReader:
@@ -250,6 +262,9 @@ class SettingsReader:
         remaining = {
             k: v for k, v in config_settings.items() if not k.startswith("skbuild.")
         }
+        self.config_setting_keys = {
+            k[8:] if k.startswith("skbuild.") else k for k in config_settings
+        }
         self.sources = SourceChain(
             EnvSource("SKBUILD", env=env),
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
@@ -259,7 +274,7 @@ class SettingsReader:
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
 
-        static_settings = SourceChain(
+        self.static_settings = SourceChain(
             *toml_srcs, prefixes=["tool", "scikit-build"]
         ).convert_target(ScikitBuildSettings)
 
@@ -350,8 +365,8 @@ class SettingsReader:
             self.settings.build.verbose,
             self.settings.minimum_version,
             Version("0.10"),
-            static=static_settings.cmake.verbose == self.settings.cmake.verbose
-            and static_settings.build.verbose == self.settings.build.verbose,
+            static=self.static_settings.cmake.verbose == self.settings.cmake.verbose
+            and self.static_settings.build.verbose == self.settings.build.verbose,
         )
         self.settings.build.targets = _handle_move(
             "cmake.targets",
@@ -360,8 +375,8 @@ class SettingsReader:
             self.settings.build.targets,
             self.settings.minimum_version,
             Version("0.10"),
-            static=static_settings.cmake.targets == self.settings.cmake.targets
-            and static_settings.build.targets == self.settings.build.targets,
+            static=self.static_settings.cmake.targets == self.settings.cmake.targets
+            and self.static_settings.build.targets == self.settings.build.targets,
         )
 
         if self.settings.sdist.inclusion_mode is not None:
@@ -421,7 +436,12 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
-        _validate_overrides(self.settings, self.overridden_items)
+        _validate_overrides(
+            self.settings,
+            self.static_settings,
+            self.overridden_items,
+            self.config_setting_keys,
+        )
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:
