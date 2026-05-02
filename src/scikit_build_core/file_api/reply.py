@@ -8,11 +8,18 @@ from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID2
 
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import get_args, get_origin
+from ..utils.typing import (
+    get_target_raw_type,
+    is_union_type,
+    process_union,
+)
+from .model._common import ObjectKind, ObjectKindSubType
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.directory import Directory
 from .model.index import Index
+from .model.toolchains import Toolchains
 
 __all__ = ["load_reply_dir"]
 
@@ -50,8 +57,9 @@ class Converter:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
+        # TODO: remove this special handling once everything is registered in `ObjectKind`
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles, Directory}
+            target in {CodeModel, Target, Cache, CMakeFiles, Directory, Toolchains}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
@@ -62,9 +70,7 @@ class Converter:
 
         # We don't have DataclassInstance exposed in typing yet
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
-            json_field = field.name.replace("_v", "-v").replace(
-                "cmakefiles", "cmakeFiles"
-            )
+            json_field = field.name.replace("_v", "-v")
             if json_field in data:
                 field_type = field.type
                 try:
@@ -87,23 +93,69 @@ class Converter:
 
         return target(**input_dict)
 
+    def _convert_object_kind(
+        self, data: Any, target: Union[type[Any], None] = None
+    ) -> Any:
+        """
+        Special handling for ``ObjectKind`` types:
+          * this gets the data from the file defined in ``jsonFile`` field instead
+          * the actual type to use is defined in the ``kind``, ``version``
+        """
+        assert isinstance(data, dict)
+        index_kind = data.pop("kind", None)
+        index_version = data.pop("version", None)
+        json_file = data.pop("jsonFile")
+        with self.base_dir.joinpath(json_file).open(encoding="utf-8") as f:
+            actual_data = json.load(f)
+        kind = actual_data.pop("kind", None)
+        version = actual_data.pop("version", None)
+        if not (kind == index_kind and version == index_version):
+            msg = f"Indexed object kind ({index_kind},{index_version}) does not match actual one ({kind},{version}) from {json_file}"
+            raise ValueError(msg)
+        if kind and version:
+            target = ObjectKind.get_object_kind(kind=index_kind, version=index_version)
+        assert target is not None
+        return self.make_class(actual_data, target)
+
     @typing.overload
     def _convert_any(self, item: Any, target: Type[T]) -> T: ...
     @typing.overload
     def _convert_any(self, item: Any, target: Any) -> Any: ...
 
     def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
+        target = process_union(target)
+        if isinstance(target, type) and issubclass(
+            target, (ObjectKind, ObjectKindSubType)
+        ):
+            # Special handling for ObjectKind, see inner comment
+            return self._convert_object_kind(item, target)
         if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)
-        origin = get_origin(target)
-        if origin is not None:
-            if origin is list:
-                return [self._convert_any(i, get_args(target)[0]) for i in item]
-            if origin is Union:
-                return self._convert_any(item, get_args(target)[0])
+        raw_target = get_target_raw_type(target)
+        # For generic Unions we try each type on at a time
+        if is_union_type(raw_target):
+            if all(
+                isinstance(t, type) and issubclass(t, ObjectKind)
+                for t in get_args(target)
+            ):
+                # Special handling for ObjectKind, see inner comment
+                # No need to handle ObjectKindSubType these are versioned-locked to the parent
+                return self._convert_object_kind(item)
+            last_err: Exception = AssertionError("Failed for unknown reason")
+            for maybe_target in get_args(target):
+                try:
+                    return self._convert_any(item, maybe_target)
+                except ExceptionGroup as err:  # noqa: PERF203
+                    last_err = err
+                    continue
+            raise last_err
 
-        return target(item)  # type: ignore[call-arg]
+        origin = get_origin(target)
+        if origin is not None and origin is list:
+            return [self._convert_any(i, get_args(target)[0]) for i in item]
+
+        return target(item)
 
 
 def load_reply_dir(path: Path) -> Index:

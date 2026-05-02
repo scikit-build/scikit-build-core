@@ -1,7 +1,7 @@
 import dataclasses
 from typing import List
 
-from .common import APIVersion
+from ._common import APIVersion
 
 __all__ = ["Cache", "Entry", "Property"]
 

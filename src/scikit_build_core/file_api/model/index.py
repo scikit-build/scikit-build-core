@@ -2,10 +2,10 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
+from ._common import APIVersion
 from .cache import Cache
 from .cmakefiles import CMakeFiles
 from .codemodel import CodeModel
-from .common import APIVersion
 from .toolchains import Toolchains
 
 __all__ = [
@@ -57,10 +57,10 @@ class CMake:
 
 @dataclasses.dataclass(frozen=True)
 class Reply:
-    codemodel_v2: Optional[CodeModel]
-    cache_v2: Optional[Cache]
-    cmakefiles_v1: Optional[CMakeFiles]
-    toolchains_v1: Optional[Toolchains]
+    codemodel_v2: Optional[CodeModel] = None
+    cache_v2: Optional[Cache] = None
+    cmakeFiles_v1: Optional[CMakeFiles] = None
+    toolchains_v1: Optional[Toolchains] = None
 
 
 @dataclasses.dataclass(frozen=True)
