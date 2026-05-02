@@ -85,7 +85,7 @@ def test_simple_pure(tmp_path):
     cache = index.reply.cache_v2
     assert cache is not None
 
-    cmakefiles = index.reply.cmakefiles_v1
+    cmakefiles = index.reply.cmakeFiles_v1
     assert cmakefiles is not None
 
     toolchains = index.reply.toolchains_v1
@@ -111,7 +111,7 @@ def test_included_dir():
     cache = index.reply.cache_v2
     assert cache is not None
 
-    cmakefiles = index.reply.cmakefiles_v1
+    cmakefiles = index.reply.cmakeFiles_v1
     assert cmakefiles is not None
 
     toolchains = index.reply.toolchains_v1

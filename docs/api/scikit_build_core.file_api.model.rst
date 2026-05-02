@@ -6,6 +6,14 @@ scikit\_build\_core.file\_api.model package
    :show-inheritance:
    :undoc-members:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   scikit_build_core.file_api.model.codemodel
+
 Submodules
 ----------
 
@@ -25,26 +33,10 @@ scikit\_build\_core.file\_api.model.cmakefiles module
    :show-inheritance:
    :undoc-members:
 
-scikit\_build\_core.file\_api.model.codemodel module
-----------------------------------------------------
+scikit\_build\_core.file\_api.model.configurelog module
+-------------------------------------------------------
 
-.. automodule:: scikit_build_core.file_api.model.codemodel
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-scikit\_build\_core.file\_api.model.common module
--------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.common
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-scikit\_build\_core.file\_api.model.directory module
-----------------------------------------------------
-
-.. automodule:: scikit_build_core.file_api.model.directory
+.. automodule:: scikit_build_core.file_api.model.configurelog
    :members:
    :show-inheritance:
    :undoc-members:

@@ -19,6 +19,7 @@ def stateless_query(build_dir: Path) -> Path:
     query.joinpath("cache-v2").touch()
     query.joinpath("cmakeFiles-v1").touch()
     query.joinpath("toolchains-v1").touch()
+    query.joinpath("configureLog-v1").touch()
     return api_dir / "reply"
 
 
