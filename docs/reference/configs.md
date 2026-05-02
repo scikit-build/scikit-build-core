@@ -291,6 +291,35 @@ print(mk_skbuild_docs())
   Turn on verbose output for the editable mode rebuilds.
 ```
 
+## force-include[]
+
+```{eval-rst}
+.. confval:: force-include[].sdist
+  :type: ``str``
+
+  Destination path inside the SDist.
+
+  Leave empty to skip adding this source to the SDist.
+```
+
+```{eval-rst}
+.. confval:: force-include[].source
+  :type: ``Path``
+
+  Source path to include.
+
+  Can be a file or a directory, and may point outside the project root.
+```
+
+```{eval-rst}
+.. confval:: force-include[].wheel
+  :type: ``str``
+
+  Destination path inside the wheel's purelib/platlib area.
+
+  Leave empty to skip adding this source to the wheel.
+```
+
 ## generate[]
 
 ```{eval-rst}

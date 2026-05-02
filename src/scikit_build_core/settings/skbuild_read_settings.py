@@ -441,6 +441,24 @@ class SettingsReader:
                 sys.stdout.flush()
                 rich_error("template= or template-path= must be provided in generate")
 
+        for item in self.settings.force_include:
+            if not item.sdist and not item.wheel:
+                sys.stdout.flush()
+                rich_error(
+                    "At least one of force-include[].sdist or force-include[].wheel must be set"
+                )
+
+            for k, v in (("sdist", item.sdist), ("wheel", item.wheel)):
+                if not v:
+                    continue
+
+                path = Path(v)
+                if path.is_absolute() or ".." in path.parts:
+                    sys.stdout.flush()
+                    rich_error(
+                        f"force-include[].{k} must be a relative path without '..'"
+                    )
+
     @classmethod
     def from_file(
         cls,

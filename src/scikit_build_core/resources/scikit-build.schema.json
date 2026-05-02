@@ -352,6 +352,32 @@
         }
       }
     },
+    "force-include": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Source path to include."
+          },
+          "sdist": {
+            "type": "string",
+            "default": "",
+            "description": "Destination path inside the SDist."
+          },
+          "wheel": {
+            "type": "string",
+            "default": "",
+            "description": "Destination path inside the wheel's purelib/platlib area."
+          }
+        }
+      }
+    },
     "generate": {
       "type": "array",
       "items": {
@@ -646,6 +672,9 @@
           },
           "install": {
             "$ref": "#/properties/install"
+          },
+          "force-include": {
+            "$ref": "#/properties/force-include"
           },
           "generate": {
             "$ref": "#/properties/generate"
