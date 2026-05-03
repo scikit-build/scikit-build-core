@@ -325,16 +325,18 @@ class BuildCMake(setuptools.Command):
             ]
             return
 
-        manifest = build_dir / "install_manifest.txt"
-        if not manifest.is_file():
+        manifests = sorted(build_dir.glob("install_manifest*.txt"))
+        if not manifests:
             self._installed_files = []
             return
 
-        self._installed_files = [
-            Path(line).resolve()
-            for line in manifest.read_text(encoding="utf-8").splitlines()
-            if line
-        ]
+        self._installed_files = []
+        for manifest in manifests:
+            self._installed_files.extend(
+                Path(line).resolve()
+                for line in manifest.read_text(encoding="utf-8").splitlines()
+                if line
+            )
 
     def run(self) -> None:
         assert self.build_lib is not None
