@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal
 
 import setuptools
-import setuptools.errors
 from packaging.version import Version
 
 from .._compat import tomllib
+from .._compat.setuptools.errors import SetupError
 from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
@@ -375,7 +375,7 @@ def cmake_args(
     _cmake_extension(dist)
     if not isinstance(value, list):
         msg = "cmake_args must be a list"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
 
 def cmake_install_dir(
@@ -385,12 +385,12 @@ def cmake_install_dir(
     _cmake_extension(dist)
     if not isinstance(value, str):
         msg = "cmake_install_dir must be a string"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
     # Reject path traversal and drive components to prevent escaping build_lib
     p = Path(value)
     if p.is_absolute() or ".." in p.parts or p.drive:
         msg = f"cmake_install_dir must be a relative path without '..' components, got: {value!r}"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
 
 def cmake_source_dir(
@@ -399,11 +399,11 @@ def cmake_source_dir(
     assert attr == "cmake_source_dir"
     if get_source_dir_from_pyproject_toml() is not None:
         msg = "cmake_source_dir is already defined in pyproject.toml"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
     _cmake_extension(dist)
     if not Path(value).is_dir():
         msg = "cmake_source_dir must be an existing directory"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
 
 
 def cmake_install_target(
@@ -413,7 +413,7 @@ def cmake_install_target(
     assert value is not None
     _cmake_extension(dist)
     msg = "cmake_install_target is not supported - please use components and build targets instead"
-    raise setuptools.errors.SetupError(msg)
+    raise SetupError(msg)
 
 
 def cmake_with_sdist(
@@ -424,4 +424,4 @@ def cmake_with_sdist(
     assert attr == "cmake_with_sdist"
     if value:
         msg = "cmake_with_sdist must not be set to True"
-        raise setuptools.errors.SetupError(msg)
+        raise SetupError(msg)
