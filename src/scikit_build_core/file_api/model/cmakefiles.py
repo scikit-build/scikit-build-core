@@ -1,13 +1,12 @@
 import dataclasses
 from pathlib import Path
-from typing import List
 
 from .common import Paths
 
 __all__ = ["CMakeFiles", "Input"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -23,4 +22,4 @@ class Input:
 class CMakeFiles:
     kind: str
     paths: Paths
-    inputs: List[Input]
+    inputs: list[Input]

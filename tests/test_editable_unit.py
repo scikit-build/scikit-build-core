@@ -201,6 +201,5 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     print(virtualenv.execute("import pkg.source"))
 
     # Load resource files
-    if sys.version_info >= (3, 9):
-        virtualenv.execute("import pkg.src_files")
-        virtualenv.execute("import pkg.installed_files")
+    virtualenv.execute("import pkg.src_files")
+    virtualenv.execute("import pkg.installed_files")

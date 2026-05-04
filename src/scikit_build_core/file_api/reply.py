@@ -4,7 +4,7 @@ import json
 import sys
 import typing
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID251
+from typing import Any, Callable, TypeVar, Union  # noqa: TID251
 
 from .._compat.builtins import ExceptionGroup
 from .._compat.typing import get_args, get_origin
@@ -17,13 +17,13 @@ from .model.index import Index
 __all__ = ["load_reply_dir"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
 T = TypeVar("T")
 
-InputDict = Dict[str, Any]
+InputDict = dict[str, Any]
 
 
 class Converter:
@@ -40,13 +40,13 @@ class Converter:
 
         return self.make_class(data, Index)
 
-    def _load_from_json(self, name: Path, target: Type[T]) -> T:
+    def _load_from_json(self, name: Path, target: type[T]) -> T:
         with self.base_dir.joinpath(name).open(encoding="utf-8") as f:
             data = json.load(f)
 
         return self.make_class(data, target)
 
-    def make_class(self, data: InputDict, target: Type[T]) -> T:
+    def make_class(self, data: InputDict, target: type[T]) -> T:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
@@ -57,8 +57,8 @@ class Converter:
         ):
             return self._load_from_json(Path(data["jsonFile"]), target)
 
-        input_dict: Dict[str, Type[Any]] = {}
-        exceptions: List[Exception] = []
+        input_dict: dict[str, type[Any]] = {}
+        exceptions: list[Exception] = []
 
         # We don't have DataclassInstance exposed in typing yet
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
@@ -88,11 +88,11 @@ class Converter:
         return target(**input_dict)
 
     @typing.overload
-    def _convert_any(self, item: Any, target: Type[T]) -> T: ...
+    def _convert_any(self, item: Any, target: type[T]) -> T: ...
     @typing.overload
     def _convert_any(self, item: Any, target: Any) -> Any: ...
 
-    def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
+    def _convert_any(self, item: Any, target: Union[type[T], Any]) -> Any:
         if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)

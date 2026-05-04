@@ -8,7 +8,7 @@ if typing.TYPE_CHECKING:
     if sys.version_info < (3, 10):
         from importlib.metadata import EntryPoint
 
-        EntryPoints = typing.List[EntryPoint]
+        EntryPoints = list[EntryPoint]
     else:
         from importlib.metadata import EntryPoints
 

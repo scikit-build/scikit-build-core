@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import pytest
 from packaging.version import Version
@@ -30,28 +30,28 @@ def test_convert_version():
 
 
 def test_convert_list():
-    assert convert_type(List[str], normalize_keys=False) == {
+    assert convert_type(list[str], normalize_keys=False) == {
         "type": "array",
         "items": {"type": "string"},
     }
-    assert convert_type(List[Union[str, bool]], normalize_keys=False) == {
+    assert convert_type(list[Union[str, bool]], normalize_keys=False) == {
         "type": "array",
         "items": {"oneOf": [{"type": "string"}, {"type": "boolean"}]},
     }
 
 
 def test_convert_dict():
-    assert convert_type(Dict[str, str], normalize_keys=False) == {
+    assert convert_type(dict[str, str], normalize_keys=False) == {
         "type": "object",
         "patternProperties": {".+": {"type": "string"}},
     }
-    assert convert_type(Dict[str, Dict[str, str]], normalize_keys=False) == {
+    assert convert_type(dict[str, dict[str, str]], normalize_keys=False) == {
         "type": "object",
         "patternProperties": {
             ".+": {"type": "object", "patternProperties": {".+": {"type": "string"}}}
         },
     }
-    assert convert_type(Dict[str, Any], normalize_keys=False) == {
+    assert convert_type(dict[str, Any], normalize_keys=False) == {
         "type": "object",
     }
 
