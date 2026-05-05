@@ -7,13 +7,18 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
+from packaging.tags import Tag
 
 from scikit_build_core.build._editable import (
+    EDITABLE_REDIRECT_CALLABLE,
     editable_redirect,
+    editable_redirect_pth,
+    editable_redirect_start,
     libdir_to_installed,
     mapping_to_modules,
 )
 from scikit_build_core.build._pathutil import packages_to_file_mapping
+from scikit_build_core.build.wheel import _should_write_editable_start
 
 if typing.TYPE_CHECKING:
     from conftest import VEnv
@@ -187,7 +192,9 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     )
 
     site_packages.joinpath("_pkg_editable.py").write_text(editable_txt)
-    site_packages.joinpath("_pkg_editable.pth").write_text("import _pkg_editable\n")
+    site_packages.joinpath("_pkg_editable.pth").write_text(
+        editable_redirect_pth(name="pkg", packages=[])
+    )
 
     # Test the editable install
     virtualenv.execute("import pkg.subpkg")
@@ -204,3 +211,39 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     if sys.version_info >= (3, 9):
         virtualenv.execute("import pkg.src_files")
         virtualenv.execute("import pkg.installed_files")
+
+
+def test_editable_redirect_startup_files():
+    editable_txt = editable_redirect(
+        modules={"pkg": "/source/pkg/__init__.py"},
+        installed={"pkg.source": "pkg/source.py"},
+        reload_dir=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        install_dir="",
+    )
+
+    assert f"def {EDITABLE_REDIRECT_CALLABLE}() -> None:" in editable_txt
+    assert editable_redirect_pth(name="pkg", packages=["pkg-src"]).splitlines() == [
+        f"import _pkg_editable; _pkg_editable.{EDITABLE_REDIRECT_CALLABLE}()",
+        "pkg-src",
+    ]
+    assert editable_redirect_start(name="pkg") == (
+        f"_pkg_editable:{EDITABLE_REDIRECT_CALLABLE}\n"
+    )
+
+
+@pytest.mark.parametrize(
+    ("version_info", "wheel_tags", "expected"),
+    [
+        ((3, 11), frozenset({Tag("cp311", "cp311", "macosx_11_0_arm64")}), False),
+        ((3, 11), frozenset({Tag("cp39", "abi3", "macosx_11_0_arm64")}), True),
+        ((3, 11), frozenset({Tag("py3", "none", "any")}), True),
+        ((3, 15), frozenset({Tag("cp315", "cp315", "macosx_11_0_arm64")}), True),
+    ],
+)
+def test_should_write_editable_start(monkeypatch, version_info, wheel_tags, expected):
+    monkeypatch.setattr("scikit_build_core.build.wheel.sys.version_info", version_info)
+    assert _should_write_editable_start(wheel_tags) is expected

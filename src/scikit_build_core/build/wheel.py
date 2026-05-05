@@ -24,7 +24,13 @@ from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
 from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
-from ._editable import editable_redirect, libdir_to_installed, mapping_to_modules
+from ._editable import (
+    editable_redirect,
+    editable_redirect_pth,
+    editable_redirect_start,
+    libdir_to_installed,
+    mapping_to_modules,
+)
 from ._init import setup_logging
 from ._pathutil import (
     packages_to_file_mapping,
@@ -55,6 +61,7 @@ def _make_editable(
     name: str,
     reload_dir: Path | None,
     settings: ScikitBuildSettings,
+    wheel_tags: frozenset[Tag],
     wheel: WheelWriter,
     packages: Iterable[str],
 ) -> None:
@@ -78,14 +85,25 @@ def _make_editable(
         f"_{name}_editable.py",
         editable_txt.encode(),
     )
-    # Support Cython by adding the source directory directly to the path.
-    # This is necessary because Cython does not support sys.meta_path for
-    # cimports (as of 3.0.5).
-    import_strings = [f"import _{name}_editable", *packages, ""]
-    pth_import_paths = "\n".join(import_strings)
     wheel.writestr(
         f"_{name}_editable.pth",
-        pth_import_paths.encode(),
+        editable_redirect_pth(name=name, packages=packages).encode(),
+    )
+    if _should_write_editable_start(wheel_tags):
+        wheel.writestr(
+            f"_{name}_editable.start",
+            editable_redirect_start(name=name).encode("utf-8-sig"),
+        )
+
+
+def _should_write_editable_start(wheel_tags: frozenset[Tag]) -> bool:
+    if sys.version_info >= (3, 15):
+        return True
+
+    return any(
+        tag.abi in {"abi3", "abi3t"}
+        or (tag.abi == "none" and tag.interpreter.startswith("py"))
+        for tag in wheel_tags
     )
 
 
@@ -492,10 +510,12 @@ def _build_wheel_impl_impl(
 
             process_script_dir(wheel_dirs["scripts"])
 
+        final_wheel_tags = override_wheel_tags or tags.as_tags_set()
+
         with WheelWriter(
             metadata,
             Path(wheel_directory),
-            override_wheel_tags or tags.as_tags_set(),
+            final_wheel_tags,
             WheelMetadata(
                 root_is_purelib=targetlib == "purelib",
                 build_tag=settings.wheel.build_tag,
@@ -517,6 +537,7 @@ def _build_wheel_impl_impl(
                     mapping=mapping,
                     reload_dir=reload_dir,
                     settings=settings,
+                    wheel_tags=final_wheel_tags,
                     wheel=wheel,
                     name=normalized_name,
                     packages=str_pkgs,

@@ -1,3 +1,4 @@
+import codecs
 import sys
 import sysconfig
 import zipfile
@@ -32,19 +33,57 @@ def test_pep660_wheel(editable, tmp_path: Path):
         with zf.open("simplest-0.0.1.dist-info/METADATA") as f:
             metadata = f.read().decode("utf-8")
 
-    assert len(file_names) == 4 if editable.mode == "redirect" else 2
+    expect_start = editable.mode == "redirect" and sys.version_info >= (3, 15)
+    expected_file_count = 4 + int(expect_start) if editable.mode == "redirect" else 2
+    assert len(file_names) == expected_file_count
     assert "simplest-0.0.1.dist-info" in file_names
     if editable.mode == "redirect":
         assert "simplest" in file_names
         assert "_simplest_editable.py" in file_names
+        assert ("_simplest_editable.start" in file_names) is expect_start
     else:
         assert "simplest" not in file_names
         assert "_simplest_editable.py" not in file_names
+        assert "_simplest_editable.start" not in file_names
     assert "_simplest_editable.pth" in file_names
 
     assert "Metadata-Version: 2.2" in metadata
     assert "Name: simplest" in metadata
     assert "Version: 0.0.1" in metadata
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.parametrize(
+    ("py_api", "expected_start"),
+    [
+        ("", False),
+        ("cp39", True),
+        ("py3", True),
+    ],
+)
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
+@pytest.mark.usefixtures("package")
+def test_pep660_redirect_start_file(py_api: str, expected_start: bool, tmp_path: Path):
+    dist = tmp_path / "dist"
+    config_settings = {"editable.mode": "redirect"}
+    if py_api:
+        config_settings["wheel.py-api"] = py_api
+
+    build_editable(str(dist), config_settings)
+
+    (wheel,) = dist.glob("simplest-0.0.1-*.whl")
+    with zipfile.ZipFile(wheel.resolve()) as zf:
+        file_names = {Path(p).parts[0] for p in zf.namelist()}
+
+        assert ("_simplest_editable.start" in file_names) is expected_start
+        if expected_start:
+            start_file = zf.read("_simplest_editable.start")
+            assert start_file.startswith(codecs.BOM_UTF8)
+            assert start_file.decode("utf-8-sig") == "_simplest_editable:bootstrap\n"
+
+        pth_file = zf.read("_simplest_editable.pth").decode("utf-8")
+        assert "import _simplest_editable; _simplest_editable.bootstrap()" in pth_file
 
 
 @pytest.mark.compile
