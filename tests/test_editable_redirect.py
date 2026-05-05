@@ -67,7 +67,7 @@ def test_editable_redirect():
             },
         }
     )
-    assert finder.pkgs == ["pkg", "pkg.subpkg"]
+    assert finder.pkgs == frozenset(["pkg", "pkg.subpkg"])
 
 
 def test_editable_redirect_pxd():

@@ -128,7 +128,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
         self.submodule_search_locations = submodule_search_locations
-        self.pkgs = pkgs
+        self.pkgs = frozenset(pkgs)
 
     def find_spec(
         self,
