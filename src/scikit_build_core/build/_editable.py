@@ -14,7 +14,17 @@ from ._pathutil import (
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ["editable_redirect", "libdir_to_installed", "mapping_to_modules"]
+__all__ = [
+    "EDITABLE_REDIRECT_CALLABLE",
+    "editable_redirect",
+    "editable_redirect_pth",
+    "editable_redirect_start",
+    "libdir_to_installed",
+    "mapping_to_modules",
+]
+
+
+EDITABLE_REDIRECT_CALLABLE = "bootstrap"
 
 
 def __dir__() -> list[str]:
@@ -50,8 +60,25 @@ def editable_redirect(
         install_dir,
     )
     arguments_str = ", ".join(repr(x) for x in arguments)
-    editable_txt += f"\n\ninstall({arguments_str})\n"
+    editable_txt += (
+        f"\n\n"
+        f"def {EDITABLE_REDIRECT_CALLABLE}() -> None:\n"
+        f"    install({arguments_str})\n"
+    )
     return editable_txt
+
+
+def editable_redirect_pth(*, name: str, packages: Sequence[str]) -> str:
+    import_strings = [
+        f"import _{name}_editable; _{name}_editable.{EDITABLE_REDIRECT_CALLABLE}()",
+        *packages,
+        "",
+    ]
+    return "\n".join(import_strings)
+
+
+def editable_redirect_start(*, name: str) -> str:
+    return f"_{name}_editable:{EDITABLE_REDIRECT_CALLABLE}\n"
 
 
 def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
