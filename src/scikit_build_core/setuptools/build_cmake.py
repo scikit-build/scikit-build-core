@@ -515,13 +515,13 @@ class BuildCMake(setuptools.Command):
         use_wrapper_classic_layout_compat = (
             self._wrapper_classic_layout_compat_enabled()
         )
-        cmake_install_dir = (
+        cmake_install_prefix = (
             build_temp / "cmake-install" / install_subdir
             if use_wrapper_classic_layout_compat
             else install_dir
         )
         installed_before = _collect_recursive_files(install_dir)
-        defines = {"CMAKE_INSTALL_PREFIX": cmake_install_dir}
+        defines = {"CMAKE_INSTALL_PREFIX": cmake_install_prefix}
 
         builder.configure(
             name=dist.get_name(),
@@ -541,20 +541,20 @@ class BuildCMake(setuptools.Command):
             build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
-        builder.install(install_dir=cmake_install_dir)
+        builder.install(install_dir=cmake_install_prefix)
 
-        cmake_manifest = _read_cmake_install_manifests(build_temp, cmake_install_dir)
+        cmake_manifest = _read_cmake_install_manifests(build_temp, cmake_install_prefix)
         if cmake_manifest is None:
             installed_after = _collect_recursive_files(install_dir)
             cmake_manifest = sorted(installed_after - installed_before)
 
         process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
         processed_manifest = _process_manifest(cmake_manifest, process_manifest)
-        _prune_manifest(cmake_install_dir, cmake_manifest, processed_manifest)
-        self._record_installed_files(build_temp, cmake_install_dir, processed_manifest)
+        _prune_manifest(cmake_install_prefix, cmake_manifest, processed_manifest)
+        self._record_installed_files(build_temp, cmake_install_prefix, processed_manifest)
         if use_wrapper_classic_layout_compat:
             self._apply_wrapper_classic_layout_compat(
-                staged_install_dir=cmake_install_dir, install_subdir=install_subdir
+                staged_install_dir=cmake_install_prefix, install_subdir=install_subdir
             )
 
     def get_outputs(self) -> list[str]:
