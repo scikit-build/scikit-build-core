@@ -5,6 +5,12 @@ set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 pybind11_add_module(_core MODULE example.cpp)
+if(SKBUILD_STATE STREQUAL "editable")
+  # Keep multi-config generators from adding a Release/Debug subdir.
+  set_target_properties(
+    _core PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+                     "${CMAKE_CURRENT_LIST_DIR}/../src/hatchling_example$<0:>")
+endif()
 install(TARGETS _core DESTINATION .)
 
 if(NOT DEFINED SKBUILD_HATCHLING)
