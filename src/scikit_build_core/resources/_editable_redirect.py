@@ -110,7 +110,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 # Strip the last element of the module
                 parent = ".".join(module.split(".")[:-1])
                 # Check if it is a package
-                if "__init__.py" in file:
+                if os.path.basename(file).partition(".")[0] == "__init__":
                     parent = module
                     pkgs.append(parent)
                 # Skip if it's a root module (there are no search paths for these)
@@ -128,7 +128,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
         self.submodule_search_locations = submodule_search_locations
-        self.pkgs = pkgs
+        self.pkgs = frozenset(pkgs)
 
     def find_spec(
         self,
@@ -151,7 +151,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 fullname,
                 os.path.join(self.dir, redir),
                 submodule_search_locations=submodule_search_locations
-                if redir.endswith(("__init__.py", "__init__.pyc"))
+                if fullname in self.pkgs
                 else None,
             )
         if fullname in self.known_source_files:
@@ -160,7 +160,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 fullname,
                 redir,
                 submodule_search_locations=submodule_search_locations
-                if redir.endswith(("__init__.py", "__init__.pyc"))
+                if fullname in self.pkgs
                 else None,
             )
         return None
