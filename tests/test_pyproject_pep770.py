@@ -40,5 +40,7 @@ def test_pep770_wheel_sbom_files(tmp_path: Path, filename: str, content: str):
 @pytest.mark.usefixtures("package")
 def test_pep770_wheel_sbom_file_missing(tmp_path: Path):
     dist = tmp_path / "dist"
-    with pytest.raises(FileNotFoundError, match=r"SBOM file not found: missing_sbom\.json"):
+    with pytest.raises(
+        FileNotFoundError, match=r"SBOM file not found: missing_sbom\.json"
+    ):
         build_wheel(str(dist), {"wheel.sbom-files": ["missing_sbom.json"]})
