@@ -187,6 +187,7 @@ def test_skbuild_settings_config_settings(
         "wheel.py-api": "cp39",
         "wheel.expand-macos-universal-tags": "True",
         "wheel.license-files": ["a", "b", "c"],
+        "wheel.sbom-files": ["sbom1.spdx.json", "sbom2.cdx.json"],
         "wheel.exclude": ["b", "y", "e"],
         "wheel.build-tag": "1foo",
         "backport.find-python": "0",
@@ -231,6 +232,7 @@ def test_skbuild_settings_config_settings(
     assert settings.wheel.py_api == "cp39"
     assert settings.wheel.expand_macos_universal_tags
     assert settings.wheel.license_files == ["a", "b", "c"]
+    assert settings.wheel.sbom_files == ["sbom1.spdx.json", "sbom2.cdx.json"]
     assert settings.wheel.exclude == ["b", "y", "e"]
     assert settings.wheel.build_tag == "1foo"
     assert settings.backport.find_python == Version("0")

@@ -572,6 +572,15 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: wheel.sbom-files
+  :type: ``list[str]``
+
+  A list of Software Bill of Materials files to include in the wheel.
+
+  Files are copied into the ``*.dist-info/sboms`` directory.
+```
+
+```{eval-rst}
 .. confval:: wheel.packages
   :type: ``list[str]``
   :default: ["src/<package>", "python/<package>", "<package>"]
