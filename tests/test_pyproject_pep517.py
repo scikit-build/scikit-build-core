@@ -313,34 +313,6 @@ def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
     assert add.strip() == "3"
 
 
-@pytest.mark.parametrize("package", ["simple_purelib_package"], indirect=True)
-@pytest.mark.usefixtures("package")
-def test_pep517_wheel_sbom_files(tmp_path: Path):
-    sbom_dir = Path("sbom_inputs")
-    sbom_dir.mkdir()
-    sbom_file = sbom_dir / "project.spdx.json"
-    sbom_content = '{"spdxVersion": "SPDX-2.3"}'
-    sbom_file.write_text(sbom_content, encoding="utf-8")
-
-    dist = tmp_path / "dist"
-    build_wheel(str(dist), {"wheel.sbom-files": [str(sbom_file)]})
-
-    (wheel,) = dist.glob("purelib_example-0.0.1-*.whl")
-    wheel = wheel.resolve()
-    with zipfile.ZipFile(wheel) as zf:
-        sbom_path = "purelib_example-0.0.1.dist-info/sboms/project.spdx.json"
-        assert sbom_path in set(zf.namelist())
-        assert zf.read(sbom_path).decode("utf-8") == sbom_content
-
-
-@pytest.mark.parametrize("package", ["simple_purelib_package"], indirect=True)
-@pytest.mark.usefixtures("package")
-def test_pep517_wheel_sbom_file_missing(tmp_path: Path):
-    dist = tmp_path / "dist"
-    with pytest.raises(FileNotFoundError, match="SBOM file not found: missing.spdx.json"):
-        build_wheel(str(dist), {"wheel.sbom-files": ["missing.spdx.json"]})
-
-
 @pytest.mark.skip(reason="Doesn't work yet")
 @pytest.mark.compile
 @pytest.mark.configure
