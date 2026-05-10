@@ -364,6 +364,19 @@ def _build_wheel_impl_impl(
                 "No license files found, set wheel.license-files to [] to suppress this warning"
             )
 
+        sbom_paths: list[Path] = []
+        for sbom_file in settings.wheel.sbom_files or []:
+            sbom_path = Path(sbom_file)
+            if not sbom_path.is_file():
+                msg = f"SBOM file not found: {sbom_file}"
+                raise FileNotFoundError(msg)
+            sbom_paths.append(sbom_path)
+
+        for sbom_path in sbom_paths:
+            path = wheel_dirs["metadata"] / "sboms" / sbom_path.name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(sbom_path, path)
+
         for gen in settings.generate:
             if gen.location == "source":
                 contents = generate_file_contents(gen, metadata)

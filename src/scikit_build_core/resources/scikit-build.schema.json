@@ -237,6 +237,13 @@
           },
           "description": "A list of license files to include in the wheel. Supports glob patterns."
         },
+        "sbom-files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of Software Bill of Materials files to include in the wheel."
+        },
         "cmake": {
           "type": "boolean",
           "default": true,
@@ -583,6 +590,9 @@
                     "$ref": "#/$defs/inherit"
                   },
                   "license-files": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "sbom-files": {
                     "$ref": "#/$defs/inherit"
                   },
                   "exclude": {
