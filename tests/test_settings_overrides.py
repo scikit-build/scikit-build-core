@@ -641,7 +641,12 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.targets == ["a", "b", "c", "d"]
         assert settings.wheel.packages == ["a", "b", "c", "d"]
         assert settings.wheel.license_files == ["a.txt", "b.txt", "c.txt", "d.txt"]
-        assert settings.wheel.sbom_files == ["a.spdx.json", "b.cdx.json", "c.spdx.json", "d.cdx.json"]
+        assert settings.wheel.sbom_files == [
+            "a.spdx.json",
+            "b.cdx.json",
+            "c.spdx.json",
+            "d.cdx.json",
+        ]
         assert settings.wheel.exclude == ["x", "y", "xx", "yy"]
         assert settings.install.components == ["a", "b", "c", "d"]
         assert settings.cmake.define == {"a": "A", "b": "X", "c": "C"}
@@ -650,7 +655,12 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.targets == ["c", "d", "a", "b"]
         assert settings.wheel.packages == ["c", "d", "a", "b"]
         assert settings.wheel.license_files == ["c.txt", "d.txt", "a.txt", "b.txt"]
-        assert settings.wheel.sbom_files == ["c.spdx.json", "d.cdx.json", "a.spdx.json", "b.cdx.json"]
+        assert settings.wheel.sbom_files == [
+            "c.spdx.json",
+            "d.cdx.json",
+            "a.spdx.json",
+            "b.cdx.json",
+        ]
         assert settings.wheel.exclude == ["xx", "yy", "x", "y"]
         assert settings.install.components == ["c", "d", "a", "b"]
         assert settings.cmake.define == {"a": "A", "b": "B", "c": "C"}
