@@ -493,6 +493,19 @@ print(mk_skbuild_docs())
   ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set.
 ```
 
+```{eval-rst}
+.. confval:: sdist.resolve-symlinks
+  :type: ``bool``
+  :default: true
+
+  Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
+
+  If not set, it will be ``true`` unless you set the minimum version below 0.13,
+  in which case it will be ``false`` to preserve backward compatibility.
+
+  .. versionadded: 0.13
+```
+
 ## search
 
 ```{eval-rst}
