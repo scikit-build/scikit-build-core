@@ -286,7 +286,8 @@
         "mode": {
           "enum": [
             "redirect",
-            "inplace"
+            "inplace",
+            "build-dir"
           ],
           "default": "redirect",
           "description": "Select the editable mode to use. Can be \"redirect\" (default) or \"inplace\"."

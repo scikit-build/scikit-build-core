@@ -14,11 +14,42 @@ from ._pathutil import (
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ["editable_redirect", "libdir_to_installed", "mapping_to_modules"]
+__all__ = [
+    "editable_build_dir",
+    "editable_redirect",
+    "libdir_to_installed",
+    "mapping_to_modules",
+]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def editable_build_dir(
+    *,
+    source_files: dict[str, str],
+) -> str:
+    """
+    Prepare the contents of the _editable_redirect.py file as build-dir mode.
+    """
+
+    # We can reuse the `_editable_redirect.py` file without the rebuild/install
+    # feature and providing only source files to map.
+    editable_py = resources / "_editable_redirect.py"
+    editable_txt: str = editable_py.read_text(encoding="utf-8")
+
+    # Wheel_files are always empty here.
+    wheel_files: dict[str, str] = {}
+
+    arguments = (
+        source_files,  # known_source_files
+        wheel_files,  # known_wheel_files
+        None,  # path
+    )
+    arguments_str = ", ".join(repr(x) for x in arguments)
+    editable_txt += f"\n\ninstall({arguments_str})\n"
+    return editable_txt
 
 
 def editable_redirect(
