@@ -38,9 +38,7 @@ def setup(
     distclass: type[_DistributionT] = setuptools.Distribution,  # type: ignore[assignment]
     **kw: Any,
 ) -> _DistributionT:
-    assert cmake_process_manifest_hook is None, (
-        "cmake_process_manifest_hook not supported yet"
-    )
+    assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
     assert cmake_install_target == "install", "cmake_install_target not supported yet"
 
     if cmake_languages is not None:
@@ -67,6 +65,7 @@ def setup(
         cmake_with_sdist=cmake_with_sdist,
         cmake_args=list(cmake_args),
         cmake_install_dir=cmake_install_dir,
+        cmake_process_manifest_hook=cmake_process_manifest_hook,
         distclass=distribution_class,
         **kw,
     )
