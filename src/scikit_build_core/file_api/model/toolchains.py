@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
-from .common import APIVersion
+from ._common import APIVersion
 
 __all__ = ["Compiler", "Implicit", "Toolchain", "Toolchains"]
 

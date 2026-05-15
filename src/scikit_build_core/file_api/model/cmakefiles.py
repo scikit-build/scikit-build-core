@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List
 
-from .common import Paths
+from ._common import Paths
 
 __all__ = ["CMakeFiles", "Input"]
 

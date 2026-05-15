@@ -2,7 +2,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional
 
-from .common import APIVersion, Paths
+from ._common import APIVersion, Paths
 
 __all__ = [
     "Archive",
