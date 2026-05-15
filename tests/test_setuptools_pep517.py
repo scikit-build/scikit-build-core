@@ -352,6 +352,41 @@ def test_cmake_install_dir_wheel(
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
+)
+@pytest.mark.parametrize(
+    "package", ["wrapper_setuptools_classic_layout"], indirect=True
+)
+@pytest.mark.usefixtures("package", "pybind11")
+def test_wrapper_classic_layout_wheel(tmp_path: Path):
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
+    wheel = (dist / out).resolve()
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = set(zf.namelist())
+
+    assert "classic_layout_example/__init__.py" in file_names
+    assert any(name.startswith("classic_layout_example/_core.") for name in file_names)
+    assert any(
+        name.endswith(".data/data/include/classic_layout_example/example.h")
+        for name in file_names
+    )
+    assert not any(
+        name.startswith("python/classic_layout_example/") for name in file_names
+    )
+    assert not any(name.startswith("include/") for name in file_names)
+
+    venv = VEnv(tmp_path / "classic-layout-venv")
+    venv.install(str(wheel))
+    _assert_extension_import(venv, "classic_layout_example")
+
+
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.skipif(
     build_editable is None, reason="Requires setuptools editable support"
 )
