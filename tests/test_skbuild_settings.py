@@ -61,6 +61,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.build.tool_args == []
     assert settings.install.components == []
     assert settings.install.strip
+    assert settings.force_include == []
     assert settings.generate == []
     assert not settings.fail
     assert settings.messages.after_failure == ""

@@ -259,6 +259,15 @@ install.components = []
 # Whether to strip the binaries.
 install.strip = true
 
+# Source path to include.
+force-include[].source = ""
+
+# Destination path inside the SDist.
+force-include[].sdist = ""
+
+# Destination path inside the wheel's purelib/platlib area.
+force-include[].wheel = ""
+
 # The path (relative to platlib) for the file to generate.
 generate[].path = ""
 
