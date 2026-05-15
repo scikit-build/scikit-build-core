@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from .common import APIVersion, Paths
 
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -40,8 +40,8 @@ class Directory:
     projectIndex: int
     jsonFile: Optional[Path] = None
     parentIndex: Optional[int] = None
-    childIndexes: List[int] = dataclasses.field(default_factory=list)
-    targetIndexes: List[int] = dataclasses.field(default_factory=list)
+    childIndexes: list[int] = dataclasses.field(default_factory=list)
+    targetIndexes: list[int] = dataclasses.field(default_factory=list)
     minimumCMakeVersion: Optional[StringCMakeVersion] = None
     hasInstallRule: bool = False
 
@@ -52,10 +52,10 @@ class Directory:
 @dataclasses.dataclass(frozen=True)
 class Project:
     name: str
-    directoryIndexes: List[int]
+    directoryIndexes: list[int]
     parentIndex: Optional[int] = None
-    childIndexes: List[int] = dataclasses.field(default_factory=list)
-    targetIndexes: List[int] = dataclasses.field(default_factory=list)
+    childIndexes: list[int] = dataclasses.field(default_factory=list)
+    targetIndexes: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -77,7 +77,7 @@ class Destination:
 @dataclasses.dataclass(frozen=True)
 class Install:
     prefix: Prefix
-    destinations: List[Destination]
+    destinations: list[Destination]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -94,14 +94,14 @@ class Sysroot:
 @dataclasses.dataclass(frozen=True)
 class Link:
     language: str
-    commandFragments: Optional[List[CommandFragment]]
+    commandFragments: Optional[list[CommandFragment]]
     lto: Optional[bool] = None
     sysroot: Optional[Sysroot] = None
 
 
 @dataclasses.dataclass(frozen=True)
 class Archive:
-    commandFragments: Optional[List[CommandFragment]] = dataclasses.field(
+    commandFragments: Optional[list[CommandFragment]] = dataclasses.field(
         default_factory=list
     )
     lto: Optional[bool] = None
@@ -128,22 +128,22 @@ class Target:
     id: str
     type: str
     paths: Paths
-    sources = List[Source]
+    sources = list[Source]
     nameOnDisk: Optional[Path] = None
-    artifacts: List[Artifact] = dataclasses.field(default_factory=list)
+    artifacts: list[Artifact] = dataclasses.field(default_factory=list)
     isGeneratorProvided: Optional[bool] = None
     install: Optional[Install] = None
     link: Optional[Link] = None
     archive: Optional[Archive] = None
-    dependencies: List[Dependency] = dataclasses.field(default_factory=list)
+    dependencies: list[Dependency] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
 class Configuration:
     name: str
-    projects: List[Project]
-    targets: List[Target]
-    directories: List[Directory]
+    projects: list[Project]
+    targets: list[Target]
+    directories: list[Directory]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -151,4 +151,4 @@ class CodeModel:
     kind: str
     version: APIVersion
     paths: Paths
-    configurations: List[Configuration]
+    configurations: list[Configuration]

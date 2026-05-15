@@ -1,6 +1,6 @@
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from .cache import Cache
 from .cmakefiles import CMakeFiles
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -73,5 +73,5 @@ class Object:
 @dataclasses.dataclass(frozen=True)
 class Index:
     cmake: CMake
-    objects: List[Object]
+    objects: list[Object]
     reply: Reply

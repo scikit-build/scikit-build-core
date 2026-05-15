@@ -73,7 +73,7 @@ features over classic Scikit-build:
 The following limitations are present compared to classic scikit-build:
 
 - The minimum supported CMake is 3.15
-- The minimum supported Python is 3.8 (3.7+ for 0.10.x and older)
+- The minimum supported Python is 3.9 (3.8+ for 0.11.x and older)
 
 Some known missing features that will be developed soon:
 
