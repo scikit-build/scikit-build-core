@@ -70,6 +70,37 @@ def test_disallow_hardcoded(
     assert "is not allowed to be hard-coded in the pyproject.toml file" in out
 
 
+@pytest.mark.parametrize("prefix", [True, False], ids=["skbuild", "noprefix"])
+def test_allow_override_only_in_config_settings(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    prefix: bool,
+):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    config_settings: dict[str, str] = {
+        "cmake.toolchain-file": "foo.cmake",
+        "wheel.tags": "cp312-abi3-win_amd64",
+    }
+    if prefix:
+        config_settings = {f"skbuild.{k}": v for k, v in config_settings.items()}
+
+    caplog.set_level(logging.WARNING)
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    settings_reader.validate_may_exit()
+
+    assert settings_reader.settings.cmake.toolchain_file == Path("foo.cmake")
+    assert settings_reader.settings.wheel.tags == ["cp312-abi3-win_amd64"]
+    assert not [
+        record
+        for record in caplog.records
+        if "is not allowed to be hard-coded in the pyproject.toml file"
+        in str(record.msg)
+    ]
+
+
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
 def test_skbuild_overrides_pyver(
     python_version: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
