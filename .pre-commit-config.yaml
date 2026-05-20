@@ -7,7 +7,7 @@ exclude: ^src/scikit_build_core/_vendor
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -25,33 +25,33 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.12
+    rev: 6fec9b7edb08fd9989088709d864a7826dc74e80 # frozen: v0.15.12
     hooks:
       - id: ruff-check
         args: ["--fix"]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
+    rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316 # frozen: v1.10.0
     hooks:
       - id: rst-backticks
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.20.0
+    rev: fda77690955e9b63c6687d8806bafd56a526e45f # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: v0.6.13
+    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319 # frozen: v0.6.13
     hooks:
       - id: cmake-format
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.3"
+    rev: "515f543f5718ebfd6ce22e16708bb32c68ff96e1" # frozen: v3.8.3
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -59,7 +59,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.20.2
+    rev: d2823d321df3af8f878f7ee3414dc94d037145b9 # frozen: v2.1.0
     hooks:
       - id: mypy
         exclude: |
@@ -69,7 +69,7 @@ repos:
             tests/packages/.*/setup.py
           )
         files: ^(src|tests|noxfile.py)
-        args: []
+        args: ["--python-version=3.10"]
         additional_dependencies:
           - build<1.5 # Requires Python 3.10+
           - cattrs<26.1 # Requires Python 3.10+
@@ -91,7 +91,7 @@ repos:
           - types-setuptools>=80.9
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "v1.4.0"
+    rev: "8d786ae74939ac1d9b12681bc43f72a0980283dd" # frozen: v1.4.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -100,14 +100,14 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.46.0
+    rev: 5374cbf686e897b15713110e233094e2874de7ef # frozen: v1.46.1
     hooks:
       - id: typos
         args: []
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95 # frozen: v0.11.0.1
     hooks:
       - id: shellcheck
 
@@ -133,12 +133,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.04.26
+    rev: a18e62629cfba1fb2d16eb417e5442cd7b962a67 # frozen: 2026.05.13
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: f805888065fdb6162e1f800e50bb9460cbd223d6 # frozen: 0.37.2
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -151,7 +151,14 @@ repos:
     hooks:
       - id: validate-cff
 
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: a4727cbbcd26d7098e96b9cb738169b59711ae51 # frozen: v1.24.1
+    hooks:
+      - id: zizmor
+        files: "^\\.github"
+        args: [--persona=pedantic]
+
   - repo: https://github.com/scientific-python/cookie
-    rev: 2026.04.04
+    rev: 04d0e44c1d3b036e9714aca375d965504ba5ea4a # frozen: 2026.04.04
     hooks:
       - id: sp-repo-review

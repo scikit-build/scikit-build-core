@@ -1,0 +1,4 @@
+rules:
+  concurrency-limits:
+    ignore:
+      - copilot-setup-steps.yml

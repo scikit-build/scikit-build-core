@@ -23,17 +23,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       - name: Install nox
         run: uv tool install nox
-      - uses: pre-commit/action@v3.0.1
+      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         with:
           extra_args: --all-files
       - name: Run PyLint
@@ -121,20 +121,20 @@ jobs:
             cmake-version: "4.0"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
           architecture: ${{ matrix.architecture }}
 
-      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Setup CMake ${{ matrix.cmake-version }}
-        uses: jwlawson/actions-setup-cmake@v2.2
+        uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2.2.0
         with:
           cmake-version: ${{ matrix.cmake-version }}
 
@@ -149,7 +149,7 @@ jobs:
           auto --durations=20
 
       - name: Test package (two attempts)
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
         if: "contains(matrix.python_version, 'pypy')"
         with:
           max_attempts: 2
@@ -160,7 +160,7 @@ jobs:
             --durations=20 -n auto
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
           name:
             ${{ runner.os }}-${{ matrix.python-version }}-${{
@@ -180,15 +180,15 @@ jobs:
         runs-on: [ubuntu-latest, macos-15-intel, windows-latest]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       # The min requirements are not compatible with some of the extra test
       # deps, so limit to just built-in deps.
@@ -200,14 +200,14 @@ jobs:
           uv pip install -e. --group=test --group=test-schema --resolution=lowest-direct --system
 
       - name: Setup CMake 3.15
-        uses: jwlawson/actions-setup-cmake@v2.2
+        uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2.2.0
         if: runner.os != 'Windows'
         with:
           cmake-version: "3.15.x"
 
         # First version to support VS 17.0
       - name: Setup CMake 3.21
-        uses: jwlawson/actions-setup-cmake@v2.2
+        uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2.2.0
         if: runner.os == 'Windows'
         with:
           cmake-version: "3.21.x"
@@ -222,9 +222,9 @@ jobs:
     name: Manylinux on 🐍 3.13 • Free-threaded
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    container: quay.io/pypa/musllinux_1_2_x86_64:latest
+    container: quay.io/pypa/musllinux_1_2_x86_64@sha256:cb1d34fa8b14b96661e589014e9782f1434cbbf6c6b7c3595b656659da12d8cc
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -244,12 +244,12 @@ jobs:
     timeout-minutes: 40
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: cygwin/cygwin-install-action@v6
+      - uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6.1
         with:
           platform: x86_64
           packages:
@@ -276,7 +276,7 @@ jobs:
         shell: msys2 {0}
 
     steps:
-      - uses: msys2/setup-msys2@v2
+      - uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
         with:
           msystem: UCRT64
           path-type: minimal
@@ -286,7 +286,7 @@ jobs:
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -309,7 +309,7 @@ jobs:
         shell: msys2 {0}
 
     steps:
-      - uses: msys2/setup-msys2@v2
+      - uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
         with:
           msystem: mingw64
           path-type: minimal
@@ -319,7 +319,7 @@ jobs:
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -340,12 +340,12 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: hynek/build-and-inspect-python-package@v2
+      - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2.18.0
 
   docs:
     name: Docs on ${{ matrix.runs-on }}
@@ -357,14 +357,14 @@ jobs:
         runs-on: [ubuntu-latest, macos-latest] # Windows command output issue (wrong Python selected)
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v8.1.0
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - uses: wntrblm/nox@2026.04.10
+      - uses: wntrblm/nox@903fd97f0c3e19a39c3e0847072b652639044d30 # v0.19.1
         with:
           python-versions: "3.12"
 
@@ -388,12 +388,13 @@ jobs:
           git diff --exit-code
 
   pass:
+    name: CI pass
     if: always()
     needs: [lint, checks, min, cygwin, dist, docs]
     runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
       - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
           jobs: ${{ toJSON(needs) }}
