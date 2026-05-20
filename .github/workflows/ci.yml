@@ -364,7 +364,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - uses: wntrblm/nox@903fd97f0c3e19a39c3e0847072b652639044d30 # v0.19.1
+      - uses: wntrblm/nox@ 97e345e6a26bb2c5aacff9cc4327bd4ac1b00ce6 # 2026.04.10
         with:
           python-versions: "3.12"
 
