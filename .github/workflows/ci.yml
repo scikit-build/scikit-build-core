@@ -222,7 +222,7 @@ jobs:
     name: Manylinux on 🐍 3.13 • Free-threaded
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    container: quay.io/pypa/musllinux_1_2_x86_64@sha256:cb1d34fa8b14b96661e589014e9782f1434cbbf6c6b7c3595b656659da12d8cc
+    container: quay.io/pypa/musllinux_1_2_x86_64@sha256:36bd94f44a613d006b5255f8393ab262d86a3bc016feedb91dc0b520a1b51e50  # 2026.05.17-1
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
