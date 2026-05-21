@@ -371,7 +371,7 @@ def test_prepare_metadata_for_build_wheel_by_hand(tmp_path):
     }
 
     for k, b in answer.items():
-        assert metadata.get(k, None) == b
+        assert metadata[k] == b
 
     assert len(metadata) == len(answer)
 
