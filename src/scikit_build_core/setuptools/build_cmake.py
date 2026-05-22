@@ -551,7 +551,9 @@ class BuildCMake(setuptools.Command):
         process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
         processed_manifest = _process_manifest(cmake_manifest, process_manifest)
         _prune_manifest(cmake_install_prefix, cmake_manifest, processed_manifest)
-        self._record_installed_files(build_temp, cmake_install_prefix, processed_manifest)
+        self._record_installed_files(
+            build_temp, cmake_install_prefix, processed_manifest
+        )
         if use_wrapper_classic_layout_compat:
             self._apply_wrapper_classic_layout_compat(
                 staged_install_dir=cmake_install_prefix, install_subdir=install_subdir
