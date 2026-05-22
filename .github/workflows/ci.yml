@@ -219,10 +219,10 @@ jobs:
         run: pytest -n auto -ra --showlocals -Wdefault
 
   manylinux:
-    name: Manylinux on 🐍 3.13 • Free-threaded
+    name: Manylinux on 🐍 3.14 • Free-threaded
     runs-on: ubuntu-latest
     timeout-minutes: 40
-    container: quay.io/pypa/musllinux_1_2_x86_64@sha256:36bd94f44a613d006b5255f8393ab262d86a3bc016feedb91dc0b520a1b51e50  # 2026.05.17-1
+    container: quay.io/pypa/musllinux_1_2_x86_64@sha256:36bd94f44a613d006b5255f8393ab262d86a3bc016feedb91dc0b520a1b51e50 # 2026.05.17-1
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -230,7 +230,7 @@ jobs:
           persist-credentials: false
 
       - name: Prepare venv
-        run: python3.13t -m venv /venv
+        run: python3.14t -m venv /venv
 
       - name: Install deps
         run: /venv/bin/pip install -e . --group=test ninja
