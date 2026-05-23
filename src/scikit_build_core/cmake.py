@@ -110,9 +110,10 @@ class CMaker:
         stale = False
 
         info: dict[str, str] = {}
-        with contextlib.suppress(FileNotFoundError), skbuild_info.open(
-            "r", encoding="utf-8"
-        ) as f:
+        with (
+            contextlib.suppress(FileNotFoundError),
+            skbuild_info.open("r", encoding="utf-8") as f,
+        ):
             info = json.load(f)
 
         if info:
@@ -139,7 +140,7 @@ class CMaker:
         # Not using --fresh here, not just due to CMake 3.24+, but also just in
         # case it triggers an extra FetchContent pull in CMake 3.30+
         if stale:
-            # Python 3.8+ can use missing_ok=True
+            # Can use missing_ok=True
             with contextlib.suppress(FileNotFoundError):
                 self.build_dir.joinpath("CMakeCache.txt").unlink()
             shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)

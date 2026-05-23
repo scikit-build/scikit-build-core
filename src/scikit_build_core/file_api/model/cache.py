@@ -1,12 +1,11 @@
 import dataclasses
-from typing import List
 
 from .common import APIVersion
 
 __all__ = ["Cache", "Entry", "Property"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -21,11 +20,11 @@ class Entry:
     name: str
     value: str
     type: str
-    properties: List[Property]
+    properties: list[Property]
 
 
 @dataclasses.dataclass(frozen=True)
 class Cache:
     kind: str
     version: APIVersion
-    entries: List[Entry]
+    entries: list[Entry]

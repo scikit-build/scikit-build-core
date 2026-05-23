@@ -79,7 +79,6 @@ def each_unignored_file(
         if mode != "classic":
             for dname in dirs:
                 if not match_path(
-                    dirpath,
                     dirpath / dname,
                     include_spec,
                     global_exclude_spec,
@@ -96,7 +95,6 @@ def each_unignored_file(
         for fn in filenames:
             path = dirpath / fn
             if match_path(
-                dirpath,
                 path,
                 include_spec,
                 global_exclude_spec,
@@ -109,7 +107,6 @@ def each_unignored_file(
 
 
 def match_path(
-    dirpath: Path,
     p: Path,
     include_spec: pathspec.GitIgnoreSpec,
     global_exclude_spec: pathspec.GitIgnoreSpec,
@@ -165,11 +162,9 @@ def match_path(
         )
         return False
 
-    # Check relative ignores (Python 3.9's is_relative_to workaround)
+    # Check relative ignores
     for np, nex in nested_excludes.items():
-        if (dirpath == np or np in dirpath.parents) and (
-            c := nex.check_file(p.relative_to(np))
-        ).include:
+        if p.is_relative_to(np) and (c := nex.check_file(p.relative_to(np))).include:
             assert c.index is not None
             logger.debug(
                 "Excluding {} {} because it is explicitly excluded by nested ignore with {!r}.",

@@ -603,7 +603,7 @@ print(mk_skbuild_docs())
 
   The default (empty string) will use the default Python version.
 
-  You can also set this to "cp38" to enable the CPython 3.8+ Stable
+  You can also set this to "cp39" to enable the CPython 3.9+ Stable
   ABI / Limited API (only on CPython and if the version is sufficient,
   otherwise this has no effect). For free-threaded Python, you can use
   "cp315t" to enable the free-threaded stable ABI (only on CPython
