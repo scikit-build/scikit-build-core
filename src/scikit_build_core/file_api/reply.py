@@ -103,13 +103,23 @@ class Converter:
             # We don't have DataclassInstance exposed in typing yet
             return self.make_class(item, target)
         raw_target = get_target_raw_type(target)
-        # For generic Unions we try each type on at a time
+        # For generic Unions we try each type one at a time. We first match the
+        # shape of the item against the candidate, so that e.g. ``str(<dict>)``
+        # cannot shadow a dataclass member in ``Union[str, Paths]``: a dict-like
+        # item must go to a dataclass member, and any other item to a
+        # non-dataclass member.
         if is_union_type(raw_target):
-            last_err: Exception = AssertionError("Failed for unknown reason")
+            last_err: Exception = TypeError(f"No member of {target} matched {item!r}")
             for maybe_target in get_args(target):
+                sub_target = process_union(maybe_target)
+                is_dataclass = dataclasses.is_dataclass(sub_target) and isinstance(
+                    sub_target, type
+                )
+                if isinstance(item, dict) != is_dataclass:
+                    continue
                 try:
                     return self._convert_any(item, maybe_target)
-                except ExceptionGroup as err:  # noqa: PERF203
+                except (ExceptionGroup, TypeError) as err:
                     last_err = err
                     continue
             raise last_err

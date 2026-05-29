@@ -4,6 +4,7 @@ import os
 import shutil
 import sysconfig
 from pathlib import Path
+from typing import List, Union
 
 import pytest
 from packaging.specifiers import SpecifierSet
@@ -12,8 +13,9 @@ from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.file_api._cattrs_converter import (
     load_reply_dir as load_reply_dir_cattrs,
 )
+from scikit_build_core.file_api.model.common import Paths
 from scikit_build_core.file_api.query import stateless_query
-from scikit_build_core.file_api.reply import load_reply_dir
+from scikit_build_core.file_api.reply import Converter, load_reply_dir
 
 DIR = Path(__file__).parent.absolute()
 
@@ -52,6 +54,21 @@ def test_cattrs_comparison(tmp_path):
     cattrs_index = load_reply_dir_cattrs(reply_dir)
     index = load_reply_dir(reply_dir)
     assert index == cattrs_index
+
+
+def test_convert_union_matches_shape():
+    # ``InstallRule.paths`` is a ``List[Union[str, Paths]]``. A bare string must
+    # stay a string, while a mapping must be converted to the dataclass member
+    # (``str(<dict>)`` would otherwise succeed and shadow ``Paths``).
+    converter = Converter(Path())
+    result = converter._convert_any(
+        ["a/string", {"source": "src/dir", "build": "build/dir"}],
+        List[Union[str, Paths]],
+    )
+    assert result == [
+        "a/string",
+        Paths(source=Path("src/dir"), build=Path("build/dir")),
+    ]
 
 
 # TODO: Why is this an IndexError?
