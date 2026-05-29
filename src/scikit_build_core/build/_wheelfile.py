@@ -136,8 +136,11 @@ class WheelWriter:
             for f in metadata_files
             if f.is_file()
         }
-        if {"METADATA", "WHEEL", "RECORD", "entry_points.txt"} & extra_metadata.keys():
-            msg = "Cannot have METADATA, WHEEL, RECORD, or entry_points.txt in metadata_dir"
+        reserved = {"METADATA", "WHEEL", "RECORD", "entry_points.txt"}
+        if self.variant_dist_info_contents is not None:
+            reserved.add(VARIANT_DIST_INFO_FILENAME)
+        if reserved & extra_metadata.keys():
+            msg = f"Cannot have {', '.join(sorted(reserved))} in metadata_dir"
             raise ValueError(msg)
 
         entry_points_txt = entry_points.getvalue().encode("utf-8")

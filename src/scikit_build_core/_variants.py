@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import importlib
+import re
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -10,6 +11,9 @@ if TYPE_CHECKING:
 
 VARIANTLIB_BUILD_REQUIREMENT = "variantlib"
 VARIANT_DIST_INFO_FILENAME = "variant.json"
+# A wheel filename uses "-" as the field separator, so the variant label (the
+# final field) must not contain dashes or whitespace.
+_VARIANT_LABEL_RE = re.compile(r"[A-Za-z0-9_.]+")
 
 __all__ = [
     "VARIANT_DIST_INFO_FILENAME",
@@ -111,10 +115,16 @@ def get_wheel_variant(
         dist_info_contents = make_variant_dist_info(
             variant,
             variant_info=variant_info,
-            variant_label=settings.variant_label,
+            variant_label=variant_label,
         ).encode("utf-8")
     except validation_error as err:
         rich_error(str(err))
+
+    if not _VARIANT_LABEL_RE.fullmatch(variant_label):
+        rich_error(
+            f"Computed variant label {variant_label!r} is not safe for a wheel "
+            "filename; it must match [A-Za-z0-9_.]+ (no dashes or whitespace)"
+        )
 
     if metadata.version is None:
         msg = "project.version is required to build variant wheel metadata"

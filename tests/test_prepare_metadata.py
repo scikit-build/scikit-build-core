@@ -116,9 +116,11 @@ def test_prepare_metadata_for_build_wheel_variant(fp, monkeypatch, tmp_path):
     )
 
     variantlib: Any = types.ModuleType("variantlib")
+    variantlib.__path__ = []  # mark as a package so submodule imports resolve
     variantlib_api: Any = types.ModuleType("variantlib.api")
     variantlib_errors: Any = types.ModuleType("variantlib.errors")
     variantlib_models: Any = types.ModuleType("variantlib.models")
+    variantlib_models.__path__ = []
     variantlib_models_variant: Any = types.ModuleType("variantlib.models.variant")
     variantlib_pyproject: Any = types.ModuleType("variantlib.pyproject_toml")
 
