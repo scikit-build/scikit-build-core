@@ -83,7 +83,8 @@ class _SkbuildMultiplexedPath:
 
     Used to combine source-tree and CMake-install-tree paths so that
     importlib.resources.files() can see files from both locations.
-    Fallback for Python < 3.11, which lacks importlib.resources.readers.MultiplexedPath.
+    Fallback for Python < 3.12, whose importlib.resources.readers.MultiplexedPath
+    mishandles slash-containing joinpath() calls across search locations.
     """
 
     def __init__(self, *paths: str) -> None:
@@ -168,6 +169,15 @@ class _ScikitBuildEditableReader:
             return Path(self._paths[0]) if self._paths else Path(".")
         if len(existing) == 1:
             return Path(existing[0])
+        if sys.version_info >= (3, 12):
+            # The stdlib MultiplexedPath is only reliable on 3.12+.  On 3.11
+            # and earlier, joinpath() with a slash-containing path (e.g.
+            # "namespace1/generated_data") falls back to the first search
+            # location instead of navigating across them, so we use the
+            # _SkbuildMultiplexedPath fallback below.
+            from importlib.resources.readers import MultiplexedPath
+
+            return MultiplexedPath(*[Path(p) for p in existing])
         return _SkbuildMultiplexedPath(*existing)
 
     def open_resource(self, resource: str) -> object:
@@ -288,23 +298,6 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 if not os.path.isabs(parent_path):
                     parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
-        # Second pass: propagate build-tree paths from parent packages to
-        # sub-packages.  This covers the case where a Python package (with
-        # __init__.py) lives in a directory that also contains CMake-generated
-        # data files but has no Python modules of its own in the build tree.
-        # Processing in depth order ensures parents are resolved before children.
-        for pkg in sorted(pkgs, key=lambda p: p.count(".")):
-            parent = ".".join(pkg.split(".")[:-1])
-            last = pkg.split(".")[-1]
-            if not parent or parent not in submodule_search_locations:
-                continue
-            for parent_path in sorted(submodule_search_locations[parent]):
-                sub_path = os.path.join(parent_path, last)
-                if (
-                    os.path.isdir(sub_path)
-                    and sub_path not in submodule_search_locations[pkg]
-                ):
-                    submodule_search_locations[pkg].add(sub_path)
 
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = frozenset(pkgs)
@@ -323,38 +316,35 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             submodule_search_locations = None
 
         if fullname in self.known_wheel_files:
-            redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
                 self.rebuild()
-            is_pkg = redir.endswith(("__init__.py", "__init__.pyc"))
-            spec = importlib.util.spec_from_file_location(
-                fullname,
-                os.path.join(self.dir, redir),
-                submodule_search_locations=submodule_search_locations
-                if is_pkg
-                else None,
-            )
-            if spec is not None and is_pkg and submodule_search_locations:
-                spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
-                    spec.loader, submodule_search_locations
-                )
-            return spec
+            origin = os.path.join(self.dir, self.known_wheel_files[fullname])
+            return self._make_spec(fullname, origin, submodule_search_locations)
         if fullname in self.known_source_files:
-            redir = self.known_source_files[fullname]
-            is_pkg = redir.endswith(("__init__.py", "__init__.pyc"))
-            spec = importlib.util.spec_from_file_location(
-                fullname,
-                redir,
-                submodule_search_locations=submodule_search_locations
-                if is_pkg
-                else None,
-            )
-            if spec is not None and is_pkg and submodule_search_locations:
-                spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
-                    spec.loader, submodule_search_locations
-                )
-            return spec
+            origin = self.known_source_files[fullname]
+            return self._make_spec(fullname, origin, submodule_search_locations)
         return None
+
+    def _make_spec(
+        self,
+        fullname: str,
+        origin: str,
+        submodule_search_locations: list[str] | None,
+    ) -> ModuleSpec | None:
+        is_pkg = origin.endswith(("__init__.py", "__init__.pyc"))
+        spec = importlib.util.spec_from_file_location(
+            fullname,
+            origin,
+            submodule_search_locations=submodule_search_locations if is_pkg else None,
+        )
+        # For packages with multiple search locations (e.g. a source tree and a
+        # CMake install tree), wrap the loader so importlib.resources.files()
+        # can see resources from every location, not just origin's directory.
+        if spec is not None and is_pkg and submodule_search_locations:
+            spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
+                spec.loader, submodule_search_locations
+            )
+        return spec
 
     def rebuild(self) -> None:
         # Don't rebuild if not set to a local path
