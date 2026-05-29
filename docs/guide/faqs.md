@@ -126,14 +126,14 @@ change, and it must be opted into with `experimental = true`.
 
 Scikit-build-core can attach variant metadata to a wheel, producing a
 variant-labeled filename (the label becomes the final field of the wheel name)
-and a `variant.json` file inside `*.dist-info`. This lets you ship several wheels
-for the same version that differ by hardware or library features (CPU ABI, CUDA
-version, BLAS implementation, etc.).
+and a `variant.json` file inside `*.dist-info`. This lets you ship several
+wheels for the same version that differ by hardware or library features (CPU
+ABI, CUDA version, BLAS implementation, etc.).
 
-Because each variant of a build needs different settings, the variant options are
-**only allowed in config-settings or `[[tool.scikit-build.overrides]]`** — they
-cannot be hard-coded at the top level of `pyproject.toml`. The relevant settings
-are:
+Because each variant of a build needs different settings, the variant options
+are **only allowed in config-settings or `[[tool.scikit-build.overrides]]`** —
+they cannot be hard-coded at the top level of `pyproject.toml`. The relevant
+settings are:
 
 - `variant` / `variant-name`: variant properties in
   `namespace :: feature :: value` form (repeatable).
