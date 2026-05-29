@@ -9,7 +9,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
 from .._compat.typing import TypeVar
-from .build_cmake import WRAPPER_CMAKE_INSTALL_DIR_COMPAT
+from .build_cmake import (
+    WRAPPER_CLASSIC_LAYOUT_COMPAT,
+    WRAPPER_CMAKE_INSTALL_DIR_COMPAT,
+)
 
 __all__ = ["setup"]
 
@@ -52,7 +55,10 @@ def setup(
         type(
             "DistributionClass",
             (distclass,),
-            {WRAPPER_CMAKE_INSTALL_DIR_COMPAT: True},
+            {
+                WRAPPER_CLASSIC_LAYOUT_COMPAT: True,
+                WRAPPER_CMAKE_INSTALL_DIR_COMPAT: True,
+            },
         ),
     )
 

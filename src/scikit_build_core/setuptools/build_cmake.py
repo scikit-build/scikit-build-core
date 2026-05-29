@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import sys
+from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal
@@ -36,6 +37,8 @@ __all__ = [
 ]
 
 WRAPPER_CMAKE_INSTALL_DIR_COMPAT = "_scikit_build_wrapper_cmake_install_dir_compat"
+WRAPPER_CLASSIC_LAYOUT_COMPAT = "_scikit_build_wrapper_classic_layout_compat"
+ORIGINAL_DATA_FILES = "_scikit_build_original_data_files"
 
 
 def __dir__() -> list[str]:
@@ -229,6 +232,57 @@ def _prune_manifest(
         _remove_empty_parents(path, install_dir)
 
 
+def _package_paths(dist: Distribution) -> set[Path]:
+    return {
+        Path(*package.split(".")) for package in getattr(dist, "packages", None) or []
+    }
+
+
+def _package_source_roots(dist: Distribution) -> list[Path]:
+    packages = list(getattr(dist, "packages", None) or [])
+    if not packages:
+        return [_package_base_dir(dist)]
+
+    roots: set[Path] = set()
+    for package in packages:
+        package_source_dir = _package_source_dir(dist, package)
+        package_parts = package.split(".")
+        if package_parts == list(package_source_dir.parts[-len(package_parts) :]):
+            roots.add(Path(*package_source_dir.parts[: -len(package_parts)]))
+        else:
+            roots.add(package_source_dir.parent)
+
+    return sorted(roots, key=lambda path: (-len(path.parts), os.fspath(path)))
+
+
+def _classify_wrapper_package_file(dist: Distribution, path: Path) -> Path | None:
+    package_paths = _package_paths(dist)
+    if not package_paths:
+        return None
+
+    candidates = [path]
+    for root in _package_source_roots(dist):
+        if not root.parts:
+            continue
+        try:
+            candidates.append(path.relative_to(root))
+        except ValueError:
+            continue
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if any(
+            candidate == package_path or package_path in candidate.parents
+            for package_path in package_paths
+        ):
+            return candidate
+
+    return None
+
+
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
     cmake_args: list[str] | str | None = None
@@ -312,6 +366,18 @@ class BuildCMake(setuptools.Command):
         source_root = package_dir.get("", ".")
         return Path(source_root).resolve() / install_subdir
 
+    def _set_generated_data_files(
+        self, data_files: list[tuple[str, list[str]]] | None = None
+    ) -> None:
+        dist = self.distribution
+        if not hasattr(dist, ORIGINAL_DATA_FILES):
+            setattr(
+                dist, ORIGINAL_DATA_FILES, list(getattr(dist, "data_files", []) or [])
+            )
+
+        original_data_files = list(getattr(dist, ORIGINAL_DATA_FILES))
+        dist.data_files = [*original_data_files, *(data_files or [])]
+
     def _record_installed_files(
         self,
         build_dir: Path,
@@ -338,6 +404,54 @@ class BuildCMake(setuptools.Command):
                 if line
             )
 
+    def _wrapper_classic_layout_compat_enabled(self) -> bool:
+        return bool(
+            not self.editable_mode
+            and getattr(self.distribution, WRAPPER_CLASSIC_LAYOUT_COMPAT, False)
+        )
+
+    def _apply_wrapper_classic_layout_compat(
+        self, *, staged_install_dir: Path, install_subdir: Path
+    ) -> None:
+        assert self.build_lib is not None
+
+        build_lib = Path(self.build_lib).resolve()
+        staged_install_dir = staged_install_dir.resolve()
+        generated_data_files: defaultdict[str, list[str]] = defaultdict(list)
+        package_outputs: list[Path] = []
+
+        for staged_path in self._installed_files:
+            relative_output = staged_path.relative_to(staged_install_dir)
+            effective_output = (
+                install_subdir / relative_output
+                if install_subdir.parts
+                else relative_output
+            )
+            package_output = _classify_wrapper_package_file(
+                self.distribution, effective_output
+            )
+
+            if package_output is None:
+                data_dir = (
+                    os.fspath(effective_output.parent)
+                    if effective_output.parent.parts
+                    else ""
+                )
+                generated_data_files[data_dir].append(os.fspath(staged_path))
+                continue
+
+            destination = build_lib / package_output
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(staged_path, destination)
+            package_outputs.append(destination)
+
+        self._installed_files = sorted(package_outputs)
+        data_files = [
+            (directory, sorted(files))
+            for directory, files in sorted(generated_data_files.items())
+        ]
+        self._set_generated_data_files(data_files)
+
     def run(self) -> None:
         assert self.build_lib is not None
         assert self.build_temp is not None
@@ -351,6 +465,7 @@ class BuildCMake(setuptools.Command):
         build_temp = build_tmp_folder / "_skbuild"
         self._installed_files = []
         self._editable_install_dir = None
+        self._set_generated_data_files()
 
         dist = self.distribution
         dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
@@ -395,9 +510,18 @@ class BuildCMake(setuptools.Command):
 
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
+        install_subdir = self._get_install_subdir()
         install_dir = self._get_install_dir()
+        use_wrapper_classic_layout_compat = (
+            self._wrapper_classic_layout_compat_enabled()
+        )
+        cmake_install_prefix = (
+            build_temp / "cmake-install" / install_subdir
+            if use_wrapper_classic_layout_compat
+            else install_dir
+        )
         installed_before = _collect_recursive_files(install_dir)
-        defines = {"CMAKE_INSTALL_PREFIX": install_dir}
+        defines = {"CMAKE_INSTALL_PREFIX": cmake_install_prefix}
 
         builder.configure(
             name=dist.get_name(),
@@ -417,17 +541,23 @@ class BuildCMake(setuptools.Command):
             build_args.append(f"-j{self.parallel}")
 
         builder.build(build_args=build_args)
-        builder.install(install_dir=install_dir)
+        builder.install(install_dir=cmake_install_prefix)
 
-        cmake_manifest = _read_cmake_install_manifests(build_temp, install_dir)
+        cmake_manifest = _read_cmake_install_manifests(build_temp, cmake_install_prefix)
         if cmake_manifest is None:
             installed_after = _collect_recursive_files(install_dir)
             cmake_manifest = sorted(installed_after - installed_before)
 
         process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
         processed_manifest = _process_manifest(cmake_manifest, process_manifest)
-        _prune_manifest(install_dir, cmake_manifest, processed_manifest)
-        self._record_installed_files(build_temp, install_dir, processed_manifest)
+        _prune_manifest(cmake_install_prefix, cmake_manifest, processed_manifest)
+        self._record_installed_files(
+            build_temp, cmake_install_prefix, processed_manifest
+        )
+        if use_wrapper_classic_layout_compat:
+            self._apply_wrapper_classic_layout_compat(
+                staged_install_dir=cmake_install_prefix, install_subdir=install_subdir
+            )
 
     def get_outputs(self) -> list[str]:
         if self.editable_mode:
