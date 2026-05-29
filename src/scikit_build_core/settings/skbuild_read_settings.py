@@ -154,13 +154,21 @@ def _validate_overrides(
         # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
         if field.metadata.get("override_only", False):
+            # "metadata" is the one dict-valued override-only field; has_item
+            # needs to know to use dict-presence semantics for it.
             is_dict = field.name == "metadata"
+            # override-only fields are also allowed via env vars and
+            # config-settings (sources[:3]); only pyproject.toml is forbidden.
             if any(
                 source.has_item(*path, field.name, is_dict=is_dict)
                 for source in sources[:3]
             ):
                 return
 
+            # Decide whether the value was actually hard-coded in pyproject.toml.
+            # We can't rely on `value is not None`, since some override-only
+            # fields have non-None falsy defaults (e.g. [] or False), so we ask
+            # the TOML sources (sources[3:]) whether the key is really present.
             if record is not None:
                 original_value = record.original_value
             elif any(
