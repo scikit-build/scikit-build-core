@@ -11,6 +11,7 @@ from packaging.tags import sys_tags
 
 from .._compat import tomllib
 from .._logging import logger
+from .._variants import variant_build_requires
 from ..format import pyproject_format
 from ..program_search import (
     best_program,
@@ -157,3 +158,9 @@ class GetRequires:
                 yield from getattr(
                     module, "get_requires_for_dynamic_metadata", lambda _: []
                 )(config)
+
+    def variants(self) -> Generator[str, None, None]:
+        if self.settings.fail:
+            return
+
+        yield from variant_build_requires(self.settings)

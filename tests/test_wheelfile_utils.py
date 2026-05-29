@@ -1,6 +1,7 @@
 import stat
 import zipfile
 
+import pytest
 from packaging.tags import Tag
 
 import scikit_build_core.build._wheelfile
@@ -71,3 +72,57 @@ def test_wheel_writer_simple(tmp_path, monkeypatch):
         for info in zf.infolist():
             assert info.external_attr == (0o664 | stat.S_IFREG) << 16
             assert info.compress_type == zipfile.ZIP_DEFLATED
+
+
+def test_wheel_writer_variant(tmp_path):
+    metadata = StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "something",
+                "version": "1.2.3",
+            },
+        },
+        metadata_version="2.3",
+    )
+    out_dir = tmp_path / "out"
+
+    wheel = scikit_build_core.build._wheelfile.WheelWriter(
+        metadata,
+        out_dir,
+        {Tag("py3", "none", "any")},
+        scikit_build_core.build._wheelfile.WheelMetadata(),
+        None,
+        variant_label="cpu",
+        variant_dist_info_contents=b'{"variant":"cpu"}',
+    )
+
+    assert wheel.wheelpath.name == "something-1.2.3-py3-none-any-cpu.whl"
+    assert wheel.dist_info_contents()["variant.json"] == b'{"variant":"cpu"}'
+
+
+def test_wheel_writer_variant_metadata_dir_conflict(tmp_path):
+    metadata = StandardMetadata.from_pyproject(
+        {
+            "project": {
+                "name": "something",
+                "version": "1.2.3",
+            },
+        },
+        metadata_version="2.3",
+    )
+    metadata_dir = tmp_path / "metadata"
+    metadata_dir.mkdir()
+    (metadata_dir / "variant.json").write_bytes(b'{"variant":"override"}')
+
+    wheel = scikit_build_core.build._wheelfile.WheelWriter(
+        metadata,
+        tmp_path / "out",
+        {Tag("py3", "none", "any")},
+        scikit_build_core.build._wheelfile.WheelMetadata(),
+        metadata_dir,
+        variant_label="cpu",
+        variant_dist_info_contents=b'{"variant":"cpu"}',
+    )
+
+    with pytest.raises(ValueError, match=r"variant\.json"):
+        wheel.dist_info_contents()

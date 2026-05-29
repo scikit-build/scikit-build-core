@@ -18,6 +18,7 @@ from zipfile import ZipInfo
 import pathspec
 
 from .. import __version__
+from .._variants import VARIANT_DIST_INFO_FILENAME
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -76,6 +77,8 @@ class WheelWriter:
     tags: AbstractSet[Tag]
     wheel_metadata: WheelMetadata
     metadata_dir: Path | None
+    variant_label: str = ""
+    variant_dist_info_contents: bytes | None = None
     _zipfile: zipfile.ZipFile | None = None
 
     @property
@@ -93,7 +96,8 @@ class WheelWriter:
         optbuildver = (
             [self.wheel_metadata.build_tag] if self.wheel_metadata.build_tag else []
         )
-        return "-".join([self.name_ver, *optbuildver, pyver, abi, arch])
+        variant = [self.variant_label] if self.variant_label else []
+        return "-".join([self.name_ver, *optbuildver, pyver, abi, arch, *variant])
 
     @property
     def wheelpath(self) -> Path:
@@ -132,8 +136,11 @@ class WheelWriter:
             for f in metadata_files
             if f.is_file()
         }
-        if {"METADATA", "WHEEL", "RECORD", "entry_points.txt"} & extra_metadata.keys():
-            msg = "Cannot have METADATA, WHEEL, RECORD, or entry_points.txt in metadata_dir"
+        reserved = {"METADATA", "WHEEL", "RECORD", "entry_points.txt"}
+        if self.variant_dist_info_contents is not None:
+            reserved.add(VARIANT_DIST_INFO_FILENAME)
+        if reserved & extra_metadata.keys():
+            msg = f"Cannot have {', '.join(sorted(reserved))} in metadata_dir"
             raise ValueError(msg)
 
         entry_points_txt = entry_points.getvalue().encode("utf-8")
@@ -145,6 +152,11 @@ class WheelWriter:
             "METADATA": bytes(rfc822),
             "WHEEL": self.wheel_metadata.as_bytes(),
             **entry_points_dict,
+            **(
+                {VARIANT_DIST_INFO_FILENAME: self.variant_dist_info_contents}
+                if self.variant_dist_info_contents is not None
+                else {}
+            ),
             **extra_metadata,
         }
 

@@ -546,6 +546,46 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
+    variant: List[str] = dataclasses.field(
+        default_factory=list,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
+    """
+    Experimental PEP 817 variant properties.
+
+    This is only allowed in overrides or config-settings.
+    """
+
+    variant_name: List[str] = dataclasses.field(
+        default_factory=list,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
+    """
+    Experimental PEP 817 variant properties used for wheel metadata selection.
+
+    This is only allowed in overrides or config-settings.
+    """
+
+    variant_label: Optional[str] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
+    """
+    Experimental PEP 817 wheel variant label override.
+
+    This is only allowed in overrides or config-settings.
+    """
+
+    null_variant: bool = dataclasses.field(
+        default=False,
+        metadata=SettingsFieldMetadata(override_only=True),
+    )
+    """
+    Experimental PEP 817 null-variant selector.
+
+    This is only allowed in overrides or config-settings.
+    """
+
     minimum_version: Optional[Version] = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(

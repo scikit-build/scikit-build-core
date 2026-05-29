@@ -13,12 +13,13 @@ from packaging.version import Version
 from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_error, rich_print, rich_warning
+from .._variants import validate_variant_settings
 from ..errors import CMakeConfigError
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
 from .skbuild_overrides import process_overrides
-from .sources import ConfSource, EnvSource, SourceChain, TOMLSource
+from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
 if TYPE_CHECKING:
     import os
@@ -138,6 +139,7 @@ def _handle_move(
 def _validate_overrides(
     settings: ScikitBuildSettings,
     overrides: dict[str, OverrideRecord],
+    sources: tuple[Source, ...],
 ) -> None:
     """Validate all fields with any override information."""
 
@@ -145,13 +147,38 @@ def _validate_overrides(
         field: dataclasses.Field[Any],
         value: Any,
         prefix: str = "",
+        path: tuple[str, ...] = (),
         record: OverrideRecord | None = None,
     ) -> None:
         """Do the actual validation."""
         # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
         if field.metadata.get("override_only", False):
-            original_value = record.original_value if record else value
+            # "metadata" is the one dict-valued override-only field; has_item
+            # needs to know to use dict-presence semantics for it.
+            is_dict = field.name == "metadata"
+            # override-only fields are also allowed via env vars and
+            # config-settings (sources[:3]); only pyproject.toml is forbidden.
+            if any(
+                source.has_item(*path, field.name, is_dict=is_dict)
+                for source in sources[:3]
+            ):
+                return
+
+            # Decide whether the value was actually hard-coded in pyproject.toml.
+            # We can't rely on `value is not None`, since some override-only
+            # fields have non-None falsy defaults (e.g. [] or False), so we ask
+            # the TOML sources (sources[3:]) whether the key is really present.
+            if record is not None:
+                original_value = record.original_value
+            elif any(
+                source.has_item(*path, field.name, is_dict=is_dict)
+                for source in sources[3:]
+            ):
+                original_value = value
+            else:
+                original_value = None
+
             if original_value is not None:
                 msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
                 if settings.strict_config:
@@ -164,6 +191,7 @@ def _validate_overrides(
         obj: Any,
         record: OverrideRecord | None = None,
         prefix: str = "",
+        path: tuple[str, ...] = (),
     ) -> None:
         """Navigate through all the keys and validate each field."""
         for field in dataclasses.fields(obj):
@@ -175,11 +203,15 @@ def _validate_overrides(
                 field=field,
                 value=value,
                 prefix=prefix,
+                path=path,
                 record=closest_record,
             )
             if dataclasses.is_dataclass(value):
                 validate_field_recursive(
-                    obj=value, record=closest_record, prefix=f"{prefix}{conf_key}."
+                    obj=value,
+                    record=closest_record,
+                    prefix=f"{prefix}{conf_key}.",
+                    path=(*path, field.name),
                 )
 
     # Navigate all fields starting from the top-level
@@ -258,6 +290,7 @@ class SettingsReader:
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+        validate_variant_settings(self.settings)
 
         static_settings = SourceChain(
             *toml_srcs, prefixes=["tool", "scikit-build"]
@@ -421,7 +454,7 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
-        _validate_overrides(self.settings, self.overridden_items)
+        _validate_overrides(self.settings, self.overridden_items, self.sources.sources)
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:
