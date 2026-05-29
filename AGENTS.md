@@ -50,8 +50,8 @@ It is built with **hatchling** and stored under `src/scikit_build_core/`.
   shims (`tomllib`, `typing.Self`, `importlib.metadata`, etc.) and
   `scikit_build_core._vendor.pyproject_metadata` — never the direct modules. See
   `tool.ruff.lint.flake8-tidy-imports.banned-api` in `pyproject.toml`.
-- **`src/scikit_build_core/_vendor/` is vendored** (`pyproject_metadata`). Do not
-  lint or hand-edit it.
+- **`src/scikit_build_core/_vendor/` is vendored** (`pyproject_metadata`). Do
+  not lint or hand-edit it.
 - **Generated files** — editing the settings model or docstrings requires
   `nox -t gen`. This regenerates cog sections in `README.md` and
   `docs/reference/configs.md`, and
