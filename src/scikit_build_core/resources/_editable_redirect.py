@@ -317,7 +317,6 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 ):
                     submodule_search_locations[pkg].add(sub_path)
 
-
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = frozenset(pkgs)
 
