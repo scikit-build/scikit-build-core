@@ -17,16 +17,19 @@ import pytest
         pytest.param(
             True,
             id="package",
-            marks=[pytest.mark.xfail(reason="Only data folders supported currently")],
         ),
-        pytest.param(False, id="datafolder"),
+        pytest.param(
+            False,
+            id="datafolder",
+            marks=pytest.mark.xfail(
+                sys.version_info[:2] == (3, 9),
+                reason="Python 3.9 redirect does not support resource-only data folders yet",
+            ),
+        ),
     ],
 )
 @pytest.mark.parametrize("package", ["navigate_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
-@pytest.mark.xfail(
-    sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
-)
 def test_navigate_editable(isolated, isolate, py_pkg):
     if py_pkg:
         init_py = Path("python/shared_pkg/data/__init__.py")
@@ -151,8 +154,6 @@ def test_importlib_resources(editable, isolated):
         pytest.skip("importlib.resources.files is introduced in Python 3.9")
 
     # TODO: Investigate these failures
-    if editable.mode == "redirect":
-        pytest.xfail("Redirect mode is at navigating importlib.resources.files")
     if platform.system() == "Windows" and editable.mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")
 

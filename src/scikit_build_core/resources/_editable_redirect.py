@@ -77,6 +77,177 @@ class FileLockIfUnix:
         os.close(self.lock_file_fd)
 
 
+class _SkbuildMultiplexedPath:
+    """
+    A Traversable that merges multiple filesystem directories.
+
+    Used to combine source-tree and CMake-install-tree paths so that
+    importlib.resources.files() can see files from both locations.
+    Fallback for Python < 3.12, whose importlib.resources.readers.MultiplexedPath
+    mishandles slash-containing joinpath() calls across search locations.
+    """
+
+    def __init__(self, *paths: str) -> None:
+        from pathlib import Path
+
+        self._paths = [Path(p) for p in paths if os.path.isdir(p)]
+
+    @property
+    def name(self) -> str:
+        return self._paths[0].name if self._paths else ""
+
+    def is_dir(self) -> bool:
+        return True
+
+    def is_file(self) -> bool:
+        return False
+
+    def open(self, *args: object, **kwargs: object) -> object:
+        raise IsADirectoryError(self._paths[0] if self._paths else "")
+
+    def read_bytes(self) -> bytes:
+        raise IsADirectoryError
+
+    def read_text(self, encoding: str | None = None) -> str:
+        raise IsADirectoryError
+
+    def iterdir(self) -> object:
+        seen: dict[str, object] = {}
+        for base in self._paths:
+            for child in base.iterdir():
+                if child.name not in seen:
+                    seen[child.name] = child
+        return iter(seen.values())
+
+    def joinpath(self, *descendants: object) -> object:
+        if not descendants:
+            return self
+        from pathlib import Path
+
+        first = str(descendants[0])
+        rest = descendants[1:]
+        parts = first.split("/")
+        child_name, extra = parts[0], parts[1:]
+
+        candidates = [p / child_name for p in self._paths if (p / child_name).exists()]
+        if not candidates:
+            return (self._paths[0] / child_name) if self._paths else Path(child_name)
+        if len(candidates) == 1 or not all(c.is_dir() for c in candidates):
+            result: object = candidates[0]
+        else:
+            result = _SkbuildMultiplexedPath(*[str(c) for c in candidates])
+        for part in extra:
+            result = result / part  # type: ignore[operator]
+        for desc in rest:
+            result = result / str(desc)  # type: ignore[operator]
+        return result
+
+    def __truediv__(self, child: object) -> object:
+        return self.joinpath(str(child))
+
+    def __repr__(self) -> str:
+        paths = ", ".join(f"'{p}'" for p in self._paths)
+        return f"_SkbuildMultiplexedPath({paths})"
+
+
+class _ScikitBuildEditableReader:
+    """
+    Resource reader for editable installs with multiple package roots.
+
+    Provides importlib.resources.files() access across both the source tree
+    and the CMake install tree.
+    """
+
+    def __init__(self, paths: list[str]) -> None:
+        self._paths = paths
+
+    def files(self) -> object:
+        from pathlib import Path
+
+        existing = [p for p in self._paths if os.path.isdir(p)]
+        if not existing:
+            return Path(self._paths[0]) if self._paths else Path(".")
+        if len(existing) == 1:
+            return Path(existing[0])
+        if sys.version_info >= (3, 12):
+            # The stdlib MultiplexedPath is only reliable on 3.12+.  On 3.11
+            # and earlier, joinpath() with a slash-containing path (e.g.
+            # "namespace1/generated_data") falls back to the first search
+            # location instead of navigating across them, so we use the
+            # _SkbuildMultiplexedPath fallback below.
+            from importlib.resources.readers import MultiplexedPath
+
+            return MultiplexedPath(*[Path(p) for p in existing])
+        return _SkbuildMultiplexedPath(*existing)
+
+    def open_resource(self, resource: str) -> object:
+        return self.files().joinpath(resource).open("rb")  # type: ignore[attr-defined]
+
+    def resource_path(self, resource: str) -> str:
+        path = self.files().joinpath(resource)  # type: ignore[attr-defined]
+        if hasattr(path, "__fspath__"):
+            return str(path)
+        msg = f"{resource!r} is not available as a concrete file path"
+        raise FileNotFoundError(msg)
+
+    def is_resource(self, name: str) -> bool:
+        path = self.files().joinpath(name)  # type: ignore[attr-defined]
+        return hasattr(path, "is_file") and path.is_file()
+
+    def contents(self) -> object:
+        return (item.name for item in self.files().iterdir())  # type: ignore[attr-defined]
+
+
+class _ScikitBuildResourceLoaderWrapper:
+    """
+    Thin wrapper around a module loader that provides multi-path resource reading.
+
+    Delegates all loader functionality to the wrapped loader, overriding only
+    get_resource_reader() to return a reader covering all search paths (both
+    source and CMake install trees).
+    """
+
+    def __init__(self, loader: object, search_paths: list[str]) -> None:
+        self._skbuild_loader = loader
+        self._skbuild_paths = search_paths
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._skbuild_loader, name)
+
+    def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
+        return _ScikitBuildEditableReader(self._skbuild_paths)
+
+
+def _patch_importlib_resources_for_python39() -> None:
+    """
+    Make importlib.resources.files() honor the editable resource reader on Python 3.9.
+
+    Python 3.9 ignores get_resource_reader().files() and falls back to
+    Path(spec.origin).parent, which points at the source tree for editable
+    installs. Patch that fallback so redirect packages can expose build-tree
+    resources there too.
+    """
+
+    if sys.version_info[:2] != (3, 9):
+        return
+
+    from importlib.resources import _common  # type: ignore[attr-defined]
+
+    if getattr(_common, "_skbuild_editable_patched", False):
+        return
+
+    original_fallback_resources = _common.fallback_resources
+
+    def fallback_resources(spec: object) -> object:
+        loader = getattr(spec, "loader", None)
+        if isinstance(loader, _ScikitBuildResourceLoaderWrapper):
+            return loader.get_resource_reader(getattr(spec, "name", "")).files()
+        return original_fallback_resources(spec)
+
+    _common.fallback_resources = fallback_resources
+    _common._skbuild_editable_patched = True  # pylint: disable=protected-access
+
+
 class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
     def __init__(
         self,
@@ -127,6 +298,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 if not os.path.isabs(parent_path):
                     parent_path = os.path.join(self.dir, parent_path)
                 submodule_search_locations[parent].add(parent_path)
+
         self.submodule_search_locations = submodule_search_locations
         self.pkgs = frozenset(pkgs)
 
@@ -144,26 +316,35 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             submodule_search_locations = None
 
         if fullname in self.known_wheel_files:
-            redir = self.known_wheel_files[fullname]
             if self.rebuild_flag:
                 self.rebuild()
-            return importlib.util.spec_from_file_location(
-                fullname,
-                os.path.join(self.dir, redir),
-                submodule_search_locations=submodule_search_locations
-                if fullname in self.pkgs
-                else None,
-            )
+            origin = os.path.join(self.dir, self.known_wheel_files[fullname])
+            return self._make_spec(fullname, origin, submodule_search_locations)
         if fullname in self.known_source_files:
-            redir = self.known_source_files[fullname]
-            return importlib.util.spec_from_file_location(
-                fullname,
-                redir,
-                submodule_search_locations=submodule_search_locations
-                if fullname in self.pkgs
-                else None,
-            )
+            origin = self.known_source_files[fullname]
+            return self._make_spec(fullname, origin, submodule_search_locations)
         return None
+
+    def _make_spec(
+        self,
+        fullname: str,
+        origin: str,
+        submodule_search_locations: list[str] | None,
+    ) -> ModuleSpec | None:
+        is_pkg = origin.endswith(("__init__.py", "__init__.pyc"))
+        spec = importlib.util.spec_from_file_location(
+            fullname,
+            origin,
+            submodule_search_locations=submodule_search_locations if is_pkg else None,
+        )
+        # For packages with multiple search locations (e.g. a source tree and a
+        # CMake install tree), wrap the loader so importlib.resources.files()
+        # can see resources from every location, not just origin's directory.
+        if spec is not None and is_pkg and submodule_search_locations:
+            spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
+                spec.loader, submodule_search_locations
+            )
+        return spec
 
     def rebuild(self) -> None:
         # Don't rebuild if not set to a local path
@@ -250,6 +431,7 @@ def install(
     :param install_dir: The wheel install directory override, if one was
                         specified
     """
+    _patch_importlib_resources_for_python39()
     sys.meta_path.insert(
         0,
         ScikitBuildRedirectingFinder(
