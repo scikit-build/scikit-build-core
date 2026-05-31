@@ -47,8 +47,10 @@ def test_requires_command(
     (tmp_path / "pyproject.toml").write_text(PYPROJECT_1)
     monkeypatch.chdir(tmp_path)
 
-    main()
+    # rich_warning is memoized; clear before main() so the warning is emitted
+    # even if an earlier test in the same worker already triggered it (xdist).
     rich_warning.cache_clear()
+    main()
     out, err = capsys.readouterr()
     assert "CMakeLists.txt not found" in err
     jout = json.loads(out)
