@@ -434,9 +434,17 @@ def install(
     # PEP 829 .start entry points may be invoked more than once (e.g. CPython
     # 3.15.0b1 processes a venv's site-packages twice during startup), unlike a
     # .pth `import` line whose side effects run once via the module cache.
-    # Guard against installing a duplicate finder.
-    if any(isinstance(f, ScikitBuildRedirectingFinder) for f in sys.meta_path):
-        return
+    # Guard against installing a duplicate finder, but only for *this* package:
+    # several scikit-build-core editable packages can share an environment, each
+    # with its own finder and module mappings, so the check is keyed to the
+    # module maps rather than rejecting any existing finder.
+    for finder in sys.meta_path:
+        if (
+            isinstance(finder, ScikitBuildRedirectingFinder)
+            and finder.known_source_files == known_source_files
+            and finder.known_wheel_files == known_wheel_files
+        ):
+            return
     _patch_importlib_resources_for_python39()
     sys.meta_path.insert(
         0,
