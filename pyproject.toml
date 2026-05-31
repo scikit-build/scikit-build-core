@@ -143,7 +143,6 @@ cov = [
 ]
 dev = [
     { include-group = "cov" },
-    { include-group = "test" },
     { include-group = "test-schema" },
     "rich",
 ]

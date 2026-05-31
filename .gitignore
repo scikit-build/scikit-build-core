@@ -178,3 +178,5 @@ uv.lock
 
 # Symlink to AGENTS.md
 CLAUDE.md
+# ClaudeCode sticks stuff in here
+.claude/
