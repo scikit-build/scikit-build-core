@@ -110,9 +110,7 @@ def build_sdist(
     timestamp = get_reproducible_epoch() if reproducible else None
 
     metadata = get_standard_metadata(pyproject, settings)
-    # Using deepcopy here because of a bug in pyproject-metadata
-    # https://github.com/FFY00/python-pyproject-metadata/pull/49
-    pkg_info = bytes(copy.deepcopy(metadata).as_rfc822())
+    pkg_info = bytes(metadata.as_rfc822())
 
     # Names must be normalized per PEP 625
     sdist_name = canonicalize_name(metadata.name).replace("-", "_")

@@ -27,6 +27,7 @@ __all__ = [
     "best_program",
     "get_cmake_program",
     "get_cmake_programs",
+    "get_make_programs",
     "get_ninja_programs",
 ]
 

@@ -231,7 +231,7 @@ class Builder:
         elif limited_api is None and py_api.startswith("cp3"):
             target_minor_version = int(py_api[3:].rstrip("t"))
             if sys.implementation.name != "cpython":
-                logger.info("py-api {} requires CPython, ignoring")
+                logger.info("py-api {} requires CPython, ignoring", py_api)
             elif py_api.endswith("t"):
                 # Free-threaded stable ABI (PEP 803 / abi3t)
                 if gil_disabled and target_minor_version <= sys.version_info.minor:
