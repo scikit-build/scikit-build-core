@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
-from scikit_build_core.resources._editable_redirect import ScikitBuildRedirectingFinder
+import pytest
+
+from scikit_build_core.resources._editable_redirect import (
+    ScikitBuildRedirectingFinder,
+    install,
+)
 
 
 def process_dict(d: dict[str, str]) -> dict[str, str]:
@@ -120,6 +126,33 @@ def test_editable_redirect_pxd():
     assert not any("pyx_subpkg" in p for p in pkg_paths), (
         f"pkg.__path__ is polluted with pyx_subpkg: {pkg_paths}"
     )
+
+
+@pytest.fixture
+def _restore_meta_path():
+    saved = sys.meta_path[:]
+    try:
+        yield
+    finally:
+        sys.meta_path[:] = saved
+
+
+@pytest.mark.usefixtures("_restore_meta_path")
+def test_install_is_idempotent():
+    """PEP 829 .start entry points may be invoked more than once.
+
+    CPython 3.15 processes a venv's site-packages twice during startup, so the
+    .start entry point runs twice. ``install`` must not insert a second finder.
+    """
+
+    def count_finders() -> int:
+        return sum(isinstance(f, ScikitBuildRedirectingFinder) for f in sys.meta_path)
+
+    assert count_finders() == 0
+    install({}, {}, None)
+    assert count_finders() == 1
+    install({}, {}, None)
+    assert count_finders() == 1
 
 
 def test_mapping_to_modules_prefers_py():

@@ -431,6 +431,12 @@ def install(
     :param install_dir: The wheel install directory override, if one was
                         specified
     """
+    # PEP 829 .start entry points may be invoked more than once (e.g. CPython
+    # 3.15.0b1 processes a venv's site-packages twice during startup), unlike a
+    # .pth `import` line whose side effects run once via the module cache.
+    # Guard against installing a duplicate finder.
+    if any(isinstance(f, ScikitBuildRedirectingFinder) for f in sys.meta_path):
+        return
     _patch_importlib_resources_for_python39()
     sys.meta_path.insert(
         0,
