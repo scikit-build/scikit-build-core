@@ -413,7 +413,7 @@ def _build_wheel_impl_impl(
                 f"{{bold}}Building project with {{blue}}{generator}{{default}}...",
             )
 
-            # These are the args _before_ the `--`, directly to `--build`
+            # These are the args before the `--`, directly to `--build`
             # (there are none here)
             build_args: list[str] = []
             builder.build(build_args=build_args)
