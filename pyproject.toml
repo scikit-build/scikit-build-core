@@ -363,5 +363,9 @@ docstring-code-format = true
 sdist-only = ["src/scikit_build_core/_version.py"]
 
 
+[tool.typos.default]
+# Ignore cog's generated checksum lines, e.g. "(sum: Dz4otQAPQ9)"
+extend-ignore-re = ['\(sum: [A-Za-z0-9+/]+\)']
+
 [tool.typos.default.extend-words]
 delocate = "delocate"

@@ -105,7 +105,7 @@ for project in projects["project"]:
 * [viennaps](https://pypi.org/project/viennaps) ([source](https://github.com/ViennaTools/ViennaPS/blob/HEAD/pyproject.toml))
 * [xgrammar](https://pypi.org/project/xgrammar) ([source](https://github.com/mlc-ai/xgrammar/blob/HEAD/pyproject.toml))
 * [xtgeo](https://pypi.org/project/xtgeo) ([source](https://github.com/equinor/xtgeo/blob/HEAD/pyproject.toml))
-<!--[[[end]]]-->
+<!--[[[end]]] (sum: Dz4otQAPQ9)-->
 
 <!-- prettier-ignore-end -->
 
