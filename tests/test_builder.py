@@ -115,13 +115,15 @@ def test_get_python_library():
         assert lib.name == expected
         assert lib.parent.name in {"libs", "lib"}
 
-        abi3_lib = get_python_library({}, abi3=True)
-        assert abi3_lib is not None
-        assert abi3_lib.name == f"python3{d}.lib"
+        # The stable ABI is CPython-only; PyPy ships no python3[t].lib.
+        if sys.implementation.name == "cpython":
+            abi3_lib = get_python_library({}, abi3=True)
+            assert abi3_lib is not None
+            assert abi3_lib.name == f"python3{d}.lib"
 
-        abi3t_lib = get_python_library({}, abi3t=True)
-        assert abi3t_lib is not None
-        assert abi3t_lib.name == f"python3{t}{d}.lib"
+            abi3t_lib = get_python_library({}, abi3t=True)
+            assert abi3t_lib is not None
+            assert abi3t_lib.name == f"python3{t}{d}.lib"
     else:
         # POSIX usually returns None (FindPython resolves it itself); if a real
         # library does resolve, it must be an existing file.
