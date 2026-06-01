@@ -153,3 +153,140 @@ github = "munich-quantum-toolkit/core"
 pypi = "pyarrow"
 github = "apache/arrow"
 path = "python/pyproject.toml"
+
+[[project]]
+pypi = "rapidfuzz"
+github = "rapidfuzz/RapidFuzz"
+
+[[project]]
+pypi = "Levenshtein"
+github = "maxbachmann/Levenshtein"
+
+[[project]]
+pypi = "faiss-cpu"
+github = "facebookresearch/faiss"
+
+[[project]]
+pypi = "nanobind"
+github = "wjakob/nanobind"
+
+[[project]]
+pypi = "SimpleITK"
+github = "SimpleITK/SimpleITK"
+
+[[project]]
+pypi = "h3"
+github = "uber/h3-py"
+
+[[project]]
+pypi = "osqp"
+github = "osqp/osqp-python"
+
+[[project]]
+pypi = "phonopy"
+github = "phonopy/phonopy"
+
+[[project]]
+pypi = "phono3py"
+github = "phonopy/phono3py"
+
+[[project]]
+pypi = "libigl"
+github = "libigl/libigl-python-bindings"
+
+[[project]]
+pypi = "tiledb"
+github = "TileDB-Inc/TileDB-Py"
+
+[[project]]
+pypi = "adios2"
+github = "ornladios/ADIOS2"
+
+[[project]]
+pypi = "polyscope"
+github = "nmwsharp/polyscope-py"
+
+[[project]]
+pypi = "ducc0"
+github = "mreineck/ducc"
+
+[[project]]
+pypi = "pyhmmer"
+github = "althonos/pyhmmer"
+
+[[project]]
+pypi = "osmium"
+github = "osmcode/pyosmium"
+
+[[project]]
+pypi = "spherely"
+github = "benbovy/spherely"
+
+[[project]]
+pypi = "stormpy"
+github = "stormchecker/stormpy"
+
+[[project]]
+pypi = "islpy"
+github = "inducer/islpy"
+
+[[project]]
+pypi = "celerite2"
+github = "exoplanet-dev/celerite2"
+
+[[project]]
+pypi = "ompl"
+github = "ompl/ompl"
+path = "py-bindings/pyproject.toml"
+
+[[project]]
+pypi = "tetgen"
+github = "pyvista/tetgen"
+
+[[project]]
+pypi = "deflate"
+github = "dcwatson/deflate"
+
+[[project]]
+pypi = "ncrystal"
+github = "mctools/ncrystal"
+
+[[project]]
+pypi = "viennals"
+github = "ViennaTools/ViennaLS"
+
+[[project]]
+pypi = "viennaps"
+github = "ViennaTools/ViennaPS"
+
+[[project]]
+pypi = "MaterialX"
+github = "AcademySoftwareFoundation/MaterialX"
+
+[[project]]
+pypi = "OpenImageIO"
+github = "AcademySoftwareFoundation/OpenImageIO"
+
+[[project]]
+pypi = "afdko"
+github = "adobe-type-tools/afdko"
+
+[[project]]
+pypi = "antspyx"
+github = "ANTsX/ANTsPy"
+
+[[project]]
+pypi = "tomotopy"
+github = "bab2min/tomotopy"
+
+[[project]]
+pypi = "xtgeo"
+github = "equinor/xtgeo"
+
+[[project]]
+pypi = "freud-analysis"
+github = "glotzerlab/freud"
+
+[[project]]
+pypi = "xgrammar"
+github = "mlc-ai/xgrammar"
