@@ -408,6 +408,26 @@ def protect_get_requires(fp, monkeypatch):
     monkeypatch.setattr(importlib.util, "find_spec", find_spec)
 
 
+@pytest.fixture(autouse=True)
+def _stub_macos_arch_probe(request: pytest.FixtureRequest) -> None:
+    """
+    ``program_search.compute_timeout`` shells out to ``lipo`` on macOS arm64
+    (when ``CI`` is unset) to detect x86 binaries. Tests that fake subprocesses
+    with the ``fp`` fixture don't register that call, so it raises
+    ``ProcessNotRegisteredError`` locally (CI passes only because the ``CI`` env
+    var short-circuits the probe). Stub it out for fake-subprocess tests; real
+    tests still exercise the genuine ``lipo`` path.
+    """
+    if "fp" not in request.fixturenames:
+        return
+
+    from scikit_build_core import program_search
+
+    monkeypatch = request.getfixturevalue("monkeypatch")
+    monkeypatch.setattr(program_search, "_macos_binary_is_x86", lambda _path: False)
+    program_search.compute_timeout.cache_clear()
+
+
 @pytest.fixture
 def pybind11():
     return pytest.importorskip("pybind11")
