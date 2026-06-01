@@ -25,14 +25,6 @@ def test_prepare_metadata_for_build(fp, editable):
     fp.pass_command([sys.executable, fp.any()])
     fp.pass_command([fp.program("cmake"), "-E", "capabilities"])
     fp.pass_command([fp.program("cmake3"), "-E", "capabilities"])
-    fp.register(
-        ["lipo", "-info", fp.program("cmake")],
-        stdout="Architectures in the fat file: ... are: x86_64 arm64",
-    )
-    fp.register(
-        ["lipo", "-info", fp.program("cmake3")],
-        stdout="Architectures in the fat file: ... are: x86_64 arm64",
-    )
 
     if editable:
         assert (
@@ -106,14 +98,6 @@ def test_prepare_metadata_for_build_wheel_variant(fp, monkeypatch, tmp_path):
     fp.pass_command([sys.executable, fp.any()])
     fp.pass_command([fp.program("cmake"), "-E", "capabilities"])
     fp.pass_command([fp.program("cmake3"), "-E", "capabilities"])
-    fp.register(
-        ["lipo", "-info", fp.program("cmake")],
-        stdout="Architectures in the fat file: ... are: x86_64 arm64",
-    )
-    fp.register(
-        ["lipo", "-info", fp.program("cmake3")],
-        stdout="Architectures in the fat file: ... are: x86_64 arm64",
-    )
 
     variantlib: Any = types.ModuleType("variantlib")
     variantlib.__path__ = []  # mark as a package so submodule imports resolve
