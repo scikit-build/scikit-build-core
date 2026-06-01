@@ -44,14 +44,27 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _config_var_is_set(name: str) -> bool:
+    """
+    Read a sysconfig flag as a boolean. The value may be an ``int``, ``None``,
+    or a numeric string like ``"0"``/``"1"`` depending on platform, so plain
+    ``bool()`` is unsafe (``bool("0")`` is ``True``). Numeric strings are parsed
+    as integers; other non-empty strings keep their truthiness.
+    """
+    value = sysconfig.get_config_var(name)
+    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
+        return int(value) != 0
+    return bool(value)
+
+
 def _is_debug_build() -> bool:
     """Whether the interpreter is a debug build (``pythonXY_d.lib`` on Windows)."""
-    return bool(sysconfig.get_config_var("Py_DEBUG"))
+    return _config_var_is_set("Py_DEBUG")
 
 
 def _is_free_threaded() -> bool:
     """Whether the interpreter is free-threaded (the ``t`` ABI flag)."""
-    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+    return _config_var_is_set("Py_GIL_DISABLED")
 
 
 def _windows_lib_names(*, abi3: bool, abi3t: bool) -> list[str]:
@@ -146,29 +159,32 @@ def get_python_library(
     multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
     masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
+    def _is_dir(path: Path) -> bool:
+        """``Path.is_dir()`` that treats a permission-denied probe as missing."""
+        try:
+            return path.is_dir()
+        except PermissionError:
+            return False
+
     libdirs: list[Path] = []
     if libdirstr:
         libdir = Path(libdirstr)
-        try:
-            libdir_is_dir = libdir.is_dir()
-        except PermissionError:
-            libdir_is_dir = False
-        if libdir_is_dir:
+        if _is_dir(libdir):
             if multiarch and masd:
                 if masd.startswith(os.sep):
                     masd = masd[len(os.sep) :]
                 libdir_masd = libdir / masd
-                if libdir_masd.is_dir():
+                if _is_dir(libdir_masd):
                     libdirs.append(libdir_masd)
             libdirs.append(libdir)
             libdir64 = libdir.with_name("lib64")
-            if libdir.name == "lib" and libdir64.is_dir():
+            if libdir.name == "lib" and _is_dir(libdir64):
                 libdirs.append(libdir64)
     # LIBPL is CMake's CONFIGDIR (the build-time config-* directory).
-    if libplstr and Path(libplstr).is_dir():
+    if libplstr and _is_dir(Path(libplstr)):
         libdirs.append(Path(libplstr))
     # macOS frameworks.
-    if framework_prefix and Path(framework_prefix).is_dir():
+    if framework_prefix and _is_dir(Path(framework_prefix)):
         libdirs.append(Path(framework_prefix))
 
     for libdir in libdirs:

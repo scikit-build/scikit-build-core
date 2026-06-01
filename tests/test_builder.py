@@ -16,6 +16,7 @@ from packaging.version import Version
 from scikit_build_core.builder.builder import Builder, archs_to_tags, get_archs
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
+    _config_var_is_set,
     _windows_lib_names,
     get_python_include_dir,
     get_python_library,
@@ -105,8 +106,8 @@ def test_get_python_library():
     lib = get_python_library({})
     if sysconfig.get_platform().startswith("win"):
         # Recompute the expected name independently of the implementation.
-        free_threaded = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
-        debug = bool(sysconfig.get_config_var("Py_DEBUG"))
+        free_threaded = _config_var_is_set("Py_GIL_DISABLED")
+        debug = _config_var_is_set("Py_DEBUG")
         t = "t" if free_threaded else ""
         d = "_d" if debug else ""
         expected = f"python3{sys.version_info[1]}{t}{d}.lib"
