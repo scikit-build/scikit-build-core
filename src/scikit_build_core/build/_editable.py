@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import typing
 from collections.abc import Mapping
 from pathlib import Path
@@ -41,9 +42,14 @@ def editable_redirect(
     build_options: Sequence[str],
     install_options: Sequence[str],
     install_dir: str,
+    as_entrypoint: bool = False,
 ) -> str:
     """
     Prepare the contents of the _editable_redirect.py file.
+
+    If ``as_entrypoint`` is set, the install call is wrapped in a zero-argument
+    ``entrypoint()`` function (for PEP 829 ``.start`` files) rather than being
+    invoked at module import time (for the legacy ``.pth`` ``import`` line).
     """
 
     editable_py = resources / "_editable_redirect.py"
@@ -60,7 +66,10 @@ def editable_redirect(
         install_dir,
     )
     arguments_str = ", ".join(repr(x) for x in arguments)
-    editable_txt += f"\n\ninstall({arguments_str})\n"
+    if as_entrypoint:
+        editable_txt += f"\n\ndef entrypoint() -> None:\n    install({arguments_str})\n"
+    else:
+        editable_txt += f"\n\ninstall({arguments_str})\n"
     return editable_txt
 
 
@@ -74,7 +83,19 @@ def editable_redirect_files(
     packages: Iterable[str],
     reload_dir: Path | None,
     settings: ScikitBuildSettings,
+    use_start: bool | None = None,
 ) -> dict[str, bytes]:
+    """
+    Build the editable redirect files for a package.
+
+    On Python 3.15+ (PEP 829), the ``import`` line that runs the redirect is
+    moved out of the ``.pth`` file (where it is deprecated) into a ``.start``
+    file, and the ``.pth`` keeps only the ``sys.path`` entries. ``use_start``
+    overrides this auto-detection (used by tests); leave it ``None`` to select
+    based on the running interpreter.
+    """
+    if use_start is None:
+        use_start = sys.version_info >= (3, 15)
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
     if settings.wheel.install_dir.startswith("/"):
@@ -89,13 +110,22 @@ def editable_redirect_files(
         build_options=build_options,
         install_options=install_options,
         install_dir=settings.wheel.install_dir,
+        as_entrypoint=use_start,
     )
     package_paths = tuple(packages)
-    pth_import_paths = "\n".join([f"import _{name}_editable", *package_paths, ""])
-    return {
-        f"_{name}_editable.py": editable_txt.encode(),
-        f"_{name}_editable.pth": pth_import_paths.encode(),
-    }
+    files = {f"_{name}_editable.py": editable_txt.encode()}
+    if use_start:
+        # PEP 829: the import callable lives in a UTF-8-sig encoded .start file,
+        # and the .pth carries only sys.path entries (if any).
+        files[f"_{name}_editable.start"] = f"_{name}_editable:entrypoint".encode(
+            "utf-8-sig"
+        )
+        if package_paths:
+            files[f"_{name}_editable.pth"] = "\n".join([*package_paths, ""]).encode()
+    else:
+        pth_import_paths = "\n".join([f"import _{name}_editable", *package_paths, ""])
+        files[f"_{name}_editable.pth"] = pth_import_paths.encode()
+    return files
 
 
 def editable_inplace_files(*, name: str, packages: Iterable[str]) -> dict[str, bytes]:

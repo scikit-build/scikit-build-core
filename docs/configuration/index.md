@@ -594,6 +594,14 @@ added via scikit-build-core's package discovery will be found in the original
 location, so changes there are picked up on import, regardless of the
 `editable.rebuild` setting.
 
+The redirecting finder is installed at interpreter startup. On Python 3.15+,
+this uses a [PEP 829][] `.start` file (the slightly safer, structured
+replacement for the deprecated `import` line in a `.pth` file); on older Pythons
+it uses the classic `.pth` `import` line. This is handled automatically based on
+the interpreter running the editable install.
+
+[PEP 829]: https://peps.python.org/pep-0829/
+
 :::{note}
 
 A second experimental mode, `"inplace"`, is also available. This does an

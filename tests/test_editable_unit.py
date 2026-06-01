@@ -10,10 +10,12 @@ import pytest
 
 from scikit_build_core.build._editable import (
     editable_redirect,
+    editable_redirect_files,
     libdir_to_installed,
     mapping_to_modules,
 )
 from scikit_build_core.build._pathutil import packages_to_file_mapping
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 if typing.TYPE_CHECKING:
     from conftest import VEnv
@@ -204,3 +206,74 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     if sys.version_info >= (3, 9):
         virtualenv.execute("import pkg.src_files")
         virtualenv.execute("import pkg.installed_files")
+
+
+def test_editable_redirect_files_legacy_pth(tmp_path: Path):
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[str(tmp_path / "src")],
+        reload_dir=None,
+        settings=ScikitBuildSettings(),
+        use_start=False,
+    )
+
+    assert set(files) == {"_pkg_editable.py", "_pkg_editable.pth"}
+    assert "_pkg_editable.start" not in files
+
+    pth = files["_pkg_editable.pth"].decode()
+    assert pth.splitlines()[0] == "import _pkg_editable"
+    assert str(tmp_path / "src") in pth
+
+    py = files["_pkg_editable.py"].decode()
+    assert "\ninstall(" in py
+    assert "def entrypoint()" not in py
+
+
+def test_editable_redirect_files_pep829_start(tmp_path: Path):
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[str(tmp_path / "src")],
+        reload_dir=None,
+        settings=ScikitBuildSettings(),
+        use_start=True,
+    )
+
+    assert set(files) == {
+        "_pkg_editable.py",
+        "_pkg_editable.pth",
+        "_pkg_editable.start",
+    }
+
+    # PEP 829 mandates UTF-8-sig (BOM) for .start files
+    start = files["_pkg_editable.start"]
+    assert start == "_pkg_editable:entrypoint".encode("utf-8-sig")
+    assert start.startswith(b"\xef\xbb\xbf")
+
+    # The .pth keeps only the sys.path entries, no import line
+    pth = files["_pkg_editable.pth"].decode()
+    assert "import _pkg_editable" not in pth
+    assert str(tmp_path / "src") in pth
+
+    # The import is now a zero-argument entrypoint, not run at import time
+    py = files["_pkg_editable.py"].decode()
+    assert "def entrypoint() -> None:" in py
+    assert "\ninstall(" not in py
+
+
+def test_editable_redirect_files_pep829_no_paths(tmp_path: Path):
+    # With no package paths, no .pth file is needed on 3.15+
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=None,
+        settings=ScikitBuildSettings(),
+        use_start=True,
+    )
+
+    assert set(files) == {"_pkg_editable.py", "_pkg_editable.start"}

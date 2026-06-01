@@ -102,10 +102,26 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     wheel = Path(wheel_str).resolve()
     with zipfile.ZipFile(wheel) as f:
         file_names = set(f.namelist())
-        pth_contents = f.read("_hatchling_example_editable.pth").decode("utf-8")
+        # The hatchling example always discovers a package (src/), so a .pth is
+        # always emitted (in pep829 redirect mode it carries only the paths).
+        pth_lines = [
+            ln
+            for ln in f.read("_hatchling_example_editable.pth")
+            .decode("utf-8")
+            .splitlines()
+            if ln
+        ]
+        start_contents = (
+            f.read("_hatchling_example_editable.start")
+            if "_hatchling_example_editable.start" in file_names
+            else None
+        )
         wheel_metadata = f.read("hatchling_example-0.1.0.dist-info/WHEEL").decode(
             "utf-8"
         )
+
+    # PEP 829: redirect mode moves the import line into a .start file on 3.15+
+    pep829 = sys.version_info >= (3, 15)
 
     assert "hatchling_example-0.1.0.dist-info/METADATA" in file_names
     assert "_hatchling_example_editable.pth" in file_names
@@ -113,11 +129,20 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     if editable_mode == "redirect":
         assert "_hatchling_example_editable.py" in file_names
         assert f"hatchling_example/_core{ext_suffix}" in file_names
-        assert pth_contents.splitlines()[0] == "import _hatchling_example_editable"
+        if pep829:
+            assert start_contents == "_hatchling_example_editable:entrypoint".encode(
+                "utf-8-sig"
+            )
+            # The .pth keeps only the path entries, no import line
+            assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
+        else:
+            assert start_contents is None
+            assert pth_lines[0] == "import _hatchling_example_editable"
     else:
         assert "_hatchling_example_editable.py" not in file_names
+        assert start_contents is None
         assert f"hatchling_example/_core{ext_suffix}" not in file_names
-        assert Path(pth_contents.strip()).resolve().samefile(Path("src").resolve())
+        assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
 
 
 @pytest.mark.compile
