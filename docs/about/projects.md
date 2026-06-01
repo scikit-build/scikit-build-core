@@ -3,7 +3,7 @@
 There are over 600 projects using scikit-build-core on PyPI (as of May 2025).
 This is a selection of some of the projects. Feel free to add your own project
 to `docs/data/projects.toml`. The following selection was primarily constructed
-by looking at the [top 15,000](https://hugovk.github.io/top-pypi-packages/) most
+by looking at the [top 15,000](https://hugovk.dev/top-pypi-packages/) most
 downloaded projects on PyPI for top-level pyproject.toml's in SDists that use
 scikit-build-core.
 
@@ -38,7 +38,7 @@ for project in projects["project"]:
 * [cmake](https://pypi.org/project/cmake) ([source](https://github.com/scikit-build/cmake-python-distributions/blob/HEAD/pyproject.toml))
 * [ninja](https://pypi.org/project/ninja) ([source](https://github.com/scikit-build/ninja-python-distributions/blob/HEAD/pyproject.toml))
 * [pyzmq](https://pypi.org/project/pyzmq) ([source](https://github.com/zeromq/pyzmq/blob/HEAD/pyproject.toml))
-* [lightgbm](https://pypi.org/project/lightgbm) ([source](https://github.com/microsoft/LightGBM/blob/HEAD/python-package/pyproject.toml))
+* [lightgbm](https://pypi.org/project/lightgbm) ([source](https://github.com/lightgbm-org/LightGBM/blob/HEAD/python-package/pyproject.toml))
 * [phik](https://pypi.org/project/phik) ([source](https://github.com/kaveio/phik/blob/HEAD/pyproject.toml))
 * [clang-format](https://pypi.org/project/clang-format) ([source](https://github.com/ssciwr/clang-format-wheel/blob/HEAD/pyproject.toml))
 * [llama-cpp-python](https://pypi.org/project/llama-cpp-python) ([source](https://github.com/abetlen/llama-cpp-python/blob/HEAD/pyproject.toml))
@@ -71,7 +71,7 @@ for project in projects["project"]:
 * [simsopt](https://pypi.org/project/simsopt) ([source](https://github.com/hiddenSymmetries/simsopt/blob/HEAD/pyproject.toml))
 * [mqt-core](https://pypi.org/project/mqt-core) ([source](https://github.com/munich-quantum-toolkit/core/blob/HEAD/pyproject.toml))
 * [pyarrow](https://pypi.org/project/pyarrow) ([source](https://github.com/apache/arrow/blob/HEAD/python/pyproject.toml))
-<!--[[[end]]] (sum: M+iKao/rWk)-->
+<!--[[[end]]] (sum: T95lSrD9V5)-->
 
 <!-- prettier-ignore-end -->
 
