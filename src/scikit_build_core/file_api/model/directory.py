@@ -20,7 +20,7 @@ class Target:
 @dataclasses.dataclass(frozen=True)
 class InstallRule:
     component: str
-    type = str
+    type: str
     destination: Optional[Path] = None
     paths: List[Union[str, Paths]] = dataclasses.field(default_factory=list)
     isExcludeFromAll: bool = False

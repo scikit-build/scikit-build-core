@@ -360,7 +360,7 @@ class EnvSource(Source):
                 cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
-            items = (i.strip().split("=") for i in item.split(";"))
+            items = (i.strip().split("=", 1) for i in item.split(";"))
             return {k: cls.convert(v, get_inner_type(target)) for k, v in items}
 
         if raw_target is bool:
@@ -374,7 +374,7 @@ class EnvSource(Source):
             if str in args:
                 return item
             if dict in args and "=" in item:
-                items = (i.strip().split("=") for i in item.split(";"))
+                items = (i.strip().split("=", 1) for i in item.split(";"))
                 return {k: cls.convert(v, get_inner_type(args[dict])) for k, v in items}
             if list in args:
                 return [
