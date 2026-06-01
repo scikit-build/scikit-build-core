@@ -70,6 +70,43 @@ def test_disallow_hardcoded(
     assert "is not allowed to be hard-coded in the pyproject.toml file" in out
 
 
+def test_override_only_allowed_dynamically(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """override_only fields are allowed via config-settings / env vars (#1261)."""
+    caplog.set_level(logging.WARNING)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            strict-config = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Via PEP 517 config-settings
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml,
+        {"cmake.toolchain-file": "foo.cmake", "wheel.tags": "cp312-abi3-win_amd64"},
+        state="wheel",
+    )
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.cmake.toolchain_file == Path("foo.cmake")
+    assert settings_reader.settings.wheel.tags == ["cp312-abi3-win_amd64"]
+    assert not [r for r in caplog.records if "hard-coded" in str(r.msg)]
+
+    # Via environment variables
+    monkeypatch.setenv("SKBUILD_CMAKE_TOOLCHAIN_FILE", "bar.cmake")
+    settings_reader = SettingsReader.from_file(pyproject_toml, {}, state="wheel")
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.cmake.toolchain_file == Path("bar.cmake")
+    assert not [r for r in caplog.records if "hard-coded" in str(r.msg)]
+
+
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])
 def test_skbuild_overrides_pyver(
     python_version: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
