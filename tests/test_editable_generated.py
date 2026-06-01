@@ -321,3 +321,42 @@ def test_build_time_generated_module(editable, isolated):
         "import importlib.metadata; print(importlib.metadata.version('cmake_generated'))"
     )
     assert metadata_value == "1.2.3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
+@pytest.mark.usefixtures("package")
+@pytest.mark.usefixtures("isolate")
+@pytest.mark.parametrize(
+    "editable",
+    [
+        pytest.param(None, id="not_editable"),
+        "redirect",
+        pytest.param(
+            "inplace",
+            marks=pytest.mark.skip(
+                "`inplace` editable mode requires build tree layout to match package layout."
+            ),
+        ),
+    ],
+    indirect=True,
+)
+@pytest.mark.skipif(
+    sys.version_info < (3, 9),
+    reason="importlib.resources.files is introduced in Python 3.9",
+)
+def test_subpackage_generated_data(editable, isolated):
+    isolated.install(
+        "-v",
+        *editable.flags,
+        ".",
+    )
+    # Data generated into a regular subpackage (nested2) that has no Python
+    # module of its own in the build tree.  Finding it requires propagating the
+    # parent package's build-tree path down to the subpackage.
+    value = isolated.execute(
+        "from cmake_generated.nested2 import get_generated_data; print(get_generated_data())"
+    )
+    assert value == "value written into a regular subpackage"
