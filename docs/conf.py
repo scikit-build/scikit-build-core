@@ -120,6 +120,8 @@ linkcheck_anchors_ignore = [
 linkcheck_ignore = [
     # Rate limited
     r"https://github.com/?.*",
+    # Fails sometimes
+    "https://learn.scientific-python.org/development",
 ]
 # -- Options for HTML output -------------------------------------------------
 
