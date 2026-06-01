@@ -16,6 +16,7 @@ from packaging.version import Version
 from scikit_build_core.builder.builder import Builder, archs_to_tags, get_archs
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
+    _windows_lib_names,
     get_python_include_dir,
     get_python_library,
 )
@@ -92,9 +93,6 @@ def test_get_python_include_dir():
     assert get_python_include_dir().is_dir()
 
 
-@pytest.mark.xfail(
-    strict=False, reason="Doesn't matter if this fails, usually not used"
-)
 def test_get_python_library():
     pprint.pprint(
         {
@@ -106,10 +104,62 @@ def test_get_python_library():
 
     lib = get_python_library({})
     if sysconfig.get_platform().startswith("win"):
-        assert lib
+        # Recompute the expected name independently of the implementation.
+        free_threaded = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+        debug = bool(sysconfig.get_config_var("Py_DEBUG"))
+        t = "t" if free_threaded else ""
+        d = "_d" if debug else ""
+        expected = f"python3{sys.version_info[1]}{t}{d}.lib"
+        assert lib is not None
         assert lib.is_file()
+        assert lib.name == expected
+        assert lib.parent.name in {"libs", "lib"}
+
+        abi3_lib = get_python_library({}, abi3=True)
+        assert abi3_lib is not None
+        assert abi3_lib.name == f"python3{d}.lib"
+
+        abi3t_lib = get_python_library({}, abi3t=True)
+        assert abi3t_lib is not None
+        assert abi3t_lib.name == f"python3{t}{d}.lib"
     else:
-        assert lib is None
+        # POSIX usually returns None (FindPython resolves it itself); if a real
+        # library does resolve, it must be an existing file.
+        assert lib is None or lib.is_file()
+
+
+@pytest.mark.parametrize("free_threaded", [False, True])
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("variant", ["classic", "abi3", "abi3t"])
+def test_windows_lib_names(monkeypatch, variant, debug, free_threaded):
+    overrides = {
+        "Py_GIL_DISABLED": "1" if free_threaded else None,
+        "Py_DEBUG": 1 if debug else 0,
+    }
+    real = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda name: overrides[name] if name in overrides else real(name),
+    )
+
+    abi3 = variant == "abi3"
+    abi3t = variant == "abi3t"
+    names = _windows_lib_names(abi3=abi3, abi3t=abi3t)
+
+    t = "t" if free_threaded else ""
+    if abi3:
+        # Classic stable ABI has no free-threaded variant.
+        base = "python3"
+    elif abi3t:
+        base = f"python3{t}"
+    else:
+        base = f"python3{sys.version_info[1]}{t}"
+
+    expected = [f"{base}.lib"]
+    if debug:
+        expected.insert(0, f"{base}_d.lib")
+    assert names == expected
 
 
 @pytest.mark.skipif(not sysconfig.get_platform().startswith("win"), reason="MSVC only")

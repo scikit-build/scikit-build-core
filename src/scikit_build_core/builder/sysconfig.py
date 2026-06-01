@@ -44,10 +44,53 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _is_debug_build() -> bool:
+    """Whether the interpreter is a debug build (``pythonXY_d.lib`` on Windows)."""
+    return bool(sysconfig.get_config_var("Py_DEBUG"))
+
+
+def _is_free_threaded() -> bool:
+    """Whether the interpreter is free-threaded (the ``t`` ABI flag)."""
+    return bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+
+
+def _windows_lib_names(*, abi3: bool, abi3t: bool) -> list[str]:
+    """
+    Construct the candidate Windows import-library names for the running
+    interpreter, mirroring CMake's ``_PYTHON_GET_NAMES`` (FindPython
+    ``Support.cmake``). Debug builds get a ``_d`` suffix (tried first), and
+    free-threaded builds get a ``t`` ABI flag.
+    """
+    free_threaded = _is_free_threaded()
+    if abi3 or abi3t:
+        # Stable ABI: python3.lib, or python3t.lib on free-threaded abi3t.
+        t = "t" if (abi3t and free_threaded) else ""
+        base = f"python3{t}"
+    else:
+        t = "t" if free_threaded else ""
+        base = f"python3{sys.version_info[1]}{t}"
+    names = [f"{base}.lib"]
+    if _is_debug_build():
+        names.insert(0, f"{base}_d.lib")
+    return names
+
+
 def get_python_library(
     env: Mapping[str, str], *, abi3: bool = False, abi3t: bool = False
 ) -> Path | None:
-    # When cross-compiling, check DIST_EXTRA_CONFIG first
+    """
+    Locate the Python library to hand to CMake's FindPython. Mirrors CMake's
+    approach of constructing the library name and searching a known directory
+    layout under the install prefix, rather than relying on POSIX-only Makefile
+    config vars (which are ``None`` on Windows). The result is always
+    existence-validated; ``None`` is returned when no real file is found (the
+    common, safe case on POSIX, where FindPython resolves the library itself).
+    """
+    log_func = logger.warning if sys.platform.startswith("win") else logger.debug
+
+    # When cross-compiling, check DIST_EXTRA_CONFIG first. The cross target is
+    # described entirely by the config file, so this must not consult the host
+    # interpreter's GIL/debug state via _windows_lib_names.
     config_file = env.get("DIST_EXTRA_CONFIG", None)
     if config_file and Path(config_file).is_file():
         cp = configparser.ConfigParser()
@@ -59,11 +102,32 @@ def get_python_library(
             suffix = "t" if abi3t else ""
             return Path(result) / f"python3{minor}{suffix}.lib"
 
-    libdirstr = sysconfig.get_config_var("LIBDIR")
+    # Windows: construct pythonXY[t][_d].lib (or the stable-ABI python3[t].lib)
+    # and probe the base install's libs/ directory. base_exec_prefix is used,
+    # not prefix/exec_prefix, because venvs lack a libs/ dir but the base
+    # install (and conda env roots) have it.
+    if sys.platform.startswith("win"):
+        root = Path(sys.base_exec_prefix)
+        names = _windows_lib_names(abi3=abi3, abi3t=abi3t)
+        for libdir in (root / "libs", root / "lib", root):
+            for name in names:
+                libpath = libdir / name
+                try:
+                    is_file = libpath.is_file()
+                except PermissionError:
+                    continue
+                if is_file:
+                    return libpath
+        log_func("Can't find a Python library; tried {} under {}", names, root)
+        return None
+
+    # POSIX / macOS: use the Makefile config vars, restructured into a
+    # name x directory search. Existence-gated, so cases that return None today
+    # still return None.
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
     librarystr = sysconfig.get_config_var("LIBRARY")
     if abi3 or abi3t:
-        if abi3t and sysconfig.get_config_var("Py_GIL_DISABLED"):
+        if abi3t and _is_free_threaded():
             replacement = f"python3{sys.version_info[1]}t"
             target = "python3t"
         else:
@@ -74,49 +138,49 @@ def get_python_library(
         if librarystr is not None:
             librarystr = librarystr.replace(replacement, target)
 
-    libdir: Path | None = libdirstr and Path(libdirstr)
-    ldlibrary: Path | None = ldlibrarystr and Path(ldlibrarystr)
-    library: Path | None = librarystr and Path(librarystr)
+    names: list[str] = [str(n) for n in (ldlibrarystr, librarystr) if n]
+
+    libdirstr = sysconfig.get_config_var("LIBDIR")
+    libplstr = sysconfig.get_config_var("LIBPL")
+    framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
     multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
     masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
-    log_func = logger.warning if sys.platform.startswith("win") else logger.debug
-
-    if libdir and ldlibrary:
+    libdirs: list[Path] = []
+    if libdirstr:
+        libdir = Path(libdirstr)
         try:
             libdir_is_dir = libdir.is_dir()
         except PermissionError:
-            return None
+            libdir_is_dir = False
         if libdir_is_dir:
             if multiarch and masd:
                 if masd.startswith(os.sep):
                     masd = masd[len(os.sep) :]
                 libdir_masd = libdir / masd
                 if libdir_masd.is_dir():
-                    libdir = libdir_masd
-            libpath = libdir / ldlibrary
+                    libdirs.append(libdir_masd)
+            libdirs.append(libdir)
+            libdir64 = libdir.with_name("lib64")
+            if libdir.name == "lib" and libdir64.is_dir():
+                libdirs.append(libdir64)
+    # LIBPL is CMake's CONFIGDIR (the build-time config-* directory).
+    if libplstr and Path(libplstr).is_dir():
+        libdirs.append(Path(libplstr))
+    # macOS frameworks.
+    if framework_prefix and Path(framework_prefix).is_dir():
+        libdirs.append(Path(framework_prefix))
+
+    for libdir in libdirs:
+        for name in names:
+            libpath = libdir / name
             if Path(os.path.expandvars(libpath)).is_file():
                 return libpath
-            if library:
-                libpath = libdir / library
-                if sys.platform.startswith("win") and libpath.suffix == ".dll":
-                    libpath = libpath.with_suffix(".lib")
-                if Path(os.path.expandvars(libpath)).is_file():
-                    return libpath
-            log_func("libdir/(ld)library: {} is not a real file!", libpath)
-        else:
-            log_func("libdir: {} is not a directory", libdir)
-
-    framework_prefix = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
-    if framework_prefix and Path(framework_prefix).is_dir() and ldlibrary:
-        libpath = Path(framework_prefix) / ldlibrary
-        if libpath.is_file():
-            return libpath
 
     log_func(
-        "Can't find a Python library, got libdir={}, ldlibrary={}, multiarch={}, masd={}",
-        libdir,
-        ldlibrary,
+        "Can't find a Python library, got libdir={}, names={}, multiarch={}, masd={}",
+        libdirstr,
+        names,
         multiarch,
         masd,
     )
