@@ -242,15 +242,13 @@ class Builder:
                         py_api,
                         target_minor_version,
                     )
-            else:
-                # Classic stable ABI (abi3)
-                target_minor_version = int(py_api[3:])
-                if gil_disabled:
-                    logger.info(
-                        "Free-threaded Python doesn't support the classic Limited API, ignoring"
-                    )
-                elif target_minor_version <= sys.version_info.minor:
-                    sabi = _SabiMode.ABI3
+            # Classic stable ABI (abi3)
+            elif gil_disabled:
+                logger.info(
+                    "Free-threaded Python doesn't support the classic Limited API, ignoring"
+                )
+            elif target_minor_version <= sys.version_info.minor:
+                sabi = _SabiMode.ABI3
 
         python_library = get_python_library(self.config.env, abi3=False)
         python_sabi_library = None

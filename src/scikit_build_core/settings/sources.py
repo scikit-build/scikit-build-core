@@ -366,9 +366,6 @@ class EnvSource(Source):
         if raw_target is bool:
             return _process_bool(item)
 
-        if is_union_type(raw_target) and str in get_args(target):
-            return item
-
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
             if str in args:

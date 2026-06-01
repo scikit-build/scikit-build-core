@@ -261,12 +261,12 @@ def info_print(
         color=color,
     )
     rich_print(
-        "{color}Detected ABI3 SOABI:",
+        "{bold}Detected ABI3 SOABI:",
         get_soabi(os.environ, abi3=True),
         color=color,
     )
     rich_print(
-        "{color}Detected ABI3T SOABI:",
+        "{bold}Detected ABI3T SOABI:",
         get_soabi(os.environ, abi3t=True),
         color=color,
     )
