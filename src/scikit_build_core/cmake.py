@@ -200,9 +200,10 @@ class CMaker:
                         f'set({pkg}_ROOT [===[{paths_str}]===] CACHE PATH "" FORCE)\n'
                     )
                     # Available since CMake 3.27 with CMP0144
-                    f.write(
-                        f'set({pkg.upper()}_ROOT [===[{paths_str}]===] CACHE PATH "" FORCE)\n'
-                    )
+                    if pkg != pkg.upper():
+                        f.write(
+                            f'set({pkg.upper()}_ROOT [===[{paths_str}]===] CACHE PATH "" FORCE)\n'
+                        )
 
         contents = self.init_cache_file.read_text(encoding="utf-8").strip()
         logger.debug(

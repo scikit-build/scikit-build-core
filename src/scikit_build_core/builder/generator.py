@@ -60,12 +60,12 @@ def get_default(cmake: CMake) -> str | None:
     """
     Returns the computed default for the current platform.
     """
-    generator = get_default_from_cmake(cmake)
-
     # Non-MSVC Windows platforms require Ninja
     is_msvc_platform = sysconfig.get_platform().startswith("win")
     if sys.platform.startswith("win") and not is_msvc_platform:
         return "Ninja"
+
+    generator = get_default_from_cmake(cmake)
 
     # Try Ninja if it is available, even if make is CMake default
     if generator == "Unix Makefiles":
