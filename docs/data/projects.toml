@@ -1,271 +1,6 @@
 [[project]]
-pypi = "cmake"
-github = "scikit-build/cmake-python-distributions"
-
-[[project]]
-pypi = "ninja"
-github = "scikit-build/ninja-python-distributions"
-
-[[project]]
-pypi = "pyzmq"
-github = "zeromq/pyzmq"
-
-[[project]]
-pypi = "lightgbm"
-github = "lightgbm-org/LightGBM"
-path = "python-package/pyproject.toml"
-
-[[project]]
-pypi = "phik"
-github = "kaveio/phik"
-
-[[project]]
-pypi = "clang-format"
-github = "ssciwr/clang-format-wheel"
-
-[[project]]
-pypi = "llama-cpp-python"
-github = "abetlen/llama-cpp-python"
-
-[[project]]
-pypi = "coreforecast"
-github = "Nixtla/coreforecast"
-
-[[project]]
-pypi = "sparse-dot-topn"
-github = "ing-bank/sparse_dot_topn"
-
-[[project]]
-pypi = "spglib"
-github = "spglib/spglib"
-
-[[project]]
-pypi = "awkward-cpp"
-github = "scikit-hep/awkward"
-path = "awkward-cpp/pyproject.toml"
-
-[[project]]
-pypi = "OpenEXR"
-github = "AcademySoftwareFoundation/OpenEXR"
-
-[[project]]
-pypi = "iminuit"
-github = "scikit-hep/iminuit"
-
-[[project]]
-pypi = "boost-histogram"
-github = "scikit-hep/iminuit"
-
-[[project]]
-pypi = "astyle"
-github = "Freed-Wu/astyle-wheel"
-
-[[project]]
-pypi = "lammps"
-github = "njzjz/lammps-wheel"
-
-[[project]]
-pypi = "llamacpp"
-github = "thomasantony/llamacpp-python"
-
-[[project]]
-pypi = "nodejs-wheel"
-github = "njzjz/nodejs-wheel"
-
-[[project]]
-pypi = "pygram11"
-github = "douglasdavis/pygram11"
-
-[[project]]
-pypi = "manifold3d"
-github = "elalish/manifold"
-
-[[project]]
-pypi = "highspy"
-github = "ERGO-Code/HiGHS"
-
-[[project]]
-pypi = "laszip"
-github = "tmontaigu/laszip-python"
-
-[[project]]
-pypi = "imgui-bundle"
-github = "pthom/imgui_bundle"
-
-[[project]]
-pypi = "pyopencl"
-github = "inducer/pyopencl"
-
-[[project]]
-pypi = "pylibmagic"
-github = "kratsg/pylibmagic"
-
-[[project]]
-pypi = "gemmi"
-github = "project-gemmi/gemmi"
-
-[[project]]
-pypi = "gdstk"
-github = "heitzmann/gdstk"
-
-[[project]]
-pypi = "symusic"
-github = "Yikai-Liao/symusic"
-
-[[project]]
-pypi = "s5cmd"
-github = "ImagingDataCommons/s5cmd-python-distributions"
-
-[[project]]
-pypi = "pyslang"
-github = "MikePopoloski/slang"
-
-#[[project]]
-#pypi = "pytango"
-#gitlab = "https://gitlab.com/tango-controls/pytango"
-
-[[project]]
-pypi = "librapid"
-github = "LibRapid/librapid"
-
-[[project]]
-pypi = "pyresidfp"
-github = "pyresidfp/pyresidfp"
-
-[[project]]
-pypi = "kiss-icp"
-github = "PRBonn/kiss-icp"
-path = "python/pyproject.toml"
-
-[[project]]
-pypi = "simsopt"
-github = "hiddenSymmetries/simsopt"
-
-#[[project]]
-#pypi = "networkx-graph"
-#github = "?"
-
-[[project]]
-pypi = "mqt-core"
-github = "munich-quantum-toolkit/core"
-
-[[project]]
-pypi = "pyarrow"
-github = "apache/arrow"
-path = "python/pyproject.toml"
-
-[[project]]
-pypi = "rapidfuzz"
-github = "rapidfuzz/RapidFuzz"
-
-[[project]]
-pypi = "Levenshtein"
-github = "maxbachmann/Levenshtein"
-
-[[project]]
-pypi = "faiss-cpu"
-github = "facebookresearch/faiss"
-
-[[project]]
-pypi = "nanobind"
-github = "wjakob/nanobind"
-
-[[project]]
-pypi = "SimpleITK"
-github = "SimpleITK/SimpleITK"
-
-[[project]]
-pypi = "h3"
-github = "uber/h3-py"
-
-[[project]]
-pypi = "osqp"
-github = "osqp/osqp-python"
-
-[[project]]
-pypi = "phonopy"
-github = "phonopy/phonopy"
-
-[[project]]
-pypi = "phono3py"
-github = "phonopy/phono3py"
-
-[[project]]
-pypi = "libigl"
-github = "libigl/libigl-python-bindings"
-
-[[project]]
-pypi = "tiledb"
-github = "TileDB-Inc/TileDB-Py"
-
-[[project]]
 pypi = "adios2"
 github = "ornladios/ADIOS2"
-
-[[project]]
-pypi = "polyscope"
-github = "nmwsharp/polyscope-py"
-
-[[project]]
-pypi = "ducc0"
-github = "mreineck/ducc"
-
-[[project]]
-pypi = "pyhmmer"
-github = "althonos/pyhmmer"
-
-[[project]]
-pypi = "osmium"
-github = "osmcode/pyosmium"
-
-[[project]]
-pypi = "spherely"
-github = "benbovy/spherely"
-
-[[project]]
-pypi = "stormpy"
-github = "stormchecker/stormpy"
-
-[[project]]
-pypi = "islpy"
-github = "inducer/islpy"
-
-[[project]]
-pypi = "celerite2"
-github = "exoplanet-dev/celerite2"
-
-[[project]]
-pypi = "ompl"
-github = "ompl/ompl"
-path = "py-bindings/pyproject.toml"
-
-[[project]]
-pypi = "tetgen"
-github = "pyvista/tetgen"
-
-[[project]]
-pypi = "deflate"
-github = "dcwatson/deflate"
-
-[[project]]
-pypi = "ncrystal"
-github = "mctools/ncrystal"
-
-[[project]]
-pypi = "viennals"
-github = "ViennaTools/ViennaLS"
-
-[[project]]
-pypi = "viennaps"
-github = "ViennaTools/ViennaPS"
-
-[[project]]
-pypi = "MaterialX"
-github = "AcademySoftwareFoundation/MaterialX"
-
-[[project]]
-pypi = "OpenImageIO"
-github = "AcademySoftwareFoundation/OpenImageIO"
 
 [[project]]
 pypi = "afdko"
@@ -276,17 +11,282 @@ pypi = "antspyx"
 github = "ANTsX/ANTsPy"
 
 [[project]]
-pypi = "tomotopy"
-github = "bab2min/tomotopy"
+pypi = "astyle"
+github = "Freed-Wu/astyle-wheel"
 
 [[project]]
-pypi = "xtgeo"
-github = "equinor/xtgeo"
+pypi = "awkward-cpp"
+github = "scikit-hep/awkward"
+path = "awkward-cpp/pyproject.toml"
+
+[[project]]
+pypi = "boost-histogram"
+github = "scikit-hep/boost-histogram"
+
+[[project]]
+pypi = "celerite2"
+github = "exoplanet-dev/celerite2"
+
+[[project]]
+pypi = "clang-format"
+github = "ssciwr/clang-format-wheel"
+
+[[project]]
+pypi = "cmake"
+github = "scikit-build/cmake-python-distributions"
+
+[[project]]
+pypi = "coreforecast"
+github = "Nixtla/coreforecast"
+
+[[project]]
+pypi = "deflate"
+github = "dcwatson/deflate"
+
+[[project]]
+pypi = "ducc0"
+github = "mreineck/ducc"
+
+[[project]]
+pypi = "faiss-cpu"
+github = "facebookresearch/faiss"
 
 [[project]]
 pypi = "freud-analysis"
 github = "glotzerlab/freud"
 
 [[project]]
+pypi = "gdstk"
+github = "heitzmann/gdstk"
+
+[[project]]
+pypi = "gemmi"
+github = "project-gemmi/gemmi"
+
+[[project]]
+pypi = "h3"
+github = "uber/h3-py"
+
+[[project]]
+pypi = "highspy"
+github = "ERGO-Code/HiGHS"
+
+[[project]]
+pypi = "imgui-bundle"
+github = "pthom/imgui_bundle"
+
+[[project]]
+pypi = "iminuit"
+github = "scikit-hep/iminuit"
+
+[[project]]
+pypi = "islpy"
+github = "inducer/islpy"
+
+[[project]]
+pypi = "kiss-icp"
+github = "PRBonn/kiss-icp"
+path = "python/pyproject.toml"
+
+[[project]]
+pypi = "lammps"
+github = "njzjz/lammps-wheel"
+
+[[project]]
+pypi = "laszip"
+github = "tmontaigu/laszip-python"
+
+[[project]]
+pypi = "Levenshtein"
+github = "maxbachmann/Levenshtein"
+
+[[project]]
+pypi = "libigl"
+github = "libigl/libigl-python-bindings"
+
+[[project]]
+pypi = "librapid"
+github = "LibRapid/librapid"
+
+[[project]]
+pypi = "lightgbm"
+github = "lightgbm-org/LightGBM"
+path = "python-package/pyproject.toml"
+
+[[project]]
+pypi = "llama-cpp-python"
+github = "abetlen/llama-cpp-python"
+
+[[project]]
+pypi = "llamacpp"
+github = "thomasantony/llamacpp-python"
+
+[[project]]
+pypi = "manifold3d"
+github = "elalish/manifold"
+
+[[project]]
+pypi = "MaterialX"
+github = "AcademySoftwareFoundation/MaterialX"
+
+[[project]]
+pypi = "mqt-core"
+github = "munich-quantum-toolkit/core"
+
+[[project]]
+pypi = "nanobind"
+github = "wjakob/nanobind"
+
+[[project]]
+pypi = "ncrystal"
+github = "mctools/ncrystal"
+
+#[[project]]
+#pypi = "networkx-graph"
+#github = "?"
+
+[[project]]
+pypi = "ninja"
+github = "scikit-build/ninja-python-distributions"
+
+[[project]]
+pypi = "nodejs-wheel"
+github = "njzjz/nodejs-wheel"
+
+[[project]]
+pypi = "ompl"
+github = "ompl/ompl"
+path = "py-bindings/pyproject.toml"
+
+[[project]]
+pypi = "OpenEXR"
+github = "AcademySoftwareFoundation/OpenEXR"
+
+[[project]]
+pypi = "OpenImageIO"
+github = "AcademySoftwareFoundation/OpenImageIO"
+
+[[project]]
+pypi = "osmium"
+github = "osmcode/pyosmium"
+
+[[project]]
+pypi = "osqp"
+github = "osqp/osqp-python"
+
+[[project]]
+pypi = "phik"
+github = "kaveio/phik"
+
+[[project]]
+pypi = "phono3py"
+github = "phonopy/phono3py"
+
+[[project]]
+pypi = "phonopy"
+github = "phonopy/phonopy"
+
+[[project]]
+pypi = "polyscope"
+github = "nmwsharp/polyscope-py"
+
+[[project]]
+pypi = "pyarrow"
+github = "apache/arrow"
+path = "python/pyproject.toml"
+
+[[project]]
+pypi = "pygram11"
+github = "douglasdavis/pygram11"
+
+[[project]]
+pypi = "pyhmmer"
+github = "althonos/pyhmmer"
+
+[[project]]
+pypi = "pylibmagic"
+github = "kratsg/pylibmagic"
+
+[[project]]
+pypi = "pyopencl"
+github = "inducer/pyopencl"
+
+[[project]]
+pypi = "pyresidfp"
+github = "pyresidfp/pyresidfp"
+
+[[project]]
+pypi = "pyslang"
+github = "MikePopoloski/slang"
+
+#[[project]]
+#pypi = "pytango"
+#gitlab = "https://gitlab.com/tango-controls/pytango"
+
+[[project]]
+pypi = "pyzmq"
+github = "zeromq/pyzmq"
+
+[[project]]
+pypi = "rapidfuzz"
+github = "rapidfuzz/RapidFuzz"
+
+[[project]]
+pypi = "s5cmd"
+github = "ImagingDataCommons/s5cmd-python-distributions"
+
+[[project]]
+pypi = "SimpleITK"
+github = "SimpleITK/SimpleITK"
+
+[[project]]
+pypi = "simsopt"
+github = "hiddenSymmetries/simsopt"
+
+[[project]]
+pypi = "sparse-dot-topn"
+github = "ing-bank/sparse_dot_topn"
+
+[[project]]
+pypi = "spglib"
+github = "spglib/spglib"
+
+[[project]]
+pypi = "spherely"
+github = "benbovy/spherely"
+
+[[project]]
+pypi = "stormpy"
+github = "stormchecker/stormpy"
+
+[[project]]
+pypi = "symusic"
+github = "Yikai-Liao/symusic"
+
+[[project]]
+pypi = "tetgen"
+github = "pyvista/tetgen"
+
+[[project]]
+pypi = "tiledb"
+github = "TileDB-Inc/TileDB-Py"
+
+[[project]]
+pypi = "tomotopy"
+github = "bab2min/tomotopy"
+
+[[project]]
+pypi = "viennals"
+github = "ViennaTools/ViennaLS"
+
+[[project]]
+pypi = "viennaps"
+github = "ViennaTools/ViennaPS"
+
+[[project]]
 pypi = "xgrammar"
 github = "mlc-ai/xgrammar"
+
+[[project]]
+pypi = "xtgeo"
+github = "equinor/xtgeo"
