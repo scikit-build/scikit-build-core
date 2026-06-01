@@ -169,7 +169,7 @@ def _build_wheel_impl(
                 pyproject=pyproject,
             )
         except FailedLiveProcessError as err2:
-            err2.msg = settings_reader.settings.messages.after_failure.format()
+            err2.msg = settings_reader.settings.messages.after_failure
             raise
 
 
@@ -291,12 +291,15 @@ def _build_wheel_impl_impl(
         if metadata.license_files:
             license_paths = metadata.license_files
         else:
-            license_file_globs = settings.wheel.license_files or [
-                "LICEN[CS]E*",
-                "COPYING*",
-                "NOTICE*",
-                "AUTHORS*",
-            ]
+            if settings.wheel.license_files is None:
+                license_file_globs = [
+                    "LICEN[CS]E*",
+                    "COPYING*",
+                    "NOTICE*",
+                    "AUTHORS*",
+                ]
+            else:
+                license_file_globs = list(settings.wheel.license_files)
             if (
                 metadata.license
                 and not isinstance(metadata.license, str)

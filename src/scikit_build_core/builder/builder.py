@@ -263,7 +263,7 @@ class Builder:
 
         # Warning for CPython 3.13.4 Windows bug
         if (
-            sys.implementation.name == "CPython"
+            sys.implementation.name == "cpython"
             and sys.version_info[:3] == (3, 13, 4)
             and sys.platform.startswith("win32")
             and not sysconfig.get_config_var("Py_GIL_DISABLED")

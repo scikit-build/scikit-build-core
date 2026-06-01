@@ -128,7 +128,7 @@ class Target:
     id: str
     type: str
     paths: Paths
-    sources = List[Source]
+    sources: List[Source] = dataclasses.field(default_factory=list)
     nameOnDisk: Optional[Path] = None
     artifacts: List[Artifact] = dataclasses.field(default_factory=list)
     isGeneratorProvided: Optional[bool] = None

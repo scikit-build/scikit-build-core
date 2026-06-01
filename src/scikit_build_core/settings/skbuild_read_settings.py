@@ -448,10 +448,17 @@ class SettingsReader:
         return result
 
     def print_suggestions(self) -> None:
-        for index in (1, 2, 3):
-            name = {1: "config-settings", 2: "config-settings", 3: "pyproject.toml"}[
-                index
-            ]
+        # Index 0 is the env source (skipped); the config-settings sources follow,
+        # then the TOML sources. The last TOML source is always pyproject.toml;
+        # any earlier ones are extra settings injected by a plugin (e.g. hatch).
+        n_dynamic = len(self._dynamic_srcs)
+        names = dict.fromkeys(range(1, n_dynamic), "config-settings")
+        for offset in range(len(self._toml_srcs)):
+            is_pyproject = offset == len(self._toml_srcs) - 1
+            names[n_dynamic + offset] = (
+                "pyproject.toml" if is_pyproject else "extra settings"
+            )
+        for index, name in names.items():
             suggestions_dict = self.suggestions(index)
             if suggestions_dict:
                 rich_print(
