@@ -139,9 +139,19 @@ def _handle_move(
 def _validate_overrides(
     settings: ScikitBuildSettings,
     overrides: dict[str, OverrideRecord],
-    sources: tuple[Source, ...],
+    *,
+    dynamic_sources: tuple[Source, ...],
+    toml_sources: tuple[Source, ...],
 ) -> None:
-    """Validate all fields with any override information."""
+    """
+    Validate all fields with any override information.
+
+    ``dynamic_sources`` are the sources that may legitimately set
+    ``override_only`` fields at build time (env vars and PEP 517
+    config-settings); ``toml_sources`` are the static ``pyproject.toml`` (and
+    ``extra_settings``) tables where ``override_only`` fields are forbidden
+    outside of an ``[[overrides]]`` section.
+    """
 
     def validate_field(
         field: dataclasses.Field[Any],
@@ -157,23 +167,23 @@ def _validate_overrides(
             # "metadata" is the one dict-valued override-only field; has_item
             # needs to know to use dict-presence semantics for it.
             is_dict = field.name == "metadata"
-            # override-only fields are also allowed via env vars and
-            # config-settings (sources[:3]); only pyproject.toml is forbidden.
+            # override-only fields may be set dynamically via env vars or
+            # config-settings; only static pyproject.toml values are forbidden.
             if any(
                 source.has_item(*path, field.name, is_dict=is_dict)
-                for source in sources[:3]
+                for source in dynamic_sources
             ):
                 return
 
             # Decide whether the value was actually hard-coded in pyproject.toml.
             # We can't rely on `value is not None`, since some override-only
             # fields have non-None falsy defaults (e.g. [] or False), so we ask
-            # the TOML sources (sources[3:]) whether the key is really present.
+            # the TOML sources whether the key is really present.
             if record is not None:
                 original_value = record.original_value
             elif any(
                 source.has_item(*path, field.name, is_dict=is_dict)
-                for source in sources[3:]
+                for source in toml_sources
             ):
                 original_value = value
             else:
@@ -282,10 +292,18 @@ class SettingsReader:
         remaining = {
             k: v for k, v in config_settings.items() if not k.startswith("skbuild.")
         }
-        self.sources = SourceChain(
+        # Sources that may legitimately set override-only fields at build time.
+        dynamic_srcs: list[Source] = [
             EnvSource("SKBUILD", env=env),
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
             ConfSource(settings=remaining, verify=verify_conf),
+        ]
+        # Static pyproject.toml (and extra_settings) tables; override-only fields
+        # are forbidden here outside of an [[overrides]] section.
+        self._dynamic_srcs = tuple(dynamic_srcs)
+        self._toml_srcs = tuple(toml_srcs)
+        self.sources = SourceChain(
+            *dynamic_srcs,
             *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )
@@ -454,7 +472,12 @@ class SettingsReader:
                 self.print_suggestions()
                 raise SystemExit(7)
             logger.warning("Unrecognized options: {}", ", ".join(unrecognized))
-        _validate_overrides(self.settings, self.overridden_items, self.sources.sources)
+        _validate_overrides(
+            self.settings,
+            self.overridden_items,
+            dynamic_sources=self._dynamic_srcs,
+            toml_sources=self._toml_srcs,
+        )
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:
