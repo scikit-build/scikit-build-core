@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 6fec9b7edb08fd9989088709d864a7826dc74e80 # frozen: v0.15.12
+    rev: 0671d8ab202c4ac093b78433ae5baf74f3fc7246 # frozen: v0.15.15
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -39,7 +39,7 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: fda77690955e9b63c6687d8806bafd56a526e45f # frozen: 1.20.0
+    rev: dda8db18cfc68df532abf33b185ecd12d5b7b326 # frozen: 1.20.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==25.*]
@@ -100,7 +100,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: 5374cbf686e897b15713110e233094e2874de7ef # frozen: v1.46.1
+    rev: 0758ccd3261dc7b0594e9b698113eb08d3ba25b5 # frozen: v1
     hooks:
       - id: typos
         args: []
@@ -133,12 +133,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: a18e62629cfba1fb2d16eb417e5442cd7b962a67 # frozen: 2026.05.13
+    rev: a4ec1952e236bbc3b6ec29909724a33ff9d83327 # frozen: 2026.05.28
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: f805888065fdb6162e1f800e50bb9460cbd223d6 # frozen: 0.37.2
+    rev: 943377262562a12b57292fc98fabd7dbf81451fe # frozen: 0.37.2
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -152,7 +152,7 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: a4727cbbcd26d7098e96b9cb738169b59711ae51 # frozen: v1.24.1
+    rev: 9257c6050c0261b8c57e712f632dc4a8010109a9 # frozen: v1.25.2
     hooks:
       - id: zizmor
         files: "^\\.github"
