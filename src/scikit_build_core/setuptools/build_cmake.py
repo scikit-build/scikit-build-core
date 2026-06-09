@@ -5,6 +5,7 @@ import shutil
 import sys
 from collections import defaultdict
 from collections.abc import Iterable
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal
 
@@ -64,6 +65,14 @@ def _validate_settings(
         assert not settings.editable.rebuild, (
             "editable.rebuild is not supported in setuptools mode"
         )
+
+
+def _load_settings() -> ScikitBuildSettings:
+    # setup.py-only projects (common with the classic scikit-build wrapper)
+    # don't have a pyproject.toml.
+    if not Path("pyproject.toml").is_file():
+        return SettingsReader({}, {}, state="sdist").settings
+    return SettingsReader.from_file("pyproject.toml").settings
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:
@@ -147,7 +156,10 @@ def _read_cmake_install_manifests(
 
             installed_path = Path(line)
             if not installed_path.is_absolute():
-                installed_path = (build_dir / installed_path).resolve()
+                installed_path = build_dir / installed_path
+            # Resolve symlinks (e.g. macOS /tmp) so relative_to() can't be
+            # fooled by an unresolved prefix.
+            installed_path = installed_path.resolve()
 
             try:
                 relpath = installed_path.relative_to(install_root)
@@ -260,6 +272,22 @@ def _classify_wrapper_package_file(dist: Distribution, path: Path) -> Path | Non
     if not package_paths:
         return None
 
+    # Files installed into a package's source directory belong to that
+    # package, honoring package_dir mappings (deepest source dir first).
+    packages = list(getattr(dist, "packages", None) or [])
+    package_source_dirs = sorted(
+        ((_package_source_dir(dist, package), package) for package in packages),
+        key=lambda pair: -len(pair[0].parts),
+    )
+    for source_dir, package in package_source_dirs:
+        if not source_dir.parts:
+            continue
+        try:
+            remainder = path.relative_to(source_dir)
+        except ValueError:
+            continue
+        return Path(*package.split(".")) / remainder
+
     candidates = [path]
     for root in _package_source_roots(dist):
         if not root.parts:
@@ -281,6 +309,25 @@ def _classify_wrapper_package_file(dist: Distribution, path: Path) -> Path | Non
             return candidate
 
     return None
+
+
+def _excluded_by_package_data(dist: Distribution, package_output: Path) -> bool:
+    """Check a package file against exclude_package_data, like build_py does
+    for source package data."""
+    exclude = getattr(dist, "exclude_package_data", None) or {}
+    if not exclude:
+        return False
+
+    # Attribute the file to its deepest containing package
+    package_paths = sorted(_package_paths(dist), key=lambda p: -len(p.parts))
+    for package_path in package_paths:
+        if package_path in package_output.parents:
+            package = ".".join(package_path.parts)
+            relative = package_output.relative_to(package_path).as_posix()
+            patterns = [*exclude.get(package, []), *exclude.get("", [])]
+            return any(fnmatchcase(relative, pattern) for pattern in patterns)
+
+    return False
 
 
 class BuildCMake(setuptools.Command):
@@ -340,9 +387,10 @@ class BuildCMake(setuptools.Command):
             ]
 
     def _get_editable_mode(self) -> bool:
+        # editable_mode is the PEP 660 path; inplace is "build_ext --inplace"
         build_ext = self.distribution.get_command_obj("build_ext")
-        return bool(
-            getattr(build_ext, "editable_mode", getattr(build_ext, "inplace", False))
+        return bool(getattr(build_ext, "editable_mode", False)) or bool(
+            getattr(build_ext, "inplace", False)
         )
 
     def _get_install_subdir(self) -> Path:
@@ -431,6 +479,20 @@ class BuildCMake(setuptools.Command):
                 self.distribution, effective_output
             )
 
+            # Classic scikit-build treats CMake-installed top-level Python
+            # modules as py_modules rather than data files.
+            if (
+                package_output is None
+                and len(effective_output.parts) == 1
+                and effective_output.suffix == ".py"
+            ):
+                package_output = effective_output
+
+            if package_output is not None and _excluded_by_package_data(
+                self.distribution, package_output
+            ):
+                continue
+
             if package_output is None:
                 data_dir = (
                     os.fspath(effective_output.parent)
@@ -458,7 +520,7 @@ class BuildCMake(setuptools.Command):
         assert self.plat_name is not None
 
         self.editable_mode = self._get_editable_mode()
-        settings = SettingsReader.from_file("pyproject.toml").settings
+        settings = _load_settings()
         _validate_settings(settings, editable_mode=self.editable_mode)
 
         build_tmp_folder = Path(self.build_temp)
@@ -608,6 +670,24 @@ def finalize_distribution_options(dist: Distribution) -> None:
         build.sub_commands.append(
             ("build_cmake", lambda cmd: _has_cmake(cmd.distribution))
         )
+
+    # Direct "setup.py build_ext --inplace" invocations don't go through the
+    # build command, so hook build_ext as well (run_command is a no-op if
+    # build_cmake already ran).
+    build_ext = dist.get_command_class("build_ext")
+    assert build_ext is not None
+    if not getattr(build_ext, "_scikit_build_core_patched", False):
+
+        class BuildExtWithCMake(build_ext):  # type: ignore[valid-type,misc]
+            _scikit_build_core_patched = True
+
+            def run(self) -> None:
+                if _has_cmake(self.distribution):
+                    self.run_command("build_cmake")
+                super().run()
+
+        dist.cmdclass["build_ext"] = BuildExtWithCMake
+
     if get_source_dir_from_pyproject_toml() is not None:
         _cmake_extension(dist)
 
@@ -635,7 +715,7 @@ def _cmake_extension(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
     # Setup logging
-    settings = SettingsReader.from_file("pyproject.toml").settings
+    settings = _load_settings()
     level_value = LEVEL_VALUE[settings.logging.level]
     raw_logger.setLevel(level_value)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import setuptools
@@ -49,6 +50,14 @@ def setup(
 
     if cmake_minimum_required_version is not None:
         warnings.warn("Set via pyproject.toml", stacklevel=2)
+
+    # Classic scikit-build builds projects without a CMakeLists.txt as plain
+    # setuptools projects. A nonexistent cmake_source_dir still errors via the
+    # cmake_source_dir keyword validator below.
+    source_dir = Path(cmake_source_dir or ".")
+    if source_dir.is_dir() and not source_dir.joinpath("CMakeLists.txt").is_file():
+        print("skipping skbuild (no CMakeLists.txt found)", flush=True)  # noqa: T201
+        return cast("_DistributionT", setuptools.setup(distclass=distclass, **kw))
 
     distribution_class = cast(
         "type[_DistributionT]",
