@@ -57,7 +57,7 @@ def setup(
     source_dir = Path(cmake_source_dir or ".")
     if source_dir.is_dir() and not source_dir.joinpath("CMakeLists.txt").is_file():
         print("skipping skbuild (no CMakeLists.txt found)", flush=True)  # noqa: T201
-        return cast("_DistributionT", setuptools.setup(distclass=distclass, **kw))
+        return setuptools.setup(distclass=distclass, **kw)
 
     distribution_class = cast(
         "type[_DistributionT]",
