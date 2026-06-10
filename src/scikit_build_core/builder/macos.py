@@ -46,13 +46,12 @@ def get_macosx_deployment_target(*, arm: bool) -> MacOSVer:
         logger.debug("MACOSX_DEPLOYMENT_TARGET not set, using {}", plat_target)
         return plat_target
 
-    env_target = ".".join(target.split(".")[:2]) if "." in target else f"{target}.0"
     try:
-        norm_env_target = normalize_macos_version(env_target, arm=arm)
+        norm_env_target = normalize_macos_version(target, arm=arm)
     except ValueError:
         msg = "MACOSX_DEPLOYMENT_TARGET not readable ({}), using {} instead"
-        logger.warning(msg, env_target, plat_target)
+        logger.warning(msg, target, plat_target)
         return plat_target
 
-    logger.debug("MACOSX_DEPLOYMENT_TARGET is set to {}", env_target)
+    logger.debug("MACOSX_DEPLOYMENT_TARGET is set to {}", target)
     return norm_env_target
