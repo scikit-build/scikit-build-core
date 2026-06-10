@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 import sysconfig
 import tarfile
@@ -9,6 +11,26 @@ import pytest
 
 pytest.importorskip("hatchling")
 from hatchling.builders.wheel import WheelBuilder
+
+from scikit_build_core.hatch.plugin import ScikitBuildHook
+from scikit_build_core.settings.skbuild_read_settings import (
+    SettingsReader,
+)
+
+
+def _validate_settings(pyproject: dict[str, object]) -> None:
+    reader = SettingsReader(pyproject, {}, state="sdist")
+    # _validate only uses the settings_reader argument, not self.
+    ScikitBuildHook._validate(None, reader)  # type: ignore[arg-type]
+
+
+def test_hatchling_sdist_cmake_error_message() -> None:
+    pyproject = {
+        "project": {"name": "x", "version": "0.1.0"},
+        "tool": {"scikit-build": {"experimental": True, "sdist": {"cmake": True}}},
+    }
+    with pytest.raises(ValueError, match="Not currently supported for SDist builds"):
+        _validate_settings(pyproject)
 
 
 def set_hatchling_editable_mode(mode: str) -> None:
@@ -76,9 +98,17 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
         "hatchling_example-0.1.0.dist-info/extra_metadata/metadata_file.txt",
         "hatchling_example/__init__.py",
         "hatchling_example/_core.pyi",
-        f"hatchling_example/hatchling_example/_core{ext_suffix}",
+        f"hatchling_example/_core{ext_suffix}",
     }
     assert "Root-Is-Purelib: false" in wheel_metadata
+
+    # The built wheel must be importable (regression test for the doubled
+    # install_dir prefix that produced an unimportable layout).
+    isolated.install(str(wheel), isolated=False)
+    assert (
+        isolated.execute("import hatchling_example; print(hatchling_example.add(1, 2))")
+        == "3"
+    )
 
 
 @pytest.mark.compile

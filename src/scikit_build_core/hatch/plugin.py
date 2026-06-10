@@ -72,7 +72,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "Hatch support is experimental, must enable the experimental flag"
             raise ValueError(msg)
 
-        if not settings.wheel.cmake or settings.sdist.cmake:
+        if not settings.wheel.cmake:
             msg = "CMake is required for scikit-build"
             raise ValueError(msg)
 
@@ -171,13 +171,12 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             expand_macos=settings.wheel.expand_macos_universal_tags,
             build_tag=settings.wheel.build_tag,
         )
-        if settings.wheel.platlib is None:
-            targetlib = "platlib" if settings.wheel.cmake else "purelib"
-        else:
-            targetlib = "platlib" if settings.wheel.platlib else "purelib"
+        # _validate guarantees wheel.cmake is true and rejects a falsy
+        # wheel.platlib (purelib), so this is always a platlib build.
+        targetlib = "platlib"
 
         build_data["tag"] = str(tags)
-        build_data["pure_python"] = targetlib == "purelib"
+        build_data["pure_python"] = False
 
         if editable and settings.editable.mode == "inplace":
             build_dir = Path(settings.cmake.source_dir)
@@ -342,10 +341,15 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 path.write_bytes(contents)
                 editable_force_include[str(path)] = filename
         else:
+            # CMake already installed into
+            # wheel_dirs[targetlib] / settings.wheel.install_dir, so the files
+            # under wheel_dirs[targetlib] already carry the install_dir prefix;
+            # mapping them relative to wheel_dirs[targetlib] keeps that single
+            # prefix (matching the editable branch above).
             for raw_path in wheel_dirs[targetlib].iterdir():
                 path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
                 build_data["force_include"][f"{path}"] = str(
-                    settings.wheel.install_dir / path.relative_to(wheel_dirs[targetlib])
+                    path.relative_to(wheel_dirs[targetlib])
                 )
 
         try:
