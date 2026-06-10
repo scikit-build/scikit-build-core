@@ -44,6 +44,58 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _config_var_is_set(name: str) -> bool:
+    """
+    Read a sysconfig flag as a boolean. The value may be an ``int``, ``None``,
+    or a numeric string like ``"0"``/``"1"`` depending on platform, so plain
+    ``bool()`` is unsafe (``bool("0")`` is ``True``). Numeric strings are parsed
+    as integers; other non-empty strings keep their truthiness.
+    """
+    value = sysconfig.get_config_var(name)
+    if isinstance(value, str) and value.strip().lstrip("-").isdigit():
+        return int(value) != 0
+    return bool(value)
+
+
+def _is_debug_build() -> bool:
+    """Whether the interpreter is a debug build (``pythonXY_d.lib`` on Windows)."""
+    return _config_var_is_set("Py_DEBUG")
+
+
+def _is_free_threaded() -> bool:
+    """Whether the interpreter is free-threaded (the ``t`` ABI flag)."""
+    return _config_var_is_set("Py_GIL_DISABLED")
+
+
+def _windows_lib_names(*, abi3: bool, abi3t: bool) -> list[str]:
+    """
+    Construct the candidate Windows import-library names for the running
+    interpreter, mirroring CMake's ``_PYTHON_GET_NAMES`` (FindPython
+    ``Support.cmake``). Debug builds get a ``_d`` suffix (tried first), and
+    free-threaded builds get a ``t`` ABI flag.
+    """
+    free_threaded = _is_free_threaded()
+    if abi3 or abi3t:
+        # Stable ABI: python3.lib, or python3t.lib on free-threaded abi3t.
+        t = "t" if (abi3t and free_threaded) else ""
+        base = f"python3{t}"
+    else:
+        t = "t" if free_threaded else ""
+        base = f"python3{sys.version_info[1]}{t}"
+    names = [f"{base}.lib"]
+    if _is_debug_build():
+        names.insert(0, f"{base}_d.lib")
+    return names
+
+
+def _is_dir(path: Path) -> bool:
+    """``Path.is_dir()`` that treats a permission-denied probe as missing."""
+    try:
+        return path.is_dir()
+    except PermissionError:
+        return False
+
+
 def get_python_library(
     env: Mapping[str, str], *, abi3: bool = False, abi3t: bool = False
 ) -> Path | None:
@@ -58,6 +110,21 @@ def get_python_library(
             minor = "" if (abi3 or abi3t) else sys.version_info[1]
             suffix = "t" if abi3t else ""
             return Path(result) / f"python3{minor}{suffix}.lib"
+
+    # Windows CPython has no LIBDIR/LDLIBRARY/LIBRARY config vars, so construct
+    # the import-library name and probe the base install's libs/ directory.
+    # base_exec_prefix is used (not the venv prefix) because venvs lack a libs/
+    # dir but the base install (and conda env roots) have it. MinGW/MSYS2 report
+    # "win32" but ship a POSIX-style libpython, so fall through to the config-var
+    # search below when nothing matches here.
+    if sys.platform.startswith("win"):
+        root = Path(sys.base_exec_prefix)
+        for libdir in (root / "libs", root / "lib"):
+            if _is_dir(libdir):
+                for name in _windows_lib_names(abi3=abi3, abi3t=abi3t):
+                    libpath = libdir / name
+                    if libpath.is_file():
+                        return libpath
 
     libdirstr = sysconfig.get_config_var("LIBDIR")
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
