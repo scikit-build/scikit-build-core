@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import os
 import platform
 import shutil
@@ -273,6 +274,23 @@ def _build_wheel_impl_impl(
         for d in wheel_dirs.values():
             d.mkdir(parents=True)
 
+        # The metadata-only and full-wheel paths build identical WheelWriters
+        # except for the output folder; share a single constructor.
+        make_wheel = functools.partial(
+            WheelWriter,
+            metadata,
+            tags=override_wheel_tags or tags.as_tags_set(),
+            wheel_metadata=WheelMetadata(
+                root_is_purelib=targetlib == "purelib",
+                build_tag=settings.wheel.build_tag,
+            ),
+            metadata_dir=wheel_dirs["metadata"],
+            variant_label=wheel_variant.label if wheel_variant else "",
+            variant_dist_info_contents=(
+                wheel_variant.dist_info_contents if wheel_variant else None
+            ),
+        )
+
         if ".." in settings.wheel.install_dir:
             msg = "wheel.install_dir must not contain '..'"
             raise AssertionError(msg)
@@ -288,7 +306,7 @@ def _build_wheel_impl_impl(
             install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
 
         # Include the metadata license.file entry if provided
-        if metadata.license_files:
+        if metadata.license_files is not None:
             license_paths = metadata.license_files
         else:
             if settings.wheel.license_files is None:
@@ -327,27 +345,14 @@ def _build_wheel_impl_impl(
         for gen in settings.generate:
             if gen.location == "source":
                 contents = generate_file_contents(gen, metadata)
-                gen.path.write_text(contents)
+                gen.path.write_text(contents, encoding="utf-8")
                 settings.sdist.include.append(str(gen.path))
 
         if wheel_directory is None and not exit_after_config:
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
-            wheel = WheelWriter(
-                metadata,
-                Path(metadata_directory),
-                override_wheel_tags or tags.as_tags_set(),
-                WheelMetadata(
-                    root_is_purelib=targetlib == "purelib",
-                    build_tag=settings.wheel.build_tag,
-                ),
-                wheel_dirs["metadata"],
-                variant_label=wheel_variant.label if wheel_variant else "",
-                variant_dist_info_contents=(
-                    wheel_variant.dist_info_contents if wheel_variant else None
-                ),
-            )
+            wheel = make_wheel(folder=Path(metadata_directory))
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
             dist_info.mkdir(parents=True)
@@ -459,20 +464,7 @@ def _build_wheel_impl_impl(
 
             process_script_dir(wheel_dirs["scripts"])
 
-        with WheelWriter(
-            metadata,
-            Path(wheel_directory),
-            override_wheel_tags or tags.as_tags_set(),
-            WheelMetadata(
-                root_is_purelib=targetlib == "purelib",
-                build_tag=settings.wheel.build_tag,
-            ),
-            wheel_dirs["metadata"],
-            variant_label=wheel_variant.label if wheel_variant else "",
-            variant_dist_info_contents=(
-                wheel_variant.dist_info_contents if wheel_variant else None
-            ),
-        ) as wheel:
+        with make_wheel(folder=Path(wheel_directory)) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
 
             str_pkgs = (

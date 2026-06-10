@@ -458,3 +458,45 @@ def test_pep639_license_files_wheel(tmp_path: Path):
 
     assert "LICENSE1.txt" in metadata
     assert "nested/more/LICENSE2.txt" in metadata
+
+
+def test_pep639_license_files_optout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """
+    An explicit ``license-files = []`` opts out of shipping license files, even
+    if a default-glob-matching file (LICENSE) is present in the source tree.
+    """
+    src = tmp_path / "src"
+    src.mkdir()
+    src.joinpath("pyproject.toml").write_text(
+        inspect.cleandoc(
+            """
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "license_optout"
+            version = "0.1.0"
+            license = "MIT"
+            license-files = []
+
+            [tool.scikit-build]
+            wheel.cmake = false
+            """
+        )
+    )
+    # A file that would otherwise be picked up by the default license globs.
+    src.joinpath("LICENSE").write_text("Not actually shipped\n")
+    monkeypatch.chdir(src)
+
+    dist = tmp_path / "dist"
+    build_wheel(str(dist), {})
+    (wheel,) = dist.glob("license_optout-0.1.0-*.whl")
+
+    with zipfile.ZipFile(wheel) as zf:
+        names = zf.namelist()
+        with zf.open("license_optout-0.1.0.dist-info/METADATA") as f:
+            metadata = f.read().decode("utf-8")
+
+    assert not any("dist-info/licenses/" in n for n in names)
+    assert "License-File:" not in metadata
