@@ -4,9 +4,15 @@ This is the entry point for the build backend. Items in this module are designed
 
 from __future__ import annotations
 
+import contextlib
 import sys
+from typing import TYPE_CHECKING
 
 from .._compat import tomllib
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from typing import Literal
 
 __all__ = [
     "build_editable",
@@ -15,9 +21,23 @@ __all__ = [
     "get_requires_for_build_editable",
     "get_requires_for_build_sdist",
     "get_requires_for_build_wheel",
-    "prepare_metadata_for_build_editable",
-    "prepare_metadata_for_build_wheel",
 ]
+
+
+@contextlib.contextmanager
+def _exit_on_failed_live_process() -> Iterator[None]:
+    """Translate a FailedLiveProcessError into a clean ``SystemExit(1)``."""
+    from .._logging import rich_print
+    from ..errors import FailedLiveProcessError
+
+    try:
+        yield
+    except FailedLiveProcessError as err:
+        sys.stdout.flush()
+        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
+        if err.msg:
+            rich_print(err.msg)
+        raise SystemExit(1) from None
 
 
 def build_wheel(
@@ -25,23 +45,15 @@ def build_wheel(
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
-    from .._logging import rich_print
-    from ..errors import FailedLiveProcessError
     from .wheel import _build_wheel_impl
 
-    try:
+    with _exit_on_failed_live_process():
         return _build_wheel_impl(
             wheel_directory,
             config_settings,
             metadata_directory,
             editable=False,
         ).wheel_filename
-    except FailedLiveProcessError as err:
-        sys.stdout.flush()
-        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
-        if err.msg:
-            rich_print(err.msg)
-        raise SystemExit(1) from None
 
 
 def build_editable(
@@ -49,23 +61,15 @@ def build_editable(
     config_settings: dict[str, list[str] | str] | None = None,
     metadata_directory: str | None = None,
 ) -> str:
-    from .._logging import rich_print
-    from ..errors import FailedLiveProcessError
     from .wheel import _build_wheel_impl
 
-    try:
+    with _exit_on_failed_live_process():
         return _build_wheel_impl(
             wheel_directory,
             config_settings,
             metadata_directory,
             editable=True,
         ).wheel_filename
-    except FailedLiveProcessError as err:
-        sys.stdout.flush()
-        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
-        if err.msg:
-            rich_print(err.msg)
-        raise SystemExit(1) from None
 
 
 def _has_safe_metadata() -> bool:
@@ -119,18 +123,10 @@ def build_sdist(
     sdist_directory: str,
     config_settings: dict[str, list[str] | str] | None = None,
 ) -> str:
-    from .._logging import rich_print
-    from ..errors import FailedLiveProcessError
     from .sdist import build_sdist as skbuild_build_sdist
 
-    try:
+    with _exit_on_failed_live_process():
         return skbuild_build_sdist(sdist_directory, config_settings)
-    except FailedLiveProcessError as err:
-        sys.stdout.flush()
-        rich_print("\n{bold}***", *err.args, color="red", file=sys.stderr)
-        if err.msg:
-            rich_print(err.msg)
-        raise SystemExit(1) from None
 
 
 def get_requires_for_build_sdist(
@@ -138,7 +134,7 @@ def get_requires_for_build_sdist(
 ) -> list[str]:
     from ..builder.get_requires import GetRequires
 
-    requires = GetRequires.from_config_settings(config_settings)
+    requires = GetRequires.from_config_settings(config_settings, state="sdist")
 
     # These are only injected if cmake is required for the SDist step
     cmake_requires = (
@@ -152,12 +148,13 @@ def get_requires_for_build_sdist(
     ]
 
 
-def get_requires_for_build_wheel(
-    config_settings: dict[str, str | list[str]] | None = None,
+def _get_requires_for_build_wheel(
+    config_settings: dict[str, str | list[str]] | None,
+    state: Literal["wheel", "editable"],
 ) -> list[str]:
     from ..builder.get_requires import GetRequires
 
-    requires = GetRequires.from_config_settings(config_settings)
+    requires = GetRequires.from_config_settings(config_settings, state=state)
 
     # These are only injected if cmake is required for the wheel step
     cmake_requires = (
@@ -169,22 +166,15 @@ def get_requires_for_build_wheel(
         *requires.variants(),
         *requires.dynamic_metadata(),
     ]
+
+
+def get_requires_for_build_wheel(
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> list[str]:
+    return _get_requires_for_build_wheel(config_settings, state="wheel")
 
 
 def get_requires_for_build_editable(
     config_settings: dict[str, str | list[str]] | None = None,
 ) -> list[str]:
-    from ..builder.get_requires import GetRequires
-
-    requires = GetRequires.from_config_settings(config_settings)
-
-    # These are only injected if cmake is required for the wheel step
-    cmake_requires = (
-        [*requires.cmake(), *requires.ninja()] if requires.settings.wheel.cmake else []
-    )
-
-    return [
-        *cmake_requires,
-        *requires.variants(),
-        *requires.dynamic_metadata(),
-    ]
+    return _get_requires_for_build_wheel(config_settings, state="editable")

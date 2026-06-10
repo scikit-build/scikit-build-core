@@ -172,3 +172,40 @@ def test_get_requires_for_build_editable_pure(fp: FakeProcess):
         stdout='{"version":{"string":"3.14.0"}}',
     )
     assert set(get_requires_for_build_editable({"wheel.cmake": "False"})) == set()
+
+
+def test_get_requires_state_override(
+    fp: FakeProcess, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """
+    Overrides gated on ``if.state`` must be resolved against the actual hook's
+    state, so a ``state = "wheel"`` override only affects the wheel hook.
+    """
+    monkeypatch.chdir(tmp_path)
+    tmp_path.joinpath("pyproject.toml").write_text(
+        """
+        [tool.scikit-build]
+        wheel.cmake = false
+        sdist.cmake = false
+
+        [[tool.scikit-build.overrides]]
+        if.state = "wheel"
+        build.requires = ["wheel-only-dep"]
+
+        [[tool.scikit-build.overrides]]
+        if.state = "editable"
+        build.requires = ["editable-only-dep"]
+        """
+    )
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.14.0"}}',
+    )
+
+    assert "wheel-only-dep" in get_requires_for_build_wheel({})
+    assert "wheel-only-dep" not in get_requires_for_build_sdist({})
+    assert "wheel-only-dep" not in get_requires_for_build_editable({})
+
+    assert "editable-only-dep" in get_requires_for_build_editable({})
+    assert "editable-only-dep" not in get_requires_for_build_sdist({})
+    assert "editable-only-dep" not in get_requires_for_build_wheel({})
