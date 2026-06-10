@@ -15,7 +15,7 @@ def resolver(tmp_path: Path) -> RootPathResolver:
 def test_root_plain_format(resolver: RootPathResolver) -> None:
     # Regression: a bare {root} used to fall through to repr() and emit
     # "RootPathResolver(path=...)" instead of the path itself.
-    formatted = "{root}".format(root=resolver)
+    formatted = f"{resolver}"
     assert formatted == str(resolver.path)
     assert "RootPathResolver" not in formatted
 
@@ -26,24 +26,22 @@ def test_root_str(resolver: RootPathResolver) -> None:
 
 def test_root_parent_format(resolver: RootPathResolver) -> None:
     # Regression: a terminal {root:parent} used to emit the repr.
-    formatted = "{root:parent}".format(root=resolver)
+    formatted = f"{resolver:parent}"
     assert formatted == str(resolver.path.parent)
     assert "RootPathResolver" not in formatted
 
 
 def test_root_uri_format(resolver: RootPathResolver) -> None:
-    assert "{root:uri}".format(root=resolver) == resolver.path.as_uri()
+    assert f"{resolver:uri}" == resolver.path.as_uri()
 
 
 def test_root_parent_uri_format(resolver: RootPathResolver) -> None:
-    assert (
-        "{root:parent:uri}".format(root=resolver) == resolver.path.parent.as_uri()
-    )
+    assert f"{resolver:parent:uri}" == resolver.path.parent.as_uri()
 
 
 def test_root_invalid_format(resolver: RootPathResolver) -> None:
     with pytest.raises(ValueError, match="Could not handle format"):
-        "{root:nonsense}".format(root=resolver)
+        f"{resolver:nonsense}"
 
 
 def test_dummy_plain_keys() -> None:
