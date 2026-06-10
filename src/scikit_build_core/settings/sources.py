@@ -190,6 +190,28 @@ def _dig_fields(opt: Any, /, *names: str) -> Any:
     return opt
 
 
+def _under_dict_field(opt: Any, names: Sequence[str], /) -> bool:
+    """
+    Return True if walking ``names`` from dataclass ``opt`` passes through a
+    dict-typed field before exhausting ``names``.
+
+    Such a path is free-form (e.g. ``metadata.version.*``), so deeper keys
+    cannot be validated against dataclass fields and must be accepted.
+    """
+    for name in names:
+        if not dataclasses.is_dataclass(opt):
+            return False
+        fields = dataclasses.fields(opt)
+        types = [x.type for x in fields if x.name == name]
+        if len(types) != 1:
+            return False
+        (opt,) = types
+        if get_target_raw_type(opt) is dict:
+            # Everything below a dict-typed field is free-form.
+            return True
+    return False
+
+
 def _nested_dataclass_to_names(
     target: type[Any] | Any, /, *inner: str
 ) -> Iterator[list[str]]:
@@ -535,7 +557,9 @@ class ConfSource(Source):
                 cls.convert(i.strip(), get_inner_type(target)) for i in item.split(";")
             ]
         if raw_target is dict:
-            assert not isinstance(item, (str, list, bool))
+            if isinstance(item, (str, list, bool)):
+                msg = f"Expected {target}, got {type(item).__name__}"
+                raise TypeError(msg)
             return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
@@ -548,6 +572,20 @@ class ConfSource(Source):
                 }
             if list in args and isinstance(item, list):
                 return [cls.convert(i, get_inner_type(args[list])) for i in item]
+            # pip/uv/build deliver plain strings for ``-Cwheel.packages=...``;
+            # split them like a list (or as a dict if they contain ``=``),
+            # mirroring EnvSource and the plain-list branch above.
+            if isinstance(item, str):
+                if dict in args and "=" in item:
+                    items = (i.strip().split("=", 1) for i in item.split(";"))
+                    return {
+                        k: cls.convert(v, get_inner_type(args[dict])) for k, v in items
+                    }
+                if list in args:
+                    return [
+                        cls.convert(i.strip(), get_inner_type(args[list]))
+                        for i in item.split(";")
+                    ]
             msg = f"Can't convert into {target}"
             raise TypeError(msg)
         if isinstance(item, (list, dict)):
@@ -572,7 +610,13 @@ class ConfSource(Source):
             keys = keystr.replace("-", "_").split(".")[len(self.prefixes) :]
             try:
                 outer_option = _dig_fields(options, *keys[:-1])
-            except KeyError:
+            except (KeyError, TypeError):
+                # KeyError: an intermediate field does not exist.
+                # TypeError: an intermediate field is a dict (or other
+                # non-dataclass), so anything nested under it is free-form and
+                # cannot be a dataclass field.
+                if _under_dict_field(options, keys[:-1]):
+                    continue
                 yield ".".join(keystr.split(".")[:-1])
                 continue
             if dataclasses.is_dataclass(outer_option):
@@ -581,8 +625,12 @@ class ConfSource(Source):
                 except KeyError:
                     yield keystr
                     continue
+                continue
             if get_target_raw_type(outer_option) is dict:
                 continue
+            # Neither a dataclass field nor a dict: the final key cannot be a
+            # valid nested option (e.g. ``cmake.args.extra``).
+            yield keystr
 
     def all_option_names(self, target: type[Any]) -> Iterator[str]:
         for names in _nested_dataclass_to_names(target):
@@ -666,10 +714,11 @@ class TOMLSource(Source):
                 msg = f"Expected {target}, got {type(item).__name__}"
                 raise TypeError(msg)
             if annotations == ("EnvVar",):
+                resolved = ((k, _dict_with_envvar(v)) for k, v in item.items())
                 return {
-                    k: cls.convert(_dict_with_envvar(v), get_inner_type(target))
-                    for k, v in item.items()
-                    if _dict_with_envvar(v) is not None
+                    k: cls.convert(rv, get_inner_type(target))
+                    for k, rv in resolved
+                    if rv is not None
                 }
             return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if raw_target is Any:
@@ -685,6 +734,8 @@ class TOMLSource(Source):
                 if isinstance(item, list):
                     return [cls.convert(i, get_inner_type(args[list])) for i in item]
                 return item
+            msg = f"Expected {target}, got {type(item).__name__}"
+            raise TypeError(msg)
         if raw_target is Literal:
             if item not in get_args(process_union(target)):
                 msg = f"{item!r} not in {get_args(process_union(target))!r}"
