@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,7 @@ from packaging.version import Version
 
 from scikit_build_core.program_search import (
     best_program,
+    get_cmake_program,
     get_cmake_programs,
     get_ninja_programs,
 )
@@ -116,3 +118,29 @@ def test_get_cmake_programs_malformed(monkeypatch, fp, caplog):
 
     best_3_20 = best_program(programs, version=SpecifierSet(">=3.20"))
     assert best_3_20 is None
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [
+        subprocess.TimeoutExpired(["cmake"], 1),
+        PermissionError("nope"),
+    ],
+)
+def test_get_cmake_program_fallback_exception(monkeypatch, fp, caplog, exc):
+    # If `cmake -E capabilities` fails, the `--version` fallback runs inside the
+    # except handler. A TimeoutExpired/PermissionError raised there must be
+    # handled (yielding Program(path, None)), not propagate out and abort search.
+    caplog.set_level(logging.WARNING)
+    monkeypatch.setattr("shutil.which", lambda x: x)
+    cmake_path = Path("cmake")
+
+    def raises(_process):
+        raise exc
+
+    fp.register([cmake_path, "-E", "capabilities"], returncode=1)
+    fp.register([cmake_path, "--version"], callback=raises)
+
+    program = get_cmake_program(cmake_path)
+    assert program.path == cmake_path
+    assert program.version is None
