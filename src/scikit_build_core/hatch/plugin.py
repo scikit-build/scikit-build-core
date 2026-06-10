@@ -23,7 +23,12 @@ from ..build._editable import (
 )
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
-from ..builder.builder import Builder, archs_to_tags, get_archs
+from ..builder.builder import (
+    Builder,
+    archs_to_tags,
+    get_archs,
+    get_cmake_args_from_settings,
+)
 from ..builder.get_requires import GetRequires
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
@@ -166,7 +171,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         wheel_dir = self.__tmp_dir / "wheel"
 
         tags = WheelTag.compute_best(
-            archs_to_tags(get_archs(os.environ)),
+            archs_to_tags(
+                get_archs(
+                    os.environ, get_cmake_args_from_settings(settings, os.environ)
+                )
+            ),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
             build_tag=settings.wheel.build_tag,

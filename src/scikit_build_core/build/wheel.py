@@ -18,7 +18,12 @@ from .._compat import tomllib
 from .._compat.typing import assert_never
 from .._logging import LEVEL_VALUE, logger, rich_error, rich_print
 from .._variants import get_wheel_variant
-from ..builder.builder import Builder, archs_to_tags, get_archs
+from ..builder.builder import (
+    Builder,
+    archs_to_tags,
+    get_archs,
+    get_cmake_args_from_settings,
+)
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
@@ -235,7 +240,11 @@ def _build_wheel_impl_impl(
         wheel_variant = get_wheel_variant(settings, pyproject, metadata)
 
         tags = WheelTag.compute_best(
-            archs_to_tags(get_archs(os.environ)),
+            archs_to_tags(
+                get_archs(
+                    os.environ, get_cmake_args_from_settings(settings, os.environ)
+                )
+            ),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
             root_is_purelib=targetlib == "purelib",
