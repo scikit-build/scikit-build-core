@@ -14,6 +14,7 @@ from .. import __version__
 from .._compat import tomllib
 from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
+from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
 from ..utils.typing import get_target_raw_type
 from .auto_cmake_version import find_min_cmake_version
@@ -371,6 +372,12 @@ class SettingsReader:
                 rich_warning(
                     "CMakeLists.txt not found when looking for minimum CMake version. "
                     "Report this or (and) set manually to avoid this warning. Using 3.15 as a fall-back."
+                )
+            except ParseError:
+                new_min_cmake = None
+                rich_warning(
+                    "CMakeLists.txt could not be parsed when looking for minimum "
+                    "CMake version. Report this or (and) set manually to avoid this warning."
                 )
 
             if new_min_cmake is None:

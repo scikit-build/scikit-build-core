@@ -22,7 +22,7 @@ def dynamic_metadata(
     settings: Mapping[str, str | list[str] | dict[str, str] | dict[str, list[str]]],
     project: Mapping[str, Any],
 ) -> str | list[str] | dict[str, str] | dict[str, list[str]]:
-    if settings.keys() > KEYS:
+    if settings.keys() - KEYS:
         msg = f"Only {KEYS} settings allowed by this plugin"
         raise RuntimeError(msg)
 

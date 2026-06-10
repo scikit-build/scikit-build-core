@@ -17,6 +17,7 @@ from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.index import Index
+from .model.toolchains import Toolchains
 
 __all__ = ["load_reply_dir"]
 
@@ -55,7 +56,7 @@ class Converter:
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles}
+            target in {CodeModel, Target, Cache, CMakeFiles, Toolchains}
             and "jsonFile" in data
             and data["jsonFile"] is not None
         ):
@@ -124,7 +125,7 @@ class Converter:
             raise last_err
 
         origin = get_origin(target)
-        if origin is not None and origin is list:
+        if origin is list:
             return [self._convert_any(i, get_args(target)[0]) for i in item]
 
         return target(item)

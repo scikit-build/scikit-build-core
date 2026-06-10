@@ -3,8 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from scikit_build_core.ast.ast import parse
+from scikit_build_core.ast.ast import ParseError, parse
 from scikit_build_core.ast.tokenizer import tokenize
+from scikit_build_core.settings.auto_cmake_version import find_min_cmake_version
 
 DIR = Path(__file__).parent.absolute()
 
@@ -136,3 +137,34 @@ def test_cmake_ast_parse_long():
     )
     for _ in parse(tokenize(txt)):
         pass
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "# why not\n",
+        "#[[ bracket comment ]]\n",
+    ],
+)
+def test_find_min_cmake_version_with_inner_comment(comment: str) -> None:
+    txt = f"cmake_minimum_required(VERSION 3.15 {comment})\n"
+    assert find_min_cmake_version(txt) == "3.15"
+
+
+def test_find_min_cmake_version_with_leading_inner_comment() -> None:
+    # A bracket comment swallows leading whitespace; ensure the version token
+    # stays separated from the surrounding arguments.
+    txt = "cmake_minimum_required(\n  #[[ note ]]\n  VERSION 3.20)\n"
+    assert find_min_cmake_version(txt) == "3.20"
+
+
+def test_unterminated_block_raises_parse_error() -> None:
+    # A file ending mid-block must raise a catchable ParseError, not a bare
+    # IndexError.
+    with pytest.raises(ParseError):
+        list(parse(tokenize("if(x)\n")))
+
+
+def test_missing_open_paren_raises_parse_error() -> None:
+    with pytest.raises(ParseError):
+        list(parse(tokenize("cmake_minimum_required VERSION 3.15\n")))

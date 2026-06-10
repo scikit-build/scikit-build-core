@@ -824,6 +824,40 @@ def test_skbuild_settings_auto_cmake_warning(
     ]
 
 
+def test_skbuild_settings_auto_cmake_unparseable(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+):
+    # A CMakeLists.txt the parser chokes on must fall through to the graceful
+    # warning path with a 3.15 fall-back, not raise an opaque traceback.
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
+    scikit_build_core._logging.rich_warning.cache_clear()
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.10"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    cmakelists_txt = tmp_path / "CMakeLists.txt"
+    # Unterminated if-block: the parser raises ParseError.
+    cmakelists_txt.write_text("if(TRUE)\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+
+    assert settings_reader.settings.cmake.version == SpecifierSet(">=3.15")
+
+    ex = capsys.readouterr().err
+    ex = re.sub(r"\x1b(\[.*?[@-~]|\].*?(\x07|\x1b\\))", "", ex)
+    assert "could not be parsed" in ex
+
+
 def test_skbuild_settings_cmake_define_list():
     pyproject_toml = (
         Path(__file__).parent / "packages" / "cmake_defines" / "pyproject.toml"
