@@ -56,3 +56,29 @@ def test_script_dir(tmp_path: Path) -> None:
         script_7.read_text(encoding="utf-8")
         == "#!/usr/bin/env other\n\nprint('hello world')"
     )
+
+
+def test_script_dir_with_subdirectory(tmp_path: Path) -> None:
+    """
+    A subdirectory installed into the scripts dir must be skipped, not opened
+    (which would raise IsADirectoryError / PermissionError on Windows).
+    """
+    script_dir = tmp_path / "scripts"
+    script_dir.mkdir()
+
+    script_1 = script_dir / "script1"
+    script_1.write_text("#!/usr/bin/env python3\n\nprint('hello world')")
+
+    nested = script_dir / "nested"
+    nested.mkdir()
+    nested_script = nested / "script2"
+    nested_script.write_text("#!/usr/bin/env python3\n\nprint('nested')")
+
+    # Must not raise on the subdirectory.
+    process_script_dir(script_dir)
+
+    assert script_1.read_text(encoding="utf-8") == "#!python\n\nprint('hello world')"
+    # Nested files are not rewritten by this function (packaging handles them).
+    assert nested_script.read_text(encoding="utf-8") == (
+        "#!/usr/bin/env python3\n\nprint('nested')"
+    )

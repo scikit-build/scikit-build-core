@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -547,6 +548,58 @@ def test_empty_directory(
 
     result = list(each_unignored_file(Path(), exclude=["*.py"], mode=mode))
     assert result == []
+
+
+def test_consecutive_excluded_dirs_not_descended(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Two consecutive excluded sibling directories must both be pruned from the
+    os.walk traversal (mutating the dirs list while iterating it used to skip
+    the second one, descending into the excluded tree).
+    """
+    monkeypatch.chdir(tmp_path)
+
+    Path("keep.txt").write_text("content")
+    for name in ("excluded_a", "excluded_b"):
+        deep = Path(name) / "deep"
+        deep.mkdir(parents=True)
+        (deep / "inner.txt").write_text("content")
+
+    # Track which directories the main (followlinks) traversal descends into.
+    # The unrelated nested-.gitignore discovery walk is not followlinks, so it
+    # is ignored here.
+    descended: list[str] = []
+    real_walk = os.walk
+
+    def tracking_walk(
+        top: str, *args: object, **kwargs: object
+    ) -> Generator[tuple[str, list[str], list[str]], None, None]:
+        track = bool(kwargs.get("followlinks"))
+        for dirstr, dirs, filenames in real_walk(top, *args, **kwargs):  # type: ignore[arg-type]
+            if track:
+                descended.append(dirstr)
+            yield dirstr, dirs, filenames
+
+    monkeypatch.setattr(os, "walk", tracking_walk)
+
+    result = set(
+        each_unignored_file(
+            Path(),
+            exclude=["excluded_a", "excluded_b"],
+            mode="default",
+        )
+    )
+
+    assert result == {Path("keep.txt")}
+
+    # Neither excluded directory should have been descended into. With the
+    # mutate-while-iterating bug, the second sibling (excluded_b) was skipped
+    # by the removal loop and therefore still walked.
+    descended_paths = {Path(d) for d in descended}
+    assert Path("excluded_a") not in descended_paths
+    assert Path("excluded_b") not in descended_paths
 
 
 def test_nonexistent_patterns(
