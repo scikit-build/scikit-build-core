@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -186,6 +187,78 @@ def test_install_multiple_packages():
     install(*pkg_a, None)
     install(*pkg_b, None)
     assert count_finders() == 2
+
+
+def _make_finder(tmp_path: Path, *, verbose: bool) -> ScikitBuildRedirectingFinder:
+    return ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={},
+        path=str(tmp_path),
+        rebuild=True,
+        verbose=verbose,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path),
+        install_dir="",
+    )
+
+
+def test_rebuild_failure_surfaces_stdout_when_not_verbose(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    """Regression: a failed non-verbose build captured stdout but never printed it.
+
+    The error branch used ``and verbose`` (verbose already streams live), so the
+    captured stdout from the failing build (e.g. MSBuild writes to stdout) was
+    silently dropped. It should print when *not* verbose.
+    """
+
+    def fake_run(
+        command: list[str], **kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        assert kwargs["stdout"] == subprocess.PIPE
+        return subprocess.CompletedProcess(
+            command, returncode=1, stdout="boom build error", stderr=""
+        )
+
+    monkeypatch.setattr(
+        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
+    )
+
+    finder = _make_finder(tmp_path, verbose=False)
+    with pytest.raises(subprocess.CalledProcessError):
+        finder.rebuild()
+
+    captured = capsys.readouterr()
+    assert "boom build error" in captured.err
+    # Must not print the literal "None" (the old verbose branch did this).
+    assert "ERROR: None" not in captured.err
+
+
+def test_rebuild_success_runs_build_and_install(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        **kwargs: object,  # noqa: ARG001
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(list(command))
+        return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
+    )
+
+    finder = _make_finder(tmp_path, verbose=False)
+    finder.rebuild()
+
+    assert calls[0][:2] == ["cmake", "--build"]
+    assert calls[1][:2] == ["cmake", "--install"]
 
 
 def test_mapping_to_modules_prefers_py():

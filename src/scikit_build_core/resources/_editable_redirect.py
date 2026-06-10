@@ -44,9 +44,10 @@ class FileLockIfUnix:
 
         while True:
             os.makedirs(os.path.dirname(self.lock_file), exist_ok=True)
-            open_flags = os.O_RDWR | os.O_TRUNC
-            if not os.path.exists(self.lock_file):
-                open_flags |= os.O_CREAT
+            # O_CREAT without O_EXCL is a no-op on an existing file, so always
+            # request it; checking os.path.exists() first only adds a TOCTOU race
+            # (the file could be removed between the check and the open).
+            open_flags = os.O_RDWR | os.O_TRUNC | os.O_CREAT
 
             fd = os.open(self.lock_file, open_flags, 0o644)
             with contextlib.suppress(PermissionError):  # Lock is not owned by this UID
@@ -382,27 +383,31 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         if verbose:
             print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
 
-        lock = FileLockIfUnix(os.path.join(self.path, "editable_rebuild.lock"))
-
-        try:
-            lock.acquire()
-
+        def run_checked(command: list[str]) -> None:
             result = subprocess.run(
-                ["cmake", "--build", ".", *self.build_options],
+                command,
                 cwd=self.path,
                 stdout=sys.stderr if verbose else subprocess.PIPE,
                 env=env,
                 check=False,
                 text=True,
             )
-            if result.returncode and verbose:
+            # When verbose, output was already streamed live to stderr. When not
+            # verbose, stdout was captured, so surface it here so build errors
+            # (e.g. from MSBuild, which writes to stdout) are not lost.
+            if result.returncode and not verbose:
                 print(  # noqa: T201
                     f"ERROR: {result.stdout}",
                     file=sys.stderr,
                 )
             result.check_returncode()
 
-            result = subprocess.run(
+        lock = FileLockIfUnix(os.path.join(self.path, "editable_rebuild.lock"))
+
+        try:
+            lock.acquire()
+            run_checked(["cmake", "--build", ".", *self.build_options])
+            run_checked(
                 [
                     "cmake",
                     "--install",
@@ -410,19 +415,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                     "--prefix",
                     self.install_dir,
                     *self.install_options,
-                ],
-                cwd=self.path,
-                stdout=sys.stderr if verbose else subprocess.PIPE,
-                env=env,
-                check=False,
-                text=True,
+                ]
             )
-            if result.returncode and verbose:
-                print(  # noqa: T201
-                    f"ERROR: {result.stdout}",
-                    file=sys.stderr,
-                )
-            result.check_returncode()
         finally:
             lock.release()
 
