@@ -15,6 +15,7 @@ from .._compat import tomllib
 from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..errors import CMakeConfigError
+from ..utils.typing import get_target_raw_type
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
@@ -164,9 +165,9 @@ def _validate_overrides(
         # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
         if field.metadata.get("override_only", False):
-            # "metadata" is the one dict-valued override-only field; has_item
-            # needs to know to use dict-presence semantics for it.
-            is_dict = field.name == "metadata"
+            # has_item needs dict-presence semantics for dict-valued fields,
+            # since some sources represent dict entries as nested keys.
+            is_dict = get_target_raw_type(field.type) is dict
             # override-only fields may be set dynamically via env vars or
             # config-settings; only static pyproject.toml values are forbidden.
             if any(
@@ -283,7 +284,11 @@ class SettingsReader:
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
-            process_overrides(extra_skb, state=state, env=env, retry=retry)
+            extra_matched, extra_overridden = process_overrides(
+                extra_skb, state=state, env=env, retry=retry
+            )
+            self.overrides |= extra_matched
+            self.overridden_items.update(extra_overridden)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
 
         prefixed = {

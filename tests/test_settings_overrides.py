@@ -687,6 +687,69 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.define == {"a": "A", "b": "B", "c": "C"}
 
 
+def test_skbuild_overrides_inherit_with_scalar_key(tmp_path: Path):
+    """An override mixing inherit.<table>.<key> with a top-level scalar key
+    must not crash (previously asserted the whole inherit table was empty)."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            cmake.args = ["a", "b"]
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            inherit.cmake.args = "append"
+            build-dir = "mybuild"
+            cmake.args = ["c", "d"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, state="wheel")
+    settings = settings_reader.settings
+    assert settings.cmake.args == ["a", "b", "c", "d"]
+    assert settings.build_dir == "mybuild"
+
+
+def test_skbuild_overrides_in_extra_settings(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    """An override-only field set via an [[overrides]] block in extra_settings
+    must validate just like the equivalent override in pyproject.toml (#1261)."""
+    caplog.set_level(logging.WARNING)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            strict-config = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    extra_settings = {
+        "overrides": [
+            {
+                "if": {"state": "wheel"},
+                "wheel": {"tags": ["cp312-abi3-win_amd64"]},
+            }
+        ]
+    }
+
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml,
+        state="wheel",
+        extra_settings=extra_settings,
+    )
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.wheel.tags == ["cp312-abi3-win_amd64"]
+    assert not [r for r in caplog.records if "hard-coded" in str(r.msg)]
+
+
 @pytest.mark.parametrize("from_sdist", [True, False])
 def test_skbuild_overrides_from_sdist(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, from_sdist: bool
