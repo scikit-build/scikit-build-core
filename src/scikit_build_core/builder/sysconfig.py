@@ -88,6 +88,14 @@ def _windows_lib_names(*, abi3: bool, abi3t: bool) -> list[str]:
     return names
 
 
+def _is_dir(path: Path) -> bool:
+    """``Path.is_dir()`` that treats a permission-denied probe as missing."""
+    try:
+        return path.is_dir()
+    except PermissionError:
+        return False
+
+
 def get_python_library(
     env: Mapping[str, str], *, abi3: bool = False, abi3t: bool = False
 ) -> Path | None:
@@ -95,12 +103,11 @@ def get_python_library(
     Locate the Python library to hand to CMake's FindPython. Mirrors CMake's
     approach of constructing the library name and searching a known directory
     layout under the install prefix, rather than relying on POSIX-only Makefile
-    config vars (which are ``None`` on Windows). The result is always
+    config vars (which are ``None`` on Windows). Outside the cross-compile
+    branch (which trusts ``DIST_EXTRA_CONFIG``), the result is
     existence-validated; ``None`` is returned when no real file is found (the
     common, safe case on POSIX, where FindPython resolves the library itself).
     """
-    log_func = logger.warning if sys.platform.startswith("win") else logger.debug
-
     # When cross-compiling, check DIST_EXTRA_CONFIG first. The cross target is
     # described entirely by the config file, so this must not consult the host
     # interpreter's GIL/debug state via _windows_lib_names.
@@ -115,28 +122,23 @@ def get_python_library(
             suffix = "t" if abi3t else ""
             return Path(result) / f"python3{minor}{suffix}.lib"
 
+    names: list[str] = []
+    libdirs: list[Path] = []
+
     # Windows: construct pythonXY[t][_d].lib (or the stable-ABI python3[t].lib)
     # and probe the base install's libs/ directory. base_exec_prefix is used,
     # not prefix/exec_prefix, because venvs lack a libs/ dir but the base
-    # install (and conda env roots) have it.
+    # install (and conda env roots) have it. MinGW/MSYS2 Pythons also report
+    # "win32" but ship a POSIX-style libpython, so the config-var search below
+    # runs as a fallback rather than stopping here.
     if sys.platform.startswith("win"):
+        names += _windows_lib_names(abi3=abi3, abi3t=abi3t)
         root = Path(sys.base_exec_prefix)
-        names = _windows_lib_names(abi3=abi3, abi3t=abi3t)
-        for libdir in (root / "libs", root / "lib", root):
-            for name in names:
-                libpath = libdir / name
-                try:
-                    is_file = libpath.is_file()
-                except PermissionError:
-                    continue
-                if is_file:
-                    return libpath
-        log_func("Can't find a Python library; tried {} under {}", names, root)
-        return None
+        libdirs += [d for d in (root / "libs", root / "lib") if _is_dir(d)]
 
-    # POSIX / macOS: use the Makefile config vars, restructured into a
-    # name x directory search. Existence-gated, so cases that return None today
-    # still return None.
+    # POSIX / macOS / MinGW: use the Makefile config vars (None on Windows
+    # CPython), restructured into a name x directory search. Existence-gated,
+    # so cases that returned None before still return None.
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
     librarystr = sysconfig.get_config_var("LIBRARY")
     if abi3 or abi3t:
@@ -151,7 +153,17 @@ def get_python_library(
         if librarystr is not None:
             librarystr = librarystr.replace(replacement, target)
 
-    names: list[str] = [str(n) for n in (ldlibrarystr, librarystr) if n]
+    # A static archive is only a valid hint if the interpreter itself is a
+    # static build (LDLIBRARY is the archive). Otherwise, pointing FindPython
+    # at e.g. LIBPL's libpythonX.Y.a (common for python-build-standalone)
+    # would be worse than no hint. MinGW's import library (.dll.a) passes
+    # because its LDLIBRARY ends in .a as well.
+    static_ok = bool(ldlibrarystr) and str(ldlibrarystr).endswith(".a")
+    names += [
+        str(n)
+        for n in (ldlibrarystr, librarystr)
+        if n and (static_ok or not str(n).endswith(".a"))
+    ]
 
     libdirstr = sysconfig.get_config_var("LIBDIR")
     libplstr = sysconfig.get_config_var("LIBPL")
@@ -159,14 +171,6 @@ def get_python_library(
     multiarch: str | None = sysconfig.get_config_var("MULTIARCH")
     masd: str | None = sysconfig.get_config_var("multiarchsubdir")
 
-    def _is_dir(path: Path) -> bool:
-        """``Path.is_dir()`` that treats a permission-denied probe as missing."""
-        try:
-            return path.is_dir()
-        except PermissionError:
-            return False
-
-    libdirs: list[Path] = []
     if libdirstr:
         libdir = Path(libdirstr)
         if _is_dir(libdir):
@@ -190,15 +194,17 @@ def get_python_library(
     for libdir in libdirs:
         for name in names:
             libpath = libdir / name
-            if Path(os.path.expandvars(libpath)).is_file():
-                return libpath
+            try:
+                if Path(os.path.expandvars(libpath)).is_file():
+                    return libpath
+            except PermissionError:
+                continue
 
+    log_func = logger.warning if sys.platform.startswith("win") else logger.debug
     log_func(
-        "Can't find a Python library, got libdir={}, names={}, multiarch={}, masd={}",
-        libdirstr,
+        "Can't find a Python library; tried names={} in dirs={}",
         names,
-        multiarch,
-        masd,
+        [str(d) for d in libdirs],
     )
     return None
 

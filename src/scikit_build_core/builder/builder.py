@@ -283,9 +283,10 @@ class Builder:
                 cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.base_exec_prefix)
                 cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
                 cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
-                # On Windows the library is constructed and existence-checked, so
-                # this is reliable. On POSIX it can break FindPython (and the
-                # locator returns None there anyway), so it stays Windows-only.
+                # On Windows the library is constructed and existence-checked,
+                # so this is reliable. On POSIX a library hint can break
+                # FindPython (which resolves it fine on its own), so this
+                # stays Windows-only.
                 if python_library and sysconfig.get_platform().startswith("win"):
                     cache_config[f"{prefix}_LIBRARY"] = python_library
                 if python_sabi_library and sysconfig.get_platform().startswith("win"):

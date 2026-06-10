@@ -165,6 +165,40 @@ def test_windows_lib_names(monkeypatch, variant, debug, free_threaded):
     assert names == expected
 
 
+@pytest.mark.parametrize("static_interp", [False, True])
+def test_get_python_library_static_hint(monkeypatch, tmp_path, static_interp):
+    # A static archive is only a valid hint when the interpreter itself is a
+    # static build (LDLIBRARY is the archive); a shared interpreter with only
+    # a .a on disk must return None.
+    libdir = tmp_path / "lib"
+    libdir.mkdir()
+    static_lib = libdir / "libpython3.99.a"
+    static_lib.touch()
+
+    overrides = {
+        "LDLIBRARY": "libpython3.99.a" if static_interp else "libpython3.99.so",
+        "LIBRARY": "libpython3.99.a",
+        "LIBDIR": str(libdir),
+        "LIBPL": None,
+        "PYTHONFRAMEWORKPREFIX": None,
+        "MULTIARCH": None,
+        "multiarchsubdir": None,
+    }
+    real = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda name: overrides[name] if name in overrides else real(name),
+    )
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    lib = get_python_library({})
+    if static_interp:
+        assert lib == static_lib
+    else:
+        assert lib is None
+
+
 @pytest.mark.skipif(not sysconfig.get_platform().startswith("win"), reason="MSVC only")
 def test_get_python_library_xcompile(tmp_path):
     config_path = tmp_path / "tmp.cfg"
