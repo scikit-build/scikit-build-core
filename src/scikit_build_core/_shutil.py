@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import stat
 import subprocess
 from typing import TYPE_CHECKING, ClassVar
 
@@ -84,17 +83,3 @@ class Run:
         if k in self._prev_env and k not in self.env:
             return "-"
         return " "
-
-
-def _fix_all_permissions(directory: str) -> None:
-    """
-    Makes sure the write permission is set. Only run this on Windows.
-    """
-    with os.scandir(directory) as it:
-        for entry in it:
-            if entry.is_dir():
-                _fix_all_permissions(entry.path)
-                continue
-            mode = stat.S_IMODE(entry.stat().st_mode)
-            if not mode & stat.S_IWRITE:
-                os.chmod(entry.path, mode | stat.S_IWRITE)  # noqa: PTH101

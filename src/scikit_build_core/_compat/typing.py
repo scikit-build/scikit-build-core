@@ -8,11 +8,6 @@ if sys.version_info < (3, 9):
 else:
     from typing import Annotated, get_args, get_origin
 
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeAlias
-else:
-    from typing import TypeAlias
-
 if sys.version_info < (3, 11):
     if typing.TYPE_CHECKING:
         from typing_extensions import Self, assert_never
@@ -43,7 +38,6 @@ else:
 __all__ = [
     "Annotated",
     "Self",
-    "TypeAlias",
     "TypeVar",
     "assert_never",
     "get_args",
