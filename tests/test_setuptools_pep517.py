@@ -461,6 +461,43 @@ def test_manifest_hook_must_be_callable():
         )
 
 
+def test_validate_settings_raises_setup_error():
+    # Must use a real exception (not bare assert) so it survives python -O.
+    settings = build_cmake._load_settings()
+    settings.wheel.py_api = "cp39"
+    with pytest.raises(SetupError, match=r"wheel\.py_api is not supported"):
+        build_cmake._validate_settings(settings)
+
+
+def test_wrapper_setup_raises_setup_error():
+    with pytest.raises(SetupError, match="cmake_with_sdist not supported"):
+        wrapper.setup(cmake_with_sdist=True)
+    with pytest.raises(SetupError, match="cmake_install_target not supported"):
+        wrapper.setup(cmake_install_target="custom")
+
+
+def test_load_settings_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            wheel.cmake = false
+
+            [[tool.scikit-build.overrides]]
+            if.state = "editable"
+            wheel.cmake = true
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    # Default state is sdist, so the editable override should not apply.
+    assert build_cmake._load_settings().wheel.cmake is False
+    assert build_cmake._load_settings(state="wheel").wheel.cmake is False
+    assert build_cmake._load_settings(state="editable").wheel.cmake is True
+
+
 def test_wrapper_forwards_manifest_hook(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
