@@ -12,6 +12,7 @@ from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
 from .model.index import Index, Reply
+from .model.toolchains import Toolchains
 
 T = TypeVar("T")
 
@@ -47,6 +48,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Target, from_json_file)
     converter.register_structure_hook(Cache, from_json_file)
     converter.register_structure_hook(CMakeFiles, from_json_file)
+    converter.register_structure_hook(Toolchains, from_json_file)
     return converter
 
 
