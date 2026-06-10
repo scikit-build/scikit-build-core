@@ -44,6 +44,24 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
 
 
+class _AnySpecDummy:
+    """A dummy value whose ``__format__`` accepts any spec and returns ``"*"``.
+
+    Used for dummy-mode formatting of keys that take a format spec (e.g.
+    ``{root:uri}``), so that ``"{root:uri}".format(...)`` does not raise.
+    """
+
+    def __format__(self, fmt: str) -> str:
+        return "*"
+
+    def __str__(self) -> str:
+        return "*"
+
+
+# Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``).
+_SPEC_TAKING_KEYS = ("root",)
+
+
 @typing.overload
 def pyproject_format(
     *,
@@ -71,7 +89,15 @@ def pyproject_format(
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
     if dummy:
         # Return a dict with all the known keys but with values replaced with dummy values
-        return dict.fromkeys(PyprojectFormatter.__annotations__, "*")
+        res_dummy: dict[str, object] = dict.fromkeys(
+            PyprojectFormatter.__annotations__, "*"
+        )
+        # Keys that accept a format spec (e.g. ``{root:uri}``) must use a value
+        # whose ``__format__`` accepts any spec, otherwise dummy formatting of a
+        # build-dir like ``{root:uri}`` raises ValueError.
+        for key in _SPEC_TAKING_KEYS:
+            res_dummy[key] = _AnySpecDummy()
+        return typing.cast("dict[str, str]", res_dummy)
 
     assert settings is not None
     # First set all known values
@@ -99,6 +125,9 @@ class RootPathResolver:
 
     def __post_init__(self) -> None:
         self.path = self.path.resolve()
+
+    def __str__(self) -> str:
+        return str(self.path)
 
     def __format__(self, fmt: str) -> str:
         command, _, rest = fmt.partition(":")
