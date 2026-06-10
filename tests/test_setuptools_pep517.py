@@ -461,7 +461,13 @@ def test_manifest_hook_must_be_callable():
         )
 
 
-def test_wrapper_forwards_manifest_hook(monkeypatch: pytest.MonkeyPatch):
+def test_wrapper_forwards_manifest_hook(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    # Without a CMakeLists.txt, the wrapper skips CMake entirely
+    (tmp_path / "CMakeLists.txt").touch()
+    monkeypatch.chdir(tmp_path)
+
     dist = setuptools.Distribution()
 
     def passthrough_hook(cmake_manifest: list[str]) -> list[str]:
