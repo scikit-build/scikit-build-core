@@ -32,7 +32,7 @@ def dynamic_metadata(
     settings: Mapping[str, Any],
 ) -> str:
     # Input validation
-    if settings.keys() > KEYS:
+    if settings.keys() - KEYS:
         msg = f"Only {KEYS} settings allowed by this plugin"
         raise RuntimeError(msg)
     if "input" not in settings:

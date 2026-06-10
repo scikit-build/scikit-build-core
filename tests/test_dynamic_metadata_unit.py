@@ -4,6 +4,10 @@ import pytest
 
 from scikit_build_core.builder._load_provider import process_dynamic_metadata
 from scikit_build_core.metadata import _process_dynamic_metadata
+from scikit_build_core.metadata.regex import dynamic_metadata as regex_dynamic_metadata
+from scikit_build_core.metadata.template import (
+    dynamic_metadata as template_dynamic_metadata,
+)
 
 
 def test_template_basic() -> None:
@@ -103,3 +107,34 @@ def test_regex() -> None:
 def test_actions(field: str, input_: Any, output: Any) -> None:
     result = _process_dynamic_metadata(field, lambda x: x.format(sub=42), input_)
     assert output == result
+
+
+def test_regex_rejects_bogus_key() -> None:
+    # A typo'd key (here "removes") must raise, not be silently ignored.
+    with pytest.raises(RuntimeError, match="settings allowed"):
+        regex_dynamic_metadata(
+            "version",
+            {"input": "pyproject.toml", "removes": "x"},
+        )
+
+
+def test_template_rejects_bogus_key() -> None:
+    with pytest.raises(RuntimeError, match="settings allowed"):
+        template_dynamic_metadata(
+            "version",
+            {"result": "{project[version]}", "removes": "x"},
+            {"version": "0.1.0"},
+        )
+
+
+def test_list_dict_field_rejects_non_dict() -> None:
+    # ``authors``/``maintainers`` given a list of strings must raise a
+    # RuntimeError (previously raised AttributeError from .items()).
+    with pytest.raises(RuntimeError, match="list of dictionaries of strings"):
+        _process_dynamic_metadata("authors", lambda x: x, ["not-a-dict"])
+
+
+def test_optional_dependencies_rejects_non_str_elements() -> None:
+    bad: Any = {"dev": [42]}
+    with pytest.raises(RuntimeError, match="lists of strings"):
+        _process_dynamic_metadata("optional-dependencies", lambda x: x, bad)

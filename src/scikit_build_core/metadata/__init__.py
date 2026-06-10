@@ -89,11 +89,11 @@ def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: 
         return {action(k): action(v) for k, v in result.items()}  # type: ignore[arg-type, return-value]
     if field in _LIST_DICT_FIELDS:
         if not isinstance(result, list) or not all(
-            isinstance(k, str) and isinstance(v, str)
+            isinstance(d, dict)
+            and all(isinstance(k, str) and isinstance(v, str) for k, v in d.items())  # type: ignore[redundant-expr]
             for d in result
-            for k, v in d.items()  # type: ignore[union-attr]
         ):
-            msg = f"Field {field!r} must be a dictionary of strings"
+            msg = f"Field {field!r} must be a list of dictionaries of strings"
             raise RuntimeError(msg)
         return [{k: action(v) for k, v in d.items()} for d in result]  # type: ignore[union-attr, return-value]
     if field == "entry-points":
@@ -110,9 +110,12 @@ def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: 
         }  # type: ignore[return-value]
     if field == "optional-dependencies":
         if not isinstance(result, dict) or not all(
-            isinstance(v, list) for v in result.values()
+            isinstance(v, list) and all(isinstance(r, str) for r in v)
+            for v in result.values()
         ):
-            msg = "Field 'optional-dependencies' must be a dictionary of lists"
+            msg = (
+                "Field 'optional-dependencies' must be a dictionary of lists of strings"
+            )
             raise RuntimeError(msg)
         return {k: [action(r) for r in v] for k, v in result.items()}  # type: ignore[return-value]
 
