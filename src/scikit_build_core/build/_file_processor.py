@@ -77,7 +77,7 @@ def each_unignored_file(
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
         if mode != "classic":
-            for dname in dirs:
+            for dname in list(dirs):
                 if not match_path(
                     dirpath,
                     dirpath / dname,

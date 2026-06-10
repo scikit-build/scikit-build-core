@@ -64,8 +64,11 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
 
 def _load_scikit_build_settings(
     config_settings: Mapping[str, list[str] | str] | None = None,
+    state: Literal["sdist", "wheel", "editable"] = "sdist",
 ) -> ScikitBuildSettings:
-    return SettingsReader.from_file("pyproject.toml", config_settings).settings
+    return SettingsReader.from_file(
+        "pyproject.toml", config_settings, state=state
+    ).settings
 
 
 @dataclasses.dataclass(frozen=True)
@@ -76,9 +79,11 @@ class GetRequires:
 
     @classmethod
     def from_config_settings(
-        cls, config_settings: Mapping[str, list[str] | str] | None
+        cls,
+        config_settings: Mapping[str, list[str] | str] | None,
+        state: Literal["sdist", "wheel", "editable"] = "sdist",
     ) -> Self:
-        return cls(_load_scikit_build_settings(config_settings))
+        return cls(_load_scikit_build_settings(config_settings, state))
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
