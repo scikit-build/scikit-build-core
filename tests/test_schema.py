@@ -128,3 +128,19 @@ def test_valid_schemas(addition: dict[str, Any]) -> None:
 
     validator = api.Validator()
     validator(example)
+
+
+def test_required_names_normalized() -> None:
+    """Required field names must be dash-normalized like the prop keys when
+    normalize_keys is set, otherwise the schema would be unsatisfiable."""
+    from schema_models import HasUnderscoreRequired
+
+    from scikit_build_core.settings.json_schema import to_json_schema
+
+    schema = to_json_schema(HasUnderscoreRequired, normalize_keys=True)
+    assert schema["required"] == ["required-field"]
+    assert set(schema["required"]) <= set(schema["properties"])
+
+    schema = to_json_schema(HasUnderscoreRequired, normalize_keys=False)
+    assert schema["required"] == ["required_field"]
+    assert set(schema["required"]) <= set(schema["properties"])

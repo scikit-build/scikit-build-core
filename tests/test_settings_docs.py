@@ -28,7 +28,7 @@ def test_skbuild_docs_sphinx() -> None:
     assert (
         textwrap.dedent("""\
     .. confval:: cmake.define
-      :type: ``EnvVar``
+      :type: ``dict[str,CMakeSettingsDefine]``
 
       A table of defines to pass to CMake when configuring the project. Additive.
     """)
@@ -49,7 +49,7 @@ def test_mk_docs() -> None:
     docs = set(mk_docs(ScikitBuildSettings))
 
     dcdoc = next(item for item in docs if item.name == "cmake.define")
-    assert dcdoc.type == "EnvVar"
+    assert dcdoc.type == "dict[str,CMakeSettingsDefine]"
     assert dcdoc.default == "{}"
     assert (
         dcdoc.docs
