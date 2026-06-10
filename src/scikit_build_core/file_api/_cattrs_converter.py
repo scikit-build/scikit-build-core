@@ -38,8 +38,11 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Reply, st_hook)
 
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
-        if with_path["jsonFile"] is None:
-            return converter.structure_attrs_fromdict({}, t)
+        # An error reply (e.g. an object kind unsupported by the running CMake)
+        # has no "jsonFile" to follow; structure the inline dict instead, as the
+        # built-in converter does.
+        if with_path.get("jsonFile") is None:
+            return converter.structure_attrs_fromdict(with_path, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
         return converter.structure_attrs_fromdict(raw, t)
