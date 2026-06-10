@@ -9,6 +9,7 @@ import setuptools
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
+from .._compat.setuptools.errors import SetupError
 from .._compat.typing import TypeVar
 from .build_cmake import (
     WRAPPER_CLASSIC_LAYOUT_COMPAT,
@@ -42,8 +43,12 @@ def setup(
     distclass: type[_DistributionT] = setuptools.Distribution,  # type: ignore[assignment]
     **kw: Any,
 ) -> _DistributionT:
-    assert not cmake_with_sdist, "cmake_with_sdist not supported yet"
-    assert cmake_install_target == "install", "cmake_install_target not supported yet"
+    if cmake_with_sdist:
+        msg = "cmake_with_sdist not supported yet"
+        raise SetupError(msg)
+    if cmake_install_target != "install":
+        msg = "cmake_install_target not supported yet"
+        raise SetupError(msg)
 
     if cmake_languages is not None:
         warnings.warn("cmake_languages no longer has any effect", stacklevel=2)

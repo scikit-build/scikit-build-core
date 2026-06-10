@@ -49,30 +49,32 @@ def __dir__() -> list[str]:
 def _validate_settings(
     settings: ScikitBuildSettings, *, editable_mode: bool = False
 ) -> None:
-    assert not settings.wheel.expand_macos_universal_tags, (
-        "wheel.expand_macos_universal_tags is not supported in setuptools mode"
-    )
-    assert settings.logging.level == "WARNING", (
-        "Logging is not adjustable in setuptools mode yet"
-    )
-    assert not settings.wheel.py_api, (
-        "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
-    )
+    if settings.wheel.expand_macos_universal_tags:
+        msg = "wheel.expand_macos_universal_tags is not supported in setuptools mode"
+        raise SetupError(msg)
+    if settings.logging.level != "WARNING":
+        msg = "Logging is not adjustable in setuptools mode yet"
+        raise SetupError(msg)
+    if settings.wheel.py_api:
+        msg = "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
+        raise SetupError(msg)
     if editable_mode:
-        assert settings.editable.mode == "inplace", (
-            "setuptools editable installs require editable.mode = 'inplace'"
-        )
-        assert not settings.editable.rebuild, (
-            "editable.rebuild is not supported in setuptools mode"
-        )
+        if settings.editable.mode != "inplace":
+            msg = "setuptools editable installs require editable.mode = 'inplace'"
+            raise SetupError(msg)
+        if settings.editable.rebuild:
+            msg = "editable.rebuild is not supported in setuptools mode"
+            raise SetupError(msg)
 
 
-def _load_settings() -> ScikitBuildSettings:
+def _load_settings(
+    state: Literal["sdist", "wheel", "editable"] = "sdist",
+) -> ScikitBuildSettings:
     # setup.py-only projects (common with the classic scikit-build wrapper)
     # don't have a pyproject.toml.
     if not Path("pyproject.toml").is_file():
-        return SettingsReader({}, {}, state="sdist").settings
-    return SettingsReader.from_file("pyproject.toml").settings
+        return SettingsReader({}, {}, state=state).settings
+    return SettingsReader.from_file("pyproject.toml", state=state).settings
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:
@@ -333,8 +335,6 @@ def _excluded_by_package_data(dist: Distribution, package_output: Path) -> bool:
 class BuildCMake(setuptools.Command):
     source_dir: str | None = None
     cmake_args: list[str] | str | None = None
-    cmake_install_dir: str | None = None
-    cmake_install_target: str | None = None
     _editable_install_dir: Path | None
     _installed_files: list[Path]
 
@@ -353,7 +353,6 @@ class BuildCMake(setuptools.Command):
         ("parallel=", "j", "number of parallel build jobs"),
         ("source-dir=", "s", "directory with CMakeLists.txt"),
         ("cmake-args=", "a", "extra arguments for CMake"),
-        ("cmake-install-target=", "", "CMake target to install"),
     ]
 
     def initialize_options(self) -> None:
@@ -365,8 +364,6 @@ class BuildCMake(setuptools.Command):
         self.plat_name = None
         self.source_dir = get_source_dir_from_pyproject_toml()
         self.cmake_args = None
-        self.cmake_install_dir = None
-        self.cmake_install_target = None
         self._editable_install_dir = None
         self._installed_files = []
 
@@ -520,7 +517,9 @@ class BuildCMake(setuptools.Command):
         assert self.plat_name is not None
 
         self.editable_mode = self._get_editable_mode()
-        settings = _load_settings()
+        # run() is always a wheel or editable build; pass the matching state so
+        # overrides (if.state = "wheel"/"editable") are applied correctly.
+        settings = _load_settings(state="editable" if self.editable_mode else "wheel")
         _validate_settings(settings, editable_mode=self.editable_mode)
 
         build_tmp_folder = Path(self.build_temp)
@@ -534,8 +533,10 @@ class BuildCMake(setuptools.Command):
         source_dir = self.source_dir if dist_source_dir is None else dist_source_dir
         assert source_dir is not None, "This should not be reachable"
 
-        configure_args = self.cmake_args or []
-        assert isinstance(configure_args, list)
+        assert self.cmake_args is None or isinstance(self.cmake_args, list)
+        # Copy to avoid mutating self.cmake_args in place (which would
+        # double-append the dist args if run() executes more than once).
+        configure_args = list(self.cmake_args or [])
         dist_cmake_args = getattr(self.distribution, "cmake_args", None)
         configure_args.extend(dist_cmake_args or [])
 
@@ -582,7 +583,7 @@ class BuildCMake(setuptools.Command):
             if use_wrapper_classic_layout_compat
             else install_dir
         )
-        installed_before = _collect_recursive_files(install_dir)
+        installed_before = _collect_recursive_files(cmake_install_prefix)
         defines = {"CMAKE_INSTALL_PREFIX": cmake_install_prefix}
 
         builder.configure(
@@ -607,7 +608,7 @@ class BuildCMake(setuptools.Command):
 
         cmake_manifest = _read_cmake_install_manifests(build_temp, cmake_install_prefix)
         if cmake_manifest is None:
-            installed_after = _collect_recursive_files(install_dir)
+            installed_after = _collect_recursive_files(cmake_install_prefix)
             cmake_manifest = sorted(installed_after - installed_before)
 
         process_manifest = getattr(dist, "cmake_process_manifest_hook", None)
