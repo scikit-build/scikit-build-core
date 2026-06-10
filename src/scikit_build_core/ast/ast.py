@@ -11,11 +11,15 @@ from .tokenizer import Token, TokenType, tokenize
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-__all__ = ["Block", "Node", "parse"]
+__all__ = ["Block", "Node", "ParseError", "parse"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+class ParseError(Exception):
+    """Raised when the CMake source cannot be parsed."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,7 +64,7 @@ def parse(
                 token = next(tokens)
             if token.type != TokenType.OPEN_PAREN:
                 msg = f"Expected open paren after {name!r}, got {token!r}"
-                raise AssertionError(msg)
+                raise ParseError(msg)
             count = 1
             value = ""
             while True:
@@ -71,10 +75,19 @@ def parse(
                     count -= 1
                     if count == 0:
                         break
+                elif token.type in {TokenType.COMMENT, TokenType.BRACKET_COMMENT}:
+                    # Comments are not part of the argument value. A bracket
+                    # comment's regex also swallows any leading whitespace, so
+                    # replace it with a single space to keep tokens separated.
+                    value += " "
+                    continue
                 value += token.value
 
             if name in {"if", "foreach", "while", "macro", "function", "block"}:
                 contents = list(parse(tokens, f"end{name}"))
+                if not contents:
+                    msg = f"Unterminated {name!r} block starting at {start}"
+                    raise ParseError(msg)
                 yield Block(name, value, start, contents[-1].stop, contents)
             else:
                 yield Node(name, value, start, token.stop)
