@@ -143,6 +143,16 @@ def test_builder_macos_arch(monkeypatch, archs):
     assert get_archs({"ARCHFLAGS": archflags}) == archs
 
 
+def test_builder_macos_arch_cmake_system_processor(monkeypatch):
+    # If CMAKE_SYSTEM_PROCESSOR is in the cmake args, ARCHFLAGS is ignored (#207).
+    monkeypatch.setattr(sys, "platform", "darwin")
+    env = {"ARCHFLAGS": "-arch x86_64"}
+    cmake_args = ["-DCMAKE_SYSTEM_PROCESSOR=arm64"]
+    assert get_archs(env, cmake_args) == ["arm64"]
+    # Without the cmake arg, ARCHFLAGS wins.
+    assert get_archs(env) == ["x86_64"]
+
+
 def test_builder_macos_arch_extra(monkeypatch):
     archflags = "-arch arm64 -arch x86_64"
     monkeypatch.setattr(sys, "platform", "darwin")
@@ -533,3 +543,47 @@ def test_generator_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         ),
     )
     assert builder.get_generator() == "Anything"
+
+
+@pytest.mark.parametrize("generator", ["Ninja", "Ninja Multi-Config"])
+def test_set_environment_for_gen_ninja_variants(
+    monkeypatch: pytest.MonkeyPatch, generator: str
+):
+    # Both "Ninja" and "Ninja Multi-Config" must trigger ninja handling: a
+    # CMAKE_MAKE_PROGRAM hint and the actual generator set in CMAKE_GENERATOR.
+    from scikit_build_core.builder import generator as gen_mod
+    from scikit_build_core.program_search import Program
+    from scikit_build_core.settings.skbuild_model import NinjaSettings
+
+    fake_ninja = Program(Path("/usr/bin/ninja"), Version("1.11.0"))
+    monkeypatch.setattr(gen_mod, "get_ninja_programs", lambda: [fake_ninja])
+
+    env: dict[str, str] = {}
+    result = gen_mod.set_environment_for_gen(
+        generator,
+        CMake(Version("3.30"), Path("cmake")),
+        env,
+        NinjaSettings(),
+    )
+    assert result == {"CMAKE_MAKE_PROGRAM": str(fake_ninja.path)}
+    assert env["CMAKE_GENERATOR"] == generator
+
+
+def test_set_environment_for_gen_ninja_multi_config_missing(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    # An explicit Ninja Multi-Config generator with no ninja must raise rather
+    # than silently fall back to make.
+    from scikit_build_core.builder import generator as gen_mod
+    from scikit_build_core.errors import NinjaNotFoundError
+    from scikit_build_core.settings.skbuild_model import NinjaSettings
+
+    monkeypatch.setattr(gen_mod, "get_ninja_programs", list)
+
+    with pytest.raises(NinjaNotFoundError):
+        gen_mod.set_environment_for_gen(
+            "Ninja Multi-Config",
+            CMake(Version("3.30"), Path("cmake")),
+            {},
+            NinjaSettings(),
+        )

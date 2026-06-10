@@ -120,11 +120,11 @@ def set_environment_for_gen(
         if cxx:
             env["CXX"] = cxx
 
-    if (generator or "Ninja") == "Ninja":
+    if "Ninja" in (generator or "Ninja"):
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)
 
         if ninja is not None:
-            env.setdefault("CMAKE_GENERATOR", "Ninja")
+            env.setdefault("CMAKE_GENERATOR", generator or "Ninja")
             logger.debug("CMAKE_GENERATOR: Using ninja: {}", ninja.path)
             return {"CMAKE_MAKE_PROGRAM": str(ninja.path)}
 
