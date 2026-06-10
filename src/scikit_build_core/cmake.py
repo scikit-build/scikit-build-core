@@ -67,7 +67,7 @@ class CMake:
             msg = f"Could not find CMake with version {version}"
             raise CMakeNotFoundError(msg)
         if cmake_program.version is None:
-            msg = "CMake version undetermined @ {program.path}"
+            msg = f"CMake version undetermined @ {cmake_program.path}"
             raise CMakeNotFoundError(msg)
 
         return cls(version=cmake_program.version, cmake_path=cmake_program.path)
@@ -269,7 +269,7 @@ class CMaker:
         _cmake_args = self._compute_cmake_args(defines or {}, toolchain)
         all_args = [*_cmake_args, *cmake_args]
 
-        gen = self.get_generator(*all_args)
+        gen = self.get_generator(*all_args, defines=defines or {})
         if gen:
             self.single_config = gen == "Ninja" or "Makefiles" in gen
 
