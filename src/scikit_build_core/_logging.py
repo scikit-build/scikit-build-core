@@ -119,8 +119,9 @@ def colors() -> bool:
     # Pip reroutes sys.stdout, so FORCE_COLOR is required there
     if os.environ.get("FORCE_COLOR", ""):
         return True
-    # Avoid ValueError: I/O operation on closed file
-    with contextlib.suppress(ValueError):
+    # sys.stdout can be None (e.g. pythonw / embedded interpreters); avoid
+    # AttributeError as well as ValueError: I/O operation on closed file.
+    with contextlib.suppress(ValueError, AttributeError):
         # Assume sys.stderr is similar to sys.stdout
         isatty = sys.stdout.isatty()
         if isatty and not sys.platform.startswith("win"):
