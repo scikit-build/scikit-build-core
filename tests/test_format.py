@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from scikit_build_core.format import RootPathResolver, pyproject_format
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
@@ -51,12 +54,20 @@ def test_dummy_plain_keys() -> None:
     assert "{wheel_tag}".format(**dummy) == "*"
 
 
-def test_dummy_root_spec() -> None:
+@pytest.mark.parametrize(
+    ("spec", "expected"),
+    [
+        ("{root}", "*"),
+        ("{root:uri}", "*"),
+        ("{root:parent:uri}", "*"),
+        ("build/{root:uri}/x", "build/*/x"),
+    ],
+)
+def test_dummy_root_spec(spec: str, expected: str) -> None:
     # Regression: dummy mode mapped root to the plain string "*", so any
     # build-dir containing a spec like {root:uri} raised
     # "ValueError: Invalid format specifier 'uri' for object of type 'str'".
+    # The spec is kept out of a literal .format() call so linters don't try to
+    # validate the custom :uri spec against a plain str.
     dummy = pyproject_format(dummy=True)
-    assert "{root}".format(**dummy) == "*"
-    assert "{root:uri}".format(**dummy) == "*"
-    assert "{root:parent:uri}".format(**dummy) == "*"
-    assert "build/{root:uri}/x".format(**dummy) == "build/*/x"
+    assert spec.format(**dummy) == expected
