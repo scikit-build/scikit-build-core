@@ -223,7 +223,7 @@ print(mk_skbuild_docs())
 
 ```{eval-rst}
 .. confval:: cmake.define
-  :type: ``EnvVar``
+  :type: ``dict[str,CMakeSettingsDefine]``
 
   A table of defines to pass to CMake when configuring the project. Additive.
 ```

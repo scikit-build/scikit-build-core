@@ -93,7 +93,12 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
             field.default_factory is dataclasses.MISSING
             and field.default is dataclasses.MISSING
         ):
-            required.append(field.name)
+            # props keys are dash-normalized below when normalize_keys is set,
+            # so the required names must be normalized the same way to stay
+            # satisfiable.
+            required.append(
+                field.name.replace("_", "-") if normalize_keys else field.name
+            )
 
     if errs:
         msg = f"Failed Conversion to JSON Schema on {dclass.__name__}"

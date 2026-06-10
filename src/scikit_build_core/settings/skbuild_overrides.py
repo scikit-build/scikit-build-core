@@ -458,10 +458,11 @@ def process_overrides(
                         passed_all=passed_all,
                         passed_any=passed_any,
                     )
-                    inherit_override_tmp = inherit_override or "none"
-                    if isinstance(inherit_override_tmp, dict):
-                        assert not inherit_override_tmp
+                    # ``inherit`` is keyed per-table; a non-dict top-level key
+                    # has no nested inherit entry, so any inherit for it must be
+                    # a plain string (e.g. for a list-valued top-level field).
+                    inherit_for_key = inherit_override.get(key, "none")
                     tool_skb[key] = inherit_join(
-                        value, tool_skb.get(key), inherit_override_tmp
+                        value, tool_skb.get(key), inherit_for_key
                     )
     return global_matched, overridden_items

@@ -148,6 +148,71 @@ def test_conf():
     assert settings.literal == "three"
 
 
+def test_conf_union_str_list():
+    # pip/uv/build pass a plain string for ``-Celeven=src/a``; it should be
+    # split like a list, matching EnvSource and the plain-list branch.
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={
+                "zero": "zero",
+                "one": "one",
+                "two": "2",
+                "three": ["three"],
+                "eleven": "src/a",
+            }
+        ),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingChecker)
+    assert settings.eleven == ["src/a"]
+
+
+def test_conf_union_str_list_multiple():
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={
+                "zero": "zero",
+                "one": "one",
+                "two": "2",
+                "three": ["three"],
+                "eleven": "src/a;src/b",
+            }
+        ),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingChecker)
+    assert settings.eleven == ["src/a", "src/b"]
+
+
+def test_conf_union_str_dict():
+    # A plain string with ``=`` should be parsed as a dict, matching EnvSource.
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(
+            settings={
+                "zero": "zero",
+                "one": "one",
+                "two": "2",
+                "three": ["three"],
+                "eleven": "a=one;b=two",
+            }
+        ),
+        TOMLSource(settings={}),
+    )
+    settings = sources.convert_target(SettingChecker)
+    assert settings.eleven == {"a": "one", "b": "two"}
+
+
+def test_conf_dict_wrong_type_raises():
+    # A scalar reaching the dict branch (e.g. ``-Cmetadata.version.provider=x``
+    # where the field is Dict[str, Dict[str, str]]) should raise a clear
+    # TypeError, not an AssertionError (which vanishes under python -O).
+    with pytest.raises(TypeError, match="Expected"):
+        ConfSource.convert("x", Dict[str, Dict[str, str]])
+
+
 def test_toml():
     toml_settings = {
         "zero": "zero",
@@ -475,6 +540,40 @@ def test_missing_opts_conf(prefixes):
     answer = ["missing", "two.missing", "other"]
     answer = [".".join([*prefixes, k]) for k in answer]
     assert list(sources.unrecognized_options(NestedSettingChecker)) == answer
+
+
+def test_unrecognized_conf_under_scalar():
+    # A key nested under a scalar field (``one.extra``) is bogus and must be
+    # reported, not silently accepted.
+    settings = {
+        "one": "one",
+        "one.extra": "x",
+        "two.literal": "two",
+    }
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings=settings),
+        TOMLSource(settings={}),
+    )
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == ["one.extra"]
+
+
+def test_unrecognized_conf_under_dict_of_dict():
+    # Keys nested arbitrarily deep under a dict-typed field (``two.ten`` is
+    # Dict[str, Any]) are free-form and must be accepted (no TypeError, no
+    # spurious report).
+    settings = {
+        "one": "one",
+        "two.literal": "two",
+        "two.ten.foo": "x",
+        "two.ten.foo.bar": "y",
+    }
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings=settings),
+        TOMLSource(settings={}),
+    )
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == []
 
 
 def test_ignore_conf():
