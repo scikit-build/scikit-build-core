@@ -564,7 +564,9 @@ class BuildCMake(setuptools.Command):
 
         # Setuptools requires this be specified if there's a mismatch.
         if sys.platform.startswith("darwin"):
-            arm_only = get_archs(builder.config.env) == ["arm64"]
+            arm_only = get_archs(builder.config.env, builder.get_cmake_args()) == [
+                "arm64"
+            ]
             orig_macos_str = self.plat_name.rsplit("-", 1)[0].split("-", 1)[1]
             orig_macos = normalize_macos_version(orig_macos_str, arm=arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))

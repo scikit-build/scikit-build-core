@@ -171,6 +171,43 @@ def test_cmake_args(
 
 
 @pytest.mark.configure
+def test_cmake_multi_config_generator_via_define(
+    tmp_path: Path,
+    fp,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    # A multi-config generator set via ``cmake.define.CMAKE_GENERATOR`` must be
+    # detected so that single_config is False (no -DCMAKE_BUILD_TYPE, --config
+    # is used for build/install).
+    monkeypatch.delenv("CMAKE_GENERATOR", raising=False)
+    fp.register(
+        [fp.program("cmake"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.15.0"}}',
+    )
+    fp.register(
+        [fp.program("cmake3"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.15.0"}}',
+    )
+
+    config = CMaker(
+        CMake.default_search(),
+        source_dir=DIR / "packages" / "simple_pure",
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+
+    # Register any configure call; we only care about the resulting state.
+    fp.register([fp.program("cmake"), fp.any()])
+    fp.register([fp.program("cmake3"), fp.any()])
+
+    config.configure(defines={"CMAKE_GENERATOR": "Ninja Multi-Config"})
+
+    assert config.single_config is False
+    configure_call = next(c for c in fp.calls if "-E" not in c)
+    assert not any("CMAKE_BUILD_TYPE" in arg for arg in configure_call)
+
+
+@pytest.mark.configure
 def test_cmake_paths(
     generator: str,
     tmp_path: Path,

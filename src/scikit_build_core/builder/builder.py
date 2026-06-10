@@ -31,7 +31,12 @@ if TYPE_CHECKING:
     from ..cmake import CMaker
     from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["Builder", "archs_to_tags", "get_archs"]
+__all__ = [
+    "Builder",
+    "archs_to_tags",
+    "get_archs",
+    "get_cmake_args_from_settings",
+]
 
 DIR = Path(__file__).parent.resolve()
 
@@ -92,6 +97,25 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, No
             yield arg
 
 
+def get_cmake_args_from_settings(
+    settings: ScikitBuildSettings, env: Mapping[str, str]
+) -> list[str]:
+    """
+    Get CMake args from the settings and environment (settings ``cmake.args``
+    plus the filtered ``CMAKE_ARGS`` environment variable).
+    """
+    # Adding CMake arguments set as environment variable
+    # (needed e.g. to build for ARM OSX on conda-forge)
+    env_cmake_args: list[str] = list(
+        filter(None, shlex.split(env.get("CMAKE_ARGS", "")))
+    )
+
+    if env_cmake_args:
+        logger.debug("Env CMAKE_ARGS: {}", env_cmake_args)
+
+    return [*settings.cmake.args, *_filter_env_cmake_args(env_cmake_args)]
+
+
 def _sanitize_path(path: Any) -> list[Path]:
     # This handles classes like:
     # MultiplexedPath from importlib.resources.readers (3.11+)
@@ -113,16 +137,7 @@ class Builder:
         """
         Get CMake args from the settings and environment.
         """
-        # Adding CMake arguments set as environment variable
-        # (needed e.g. to build for ARM OSX on conda-forge)
-        env_cmake_args: list[str] = list(
-            filter(None, shlex.split(self.config.env.get("CMAKE_ARGS", "")))
-        )
-
-        if env_cmake_args:
-            logger.debug("Env CMAKE_ARGS: {}", env_cmake_args)
-
-        return [*self.settings.cmake.args, *_filter_env_cmake_args(env_cmake_args)]
+        return get_cmake_args_from_settings(self.settings, self.config.env)
 
     def get_generator(self, *args: str) -> str | None:
         return self.config.get_generator(
@@ -320,8 +335,9 @@ class Builder:
         self.config.init_cache(cache_config)
 
         if sys.platform.startswith("darwin"):
-            # Cross-compile support for macOS - respect ARCHFLAGS if set
-            archs = get_archs(self.config.env)
+            # Cross-compile support for macOS - respect ARCHFLAGS if set,
+            # unless CMAKE_SYSTEM_PROCESSOR is in the cmake args (conda, #207)
+            archs = get_archs(self.config.env, self.get_cmake_args())
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
 
