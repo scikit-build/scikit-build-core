@@ -100,16 +100,23 @@ jobs:
           - python-version: "3.8"
             runs-on: windows-2022
             cmake-version: "3.24.x"
+          # CMake < 4.2 cannot detect Visual Studio 2026, so rows testing older
+          # CMake versions need the VS 2022 image: windows-latest and
+          # windows-2025 are both migrating to VS 2026 by default
+          # (https://github.com/actions/runner-images/issues/14017).
           - python-version: "3.12"
-            runs-on: windows-latest
+            runs-on: windows-2022
             cmake-version: "3.26.x"
             architecture: x86
           - python-version: "3.14"
-            runs-on: windows-latest
+            runs-on: windows-2022
             cmake-version: "4.0.x"
           - python-version: "3.13"
-            runs-on: windows-latest
+            runs-on: windows-2022
             cmake-version: "3.26.x"
+          - python-version: "3.14"
+            runs-on: windows-2025-vs2026
+            cmake-version: "4.2.x"
           - python-version: "3.8"
             runs-on: ubuntu-22.04
             cmake-version: "3.15.x"
@@ -177,7 +184,10 @@ jobs:
       matrix:
         python-version: ["3.8", "3.11"]
         # TODO: investigate failure with macos-latest (#1167)
-        runs-on: [ubuntu-latest, macos-15-intel, windows-latest]
+        # windows-2022: this job uses CMake 3.21, which cannot detect VS 2026;
+        # windows-latest/windows-2025 are migrating to VS 2026 by default
+        # (https://github.com/actions/runner-images/issues/14017).
+        runs-on: [ubuntu-latest, macos-15-intel, windows-2022]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
