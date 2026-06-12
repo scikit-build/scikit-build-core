@@ -4,7 +4,10 @@ project(
   LANGUAGES C
   VERSION "${SKBUILD_PROJECT_VERSION}")
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(
+  Python
+  COMPONENTS Interpreter Development.Module
+  REQUIRED)
 python_add_library(cmake_example MODULE src/main.c WITH_SOABI)
 
 target_compile_definitions(cmake_example

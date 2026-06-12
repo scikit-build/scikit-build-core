@@ -140,7 +140,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
         f"--outdir={dist}",
         *build_args,
     )
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     if not sys.platform.startswith("win32"):
         assert "Fetching dummy project" in out
         if build_args:

@@ -21,7 +21,10 @@ if(NOT EXAMPLE_DEFINE5 EQUAL 5)
   message(FATAL_ERROR "Example define 5 is not set")
 endif()
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(
+  Python
+  COMPONENTS Interpreter Development.Module
+  REQUIRED)
 python_add_library(_core MODULE src/main.c WITH_SOABI)
 
 install(TARGETS _core LIBRARY DESTINATION mixed_setuptools)

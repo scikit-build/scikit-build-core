@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.15...3.29)
 project(extensionlib_example_cmake LANGUAGES C)
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(
+  Python
+  COMPONENTS Interpreter Development.Module
+  REQUIRED)
 
 python_add_library(_core MODULE example.c WITH_SOABI)
 if(SKBUILD_STATE STREQUAL "editable")

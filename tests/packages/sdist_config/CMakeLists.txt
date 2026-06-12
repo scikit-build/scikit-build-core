@@ -15,14 +15,15 @@ if(NOT SKBUILD_STATE STREQUAL "sdist"
   add_subdirectory(dummy)
 else()
   message(STATUS "Fetching dummy project")
-  FetchContent_Declare(
-    dummy
-    URL "${CMAKE_CURRENT_SOURCE_DIR}/external/dummy"
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dummy)
+  FetchContent_Declare(dummy URL "${CMAKE_CURRENT_SOURCE_DIR}/external/dummy"
+                                 SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dummy)
   FetchContent_MakeAvailable(dummy)
 endif()
 
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(
+  Python
+  COMPONENTS Interpreter Development.Module
+  REQUIRED)
 python_add_library(sdist_config MODULE main.c WITH_SOABI)
 target_link_libraries(sdist_config PRIVATE dummy_lib)
 install(TARGETS sdist_config DESTINATION .)
