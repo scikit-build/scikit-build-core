@@ -56,6 +56,7 @@ def test_navigate_editable(isolated, isolate, py_pkg):
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("isolate", {False}, indirect=True)
+@pytest.mark.parametrize("editable", ["redirect", "inplace"], indirect=True)
 @pytest.mark.parametrize(
     "multiple_packages",
     [["cython_pxd_editable/pkg1", "cython_pxd_editable/pkg2"]],

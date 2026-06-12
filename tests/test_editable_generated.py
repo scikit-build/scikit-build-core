@@ -7,6 +7,9 @@ Check a variety of scenarios in which package files (modules or data) are
 not present in the source tree to confirm that we can find resources as expected,
 either by ``import`` or with tools such as `importlib.resources.files()`.
 Note that `importlib.resources.files()` requires an argument before Python 3.12.
+
+All scenarios share a single install of the ``cmake_generated`` package; each
+assertion block below documents one supported pattern.
 """
 
 from __future__ import annotations
@@ -40,12 +43,15 @@ import pytest
     sys.version_info < (3, 9),
     reason="importlib.resources.files is introduced in Python 3.9",
 )
-def test_basic_data_resources(editable, isolated):
+def test_generated_files(editable, isolated):
     isolated.install(
         "-v",
         *editable.flags,
         ".",
     )
+
+    # Static data resources in the top-level package, a subpackage, and a
+    # namespace package are all found.
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_static_data())"
     )
@@ -61,153 +67,27 @@ def test_basic_data_resources(editable, isolated):
     )
     assert value == "static value in namespace package"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        pytest.param(
-            "redirect",
-        ),
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_configure_time_generated_data(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
+    # Data generated at configure time (file(GENERATE)) is found.
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_configured_data())"
     )
     assert value == "value written by cmake file generation"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        pytest.param(
-            "redirect",
-        ),
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_build_time_generated_data(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
+    # Data generated at build time (add_custom_command) into a namespace
+    # package is found.
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.get_namespace_generated_data())"
     )
     assert value == "value written by cmake custom_command"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        pytest.param(
-            "redirect",
-        ),
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_compiled_ctypes_resource(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
+    # A compiled (non-extension) shared library is loadable through ctypes.
     value = isolated.execute(
         "import cmake_generated; print(cmake_generated.ctypes_function()())"
     )
     assert value == str(42)
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        "redirect",
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_configure_time_generated_module(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
-    # Check that a generated module can access and be accessed by all parts of the package
-
+    # A module generated at configure time (configure_file) can access and be
+    # accessed by all parts of the package.
     value = isolated.execute(
         "from cmake_generated.nested1.generated import __version__; print(__version__)"
     )
@@ -241,78 +121,14 @@ def test_configure_time_generated_module(editable, isolated):
     )
     assert value == "success"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        pytest.param(
-            "redirect",
-        ),
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_generated_module_generated_data(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
-    # Check that a generated module can access generated data in a namespace subpackage
-
+    # A generated module can access generated data in a namespace subpackage.
     value = isolated.execute(
         "from cmake_generated.nested1.generated import cmake_generated_namespace_generated_data; print(cmake_generated_namespace_generated_data())"
     )
     assert value == "value written by cmake custom_command"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        "redirect",
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_build_time_generated_module(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
-    # Check generated _version module
+    # The generated _version module is importable and matches the installed
+    # distribution metadata.
     attr_value = isolated.execute(
         "import cmake_generated; print(cmake_generated.__version__)"
     )
@@ -322,37 +138,6 @@ def test_build_time_generated_module(editable, isolated):
     )
     assert metadata_value == "1.2.3"
 
-
-@pytest.mark.compile
-@pytest.mark.configure
-@pytest.mark.integration
-@pytest.mark.parametrize("package", ["cmake_generated"], indirect=True)
-@pytest.mark.usefixtures("package")
-@pytest.mark.usefixtures("isolate")
-@pytest.mark.parametrize(
-    "editable",
-    [
-        pytest.param(None, id="not_editable"),
-        "redirect",
-        pytest.param(
-            "inplace",
-            marks=pytest.mark.skip(
-                "`inplace` editable mode requires build tree layout to match package layout."
-            ),
-        ),
-    ],
-    indirect=True,
-)
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="importlib.resources.files is introduced in Python 3.9",
-)
-def test_subpackage_generated_data(editable, isolated):
-    isolated.install(
-        "-v",
-        *editable.flags,
-        ".",
-    )
     # Data generated into a regular subpackage (nested2) that has no Python
     # module of its own in the build tree.  Finding it requires propagating the
     # parent package's build-tree path down to the subpackage.

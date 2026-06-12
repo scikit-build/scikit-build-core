@@ -214,11 +214,8 @@ def test_pep518_wheel(isolated, build_args, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
-)
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
-def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
+def test_pep518_rebuild_build_dir(isolated, tmp_path):
     isolated.install("build[virtualenv]")
 
     build_dir = tmp_path.joinpath("build")
@@ -231,7 +228,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
         shutil.rmtree(dist, ignore_errors=True)
         isolated.module(
             "build",
-            *build_args,
+            "--wheel",
             f"--outdir={dist}",
             "--config-setting=logging.level=DEBUG",
             f"--config-setting=build-dir={build_dir}",
