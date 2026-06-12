@@ -63,7 +63,7 @@ def test_navigate_editable(isolated, isolate, py_pkg):
     indirect=True,
 )
 def test_cython_pxd(multiple_packages, editable, isolated, isolate):
-    isolated.install("cython")
+    isolated.aux_install("cython")
 
     # install the packages in order with one dependent on the other
     for package in multiple_packages:

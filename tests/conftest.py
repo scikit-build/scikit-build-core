@@ -38,6 +38,8 @@ BASE = DIR.parent
 
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
+UV = shutil.which("uv")
+
 
 def _is_valid_wheel(wheel: Path) -> bool:
     if not zipfile.is_zipfile(wheel):
@@ -196,6 +198,20 @@ class VEnv:
         isolated_flags = "" if isolated else ["--no-build-isolation"]
         self.module("pip", "install", *isolated_flags, *args)
 
+    def aux_install(self, *args: str) -> None:
+        """Install build tooling, not the package under test.
+
+        Uses uv when available, since it is much faster; installs that are
+        themselves under test must use :meth:`install` (pip) instead.
+        """
+        if UV is None:
+            self.install(*args)
+            return
+        cmd = [UV, "pip", "install", f"--python={self.executable}"]
+        if self.wheelhouse is not None:
+            cmd += ["--no-index", f"--find-links={self.wheelhouse}"]
+        self.run(*cmd, *args)
+
     def prepare_no_build_isolation(self) -> None:
         if not self.wheelhouse:
             msg = "Wheelhouse was not setup."
@@ -208,8 +224,8 @@ class VEnv:
             "cmake" for f in self.wheelhouse.iterdir() if f.name.startswith("cmake-")
         ]
 
-        self.install("pip>23")
-        self.install("scikit-build-core", *ninja, *cmake)
+        self.aux_install("pip>23")
+        self.aux_install("scikit-build-core", *ninja, *cmake)
 
 
 @pytest.fixture
