@@ -40,7 +40,7 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
     )
 
     dist = tmp_path / "dist"
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
     sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
@@ -85,7 +85,7 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: P
     )
 
     dist = tmp_path / "dist"
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
     sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
@@ -133,7 +133,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
     isolated, build_args, capfd, cleanup_overwrite, tmp_path: Path
 ):
     dist = tmp_path / "dist"
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
     isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
@@ -183,7 +183,7 @@ def test_pep518_wheel_sdist_with_cmake_config(
 )
 def test_pep518_wheel(isolated, build_args, tmp_path: Path):
     dist = tmp_path / "dist"
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
     isolated.module(
         "build",
         "--config-setting=logging.level=DEBUG",
@@ -222,7 +222,7 @@ def test_pep518_wheel(isolated, build_args, tmp_path: Path):
 @pytest.mark.integration
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep518_rebuild_build_dir(isolated, tmp_path):
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
 
     build_dir = tmp_path.joinpath("build")
     build_dir.mkdir()
@@ -268,7 +268,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path):
 @pytest.mark.integration
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep518_pip(isolated):
-    isolated.install("-v", ".")
+    isolated.install("-v", ".", installer="pip")
 
     version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"

@@ -66,6 +66,7 @@ def test_pep660_pip_isolated(isolated, isolate, editable):
         *isolate.flags,
         *editable.flags,
         ".",
+        installer="pip",
     )
 
     value = isolated.execute("import simplest; print(simplest.square(2))")

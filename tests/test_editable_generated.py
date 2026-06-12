@@ -48,6 +48,7 @@ def test_generated_files(editable, isolated):
         "-v",
         *editable.flags,
         ".",
+        installer="pip",
     )
 
     # Static data resources in the top-level package, a subpackage, and a

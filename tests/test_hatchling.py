@@ -47,7 +47,7 @@ def set_hatchling_editable_mode(mode: str) -> None:
 @pytest.mark.usefixtures("package")
 def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
-    isolated.aux_install("build[virtualenv]")
+    isolated.install("build[virtualenv]")
     isolated.module("build", "--sdist", f"--outdir={dist}")
     (sdist,) = dist.iterdir()
     sdist = sdist.resolve()  # Windows mingw64 and UCRT now requires this
@@ -76,7 +76,7 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
 )
 def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
     dist = tmp_path / "dist"
-    isolated.aux_install(
+    isolated.install(
         "build[virtualenv]", "scikit-build-core", "hatchling", *download_wheels.EXTRA
     )
     isolated.module("build", "--no-isolation", f"--outdir={dist}", *build_args)
@@ -178,12 +178,12 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
 @pytest.mark.usefixtures("package")
 def test_hatchling_editable_install(isolated, editable_mode: str) -> None:
     set_hatchling_editable_mode(editable_mode)
-    isolated.aux_install(
+    isolated.install(
         "scikit-build-core",
         "hatchling",
         *download_wheels.EXTRA,
     )
-    isolated.install("-v", "-e", ".", isolated=False)
+    isolated.install("-v", "-e", ".", isolated=False, installer="pip")
 
     assert (
         isolated.execute("import hatchling_example; print(hatchling_example.add(1, 2))")

@@ -194,23 +194,32 @@ class VEnv:
     def module(self, *args: str) -> None:
         return self.run(str(self.executable), "-m", *args)
 
-    def install(self, *args: str, isolated: bool = True) -> None:
-        isolated_flags = "" if isolated else ["--no-build-isolation"]
-        self.module("pip", "install", *isolated_flags, *args)
+    def install(
+        self,
+        *args: str,
+        isolated: bool = True,
+        installer: Literal["auto", "pip", "uv"] = "auto",
+    ) -> None:
+        """Install into the venv.
 
-    def aux_install(self, *args: str) -> None:
-        """Install build tooling, not the package under test.
-
-        Uses uv when available, since it is much faster; installs that are
-        themselves under test must use :meth:`install` (pip) instead.
+        The default installer ("auto") uses uv when available, since it is
+        much faster. Installs that are themselves under test (``.`` /
+        ``-e .``) must pin ``installer="pip"`` so the frontend being
+        exercised doesn't depend on what happens to be on PATH.
         """
-        if UV is None:
-            self.install(*args)
-            return
-        cmd = [UV, "pip", "install", f"--python={self.executable}"]
-        if self.wheelhouse is not None:
-            cmd += ["--no-index", f"--find-links={self.wheelhouse}"]
-        self.run(*cmd, *args)
+        if installer == "auto":
+            installer = "pip" if UV is None else "uv"
+        isolated_flags = [] if isolated else ["--no-build-isolation"]
+        if installer == "uv":
+            if UV is None:
+                msg = "installer='uv' requested but uv is not on PATH"
+                raise RuntimeError(msg)
+            cmd = [UV, "pip", "install", f"--python={self.executable}"]
+            if self.wheelhouse is not None:
+                cmd += ["--no-index", f"--find-links={self.wheelhouse}"]
+            self.run(*cmd, *isolated_flags, *args)
+        else:
+            self.module("pip", "install", *isolated_flags, *args)
 
     def prepare_no_build_isolation(self) -> None:
         if not self.wheelhouse:
@@ -224,8 +233,8 @@ class VEnv:
             "cmake" for f in self.wheelhouse.iterdir() if f.name.startswith("cmake-")
         ]
 
-        self.aux_install("pip>23")
-        self.aux_install("scikit-build-core", *ninja, *cmake)
+        self.install("pip>23")
+        self.install("scikit-build-core", *ninja, *cmake)
 
 
 @pytest.fixture

@@ -36,7 +36,12 @@ def test_navigate_editable(isolated, isolate, py_pkg):
         init_py.touch()
 
     isolated.install(
-        "-v", "--config-settings=build-dir=build/{wheel_tag}", *isolate.flags, "-e", "."
+        "-v",
+        "--config-settings=build-dir=build/{wheel_tag}",
+        *isolate.flags,
+        "-e",
+        ".",
+        installer="pip",
     )
 
     value = isolated.execute("import shared_pkg; shared_pkg.call_c_method()")
@@ -63,7 +68,7 @@ def test_navigate_editable(isolated, isolate, py_pkg):
     indirect=True,
 )
 def test_cython_pxd(multiple_packages, editable, isolated, isolate):
-    isolated.aux_install("cython")
+    isolated.install("cython")
 
     # install the packages in order with one dependent on the other
     for package in multiple_packages:
@@ -72,6 +77,7 @@ def test_cython_pxd(multiple_packages, editable, isolated, isolate):
             *isolate.flags,
             *editable.flags,
             str(package.workdir),
+            installer="pip",
         )
 
 
@@ -105,6 +111,7 @@ def test_install_dir(isolated, isolate):
         *isolate.flags,
         "-e",
         ".",
+        installer="pip",
     )
 
     # Make sure the package is correctly installed in the subdirectory
@@ -138,6 +145,7 @@ def test_direct_import(editable, isolated):
         "-v",
         *editable.flags,
         ".",
+        installer="pip",
     )
 
     isolated.execute("import pkg")
@@ -162,6 +170,7 @@ def test_importlib_resources(editable, isolated):
         "-v",
         *editable.flags,
         ".",
+        installer="pip",
     )
 
     isolated.execute(
