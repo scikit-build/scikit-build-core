@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(
   ${SKBUILD_PROJECT_NAME}
-  LANGUAGES CXX
+  LANGUAGES C
   VERSION 1.2.3)
 
 # Generate files at config time (configure_file) and at build time
@@ -50,7 +50,7 @@ file(
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/nested2-generated-data.txt"
         DESTINATION ${SKBUILD_PROJECT_NAME}/nested2)
 
-add_library(pkg MODULE src/cmake_generated/pkg.cpp)
+add_library(pkg MODULE src/cmake_generated/pkg.c)
 include(GenerateExportHeader)
 generate_export_header(pkg)
 target_include_directories(pkg PRIVATE ${CMAKE_CURRENT_BINARY_DIR})

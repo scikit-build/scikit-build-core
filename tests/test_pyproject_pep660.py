@@ -8,7 +8,7 @@ import pytest
 from scikit_build_core.build import build_editable
 
 
-# TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
+# TODO: figure out why gmake is reporting no rule to make simple_pure.c
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.xfail(
@@ -66,6 +66,7 @@ def test_pep660_pip_isolated(isolated, isolate, editable):
         *isolate.flags,
         *editable.flags,
         ".",
+        installer="pip",
     )
 
     value = isolated.execute("import simplest; print(simplest.square(2))")

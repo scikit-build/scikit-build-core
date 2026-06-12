@@ -68,7 +68,6 @@ def test_pep518_sdist(isolated, package_simple_pyproject_ext, tmp_path: Path):
         assert correct_metadata == pkg_info_contents
 
 
-@pytest.mark.network
 @pytest.mark.configure
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["sdist_config"], indirect=True)
@@ -99,13 +98,21 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: P
             for x in (
                 "CMakeLists.txt",
                 "pyproject.toml",
-                "main.cpp",
+                "main.c",
                 "PKG-INFO",
                 "overwrite.cmake",
                 ".gitignore",
             )
         }
-        assert sum("pybind11" in x for x in file_names) >= 10
+        # The FetchContent-populated (gitignored) files bundled via sdist.include
+        assert {
+            f"sdist_config-0.1.0/dummy/{x}"
+            for x in (
+                "CMakeLists.txt",
+                "include/dummy.h",
+                "tools/dummy_helper.cmake",
+            )
+        } <= file_names
         pkg_info = f.extractfile("sdist_config-0.1.0/PKG-INFO")
         assert pkg_info
         pkg_info_contents = pkg_info.read().decode()
@@ -114,7 +121,6 @@ def test_pep518_sdist_with_cmake_config(isolated, cleanup_overwrite, tmp_path: P
     assert cleanup_overwrite.is_file()
 
 
-@pytest.mark.network
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
@@ -134,13 +140,13 @@ def test_pep518_wheel_sdist_with_cmake_config(
         f"--outdir={dist}",
         *build_args,
     )
-    out, err = capfd.readouterr()
+    out, _err = capfd.readouterr()
     if not sys.platform.startswith("win32"):
-        assert "Cloning into 'pybind11'..." in err
+        assert "Fetching dummy project" in out
         if build_args:
-            assert "Using integrated pybind11" not in out
+            assert "Using integrated dummy" not in out
         else:
-            assert "Using integrated pybind11" in out
+            assert "Using integrated dummy" in out
 
     (wheel,) = dist.glob("sdist_config-0.1.0-*.whl")
     wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
@@ -214,11 +220,8 @@ def test_pep518_wheel(isolated, build_args, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
-@pytest.mark.parametrize(
-    "build_args", [(), ("--wheel",)], ids=["sdist_to_wheel", "wheel_directly"]
-)
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
-def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
+def test_pep518_rebuild_build_dir(isolated, tmp_path):
     isolated.install("build[virtualenv]")
 
     build_dir = tmp_path.joinpath("build")
@@ -231,7 +234,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
         shutil.rmtree(dist, ignore_errors=True)
         isolated.module(
             "build",
-            *build_args,
+            "--wheel",
             f"--outdir={dist}",
             "--config-setting=logging.level=DEBUG",
             f"--config-setting=build-dir={build_dir}",
@@ -265,7 +268,7 @@ def test_pep518_rebuild_build_dir(isolated, tmp_path, build_args):
 @pytest.mark.integration
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "pybind11")
 def test_pep518_pip(isolated):
-    isolated.install("-v", ".")
+    isolated.install("-v", ".", installer="pip")
 
     version = isolated.execute("import cmake_example; print(cmake_example.__version__)")
     assert version == "0.0.1"

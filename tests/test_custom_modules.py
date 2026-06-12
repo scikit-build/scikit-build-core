@@ -11,8 +11,8 @@ PROJECT_DIR = DIR / "packages" / "custom_cmake"
 
 def test_ep(isolated):
     isolated.install("hatchling", "scikit-build-core")
-    isolated.install(PROJECT_DIR / "extern", isolated=False)
-    isolated.install(PROJECT_DIR, "-v", isolated=False)
+    isolated.install(PROJECT_DIR / "extern", isolated=False, installer="pip")
+    isolated.install(PROJECT_DIR, "-v", isolated=False, installer="pip")
 
     if sys.platform.startswith("win"):
         # TODO: maybe figure out how to make this work on windows?

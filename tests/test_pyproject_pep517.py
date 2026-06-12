@@ -256,7 +256,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["simple_pyproject_source_dir"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep517_wheel_source_dir(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist), config_settings={"skbuild.wheel.build-tag": "1foo"})

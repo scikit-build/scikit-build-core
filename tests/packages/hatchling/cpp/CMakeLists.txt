@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.15...3.29)
-project(extensionlib_example_cmake LANGUAGES CXX)
+project(extensionlib_example_cmake LANGUAGES C)
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 CONFIG REQUIRED)
+find_package(
+  Python
+  COMPONENTS Interpreter Development.Module
+  REQUIRED)
 
-pybind11_add_module(_core MODULE example.cpp)
+python_add_library(_core MODULE example.c WITH_SOABI)
 if(SKBUILD_STATE STREQUAL "editable")
   # Keep multi-config generators from adding a Release/Debug subdir.
   set_target_properties(

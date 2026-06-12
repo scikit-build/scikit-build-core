@@ -116,7 +116,7 @@ def test_pep517_sdist(tmp_path: Path):
                 "setup.cfg",
                 "setup.py",
                 "LICENSE",
-                # TODO: "src/main.cpp",
+                # TODO: "src/main.c",
             )
         } | {f"{cmake_example}-0.0.1"}
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
@@ -129,7 +129,7 @@ def test_pep517_sdist(tmp_path: Path):
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
@@ -166,7 +166,7 @@ def test_pep517_wheel(virtualenv, tmp_path: Path):
     build_editable is None, reason="Requires setuptools editable support"
 )
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep517_editable(virtualenv, tmp_path: Path):
     assert build_editable is not None
     dist = tmp_path / "dist"
@@ -241,7 +241,7 @@ def test_toml_sdist(tmp_path: Path):
                 "pyproject.toml",
                 "setup.cfg",
                 "LICENSE",
-                # TODO: "src/main.cpp",
+                # TODO: "src/main.c",
             )
         } | {f"{cmake_example}-0.0.1"}
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
@@ -253,7 +253,7 @@ def test_toml_sdist(tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["toml_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 @pytest.mark.skipif(
     setuptools_version < Version("61.0"), reason="Requires setuptools 61+"
 )
@@ -289,7 +289,7 @@ def test_toml_wheel(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["mixed_setuptools"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_mixed_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
@@ -329,7 +329,6 @@ def test_mixed_wheel(virtualenv, tmp_path: Path):
     indirect=["package"],
     ids=SETUPTOOLS_INSTALL_DIR_CASE_IDS,
 )
-@pytest.mark.usefixtures("pybind11")
 def test_cmake_install_dir_wheel(
     package, case: SetuptoolsInstallDirCase, tmp_path: Path
 ):
@@ -363,7 +362,7 @@ def test_cmake_install_dir_wheel(
 @pytest.mark.parametrize(
     "package", ["wrapper_setuptools_classic_layout"], indirect=True
 )
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_wrapper_classic_layout_wheel(tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))
@@ -404,7 +403,6 @@ def test_wrapper_classic_layout_wheel(tmp_path: Path):
     indirect=["package"],
     ids=SETUPTOOLS_INSTALL_DIR_CASE_IDS,
 )
-@pytest.mark.usefixtures("pybind11")
 def test_cmake_install_dir_editable(
     package, case: SetuptoolsInstallDirCase, tmp_path: Path
 ):
@@ -430,7 +428,7 @@ def test_cmake_install_dir_editable(
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_manifest_hook_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(str(dist))

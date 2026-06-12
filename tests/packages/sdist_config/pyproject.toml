@@ -9,9 +9,9 @@ version = "0.1.0"
 [tool.scikit-build]
 sdist.cmake = true
 sdist.include = [
-    "pybind11/tools",
-    "pybind11/include",
-    "pybind11/CMakeLists.txt",
+    "dummy/tools",
+    "dummy/include",
+    "dummy/CMakeLists.txt",
 ]
 wheel.license-files = []
 wheel.packages = []

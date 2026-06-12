@@ -38,6 +38,8 @@ BASE = DIR.parent
 
 VIRTUALENV_VERSION = Version(metadata.version("virtualenv"))
 
+UV = shutil.which("uv")
+
 
 def _is_valid_wheel(wheel: Path) -> bool:
     if not zipfile.is_zipfile(wheel):
@@ -192,9 +194,32 @@ class VEnv:
     def module(self, *args: str) -> None:
         return self.run(str(self.executable), "-m", *args)
 
-    def install(self, *args: str, isolated: bool = True) -> None:
-        isolated_flags = "" if isolated else ["--no-build-isolation"]
-        self.module("pip", "install", *isolated_flags, *args)
+    def install(
+        self,
+        *args: str,
+        isolated: bool = True,
+        installer: Literal["auto", "pip", "uv"] = "auto",
+    ) -> None:
+        """Install into the venv.
+
+        The default installer ("auto") uses uv when available, since it is
+        much faster. Installs that are themselves under test (``.`` /
+        ``-e .``) must pin ``installer="pip"`` so the frontend being
+        exercised doesn't depend on what happens to be on PATH.
+        """
+        if installer == "auto":
+            installer = "pip" if UV is None else "uv"
+        isolated_flags = [] if isolated else ["--no-build-isolation"]
+        if installer == "uv":
+            if UV is None:
+                msg = "installer='uv' requested but uv is not on PATH"
+                raise RuntimeError(msg)
+            cmd = [UV, "pip", "install", f"--python={self.executable}"]
+            if self.wheelhouse is not None:
+                cmd += ["--no-index", f"--find-links={self.wheelhouse}"]
+            self.run(*cmd, *isolated_flags, *args)
+        else:
+            self.module("pip", "install", *isolated_flags, *args)
 
     def prepare_no_build_isolation(self) -> None:
         if not self.wheelhouse:

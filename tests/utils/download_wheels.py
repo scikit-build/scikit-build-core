@@ -21,8 +21,9 @@ if importlib.util.find_spec("cmake") is not None:
 if importlib.util.find_spec("ninja") is not None:
     EXTRA.append("ninja")
 
-if importlib.util.find_spec("pybind11") is not None:
-    EXTRA.append("pybind11")
+# Only needed by simple_pyproject_ext; kept in the wheelhouse so its isolated
+# builds can resolve it, but not part of EXTRA (tooling installed into venvs).
+PYBIND11 = ["pybind11"] if importlib.util.find_spec("pybind11") is not None else []
 
 WHEELS = [
     "build",
@@ -33,6 +34,7 @@ WHEELS = [
     "virtualenv",
     "wheel",
     *EXTRA,
+    *PYBIND11,
 ]
 
 

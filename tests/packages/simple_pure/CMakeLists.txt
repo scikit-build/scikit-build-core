@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 
-project(simple_pure LANGUAGES CXX)
+project(simple_pure LANGUAGES C)
 
-add_executable(simple_pure simple_pure.cpp)
-
-target_compile_features(simple_pure PUBLIC cxx_std_11)
+add_executable(simple_pure simple_pure.c)
 
 install(TARGETS simple_pure)
 

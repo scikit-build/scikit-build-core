@@ -54,7 +54,7 @@ def config(tmp_path_factory):
     return config
 
 
-# TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
+# TODO: figure out why gmake is reporting no rule to make simple_pure.c
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.xfail(
@@ -79,7 +79,7 @@ def test_bin_in_config(config):
     assert result.stdout == "0 one 2 three \n"
 
 
-# TODO: figure out why gmake is reporting no rule to make simple_pure.cpp
+# TODO: figure out why gmake is reporting no rule to make simple_pure.c
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.xfail(
