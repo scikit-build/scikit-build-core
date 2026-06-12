@@ -10,7 +10,7 @@ dynamic = ["version"]
 # Bundling a generated file in the sdist is not supported at this time.
 # sdist.cmake = false
 wheel.license-files = []
-wheel.exclude = ["**.cpp", "**.in"]
+wheel.exclude = ["**.c", "**.in"]
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 project(
   "${SKBUILD_PROJECT_NAME}"
-  LANGUAGES CXX
+  LANGUAGES C
   VERSION "${SKBUILD_PROJECT_VERSION}")
 
 find_package(
@@ -9,8 +9,7 @@ find_package(
   COMPONENTS Interpreter Development.Module
   REQUIRED)
 
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(cmake_example main.cpp)
+python_add_library(cmake_example MODULE main.c WITH_SOABI)
 
 target_compile_definitions(cmake_example
                            PRIVATE VERSION_INFO=${PROJECT_VERSION})

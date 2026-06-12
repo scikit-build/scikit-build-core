@@ -58,7 +58,7 @@ def test_hatchling_sdist(isolated, tmp_path: Path) -> None:
             "hatchling_example-0.1.0/.gitignore",
             "hatchling_example-0.1.0/PKG-INFO",
             "hatchling_example-0.1.0/cpp/CMakeLists.txt",
-            "hatchling_example-0.1.0/cpp/example.cpp",
+            "hatchling_example-0.1.0/cpp/example.c",
             "hatchling_example-0.1.0/pyproject.toml",
             "hatchling_example-0.1.0/src/hatchling_example/__init__.py",
             "hatchling_example-0.1.0/src/hatchling_example/_core.pyi",
@@ -115,11 +115,6 @@ def test_hatchling_wheel(isolated, build_args, tmp_path: Path) -> None:
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["hatchling"], indirect=True)
 @pytest.mark.parametrize("editable_mode", ["redirect", "inplace"])
-@pytest.mark.xfail(
-    sys.platform.startswith("cygwin"),
-    reason="Cygwin fails editable pybind11 link",
-    strict=False,
-)
 @pytest.mark.usefixtures("package")
 def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     set_hatchling_editable_mode(editable_mode)
@@ -180,11 +175,6 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
 @pytest.mark.integration
 @pytest.mark.parametrize("package", ["hatchling"], indirect=True)
 @pytest.mark.parametrize("editable_mode", ["redirect", "inplace"])
-@pytest.mark.xfail(
-    sys.platform.startswith("cygwin"),
-    reason="Cygwin fails editable pybind11 link",
-    strict=False,
-)
 @pytest.mark.usefixtures("package")
 def test_hatchling_editable_install(isolated, editable_mode: str) -> None:
     set_hatchling_editable_mode(editable_mode)
@@ -192,7 +182,6 @@ def test_hatchling_editable_install(isolated, editable_mode: str) -> None:
         "-v",
         "scikit-build-core",
         "hatchling",
-        "pybind11",
         *download_wheels.EXTRA,
         isolated=False,
     )

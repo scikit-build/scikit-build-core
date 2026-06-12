@@ -21,7 +21,7 @@ build_editable = getattr(setuptools_build_meta, "build_editable", None)
     strict=False,
 )
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep518_wheel(isolated, tmp_path: Path):
     dist = tmp_path / "dist"
     isolated.install("build[virtualenv]")
@@ -60,7 +60,7 @@ def test_pep518_wheel(isolated, tmp_path: Path):
     strict=False,
 )
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep518_pip(isolated):
     isolated.install("-v", ".")
 
@@ -88,7 +88,7 @@ def test_pep518_pip(isolated):
     build_editable is None, reason="Requires setuptools editable support"
 )
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
-@pytest.mark.usefixtures("package", "pybind11")
+@pytest.mark.usefixtures("package")
 def test_pep518_pip_editable(isolated):
     isolated.install("-v", "-e", ".")
 
