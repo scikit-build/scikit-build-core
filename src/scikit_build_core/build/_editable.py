@@ -166,7 +166,13 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
         module = path_to_module(rel)
         # Prefer .py/.pyc over other extensions (e.g. .pxd, .pyx) for the same module
         if module not in result or rel.suffix in (".py", ".pyc"):
-            result[module] = str(Path(k).resolve())
+            # Make the source path absolute, but do NOT resolve symlinks: the
+            # redirect finder derives a package's submodule_search_locations from
+            # the dirname of this path. A symlinked-in module (e.g. a monorepo
+            # file linked into a package) must keep its in-package directory, or
+            # the symlink target's real directory would be wrongly added to the
+            # parent package's __path__, exposing unrelated files there (#647).
+            result[module] = str(Path(k).absolute())
     return result
 
 
