@@ -41,13 +41,13 @@ def test_pep660_wheel(editable, tmp_path: Path):
     assert "simplest-0.0.1.dist-info" in file_names
     if editable.mode == "redirect":
         assert "simplest" in file_names
-        assert "_simplest_editable.py" in file_names
-        assert ("_simplest_editable.start" in file_names) == pep829
+        assert "_editable_skbc_simplest.py" in file_names
+        assert ("_editable_skbc_simplest.start" in file_names) == pep829
     else:
         assert "simplest" not in file_names
-        assert "_simplest_editable.py" not in file_names
-        assert "_simplest_editable.start" not in file_names
-    assert "_simplest_editable.pth" in file_names
+        assert "_editable_skbc_simplest.py" not in file_names
+        assert "_editable_skbc_simplest.start" not in file_names
+    assert "_editable_skbc_simplest.pth" in file_names
 
     assert "Metadata-Version: 2.2" in metadata
     assert "Name: simplest" in metadata
