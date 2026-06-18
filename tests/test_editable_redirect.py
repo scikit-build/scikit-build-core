@@ -196,8 +196,89 @@ def test_rebuild_success_runs_build_and_install(
     finder = _make_finder(tmp_path, verbose=False)
     finder.rebuild()
 
-    assert calls[0][:2] == ["cmake", "--build"]
-    assert calls[1][:2] == ["cmake", "--install"]
+    # A reconfigure precedes the build so the install destinations are re-pointed
+    # at the editable target (see test_rebuild_repoints_install_to_editable).
+    assert calls[0][0] == "cmake"
+    assert calls[0][-1] == "."
+    assert calls[1][:2] == ["cmake", "--build"]
+    assert calls[2][:2] == ["cmake", "--install"]
+
+
+def test_rebuild_repoints_install_to_editable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Regression for #1135.
+
+    ``cmake --install --prefix`` is ignored for install rules with an absolute
+    DESTINATION such as ``${SKBUILD_PLATLIB_DIR}/...``, which is baked at the
+    (now-deleted) temporary wheel directory. The rebuild must therefore re-point
+    SKBUILD_PLATLIB_DIR / CMAKE_INSTALL_PREFIX at the editable target before
+    installing, otherwise the rebuilt artifact never reaches site-packages.
+    """
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        **kwargs: object,  # noqa: ARG001
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(list(command))
+        return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
+    )
+
+    finder = _make_finder(tmp_path, verbose=False)
+    finder.rebuild()
+
+    # The reconfigure is the first call and must re-point the platlib destination
+    # at the editable target and the install prefix at the install dir.
+    reconfigure = calls[0]
+    assert reconfigure[0] == "cmake"
+    expected_platlib = finder.dir.replace("\\", "/")
+    expected_prefix = finder.install_dir.replace("\\", "/")
+    assert f"-DSKBUILD_PLATLIB_DIR={expected_platlib}" in reconfigure
+    assert f"-DCMAKE_INSTALL_PREFIX={expected_prefix}" in reconfigure
+
+
+def test_rebuild_skips_reconfigure_when_cache_current(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The re-point reconfigure runs once, not on every rebuild (#1135).
+
+    The reconfigure rewrites the install destinations in the persistent build
+    directory's CMakeCache.txt and that survives, so a rebuild whose cache is
+    already current must skip straight to ``cmake --build`` + ``cmake --install``.
+    """
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        **kwargs: object,  # noqa: ARG001
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(list(command))
+        return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
+    )
+
+    finder = _make_finder(tmp_path, verbose=False)
+    # Seed a cache that already holds the re-pointed destinations (with a comment
+    # and blank line to exercise the parser's skipping of non-entry lines).
+    cache_lines = ["# This is the CMakeCache file.", ""]
+    cache_lines += [f"{key}:PATH={value}" for key, value in finder._reinstall_cache()]
+    tmp_path.joinpath("CMakeCache.txt").write_text("\n".join(cache_lines) + "\n")
+
+    finder.rebuild()
+
+    # No reconfigure: build is first, install second, and nothing else ran.
+    assert [call[:2] for call in calls] == [
+        ["cmake", "--build"],
+        ["cmake", "--install"],
+    ]
 
 
 def test_rebuild_runs_once_per_process(tmp_path: Path):
