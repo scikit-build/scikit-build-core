@@ -25,6 +25,7 @@ from ..builder.builder import (
     get_archs,
     get_cmake_args_from_settings,
 )
+from ..builder.get_requires import _uses_ninja_generator
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
 from ..errors import FailedLiveProcessError
@@ -131,9 +132,16 @@ def _build_wheel_impl(
             "cmake should not be in build-system.requires - scikit-build-core will inject it as needed"
         )
     if "ninja" in requirements:
-        logger.warning(
-            "ninja should not be in build-system.requires - scikit-build-core will inject it as needed"
-        )
+        # Only warn when scikit-build-core can fall back to make, meaning ninja
+        # is not strictly required. If the user forced a Ninja generator or
+        # disabled make-fallback, ninja may genuinely be needed in requires.
+        ninja_settings = settings_reader.settings.ninja
+        uses_ninja = _uses_ninja_generator(settings_reader.settings)
+        ninja_strictly_required = uses_ninja is True or not ninja_settings.make_fallback
+        if not ninja_strictly_required:
+            logger.warning(
+                "ninja should not be in build-system.requires - scikit-build-core will inject it as needed"
+            )
 
     try:
         return _build_wheel_impl_impl(
