@@ -182,9 +182,9 @@ The project vendors a copy of `pyproject_metadata` (`_vendor/`) to parse the
 
 Two modes are supported:
 
-- **redirect** (default): A `.pth` file loads an `_editable_skbc_<pkg>.py` redirect
-  shim (from `resources/_editable_redirect.py`) that uses `sys.meta_path` to map
-  imports. Optionally triggers CMake rebuild on import if
+- **redirect** (default): A `.pth` file loads an `_editable_skbc_<pkg>.py`
+  redirect shim (from `resources/_editable_redirect.py`) that uses
+  `sys.meta_path` to map imports. Optionally triggers CMake rebuild on import if
   `editable.rebuild = true`.
 - **inplace**: A simple `.pth` file pointing at the source package directories.
 
