@@ -170,15 +170,14 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
         wheel_dir = self.__tmp_dir / "wheel"
 
+        cmake_args = get_cmake_args_from_settings(settings, os.environ)
         tags = WheelTag.compute_best(
-            archs_to_tags(
-                get_archs(
-                    os.environ, get_cmake_args_from_settings(settings, os.environ)
-                )
-            ),
+            archs_to_tags(get_archs(os.environ, cmake_args)),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
             build_tag=settings.wheel.build_tag,
+            cmake_defines=settings.cmake.define,
+            cmake_args=cmake_args,
         )
         # _validate guarantees wheel.cmake is true and rejects a falsy
         # wheel.platlib (purelib), so this is always a platlib build.
