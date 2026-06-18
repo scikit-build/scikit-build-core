@@ -635,7 +635,7 @@ def test_set_environment_for_gen_strips_cc_cxx_flags(
     fake_ninja = Program(Path("/usr/bin/ninja"), Version("1.11.0"))
     monkeypatch.setattr(gen_mod, "get_ninja_programs", lambda: [fake_ninja])
     config_vars = {"CC": "gcc -pthread", "CXX": "c++ -pthread"}
-    monkeypatch.setattr(gen_mod.sysconfig, "get_config_var", config_vars.get)
+    monkeypatch.setattr(sysconfig, "get_config_var", config_vars.get)
 
     env: dict[str, str] = {}
     gen_mod.set_environment_for_gen(
