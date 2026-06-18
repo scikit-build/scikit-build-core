@@ -80,7 +80,6 @@ repos:
           - markdown-it-py
           - ninja
           - nox
-          - orjson
           - packaging>=24.2
           - pathspec>=1.1
           - pytest<9 # pytest 9 requires Python 3.10+
