@@ -500,3 +500,57 @@ def test_pep639_license_files_optout(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     assert not any("dist-info/licenses/" in n for n in names)
     assert "License-File:" not in metadata
+
+
+@pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="Windows symlinks require elevated privileges",
+)
+def test_sdist_dereferences_file_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """File symlinks in the source tree must be stored as real files in the sdist
+    (regression test for #801)."""
+    src = tmp_path / "src"
+    src.mkdir()
+
+    # A real file one level above the package directory (simulates the original report)
+    real_file = tmp_path / "some-file.txt"
+    real_file.write_text("real content\n")
+
+    pyproject = src / "pyproject.toml"
+    pyproject.write_text(
+        inspect.cleandoc(
+            """
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "symlink_test"
+            version = "0.1.0"
+
+            [tool.scikit-build]
+            sdist.cmake = false
+            sdist.include = ["some-file.txt"]
+            """
+        )
+    )
+
+    # A file symlink pointing outside the package directory
+    link = src / "some-file.txt"
+    link.symlink_to("../some-file.txt")
+
+    monkeypatch.chdir(src)
+
+    dist = tmp_path / "dist"
+    out = build_sdist(str(dist))
+
+    sdist = dist / out
+    with tarfile.open(sdist) as tf:
+        member = tf.getmember("symlink_test-0.1.0/some-file.txt")
+        # Must be a regular file, not a symlink
+        assert member.isreg(), f"Expected regular file, got type {member.type!r}"
+        content = tf.extractfile(member)
+        assert content is not None
+        assert content.read() == b"real content\n"

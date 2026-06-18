@@ -149,11 +149,23 @@ def build_sdist(
             )
         )
         for filepath in paths:
-            tar.add(
-                filepath,
-                arcname=srcdirname / filepath,
-                filter=normalize_tar_info if reproducible else lambda x: x,
-            )
+            arcname = srcdirname / filepath
+            filter_fn = normalize_tar_info if reproducible else lambda x: x
+            # Dereference file symlinks so the sdist contains real file content
+            # instead of a dangling symlink (directory symlinks are already
+            # followed by os.walk(followlinks=True) in the file collector).
+            if filepath.is_symlink() and filepath.resolve().is_file():
+                resolved = filepath.resolve()
+                tarinfo = tar.gettarinfo(str(resolved), arcname=str(arcname))
+                tarinfo = filter_fn(tarinfo)
+                with resolved.open("rb") as fobj:
+                    tar.addfile(tarinfo, fobj)
+            else:
+                tar.add(
+                    filepath,
+                    arcname=arcname,
+                    filter=filter_fn,
+                )
 
         add_bytes_to_tar(
             tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible
