@@ -279,3 +279,47 @@ def test_editable_redirect_files_pep829_no_paths(tmp_path: Path):
     )
 
     assert set(files) == {"_editable_skbc_pkg.py", "_editable_skbc_pkg.start"}
+
+
+def test_editable_redirect_files_absolute_install_dir_no_rebuild(tmp_path: Path):
+    # Regression test for #909: absolute wheel.install-dir must not block a
+    # non-rebuild editable install; only rebuild=True is incompatible.
+    from scikit_build_core.settings.skbuild_model import WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="/data"),
+    )
+    assert not settings.editable.rebuild  # default
+
+    # Should not raise
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=None,
+        settings=settings,
+        use_start=False,
+    )
+    assert "_editable_skbc_pkg.py" in files
+
+
+def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Path):
+    # rebuild=True with an absolute install-dir must still raise AssertionError.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="/data"),
+        editable=EditableSettings(rebuild=True),
+    )
+
+    with pytest.raises(AssertionError, match=r"absolute wheel\.install-dir"):
+        editable_redirect_files(
+            libdir=tmp_path,
+            mapping={},
+            name="pkg",
+            packages=[],
+            reload_dir=None,
+            settings=settings,
+            use_start=False,
+        )
