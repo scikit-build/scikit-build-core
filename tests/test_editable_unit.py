@@ -188,8 +188,10 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
         install_dir="",
     )
 
-    site_packages.joinpath("_pkg_editable.py").write_text(editable_txt)
-    site_packages.joinpath("_pkg_editable.pth").write_text("import _pkg_editable\n")
+    site_packages.joinpath("_editable_skbc_pkg.py").write_text(editable_txt)
+    site_packages.joinpath("_editable_skbc_pkg.pth").write_text(
+        "import _editable_skbc_pkg\n"
+    )
 
     # Test the editable install
     virtualenv.execute("import pkg.subpkg")
@@ -219,14 +221,14 @@ def test_editable_redirect_files_legacy_pth(tmp_path: Path):
         use_start=False,
     )
 
-    assert set(files) == {"_pkg_editable.py", "_pkg_editable.pth"}
-    assert "_pkg_editable.start" not in files
+    assert set(files) == {"_editable_skbc_pkg.py", "_editable_skbc_pkg.pth"}
+    assert "_editable_skbc_pkg.start" not in files
 
-    pth = files["_pkg_editable.pth"].decode()
-    assert pth.splitlines()[0] == "import _pkg_editable"
+    pth = files["_editable_skbc_pkg.pth"].decode()
+    assert pth.splitlines()[0] == "import _editable_skbc_pkg"
     assert str(tmp_path / "src") in pth
 
-    py = files["_pkg_editable.py"].decode()
+    py = files["_editable_skbc_pkg.py"].decode()
     assert "\ninstall(" in py
     assert "def entrypoint()" not in py
 
@@ -243,23 +245,23 @@ def test_editable_redirect_files_pep829_start(tmp_path: Path):
     )
 
     assert set(files) == {
-        "_pkg_editable.py",
-        "_pkg_editable.pth",
-        "_pkg_editable.start",
+        "_editable_skbc_pkg.py",
+        "_editable_skbc_pkg.pth",
+        "_editable_skbc_pkg.start",
     }
 
     # PEP 829 mandates UTF-8-sig (BOM) for .start files
-    start = files["_pkg_editable.start"]
-    assert start == "_pkg_editable:entrypoint".encode("utf-8-sig")
+    start = files["_editable_skbc_pkg.start"]
+    assert start == "_editable_skbc_pkg:entrypoint".encode("utf-8-sig")
     assert start.startswith(b"\xef\xbb\xbf")
 
     # The .pth keeps only the sys.path entries, no import line
-    pth = files["_pkg_editable.pth"].decode()
-    assert "import _pkg_editable" not in pth
+    pth = files["_editable_skbc_pkg.pth"].decode()
+    assert "import _editable_skbc_pkg" not in pth
     assert str(tmp_path / "src") in pth
 
     # The import is now a zero-argument entrypoint, not run at import time
-    py = files["_pkg_editable.py"].decode()
+    py = files["_editable_skbc_pkg.py"].decode()
     assert "def entrypoint() -> None:" in py
     assert "\ninstall(" not in py
 
@@ -276,4 +278,4 @@ def test_editable_redirect_files_pep829_no_paths(tmp_path: Path):
         use_start=True,
     )
 
-    assert set(files) == {"_pkg_editable.py", "_pkg_editable.start"}
+    assert set(files) == {"_editable_skbc_pkg.py", "_editable_skbc_pkg.start"}

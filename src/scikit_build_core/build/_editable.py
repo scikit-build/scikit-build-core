@@ -113,23 +113,27 @@ def editable_redirect_files(
         as_entrypoint=use_start,
     )
     package_paths = tuple(packages)
-    files = {f"_{name}_editable.py": editable_txt.encode()}
+    files = {f"_editable_skbc_{name}.py": editable_txt.encode()}
     if use_start:
         # PEP 829: the import callable lives in a UTF-8-sig encoded .start file,
         # and the .pth carries only sys.path entries (if any).
-        files[f"_{name}_editable.start"] = f"_{name}_editable:entrypoint".encode(
-            "utf-8-sig"
+        files[f"_editable_skbc_{name}.start"] = (
+            f"_editable_skbc_{name}:entrypoint".encode("utf-8-sig")
         )
         if package_paths:
-            files[f"_{name}_editable.pth"] = "\n".join([*package_paths, ""]).encode()
+            files[f"_editable_skbc_{name}.pth"] = "\n".join(
+                [*package_paths, ""]
+            ).encode()
     else:
-        pth_import_paths = "\n".join([f"import _{name}_editable", *package_paths, ""])
-        files[f"_{name}_editable.pth"] = pth_import_paths.encode()
+        pth_import_paths = "\n".join(
+            [f"import _editable_skbc_{name}", *package_paths, ""]
+        )
+        files[f"_editable_skbc_{name}.pth"] = pth_import_paths.encode()
     return files
 
 
 def editable_inplace_files(*, name: str, packages: Iterable[str]) -> dict[str, bytes]:
-    return {f"_{name}_editable.pth": "\n".join(packages).encode()}
+    return {f"_editable_skbc_{name}.pth": "\n".join(packages).encode()}
 
 
 def get_packages(

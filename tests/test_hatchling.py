@@ -131,14 +131,14 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
         # always emitted (in pep829 redirect mode it carries only the paths).
         pth_lines = [
             ln
-            for ln in f.read("_hatchling_example_editable.pth")
+            for ln in f.read("_editable_skbc_hatchling_example.pth")
             .decode("utf-8")
             .splitlines()
             if ln
         ]
         start_contents = (
-            f.read("_hatchling_example_editable.start")
-            if "_hatchling_example_editable.start" in file_names
+            f.read("_editable_skbc_hatchling_example.start")
+            if "_editable_skbc_hatchling_example.start" in file_names
             else None
         )
         wheel_metadata = f.read("hatchling_example-0.1.0.dist-info/WHEEL").decode(
@@ -149,22 +149,23 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
     pep829 = sys.version_info >= (3, 15)
 
     assert "hatchling_example-0.1.0.dist-info/METADATA" in file_names
-    assert "_hatchling_example_editable.pth" in file_names
+    assert "_editable_skbc_hatchling_example.pth" in file_names
     assert "Root-Is-Purelib: false" in wheel_metadata
     if editable_mode == "redirect":
-        assert "_hatchling_example_editable.py" in file_names
+        assert "_editable_skbc_hatchling_example.py" in file_names
         assert f"hatchling_example/_core{ext_suffix}" in file_names
         if pep829:
-            assert start_contents == "_hatchling_example_editable:entrypoint".encode(
-                "utf-8-sig"
+            assert (
+                start_contents
+                == "_editable_skbc_hatchling_example:entrypoint".encode("utf-8-sig")
             )
             # The .pth keeps only the path entries, no import line
             assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
         else:
             assert start_contents is None
-            assert pth_lines[0] == "import _hatchling_example_editable"
+            assert pth_lines[0] == "import _editable_skbc_hatchling_example"
     else:
-        assert "_hatchling_example_editable.py" not in file_names
+        assert "_editable_skbc_hatchling_example.py" not in file_names
         assert start_contents is None
         assert f"hatchling_example/_core{ext_suffix}" not in file_names
         assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
