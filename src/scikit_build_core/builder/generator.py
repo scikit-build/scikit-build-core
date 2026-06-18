@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import subprocess
 import sys
 import sysconfig
@@ -109,16 +110,19 @@ def set_environment_for_gen(
         env.setdefault("CMAKE_GENERATOR_PLATFORM", get_cmake_platform(env))
         return {}
 
-    # Set Python's recommended CC and CXX if not already set by the user
+    # Set Python's recommended CC and CXX if not already set by the user. Only
+    # the executable is kept; sysconfig may append flags (e.g. "c++ -pthread"),
+    # which would otherwise leak into tools like autotools sub-builds. CMake adds
+    # any flags it needs itself. See #1330.
     if "CC" not in env:
         cc = sysconfig.get_config_var("CC")
         if cc:
-            env["CC"] = cc
+            env["CC"] = shlex.split(cc)[0]
 
     if "CXX" not in env:
         cxx = sysconfig.get_config_var("CXX")
         if cxx:
-            env["CXX"] = cxx
+            env["CXX"] = shlex.split(cxx)[0]
 
     if "Ninja" in (generator or "Ninja"):
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)
