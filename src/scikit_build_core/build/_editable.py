@@ -170,7 +170,8 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
         module = path_to_module(rel)
         # Prefer .py/.pyc over other extensions (e.g. .pxd, .pyx) for the same module
         if module not in result or rel.suffix in (".py", ".pyc"):
-            result[module] = str(Path(k).resolve())
+            # Make the source path absolute, but do not resolve symlinks
+            result[module] = str(Path(k).absolute())
     return result
 
 
