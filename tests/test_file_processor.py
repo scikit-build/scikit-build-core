@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -136,6 +137,59 @@ def test_on_each_with_symlink(
             nested_dir.joinpath("more/ignored.txt"),
         }
     assert set(each_unignored_file(Path(), mode=mode)) == files
+
+
+@pytest.mark.skipif(
+    sys.implementation.name == "pypy" and sys.platform.startswith("win"),
+    reason="PyPy on Windows does not support symlinks",
+)
+def test_circular_symlink_terminates(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+) -> None:
+    """
+    A circular directory symlink (pkg/sub/pkg -> ../../pkg) must not make the
+    walk loop forever or emit duplicated, ever-deeper copies of the same files
+    (#1101).
+    """
+    monkeypatch.chdir(tmp_path)
+
+    pkg = Path("pkg")
+    sub = pkg / "sub"
+    sub.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("content")
+
+    loop = sub / "pkg"
+    try:
+        loop.symlink_to(Path("..") / ".." / "pkg")
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlinks not supported on this platform")
+    if not loop.is_dir():
+        pytest.skip("Symlink support not available")
+
+    # Guard against an infinite loop (the pre-fix behavior on Linux) so the
+    # test fails fast instead of hanging the suite.
+    result: list[Path] = []
+    error: list[BaseException] = []
+
+    def _collect() -> None:
+        try:
+            result.extend(each_unignored_file(Path(), mode=mode))
+        except BaseException as exc:  # noqa: BLE001
+            error.append(exc)
+
+    thread = threading.Thread(target=_collect, daemon=True)
+    thread.start()
+    thread.join(timeout=30)
+    assert not thread.is_alive(), "each_unignored_file did not terminate (symlink loop)"
+    if error:
+        raise error[0]
+
+    # The real __init__.py must appear exactly once and there must be no
+    # ever-deeper duplicates re-entering through the symlink.
+    assert result.count(pkg / "__init__.py") == 1
+    assert not any("sub/pkg/sub/pkg" in p.as_posix() for p in result)
 
 
 def test_dot_git_is_a_file(

@@ -31,6 +31,19 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _dir_key(dirstr: str) -> tuple[int, int] | None:
+    """
+    Identify a directory by its (device, inode) pair so that symlink loops can
+    be detected. Returns None if the directory can't be stat'd (it is then
+    treated as not-yet-seen and handled normally).
+    """
+    try:
+        st = Path(dirstr).stat()
+    except OSError:
+        return None
+    return (st.st_dev, st.st_ino)
+
+
 def each_unignored_file(
     starting_path: Path,
     include: Sequence[str] = (),
@@ -74,8 +87,31 @@ def each_unignored_file(
 
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
 
+    # Map each visited directory to the set of (device, inode) keys of itself
+    # and all of its ancestors along the walk path. A circular symlink
+    # (e.g. pkg/sub/pkg -> ../../pkg) re-enters a directory that is one of its
+    # own ancestors; pruning it stops os.walk from descending forever or
+    # emitting duplicated, ever-deeper copies of the same files (#1101). A
+    # symlink to an unrelated directory is not an ancestor of itself, so it is
+    # still followed.
+    ancestor_keys: dict[str, frozenset[tuple[int, int]]] = {}
+
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
+        key = _dir_key(dirstr)
+        # os.path.dirname keeps the exact string form os.walk uses for keys
+        # (e.g. "" for the root), unlike Path.parent which maps it to ".".
+        parent_keys = ancestor_keys.get(os.path.dirname(dirstr), frozenset())  # noqa: PTH120
+        if key is not None and key in parent_keys:
+            logger.debug(
+                "Not descending into {} because it is an ancestor of itself "
+                "(symlink loop).",
+                dirpath,
+            )
+            dirs.clear()
+            continue
+        if key is not None:
+            ancestor_keys[dirstr] = parent_keys | {key}
         if mode != "classic":
             for dname in list(dirs):
                 if not match_path(
