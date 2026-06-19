@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.machinery
 import sys
 import textwrap
 import typing
@@ -14,11 +15,22 @@ from scikit_build_core.build._editable import (
     libdir_to_installed,
     mapping_to_modules,
 )
-from scikit_build_core.build._pathutil import packages_to_file_mapping
+from scikit_build_core.build._pathutil import (
+    is_module,
+    is_valid_module,
+    module_loader_rank,
+    packages_to_file_mapping,
+)
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 if typing.TYPE_CHECKING:
     from conftest import VEnv
+
+# The bare extension-module suffix for this interpreter (.so on Unix, .pyd on
+# Windows), and whether .so is importable here (it is not on Windows, where
+# versioned-soname collisions cannot occur).
+EXT_SUFFIX = importlib.machinery.EXTENSION_SUFFIXES[-1]
+SO_IMPORTABLE = ".so" in importlib.machinery.EXTENSION_SUFFIXES
 
 
 class EditablePackage(NamedTuple):
@@ -323,3 +335,94 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
             settings=settings,
             use_start=False,
         )
+
+
+def test_is_valid_module():
+    # Importable modules and data/resource files are both tracked, so the
+    # redirect registers their directories for importlib.resources.
+    assert is_valid_module(Path("one.py"))
+    assert is_valid_module(Path("one/two.py"))
+    assert is_valid_module(Path("one/two.pyc"))
+    assert is_valid_module(Path("tango/_tango.so"))
+    assert is_valid_module(Path("tango/_tango.abi3.so"))
+    assert is_valid_module(Path("pkg/resources/file.txt"))
+    assert is_valid_module(Path("pkg/module.pyx"))
+    assert is_valid_module(Path("pkg/module.pxd"))
+    # Versioned sonames are tracked too (so tango/ still gets registered), but
+    # is_module rejects them so they never resolve as the module (issue #1144).
+    assert is_valid_module(Path("tango/_tango.so.10"))
+    assert is_valid_module(Path("tango/_tango.so.10.1.0.0"))
+
+    # Invalid identifiers are rejected
+    assert not is_valid_module(Path("1one/two.py"))
+    assert not is_valid_module(Path("one/2two.py"))
+    assert not is_valid_module(Path("one/.py"))
+    assert not is_valid_module(Path(".py"))
+
+
+def test_is_module():
+    # Importable module files (EXT_SUFFIX is .so on Unix, .pyd on Windows)
+    assert is_module(Path("one.py"))
+    assert is_module(Path("one/two.pyc"))
+    assert is_module(Path(f"mod{EXT_SUFFIX}"))
+
+    # Data/resource and Cython source files are not importable modules
+    assert not is_module(Path("pkg/resources/file.txt"))
+    assert not is_module(Path("pkg/module.pyx"))
+    assert not is_module(Path("pkg/module.pxd"))
+
+
+@pytest.mark.skipif(
+    not SO_IMPORTABLE, reason="versioned .so sonames only occur where .so is importable"
+)
+def test_is_module_rejects_versioned_sonames():
+    assert is_module(Path("tango/_tango.so"))
+    assert is_module(Path("tango/_tango.abi3.so"))
+
+    # Versioned sonames are not importable (PEP 3149); they alias the real
+    # _tango.so and must not resolve as the module (issue #1144).
+    assert not is_module(Path("tango/_tango.so.10"))
+    assert not is_module(Path("tango/_tango.so.10.1.0.0"))
+
+
+def test_module_loader_rank_matches_import_precedence():
+    # Extension modules load before source, source before bytecode; everything
+    # else (data, versioned sonames) ranks last. This mirrors Python's own
+    # FileFinder order so editable installs resolve the same file as a wheel.
+    ext_rank = module_loader_rank(Path(f"mod{EXT_SUFFIX}"))
+    py_rank = module_loader_rank(Path("mod.py"))
+    pyc_rank = module_loader_rank(Path("mod.pyc"))
+    data_rank = module_loader_rank(Path("file.txt"))
+
+    assert ext_rank < py_rank < pyc_rank < data_rank
+
+
+def test_libdir_to_installed_prefers_extension_over_source(tmp_path: Path):
+    # A wheel import loads the extension module before mod.py; editable agrees.
+    pkg_dir = tmp_path / "pkg"
+    pkg_dir.mkdir()
+    (pkg_dir / f"mod{EXT_SUFFIX}").touch()
+    (pkg_dir / "mod.py").touch()
+
+    installed = libdir_to_installed(tmp_path)
+
+    assert installed["pkg.mod"] == str(Path("pkg") / f"mod{EXT_SUFFIX}")
+
+
+@pytest.mark.skipif(
+    not SO_IMPORTABLE, reason="versioned .so sonames only occur where .so is importable"
+)
+def test_libdir_to_installed_prefers_plain_so_over_versioned(tmp_path: Path):
+    # Simulate a site-packages/tango/ directory that has all three soname variants,
+    # as seen in the pytango issue (#1144). Only _tango.so should be selected.
+    pkg_dir = tmp_path / "tango"
+    pkg_dir.mkdir()
+    (pkg_dir / "_tango.so").touch()
+    (pkg_dir / "_tango.so.10").touch()
+    (pkg_dir / "_tango.so.10.1.0.0").touch()
+
+    installed = libdir_to_installed(tmp_path)
+
+    assert "tango._tango" in installed
+    # Must pick the plain .so, not a versioned soname
+    assert installed["tango._tango"] == str(Path("tango/_tango.so"))

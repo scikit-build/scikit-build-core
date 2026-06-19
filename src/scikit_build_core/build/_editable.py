@@ -9,6 +9,7 @@ from pathlib import Path
 from ..resources import resources
 from ._pathutil import (
     is_valid_module,
+    module_loader_rank,
     path_to_module,
     scantree,
 )
@@ -163,15 +164,17 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
     Convert a mapping of files to modules to a mapping of modules to installed files.
     """
     result: dict[str, str] = {}
+    selected: dict[str, Path] = {}
     for k, v in mapping.items():
         rel = Path(v).relative_to(libdir)
         if not is_valid_module(rel):
             continue
         module = path_to_module(rel)
-        # Prefer .py/.pyc over other extensions (e.g. .pxd, .pyx) for the same module
-        if module not in result or rel.suffix in (".py", ".pyc"):
-            # Make the source path absolute, but do not resolve symlinks
-            result[module] = str(Path(k).absolute())
+        if module in result and not _prefer_module(rel, selected[module]):
+            continue
+        # Make the source path absolute, but do not resolve symlinks
+        result[module] = str(Path(k).absolute())
+        selected[module] = rel
     return result
 
 
@@ -179,8 +182,28 @@ def libdir_to_installed(libdir: Path) -> dict[str, str]:
     """
     Convert a mapping of files to modules to a mapping of modules to installed files.
     """
-    return {
-        path_to_module(pth): str(pth)
-        for v in scantree(libdir)
-        if is_valid_module(pth := v.relative_to(libdir))
-    }
+    result: dict[str, str] = {}
+    selected: dict[str, Path] = {}
+    for v in scantree(libdir):
+        pth = v.relative_to(libdir)
+        if not is_valid_module(pth):
+            continue
+        module = path_to_module(pth)
+        if module in result and not _prefer_module(pth, selected[module]):
+            continue
+        result[module] = str(pth)
+        selected[module] = pth
+    return result
+
+
+def _prefer_module(candidate: Path, current: Path) -> bool:
+    """
+    Whether ``candidate`` should replace ``current`` for the same module name.
+
+    Files are ranked by Python's import loader precedence (extension module >
+    source > bytecode > non-importable), so editable installs resolve a module
+    to the same file a real wheel would import. This keeps a versioned shared
+    library (``_tango.so.10``) from shadowing the real ``_tango.so`` (issue
+    #1144) and an extension module from being shadowed by a ``.py`` next to it.
+    """
+    return module_loader_rank(candidate) < module_loader_rank(current)
