@@ -13,7 +13,7 @@ from .._logging import logger
 from .macos import get_macosx_deployment_target
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from .._compat.typing import Self
 
@@ -70,6 +70,8 @@ class WheelTag:
         expand_macos: bool = False,
         root_is_purelib: bool = False,
         build_tag: str = "",
+        cmake_defines: Mapping[str, str] | None = None,
+        cmake_args: Sequence[str] = (),
     ) -> Self:
         if build_tag:
             if not build_tag[0].isdigit():
@@ -113,7 +115,12 @@ class WheelTag:
             plats = [
                 next(
                     packaging.tags.mac_platforms(
-                        get_macosx_deployment_target(arm=arm), arch
+                        get_macosx_deployment_target(
+                            arm=arm,
+                            cmake_defines=cmake_defines,
+                            cmake_args=cmake_args,
+                        ),
+                        arch,
                     )
                 )
                 for arch, arm in pairs

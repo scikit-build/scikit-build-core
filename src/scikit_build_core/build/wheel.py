@@ -240,16 +240,15 @@ def _build_wheel_impl_impl(
         wheel_dir = build_tmp_folder / "wheel"
         wheel_variant = get_wheel_variant(settings, pyproject, metadata)
 
+        cmake_args = get_cmake_args_from_settings(settings, os.environ)
         tags = WheelTag.compute_best(
-            archs_to_tags(
-                get_archs(
-                    os.environ, get_cmake_args_from_settings(settings, os.environ)
-                )
-            ),
+            archs_to_tags(get_archs(os.environ, cmake_args)),
             settings.wheel.py_api,
             expand_macos=settings.wheel.expand_macos_universal_tags,
             root_is_purelib=targetlib == "purelib",
             build_tag=settings.wheel.build_tag,
+            cmake_defines=settings.cmake.define,
+            cmake_args=cmake_args,
         )
 
         # A build dir can be specified, otherwise use a temporary directory

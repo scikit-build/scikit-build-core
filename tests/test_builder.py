@@ -90,6 +90,75 @@ def test_macos_version(monkeypatch, pycom, envvar, answer):
     assert str(get_macosx_deployment_target(arm=False)) == answer
 
 
+@pytest.mark.parametrize(
+    ("envvar", "defines", "args", "answer"),
+    [
+        pytest.param(
+            None,
+            {"CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"},
+            (),
+            "11.0",
+            id="define_only",
+        ),
+        pytest.param(
+            None,
+            {},
+            ("-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13",),
+            "10.13",
+            id="arg_only",
+        ),
+        pytest.param(
+            None,
+            {},
+            ("-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.13",),
+            "10.13",
+            id="arg_typed",
+        ),
+        # cmake.define / cmake.args win over the env var fallback.
+        pytest.param(
+            "12.0",
+            {"CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"},
+            (),
+            "11.0",
+            id="define_beats_envvar",
+        ),
+        # args win over the define, mirroring CMake's command-line precedence.
+        pytest.param(
+            None,
+            {"CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"},
+            ("-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13",),
+            "10.13",
+            id="arg_beats_define",
+        ),
+        # An unreadable cmake value falls back to the env var.
+        pytest.param(
+            "12.0",
+            {"CMAKE_OSX_DEPLOYMENT_TARGET": "random"},
+            (),
+            "12.0",
+            id="invalid_define_falls_back_to_envvar",
+        ),
+    ],
+)
+def test_macos_version_cmake_osx_deployment_target(
+    monkeypatch, envvar, defines, args, answer
+):
+    # Pin the platform version high so the answer must come from the explicit
+    # cmake setting (or env var fallback), not the current macOS version.
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("15.0.0", "", ""))
+    if envvar is None:
+        monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
+    else:
+        monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", envvar)
+
+    result = get_macosx_deployment_target(
+        arm=False,
+        cmake_defines={k: CMakeSettingsDefine(v) for k, v in defines.items()},
+        cmake_args=args,
+    )
+    assert str(result) == answer
+
+
 def test_get_python_include_dir():
     assert get_python_include_dir().is_dir()
 
