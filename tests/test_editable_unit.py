@@ -412,6 +412,37 @@ def test_module_loader_rank_matches_import_precedence():
     assert ext_rank < py_rank < pyc_rank < data_rank
 
 
+@pytest.mark.skipif(
+    len(importlib.machinery.EXTENSION_SUFFIXES) < 2,
+    reason="needs at least two extension suffixes to order",
+)
+def test_module_loader_rank_orders_extension_suffixes():
+    # FileFinder tries EXTENSION_SUFFIXES in order, so a more specific tag (e.g.
+    # .cpython-313-...so) outranks the bare suffix (.so) for the same module.
+    suffixes = importlib.machinery.EXTENSION_SUFFIXES
+    assert module_loader_rank(Path(f"mod{suffixes[0]}")) < module_loader_rank(
+        Path(f"mod{suffixes[-1]}")
+    )
+
+
+@pytest.mark.skipif(
+    len(importlib.machinery.EXTENSION_SUFFIXES) < 2,
+    reason="needs at least two extension suffixes to order",
+)
+def test_libdir_to_installed_prefers_specific_extension_tag(tmp_path: Path):
+    # Two extension files for the same module: pick the one a wheel import would
+    # load first (the most specific tag), not whichever was scanned first.
+    suffixes = importlib.machinery.EXTENSION_SUFFIXES
+    pkg_dir = tmp_path / "pkg"
+    pkg_dir.mkdir()
+    (pkg_dir / f"mod{suffixes[0]}").touch()
+    (pkg_dir / f"mod{suffixes[-1]}").touch()
+
+    installed = libdir_to_installed(tmp_path)
+
+    assert installed["pkg.mod"] == str(Path("pkg") / f"mod{suffixes[0]}")
+
+
 def test_libdir_to_installed_prefers_extension_over_source(tmp_path: Path):
     # A wheel import loads the extension module before mod.py; editable agrees.
     pkg_dir = tmp_path / "pkg"
