@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 import setuptools
 from packaging.version import Version
 
+from .._check_extra import warn_missing_extra
 from .._compat import tomllib
 from .._compat.setuptools.errors import SetupError
 from .._logging import LEVEL_VALUE, raw_logger
@@ -515,6 +516,8 @@ class BuildCMake(setuptools.Command):
         assert self.build_lib is not None
         assert self.build_temp is not None
         assert self.plat_name is not None
+
+        warn_missing_extra("setuptools")
 
         self.editable_mode = self._get_editable_mode()
         # run() is always a wheel or editable build; pass the matching state so

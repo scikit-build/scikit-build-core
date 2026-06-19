@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "scikit-build-core"]
+requires = ["scikit-build-core[hatchling]"]
 build-backend = "hatchling.build"
 
 [project]
