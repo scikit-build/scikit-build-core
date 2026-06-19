@@ -226,6 +226,59 @@ def test_include_pattern_with_nested_path_and_broad_exclude(
     assert result == {nested_file}
 
 
+def test_glob_include_with_broad_exclude_keeps_subpackages(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Regression for #1248: ``exclude=["**/*"]`` plus glob includes like
+    ``pkg/**/*.py`` must still descend into nested subdirectories. Previously
+    the default mode only kept a directory if an include's literal text started
+    with it, so glob-only subpackages were pruned and dropped.
+    """
+    monkeypatch.chdir(tmp_path)
+    files = set(
+        _mk_files(
+            tmp_path,
+            """
+        pkg/__init__.py
+        pkg/main.py
+        pkg/ase/__init__.py
+        pkg/ase/calc.py
+        pkg/common/__init__.py
+        pkg/common/grammar_types/__init__.py
+        pkg/common/grammar_types/base.py
+        pkg/data/values.csv
+        pkg/data/info.py
+        README.md
+    """,
+        )
+    )
+
+    py_files = {f for f in files if f.suffix == ".py"}
+
+    result = set(
+        each_unignored_file(
+            Path(),
+            include=["pkg/**/*.py"],
+            exclude=["**/*"],
+            mode="default",
+        )
+    )
+    assert result == py_files
+
+    # The same result must hold in classic mode (the pre-0.12 behavior).
+    classic = set(
+        each_unignored_file(
+            Path(),
+            include=["pkg/**/*.py"],
+            exclude=["**/*"],
+            mode="classic",
+        )
+    )
+    assert classic == py_files
+
+
 def test_exclude_patterns(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
