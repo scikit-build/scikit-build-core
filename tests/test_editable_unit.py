@@ -10,6 +10,7 @@ from typing import NamedTuple
 import pytest
 
 from scikit_build_core.build._editable import (
+    collect_search_locations,
     editable_redirect,
     editable_redirect_files,
     libdir_to_installed,
@@ -168,30 +169,44 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     }
     modules = mapping_to_modules(mapping, libdir=site_packages)
 
+    # Importable modules only: the data file (pkg/resources/file.txt) is not here.
     assert modules == {
         "pkg": str(src_pkg_dir / "__init__.py"),
         "pkg.module": str(src_pkg_dir / "module.py"),
         "pkg.namespace.module": str(src_pkg_dir / "namespace/module.py"),
         "pkg.subpkg": str(src_pkg_dir / "subpkg/__init__.py"),
         "pkg.subpkg.module": str(src_pkg_dir / "subpkg/module.py"),
-        "pkg.resources.file": str(src_pkg_dir / "resources/file.txt"),
     }
 
     installed = libdir_to_installed(site_packages)
     installed = {k: v for k, v in installed.items() if k.startswith("pkg")}
 
+    # Importable modules only: the data file (pkg/iresources/file.txt) is not here.
     assert installed == {
         "pkg.subpkg.source": str(Path("pkg/subpkg/source.py")),
         "pkg.namespace.source": str(Path("pkg/namespace/source.py")),
         "pkg.source": str(Path("pkg/source.py")),
         "pkg.installed_files": str(Path("pkg/installed_files.py")),
-        "pkg.iresources.file": str(Path("pkg/iresources/file.txt")),
         "pkg.src_files": str(Path("pkg/src_files.py")),
     }
+
+    directories, package_names = collect_search_locations(mapping, libdir=site_packages)
+    directories = {k: v for k, v in directories.items() if k.startswith("pkg")}
+    package_names = [p for p in package_names if p.startswith("pkg")]
+
+    # Data directories are tracked (as directories only, with no importable
+    # module) so importlib.resources can reach them: pkg.resources lives in the
+    # source tree, pkg.iresources in the install tree.
+    assert str(src_pkg_dir / "resources") in directories["pkg.resources"]
+    assert "pkg.iresources" in directories
+    assert str(src_pkg_dir) in directories["pkg"]
+    assert package_names == ["pkg", "pkg.subpkg"]
 
     editable_txt = editable_redirect(
         modules=modules,
         installed=installed,
+        directories=directories,
+        packages=package_names,
         reload_dir=None,
         rebuild=False,
         verbose=False,
@@ -426,3 +441,55 @@ def test_libdir_to_installed_prefers_plain_so_over_versioned(tmp_path: Path):
     assert "tango._tango" in installed
     # Must pick the plain .so, not a versioned soname
     assert installed["tango._tango"] == str(Path("tango/_tango.so"))
+
+
+def test_collect_search_locations_data_only_install_dir(tmp_path: Path):
+    # The source tree has the importable package; the install (CMake) tree adds
+    # only a data file into the same package dir. The install dir must still be
+    # registered on pkg.__path__ so importlib.resources can find the data --
+    # this is the one case where a non-importable file is load-bearing.
+    libdir = tmp_path / "site"
+    (libdir / "pkg").mkdir(parents=True)
+    (libdir / "pkg" / "data.txt").write_text("hi")
+    src = tmp_path / "src"
+    mapping = {str(src / "pkg" / "__init__.py"): str(libdir / "pkg" / "__init__.py")}
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    assert packages == ["pkg"]
+    # pkg.__path__ has both the source dir (absolute) and the install dir
+    # (relative), the latter reachable only because the data file registered it.
+    assert str(src / "pkg") in directories["pkg"]
+    assert str(Path("pkg")) in directories["pkg"]
+    # The data file itself is not an importable module.
+    assert "pkg.data" not in libdir_to_installed(libdir)
+
+
+def test_collect_search_locations_pxd_packages(tmp_path: Path):
+    # .pxd/.pyx __init__ files define packages even though they are not
+    # importable; they must be marked as packages and given their own directory
+    # without polluting the parent package's __path__.
+    libdir = tmp_path / "site"
+    libdir.mkdir()
+    src = tmp_path / "src"
+    mapping = {
+        str(src / "pkg" / "__init__.py"): str(libdir / "pkg" / "__init__.py"),
+        str(src / "pkg" / "cython_subpkg" / "__init__.pxd"): str(
+            libdir / "pkg" / "cython_subpkg" / "__init__.pxd"
+        ),
+        str(src / "pkg" / "cython_subpkg" / "impl.pyx"): str(
+            libdir / "pkg" / "cython_subpkg" / "impl.pyx"
+        ),
+        str(src / "pkg" / "pyx_subpkg" / "__init__.pyx"): str(
+            libdir / "pkg" / "pyx_subpkg" / "__init__.pyx"
+        ),
+    }
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    assert "pkg.cython_subpkg" in packages
+    assert "pkg.pyx_subpkg" in packages
+    assert directories["pkg.cython_subpkg"] == [str(src / "pkg" / "cython_subpkg")]
+    assert directories["pkg.pyx_subpkg"] == [str(src / "pkg" / "pyx_subpkg")]
+    # The parent pkg.__path__ must not be polluted with child package dirs.
+    assert all("subpkg" not in p for p in directories["pkg"])
