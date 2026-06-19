@@ -221,14 +221,12 @@ def collect_search_locations(
     Every tracked file -- importable modules *and* data/resource files -- adds
     its directory to its package's ``__path__``, so ``importlib.resources`` can
     reach data even in a directory that holds no importable module (e.g. CMake
-    installs only data into a package dir). This is kept separate from the
-    module-resolution maps so a non-importable file is never returned as a
-    module's origin.
+    installs only data into a package dir). Keeping this separate from the
+    module-resolution maps means a non-importable file is never a module's origin.
 
-    Source-tree directories are absolute; install-tree directories are relative
-    to ``libdir`` (the redirect joins them with the install location at runtime).
-    Returns ``(directories, packages)`` where ``packages`` are the modules whose
-    directory holds an ``__init__`` (including ``.pxd``/``.pyx`` ones).
+    Source-tree directories are absolute, install-tree ones relative to
+    ``libdir``. Returns ``(directories, packages)`` where ``packages`` are the
+    modules whose directory holds an ``__init__`` (including ``.pxd``/``.pyx``).
     """
     directories: dict[str, set[str]] = {}
     packages: set[str] = set()
@@ -273,12 +271,7 @@ def _is_init(name: str) -> bool:
 
 def _prefer_module(candidate: Path, current: Path) -> bool:
     """
-    Whether ``candidate`` should replace ``current`` for the same module name.
-
-    Files are ranked by Python's import loader precedence (extension module >
-    source > bytecode > non-importable), so editable installs resolve a module
-    to the same file a real wheel would import. This keeps a versioned shared
-    library (``_tango.so.10``) from shadowing the real ``_tango.so`` (issue
-    #1144) and an extension module from being shadowed by a ``.py`` next to it.
+    Whether ``candidate`` outranks ``current`` for the same module name, by
+    import loader precedence (see :func:`module_loader_rank`).
     """
     return module_loader_rank(candidate) < module_loader_rank(current)

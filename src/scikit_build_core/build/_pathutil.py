@@ -21,13 +21,10 @@ __all__ = [
     "scantree",
 ]
 
-# Importable file extensions for the running interpreter, in the exact order
-# Python's FileFinder tries them: extension modules (most specific tag first,
-# e.g. .cpython-313-x86_64-linux-gnu.so before .abi3.so before .so), then source
-# (.py), then bytecode (.pyc) -- see
-# importlib.machinery._get_supported_file_loaders. EXTENSION_SUFFIXES is
-# platform- and interpreter-specific (.pyd on Windows), which matches an editable
-# install resolving on the same interpreter it was built for.
+# Importable suffixes for this interpreter, in the order Python's FileFinder
+# tries them: extension modules (most specific tag first), then source (.py),
+# then bytecode (.pyc). EXTENSION_SUFFIXES is platform-specific (.pyd on
+# Windows), matching the interpreter the editable install resolves on.
 _MODULE_SUFFIXES = (
     *importlib.machinery.EXTENSION_SUFFIXES,
     *importlib.machinery.SOURCE_SUFFIXES,
@@ -109,17 +106,15 @@ def is_valid_module(path: Path) -> bool:
 
 def module_loader_rank(path: Path) -> int:
     """
-    Where ``path`` sits in Python's import loader precedence.
+    Index of ``path``'s suffix in Python's import loader precedence.
 
     A file maps to the module name before its first ``.``; the rest is its
-    suffix. The rank is that suffix's index in the ordered list of suffixes the
-    interpreter's FileFinder tries (extension tags first, then ``.py``, then
-    ``.pyc``), so when several files share a module name the one chosen matches
-    what a real wheel import would load -- including between extension tags
-    (``mod.cpython-313-...so`` beats ``mod.abi3.so`` beats ``mod.so``).
-    Non-importable files -- data/resource files, and versioned shared libraries
-    such as ``_tango.so.10`` whose ``.so.10`` is not a real suffix -- rank last
-    (issue #1144).
+    suffix. Ranking by that suffix's position in the FileFinder order (extension
+    tags first, then ``.py``, then ``.pyc``) makes a shared module name resolve
+    to the same file a real wheel import would load -- ``mod.cpython-313-...so``
+    beats ``mod.abi3.so`` beats ``mod.so`` beats ``mod.py``. Non-importable files
+    -- data and versioned shared libraries like ``_tango.so.10`` -- rank last
+    (#1144).
     """
     _, dot, rest = path.name.partition(".")
     suffix = dot + rest
@@ -131,13 +126,10 @@ def module_loader_rank(path: Path) -> int:
 
 def is_module(path: Path) -> bool:
     """
-    True if ``path`` is an importable module file for this interpreter.
+    True if ``path``'s suffix is one this interpreter imports (``.py``, ``.pyc``,
+    or an extension suffix like ``.so``/``.pyd``/``.abi3.so``).
 
-    The file's suffix (everything after the first ``.`` in its name) must be one
-    the interpreter imports: ``.py``, ``.pyc``, or an extension suffix such as
-    ``.so``/``.pyd``/``.abi3.so``. Versioned shared libraries such as
-    ``_tango.so.10`` are *not* importable -- they alias the real ``_tango.so`` --
-    so they return ``False`` and never shadow it when a module name is resolved
-    (issue #1144).
+    Versioned shared libraries like ``_tango.so.10`` alias the real ``_tango.so``
+    and are not importable, so they never shadow it (#1144).
     """
     return module_loader_rank(path) < len(_MODULE_SUFFIXES)
