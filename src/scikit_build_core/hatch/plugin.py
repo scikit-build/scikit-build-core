@@ -15,6 +15,7 @@ from typing import Any
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from packaging.version import Version
 
+from .._check_extra import warn_missing_extra
 from .._logging import logger, rich_print
 from ..build._editable import (
     editable_inplace_files,
@@ -151,6 +152,8 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         editable = state == "editable"
 
         self._validate(settings_reader)
+
+        warn_missing_extra("hatchling")
 
         if state == "sdist":
             build_data["artifacts"].append("CMakeLists.txt")  # Needs full list, etc.
