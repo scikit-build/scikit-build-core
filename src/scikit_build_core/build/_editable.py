@@ -9,7 +9,7 @@ from pathlib import Path
 from ..resources import resources
 from ._pathutil import (
     is_module,
-    is_valid_module,
+    is_trackable,
     module_loader_rank,
     path_to_module,
     scantree,
@@ -180,7 +180,7 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
     selected: dict[str, Path] = {}
     for k, v in mapping.items():
         rel = Path(v).relative_to(libdir)
-        if not is_valid_module(rel) or not is_module(rel):
+        if not is_trackable(rel) or not is_module(rel):
             continue
         module = path_to_module(rel)
         if module in result and not _prefer_module(rel, selected[module]):
@@ -202,7 +202,7 @@ def libdir_to_installed(libdir: Path) -> dict[str, str]:
     selected: dict[str, Path] = {}
     for v in scantree(libdir):
         pth = v.relative_to(libdir)
-        if not is_valid_module(pth) or not is_module(pth):
+        if not is_trackable(pth) or not is_module(pth):
             continue
         module = path_to_module(pth)
         if module in result and not _prefer_module(pth, selected[module]):
@@ -228,10 +228,22 @@ def collect_search_locations(
     ``libdir``. Returns ``(directories, packages)`` where ``packages`` are the
     modules whose directory holds an ``__init__`` (including ``.pxd``/``.pyx``).
     """
+    # Collect (module, directory, is_init) entries. Source tree: the absolute
+    # source file's parent. Install tree: the directory relative to libdir.
+    entries: list[tuple[str, str, bool]] = []
+    for source, target in mapping.items():
+        rel = Path(target).relative_to(libdir)
+        if is_trackable(rel):
+            src = Path(source).absolute()
+            entries.append((path_to_module(rel), str(src.parent), _is_init(src.name)))
+    for v in scantree(libdir):
+        rel = v.relative_to(libdir)
+        if is_trackable(rel):
+            entries.append((path_to_module(rel), str(rel.parent), _is_init(rel.name)))
+
     directories: dict[str, set[str]] = {}
     packages: set[str] = set()
-
-    def add(module: str, directory: str, *, is_init: bool) -> None:
+    for module, directory, is_init in entries:
         if is_init:
             packages.add(module)
             parent = module
@@ -239,25 +251,6 @@ def collect_search_locations(
             parent = module.rpartition(".")[0]
         if parent:
             directories.setdefault(parent, set()).add(directory)
-
-    # Source tree: register the (absolute) source file's parent directory.
-    for source, target in mapping.items():
-        rel = Path(target).relative_to(libdir)
-        if not is_valid_module(rel):
-            continue
-        source_path = Path(source).absolute()
-        add(
-            path_to_module(rel),
-            str(source_path.parent),
-            is_init=_is_init(source_path.name),
-        )
-
-    # Install tree: register the directory relative to libdir.
-    for v in scantree(libdir):
-        rel = v.relative_to(libdir)
-        if not is_valid_module(rel):
-            continue
-        add(path_to_module(rel), str(rel.parent), is_init=_is_init(rel.name))
 
     return (
         {pkg: sorted(dirs) for pkg, dirs in directories.items()},

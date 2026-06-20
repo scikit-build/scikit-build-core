@@ -14,17 +14,14 @@ if TYPE_CHECKING:
 
 __all__ = [
     "is_module",
-    "is_valid_module",
+    "is_trackable",
     "module_loader_rank",
     "packages_to_file_mapping",
     "path_to_module",
     "scantree",
 ]
 
-# Importable suffixes for this interpreter, in the order Python's FileFinder
-# tries them: extension modules (most specific tag first), then source (.py),
-# then bytecode (.pyc). EXTENSION_SUFFIXES is platform-specific (.pyd on
-# Windows), matching the interpreter the editable install resolves on.
+# Importable suffixes for this interpreter, in order.
 _MODULE_SUFFIXES = (
     *importlib.machinery.EXTENSION_SUFFIXES,
     *importlib.machinery.SOURCE_SUFFIXES,
@@ -47,7 +44,7 @@ def scantree(path: Path) -> Generator[Path, None, None]:
 
 def path_to_module(path: Path) -> str:
     name, _, _ = path.name.partition(".")
-    assert name, f"Empty name should be filtered by is_valid_module first, got {path}"
+    assert name, f"Empty name should be filtered by is_trackable first, got {path}"
     path = path.with_name(name)
     if path.name == "__init__":
         path = path.parent
@@ -88,7 +85,7 @@ def packages_to_file_mapping(
     return mapping
 
 
-def is_valid_module(path: Path) -> bool:
+def is_trackable(path: Path) -> bool:
     """
     True if ``path`` should be tracked in an editable install.
 

@@ -18,7 +18,7 @@ from scikit_build_core.build._editable import (
 )
 from scikit_build_core.build._pathutil import (
     is_module,
-    is_valid_module,
+    is_trackable,
     module_loader_rank,
     packages_to_file_mapping,
 )
@@ -352,27 +352,27 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
         )
 
 
-def test_is_valid_module():
+def test_is_trackable():
     # Importable modules and data/resource files are both tracked, so the
     # redirect registers their directories for importlib.resources.
-    assert is_valid_module(Path("one.py"))
-    assert is_valid_module(Path("one/two.py"))
-    assert is_valid_module(Path("one/two.pyc"))
-    assert is_valid_module(Path("tango/_tango.so"))
-    assert is_valid_module(Path("tango/_tango.abi3.so"))
-    assert is_valid_module(Path("pkg/resources/file.txt"))
-    assert is_valid_module(Path("pkg/module.pyx"))
-    assert is_valid_module(Path("pkg/module.pxd"))
+    assert is_trackable(Path("one.py"))
+    assert is_trackable(Path("one/two.py"))
+    assert is_trackable(Path("one/two.pyc"))
+    assert is_trackable(Path("tango/_tango.so"))
+    assert is_trackable(Path("tango/_tango.abi3.so"))
+    assert is_trackable(Path("pkg/resources/file.txt"))
+    assert is_trackable(Path("pkg/module.pyx"))
+    assert is_trackable(Path("pkg/module.pxd"))
     # Versioned sonames are tracked too (so tango/ still gets registered), but
     # is_module rejects them so they never resolve as the module (issue #1144).
-    assert is_valid_module(Path("tango/_tango.so.10"))
-    assert is_valid_module(Path("tango/_tango.so.10.1.0.0"))
+    assert is_trackable(Path("tango/_tango.so.10"))
+    assert is_trackable(Path("tango/_tango.so.10.1.0.0"))
 
     # Invalid identifiers are rejected
-    assert not is_valid_module(Path("1one/two.py"))
-    assert not is_valid_module(Path("one/2two.py"))
-    assert not is_valid_module(Path("one/.py"))
-    assert not is_valid_module(Path(".py"))
+    assert not is_trackable(Path("1one/two.py"))
+    assert not is_trackable(Path("one/2two.py"))
+    assert not is_trackable(Path("one/.py"))
+    assert not is_trackable(Path(".py"))
 
 
 def test_is_module():
