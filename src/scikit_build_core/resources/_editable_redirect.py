@@ -254,6 +254,8 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self,
         known_source_files: dict[str, str],
         known_wheel_files: dict[str, str],
+        known_directories: dict[str, list[str]],
+        known_packages: list[str],
         path: str | None,
         rebuild: bool,
         verbose: bool,
@@ -272,33 +274,20 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.dir = dir
         self.install_dir = os.path.join(DIR, install_dir)
 
-        # Construct the __path__ of all resource files
-        # I.e. the paths of all package-like objects
+        # Construct the __path__ of all package-like objects. known_directories
+        # maps each package to the directories that make up its __path__,
+        # covering importable modules and data/resource files alike (so
+        # importlib.resources can navigate directories that hold only data).
+        # Install-tree paths are relative and joined with this file's directory;
+        # source-tree paths are already absolute.
         submodule_search_locations: dict[str, set[str]] = {}
-        pkgs: list[str] = []
-        # Loop over both python native source files and cmake installed ones
-        for tree in (known_source_files, known_wheel_files):
-            for module, file in tree.items():
-                # Strip the last element of the module
-                parent = ".".join(module.split(".")[:-1])
-                # Check if it is a package
-                if os.path.basename(file).partition(".")[0] == "__init__":
-                    parent = module
-                    pkgs.append(parent)
-                # Skip if it's a root module (there are no search paths for these)
-                if not parent:
-                    continue
-                # Initialize the tree element if needed
-                submodule_search_locations.setdefault(parent, set())
-                # Add the parent path to the dictionary values
-                parent_path = os.path.dirname(file)
-                if not parent_path:
-                    # root modules are skipped so all files should be in a parent package
-                    msg = f"Unexpected path to source file: {file} [{module}]"
-                    raise ImportError(msg)
+        for parent, parent_paths in known_directories.items():
+            locations = submodule_search_locations.setdefault(parent, set())
+            for parent_path in parent_paths:
                 if not os.path.isabs(parent_path):
-                    parent_path = os.path.join(self.dir, parent_path)
-                submodule_search_locations[parent].add(parent_path)
+                    parent_path = os.path.join(self.dir, parent_path)  # noqa: PLW2901
+                locations.add(parent_path)
+        pkgs = list(known_packages)
         # Second pass: propagate build-tree paths from parent packages to
         # sub-packages.  This covers the case where a Python package (with
         # __init__.py) lives in a directory that also contains CMake-generated
@@ -424,7 +413,9 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
 def install(
     known_source_files: dict[str, str],
     known_wheel_files: dict[str, str],
-    path: str | None,
+    known_directories: dict[str, list[str]] | None = None,
+    known_packages: list[str] | None = None,
+    path: str | None = None,
     rebuild: bool = False,
     verbose: bool = False,
     build_options: list[str] | None = None,
@@ -437,12 +428,17 @@ def install(
 
     :param known_source_files: A mapping of module names to source files
     :param known_wheel_files: A mapping of module names to wheel files
+    :param known_directories: A mapping of package names to the directories that
+                              make up their __path__ (covers data-only dirs)
+    :param known_packages: The packages that have an __init__ (regular packages)
     :param path: The path to the build directory, or None
     :param verbose: Whether to print the cmake commands (also controlled by the
                     SKBUILD_EDITABLE_VERBOSE environment variable)
     :param install_dir: The wheel install directory override, if one was
                         specified
     """
+    known_directories = known_directories or {}
+    known_packages = known_packages or []
     # PEP 829 .start entry points may be invoked more than once (e.g. CPython
     # 3.15.0b1 processes a venv's site-packages twice during startup), unlike a
     # .pth `import` line whose side effects run once via the module cache.
@@ -463,6 +459,8 @@ def install(
         ScikitBuildRedirectingFinder(
             known_source_files,
             known_wheel_files,
+            known_directories,
+            known_packages,
             path,
             rebuild,
             verbose,

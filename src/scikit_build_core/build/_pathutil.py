@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.machinery
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -11,7 +12,21 @@ from ._file_processor import each_unignored_file
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, Sequence
 
-__all__ = ["is_valid_module", "packages_to_file_mapping", "path_to_module", "scantree"]
+__all__ = [
+    "is_module",
+    "is_trackable",
+    "module_loader_rank",
+    "packages_to_file_mapping",
+    "path_to_module",
+    "scantree",
+]
+
+# Importable suffixes for this interpreter, in order.
+_MODULE_SUFFIXES = (
+    *importlib.machinery.EXTENSION_SUFFIXES,
+    *importlib.machinery.SOURCE_SUFFIXES,
+    *importlib.machinery.BYTECODE_SUFFIXES,
+)
 
 
 def __dir__() -> list[str]:
@@ -29,7 +44,7 @@ def scantree(path: Path) -> Generator[Path, None, None]:
 
 def path_to_module(path: Path) -> str:
     name, _, _ = path.name.partition(".")
-    assert name, f"Empty name should be filtered by is_valid_module first, got {path}"
+    assert name, f"Empty name should be filtered by is_trackable first, got {path}"
     path = path.with_name(name)
     if path.name == "__init__":
         path = path.parent
@@ -70,9 +85,48 @@ def packages_to_file_mapping(
     return mapping
 
 
-def is_valid_module(path: Path) -> bool:
+def is_trackable(path: Path) -> bool:
+    """
+    True if ``path`` should be tracked in an editable install.
+
+    This is intentionally broad: it accepts data/resource files (``.txt``,
+    ``.pyx``, ``.pxd``, ...) as well as importable modules, so that the editable
+    redirect registers their directories and ``importlib.resources`` can find
+    them. Use :func:`is_module` to tell whether a tracked file is importable.
+    """
     parts = path.parts
     return (
         all(p.isidentifier() for p in parts[:-1])
-        and parts[-1].split(".", 1)[0].isidentifier()
+        and parts[-1].partition(".")[0].isidentifier()
     )
+
+
+def module_loader_rank(path: Path) -> int:
+    """
+    Index of ``path``'s suffix in Python's import loader precedence.
+
+    A file maps to the module name before its first ``.``; the rest is its
+    suffix. Ranking by that suffix's position in the FileFinder order (extension
+    tags first, then ``.py``, then ``.pyc``) makes a shared module name resolve
+    to the same file a real wheel import would load -- ``mod.cpython-313-...so``
+    beats ``mod.abi3.so`` beats ``mod.so`` beats ``mod.py``. Non-importable files
+    -- data and versioned shared libraries like ``_tango.so.10`` -- rank last
+    (#1144).
+    """
+    _, dot, rest = path.name.partition(".")
+    suffix = dot + rest
+    try:
+        return _MODULE_SUFFIXES.index(suffix)
+    except ValueError:
+        return len(_MODULE_SUFFIXES)
+
+
+def is_module(path: Path) -> bool:
+    """
+    True if ``path``'s suffix is one this interpreter imports (``.py``, ``.pyc``,
+    or an extension suffix like ``.so``/``.pyd``/``.abi3.so``).
+
+    Versioned shared libraries like ``_tango.so.10`` alias the real ``_tango.so``
+    and are not importable, so they never shadow it (#1144).
+    """
+    return module_loader_rank(path) < len(_MODULE_SUFFIXES)
