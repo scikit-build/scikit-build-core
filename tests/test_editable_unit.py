@@ -237,14 +237,7 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
 def test_navigate_editable_remapped_namespace(
     tmp_path: Path, virtualenv: VEnv, monkeypatch: pytest.MonkeyPatch
 ):
-    # Regression test for #1040: a namespace subpackage (a directory with no
-    # __init__) remapped by wheel.packages from a source location *outside* the
-    # parent package's source tree must still be importable in an editable
-    # install. The parent's __path__ does not physically contain it, so the
-    # standard PathFinder cannot resolve it and the redirect finder has to
-    # synthesize the namespace spec from the tracked search locations. Unlike
-    # the resource-reading parts of test_navigate_editable_pkg, this works on
-    # every supported Python (including 3.9).
+    # Regression test for #1040
     site_packages = virtualenv.purelib
 
     source_dir = tmp_path / "source"
@@ -297,9 +290,6 @@ def test_navigate_editable_remapped_namespace(
     assert out == "remapped"
 
     # importlib.resources must reach data in the remapped namespace directory.
-    # files() only exists from 3.9; on 3.8 the older read_text() API resolves
-    # the same way, via the loader's get_resource_reader().open_resource(). The
-    # subprocess venv shares this interpreter's version, so branch on it here.
     if sys.version_info >= (3, 9):
         read_data = (
             "from importlib.resources import files;"

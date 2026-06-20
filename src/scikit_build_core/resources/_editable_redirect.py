@@ -359,12 +359,9 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         if fullname in self.known_source_files:
             origin = self.known_source_files[fullname]
             return self._make_spec(fullname, origin, submodule_search_locations)
+
         # A tracked package directory without an importable __init__ is a
-        # namespace package. Its parent's __path__ need not physically contain
-        # it -- wheel.packages can remap it from an unrelated source location --
-        # so the standard PathFinder cannot resolve it. Synthesize a namespace
-        # spec from the tracked search locations, with a loader that exposes a
-        # resource reader spanning every location.
+        # namespace package.
         if submodule_search_locations is not None:
             loader = _ScikitBuildNamespaceLoader(submodule_search_locations)
             spec = importlib.util.spec_from_loader(
