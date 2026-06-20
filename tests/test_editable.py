@@ -21,10 +21,6 @@ import pytest
         pytest.param(
             False,
             id="datafolder",
-            marks=pytest.mark.xfail(
-                sys.version_info[:2] == (3, 9),
-                reason="Python 3.9 redirect does not support resource-only data folders yet",
-            ),
         ),
     ],
 )

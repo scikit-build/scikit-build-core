@@ -297,11 +297,14 @@ def test_navigate_editable_remapped_namespace(
     assert out == "remapped"
 
     # importlib.resources must reach data in the remapped namespace directory.
-    data = virtualenv.execute(
-        "from importlib.resources import files;"
-        " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
-    )
-    assert data == "payload"
+    # importlib.resources.files() only exists from 3.9 (matches the resource
+    # checks in test_navigate_editable_pkg).
+    if sys.version_info >= (3, 9):
+        data = virtualenv.execute(
+            "from importlib.resources import files;"
+            " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
+        )
+        assert data == "payload"
 
 
 def test_editable_redirect_files_legacy_pth(tmp_path: Path):
