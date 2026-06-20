@@ -144,7 +144,7 @@ def configure_build_install(
     """
     Configure, build, and install the CMake project into ``wheel_dirs``.
 
-    Returns the :class:`Builder` along with the ``build_options`` and
+    Returns the :class:`~scikit_build_core.builder.builder.Builder` along with the ``build_options`` and
     ``install_options`` (``--config``/``-v``) derived from the resolved
     generator. The install step is skipped for editable inplace builds. When
     ``exit_after_config`` is set, returns right after configuring (with empty
