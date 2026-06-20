@@ -6,7 +6,6 @@ import os
 import platform
 import shutil
 import sys
-import sysconfig
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -19,16 +18,8 @@ from .._compat import tomllib
 from .._compat.typing import assert_never
 from .._logging import LEVEL_VALUE, logger, rich_error, rich_print
 from .._variants import get_wheel_variant
-from ..builder.builder import (
-    Builder,
-    archs_to_tags,
-    get_archs,
-    get_cmake_args_from_settings,
-)
-from ..builder.wheel_tag import WheelTag
-from ..cmake import CMake, CMaker
+from ..cmake import CMake
 from ..errors import FailedLiveProcessError
-from ..format import pyproject_format
 from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
@@ -42,6 +33,7 @@ from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
+from .std_wheel_build import configure_build_install, prepare_wheel_dirs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -262,11 +254,6 @@ def _build_wheel_impl_impl(
         cmake = None
         cmake_msg = []
 
-    if settings.wheel.platlib is None:
-        targetlib = "platlib" if settings.wheel.cmake else "purelib"
-    else:
-        targetlib = "platlib" if settings.wheel.platlib else "purelib"
-
     rich_print(
         "{green}*** {bold}scikit-build-core {__version__}",
         *cmake_msg,
@@ -288,47 +275,19 @@ def _build_wheel_impl_impl(
         wheel_dir = build_tmp_folder / "wheel"
         wheel_variant = get_wheel_variant(settings, pyproject, metadata)
 
-        cmake_args = get_cmake_args_from_settings(settings, os.environ)
-        tags = WheelTag.compute_best(
-            archs_to_tags(get_archs(os.environ, cmake_args)),
-            settings.wheel.py_api,
-            expand_macos=settings.wheel.expand_macos_universal_tags,
-            root_is_purelib=targetlib == "purelib",
-            build_tag=settings.wheel.build_tag,
-            cmake_defines=settings.cmake.define,
-            cmake_args=cmake_args,
+        wheel_layout = prepare_wheel_dirs(
+            settings=settings,
+            wheel_root=wheel_dir,
+            build_tmp_folder=build_tmp_folder,
+            state=state,
+            editable=editable,
+            has_cmake=cmake is not None,
         )
-
-        # A build dir can be specified, otherwise use a temporary directory
-        if cmake is not None and editable and settings.editable.mode == "inplace":
-            build_dir = settings.cmake.source_dir
-        else:
-            build_dir = (
-                Path(
-                    settings.build_dir.format(
-                        **pyproject_format(
-                            settings=settings,
-                            tags=tags,
-                            state=state,
-                        )
-                    )
-                )
-                if settings.build_dir
-                else build_tmp_folder / "build"
-            )
-            logger.info("Build directory: {}", build_dir.resolve())
-
-        wheel_dirs = {
-            targetlib: wheel_dir / targetlib,
-            "data": wheel_dir / "data",
-            "headers": wheel_dir / "headers",
-            "scripts": wheel_dir / "scripts",
-            "null": wheel_dir / "null",
-            "metadata": wheel_dir / "metadata",
-        }
-
-        for d in wheel_dirs.values():
-            d.mkdir(parents=True)
+        tags = wheel_layout.tags
+        build_dir = wheel_layout.build_dir
+        wheel_dirs = wheel_layout.wheel_dirs
+        install_dir = wheel_layout.install_dir
+        targetlib = wheel_layout.targetlib
 
         # The metadata-only and full-wheel paths build identical WheelWriters
         # except for the output folder; share a single constructor.
@@ -346,14 +305,6 @@ def _build_wheel_impl_impl(
                 wheel_variant.dist_info_contents if wheel_variant else None
             ),
         )
-
-        install_base, install_rest = resolve_wheel_tree(
-            settings.wheel.install_dir,
-            wheel_dirs=wheel_dirs,
-            targetlib=targetlib,
-            experimental=settings.experimental,
-        )
-        install_dir = install_base / install_rest
 
         # Include the metadata license.file entry if provided
         if metadata.license_files is not None:
@@ -434,68 +385,24 @@ def _build_wheel_impl_impl(
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(contents, encoding="utf-8")
 
-        build_options = []
-        install_options = []
+        build_options: list[str] = []
+        install_options: list[str] = []
 
         if cmake is not None:
-            config = CMaker(
-                cmake,
-                source_dir=settings.cmake.source_dir,
-                build_dir=build_dir,
-                build_type=settings.cmake.build_type,
-            )
-
-            builder = Builder(
+            _builder, build_options, install_options = configure_build_install(
+                cmake=cmake,
                 settings=settings,
-                config=config,
-            )
-
-            rich_print("{green}***", "{bold}Configuring CMake...")
-            # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
-            # Otherwise `cmake --install --prefix` would work by itself
-            defines = {"CMAKE_INSTALL_PREFIX": install_dir}
-            cache_entries: dict[str, str | Path] = {
-                f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
-            }
-            cache_entries["SKBUILD_STATE"] = state
-            builder.configure(
-                defines=defines,
-                cache_entries=cache_entries,
+                wheel_dirs=wheel_dirs,
+                install_dir=install_dir,
+                build_dir=build_dir,
+                state=state,
                 name=metadata.name,
                 version=metadata.version,
+                editable=editable,
+                exit_after_config=exit_after_config,
             )
-
             if exit_after_config:
                 return WheelImplReturn("", settings=settings)
-
-            default_gen = (
-                "MSVC"
-                if sysconfig.get_platform().startswith("win")
-                else "Default Generator"
-            )
-            generator = builder.get_generator() or default_gen
-            rich_print(
-                "{green}***",
-                f"{{bold}}Building project with {{blue}}{generator}{{default}}...",
-            )
-
-            # These are the args before the `--`, directly to `--build`
-            # (there are none here)
-            build_args: list[str] = []
-            builder.build(build_args=build_args)
-
-            if not (editable and settings.editable.mode == "inplace"):
-                rich_print(
-                    "{green}***",
-                    "{bold}Installing project into wheel...",
-                )
-                builder.install(install_dir)
-
-            if not builder.config.single_config and builder.config.build_type:
-                build_options += ["--config", builder.config.build_type]
-                install_options += ["--config", builder.config.build_type]
-            if builder.settings.cmake.verbose:
-                build_options.append("-v")
 
         assert wheel_directory is not None
 

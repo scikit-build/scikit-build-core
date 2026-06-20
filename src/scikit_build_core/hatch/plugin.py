@@ -1,12 +1,9 @@
-# pylint: disable=duplicate-code
-
 from __future__ import annotations
 
 import copy
 import importlib.metadata
 import os
 import shutil
-import sysconfig
 import tempfile
 import typing
 from pathlib import Path
@@ -23,21 +20,10 @@ from ..build._editable import (
     get_packages,
 )
 from ..build._init import setup_logging
-from ..build._pathutil import (
-    packages_to_file_mapping,
-    resolve_wheel_tree,
-    scantree,
-)
-from ..builder.builder import (
-    Builder,
-    archs_to_tags,
-    get_archs,
-    get_cmake_args_from_settings,
-)
+from ..build._pathutil import packages_to_file_mapping, scantree
+from ..build.std_wheel_build import configure_build_install, prepare_wheel_dirs
 from ..builder.get_requires import GetRequires
-from ..builder.wheel_tag import WheelTag
-from ..cmake import CMake, CMaker
-from ..format import pyproject_format
+from ..cmake import CMake
 from ..settings.skbuild_model import ScikitBuildSettings
 from ..settings.skbuild_read_settings import SettingsReader
 
@@ -177,112 +163,40 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
         wheel_dir = self.__tmp_dir / "wheel"
 
-        cmake_args = get_cmake_args_from_settings(settings, os.environ)
-        tags = WheelTag.compute_best(
-            archs_to_tags(get_archs(os.environ, cmake_args)),
-            settings.wheel.py_api,
-            expand_macos=settings.wheel.expand_macos_universal_tags,
-            build_tag=settings.wheel.build_tag,
-            cmake_defines=settings.cmake.define,
-            cmake_args=cmake_args,
+        wheel_layout = prepare_wheel_dirs(
+            settings=settings,
+            wheel_root=wheel_dir,
+            build_tmp_folder=self.__tmp_dir,
+            state=state,
+            editable=editable,
+            has_cmake=True,
         )
+        tags = wheel_layout.tags
+        build_dir = wheel_layout.build_dir
+        wheel_dirs = wheel_layout.wheel_dirs
+        install_dir = wheel_layout.install_dir
+        targetlib = wheel_layout.targetlib
         # _validate guarantees wheel.cmake is true and rejects a falsy
         # wheel.platlib (purelib), so this is always a platlib build.
-        targetlib = "platlib"
+        assert targetlib == "platlib"
 
         build_data["tag"] = str(tags)
         build_data["pure_python"] = False
 
-        if editable and settings.editable.mode == "inplace":
-            build_dir = Path(settings.cmake.source_dir)
-        else:
-            build_dir = (
-                Path(
-                    settings.build_dir.format(
-                        **pyproject_format(
-                            settings=settings,
-                            tags=tags,
-                            state=state,
-                        )
-                    )
-                )
-                if settings.build_dir
-                else self.__tmp_dir / "build"
-            )
-        logger.info("Build directory: {}", build_dir.resolve())
-
-        wheel_dirs = {
-            targetlib: wheel_dir / targetlib,
-            "data": wheel_dir / "data",
-            "headers": wheel_dir / "headers",
-            "scripts": wheel_dir / "scripts",
-            "null": wheel_dir / "null",
-            "metadata": wheel_dir / "metadata",
-        }
-
-        for d in wheel_dirs.values():
-            d.mkdir(parents=True)
-
-        install_base, install_rest = resolve_wheel_tree(
-            settings.wheel.install_dir,
-            wheel_dirs=wheel_dirs,
-            targetlib=targetlib,
-            experimental=settings.experimental,
-        )
-        install_dir = install_base / install_rest
-
-        config = CMaker(
-            cmake,
-            source_dir=settings.cmake.source_dir,
-            build_dir=build_dir,
-            build_type=settings.cmake.build_type,
-        )
-
-        builder = Builder(
+        _builder, build_options, install_options = configure_build_install(
+            cmake=cmake,
             settings=settings,
-            config=config,
-        )
-
-        rich_print("{green}***", "{bold}Configuring CMake...")
-        # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
-        # Otherwise `cmake --install --prefix` would work by itself
-        defines = {"CMAKE_INSTALL_PREFIX": install_dir}
-        cache_entries: dict[str, str | Path] = {
-            f"SKBUILD_{k.upper()}_DIR": v for k, v in wheel_dirs.items()
-        }
-        cache_entries["SKBUILD_STATE"] = state
-        cache_entries["SKBUILD_HATCHLING"] = importlib.metadata.version("hatchling")
-        builder.configure(
-            defines=defines,
-            cache_entries=cache_entries,
+            wheel_dirs=wheel_dirs,
+            install_dir=install_dir,
+            build_dir=build_dir,
+            state=state,
             name=self.build_config.builder.metadata.name,
             version=Version(self.build_config.builder.metadata.version),
+            editable=editable,
+            extra_cache_entries={
+                "SKBUILD_HATCHLING": importlib.metadata.version("hatchling")
+            },
         )
-
-        default_gen = (
-            "MSVC"
-            if sysconfig.get_platform().startswith("win")
-            else "Default Generator"
-        )
-        generator = builder.get_generator() or default_gen
-        rich_print(
-            "{green}***",
-            f"{{bold}}Building project with {{blue}}{generator}{{default}}...",
-        )
-        build_options: list[str] = []
-        install_options: list[str] = []
-        build_args: list[str] = []
-        builder.build(build_args=build_args)
-
-        if not (editable and settings.editable.mode == "inplace"):
-            rich_print("{green}***", "{bold}Installing project into wheel...")
-            builder.install(install_dir)
-
-        if not builder.config.single_config and builder.config.build_type:
-            build_options += ["--config", builder.config.build_type]
-            install_options += ["--config", builder.config.build_type]
-        if builder.settings.cmake.verbose:
-            build_options.append("-v")
 
         files = list(wheel_dirs["headers"].iterdir())
         if files:
