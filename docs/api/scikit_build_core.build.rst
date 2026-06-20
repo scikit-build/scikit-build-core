@@ -33,6 +33,14 @@ scikit\_build\_core.build.sdist module
    :show-inheritance:
    :undoc-members:
 
+scikit\_build\_core.build.std\_wheel\_build module
+--------------------------------------------------
+
+.. automodule:: scikit_build_core.build.std_wheel_build
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.build.wheel module
 --------------------------------------
 
