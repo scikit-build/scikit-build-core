@@ -219,6 +219,32 @@ class _ScikitBuildResourceLoaderWrapper:
         return _ScikitBuildEditableReader(self._skbuild_paths)
 
 
+class _ScikitBuildNamespaceLoader:
+    """
+    Loader for a synthesized namespace package (a tracked directory with no
+    importable __init__).
+
+    Returning None from create_module and doing nothing in exec_module mirrors
+    namespace-package semantics, while __path__ (set on the spec) carries every
+    tracked search location. A dedicated loader -- rather than a loader-less
+    namespace spec -- is required so importlib.resources can read data across
+    all locations: the stdlib NamespaceReader only accepts a real
+    _NamespacePath, which cannot be constructed from remapped directories.
+    """
+
+    def __init__(self, search_paths: list[str]) -> None:
+        self._skbuild_paths = search_paths
+
+    def create_module(self, spec: object) -> object:
+        return None
+
+    def exec_module(self, module: object) -> None:
+        return None
+
+    def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
+        return _ScikitBuildEditableReader(self._skbuild_paths)
+
+
 def _patch_importlib_resources_for_python39() -> None:
     """
     Make importlib.resources.files() honor the editable resource reader on Python 3.9.
@@ -241,7 +267,9 @@ def _patch_importlib_resources_for_python39() -> None:
 
     def fallback_resources(spec: object) -> object:
         loader = getattr(spec, "loader", None)
-        if isinstance(loader, _ScikitBuildResourceLoaderWrapper):
+        if isinstance(
+            loader, (_ScikitBuildResourceLoaderWrapper, _ScikitBuildNamespaceLoader)
+        ):
             return loader.get_resource_reader(getattr(spec, "name", "")).files()
         return original_fallback_resources(spec)
 
@@ -331,6 +359,22 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         if fullname in self.known_source_files:
             origin = self.known_source_files[fullname]
             return self._make_spec(fullname, origin, submodule_search_locations)
+        # A tracked package directory without an importable __init__ is a
+        # namespace package. Its parent's __path__ need not physically contain
+        # it -- wheel.packages can remap it from an unrelated source location --
+        # so the standard PathFinder cannot resolve it. Synthesize a namespace
+        # spec from the tracked search locations, with a loader that exposes a
+        # resource reader spanning every location.
+        if submodule_search_locations is not None:
+            loader = _ScikitBuildNamespaceLoader(submodule_search_locations)
+            spec = importlib.util.spec_from_loader(
+                fullname,
+                loader,  # type: ignore[arg-type]
+                is_package=True,
+            )
+            if spec is not None:
+                spec.submodule_search_locations = submodule_search_locations
+            return spec
         return None
 
     def _make_spec(
