@@ -297,14 +297,20 @@ def test_navigate_editable_remapped_namespace(
     assert out == "remapped"
 
     # importlib.resources must reach data in the remapped namespace directory.
-    # importlib.resources.files() only exists from 3.9 (matches the resource
-    # checks in test_navigate_editable_pkg).
+    # files() only exists from 3.9; on 3.8 the older read_text() API resolves
+    # the same way, via the loader's get_resource_reader().open_resource(). The
+    # subprocess venv shares this interpreter's version, so branch on it here.
     if sys.version_info >= (3, 9):
-        data = virtualenv.execute(
+        read_data = (
             "from importlib.resources import files;"
             " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
         )
-        assert data == "payload"
+    else:
+        read_data = (
+            "from importlib.resources import read_text;"
+            " print(read_text('pkg.namespace', 'data.txt'))"
+        )
+    assert virtualenv.execute(read_data) == "payload"
 
 
 def test_editable_redirect_files_legacy_pth(tmp_path: Path):
