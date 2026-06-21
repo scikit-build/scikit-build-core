@@ -142,9 +142,6 @@ def editable_package(
     return EditablePackage(site_packages, pkg_dir, src_pkg_dir)
 
 
-@pytest.mark.xfail(
-    sys.version_info[:2] == (3, 9), reason="Python 3.9 not supported yet"
-)
 def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VEnv):
     site_packages, pkg_dir, src_pkg_dir = editable_package
 
@@ -235,6 +232,75 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     if sys.version_info >= (3, 9):
         virtualenv.execute("import pkg.src_files")
         virtualenv.execute("import pkg.installed_files")
+
+
+def test_navigate_editable_remapped_namespace(
+    tmp_path: Path, virtualenv: VEnv, monkeypatch: pytest.MonkeyPatch
+):
+    # Regression test for #1040
+    site_packages = virtualenv.purelib
+
+    source_dir = tmp_path / "source"
+    source_dir.mkdir()
+    monkeypatch.chdir(source_dir)
+
+    # Regular package at its own location ...
+    pkg_src = source_dir / "lang" / "pkg"
+    pkg_src.mkdir(parents=True)
+    pkg_src.joinpath("__init__.py").touch()
+
+    # ... and a namespace subpackage living somewhere unrelated, merged in as
+    # pkg.namespace by wheel.packages, holding both a module and a data file.
+    extras_src = source_dir / "extras"
+    extras_src.mkdir()
+    extras_src.joinpath("demo.py").write_text("value = 'remapped'\n")
+    extras_src.joinpath("data.txt").write_text("payload")
+
+    modules = {
+        "pkg": str(pkg_src / "__init__.py"),
+        "pkg.namespace.demo": str(extras_src / "demo.py"),
+    }
+    directories = {
+        "pkg": [str(pkg_src)],
+        "pkg.namespace": [str(extras_src)],
+    }
+    editable_txt = editable_redirect(
+        modules=modules,
+        installed={},
+        directories=directories,
+        packages=["pkg"],
+        reload_dir=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        install_dir="",
+    )
+
+    site_packages.joinpath("_editable_skbc_pkg.py").write_text(editable_txt)
+    site_packages.joinpath("_editable_skbc_pkg.pth").write_text(
+        "import _editable_skbc_pkg\n"
+    )
+
+    # Importing the bare namespace package and a module under it must both work.
+    virtualenv.execute("import pkg.namespace")
+    out = virtualenv.execute(
+        "import pkg.namespace.demo; print(pkg.namespace.demo.value)"
+    )
+    assert out == "remapped"
+
+    # importlib.resources must reach data in the remapped namespace directory.
+    if sys.version_info >= (3, 9):
+        read_data = (
+            "from importlib.resources import files;"
+            " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
+        )
+    else:
+        read_data = (
+            "from importlib.resources import read_text;"
+            " print(read_text('pkg.namespace', 'data.txt'))"
+        )
+    assert virtualenv.execute(read_data) == "payload"
 
 
 def test_editable_redirect_files_legacy_pth(tmp_path: Path):
