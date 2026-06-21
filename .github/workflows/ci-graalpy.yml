@@ -1,0 +1,62 @@
+name: CI (GraalPy)
+
+# GraalPy is slow (a serial test run takes ~35 min) and is therefore opt-in:
+# the job only runs on PRs carrying the "graalpy" label. `labeled` lets adding
+# the label start it without a new push; `synchronize` reruns it on later pushes
+# to an already-labeled PR. Keeping it in its own workflow means toggling labels
+# does not retrigger the main CI workflow.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 3
+
+permissions: {}
+
+jobs:
+  graalpy:
+    name: 🐍 GraalPy 25.0 • CMake 4.0 on ubuntu-latest
+    runs-on: ubuntu-latest
+    if:
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'graalpy')
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "graalpy-25.0"
+          allow-prereleases: true
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: Setup CMake 4.0
+        uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2.2.0
+        with:
+          cmake-version: "4.0"
+
+      - name: Install package (uv)
+        # --no-config bypasses [tool.uv].exclude-newer, which otherwise filters
+        # out the date-less numpy wheels served by the GraalVM index.
+        run:
+          uv pip install --no-config -e.[wheels,wheel-free-setuptools]
+          --group=dev --system --only-binary=numpy
+          --extra-index-url=https://www.graalvm.org/python/wheels/
+          --index-strategy=unsafe-best-match
+
+      - name: Test package (serial)
+        # GraalPy is too slow for xdist here; run serially.
+        run: pytest -ra -v --showlocals --durations=20
+        env:
+          PIP_ONLY_BINARY: numpy
+          PIP_EXTRA_INDEX_URL: https://www.graalvm.org/python/wheels/

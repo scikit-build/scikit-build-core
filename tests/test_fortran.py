@@ -1,4 +1,5 @@
 import shutil
+import sys
 import sysconfig
 import zipfile
 from pathlib import Path
@@ -37,6 +38,10 @@ ninja_info = best_program(get_ninja_programs(), version=SpecifierSet(">=1.10"))
 )
 @pytest.mark.skipif(
     ninja_info is None, reason="Ninja needs to be 1.10+ to support Fortran with CMake"
+)
+@pytest.mark.skipif(
+    sys.implementation.name == "graalpy",
+    reason="GraalPy segfaults calling a Fortran extension through numpy",
 )
 def test_pep517_wheel(tmp_path, monkeypatch, virtualenv):
     dist = tmp_path / "dist"

@@ -458,7 +458,9 @@ def test_is_module():
 )
 def test_is_module_rejects_versioned_sonames():
     assert is_module(Path("tango/_tango.so"))
-    assert is_module(Path("tango/_tango.abi3.so"))
+    if ".abi3.so" in importlib.machinery.EXTENSION_SUFFIXES:
+        # GraalPy and other non-CPython interpreters may not support abi3.
+        assert is_module(Path("tango/_tango.abi3.so"))
 
     # Versioned sonames are not importable (PEP 3149); they alias the real
     # _tango.so and must not resolve as the module (issue #1144).
