@@ -262,6 +262,19 @@ class SDistSettings:
     If set to True, CMake will be run before building the SDist.
     """
 
+    resolve_symlinks: Optional[bool] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(display_default="true"),
+    )
+    """
+    Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
+
+    If not set, it will be ``true`` unless you set the minimum version below 0.13,
+    in which case it will be ``false`` to preserve backward compatibility.
+
+    .. versionadded: 0.13
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
