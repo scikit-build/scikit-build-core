@@ -13,16 +13,35 @@ from ..program_search import best_program, get_make_programs, get_ninja_programs
 from .sysconfig import get_cmake_platform
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, MutableMapping
+    from collections.abc import Iterable, Mapping, MutableMapping
 
     from ..cmake import CMake
     from ..settings.skbuild_model import NinjaSettings
 
-__all__ = ["set_environment_for_gen"]
+__all__ = ["parse_generator", "set_environment_for_gen"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def parse_generator(args: Iterable[str]) -> str | None:
+    """
+    Extract the generator from a sequence of CMake arguments, handling both the
+    joined ``-GNinja`` and the two-token ``-G Ninja`` forms. Returns the last
+    generator specified, or None if no ``-G`` is present.
+    """
+    result: str | None = None
+    expecting_value = False
+    for arg in args:
+        if expecting_value:
+            result = arg.strip()
+            expecting_value = False
+        elif arg == "-G":
+            expecting_value = True
+        elif arg.startswith("-G"):
+            result = arg[2:].strip()
+    return result
 
 
 def parse_help_default(txt: str) -> str | None:

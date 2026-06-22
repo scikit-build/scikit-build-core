@@ -18,6 +18,7 @@ from . import __version__
 from ._compat.builtins import ExceptionGroup
 from ._logging import logger
 from ._shutil import Run
+from .builder.generator import parse_generator
 from .errors import CMakeConfigError, CMakeNotFoundError, FailedLiveProcessError
 from .file_api.query import stateless_query
 from .file_api.reply import load_reply_dir
@@ -250,9 +251,9 @@ class CMaker:
         Try to get the generator that will be used to build the project. If it's
         not set, return None (default generator will be used).
         """
-        generators = [g for g in args if g.startswith("-G")]
-        if generators:
-            return generators[-1][2:].strip()
+        generator = parse_generator(args)
+        if generator:
+            return generator
         if defines and "CMAKE_GENERATOR" in defines:
             gen_value = defines["CMAKE_GENERATOR"]
             assert isinstance(gen_value, str)

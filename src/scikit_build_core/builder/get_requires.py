@@ -4,6 +4,7 @@ import dataclasses
 import functools
 import importlib.util
 import os
+import shlex
 import sysconfig
 from typing import TYPE_CHECKING, Literal
 
@@ -22,6 +23,7 @@ from ..program_search import (
 from ..resources import resources
 from ..settings.skbuild_read_settings import SettingsReader
 from ._load_provider import load_provider
+from .generator import parse_generator
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
@@ -41,9 +43,10 @@ def _uses_ninja_generator(settings: ScikitBuildSettings) -> bool | None:
     Returns True if Ninja is set, False if something else is set, and None
     otherwise.
     """
-    gen_args = [arg[2:] for arg in settings.cmake.args if arg.startswith("-G")]
-    if gen_args:
-        return any("Ninja" in gen for gen in gen_args)
+    args = [*settings.cmake.args, *shlex.split(os.environ.get("CMAKE_ARGS", ""))]
+    generator = parse_generator(args)
+    if generator:
+        return "Ninja" in generator
 
     if "CMAKE_GENERATOR" in os.environ:
         return "Ninja" in os.environ["CMAKE_GENERATOR"]
