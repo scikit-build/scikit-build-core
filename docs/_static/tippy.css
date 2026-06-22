@@ -1,28 +1,41 @@
 /*
- * sphinx-tippy loads tippy.js with its default dark theme (#333 box), but the
- * tip content is furo page HTML styled with furo's theme variables. The result
- * is a dark box wrapping light-mode content. Drive the box from the same furo
- * variables so it matches the page in both light and dark mode.
+ * sphinx-tippy renders tooltips with tippy.js, whose bundled themes hard-code
+ * light colors (#fff / #333). We use tippy's light-border theme (loaded in
+ * conf.py) for its outlined box and arrow, then recolor it from furo's theme
+ * variables so the tooltip matches the page in both light and dark mode.
  *
- * Box colors follow @lkubb's furo recipe:
+ * Colors follow @lkubb's furo recipe:
  * https://github.com/sphinx-extensions2/sphinx-tippy/issues/8#issuecomment-2311342324
  */
-.tippy-box {
+.tippy-box[data-theme~="light-border"] {
   background-color: var(--color-background-hover);
   color: var(--color-foreground-primary);
-  border: 1px solid var(--color-foreground-border);
+  border-color: var(--color-foreground-border);
 }
 
-/* The arrow color in tippy's default theme is set via per-placement borders. */
-.tippy-box[data-placement^="top"] > .tippy-arrow::before {
+/* Arrow fill (::before) follows the box; its outline (::after) the box border. */
+.tippy-box[data-theme~="light-border"][data-placement^="top"] > .tippy-arrow::before {
   border-top-color: var(--color-background-hover);
 }
-.tippy-box[data-placement^="bottom"] > .tippy-arrow::before {
+.tippy-box[data-theme~="light-border"][data-placement^="bottom"] > .tippy-arrow::before {
   border-bottom-color: var(--color-background-hover);
 }
-.tippy-box[data-placement^="left"] > .tippy-arrow::before {
+.tippy-box[data-theme~="light-border"][data-placement^="left"] > .tippy-arrow::before {
   border-left-color: var(--color-background-hover);
 }
-.tippy-box[data-placement^="right"] > .tippy-arrow::before {
+.tippy-box[data-theme~="light-border"][data-placement^="right"] > .tippy-arrow::before {
   border-right-color: var(--color-background-hover);
+}
+
+.tippy-box[data-theme~="light-border"][data-placement^="top"] > .tippy-arrow::after {
+  border-top-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="bottom"] > .tippy-arrow::after {
+  border-bottom-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="left"] > .tippy-arrow::after {
+  border-left-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="right"] > .tippy-arrow::after {
+  border-right-color: var(--color-foreground-border);
 }
