@@ -112,11 +112,14 @@ class Item:
 
     def config_settings(self) -> str:
         """
-        Formatted text with the equivalent ``config-settings`` key.
+        Formatted text with the equivalent ``config-settings`` keys.
+
+        Both the bare key and the namespaced ``skbuild.`` form are accepted.
         """
         if not self.flat_expressible():
             return ""
-        return f"\n  :config-settings: ``{self.item.name}``"
+        name = self.item.name
+        return f"\n  :config-settings: ``{name}`` or ``skbuild.{name}``"
 
     def env(self) -> str:
         """

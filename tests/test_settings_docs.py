@@ -29,7 +29,7 @@ def test_skbuild_docs_sphinx() -> None:
         textwrap.dedent("""\
     .. confval:: cmake.define
       :type: ``dict[str,CMakeSettingsDefine]``
-      :config-settings: ``cmake.define``
+      :config-settings: ``cmake.define`` or ``skbuild.cmake.define``
       :env: ``SKBUILD_CMAKE_DEFINE``
 
       A table of defines to pass to CMake when configuring the project. Additive.
@@ -40,7 +40,7 @@ def test_skbuild_docs_sphinx() -> None:
         textwrap.dedent("""\
     .. confval:: ninja.minimum-version
       :type: ``Version``
-      :config-settings: ``ninja.minimum-version``
+      :config-settings: ``ninja.minimum-version`` or ``skbuild.ninja.minimum-version``
       :env: ``SKBUILD_NINJA_MINIMUM_VERSION``
 
       DEPRECATED in 0.8; use version instead.
