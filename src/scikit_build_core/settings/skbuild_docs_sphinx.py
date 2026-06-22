@@ -18,6 +18,8 @@ if typing.TYPE_CHECKING:
 
 __all__ = ["mk_skbuild_docs"]
 
+_NONE_TYPE = type(None)
+
 
 def __dir__() -> list[str]:
     return __all__
@@ -40,7 +42,7 @@ def _flat_expressible(field_type: typing.Any) -> bool:
         return all(
             _flat_expressible(arg)
             for arg in get_args(field_type)
-            if arg is not type(None)
+            if arg is not _NONE_TYPE
         )
     if origin is dict:
         return get_origin(get_args(field_type)[1]) not in (dict, list)
