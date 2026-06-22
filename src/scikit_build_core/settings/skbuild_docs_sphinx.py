@@ -80,7 +80,8 @@ class Item:
     TEMPLATE: typing.ClassVar[str] = textwrap.dedent("""\
     ```{{eval-rst}}
     .. confval:: {item.name}
-      :type: ``{item.type}``{sphinx_default}{sphinx_config_settings}{sphinx_env}
+
+    {fields}
 
       {docs}
     ```
@@ -93,14 +94,6 @@ class Item:
         """
         return self.item.default in ('""', "[]", "{}")
 
-    def default(self) -> str:
-        """
-        Formatted text that includes the `:default:` key or not
-        """
-        if self.ignore_default():
-            return ""
-        return f"\n  :default: {self.item.default}"
-
     def flat_expressible(self) -> bool:
         """
         Whether the option can be set via ``config-settings`` or an env var.
@@ -110,25 +103,23 @@ class Item:
         """
         return "[]" not in self.item.name and _flat_expressible(self.item.field.type)
 
-    def config_settings(self) -> str:
+    def fields(self) -> str:
         """
-        Formatted text with the equivalent ``config-settings`` keys.
+        The rST field list rendered inside the confval body.
 
-        Both the bare key and the namespaced ``skbuild.`` form are accepted.
+        Besides type and default, this advertises the equivalent
+        ``config-settings`` keys (bare and ``skbuild.``-prefixed) and the
+        ``SKBUILD_*`` environment variable, where those forms apply.
         """
-        if not self.flat_expressible():
-            return ""
-        name = self.item.name
-        return f"\n  :config-settings: ``{name}`` or ``skbuild.{name}``"
-
-    def env(self) -> str:
-        """
-        Formatted text with the equivalent ``SKBUILD_*`` environment variable.
-        """
-        if not self.flat_expressible():
-            return ""
-        var = self.item.name.replace(".", "_").replace("-", "_").upper()
-        return f"\n  :env: ``SKBUILD_{var}``"
+        lines = [f":Type: ``{self.item.type}``"]
+        if not self.ignore_default():
+            lines.append(f":Default: {self.item.default}")
+        if self.flat_expressible():
+            name = self.item.name
+            var = name.replace(".", "_").replace("-", "_").upper()
+            lines.append(f":Config-settings: ``{name}`` or ``skbuild.{name}``")
+            lines.append(f":Environment variable: ``SKBUILD_{var}``")
+        return "\n".join(f"  {line}" for line in lines)
 
     def format(self) -> str:
         # Replace all new-lines with appropriately rst indented lines
@@ -137,9 +128,7 @@ class Item:
         docs = docs.replace("\n  \n", "\n\n")
         return self.TEMPLATE.format(
             item=self.item,
-            sphinx_default=self.default(),
-            sphinx_config_settings=self.config_settings(),
-            sphinx_env=self.env(),
+            fields=self.fields(),
             docs=docs,
         )
 
