@@ -9,6 +9,7 @@ import textwrap
 import typing
 from collections import OrderedDict
 
+from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
 
@@ -20,6 +21,28 @@ __all__ = ["mk_skbuild_docs"]
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def _env_expressible(field_type: typing.Any) -> bool:
+    """
+    Whether a field can be set through a flat ``SKBUILD_*`` environment variable.
+
+    Nested mappings (e.g. a dict of dicts) can't round-trip through a single
+    environment string, so no env var is advertised for them. Dicts of scalars
+    (including ``cmake.define``) and lists of scalars are fine.
+    """
+    origin = get_origin(field_type)
+    if origin is Annotated:
+        return _env_expressible(get_args(field_type)[0])
+    if origin is typing.Union:
+        return all(
+            _env_expressible(arg)
+            for arg in get_args(field_type)
+            if arg is not type(None)
+        )
+    if origin is dict:
+        return get_origin(get_args(field_type)[1]) not in (dict, list)
+    return True
 
 
 @dataclasses.dataclass
@@ -55,7 +78,7 @@ class Item:
     TEMPLATE: typing.ClassVar[str] = textwrap.dedent("""\
     ```{{eval-rst}}
     .. confval:: {item.name}
-      :type: ``{item.type}``{sphinx_default}
+      :type: ``{item.type}``{sphinx_default}{sphinx_env}
 
       {docs}
     ```
@@ -76,6 +99,18 @@ class Item:
             return ""
         return f"\n  :default: {self.item.default}"
 
+    def env(self) -> str:
+        """
+        Formatted text with the equivalent ``SKBUILD_*`` environment variable.
+
+        Arrays of tables (``generate[]``) and nested mappings can't be expressed
+        as environment variables, so they are skipped.
+        """
+        if "[]" in self.item.name or not _env_expressible(self.item.field.type):
+            return ""
+        var = self.item.name.replace(".", "_").replace("-", "_").upper()
+        return f"\n  :env: ``SKBUILD_{var}``"
+
     def format(self) -> str:
         # Replace all new-lines with appropriately rst indented lines
         docs = self.item.docs.replace("\n", "\n  ")
@@ -84,6 +119,7 @@ class Item:
         return self.TEMPLATE.format(
             item=self.item,
             sphinx_default=self.default(),
+            sphinx_env=self.env(),
             docs=docs,
         )
 
