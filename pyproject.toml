@@ -194,6 +194,8 @@ filterwarnings = [
     "ignore:'_UnionGenericAlias' is deprecated and slated for removal in Python 3.17:DeprecationWarning",  # From cattrs 24.1.2 and other?
     "ignore:The 'wheel.metadata' package has been made private:DeprecationWarning",
     "ignore:version of cmake-example already set:UserWarning",  # Caused by setuptoools-scm 9+ being installed
+    "default:tag.strict is not set:FutureWarning",  # setuptools-scm 10+ asks users to set tag.strict explicitly
+    "default:Configuration was created without VcsEnvironment:DeprecationWarning",  # Leaked by vcs-versioning 2.x internals, even from its public API
 ]
 log_level = "INFO"
 pythonpath = ["tests/utils"]
