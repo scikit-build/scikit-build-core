@@ -15,13 +15,41 @@
 
 /*
  * Arrow fill (::before) follows the box; its outline (::after) the box border.
- * Only the side facing the box has a non-zero border width, so recoloring all
- * four sides is safe. The bare [data-placement] keeps specificity equal to
- * light-border's own per-placement rules so these (loaded later) win.
+ * The arrow is a CSS triangle: only the side facing the box may be colored, as
+ * the two perpendicular borders must stay transparent to form the point. That
+ * means one rule per placement (matching light-border's own per-placement
+ * selectors, so specificity ties and these later-loaded rules win).
  */
-.tippy-box[data-theme~="light-border"][data-placement] > .tippy-arrow::before {
-  border-color: var(--color-background-hover);
+.tippy-box[data-theme~="light-border"][data-placement^="top"]
+  > .tippy-arrow::before {
+  border-top-color: var(--color-background-hover);
 }
-.tippy-box[data-theme~="light-border"][data-placement] > .tippy-arrow::after {
-  border-color: var(--color-foreground-border);
+.tippy-box[data-theme~="light-border"][data-placement^="bottom"]
+  > .tippy-arrow::before {
+  border-bottom-color: var(--color-background-hover);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="left"]
+  > .tippy-arrow::before {
+  border-left-color: var(--color-background-hover);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="right"]
+  > .tippy-arrow::before {
+  border-right-color: var(--color-background-hover);
+}
+
+.tippy-box[data-theme~="light-border"][data-placement^="top"]
+  > .tippy-arrow::after {
+  border-top-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="bottom"]
+  > .tippy-arrow::after {
+  border-bottom-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="left"]
+  > .tippy-arrow::after {
+  border-left-color: var(--color-foreground-border);
+}
+.tippy-box[data-theme~="light-border"][data-placement^="right"]
+  > .tippy-arrow::after {
+  border-right-color: var(--color-foreground-border);
 }
