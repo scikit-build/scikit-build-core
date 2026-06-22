@@ -1,0 +1,26 @@
+/*
+ * sphinx-tippy loads tippy.js with its default dark theme (#333 box), but the
+ * tip content is furo page HTML styled with furo's theme variables. The result
+ * is a dark box wrapping light-mode content. Drive the box from the same furo
+ * variables so it matches the page in both light and dark mode.
+ */
+.tippy-box {
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
+  border: 1px solid var(--color-background-border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* The arrow color in tippy's default theme is set via per-placement borders. */
+.tippy-box[data-placement^="top"] > .tippy-arrow::before {
+  border-top-color: var(--color-background-primary);
+}
+.tippy-box[data-placement^="bottom"] > .tippy-arrow::before {
+  border-bottom-color: var(--color-background-primary);
+}
+.tippy-box[data-placement^="left"] > .tippy-arrow::before {
+  border-left-color: var(--color-background-primary);
+}
+.tippy-box[data-placement^="right"] > .tippy-arrow::before {
+  border-right-color: var(--color-background-primary);
+}

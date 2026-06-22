@@ -149,6 +149,8 @@ html_theme_options = {
 }
 html_copy_source = False
 html_show_sourcelink = False
+html_static_path = ["_static"]
+html_css_files = ["tippy.css"]
 
 
 # -- Extension configuration -------------------------------------------------
