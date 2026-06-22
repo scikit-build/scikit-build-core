@@ -209,3 +209,34 @@ def test_get_requires_state_override(
     assert "editable-only-dep" in get_requires_for_build_editable({})
     assert "editable-only-dep" not in get_requires_for_build_sdist({})
     assert "editable-only-dep" not in get_requires_for_build_wheel({})
+
+
+@pytest.mark.parametrize(
+    ("args", "cmake_args", "expected"),
+    [
+        pytest.param(["-GNinja"], None, True, id="settings-joined"),
+        pytest.param(["-G", "Ninja"], None, True, id="settings-two-token"),
+        pytest.param(["-GUnix Makefiles"], None, False, id="settings-non-ninja"),
+        pytest.param([], "-GNinja", True, id="env-joined"),
+        pytest.param([], "-G Ninja", True, id="env-two-token"),
+        pytest.param([], "-GUnix Makefiles", False, id="env-non-ninja"),
+        pytest.param([], None, None, id="unset"),
+    ],
+)
+def test_uses_ninja_generator(
+    args: list[str],
+    cmake_args: str | None,
+    expected: bool | None,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from scikit_build_core.builder.get_requires import _uses_ninja_generator
+    from scikit_build_core.settings.skbuild_model import (
+        CMakeSettings,
+        ScikitBuildSettings,
+    )
+
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    if cmake_args is not None:
+        monkeypatch.setenv("CMAKE_ARGS", cmake_args)
+    settings = ScikitBuildSettings(cmake=CMakeSettings(args=args))
+    assert _uses_ninja_generator(settings) is expected

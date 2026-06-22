@@ -629,10 +629,19 @@ def test_get_soabi_abi3t(monkeypatch):
     )
 
 
-def test_generator_args(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(["-GAnything"], id="joined"),
+        pytest.param(["-G", "Anything"], id="two-token"),
+    ],
+)
+def test_generator_args(
+    args: list[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.chdir(tmp_path)
     builder = Builder(
-        settings=ScikitBuildSettings(cmake=CMakeSettings(args=["-GAnything"])),
+        settings=ScikitBuildSettings(cmake=CMakeSettings(args=args)),
         config=CMaker(
             CMake(Version("4.0"), Path("no-cmake")), Path(), Path(), "Release"
         ),
