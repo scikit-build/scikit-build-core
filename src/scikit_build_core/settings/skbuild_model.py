@@ -143,7 +143,7 @@ class CMakeSettings:
     """
     The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
 
-    This is only allowed in overrides or config-settings.
+    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
     python_hints: bool = True
@@ -368,8 +368,9 @@ class WheelSettings:
     Manually specify the wheel tags to use, ignoring other inputs such as
     ``wheel.py-api``. Each tag must be of the format
     {interpreter}-{abi}-{platform}.  If not specified, these tags are
-    automatically calculated. This is only allowed in overrides or
-    config-settings.
+    automatically calculated. This cannot be set in the static
+    ``[tool.scikit-build]`` table; use it in an override, config-settings, or an
+    environment variable.
     """
 
 
@@ -553,7 +554,7 @@ class ScikitBuildSettings:
     """
     Experimental PEP 817 variant properties.
 
-    This is only allowed in overrides or config-settings.
+    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
     variant_name: List[str] = dataclasses.field(
@@ -563,7 +564,7 @@ class ScikitBuildSettings:
     """
     Experimental PEP 817 variant properties used for wheel metadata selection.
 
-    This is only allowed in overrides or config-settings.
+    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
     variant_label: Optional[str] = dataclasses.field(
@@ -573,7 +574,7 @@ class ScikitBuildSettings:
     """
     Experimental PEP 817 wheel variant label override.
 
-    This is only allowed in overrides or config-settings.
+    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
     null_variant: bool = dataclasses.field(
@@ -583,7 +584,7 @@ class ScikitBuildSettings:
     """
     Experimental PEP 817 null-variant selector.
 
-    This is only allowed in overrides or config-settings.
+    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
     minimum_version: Optional[Version] = dataclasses.field(
@@ -608,5 +609,5 @@ class ScikitBuildSettings:
         metadata=SettingsFieldMetadata(override_only=True),
     )
     """
-    Immediately fail the build. This is only allowed in overrides or config-settings.
+    Immediately fail the build. This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """

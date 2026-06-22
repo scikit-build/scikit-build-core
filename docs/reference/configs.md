@@ -1,7 +1,7 @@
 # Config Reference
 
 The following are the available configurations in `pyproject.toml` for the
-`[tool.scikit-build]` table. These can be passed in one of the following ways
+`[tool.scikit-build]` table. These can be passed in one of the following ways:
 
 ````{tab} pyproject.toml
 
@@ -85,7 +85,7 @@ print(mk_skbuild_docs())
   :config-settings: ``fail`` or ``skbuild.fail``
   :env: ``SKBUILD_FAIL``
 
-  Immediately fail the build. This is only allowed in overrides or config-settings.
+  Immediately fail the build. This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ```{eval-rst}
@@ -114,7 +114,7 @@ print(mk_skbuild_docs())
 
   Experimental PEP 817 null-variant selector.
 
-  This is only allowed in overrides or config-settings.
+  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ```{eval-rst}
@@ -139,7 +139,7 @@ print(mk_skbuild_docs())
 
   Experimental PEP 817 variant properties.
 
-  This is only allowed in overrides or config-settings.
+  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ```{eval-rst}
@@ -150,7 +150,7 @@ print(mk_skbuild_docs())
 
   Experimental PEP 817 wheel variant label override.
 
-  This is only allowed in overrides or config-settings.
+  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ```{eval-rst}
@@ -161,7 +161,7 @@ print(mk_skbuild_docs())
 
   Experimental PEP 817 variant properties used for wheel metadata selection.
 
-  This is only allowed in overrides or config-settings.
+  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ## backport
@@ -312,7 +312,7 @@ print(mk_skbuild_docs())
 
   The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
 
-  This is only allowed in overrides or config-settings.
+  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 ```
 
 ```{eval-rst}
@@ -762,8 +762,9 @@ print(mk_skbuild_docs())
   Manually specify the wheel tags to use, ignoring other inputs such as
   ``wheel.py-api``. Each tag must be of the format
   {interpreter}-{abi}-{platform}.  If not specified, these tags are
-  automatically calculated. This is only allowed in overrides or
-  config-settings.
+  automatically calculated. This cannot be set in the static
+  ``[tool.scikit-build]`` table; use it in an override, config-settings, or an
+  environment variable.
 ```
 
 <!-- [[[end]]] -->

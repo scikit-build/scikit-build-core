@@ -692,7 +692,7 @@
           },
           "fail": {
             "type": "boolean",
-            "description": "Immediately fail the build. This is only allowed in overrides or config-settings."
+            "description": "Immediately fail the build. This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable."
           }
         }
       }
