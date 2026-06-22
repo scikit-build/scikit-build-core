@@ -23,20 +23,22 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def _env_expressible(field_type: typing.Any) -> bool:
+def _flat_expressible(field_type: typing.Any) -> bool:
     """
-    Whether a field can be set through a flat ``SKBUILD_*`` environment variable.
+    Whether a field can be set through a flat source (``config-settings`` or a
+    ``SKBUILD_*`` environment variable).
 
-    Nested mappings (e.g. a dict of dicts) can't round-trip through a single
-    environment string, so no env var is advertised for them. Dicts of scalars
-    (including ``cmake.define``) and lists of scalars are fine.
+    Both sources reject arrays of tables (handled separately via the ``[]`` name
+    marker) and can't round-trip nested mappings (e.g. a dict of dicts), so no
+    flat key is advertised for those. Dicts of scalars (including
+    ``cmake.define``) and lists of scalars are fine.
     """
     origin = get_origin(field_type)
     if origin is Annotated:
-        return _env_expressible(get_args(field_type)[0])
+        return _flat_expressible(get_args(field_type)[0])
     if origin is typing.Union:
         return all(
-            _env_expressible(arg)
+            _flat_expressible(arg)
             for arg in get_args(field_type)
             if arg is not type(None)
         )
@@ -78,7 +80,7 @@ class Item:
     TEMPLATE: typing.ClassVar[str] = textwrap.dedent("""\
     ```{{eval-rst}}
     .. confval:: {item.name}
-      :type: ``{item.type}``{sphinx_default}{sphinx_env}
+      :type: ``{item.type}``{sphinx_default}{sphinx_config_settings}{sphinx_env}
 
       {docs}
     ```
@@ -99,14 +101,28 @@ class Item:
             return ""
         return f"\n  :default: {self.item.default}"
 
+    def flat_expressible(self) -> bool:
+        """
+        Whether the option can be set via ``config-settings`` or an env var.
+
+        Arrays of tables (``generate[]``) and nested mappings can only be set in
+        ``pyproject.toml``, so the flat forms are skipped for them.
+        """
+        return "[]" not in self.item.name and _flat_expressible(self.item.field.type)
+
+    def config_settings(self) -> str:
+        """
+        Formatted text with the equivalent ``config-settings`` key.
+        """
+        if not self.flat_expressible():
+            return ""
+        return f"\n  :config-settings: ``{self.item.name}``"
+
     def env(self) -> str:
         """
         Formatted text with the equivalent ``SKBUILD_*`` environment variable.
-
-        Arrays of tables (``generate[]``) and nested mappings can't be expressed
-        as environment variables, so they are skipped.
         """
-        if "[]" in self.item.name or not _env_expressible(self.item.field.type):
+        if not self.flat_expressible():
             return ""
         var = self.item.name.replace(".", "_").replace("-", "_").upper()
         return f"\n  :env: ``SKBUILD_{var}``"
@@ -119,6 +135,7 @@ class Item:
         return self.TEMPLATE.format(
             item=self.item,
             sphinx_default=self.default(),
+            sphinx_config_settings=self.config_settings(),
             sphinx_env=self.env(),
             docs=docs,
         )

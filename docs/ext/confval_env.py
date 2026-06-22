@@ -1,9 +1,10 @@
-"""Extend the std-domain ``confval`` directive with an ``:env:`` option.
+"""Extend the std-domain ``confval`` directive with extra naming options.
 
 Sphinx's built-in ``confval`` directive only renders ``:type:`` and
-``:default:`` fields. scikit-build-core options can also be set via an
-environment variable, so this override adds an ``:env:`` option that is
-rendered in the same field list, right after ``:default:``.
+``:default:`` fields. scikit-build-core options can also be set through PEP 517
+``config-settings`` and ``SKBUILD_*`` environment variables, so this override
+adds ``:config-settings:`` and ``:env:`` options rendered in the same field
+list, right after ``:default:``.
 """
 
 from __future__ import annotations
@@ -19,32 +20,42 @@ if TYPE_CHECKING:
     from sphinx.application import Sphinx
     from sphinx.util.typing import OptionSpec
 
+# Extra ``:option:`` keys, in render order, mapped to their field labels.
+_EXTRA_FIELDS = (
+    ("config-settings", _("config-settings")),
+    ("env", _("Environment variable")),
+)
+
 
 class EnvConfigurationValue(ConfigurationValue):
     option_spec: ClassVar[OptionSpec] = {
         **ConfigurationValue.option_spec,
+        "config-settings": directives.unchanged_required,
         "env": directives.unchanged_required,
     }
 
     def transform_content(self, content_node: nodes.Element) -> None:
         # Let the base class build the Type/Default field list first.
         super().transform_content(content_node)
-        if "env" not in self.options:
-            return
 
-        parsed, msgs = self.parse_inline(self.options["env"], lineno=self.lineno)
-        field = nodes.field(
-            "",
-            nodes.field_name("", _("Environment variable")),
-            nodes.field_body("", *parsed),
-        )
-        # The base class inserts a field list at position 0 when type/default
-        # are present; append to it so every key renders together.
         if content_node.children and isinstance(content_node[0], nodes.field_list):
-            content_node[0].append(field)
-            content_node[0] += msgs
+            field_list = content_node[0]
         else:
-            content_node.insert(0, nodes.field_list("", field, *msgs))
+            field_list = nodes.field_list()
+            content_node.insert(0, field_list)
+
+        for key, label in _EXTRA_FIELDS:
+            if key not in self.options:
+                continue
+            parsed, msgs = self.parse_inline(self.options[key], lineno=self.lineno)
+            field_list.append(
+                nodes.field(
+                    "",
+                    nodes.field_name("", label),
+                    nodes.field_body("", *parsed),
+                )
+            )
+            field_list += msgs
 
 
 def setup(app: Sphinx) -> dict[str, object]:

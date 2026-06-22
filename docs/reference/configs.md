@@ -61,6 +61,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: build-dir
   :type: ``str``
+  :config-settings: ``build-dir``
   :env: ``SKBUILD_BUILD_DIR``
 
   The CMake build directory. Defaults to a unique temporary directory.
@@ -72,6 +73,7 @@ print(mk_skbuild_docs())
 .. confval:: experimental
   :type: ``bool``
   :default: false
+  :config-settings: ``experimental``
   :env: ``SKBUILD_EXPERIMENTAL``
 
   Enable early previews of features not finalized yet.
@@ -80,6 +82,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: fail
   :type: ``bool``
+  :config-settings: ``fail``
   :env: ``SKBUILD_FAIL``
 
   Immediately fail the build. This is only allowed in overrides or config-settings.
@@ -96,6 +99,7 @@ print(mk_skbuild_docs())
 .. confval:: minimum-version
   :type: ``Version``
   :default: "0.12"  # current version
+  :config-settings: ``minimum-version``
   :env: ``SKBUILD_MINIMUM_VERSION``
 
   If set, this will provide a method for backward compatibility.
@@ -105,6 +109,7 @@ print(mk_skbuild_docs())
 .. confval:: null-variant
   :type: ``bool``
   :default: false
+  :config-settings: ``null-variant``
   :env: ``SKBUILD_NULL_VARIANT``
 
   Experimental PEP 817 null-variant selector.
@@ -116,6 +121,7 @@ print(mk_skbuild_docs())
 .. confval:: strict-config
   :type: ``bool``
   :default: true
+  :config-settings: ``strict-config``
   :env: ``SKBUILD_STRICT_CONFIG``
 
   Strictly check all config options.
@@ -128,6 +134,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: variant
   :type: ``list[str]``
+  :config-settings: ``variant``
   :env: ``SKBUILD_VARIANT``
 
   Experimental PEP 817 variant properties.
@@ -138,6 +145,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: variant-label
   :type: ``str``
+  :config-settings: ``variant-label``
   :env: ``SKBUILD_VARIANT_LABEL``
 
   Experimental PEP 817 wheel variant label override.
@@ -148,6 +156,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: variant-name
   :type: ``list[str]``
+  :config-settings: ``variant-name``
   :env: ``SKBUILD_VARIANT_NAME``
 
   Experimental PEP 817 variant properties used for wheel metadata selection.
@@ -161,6 +170,7 @@ print(mk_skbuild_docs())
 .. confval:: backport.find-python
   :type: ``Version``
   :default: "3.26.1"
+  :config-settings: ``backport.find-python``
   :env: ``SKBUILD_BACKPORT_FIND_PYTHON``
 
   If CMake is less than this value, backport a copy of FindPython.
@@ -173,6 +183,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: build.requires
   :type: ``list[str]``
+  :config-settings: ``build.requires``
   :env: ``SKBUILD_BUILD_REQUIRES``
 
   Additional ``build-system.requires``.
@@ -183,6 +194,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: build.targets
   :type: ``list[str]``
+  :config-settings: ``build.targets``
   :env: ``SKBUILD_BUILD_TARGETS``
 
   The build targets to use when building the project.
@@ -193,6 +205,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: build.tool-args
   :type: ``list[str]``
+  :config-settings: ``build.tool-args``
   :env: ``SKBUILD_BUILD_TOOL_ARGS``
 
   Extra args to pass directly to the builder in the build step.
@@ -202,6 +215,7 @@ print(mk_skbuild_docs())
 .. confval:: build.verbose
   :type: ``bool``
   :default: false
+  :config-settings: ``build.verbose``
   :env: ``SKBUILD_BUILD_VERBOSE``
 
   Verbose printout when building.
@@ -214,6 +228,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.args
   :type: ``list[str]``
+  :config-settings: ``cmake.args``
   :env: ``SKBUILD_CMAKE_ARGS``
 
   A list of args to pass to CMake when configuring the project.
@@ -228,6 +243,7 @@ print(mk_skbuild_docs())
 .. confval:: cmake.build-type
   :type: ``str``
   :default: "Release"
+  :config-settings: ``cmake.build-type``
   :env: ``SKBUILD_CMAKE_BUILD_TYPE``
 
   The build type to use when building the project.
@@ -240,6 +256,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.define
   :type: ``dict[str,CMakeSettingsDefine]``
+  :config-settings: ``cmake.define``
   :env: ``SKBUILD_CMAKE_DEFINE``
 
   A table of defines to pass to CMake when configuring the project. Additive.
@@ -248,6 +265,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.minimum-version
   :type: ``Version``
+  :config-settings: ``cmake.minimum-version``
   :env: ``SKBUILD_CMAKE_MINIMUM_VERSION``
 
   DEPRECATED in 0.8; use version instead.
@@ -257,6 +275,7 @@ print(mk_skbuild_docs())
 .. confval:: cmake.python-hints
   :type: ``bool``
   :default: true
+  :config-settings: ``cmake.python-hints``
   :env: ``SKBUILD_CMAKE_PYTHON_HINTS``
 
   Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
@@ -268,6 +287,7 @@ print(mk_skbuild_docs())
 .. confval:: cmake.source-dir
   :type: ``Path``
   :default: "."
+  :config-settings: ``cmake.source-dir``
   :env: ``SKBUILD_CMAKE_SOURCE_DIR``
 
   The source directory to use when building the project.
@@ -278,6 +298,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.targets
   :type: ``list[str]``
+  :config-settings: ``cmake.targets``
   :env: ``SKBUILD_CMAKE_TARGETS``
 
   DEPRECATED in 0.10; use build.targets instead.
@@ -286,6 +307,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.toolchain-file
   :type: ``Path``
+  :config-settings: ``cmake.toolchain-file``
   :env: ``SKBUILD_CMAKE_TOOLCHAIN_FILE``
 
   The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
@@ -296,6 +318,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.verbose
   :type: ``bool``
+  :config-settings: ``cmake.verbose``
   :env: ``SKBUILD_CMAKE_VERBOSE``
 
   DEPRECATED in 0.10, use build.verbose instead.
@@ -304,6 +327,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.version
   :type: ``SpecifierSet``
+  :config-settings: ``cmake.version``
   :env: ``SKBUILD_CMAKE_VERSION``
 
   The versions of CMake to allow as a python-compatible specifier.
@@ -330,6 +354,7 @@ print(mk_skbuild_docs())
 .. confval:: editable.mode
   :type: ``"redirect" | "inplace"``
   :default: "redirect"
+  :config-settings: ``editable.mode``
   :env: ``SKBUILD_EDITABLE_MODE``
 
   Select the editable mode to use. Can be "redirect" (default) or "inplace".
@@ -339,6 +364,7 @@ print(mk_skbuild_docs())
 .. confval:: editable.rebuild
   :type: ``bool``
   :default: false
+  :config-settings: ``editable.rebuild``
   :env: ``SKBUILD_EDITABLE_REBUILD``
 
   Rebuild the project when the package is imported.
@@ -350,6 +376,7 @@ print(mk_skbuild_docs())
 .. confval:: editable.verbose
   :type: ``bool``
   :default: true
+  :config-settings: ``editable.verbose``
   :env: ``SKBUILD_EDITABLE_VERBOSE``
 
   Turn on verbose output for the editable mode rebuilds.
@@ -407,6 +434,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: install.components
   :type: ``list[str]``
+  :config-settings: ``install.components``
   :env: ``SKBUILD_INSTALL_COMPONENTS``
 
   The components to install.
@@ -418,6 +446,7 @@ print(mk_skbuild_docs())
 .. confval:: install.strip
   :type: ``bool``
   :default: true
+  :config-settings: ``install.strip``
   :env: ``SKBUILD_INSTALL_STRIP``
 
   Whether to strip the binaries.
@@ -436,6 +465,7 @@ print(mk_skbuild_docs())
 .. confval:: logging.level
   :type: ``"NOTSET" | "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL"``
   :default: "WARNING"
+  :config-settings: ``logging.level``
   :env: ``SKBUILD_LOGGING_LEVEL``
 
   The logging level to display.
@@ -446,6 +476,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: messages.after-failure
   :type: ``str``
+  :config-settings: ``messages.after-failure``
   :env: ``SKBUILD_MESSAGES_AFTER_FAILURE``
 
   A message to print after a build failure.
@@ -454,6 +485,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: messages.after-success
   :type: ``str``
+  :config-settings: ``messages.after-success``
   :env: ``SKBUILD_MESSAGES_AFTER_SUCCESS``
 
   A message to print after a successful build.
@@ -465,6 +497,7 @@ print(mk_skbuild_docs())
 .. confval:: ninja.make-fallback
   :type: ``bool``
   :default: true
+  :config-settings: ``ninja.make-fallback``
   :env: ``SKBUILD_NINJA_MAKE_FALLBACK``
 
   Use Make as a fallback if a suitable Ninja executable is not found.
@@ -479,6 +512,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: ninja.minimum-version
   :type: ``Version``
+  :config-settings: ``ninja.minimum-version``
   :env: ``SKBUILD_NINJA_MINIMUM_VERSION``
 
   DEPRECATED in 0.8; use version instead.
@@ -488,6 +522,7 @@ print(mk_skbuild_docs())
 .. confval:: ninja.version
   :type: ``SpecifierSet``
   :default: ">=1.5"
+  :config-settings: ``ninja.version``
   :env: ``SKBUILD_NINJA_VERSION``
 
   The versions of Ninja to allow.
@@ -508,6 +543,7 @@ print(mk_skbuild_docs())
 .. confval:: sdist.cmake
   :type: ``bool``
   :default: false
+  :config-settings: ``sdist.cmake``
   :env: ``SKBUILD_SDIST_CMAKE``
 
   If set to True, CMake will be run before building the SDist.
@@ -516,6 +552,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.exclude
   :type: ``list[str]``
+  :config-settings: ``sdist.exclude``
   :env: ``SKBUILD_SDIST_EXCLUDE``
 
   Files to exclude from the SDist even if they are included by default. Supports gitignore syntax.
@@ -527,6 +564,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.include
   :type: ``list[str]``
+  :config-settings: ``sdist.include``
   :env: ``SKBUILD_SDIST_INCLUDE``
 
   Files to include in the SDist even if they are skipped by default. Supports gitignore syntax.
@@ -541,6 +579,7 @@ print(mk_skbuild_docs())
 .. confval:: sdist.inclusion-mode
   :type: ``"classic" | "default" | "manual"``
   :default: "default"  # "classic"
+  :config-settings: ``sdist.inclusion-mode``
   :env: ``SKBUILD_SDIST_INCLUSION_MODE``
 
   Method to use to compute the files to include and exclude.
@@ -561,6 +600,7 @@ print(mk_skbuild_docs())
 .. confval:: sdist.reproducible
   :type: ``bool``
   :default: true
+  :config-settings: ``sdist.reproducible``
   :env: ``SKBUILD_SDIST_REPRODUCIBLE``
 
   Try to build a reproducible distribution.
@@ -576,6 +616,7 @@ print(mk_skbuild_docs())
 .. confval:: search.site-packages
   :type: ``bool``
   :default: true
+  :config-settings: ``search.site-packages``
   :env: ``SKBUILD_SEARCH_SITE_PACKAGES``
 
   Add the python build environment site_packages folder to the CMake prefix paths.
@@ -586,6 +627,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.build-tag
   :type: ``str``
+  :config-settings: ``wheel.build-tag``
   :env: ``SKBUILD_WHEEL_BUILD_TAG``
 
   The build tag to use for the wheel. If empty, no build tag is used.
@@ -595,6 +637,7 @@ print(mk_skbuild_docs())
 .. confval:: wheel.cmake
   :type: ``bool``
   :default: true
+  :config-settings: ``wheel.cmake``
   :env: ``SKBUILD_WHEEL_CMAKE``
 
   Run CMake as part of building the wheel.
@@ -603,6 +646,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.exclude
   :type: ``list[str]``
+  :config-settings: ``wheel.exclude``
   :env: ``SKBUILD_WHEEL_EXCLUDE``
 
   A set of patterns to exclude from the wheel.
@@ -616,6 +660,7 @@ print(mk_skbuild_docs())
 .. confval:: wheel.expand-macos-universal-tags
   :type: ``bool``
   :default: false
+  :config-settings: ``wheel.expand-macos-universal-tags``
   :env: ``SKBUILD_WHEEL_EXPAND_MACOS_UNIVERSAL_TAGS``
 
   Fill out extra tags that are not required.
@@ -627,6 +672,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.install-dir
   :type: ``str``
+  :config-settings: ``wheel.install-dir``
   :env: ``SKBUILD_WHEEL_INSTALL_DIR``
 
   The CMake install prefix relative to the platlib wheel path.
@@ -645,6 +691,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.license-files
   :type: ``list[str]``
+  :config-settings: ``wheel.license-files``
   :env: ``SKBUILD_WHEEL_LICENSE_FILES``
 
   A list of license files to include in the wheel. Supports glob patterns.
@@ -659,6 +706,7 @@ print(mk_skbuild_docs())
 .. confval:: wheel.packages
   :type: ``list[str]``
   :default: ["src/<package>", "python/<package>", "<package>"]
+  :config-settings: ``wheel.packages``
   :env: ``SKBUILD_WHEEL_PACKAGES``
 
   A list of packages to auto-copy into the wheel.
@@ -673,6 +721,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.platlib
   :type: ``bool``
+  :config-settings: ``wheel.platlib``
   :env: ``SKBUILD_WHEEL_PLATLIB``
 
   Target the platlib or the purelib.
@@ -684,6 +733,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.py-api
   :type: ``str``
+  :config-settings: ``wheel.py-api``
   :env: ``SKBUILD_WHEEL_PY_API``
 
   The Python version tag used in the wheel file.
@@ -704,6 +754,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: wheel.tags
   :type: ``list[str]``
+  :config-settings: ``wheel.tags``
   :env: ``SKBUILD_WHEEL_TAGS``
 
   Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
