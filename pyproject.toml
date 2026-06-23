@@ -179,6 +179,10 @@ build.targets.sdist.exclude = [".git"]
 exclude-newer = "7 days"
 workspace.members = ["tmp/hello/hello"]
 
+[tool.uv.exclude-newer-package]
+f2py-cmake = false
+cython-cmake = false
+
 
 [tool.pytest.ini_options]
 minversion = "7.2"
