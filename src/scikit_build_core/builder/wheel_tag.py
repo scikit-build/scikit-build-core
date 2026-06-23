@@ -246,7 +246,7 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
     parser.set_defaults(func=main_wheel_tag)
 
 
-if __name__ == "__main__":
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -257,3 +257,7 @@ if __name__ == "__main__":
     populate_parser(parser)
     args = parser.parse_args()
     args.func(args)
+
+
+if __name__ == "__main__":
+    main()
