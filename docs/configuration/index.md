@@ -601,6 +601,7 @@ it uses the classic `.pth` `import` line. This is handled automatically based on
 the interpreter running the editable install.
 
 [PEP 829]: https://peps.python.org/pep-0829/
+[PEP 817]: https://peps.python.org/pep-0817/
 
 :::{note}
 
@@ -689,6 +690,25 @@ only be used if you enable them:
 [tool.scikit-build]
 experimental = true
 ```
+
+The following features currently require this flag:
+
+- **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
+  `variant-label`, and `null-variant`). See
+  [](../guide/faqs.md#building-wheel-variants-experimental).
+- **Hatchling plugin**: driving the build from hatchling instead of using
+  scikit-build-core as the backend directly. See [](../plugins/hatchling.md).
+- **Third-party dynamic-metadata plugins**: dynamic metadata providers not
+  shipped with scikit-build-core (anything using `provider-path` or a provider
+  outside the `scikit_build_core.*` namespace). See [](./dynamic.md).
+- **Absolute `wheel.install-dir`**: an absolute install dir is placed one level
+  above the platlib root, giving access to `/platlib`, `/data`, `/headers`,
+  `/scripts`, and `/metadata`. See
+  [`wheel.install-dir`](../reference/configs.md).
+
+Some other features (such as [editable installs](#editable-installs) and the
+[setuptools integration](../plugins/setuptools.md)) are also considered
+experimental and subject to change, but are not gated behind this flag.
 
 You can also fail the build with `fail = true`. This is useful with overrides if
 you want to make a specific configuration fail. If this is set, extra
