@@ -559,8 +559,8 @@ You can pass raw arguments directly to the build tool, as well:
 
 ## Editable installs
 
-Experimental support for editable installs is provided, with some caveats and
-configuration. Recommendations:
+Support for editable installs is provided, with some caveats and configuration.
+Recommendations:
 
 - Use `--no-build-isolation` when doing an editable install is recommended; you
   should preinstall your dependencies.
@@ -580,8 +580,7 @@ Known limitations:
 $ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
 ```
 
-Due to the length of this line already being long, you do not need to set the
-`experimental` setting to use editable installs, but please consider them
+The automatic rebuild-on-import feature (`editable.rebuild`) is still
 experimental and subject to change.
 
 You can disable the verbose rebuild output with `editable.verbose=false` if you
@@ -605,11 +604,11 @@ the interpreter running the editable install.
 
 :::{note}
 
-A second experimental mode, `"inplace"`, is also available. This does an
-in-place CMake build, so all the caveats there apply too -- only one build per
-source directory, you can't change to an out-of-source builds without removing
-the build artifacts, your source directory will be littered with build
-artifacts, etc. Also, to make your binaries importable, you should set
+A second mode, `"inplace"`, is also available. This does an in-place CMake
+build, so all the caveats there apply too -- only one build per source
+directory, you can't change to an out-of-source builds without removing the
+build artifacts, your source directory will be littered with build artifacts,
+etc. Also, to make your binaries importable, you should set
 `LIBRARY_OUTPUT_DIRECTORY` (include a generator expression, like the empty one
 `$<0:>` for multi-config generator support, like MSVC, so you don't have to set
 all possible `*_<CONFIG>` variations) to make sure they are placed inside your
@@ -704,8 +703,9 @@ The following features currently require this flag:
   `/scripts`, and `/metadata`. See
   [`wheel.install-dir`](../reference/configs.md).
 
-[Editable installs](#editable-installs) are also considered experimental and
-subject to change, but are not gated behind this flag.
+The [rebuild-on-import feature](#editable-installs) for editable installs is
+also considered experimental and subject to change, but is not gated behind this
+flag.
 
 You can also fail the build with `fail = true`. This is useful with overrides if
 you want to make a specific configuration fail. If this is set, extra

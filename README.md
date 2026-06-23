@@ -65,8 +65,8 @@ features over classic Scikit-build:
 - Dedicated entrypoints for module and prefix directories
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
-- Experimental editable mode support, with optional experimental auto rebuilds
-  on import and optional in-place mode
+- Editable mode support, with optional experimental auto rebuilds on import and
+  optional in-place mode
 - Supports WebAssembly (Emscripten/[Pyodide](https://pyodide.org)).
 - Supports [free-threaded Python 3.13+](https://py-free-threading.github.io).
 
