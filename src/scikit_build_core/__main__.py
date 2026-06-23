@@ -28,6 +28,7 @@ def main_info(_args: argparse.Namespace | None = None, /) -> None:
     rich_print("  scikit-build builder sysconfig     {green}Info from sysconfig")
     rich_print("  scikit-build file-api query        {green}Request CMake file API")
     rich_print("  scikit-build file-api reply        {green}Process CMake file API")
+    rich_print("  scikit-build init                  {green}Generate a starter project")
     rich_print()
 
 
@@ -35,6 +36,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     from .build import __main__ as build_main
     from .builder import __main__ as builder_main
     from .file_api import __main__ as file_api_main
+    from .init import __main__ as init_main
 
     parser = argparse.ArgumentParser(
         prog="scikit-build",
@@ -67,6 +69,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_abbrev=False,
     )
     file_api_main.populate_parser(file_api_parser)
+
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Generate a starter project",
+        description="Generate a minimal CMake + scikit-build-core starter project.",
+        allow_abbrev=False,
+    )
+    init_main.populate_parser(init_parser)
 
     args = parser.parse_args(argv)
     args.func(args)
