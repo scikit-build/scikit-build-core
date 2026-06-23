@@ -9,4 +9,3 @@ version = "0.1.0"
 [tool.hatch.build.targets.wheel.hooks.scikit-build]
 wheel.install-dir = "hatchling_example"
 cmake.source-dir = "cpp"
-experimental = true
