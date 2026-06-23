@@ -9,6 +9,7 @@ import textwrap
 import typing
 from collections import OrderedDict
 
+from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
 
@@ -17,9 +18,35 @@ if typing.TYPE_CHECKING:
 
 __all__ = ["mk_skbuild_docs"]
 
+_NONE_TYPE = type(None)
+
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def _flat_expressible(field_type: typing.Any) -> bool:
+    """
+    Whether a field can be set through a flat source (``config-settings`` or a
+    ``SKBUILD_*`` environment variable).
+
+    Both sources reject arrays of tables (handled separately via the ``[]`` name
+    marker) and can't round-trip nested mappings (e.g. a dict of dicts), so no
+    flat key is advertised for those. Dicts of scalars (including
+    ``cmake.define``) and lists of scalars are fine.
+    """
+    origin = get_origin(field_type)
+    if origin is Annotated:
+        return _flat_expressible(get_args(field_type)[0])
+    if origin is typing.Union:
+        return all(
+            _flat_expressible(arg)
+            for arg in get_args(field_type)
+            if arg is not _NONE_TYPE
+        )
+    if origin is dict:
+        return get_origin(get_args(field_type)[1]) not in (dict, list)
+    return True
 
 
 @dataclasses.dataclass
@@ -55,7 +82,8 @@ class Item:
     TEMPLATE: typing.ClassVar[str] = textwrap.dedent("""\
     ```{{eval-rst}}
     .. confval:: {item.name}
-      :type: ``{item.type}``{sphinx_default}
+
+    {fields}
 
       {docs}
     ```
@@ -68,13 +96,32 @@ class Item:
         """
         return self.item.default in ('""', "[]", "{}")
 
-    def default(self) -> str:
+    def flat_expressible(self) -> bool:
         """
-        Formatted text that includes the `:default:` key or not
+        Whether the option can be set via ``config-settings`` or an env var.
+
+        Arrays of tables (``generate[]``) and nested mappings can only be set in
+        ``pyproject.toml``, so the flat forms are skipped for them.
         """
-        if self.ignore_default():
-            return ""
-        return f"\n  :default: {self.item.default}"
+        return "[]" not in self.item.name and _flat_expressible(self.item.field.type)
+
+    def fields(self) -> str:
+        """
+        The rST field list rendered inside the confval body.
+
+        Besides type and default, this advertises the equivalent
+        ``config-settings`` keys (bare and ``skbuild.``-prefixed) and the
+        ``SKBUILD_*`` environment variable, where those forms apply.
+        """
+        lines = [f":Type: ``{self.item.type}``"]
+        if not self.ignore_default():
+            lines.append(f":Default: {self.item.default}")
+        if self.flat_expressible():
+            name = self.item.name
+            var = name.replace(".", "_").replace("-", "_").upper()
+            lines.append(f":Config-settings: ``{name}`` or ``skbuild.{name}``")
+            lines.append(f":Environment variable: ``SKBUILD_{var}``")
+        return "\n".join(f"  {line}" for line in lines)
 
     def format(self) -> str:
         # Replace all new-lines with appropriately rst indented lines
@@ -83,7 +130,7 @@ class Item:
         docs = docs.replace("\n  \n", "\n\n")
         return self.TEMPLATE.format(
             item=self.item,
-            sphinx_default=self.default(),
+            fields=self.fields(),
             docs=docs,
         )
 
