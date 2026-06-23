@@ -569,11 +569,9 @@ Recommendations:
   also enable automatic rebuilds.
 - You need to reinstall to pick up new files.
 
-Known limitations:
-
-- Resources (via `importlib.resources`) are not properly supported (yet).
-  Currently experimentally supported except on Python 3.9 (3.8, 3.10, 3.11,
-  3.12, and 3.13 work). `importlib_resources` may work on Python 3.9.
+Resources (via `importlib.resources`) are supported and tested on all supported
+Python versions. On Python 3.8, use the `importlib_resources` backport, since
+`importlib.resources.files` was added to the standard library in Python 3.9.
 
 ```console
 # Very experimental rebuild on initial import feature
