@@ -66,7 +66,7 @@ suppresses all output. You can
 printout of the current settings using:
 
 ```bash
-python -m scikit_build_core.builder
+scikit-build builder
 ```
 
 ## Repairing wheels

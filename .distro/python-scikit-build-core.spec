@@ -78,6 +78,7 @@ export HATCH_METADATA_CLASSIFIERS_NO_VERIFY=1
 %files -n python3-scikit-build-core -f %{pyproject_files}
 %license LICENSE LICENSE-pyproject-metadata
 %doc README.md
+%{_bindir}/scikit-build
 
 
 %changelog

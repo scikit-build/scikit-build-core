@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._logging import rich_print
 from ..program_search import info_print as ip_program_search
+from . import sysconfig, wheel_tag
 from .get_requires import GetRequires
 from .sysconfig import info_print as ip_sysconfig
 from .wheel_tag import WheelTag
+
+if TYPE_CHECKING:
+    import argparse
 
 __all__ = ["main"]
 
@@ -17,7 +22,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def main() -> None:
+def main_info(_args: argparse.Namespace | None = None, /) -> None:
     rich_print(
         f"{{bold}}Scikit-build-core {__version__}{{normal}} on Python {sys.version}"
     )
@@ -26,7 +31,7 @@ def main() -> None:
 
     rich_print(f"{{bold.blue}}Default Wheel Tag:{{normal}} {WheelTag.compute_best([])}")
     rich_print(
-        "{blue} - Note: use {bold}python -m scikit_build_core.builder.wheel_tag -h{normal} for further options"
+        "{blue} - Note: use {bold}scikit-build builder wheel-tag -h{normal} for further options"
     )
 
     if Path("pyproject.toml").is_file():
@@ -40,6 +45,30 @@ def main() -> None:
         rich_print(f"{{bold.red}}Get Requires:{{normal}} {all_req!r}")
 
     ip_program_search(color="magenta")
+
+
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Add the ``builder`` subcommands to an existing parser."""
+    parser.set_defaults(func=main_info)
+    subparsers = parser.add_subparsers(help="Commands")
+    wheel_tag_parser = subparsers.add_parser(
+        "wheel-tag",
+        help="Get the computed wheel tag for the current environment",
+        description="Get the computed wheel tag for the current environment.",
+        allow_abbrev=False,
+    )
+    wheel_tag.populate_parser(wheel_tag_parser)
+    sysconfig_parser = subparsers.add_parser(
+        "sysconfig",
+        help="Print information about the Python environment",
+        description="Print information about the Python environment.",
+        allow_abbrev=False,
+    )
+    sysconfig.populate_parser(sysconfig_parser)
+
+
+def main() -> None:
+    main_info()
 
 
 if __name__ == "__main__":

@@ -4,60 +4,81 @@ Scikit-build-core has a few integrated CLI tools. These are not guaranteed to be
 stable between releases yet, but can still be useful to investigate your
 environment.
 
-```{program-output} python -m scikit_build_core
+These are available through the `scikit-build` command (also runnable as
+`python -m scikit_build_core`), with the modules exposed as subcommands.
+
+```{program-output} scikit-build
 
 ```
 
 ## Build utilities
 
-```{program-output} python -m scikit_build_core.build --help
+```{program-output} scikit-build build --help
 
 ```
 
 ### Build requirements
 
-```{program-output} python -m scikit_build_core.build requires --help
+```{program-output} scikit-build build requires --help
 
 ```
 
 Example:
 
-```{command-output} python -m scikit_build_core.build requires
+```{command-output} scikit-build build requires
 :cwd: ../examples/getting_started/c
 
 ```
 
 ### Project table
 
-```{program-output} python -m scikit_build_core.build project-table --help
+```{program-output} scikit-build build project-table --help
 
 ```
 
 Example:
 
-```{command-output} python -m scikit_build_core.build project-table
+```{command-output} scikit-build build project-table
 :cwd: ../examples/getting_started/c
 
 ```
 
 ## Building environment info
 
-```{program-output} python -m scikit_build_core.builder.wheel_tag --help
+```{program-output} scikit-build builder --help
 
 ```
 
 Example:
 
-```{command-output} python -m scikit_build_core.builder.wheel_tag
+```{command-output} scikit-build builder
+
+```
+
+### Wheel tag
+
+```{program-output} scikit-build builder wheel-tag --help
+
+```
+
+Example:
+
+```{command-output} scikit-build builder wheel-tag
+
+```
+
+### Sysconfig
+
+```{program-output} scikit-build builder sysconfig --help
 
 ```
 
 ## File API tools
 
-```{program-output} python -m scikit_build_core.file_api.query --help
+```{program-output} scikit-build file-api query --help
 
 ```
 
-```{program-output} python -m scikit_build_core.file_api.reply --help
+```{program-output} scikit-build file-api reply --help
 
 ```

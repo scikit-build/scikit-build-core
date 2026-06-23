@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import argparse
 
 __all__ = ["stateless_query"]
 
@@ -22,7 +26,18 @@ def stateless_query(build_dir: Path) -> Path:
     return api_dir / "reply"
 
 
-if __name__ == "__main__":
+def main_query(args: argparse.Namespace, /) -> None:
+    result = stateless_query(args.build_dir)
+    sys.stdout.write(f"{result}\n")
+
+
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Add the ``query`` argument to an existing parser."""
+    parser.add_argument("build_dir", type=Path, help="Path to the build directory")
+    parser.set_defaults(func=main_query)
+
+
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -30,8 +45,10 @@ if __name__ == "__main__":
         allow_abbrev=False,
         description="Write a stateless query to a build directory",
     )
-    parser.add_argument("build_dir", type=Path, help="Path to the build directory")
+    populate_parser(parser)
     args = parser.parse_args()
+    args.func(args)
 
-    result = stateless_query(args.build_dir)
-    sys.stdout.write(f"{result}\n")
+
+if __name__ == "__main__":
+    main()
