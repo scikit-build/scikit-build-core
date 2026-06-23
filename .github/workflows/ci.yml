@@ -18,6 +18,62 @@ env:
 permissions: {}
 
 jobs:
+  changes:
+    name: Identify source changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: read # Ana06/get-changed-files reads the PR's file list
+    outputs:
+      run-tests: ${{ steps.tests-changes.outputs.run-tests || false }}
+      run-docs: ${{ steps.docs-changes.outputs.run-docs || false }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Get a list of the changed test-related files
+        if: github.event_name == 'pull_request'
+        id: changed-test-files
+        uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
+        with:
+          filter: |
+            src/**
+            tests/**
+            pyproject.toml
+            noxfile.py
+            uv.lock
+            .github/workflows/ci.yml
+
+      - name: Set a flag for running the tests
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.changed-test-files.outputs.added_modified_renamed != ''
+        id: tests-changes
+        run: echo "run-tests=true" >> "${GITHUB_OUTPUT}"
+
+      # src is included because the docs build the API reference and run the
+      # documentation examples against the current source.
+      - name: Get a list of the changed docs-related files
+        if: github.event_name == 'pull_request'
+        id: changed-docs-files
+        uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
+        with:
+          filter: |
+            docs/**
+            src/**
+            README.md
+            noxfile.py
+            pyproject.toml
+            .github/workflows/ci.yml
+
+      - name: Set a flag for building the docs
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.changed-docs-files.outputs.added_modified_renamed != ''
+        id: docs-changes
+        run: echo "run-docs=true" >> "${GITHUB_OUTPUT}"
+
   lint:
     name: Format
     runs-on: ubuntu-latest
@@ -47,6 +103,8 @@ jobs:
     name:
       🐍 ${{ matrix.python-version }} • CMake ${{ matrix.cmake-version }} on ${{
       matrix.runs-on }} ${{ matrix.architecture }}
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 40
     strategy:
@@ -177,6 +235,8 @@ jobs:
 
   min:
     name: Min 🐍 ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 40
     strategy:
@@ -230,6 +290,8 @@ jobs:
 
   manylinux:
     name: Manylinux on 🐍 3.14 • Free-threaded
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     container: quay.io/pypa/musllinux_1_2_x86_64@sha256:64919b0fd451133856a4b266317da0363a7023948f8517156c42bc437751198e # 2026.05.31-3
@@ -250,6 +312,8 @@ jobs:
 
   cygwin:
     name: Tests on 🐍 3.9 • cygwin
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: windows-latest
     timeout-minutes: 40
 
@@ -278,6 +342,8 @@ jobs:
 
   msys:
     name: Tests on 🐍 3 • msys UCRT
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -311,6 +377,8 @@ jobs:
 
   mingw64:
     name: Tests on 🐍 3 • mingw64
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -346,6 +414,8 @@ jobs:
 
   dist:
     name: Distribution build
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -359,6 +429,8 @@ jobs:
 
   docs:
     name: Docs on ${{ matrix.runs-on }}
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-docs)
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 25
     strategy:
@@ -400,11 +472,28 @@ jobs:
   pass:
     name: CI pass
     if: always()
-    needs: [lint, checks, min, cygwin, dist, docs]
+    needs: [changes, lint, checks, min, cygwin, dist, docs]
     runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
+          allowed-skips: >-
+            ${{
+              fromJSON(needs.changes.outputs.run-tests)
+              && ''
+              || '
+              checks,
+              min,
+              cygwin,
+              dist,
+              '
+            }} ${{
+              fromJSON(needs.changes.outputs.run-docs)
+              && ''
+              || '
+              docs,
+              '
+            }}
           jobs: ${{ toJSON(needs) }}
