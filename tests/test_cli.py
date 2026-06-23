@@ -16,6 +16,7 @@ def test_cli_no_args(capsys: pytest.CaptureFixture[str]) -> None:
     assert "scikit-build build requires" in out
     assert "scikit-build builder" in out
     assert "scikit-build file-api" in out
+    assert "scikit-build init" in out
 
 
 def test_cli_builder(capsys: pytest.CaptureFixture[str]) -> None:

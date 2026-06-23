@@ -82,3 +82,12 @@ Example:
 ```{program-output} scikit-build file-api reply --help
 
 ```
+
+## Starter projects
+
+The `init` command generates a minimal CMake + scikit-build-core project for the
+selected binding backend. Run it without `--backend` to pick one interactively.
+
+```{program-output} scikit-build init --help
+
+```
