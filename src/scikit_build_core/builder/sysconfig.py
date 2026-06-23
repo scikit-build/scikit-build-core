@@ -12,6 +12,7 @@ import packaging.tags
 from .._logging import logger, rich_print
 
 if TYPE_CHECKING:
+    import argparse
     from collections.abc import Mapping
 
 __all__ = [
@@ -342,6 +343,15 @@ def info_print(
         get_abi_flags(),
         color=color,
     )
+
+
+def main_sysconfig(_args: argparse.Namespace, /) -> None:
+    info_print()
+
+
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Configure a parser to print sysconfig information."""
+    parser.set_defaults(func=main_sysconfig)
 
 
 if __name__ == "__main__":

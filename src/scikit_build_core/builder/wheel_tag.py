@@ -13,6 +13,7 @@ from .._logging import logger
 from .macos import get_macosx_deployment_target
 
 if TYPE_CHECKING:
+    import argparse
     from collections.abc import Iterable, Mapping, Sequence
 
     from .._compat.typing import Self
@@ -219,14 +220,13 @@ class WheelTag:
         return frozenset(itertools.starmap(packaging.tags.Tag, vals))
 
 
-if __name__ == "__main__":
-    import argparse
+def main_wheel_tag(args: argparse.Namespace, /) -> None:
+    comp_tag = WheelTag.compute_best(args.archs, args.abi, root_is_purelib=args.purelib)
+    print(comp_tag)  # noqa: T201
 
-    parser = argparse.ArgumentParser(
-        prog="python -m scikit_build_core.builder.wheel_tag",
-        description="Get the computed wheel tag for the current environment.",
-        allow_abbrev=False,
-    )
+
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Add the ``wheel-tag`` arguments to an existing parser."""
     parser.add_argument(
         "--archs",
         nargs="*",
@@ -243,6 +243,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Specify a non-platlib (pure) tag",
     )
+    parser.set_defaults(func=main_wheel_tag)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="python -m scikit_build_core.builder.wheel_tag",
+        description="Get the computed wheel tag for the current environment.",
+        allow_abbrev=False,
+    )
+    populate_parser(parser)
     args = parser.parse_args()
-    comp_tag = WheelTag.compute_best(args.archs, args.abi, root_is_purelib=args.purelib)
-    print(comp_tag)  # noqa: T201
+    args.func(args)

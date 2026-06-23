@@ -47,13 +47,8 @@ def get_requires(mode: Literal["sdist", "wheel", "editable"]) -> None:
     print(json.dumps(sorted(set(requires)), indent=2))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        prog="python -m scikit_build_core.build",
-        allow_abbrev=False,
-        description="Build backend utilities.",
-    )
-
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Add the ``build`` subcommands to an existing parser."""
     subparsers = parser.add_subparsers(required=True, help="Commands")
     requires = subparsers.add_parser(
         "requires",
@@ -75,6 +70,14 @@ def main() -> None:
     )
     project_table.set_defaults(func=main_project_table)
 
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="python -m scikit_build_core.build",
+        allow_abbrev=False,
+        description="Build backend utilities.",
+    )
+    populate_parser(parser)
     args = parser.parse_args()
     args.func(args)
 

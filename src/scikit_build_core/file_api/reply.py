@@ -1,3 +1,4 @@
+import argparse
 import builtins
 import dataclasses
 import json
@@ -135,22 +136,29 @@ def load_reply_dir(path: Path) -> Index:
     return Converter(path).load()
 
 
-if __name__ == "__main__":
-    import argparse
-
+def main_reply(args: argparse.Namespace, /) -> None:
     rich_print: Callable[[object], None]
     try:
         from rich import print as rich_print
     except ModuleNotFoundError:
         rich_print = builtins.print
 
+    reply = Path(args.reply_dir)
+    rich_print(load_reply_dir(reply))
+
+
+def populate_parser(parser: argparse.ArgumentParser, /) -> None:
+    """Add the ``reply`` argument to an existing parser."""
+    parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
+    parser.set_defaults(func=main_reply)
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="python -m scikit_build_core.file_api.reply",
         allow_abbrev=False,
         description="Read a query written out to a build directory.",
     )
-    parser.add_argument("reply_dir", type=Path, help="Path to the reply directory")
+    populate_parser(parser)
     args = parser.parse_args()
-
-    reply = Path(args.reply_dir)
-    rich_print(load_reply_dir(reply))
+    args.func(args)
