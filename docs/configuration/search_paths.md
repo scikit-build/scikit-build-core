@@ -77,5 +77,12 @@ MyProject = "myproject"
 
 Scikit-build-core also populates `CMAKE_MODULE_PATH` variable used to search for
 CMake modules using the `include()` command (if the `.cmake` suffix is omitted).
+This is populated by reading the entry-point `cmake.module` of the dependent
+projects, which is similarly exported as
+
+```toml
+[project.entry-points."cmake.module"]
+MyProject = "myproject"
+```
 
 [`CMAKE_PREFIX_PATH`]: #cmake-prefix-path
