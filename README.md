@@ -65,8 +65,8 @@ features over classic Scikit-build:
 - Dedicated entrypoints for module and prefix directories
 - Several integrated dynamic metadata plugins (proposing standardized support
   soon)
-- Experimental editable mode support, with optional experimental auto rebuilds
-  on import and optional in-place mode
+- Editable mode support, with optional experimental auto rebuilds on import and
+  optional in-place mode
 - Supports WebAssembly (Emscripten/[Pyodide](https://pyodide.org)).
 - Supports [free-threaded Python 3.13+](https://py-free-threading.github.io).
 
@@ -81,22 +81,21 @@ Some known missing features that will be developed soon:
   including setuptools)
 - Several editable mode caveats (mentioned in the docs).
 
-Other backends are also planned:
+Other backends are also available:
 
-- Setuptools integration highly experimental
-- Hatchling plugin highly experimental
+- Setuptools integration (use the `[setuptools]` extra)
+- Hatchling plugin (use the `[hatchling]` extra)
 
-The recommended interface is the native pyproject builder. There is also a WIP
-setuptools-based interface that is being developed to provide a transition path
-for classic scikit-build, and a WIP Hatchling plugin. Both might be moved to
-standalone packages in the future.
+The recommended interface is the native pyproject builder. There is also a
+setuptools-based interface that provides a transition path for classic
+scikit-build, and a Hatchling plugin.
 
 > [!WARNING]
 >
-> Only the pyproject-based builder should be used; the setuptools backend is
-> experimental and likely to move to a separate package before being declared
-> stable, and internal API is still being solidified. A future version of this
-> package will support creating new build extensions.
+> The setuptools and hatchling backends might move to standalone packages in the
+> future, so depend on them via the `scikit-build-core[setuptools]` and
+> `scikit-build-core[hatchling]` extras to stay protected if they do. The
+> internal API for writing new build extensions is still being solidified.
 
 ## Example
 

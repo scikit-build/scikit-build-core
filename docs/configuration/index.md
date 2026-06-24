@@ -559,8 +559,8 @@ You can pass raw arguments directly to the build tool, as well:
 
 ## Editable installs
 
-Experimental support for editable installs is provided, with some caveats and
-configuration. Recommendations:
+Support for editable installs is provided, with some caveats and configuration.
+Recommendations:
 
 - Use `--no-build-isolation` when doing an editable install is recommended; you
   should preinstall your dependencies.
@@ -569,19 +569,16 @@ configuration. Recommendations:
   also enable automatic rebuilds.
 - You need to reinstall to pick up new files.
 
-Known limitations:
-
-- Resources (via `importlib.resources`) are not properly supported (yet).
-  Currently experimentally supported except on Python 3.9 (3.8, 3.10, 3.11,
-  3.12, and 3.13 work). `importlib_resources` may work on Python 3.9.
+Resources (via `importlib.resources`) are supported and tested on all supported
+Python versions. On Python 3.8, use the `importlib_resources` backport, since
+`importlib.resources.files` was added to the standard library in Python 3.9.
 
 ```console
 # Very experimental rebuild on initial import feature
 $ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
 ```
 
-Due to the length of this line already being long, you do not need to set the
-`experimental` setting to use editable installs, but please consider them
+The automatic rebuild-on-import feature (`editable.rebuild`) is still
 experimental and subject to change.
 
 You can disable the verbose rebuild output with `editable.verbose=false` if you
@@ -601,14 +598,15 @@ it uses the classic `.pth` `import` line. This is handled automatically based on
 the interpreter running the editable install.
 
 [PEP 829]: https://peps.python.org/pep-0829/
+[PEP 817]: https://peps.python.org/pep-0817/
 
 :::{note}
 
-A second experimental mode, `"inplace"`, is also available. This does an
-in-place CMake build, so all the caveats there apply too -- only one build per
-source directory, you can't change to an out-of-source builds without removing
-the build artifacts, your source directory will be littered with build
-artifacts, etc. Also, to make your binaries importable, you should set
+A second mode, `"inplace"`, is also available. This does an in-place CMake
+build, so all the caveats there apply too -- only one build per source
+directory, you can't change to an out-of-source builds without removing the
+build artifacts, your source directory will be littered with build artifacts,
+etc. Also, to make your binaries importable, you should set
 `LIBRARY_OUTPUT_DIRECTORY` (include a generator expression, like the empty one
 `$<0:>` for multi-config generator support, like MSVC, so you don't have to set
 all possible `*_<CONFIG>` variations) to make sure they are placed inside your
@@ -689,6 +687,23 @@ only be used if you enable them:
 [tool.scikit-build]
 experimental = true
 ```
+
+The following features currently require this flag:
+
+- **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
+  `variant-label`, and `null-variant`). See
+  [](../guide/faqs.md#building-wheel-variants-experimental).
+- **Third-party dynamic-metadata plugins**: dynamic metadata providers not
+  shipped with scikit-build-core (anything using `provider-path` or a provider
+  outside the `scikit_build_core.*` namespace). See [](./dynamic.md).
+- **Absolute `wheel.install-dir`**: an absolute install dir is placed one level
+  above the platlib root, giving access to `/platlib`, `/data`, `/headers`,
+  `/scripts`, and `/metadata`. See
+  [`wheel.install-dir`](../reference/configs.md).
+
+The [rebuild-on-import feature](#editable-installs) for editable installs is
+also considered experimental and subject to change, but is not gated behind this
+flag.
 
 You can also fail the build with `fail = true`. This is useful with overrides if
 you want to make a specific configuration fail. If this is set, extra

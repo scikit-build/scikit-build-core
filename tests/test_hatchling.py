@@ -27,7 +27,7 @@ def _validate_settings(pyproject: dict[str, object]) -> None:
 def test_hatchling_sdist_cmake_error_message() -> None:
     pyproject = {
         "project": {"name": "x", "version": "0.1.0"},
-        "tool": {"scikit-build": {"experimental": True, "sdist": {"cmake": True}}},
+        "tool": {"scikit-build": {"sdist": {"cmake": True}}},
     }
     with pytest.raises(ValueError, match="Not currently supported for SDist builds"):
         _validate_settings(pyproject)

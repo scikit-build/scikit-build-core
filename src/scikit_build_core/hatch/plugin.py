@@ -74,10 +74,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
         settings_reader.validate_may_exit()
 
-        if not settings.experimental:
-            msg = "Hatch support is experimental, must enable the experimental flag"
-            raise ValueError(msg)
-
         if not settings.wheel.cmake:
             msg = "CMake is required for scikit-build"
             raise ValueError(msg)
