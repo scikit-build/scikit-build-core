@@ -5,16 +5,11 @@ find_package(
   Python
   COMPONENTS Interpreter Development.Module
   REQUIRED)
+find_package(Cython MODULE REQUIRED VERSION 3.0)
+include(UseCython)
 
-add_custom_command(
-  OUTPUT example.c
-  COMMENT
-    "Making ${CMAKE_CURRENT_BINARY_DIR}/example.c from ${CMAKE_CURRENT_SOURCE_DIR}/example.pyx"
-  COMMAND Python::Interpreter -m cython
-          "${CMAKE_CURRENT_SOURCE_DIR}/example.pyx" --output-file example.c
-  DEPENDS example.pyx
-  VERBATIM)
+cython_transpile(example.pyx LANGUAGE C OUTPUT_VARIABLE example_c)
 
-python_add_library(example MODULE example.c WITH_SOABI)
+python_add_library(example MODULE "${example_c}" WITH_SOABI)
 
 install(TARGETS example DESTINATION .)

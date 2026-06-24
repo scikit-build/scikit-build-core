@@ -246,7 +246,6 @@ features. Also it's hard to compile Fortran on Windows as it's not supported by
 MSVC and macOS as it's not supported by Clang.
 ```
 
-
 ````
 
 Notice that you _do not_ include `cmake`, `ninja`, `setuptools`, or `wheel` in
@@ -338,8 +337,9 @@ The project line can optionally use `SKBUILD_PROJECT_NAME` and
 your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
-You'll need to handle the generation of files by Cython directly at the moment.
-A helper (similar to scikit-build classic) might be added in the future.
+[cython-cmake][] provides the `cython_transpile` helper (via `include(UseCython)`)
+that turns your `.pyx` file into a C source you can pass to `python_add_library`.
+Add it to your build requirements as shown in the pyproject.toml above.
 
 ````
 
@@ -406,9 +406,10 @@ The project line can optionally use `SKBUILD_PROJECT_NAME` and
 your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
-You'll need to handle the generation of files by NumPy directly at the moment.
-A helper (similar to scikit-build classic) might be added in the future. You'll
-need gfortran on macOS.
+[f2py-cmake][] provides the `f2py_add_module` helper (via `include(UseF2Py)`)
+that generates the f2py wrappers, builds the `fortranobject` support code, and
+links it all into an importable module in a single call. Add it to your build
+requirements as shown in the pyproject.toml above. You'll need gfortran on macOS.
 
 ````
 
@@ -439,6 +440,8 @@ That's it for a basic package!
 <!-- prettier-ignore-start -->
 [INTERSECT Training: Packaging]:     https://intersect-training.org/packaging
 [buildgen]:                          https://github.com/shakfu/buildgen
+[cython-cmake]:                      https://github.com/scikit-build/cython-cmake
+[f2py-cmake]:                        https://github.com/scikit-build/f2py-cmake
 [nanobind example]:                  https://github.com/wjakob/nanobind_example
 [packaging.python.org's tutorial]:   https://packaging.python.org/en/latest/tutorials/packaging-projects
 [pybind11/scikit_build_example]:     https://github.com/pybind/scikit_build_example
