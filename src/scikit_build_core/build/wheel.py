@@ -33,7 +33,9 @@ from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
 from ._pathutil import (
+    iter_force_include,
     packages_to_file_mapping,
+    resolve_wheel_tree,
 )
 from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
@@ -299,19 +301,13 @@ def _build_wheel_impl_impl(
             ),
         )
 
-        if ".." in settings.wheel.install_dir:
-            msg = "wheel.install_dir must not contain '..'"
-            raise AssertionError(msg)
-        if settings.wheel.install_dir.startswith("/"):
-            if not settings.experimental:
-                msg = "Experimental features must be enabled to use absolute paths in wheel.install_dir"
-                raise AssertionError(msg)
-            if settings.wheel.install_dir[1:].split("/")[0] not in wheel_dirs:
-                msg = "Must target a valid wheel directory"
-                raise AssertionError(msg)
-            install_dir = wheel_dir / settings.wheel.install_dir[1:]
-        else:
-            install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
+        install_base, install_rest = resolve_wheel_tree(
+            settings.wheel.install_dir,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            experimental=settings.experimental,
+        )
+        install_dir = install_base / install_rest
 
         # Include the metadata license.file entry if provided
         if metadata.license_files is not None:
@@ -400,6 +396,16 @@ def _build_wheel_impl_impl(
                 config=config,
             )
 
+            for source, fi_value in settings.force_include.items():
+                build_dest = None if isinstance(fi_value, str) else fi_value.build
+                if build_dest is None:
+                    continue
+                for src_file, target in iter_force_include(
+                    source, build_dest, build_dir
+                ):
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src_file, target)
+
             rich_print("{green}***", "{bold}Configuring CMake...")
             # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
             # Otherwise `cmake --install --prefix` would work by itself
@@ -471,6 +477,23 @@ def _build_wheel_impl_impl(
                 shutil.copy2(filepath, package_dir)
 
             process_script_dir(wheel_dirs["scripts"])
+
+        # Force-include into the wheel, always (even for editable installs, as
+        # these files are not redirectable) and after the package copy, so they
+        # override package files and CMake output at the same destination.
+        for source, fi_value in settings.force_include.items():
+            wheel_dest = fi_value if isinstance(fi_value, str) else fi_value.wheel
+            if wheel_dest is None:
+                continue
+            base, rest = resolve_wheel_tree(
+                wheel_dest,
+                wheel_dirs=wheel_dirs,
+                targetlib=targetlib,
+                experimental=settings.experimental,
+            )
+            for src_file, target in iter_force_include(source, rest, base):
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_file, target)
 
         with make_wheel(folder=Path(wheel_directory)) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)

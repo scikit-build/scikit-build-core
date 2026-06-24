@@ -92,6 +92,30 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: force-include
+
+  :Type: ``dict[str,str | ForceIncludeTargets]``
+  :Config-settings: ``force-include`` or ``skbuild.force-include``
+  :Environment variable: ``SKBUILD_FORCE_INCLUDE``
+
+  Force-include files into the distributions.
+
+  Keys are source paths relative to the project root; they may point outside
+  it (e.g. ``../shared``), and ``~`` is expanded. A source may be a file or a
+  directory; directories are copied recursively, skipping VCS and
+  ``__pycache__`` junk.
+
+  A bare string value is the wheel destination (the common case). An inline
+  table gives per-target control with any subset of ``sdist``, ``wheel``, and
+  ``build`` keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline
+  table form is only available in ``pyproject.toml``).
+
+  Force-included files override package files and CMake output at the same
+  destination. A missing source is silently skipped (it is assumed to already
+  be present at the destination, e.g. when building a wheel from an SDist).
+```
+
+```{eval-rst}
 .. confval:: metadata
 
   :Type: ``dict[str,dict[str,Any]]``

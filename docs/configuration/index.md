@@ -359,6 +359,49 @@ assume `wheel.platlib = false` (purelib targeted instead).
 
 :::
 
+### Force-including files
+
+Sometimes you need to place a specific file (or directory) at a specific path in
+a distribution, even if it lives outside your package tree or is produced
+elsewhere. `force-include` is a table mapping source paths to destinations:
+
+```toml
+[tool.scikit-build.force-include]
+"vendor/lib.so" = "mypackage/_lib.so"
+"assets" = "mypackage/assets"
+```
+
+The keys are source paths relative to the project root; they may point outside
+it (e.g. `../shared`), and `~` is expanded. A source may be a file or a
+directory, and directories are copied recursively (skipping VCS and
+`__pycache__` junk). A bare string value is the wheel destination, relative to
+the platlib (the package area). Force-included files are placed last, so they
+override discovered package files and CMake output at the same destination.
+
+For more control, the value can be an inline table targeting any subset of the
+`sdist`, `wheel`, and `build` outputs independently:
+
+```toml
+[tool.scikit-build.force-include]
+# vendor an external data file into both the SDist and the wheel
+"../shared/data.json" = {sdist = "mypackage/data.json", wheel = "mypackage/data.json"}
+# drop a file into the CMake build directory before configure, for CMake to use
+"toolchain.cmake" = {build = "toolchain.cmake"}
+```
+
+The `wheel` destination also accepts a leading `/data`, `/scripts`, `/headers`,
+or `/metadata` to target that wheel tree instead of the platlib (this requires
+`experimental = true`, like `wheel.install-dir`). The `sdist` destination is
+relative to the SDist root, and `build` is relative to the CMake build
+directory.
+
+A missing source is silently skipped, rather than erroring: when a wheel is
+built from an SDist an external source may be gone, but it is assumed to already
+be present at the destination (use the `sdist` target to vendor it into the
+SDist so it is). The inline-table form is only available in `pyproject.toml`;
+the bare-string (wheel) form can also be set via config-settings or
+`SKBUILD_FORCE_INCLUDE`.
+
 ## Customizing the output wheel
 
 The python API tags for your wheel will be correct assuming you are building a

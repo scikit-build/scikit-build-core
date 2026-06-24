@@ -504,6 +504,37 @@
         }
       }
     },
+    "force-include": {
+      "type": "object",
+      "patternProperties": {
+        ".+": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sdist": {
+                  "type": "string",
+                  "description": "The destination path in the SDist, relative to the SDist root. If unset, the"
+                },
+                "wheel": {
+                  "type": "string",
+                  "description": "The destination path in the wheel, relative to platlib."
+                },
+                "build": {
+                  "type": "string",
+                  "description": "The destination path in the CMake build directory, relative to its root."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "description": "Force-include files into the distributions."
+    },
     "strict-config": {
       "type": "boolean",
       "default": true,
@@ -669,6 +700,9 @@
           },
           "metadata": {
             "$ref": "#/properties/metadata"
+          },
+          "force-include": {
+            "$ref": "#/properties/force-include"
           },
           "strict-config": {
             "$ref": "#/properties/strict-config"

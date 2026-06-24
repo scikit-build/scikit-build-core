@@ -17,6 +17,7 @@ from .._logging import rich_print
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
+from ._pathutil import iter_force_include
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
 from .wheel import _build_wheel_impl
@@ -154,6 +155,20 @@ def build_sdist(
                 arcname=srcdirname / filepath,
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
+
+        for source, fi_value in settings.force_include.items():
+            # A bare string targets the wheel only, so it is skipped here.
+            sdist_dest = None if isinstance(fi_value, str) else fi_value.sdist
+            if sdist_dest is None:
+                continue
+            for src_file, target in iter_force_include(
+                source, sdist_dest, Path(srcdirname)
+            ):
+                tar.add(
+                    src_file,
+                    arcname=target,
+                    filter=normalize_tar_info if reproducible else lambda x: x,
+                )
 
         add_bytes_to_tar(
             tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible

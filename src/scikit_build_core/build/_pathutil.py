@@ -7,17 +7,20 @@ from typing import TYPE_CHECKING, Literal
 
 import pathspec
 
-from ._file_processor import each_unignored_file
+from .._logging import logger
+from ._file_processor import EXCLUDE_LINES, each_unignored_file
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping, Sequence
+    from collections.abc import Generator, Iterator, Mapping, Sequence
 
 __all__ = [
     "is_module",
     "is_trackable",
+    "iter_force_include",
     "module_loader_rank",
     "packages_to_file_mapping",
     "path_to_module",
+    "resolve_wheel_tree",
     "scantree",
 ]
 
@@ -83,6 +86,62 @@ def packages_to_file_mapping(
                 mapping[str(filepath)] = str(target_path)
 
     return mapping
+
+
+def resolve_wheel_tree(
+    dest: str,
+    *,
+    wheel_dirs: Mapping[str, Path],
+    targetlib: str,
+    experimental: bool,
+) -> tuple[Path, str]:
+    """
+    Resolve a wheel destination into a ``(base_dir, relative_dest)`` pair.
+
+    A plain ``dest`` is relative to the target lib (platlib/purelib). A leading
+    ``/`` selects a wheel tree (``/data``, ``/scripts``, ``/headers``,
+    ``/platlib``, ``/metadata``, ...) and requires experimental features, since
+    this gives access one level above the platlib root.
+    """
+    if ".." in dest:
+        msg = f"Wheel destination must not contain '..', got {dest!r}"
+        raise AssertionError(msg)
+    if dest.startswith("/"):
+        if not experimental:
+            msg = "Experimental features must be enabled to use absolute paths (a leading '/') in a wheel destination"
+            raise AssertionError(msg)
+        tree, _, rest = dest[1:].partition("/")
+        if tree not in wheel_dirs:
+            msg = f"Must target a valid wheel directory, not {tree!r}"
+            raise AssertionError(msg)
+        return wheel_dirs[tree], rest
+    return wheel_dirs[targetlib], dest
+
+
+def iter_force_include(
+    source: str, dest: str, base: Path
+) -> Iterator[tuple[Path, Path]]:
+    """
+    Yield ``(source_file, target_path)`` pairs for a force-include entry.
+
+    ``source`` may be a file or a directory (relative to the project root, may
+    point outside it, with ``~`` expanded). A file yields a single pair mapped to
+    ``base / dest``; a directory is walked recursively (skipping VCS and
+    ``__pycache__`` junk) with each file mapped under ``base / dest``. A source
+    that does not exist yields nothing -- it is assumed to already be present at
+    the destination (e.g. when building a wheel from an SDist).
+    """
+    src = Path(source).expanduser()
+    if src.is_file():
+        yield src, base / dest
+    elif src.is_dir():
+        exclude_spec = pathspec.GitIgnoreSpec.from_lines(EXCLUDE_LINES)
+        for filepath in scantree(src):
+            rel_path = filepath.relative_to(src)
+            if not exclude_spec.match_file(rel_path):
+                yield filepath, base / dest / rel_path
+    else:
+        logger.debug("Force-include source {!r} not found, skipping", source)
 
 
 def is_trackable(path: Path) -> bool:

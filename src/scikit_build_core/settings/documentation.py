@@ -73,6 +73,10 @@ def get_display_type(field_type: type | str) -> str:
     if is_optional(field_type):
         # Special case for optional, we just take the first part
         return get_display_type(get_args(field_type)[0])
+    if get_origin(field_type) is typing.Union:
+        return " | ".join(
+            get_display_type(a) for a in get_args(field_type) if a is not type(None)
+        )
     # Handle built-ins
     if get_origin(field_type) is dict:
         key_display = get_display_type(get_args(field_type)[0])

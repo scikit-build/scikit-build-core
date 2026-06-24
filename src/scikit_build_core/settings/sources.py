@@ -734,6 +734,14 @@ class TOMLSource(Source):
                 if isinstance(item, list):
                     return [cls.convert(i, get_inner_type(args[list])) for i in item]
                 return item
+            # A TOML table (dict) can also target a dataclass member of the union
+            # (e.g. ``Union[str, ForceIncludeTargets]``).
+            if isinstance(item, dict):
+                dataclass_args = [
+                    t for t in args.values() if dataclasses.is_dataclass(t)
+                ]
+                if len(dataclass_args) == 1:
+                    return cls.convert(item, dataclass_args[0])
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is Literal:

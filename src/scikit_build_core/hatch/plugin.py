@@ -23,7 +23,11 @@ from ..build._editable import (
     get_packages,
 )
 from ..build._init import setup_logging
-from ..build._pathutil import packages_to_file_mapping, scantree
+from ..build._pathutil import (
+    packages_to_file_mapping,
+    resolve_wheel_tree,
+    scantree,
+)
 from ..builder.builder import (
     Builder,
     archs_to_tags,
@@ -215,19 +219,13 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         for d in wheel_dirs.values():
             d.mkdir(parents=True)
 
-        if ".." in settings.wheel.install_dir:
-            msg = "wheel.install_dir must not contain '..'"
-            raise AssertionError(msg)
-        if settings.wheel.install_dir.startswith("/"):
-            if not settings.experimental:
-                msg = "Experimental features must be enabled to use absolute paths in wheel.install_dir"
-                raise AssertionError(msg)
-            if settings.wheel.install_dir[1:].split("/")[0] not in wheel_dirs:
-                msg = "Must target a valid wheel directory"
-                raise AssertionError(msg)
-            install_dir = wheel_dir / settings.wheel.install_dir[1:]
-        else:
-            install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
+        install_base, install_rest = resolve_wheel_tree(
+            settings.wheel.install_dir,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            experimental=settings.experimental,
+        )
+        install_dir = install_base / install_rest
 
         config = CMaker(
             cmake,

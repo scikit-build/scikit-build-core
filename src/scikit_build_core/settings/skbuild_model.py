@@ -13,6 +13,7 @@ __all__ = [
     "CMakeSettings",
     "CMakeSettingsDefine",
     "EditableSettings",
+    "ForceIncludeTargets",
     "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
@@ -524,6 +525,32 @@ class GenerateSettings:
 
 
 @dataclasses.dataclass
+class ForceIncludeTargets:
+    sdist: Optional[str] = None
+    """
+    The destination path in the SDist, relative to the SDist root. If unset, the
+    source is not added to the SDist.
+    """
+
+    wheel: Optional[str] = None
+    """
+    The destination path in the wheel, relative to platlib.
+
+    A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
+    ``/metadata`` targets that wheel tree instead (this requires
+    :confval:`experimental`). If unset, the source is not added to the wheel.
+    """
+
+    build: Optional[str] = None
+    """
+    The destination path in the CMake build directory, relative to its root.
+
+    The file is copied in before CMake configures, so the build can consume it.
+    If unset, the source is not added to the build directory.
+    """
+
+
+@dataclasses.dataclass
 class MessagesSettings:
     """
     Settings for messages.
@@ -558,6 +585,27 @@ class ScikitBuildSettings:
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.
+    """
+
+    force_include: Dict[str, Union[str, ForceIncludeTargets]] = dataclasses.field(
+        default_factory=dict
+    )
+    """
+    Force-include files into the distributions.
+
+    Keys are source paths relative to the project root; they may point outside
+    it (e.g. ``../shared``), and ``~`` is expanded. A source may be a file or a
+    directory; directories are copied recursively, skipping VCS and
+    ``__pycache__`` junk.
+
+    A bare string value is the wheel destination (the common case). An inline
+    table gives per-target control with any subset of ``sdist``, ``wheel``, and
+    ``build`` keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline
+    table form is only available in ``pyproject.toml``).
+
+    Force-included files override package files and CMake output at the same
+    destination. A missing source is silently skipped (it is assumed to already
+    be present at the destination, e.g. when building a wheel from an SDist).
     """
 
     strict_config: bool = True

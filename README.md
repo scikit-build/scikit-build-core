@@ -288,6 +288,9 @@ search.site-packages = true
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 
+# Force-include files into the distributions.
+force-include = {}
+
 # Strictly check all config options.
 strict-config = true
 
