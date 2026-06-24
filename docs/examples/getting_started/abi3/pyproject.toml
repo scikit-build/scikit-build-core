@@ -6,5 +6,5 @@ build-backend = "scikit_build_core.build"
 name = "example"
 version = "0.0.1"
 
-[tool.scikit-build-core]
+[tool.scikit-build]
 wheel.py-api = "cp38"

@@ -117,8 +117,8 @@ CMake's guide on how to write the [toolchain file].
 You can pass the toolchain file using the environment variable
 `CMAKE_TOOLCHAIN_FILE`, or the `cmake.toolchain-file` pyproject option. You may
 also need to use `wheel.tags` to manually specify the wheel tags to use for the
-file and `cmake.no-python-hints` if the target python should be detected using
-the toolchain file instead.
+file and `cmake.python-hints = false` if the target python should be detected
+using the toolchain file instead.
 
 :::{note}
 

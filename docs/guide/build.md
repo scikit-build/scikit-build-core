@@ -186,7 +186,7 @@ scikit_build_core-0.1.2-py3-none-any.whl
 The three new items here (compared to SDists) are the [compatibility tags][]:
 
 - `python tag`: The first version of Python the wheel is compatible with. Often
-  `py3` for pure Python wheels, or `py312` (etc) for compiled wheels.
+  `py3` for pure Python wheels, or `cp312` (etc) for compiled wheels.
 - `abi tag`: The interpreter ABI this was built for. `none` for pure Python
   wheels or compiled wheels that don't use the Python API, `abi3` for stable ABI
   / limited API wheels, `abi3t` for free-threaded stable ABI wheels, and `cp312`
