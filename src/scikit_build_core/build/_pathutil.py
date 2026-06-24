@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib.machinery
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal
 
 import pathspec
@@ -130,7 +130,18 @@ def iter_force_include(
     ``__pycache__`` junk) with each file mapped under ``base / dest``. A source
     that does not exist yields nothing -- it is assumed to already be present at
     the destination (e.g. when building a wheel from an SDist).
+
+    ``dest`` must be a relative path within ``base``; an absolute path or one
+    with ``..`` components (which would escape ``base``) is rejected. Wheel-tree
+    selection (a leading ``/``) is handled earlier by :func:`resolve_wheel_tree`.
     """
+    dest_path = PurePosixPath(dest)
+    if dest_path.is_absolute() or ".." in dest_path.parts:
+        msg = (
+            f"Force-include destination {dest!r} for {source!r} must be a "
+            "relative path without '..'"
+        )
+        raise AssertionError(msg)
     src = Path(source).expanduser()
     if src.is_file():
         yield src, base / dest

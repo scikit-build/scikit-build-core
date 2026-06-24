@@ -114,6 +114,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "Metadata is not supported for hatch builds"
             raise ValueError(msg)
 
+        if settings.force_include:
+            msg = "Force-include is not supported for hatch builds"
+            raise ValueError(msg)
+
     # Requires Hatchling 1.22.0 to have an effect
     def dependencies(self) -> list[str]:
         settings = self._read_config().settings

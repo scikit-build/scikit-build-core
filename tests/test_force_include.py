@@ -148,6 +148,31 @@ def test_force_include_leading_slash_requires_experimental(chdir_tmp: Path) -> N
         build_wheel(str(dist), {})
 
 
+@pytest.mark.parametrize("bad", ["/abs/escape.txt", "../escape.txt", "a/../../x"])
+def test_force_include_rejects_escaping_sdist_dest(chdir_tmp: Path, bad: str) -> None:
+    make_pure_pkg(
+        chdir_tmp,
+        extra=f'force-include = {{"blob.txt" = {{sdist = "{bad}"}}}}',
+    )
+    (chdir_tmp / "blob.txt").write_text("x")
+
+    dist = chdir_tmp / "dist"
+    with pytest.raises(AssertionError, match=r"relative path without"):
+        build_sdist(str(dist), {})
+
+
+def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"blob.txt" = "../escape.txt"}',
+    )
+    (chdir_tmp / "blob.txt").write_text("x")
+
+    dist = chdir_tmp / "dist"
+    with pytest.raises(AssertionError):
+        build_wheel(str(dist), {})
+
+
 def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
