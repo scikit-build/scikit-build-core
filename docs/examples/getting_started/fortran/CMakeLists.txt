@@ -8,7 +8,7 @@ find_package(
 
 # F2PY headers
 execute_process(
-  COMMAND "${PYTHON_EXECUTABLE}" -c
+  COMMAND "${Python_EXECUTABLE}" -c
           "import numpy.f2py; print(numpy.f2py.get_include())"
   OUTPUT_VARIABLE F2PY_INCLUDE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)

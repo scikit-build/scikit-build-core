@@ -138,6 +138,11 @@ This is often combined with `if.any`.
 The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`,
 and `metadata_editable`. Takes a regex.
 
+The `metadata_wheel` and `metadata_editable` states correspond to the
+`prepare_metadata_for_build_wheel` and `prepare_metadata_for_build_editable` PEP
+517 hooks, respectively; these are metadata-only preparation passes that a
+frontend may run without building the full wheel.
+
 Note that you can build directly to wheel; you don't have to go through an
 SDist.
 
