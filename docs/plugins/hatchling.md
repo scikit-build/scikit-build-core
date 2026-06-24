@@ -52,7 +52,7 @@ Key limitations:
 - Using cmake in SDist step is not supported yet.
 - Editable installs are not supported yet.
 - `scikit-build.generate` and `scikit-build.metadata` is not supported.
-- `${SKBUILD_HEADER_DIR}` is not supported, request support in Hatching if
+- `${SKBUILD_HEADER_DIR}` is not supported, request support in Hatchling if
   needed.
 - Anything in `${SKBUILD_METADATA_DIR}` must be placed in an `extra_metadata`
   folder.

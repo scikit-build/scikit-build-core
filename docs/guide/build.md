@@ -55,7 +55,7 @@ the `--sdist` flag. For example, `pipx run build --sdist`. This:
 
 1. Reads `pyproject.toml` to get the `build-system` table.
 2. Set up a new isolated environment with the packages listed in
-   `build-system.requires`..
+   `build-system.requires`.
 3. Run `.get_requires_for_build_sdist(...)` inside the module listed in
    `build-system.build-backend`, if it exists. If this returns a list, install
    all the packages requested. This allows a backend to dynamically declare
@@ -94,7 +94,7 @@ This:
 
 1. Reads `pyproject.toml` to get the `build-system` table.
 2. Set up a new isolated environment with the packages listed in
-   `build-system.requires`..
+   `build-system.requires`.
 3. Run `.get_requires_for_build_wheel(...)` inside the module listed in
    `build-system.build-backend`, if it exists. If this returns a list, install
    all the packages requested. This allows a backend to dynamically declare

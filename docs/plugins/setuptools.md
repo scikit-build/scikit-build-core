@@ -16,7 +16,7 @@ version of setuptools (recommended!).
 
 To use the plugin, make sure you have both setuptools and scikit-build-core in
 your `build-system.requires` table. You can use either `setuptools.build_meta`
-or `scikit-build-core.setuptools.build_meta` as `build-system.build-backend`,
+or `scikit_build_core.setuptools.build_meta` as `build-system.build-backend`,
 but the latter will give you the auto-inclusion of `cmake` and `ninja` as
 needed, so it is recommended.
 

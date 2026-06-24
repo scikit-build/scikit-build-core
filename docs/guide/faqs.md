@@ -71,8 +71,8 @@ scikit-build builder
 
 ## Repairing wheels
 
-Like most other backends[^1], scikit-build-core produced `linux` wheels, which
-are not redistrubutable cannot be uploaded to PyPI[^2]. You have to run your
+Like most other backends[^1], scikit-build-core produces `linux` wheels, which
+are not redistributable and cannot be uploaded to PyPI[^2]. You have to run your
 wheels through `auditwheel` to make `manylinux` wheels. `cibuildwheel`
 automatically does this for you. See [repairing](#repairing-wheels).
 
@@ -84,7 +84,7 @@ recipes][]. There are a few things to keep in mind.
 You need to recreate your `build-system.requires` in the `host` table, with the
 conda versions of your dependencies. You also need to add `cmake` and either
 `make` or `ninja` to your `build:` table. Conda-build hard-codes
-`CMAKE_GENERATOR="Unix Makefiles` on UNIX systems, so you have to set or unset
+`CMAKE_GENERATOR="Unix Makefiles"` on UNIX systems, so you have to set or unset
 this to use Ninja if you prefer Ninja. The `scikit-build-core` recipe cannot
 depend on `cmake`, `make`, or `ninja`, because that would add those to the wrong
 table (`host` instead of `build`). Here's an example:

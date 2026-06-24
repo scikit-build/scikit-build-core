@@ -30,7 +30,7 @@ these tools in its [repair wheel] feature.
 
 These tools also rename the library with a unique hash to avoid any potential
 name collision if the same library is being bundled by a different package, and
-check if the packages confirm to standards like [PEP600] (`manylinux_X_Y`).
+check if the packages conform to standards like [PEP600] (`manylinux_X_Y`).
 These tools do not allow to have cross wheel library dependency.
 
 ## Manual patching
