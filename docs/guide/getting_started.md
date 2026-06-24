@@ -237,11 +237,13 @@ To create your first compiled package, start with a pyproject.toml like this:
 ```
 
 ```{warning}
-The module you build will require an equal or newer version to the version of
-NumPy it built with. You should use `oldest-supported-numpy` or manually set
-the NumPy version, though you will then be stuck with older versions of f2py.
-Also it's hard to compile Fortran on Windows as it's not supported by MSVC and
-macOS as it's not supported by Clang.
+The module you build will require an equal or newer version of NumPy at runtime
+than the version it built with. The modern approach is to build against
+`numpy>=2.0`; NumPy 2.0 wheels are backward-compatible at the C ABI level, so a
+module built against NumPy 2.0 keeps working with older NumPy at runtime. Add a
+runtime floor (in `[project]` `dependencies`) only if your code needs newer NumPy
+features. Also it's hard to compile Fortran on Windows as it's not supported by
+MSVC and macOS as it's not supported by Clang.
 ```
 
 
