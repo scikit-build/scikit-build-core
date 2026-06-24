@@ -1,6 +1,6 @@
 # Dynamic metadata
 
-Scikit-build-core supports dynamic metadata with three built-in plugins.
+Scikit-build-core supports dynamic metadata with four built-in plugins.
 
 :::{warning}
 
@@ -58,6 +58,7 @@ If you want to pull a string-valued expression (usually version) from an
 existing file, you can the integrated `regex` plugin to pull the information.
 
 ```toml
+[project]
 name = "mypackage"
 dynamic = ["version"]
 
@@ -148,7 +149,7 @@ similar to the other dynamic metadata it injects the additional
 `build-system.requires`.
 
 ```toml
-[package]
+[project]
 name = "mypackage"
 
 [tool.scikit-build]
