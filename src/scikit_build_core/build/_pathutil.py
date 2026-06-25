@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Literal
 import pathspec
 
 from .._logging import logger
+from ..settings.skbuild_model import ForceIncludeTargets
 from ._file_processor import EXCLUDE_LINES, each_unignored_file
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 
 __all__ = [
+    "force_include_targets",
     "is_module",
     "is_trackable",
     "iter_force_include",
@@ -118,18 +120,34 @@ def resolve_wheel_tree(
     return wheel_dirs[targetlib], dest
 
 
+def force_include_targets(fi_value: str | ForceIncludeTargets) -> ForceIncludeTargets:
+    """
+    Normalize a force-include value into a :class:`ForceIncludeTargets`.
+
+    A bare string is the wheel destination only and implies ``missing-ok`` (it is
+    lenient like hatchling). An inline table is returned unchanged, so it errors
+    on a missing source unless it sets ``missing-ok``.
+    """
+    if isinstance(fi_value, str):
+        return ForceIncludeTargets(wheel=fi_value, missing_ok=True)
+    return fi_value
+
+
 def iter_force_include(
-    source: str, dest: str, base: Path
+    source: str, dest: str, base: Path, *, missing_ok: bool = False
 ) -> Iterator[tuple[Path, Path]]:
     """
     Yield ``(source_file, target_path)`` pairs for a force-include entry.
 
     ``source`` may be a file or a directory (relative to the project root, may
-    point outside it, with ``~`` expanded). A file yields a single pair mapped to
-    ``base / dest``; a directory is walked recursively (skipping VCS and
-    ``__pycache__`` junk) with each file mapped under ``base / dest``. A source
-    that does not exist yields nothing -- it is assumed to already be present at
-    the destination (e.g. when building a wheel from an SDist).
+    point outside it or be absolute, with ``~`` expanded). A file yields a single
+    pair mapped to ``base / dest``; a directory is walked recursively (skipping
+    VCS and ``__pycache__`` junk) with each file mapped under ``base / dest``.
+
+    If the source does not exist, a :class:`FileNotFoundError` is raised unless
+    ``missing_ok`` is set, in which case it yields nothing -- the source is
+    assumed to already be present at the destination (e.g. when building a wheel
+    from an SDist).
 
     ``dest`` must be a relative path within ``base``; an absolute path or one
     with ``..`` components (which would escape ``base``) is rejected. Wheel-tree
@@ -151,8 +169,11 @@ def iter_force_include(
             rel_path = filepath.relative_to(src)
             if not exclude_spec.match_file(rel_path):
                 yield filepath, base / dest / rel_path
-    else:
+    elif missing_ok:
         logger.debug("Force-include source {!r} not found, skipping", source)
+    else:
+        msg = f"Force-include source {source!r} not found"
+        raise FileNotFoundError(msg)
 
 
 def is_trackable(path: Path) -> bool:

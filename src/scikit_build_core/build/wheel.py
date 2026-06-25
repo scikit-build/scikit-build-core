@@ -33,6 +33,7 @@ from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
 from ._pathutil import (
+    force_include_targets,
     iter_force_include,
     packages_to_file_mapping,
     resolve_wheel_tree,
@@ -208,6 +209,11 @@ def _build_wheel_impl_impl(
 
     # Get the closest (normally) importable name
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
+
+    # A PKG-INFO at the root means we are building from an unpacked SDist rather
+    # than a source tree; force-include entries with an ``sdist`` destination are
+    # then read from that vendored location instead of the original source.
+    from_sdist = Path("PKG-INFO").is_file()
 
     if settings.wheel.cmake:
         cmake = CMake.default_search(version=settings.cmake.version, env=os.environ)
@@ -397,11 +403,16 @@ def _build_wheel_impl_impl(
             )
 
             for source, fi_value in settings.force_include.items():
-                build_dest = None if isinstance(fi_value, str) else fi_value.build
-                if build_dest is None:
+                targets = force_include_targets(fi_value)
+                if targets.build is None:
                     continue
+                src = (
+                    targets.sdist
+                    if from_sdist and targets.sdist is not None
+                    else source
+                )
                 for src_file, target in iter_force_include(
-                    source, build_dest, build_dir
+                    src, targets.build, build_dir, missing_ok=targets.missing_ok
                 ):
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src_file, target)
@@ -482,16 +493,19 @@ def _build_wheel_impl_impl(
         # these files are not redirectable) and after the package copy, so they
         # override package files and CMake output at the same destination.
         for source, fi_value in settings.force_include.items():
-            wheel_dest = fi_value if isinstance(fi_value, str) else fi_value.wheel
-            if wheel_dest is None:
+            targets = force_include_targets(fi_value)
+            if targets.wheel is None:
                 continue
+            src = targets.sdist if from_sdist and targets.sdist is not None else source
             base, rest = resolve_wheel_tree(
-                wheel_dest,
+                targets.wheel,
                 wheel_dirs=wheel_dirs,
                 targetlib=targetlib,
                 experimental=settings.experimental,
             )
-            for src_file, target in iter_force_include(source, rest, base):
+            for src_file, target in iter_force_include(
+                src, rest, base, missing_ok=targets.missing_ok
+            ):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src_file, target)
 

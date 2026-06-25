@@ -101,9 +101,9 @@ print(mk_skbuild_docs())
   Force-include files into the distributions.
 
   Keys are source paths relative to the project root; they may point outside
-  it (e.g. ``../shared``), and ``~`` is expanded. A source may be a file or a
-  directory; directories are copied recursively, skipping VCS and
-  ``__pycache__`` junk.
+  it (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may
+  be a file or a directory; directories are copied recursively, skipping VCS
+  and ``__pycache__`` junk.
 
   A bare string value is the wheel destination (the common case). An inline
   table gives per-target control with any subset of ``sdist``, ``wheel``, and
@@ -111,8 +111,10 @@ print(mk_skbuild_docs())
   table form is only available in ``pyproject.toml``).
 
   Force-included files override package files and CMake output at the same
-  destination. A missing source is silently skipped (it is assumed to already
-  be present at the destination, e.g. when building a wheel from an SDist).
+  destination. A missing source errors unless ``missing-ok`` is set (the
+  bare-string form sets it). When a wheel or build is produced from an SDist
+  rather than a source tree, an entry with an ``sdist`` destination is read
+  from that SDist location instead of the original source.
 ```
 
 ```{eval-rst}

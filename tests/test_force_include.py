@@ -187,6 +187,7 @@ def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
 
 
 def test_force_include_missing_source_skipped(chdir_tmp: Path) -> None:
+    # The bare-string form is lenient (missing-ok), like hatchling.
     make_pure_pkg(
         chdir_tmp,
         extra='force-include = {"does-not-exist.txt" = "pkg/missing.txt"}',
@@ -196,6 +197,54 @@ def test_force_include_missing_source_skipped(chdir_tmp: Path) -> None:
     build_wheel(str(dist), {})
 
     assert "pkg/missing.txt" not in wheel_names(dist)
+
+
+def test_force_include_missing_source_table_errors(chdir_tmp: Path) -> None:
+    # The inline-table form errors on a missing source by default.
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"does-not-exist.txt" = {wheel = "pkg/missing.txt"}}',
+    )
+
+    dist = chdir_tmp / "dist"
+    with pytest.raises(FileNotFoundError, match=r"does-not-exist\.txt"):
+        build_wheel(str(dist), {})
+
+
+def test_force_include_missing_source_table_missing_ok(chdir_tmp: Path) -> None:
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'force-include = {"does-not-exist.txt" = '
+            '{wheel = "pkg/missing.txt", missing-ok = true}}'
+        ),
+    )
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg/missing.txt" not in wheel_names(dist)
+
+
+def test_force_include_from_sdist_reads_vendored_location(chdir_tmp: Path) -> None:
+    """A wheel built from an unpacked SDist reads the vendored ``sdist`` path."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'force-include = {"../outside.txt" = '
+            '{sdist = "vendored/blob.txt", wheel = "pkg/blob.txt"}}'
+        ),
+    )
+    # Simulate an unpacked SDist: a PKG-INFO at the root, the original external
+    # source gone, but the vendored copy present at the sdist destination.
+    (chdir_tmp / "PKG-INFO").write_text("Metadata-Version: 2.1\nName: pkg\n")
+    (chdir_tmp / "vendored").mkdir()
+    (chdir_tmp / "vendored" / "blob.txt").write_text("vendored")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert wheel_read(dist, "pkg/blob.txt") == b"vendored"
 
 
 def test_force_include_sdist_target(chdir_tmp: Path) -> None:
@@ -281,11 +330,13 @@ def test_settings_force_include_toml_forms(tmp_path: Path) -> None:
             "vendor/lib.so" = "pkg/_lib.so"
             "../data" = {sdist = "data", wheel = "pkg/data"}
             "toolchain.cmake" = {build = "toolchain.cmake"}
+            "maybe.so" = {wheel = "pkg/maybe.so", missing-ok = true}
             """),
     )
     assert fi["vendor/lib.so"] == "pkg/_lib.so"
     assert fi["../data"] == ForceIncludeTargets(sdist="data", wheel="pkg/data")
     assert fi["toolchain.cmake"] == ForceIncludeTargets(build="toolchain.cmake")
+    assert fi["maybe.so"] == ForceIncludeTargets(wheel="pkg/maybe.so", missing_ok=True)
 
 
 def test_settings_force_include_envvar_bare_string(tmp_path: Path) -> None:

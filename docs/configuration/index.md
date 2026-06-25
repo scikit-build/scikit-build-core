@@ -372,8 +372,8 @@ elsewhere. `force-include` is a table mapping source paths to destinations:
 ```
 
 The keys are source paths relative to the project root; they may point outside
-it (e.g. `../shared`), and `~` is expanded. A source may be a file or a
-directory, and directories are copied recursively (skipping VCS and
+it (e.g. `../shared`) or be absolute, and `~` is expanded. A source may be a
+file or a directory, and directories are copied recursively (skipping VCS and
 `__pycache__` junk). A bare string value is the wheel destination, relative to
 the platlib (the package area). Force-included files are placed last, so they
 override discovered package files and CMake output at the same destination.
@@ -395,12 +395,22 @@ or `/metadata` to target that wheel tree instead of the platlib (this requires
 relative to the SDist root, and `build` is relative to the CMake build
 directory.
 
-A missing source is silently skipped, rather than erroring: when a wheel is
-built from an SDist an external source may be gone, but it is assumed to already
-be present at the destination (use the `sdist` target to vendor it into the
-SDist so it is). The inline-table form is only available in `pyproject.toml`;
-the bare-string (wheel) form can also be set via config-settings or
-`SKBUILD_FORCE_INCLUDE`.
+A missing source is an error by default, unless the entry sets
+`missing-ok = true` (the bare-string form always does, like hatchling):
+
+```toml
+[tool.scikit-build.force-include]
+"../maybe-built.so" = {wheel = "mypackage/_lib.so", missing-ok = true}
+```
+
+When a wheel or build is produced from an SDist rather than a source tree, an
+entry with an `sdist` destination is read from that vendored SDist location
+instead of the original source. So vendoring an external source into the SDist
+(via the `sdist` target) keeps the wheel buildable from the SDist, where the
+original `../` source is gone.
+
+The inline-table form is only available in `pyproject.toml`; the bare-string
+(wheel) form can also be set via config-settings or `SKBUILD_FORCE_INCLUDE`.
 
 ## Customizing the output wheel
 

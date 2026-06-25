@@ -527,6 +527,11 @@
                 "build": {
                   "type": "string",
                   "description": "The destination path in the CMake build directory, relative to its root."
+                },
+                "missing-ok": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Do not error if the source does not exist; skip it silently instead."
                 }
               }
             }
