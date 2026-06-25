@@ -213,7 +213,11 @@ class Builder:
 
         current_gen = self.get_generator(*configure_args)
         local_def = set_environment_for_gen(
-            current_gen, self.config.cmake, self.config.env, self.settings.ninja
+            current_gen,
+            self.config.cmake,
+            self.config.env,
+            self.settings.ninja,
+            use_sysconfig_compiler=self.settings.cmake.use_sysconfig_compiler,
         )
         cmake_defines.update(local_def)
 

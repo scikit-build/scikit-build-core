@@ -99,6 +99,8 @@ def set_environment_for_gen(
     cmake: CMake,
     env: MutableMapping[str, str],
     ninja_settings: NinjaSettings,
+    *,
+    use_sysconfig_compiler: bool = True,
 ) -> Mapping[str, str]:
     """
     This function modifies the environment as needed to safely set a generator.
@@ -132,16 +134,19 @@ def set_environment_for_gen(
     # Set Python's recommended CC and CXX if not already set by the user. Only
     # the executable is kept; sysconfig may append flags (e.g. "c++ -pthread"),
     # which would otherwise leak into tools like autotools sub-builds. CMake adds
-    # any flags it needs itself. See #1330.
-    if "CC" not in env:
-        cc = sysconfig.get_config_var("CC")
-        if cc:
-            env["CC"] = shlex.split(cc)[0]
+    # any flags it needs itself. See #1330. This can be disabled with
+    # cmake.use-sysconfig-compiler for projects whose compiler probes break on
+    # the sysconfig compiler. See #1367.
+    if use_sysconfig_compiler:
+        if "CC" not in env:
+            cc = sysconfig.get_config_var("CC")
+            if cc:
+                env["CC"] = shlex.split(cc)[0]
 
-    if "CXX" not in env:
-        cxx = sysconfig.get_config_var("CXX")
-        if cxx:
-            env["CXX"] = shlex.split(cxx)[0]
+        if "CXX" not in env:
+            cxx = sysconfig.get_config_var("CXX")
+            if cxx:
+                env["CXX"] = shlex.split(cxx)[0]
 
     if "Ninja" in (generator or "Ninja"):
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)

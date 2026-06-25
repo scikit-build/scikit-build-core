@@ -36,6 +36,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert not settings.build.verbose
     assert settings.cmake.build_type == "Release"
     assert settings.cmake.source_dir == Path()
+    assert settings.cmake.use_sysconfig_compiler
     assert settings.build.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
@@ -189,6 +190,7 @@ def test_skbuild_settings_config_settings(
         "cmake.define.b": "2",
         "cmake.build-type": "Debug",
         "cmake.source-dir": "a/b/c",
+        "cmake.use-sysconfig-compiler": "false",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -236,6 +238,7 @@ def test_skbuild_settings_config_settings(
     assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
+    assert not settings.cmake.use_sysconfig_compiler
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

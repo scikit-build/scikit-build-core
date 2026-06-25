@@ -339,6 +339,24 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.use-sysconfig-compiler
+
+  :Type: ``bool``
+  :Default: true
+  :Config-settings: ``cmake.use-sysconfig-compiler`` or ``skbuild.cmake.use-sysconfig-compiler``
+  :Environment variable: ``SKBUILD_CMAKE_USE_SYSCONFIG_COMPILER``
+
+  Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the
+  environment.
+
+  When ``false``, scikit-build-core will not set these, letting CMake pick the
+  compiler from ``PATH``. This is useful for projects whose compiler probes
+  (e.g. ``FindBLAS``, ``FindOpenMP``) break on the sysconfig compiler, such as a
+  conda narrow sysroot or a stale venv gcc. A user-set ``CC``/``CXX`` in the
+  environment is always respected regardless of this setting.
+```
+
+```{eval-rst}
 .. confval:: cmake.verbose
 
   :Type: ``bool``
