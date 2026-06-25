@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib.machinery
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Literal
 
 import pathspec
@@ -149,15 +149,22 @@ def iter_force_include(
     assumed to already be present at the destination (e.g. when building a wheel
     from an SDist).
 
-    ``dest`` must be a relative path within ``base``; an absolute path or one
-    with ``..`` components (which would escape ``base``) is rejected. Wheel-tree
-    selection (a leading ``/``) is handled earlier by :func:`resolve_wheel_tree`.
+    ``dest`` must be a relative path within ``base``; anything that could escape
+    it is rejected -- an absolute path, ``..`` components, a backslash, or a
+    Windows drive (e.g. ``C:/x``), which would otherwise escape on Windows where
+    ``base / dest`` treats those as filesystem syntax. Wheel-tree selection (a
+    leading ``/``) is handled earlier by :func:`resolve_wheel_tree`.
     """
-    dest_path = PurePosixPath(dest)
-    if dest_path.is_absolute() or ".." in dest_path.parts:
+    posix_dest = PurePosixPath(dest)
+    if (
+        "\\" in dest
+        or PureWindowsPath(dest).drive
+        or posix_dest.is_absolute()
+        or ".." in posix_dest.parts
+    ):
         msg = (
             f"Force-include destination {dest!r} for {source!r} must be a "
-            "relative path without '..'"
+            "relative path without '..', a drive, or backslashes"
         )
         raise AssertionError(msg)
     src = Path(source).expanduser()

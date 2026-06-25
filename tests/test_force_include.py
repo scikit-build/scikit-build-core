@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from scikit_build_core.build import build_sdist, build_wheel
+from scikit_build_core.build import (
+    build_sdist,
+    build_wheel,
+    prepare_metadata_for_build_wheel,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -135,6 +139,41 @@ def test_force_include_leading_slash_targets_scripts(chdir_tmp: Path) -> None:
     assert "pkg-0.1.0.data/scripts/run.sh" in wheel_names(dist)
 
 
+def test_force_include_script_shebang_normalized(chdir_tmp: Path) -> None:
+    """A force-included script's python shebang is normalized to #!python."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"run.py" = {wheel = "/scripts/run.py"}}',
+    )
+    (chdir_tmp / "run.py").write_text("#!/usr/bin/env python\nprint('hi')\n")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    content = wheel_read(dist, "pkg-0.1.0.data/scripts/run.py")
+    assert content.startswith(b"#!python\n")
+
+
+def test_force_include_metadata_in_prepare(chdir_tmp: Path) -> None:
+    """A force-included metadata file appears in prepared metadata and the wheel."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"extra.txt" = {wheel = "/metadata/extra/extra.txt"}}',
+    )
+    (chdir_tmp / "extra.txt").write_text("meta")
+
+    metadata_dir = chdir_tmp / "meta"
+    metadata_dir.mkdir()
+    dist_info = prepare_metadata_for_build_wheel(str(metadata_dir), {})
+    prepared = metadata_dir / dist_info / "extra" / "extra.txt"
+    assert prepared.read_text() == "meta"
+
+    # Building with that metadata_directory must not raise on a mismatch.
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {}, str(metadata_dir / dist_info))
+    assert "pkg-0.1.0.dist-info/extra/extra.txt" in wheel_names(dist)
+
+
 def test_force_include_leading_slash_requires_experimental(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
@@ -148,11 +187,21 @@ def test_force_include_leading_slash_requires_experimental(chdir_tmp: Path) -> N
         build_wheel(str(dist), {})
 
 
-@pytest.mark.parametrize("bad", ["/abs/escape.txt", "../escape.txt", "a/../../x"])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "/abs/escape.txt",
+        "../escape.txt",
+        "a/../../x",
+        "C:/escape.txt",
+        "..\\escape.txt",
+    ],
+)
 def test_force_include_rejects_escaping_sdist_dest(chdir_tmp: Path, bad: str) -> None:
+    bad_toml = bad.replace("\\", "\\\\")  # escape backslashes for the TOML string
     make_pure_pkg(
         chdir_tmp,
-        extra=f'force-include = {{"blob.txt" = {{sdist = "{bad}"}}}}',
+        extra=f'force-include = {{"blob.txt" = {{sdist = "{bad_toml}"}}}}',
     )
     (chdir_tmp / "blob.txt").write_text("x")
 

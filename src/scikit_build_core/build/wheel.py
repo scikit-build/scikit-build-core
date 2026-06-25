@@ -80,6 +80,42 @@ def _make_editable(
         wheel.writestr(filename, contents)
 
 
+def _force_include_into_wheel(
+    settings: ScikitBuildSettings,
+    *,
+    wheel_dirs: dict[str, Path],
+    targetlib: str,
+    from_sdist: bool,
+    only_metadata: bool = False,
+) -> None:
+    """
+    Copy force-include entries into the staged wheel trees.
+
+    Run after the package copy and CMake install so force-included files override
+    files at the same destination. ``only_metadata`` restricts the copy to the
+    metadata tree; the prepare-metadata path uses it so the prepared
+    ``.dist-info`` matches the final wheel.
+    """
+    for source, fi_value in settings.force_include.items():
+        targets = force_include_targets(fi_value)
+        if targets.wheel is None:
+            continue
+        base, rest = resolve_wheel_tree(
+            targets.wheel,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            experimental=settings.experimental,
+        )
+        if only_metadata and base != wheel_dirs["metadata"]:
+            continue
+        src = targets.sdist if from_sdist and targets.sdist is not None else source
+        for src_file, target in iter_force_include(
+            src, rest, base, missing_ok=targets.missing_ok
+        ):
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, target)
+
+
 @dataclasses.dataclass
 class WheelImplReturn:
     wheel_filename: str
@@ -362,6 +398,15 @@ def _build_wheel_impl_impl(
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
+            # Metadata-tree force-includes must land here too, so the prepared
+            # .dist-info matches the final wheel (it is compared on build).
+            _force_include_into_wheel(
+                settings,
+                wheel_dirs=wheel_dirs,
+                targetlib=targetlib,
+                from_sdist=from_sdist,
+                only_metadata=True,
+            )
             wheel = make_wheel(folder=Path(metadata_directory))
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
@@ -487,27 +532,20 @@ def _build_wheel_impl_impl(
                 Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
                 shutil.copy2(filepath, package_dir)
 
-            process_script_dir(wheel_dirs["scripts"])
-
         # Force-include into the wheel, always (even for editable installs, as
         # these files are not redirectable) and after the package copy, so they
         # override package files and CMake output at the same destination.
-        for source, fi_value in settings.force_include.items():
-            targets = force_include_targets(fi_value)
-            if targets.wheel is None:
-                continue
-            src = targets.sdist if from_sdist and targets.sdist is not None else source
-            base, rest = resolve_wheel_tree(
-                targets.wheel,
-                wheel_dirs=wheel_dirs,
-                targetlib=targetlib,
-                experimental=settings.experimental,
-            )
-            for src_file, target in iter_force_include(
-                src, rest, base, missing_ok=targets.missing_ok
-            ):
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src_file, target)
+        _force_include_into_wheel(
+            settings,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            from_sdist=from_sdist,
+        )
+
+        # Normalize script shebangs after force-includes, so force-included
+        # scripts (e.g. wheel = "/scripts/...") are processed too.
+        if not editable:
+            process_script_dir(wheel_dirs["scripts"])
 
         with make_wheel(folder=Path(wheel_directory)) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
