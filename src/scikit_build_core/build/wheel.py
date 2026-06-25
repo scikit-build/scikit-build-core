@@ -528,9 +528,10 @@ def _build_wheel_impl_impl(
         )
 
         # Normalize script shebangs after force-includes, so force-included
-        # scripts (e.g. wheel = "/scripts/...") are processed too.
-        if not editable:
-            process_script_dir(wheel_dirs["scripts"])
+        # scripts (e.g. wheel = "/scripts/...") are processed too. Editable
+        # installs still ship scripts (CMake-installed or force-included), so
+        # normalize them as well.
+        process_script_dir(wheel_dirs["scripts"])
 
         with make_wheel(folder=Path(wheel_directory)) as wheel:
             wheel.build(wheel_dirs, exclude=settings.wheel.exclude)

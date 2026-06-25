@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from scikit_build_core.build import (
+    build_editable,
     build_sdist,
     build_wheel,
     prepare_metadata_for_build_wheel,
@@ -293,6 +294,37 @@ def test_force_include_from_sdist_reads_vendored_location(chdir_tmp: Path) -> No
     build_wheel(str(dist), {})
 
     assert wheel_read(dist, "pkg/blob.txt") == b"vendored"
+
+
+def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
+    """Wheel-target force-includes are baked into the editable wheel (not redirected)."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"extra/data.txt" = {wheel = "pkg/data.txt"}}',
+    )
+    (chdir_tmp / "extra").mkdir()
+    (chdir_tmp / "extra" / "data.txt").write_text("hello")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "pkg/data.txt" in wheel_names(dist)
+    assert wheel_read(dist, "pkg/data.txt") == b"hello"
+
+
+def test_force_include_editable_script_shebang_normalized(chdir_tmp: Path) -> None:
+    """A force-included script's shebang is normalized in an editable wheel too."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='force-include = {"run.py" = {wheel = "/scripts/run.py"}}',
+    )
+    (chdir_tmp / "run.py").write_text("#!/usr/bin/env python\nprint('hi')\n")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    content = wheel_read(dist, "pkg-0.1.0.data/scripts/run.py")
+    assert content.startswith(b"#!python\n")
 
 
 def test_force_include_sdist_target(chdir_tmp: Path) -> None:
