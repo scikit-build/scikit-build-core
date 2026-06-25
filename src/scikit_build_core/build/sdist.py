@@ -157,12 +157,13 @@ def build_sdist(
             )
 
         for source, fi_value in settings.force_include.items():
-            # A bare string targets the wheel only, so it is skipped here.
+            # A bare string is the SDist destination; an inline table needs an
+            # explicit sdist key, otherwise it is skipped here.
             targets = force_include_targets(fi_value)
             if targets.sdist is None:
                 continue
             for src_file, target in iter_force_include(
-                source, targets.sdist, Path(srcdirname), missing_ok=targets.missing_ok
+                source, targets.sdist, Path(srcdirname), strict=targets.strict
             ):
                 tar.add(
                     src_file,

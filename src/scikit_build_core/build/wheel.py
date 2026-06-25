@@ -110,7 +110,7 @@ def _force_include_into_wheel(
             continue
         src = targets.sdist if from_sdist and targets.sdist is not None else source
         for src_file, target in iter_force_include(
-            src, rest, base, missing_ok=targets.missing_ok
+            src, rest, base, strict=targets.strict
         ):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)

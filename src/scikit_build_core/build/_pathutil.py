@@ -124,17 +124,16 @@ def force_include_targets(fi_value: str | ForceIncludeTargets) -> ForceIncludeTa
     """
     Normalize a force-include value into a :class:`ForceIncludeTargets`.
 
-    A bare string is the wheel destination only and implies ``missing-ok`` (it is
-    lenient like hatchling). An inline table is returned unchanged, so it errors
-    on a missing source unless it sets ``missing-ok``.
+    A bare string is the SDist destination only. An inline table is returned
+    unchanged.
     """
     if isinstance(fi_value, str):
-        return ForceIncludeTargets(wheel=fi_value, missing_ok=True)
+        return ForceIncludeTargets(sdist=fi_value)
     return fi_value
 
 
 def iter_force_include(
-    source: str, dest: str, base: Path, *, missing_ok: bool = False
+    source: str, dest: str, base: Path, *, strict: bool = True
 ) -> Iterator[tuple[Path, Path]]:
     """
     Yield ``(source_file, target_path)`` pairs for a force-include entry.
@@ -145,7 +144,7 @@ def iter_force_include(
     VCS and ``__pycache__`` junk) with each file mapped under ``base / dest``.
 
     If the source does not exist, a :class:`FileNotFoundError` is raised unless
-    ``missing_ok`` is set, in which case it yields nothing -- the source is
+    ``strict`` is ``False``, in which case it yields nothing -- the source is
     assumed to already be present at the destination (e.g. when building a wheel
     from an SDist).
 
@@ -176,7 +175,7 @@ def iter_force_include(
             rel_path = filepath.relative_to(src)
             if not exclude_spec.match_file(rel_path):
                 yield filepath, base / dest / rel_path
-    elif missing_ok:
+    elif not strict:
         logger.debug("Force-include source {!r} not found, skipping", source)
     else:
         msg = f"Force-include source {source!r} not found"

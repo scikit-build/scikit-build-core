@@ -77,7 +77,7 @@ def chdir_tmp(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
 def test_force_include_file_into_wheel(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"extra/data.txt" = "pkg/data.txt"}',
+        extra='force-include = {"extra/data.txt" = {wheel = "pkg/data.txt"}}',
     )
     (chdir_tmp / "extra").mkdir()
     (chdir_tmp / "extra" / "data.txt").write_text("hello")
@@ -92,7 +92,7 @@ def test_force_include_file_into_wheel(chdir_tmp: Path) -> None:
 def test_force_include_directory_recurses_and_skips_junk(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"assets" = "pkg/assets"}',
+        extra='force-include = {"assets" = {wheel = "pkg/assets"}}',
     )
     assets = chdir_tmp / "assets"
     (assets / "sub").mkdir(parents=True)
@@ -116,7 +116,7 @@ def test_force_include_directory_recurses_and_skips_junk(chdir_tmp: Path) -> Non
 def test_force_include_external_source(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"../outside.txt" = "pkg/outside.txt"}',
+        extra='force-include = {"../outside.txt" = {wheel = "pkg/outside.txt"}}',
     )
     (chdir_tmp.parent / "outside.txt").write_text("external")
 
@@ -213,7 +213,7 @@ def test_force_include_rejects_escaping_sdist_dest(chdir_tmp: Path, bad: str) ->
 def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"blob.txt" = "../escape.txt"}',
+        extra='force-include = {"blob.txt" = {wheel = "../escape.txt"}}',
     )
     (chdir_tmp / "blob.txt").write_text("x")
 
@@ -225,7 +225,7 @@ def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
 def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"override.py" = "pkg/__init__.py"}',
+        extra='force-include = {"override.py" = {wheel = "pkg/__init__.py"}}',
     )
     (chdir_tmp / "override.py").write_bytes(b"FORCED = True\n")
 
@@ -235,17 +235,16 @@ def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/__init__.py") == b"FORCED = True\n"
 
 
-def test_force_include_missing_source_skipped(chdir_tmp: Path) -> None:
-    # The bare-string form is lenient (missing-ok), like hatchling.
+def test_force_include_missing_source_bare_errors(chdir_tmp: Path) -> None:
+    # The bare-string (SDist) form is strict by default, so a missing source errors.
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"does-not-exist.txt" = "pkg/missing.txt"}',
+        extra='force-include = {"does-not-exist.txt" = "missing.txt"}',
     )
 
     dist = chdir_tmp / "dist"
-    build_wheel(str(dist), {})
-
-    assert "pkg/missing.txt" not in wheel_names(dist)
+    with pytest.raises(FileNotFoundError, match=r"does-not-exist\.txt"):
+        build_sdist(str(dist), {})
 
 
 def test_force_include_missing_source_table_errors(chdir_tmp: Path) -> None:
@@ -260,12 +259,12 @@ def test_force_include_missing_source_table_errors(chdir_tmp: Path) -> None:
         build_wheel(str(dist), {})
 
 
-def test_force_include_missing_source_table_missing_ok(chdir_tmp: Path) -> None:
+def test_force_include_missing_source_not_strict_skipped(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
         extra=(
             'force-include = {"does-not-exist.txt" = '
-            '{wheel = "pkg/missing.txt", missing-ok = true}}'
+            '{wheel = "pkg/missing.txt", strict = false}}'
         ),
     )
 
@@ -301,8 +300,8 @@ def test_force_include_sdist_target(chdir_tmp: Path) -> None:
         chdir_tmp,
         extra=(
             "force-include = {"
-            '"vendor/blob.txt" = {sdist = "vendored/blob.txt"}, '
-            '"wheel-only.txt" = "pkg/wheel_only.txt"}'
+            '"vendor/blob.txt" = "vendored/blob.txt", '
+            '"wheel-only.txt" = {wheel = "pkg/wheel_only.txt"}}'
         ),
     )
     (chdir_tmp / "vendor").mkdir()
@@ -316,8 +315,9 @@ def test_force_include_sdist_target(chdir_tmp: Path) -> None:
     with tarfile.open(sdist) as tf:
         names = set(tf.getnames())
 
+    # A bare string is the SDist destination.
     assert "pkg-0.1.0/vendored/blob.txt" in names
-    # A bare string is wheel-only, so it must not appear in the SDist.
+    # A wheel-only entry must not appear in the SDist.
     assert not any("wheel_only" in n for n in names)
 
 
@@ -347,12 +347,12 @@ def test_settings_force_include_toml_forms(tmp_path: Path) -> None:
             [tool.scikit-build.force-include]
             "vendor/lib.so" = "pkg/_lib.so"
             "../data" = {sdist = "data", wheel = "pkg/data"}
-            "maybe.so" = {wheel = "pkg/maybe.so", missing-ok = true}
+            "maybe.so" = {wheel = "pkg/maybe.so", strict = false}
             """),
     )
     assert fi["vendor/lib.so"] == "pkg/_lib.so"
     assert fi["../data"] == ForceIncludeTargets(sdist="data", wheel="pkg/data")
-    assert fi["maybe.so"] == ForceIncludeTargets(wheel="pkg/maybe.so", missing_ok=True)
+    assert fi["maybe.so"] == ForceIncludeTargets(wheel="pkg/maybe.so", strict=False)
 
 
 def test_settings_force_include_envvar_bare_string(tmp_path: Path) -> None:

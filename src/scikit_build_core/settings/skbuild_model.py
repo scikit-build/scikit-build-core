@@ -541,12 +541,11 @@ class ForceIncludeTargets:
     :confval:`experimental`). If unset, the source is not added to the wheel.
     """
 
-    missing_ok: bool = False
+    strict: bool = True
     """
-    Do not error if the source does not exist; skip it silently instead.
-
-    By default an inline-table entry errors if the source is missing. The
-    bare-string form always sets this (it is lenient, like hatchling).
+    Error if the source does not exist. Set to ``false`` to skip a missing
+    source silently instead (e.g. a file expected to already be at the
+    destination when building a wheel from an SDist).
     """
 
 
@@ -598,16 +597,16 @@ class ScikitBuildSettings:
     be a file or a directory; directories are copied recursively, skipping VCS
     and ``__pycache__`` junk.
 
-    A bare string value is the wheel destination (the common case). An inline
-    table gives per-target control with any subset of ``sdist`` and ``wheel``
-    keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form
-    is only available in ``pyproject.toml``).
+    A bare string value is the SDist destination. An inline table gives
+    per-target control with any subset of ``sdist`` and ``wheel`` keys, e.g.
+    ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form is only
+    available in ``pyproject.toml``).
 
     Force-included files override package files and CMake output at the same
-    destination. A missing source errors unless ``missing-ok`` is set (the
-    bare-string form sets it). When a wheel is built from an SDist rather than a
-    source tree, an entry with an ``sdist`` destination is read from that SDist
-    location instead of the original source.
+    destination. A missing source errors unless ``strict = false`` is set. When
+    a wheel is built from an SDist rather than a source tree, an entry with an
+    ``sdist`` destination is read from that SDist location instead of the
+    original source.
     """
 
     strict_config: bool = True

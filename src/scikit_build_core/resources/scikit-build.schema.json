@@ -524,10 +524,10 @@
                   "type": "string",
                   "description": "The destination path in the wheel, relative to platlib."
                 },
-                "missing-ok": {
+                "strict": {
                   "type": "boolean",
-                  "default": false,
-                  "description": "Do not error if the source does not exist; skip it silently instead."
+                  "default": true,
+                  "description": "Error if the source does not exist. Set to ``false`` to skip a missing"
                 }
               }
             }
