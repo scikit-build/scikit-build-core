@@ -161,7 +161,10 @@ class WheelWriter:
         }
 
     def build(
-        self, wheel_dirs: Mapping[str, Path], exclude: Sequence[str] = ()
+        self,
+        wheel_dirs: Mapping[str, Path],
+        exclude: Sequence[str] = (),
+        exclude_exempt: AbstractSet[Path] = frozenset(),
     ) -> None:
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
         assert {
@@ -191,7 +194,11 @@ class WheelWriter:
                 if filename.suffix in {".pyc", ".pyo"}:
                     continue
                 relpath = filename.relative_to(path)
-                if exclude_spec.match_file(relpath):
+                # Force-included files are exempt from wheel.exclude.
+                if (
+                    exclude_spec.match_file(relpath)
+                    and filename.resolve() not in exclude_exempt
+                ):
                     continue
                 target = Path(data_dir) / key / relpath if key else relpath
                 self.write(str(filename), str(target))

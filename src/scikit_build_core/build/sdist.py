@@ -156,13 +156,25 @@ def build_sdist(
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        for source, dest in settings.sdist.force_include.items():
-            for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
-                tar.add(
-                    src_file,
-                    arcname=target,
-                    filter=normalize_tar_info if reproducible else lambda x: x,
+        # Sort forced entries by archive name so the tar member order (and thus
+        # the reproducible .tar.gz bytes) does not depend on filesystem ordering
+        # when a forced source is a directory.
+        forced = sorted(
+            (
+                (src_file, target)
+                for source, dest in settings.sdist.force_include.items()
+                for src_file, target in iter_force_include(
+                    source, dest, Path(srcdirname)
                 )
+            ),
+            key=lambda pair: pair[1],
+        )
+        for src_file, target in forced:
+            tar.add(
+                src_file,
+                arcname=target,
+                filter=normalize_tar_info if reproducible else lambda x: x,
+            )
 
         add_bytes_to_tar(
             tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible

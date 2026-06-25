@@ -110,6 +110,10 @@ def resolve_wheel_tree(
             msg = "Experimental features must be enabled to use absolute paths (a leading '/') in a wheel destination"
             raise AssertionError(msg)
         tree, _, rest = dest[1:].partition("/")
+        # platlib/purelib both name the target lib; map either to whichever this
+        # wheel actually has (pure wheels are keyed by purelib, not platlib).
+        if tree in {"platlib", "purelib"}:
+            tree = targetlib
         if tree not in wheel_dirs:
             msg = f"Must target a valid wheel directory, not {tree!r}"
             raise AssertionError(msg)

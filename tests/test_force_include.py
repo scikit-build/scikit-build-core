@@ -288,6 +288,60 @@ def test_force_include_from_sdist_via_overrides(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/blob.txt") == b"vendored"
 
 
+def test_force_include_survives_wheel_exclude(chdir_tmp: Path) -> None:
+    """A force-included file overrides a matching wheel.exclude pattern."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'wheel.exclude = ["pkg/data.txt"]\n'
+            'wheel.force-include = {"data.txt" = "pkg/data.txt"}'
+        ),
+    )
+    (chdir_tmp / "data.txt").write_text("forced")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg/data.txt" in wheel_names(dist)
+    assert wheel_read(dist, "pkg/data.txt") == b"forced"
+
+
+def test_force_include_pure_wheel_platlib_tree(chdir_tmp: Path) -> None:
+    """A documented /platlib destination resolves to purelib on a pure wheel."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"extra.txt" = "/platlib/pkg/extra.txt"}',
+    )
+    (chdir_tmp / "extra.txt").write_text("x")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg/extra.txt" in wheel_names(dist)
+
+
+def test_force_include_sdist_directory_reproducible(chdir_tmp: Path) -> None:
+    """Forced directory entries are ordered deterministically in the SDist tar."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='sdist.force-include = {"assets" = "vendored"}',
+    )
+    assets = chdir_tmp / "assets"
+    (assets / "sub").mkdir(parents=True)
+    for name in ("c.txt", "a.txt", "b.txt"):
+        (assets / name).write_text(name)
+    (assets / "sub" / "z.txt").write_text("z")
+
+    dist = chdir_tmp / "dist"
+    build_sdist(str(dist), {})
+
+    (sdist,) = dist.glob("pkg-0.1.0.tar.gz")
+    with tarfile.open(sdist) as tf:
+        forced = [n for n in tf.getnames() if "/vendored/" in n]
+
+    assert forced == sorted(forced)
+
+
 def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
     """Wheel-target force-includes are baked into the editable wheel (not redirected)."""
     make_pure_pkg(

@@ -85,7 +85,7 @@ def _force_include_into_wheel(
     wheel_dirs: dict[str, Path],
     targetlib: str,
     only_metadata: bool = False,
-) -> None:
+) -> set[Path]:
     """
     Copy ``wheel.force-include`` entries into the staged wheel trees.
 
@@ -93,7 +93,11 @@ def _force_include_into_wheel(
     files at the same destination. ``only_metadata`` restricts the copy to the
     metadata tree; the prepare-metadata path uses it so the prepared
     ``.dist-info`` matches the final wheel.
+
+    Returns the resolved target paths written, so the caller can exempt them from
+    ``wheel.exclude`` (force-include means force, even past an exclude pattern).
     """
+    written: set[Path] = set()
     for source, dest in settings.wheel.force_include.items():
         base, rest = resolve_wheel_tree(
             dest,
@@ -106,6 +110,8 @@ def _force_include_into_wheel(
         for src_file, target in iter_force_include(source, rest, base):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
+            written.add(target.resolve())
+    return written
 
 
 @dataclasses.dataclass
@@ -506,7 +512,7 @@ def _build_wheel_impl_impl(
         # Force-include into the wheel, always (even for editable installs, as
         # these files are not redirectable) and after the package copy, so they
         # override package files and CMake output at the same destination.
-        _force_include_into_wheel(
+        force_included = _force_include_into_wheel(
             settings,
             wheel_dirs=wheel_dirs,
             targetlib=targetlib,
@@ -519,7 +525,11 @@ def _build_wheel_impl_impl(
         process_script_dir(wheel_dirs["scripts"])
 
         with make_wheel(folder=Path(wheel_directory)) as wheel:
-            wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
+            wheel.build(
+                wheel_dirs,
+                exclude=settings.wheel.exclude,
+                exclude_exempt=force_included,
+            )
 
             str_pkgs = (
                 str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()
