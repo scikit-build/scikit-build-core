@@ -296,6 +296,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.known_wheel_files = known_wheel_files
         self.path = path
         self.rebuild_flag = rebuild
+        self.rebuilt = False
         self.verbose = verbose
         self.build_options = build_options
         self.install_options = install_options
@@ -352,7 +353,13 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             submodule_search_locations = None
 
         if fullname in self.known_wheel_files:
-            if self.rebuild_flag:
+            # Debounce to once per process: importing a project can resolve many
+            # known wheel files, but a single rebuild covers them all. Set the
+            # flag before rebuilding so a raising build doesn't loop (the import
+            # error propagates normally). The MARKER env var and file lock in
+            # rebuild() handle cross-process recursion, not this case.
+            if self.rebuild_flag and not self.rebuilt:
+                self.rebuilt = True
                 self.rebuild()
             origin = os.path.join(self.dir, self.known_wheel_files[fullname])
             return self._make_spec(fullname, origin, submodule_search_locations)
