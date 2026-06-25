@@ -373,6 +373,9 @@ class Builder:
         configuring for maximum compatibility.
         """
         components = self.settings.install.components
+        targets = self.settings.install.targets
         strip = self.settings.install.strip
         assert strip is not None
-        self.config.install(install_dir, strip=strip, components=components)
+        self.config.install(
+            install_dir, strip=strip, components=components, targets=targets
+        )

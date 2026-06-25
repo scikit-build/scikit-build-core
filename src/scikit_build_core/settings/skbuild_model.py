@@ -442,6 +442,21 @@ class InstallSettings:
     If not specified or an empty list, all default components are installed.
     """
 
+    targets: List[str] = dataclasses.field(default_factory=list)
+    """
+    Build targets to run during the install step via ``cmake --build --target``.
+
+    This is intended for projects that group their install rules under an
+    umbrella "distribution" build target (such as LLVM's ``install-distribution``)
+    rather than using CMake install ``COMPONENT``\\ s. Each listed target is built,
+    which triggers its install rules into the staging prefix.
+
+    This relies on the configure-time ``CMAKE_INSTALL_PREFIX`` (set automatically
+    by scikit-build-core to the wheel staging directory); the ``--strip`` and
+    ``--component`` options of ``cmake --install`` do not apply to these targets.
+    ``components`` and ``targets`` may be combined; both will run.
+    """
+
     strip: Optional[bool] = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(display_default="true")
     )
