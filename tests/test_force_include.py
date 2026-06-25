@@ -224,6 +224,26 @@ def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
         build_wheel(str(dist), {})
 
 
+def test_force_include_dotted_filename_allowed(chdir_tmp: Path) -> None:
+    """Adjacent dots in a destination filename are not a '..' traversal."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'wheel.force-include = {"data..txt" = "pkg/data..json", '
+            '"run..py" = "/scripts/run..py"}'
+        ),
+    )
+    (chdir_tmp / "data..txt").write_text("x")
+    (chdir_tmp / "run..py").write_text("y\n")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    names = wheel_names(dist)
+    assert "pkg/data..json" in names
+    assert "pkg-0.1.0.data/scripts/run..py" in names
+
+
 def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,

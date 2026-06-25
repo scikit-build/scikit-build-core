@@ -113,9 +113,11 @@ def _force_include_into_wheel(
         # A source that names an sdist output exists only in an unpacked-sdist
         # build; from a source tree or editable build, fall back through the
         # sdist.force-include map to the original source.
-        source = resolve_from_sdist_force_include(source, settings.sdist.force_include)
-        source_is_file = Path(source).expanduser().is_file()
-        for src_file, target in iter_force_include(source, rest, base):
+        resolved = resolve_from_sdist_force_include(
+            source, settings.sdist.force_include
+        )
+        source_is_file = Path(resolved).expanduser().is_file()
+        for src_file, target in iter_force_include(resolved, rest, base):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
             if source_is_file:

@@ -103,8 +103,10 @@ def resolve_wheel_tree(
     ``/platlib``, ``/metadata``, ...) and requires experimental features, since
     this gives access one level above the platlib root.
     """
-    if ".." in dest:
-        msg = f"Wheel destination must not contain '..', got {dest!r}"
+    # Reject a '..' parent-directory component (the traversal risk), but allow
+    # adjacent dots inside a normal filename like 'data..json'.
+    if ".." in PurePosixPath(dest).parts:
+        msg = f"Wheel destination must not contain a '..' path component, got {dest!r}"
         raise AssertionError(msg)
     if dest.startswith("/"):
         if not experimental:
