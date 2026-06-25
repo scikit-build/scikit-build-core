@@ -796,6 +796,11 @@ print(mk_skbuild_docs())
 
   Force-included files are placed last, so they override discovered package
   files and CMake output at the same destination. A missing source is an error.
+
+  A force-included *file* also overrides :confval:`wheel.exclude`, since naming
+  an exact source is an explicit request for that file. A force-included
+  *directory* stays subject to :confval:`wheel.exclude`, so a bulk copy can
+  still be trimmed by an exclude pattern.
 ```
 
 ```{eval-rst}

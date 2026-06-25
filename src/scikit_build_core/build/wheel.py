@@ -94,8 +94,10 @@ def _force_include_into_wheel(
     metadata tree; the prepare-metadata path uses it so the prepared
     ``.dist-info`` matches the final wheel.
 
-    Returns the resolved target paths written, so the caller can exempt them from
-    ``wheel.exclude`` (force-include means force, even past an exclude pattern).
+    Returns the resolved target paths of force-included *files*, so the caller
+    can exempt them from ``wheel.exclude`` (naming an exact file forces it past
+    an exclude pattern). Files copied from a force-included *directory* are not
+    returned, so a bulk directory copy stays subject to ``wheel.exclude``.
     """
     written: set[Path] = set()
     for source, dest in settings.wheel.force_include.items():
@@ -107,10 +109,12 @@ def _force_include_into_wheel(
         )
         if only_metadata and base != wheel_dirs["metadata"]:
             continue
+        source_is_file = Path(source).expanduser().is_file()
         for src_file, target in iter_force_include(source, rest, base):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
-            written.add(target.resolve())
+            if source_is_file:
+                written.add(target.resolve())
     return written
 
 

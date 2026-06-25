@@ -306,6 +306,29 @@ def test_force_include_survives_wheel_exclude(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/data.txt") == b"forced"
 
 
+def test_force_include_directory_respects_wheel_exclude(chdir_tmp: Path) -> None:
+    """A force-included directory's members are still filtered by wheel.exclude."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'wheel.exclude = ["pkg/assets/*.tmp"]\n'
+            'wheel.force-include = {"assets" = "pkg/assets"}'
+        ),
+    )
+    assets = chdir_tmp / "assets"
+    assets.mkdir()
+    (assets / "keep.txt").write_text("keep")
+    (assets / "drop.tmp").write_text("drop")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    names = wheel_names(dist)
+    assert "pkg/assets/keep.txt" in names
+    # A directory copy is bulk, so exclude still trims it.
+    assert "pkg/assets/drop.tmp" not in names
+
+
 def test_force_include_pure_wheel_platlib_tree(chdir_tmp: Path) -> None:
     """A documented /platlib destination resolves to purelib on a pure wheel."""
     make_pure_pkg(
