@@ -415,6 +415,51 @@ def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
     assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
 
 
+def configure_builder_with_version(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    version: Version,
+) -> str:
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    monkeypatch.setattr(config, "configure", unittest.mock.Mock())
+
+    builder = Builder(
+        settings=ScikitBuildSettings(search=SearchSettings(site_packages=False)),
+        config=config,
+    )
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+
+    builder.configure(defines={}, name="example", version=version)
+    return config.init_cache_file.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("version", "full", "capped"),
+    [
+        ("1.2.3", "1.2.3", "1.2.3"),
+        ("1.2", "1.2", "1.2"),
+        ("2", "2", "2"),
+        ("1.2.3.4", "1.2.3.4", "1.2.3.4"),
+        ("1.2.3.4.5", "1.2.3.4.5", "1.2.3.4"),
+        ("1!2.3.4", "1!2.3.4", "2.3.4"),
+        ("1.0.0a1", "1.0.0a1", "1.0.0"),
+        ("1.2.3.dev4+local", "1.2.3.dev4+local", "1.2.3"),
+    ],
+)
+def test_builder_project_version_cmake(tmp_path, monkeypatch, version, full, capped):
+    cache = configure_builder_with_version(tmp_path, monkeypatch, Version(version))
+    assert f"set(SKBUILD_PROJECT_VERSION [===[{capped}]===] CACHE STRING" in cache
+    assert f"set(SKBUILD_PROJECT_VERSION_FULL [===[{full}]===] CACHE STRING" in cache
+
+
 @pytest.mark.parametrize(
     ("minver", "archs", "answer"),
     [

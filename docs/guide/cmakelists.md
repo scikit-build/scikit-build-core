@@ -14,8 +14,9 @@ the version of scikit-build-core with `${SKBUILD_CORE_VERSION}`.
 Scikit-build-core provides several useful variables:
 
 - `${SKBUILD_PROJECT_NAME}`: The name of the project.
-- `${SKBUILD_PROJECT_VERSION}`: The version of the project in a form CMake can
-  use.
+- `${SKBUILD_PROJECT_VERSION}`: The version of the project, the release segment
+  capped to four components (`major.minor.patch.tweak`) so it is always valid
+  for `project(VERSION ...)`.
 - `${SKBUILD_PROJECT_VERSION_FULL}`: The exact version of the project including
   dev & local suffix.
 - `${SKBUILD_STATE}`: The run state, one of `sdist`, `wheel`, `metadata_wheel`,
