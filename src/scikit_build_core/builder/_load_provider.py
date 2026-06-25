@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 import importlib
+import importlib.abc
+import importlib.machinery
 import inspect
 import sys
 from collections.abc import Iterator, Mapping
@@ -9,7 +11,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, Union, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Sequence
+    from importlib.machinery import ModuleSpec
+    from types import ModuleType
 
     StrMapping = Mapping[str, Any]
 else:
@@ -53,6 +57,41 @@ DMProtocols = Union[
 ]
 
 
+class _ProviderPathFinder(importlib.abc.MetaPathFinder):
+    """Load the top-level provider module from ``provider-path``.
+
+    Mirrors how pyproject_hooks handles PEP 517 ``backend-path``: a finder at
+    the front of ``sys.meta_path`` guarantees the in-tree provider wins over a
+    same-named module elsewhere on ``sys.path`` (or behind another finder), and
+    a provider absent from ``provider-path`` raises instead of silently
+    importing the wrong module. Only the top-level name is intercepted; nested
+    modules resolve through the parent package's path. A provider already cached
+    in ``sys.modules`` short-circuits import and bypasses this finder.
+    """
+
+    def __init__(self, provider_path: list[str], provider: str) -> None:
+        self.provider_path = provider_path
+        self.provider = provider
+        self.provider_parent = provider.partition(".")[0]
+
+    def find_spec(
+        self,
+        fullname: str,
+        _path: Sequence[str] | None,
+        _target: ModuleType | None = None,
+    ) -> ModuleSpec | None:
+        if "." in fullname:
+            return None
+
+        spec = importlib.machinery.PathFinder.find_spec(
+            fullname, path=self.provider_path
+        )
+        if spec is None and fullname == self.provider_parent:
+            msg = f"Cannot find module {self.provider!r} in {self.provider_path!r}"
+            raise ModuleNotFoundError(msg)
+        return spec
+
+
 def load_provider(
     provider: str,
     provider_path: str | None = None,
@@ -64,11 +103,12 @@ def load_provider(
         msg = "provider-path must be an existing directory"
         raise AssertionError(msg)
 
+    finder = _ProviderPathFinder([provider_path], provider)
+    sys.meta_path.insert(0, finder)
     try:
-        sys.path.insert(0, provider_path)
         return importlib.import_module(provider)
     finally:
-        sys.path.pop(0)
+        sys.meta_path.remove(finder)
 
 
 def _load_dynamic_metadata(

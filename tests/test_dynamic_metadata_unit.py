@@ -1,8 +1,12 @@
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from scikit_build_core.builder._load_provider import process_dynamic_metadata
+from scikit_build_core.builder._load_provider import (
+    load_provider,
+    process_dynamic_metadata,
+)
 from scikit_build_core.metadata import _process_dynamic_metadata
 from scikit_build_core.metadata.regex import dynamic_metadata as regex_dynamic_metadata
 from scikit_build_core.metadata.template import (
@@ -138,3 +142,31 @@ def test_optional_dependencies_rejects_non_str_elements() -> None:
     bad: Any = {"dev": [42]}
     with pytest.raises(RuntimeError, match="lists of strings"):
         _process_dynamic_metadata("optional-dependencies", lambda x: x, bad)
+
+
+def test_load_provider_path_loads_local(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    (plugin_dir / "local_prov_ok.py").write_text(
+        "def dynamic_metadata(field, settings, project):\n    return '1.2.3'\n"
+    )
+
+    provider = load_provider("local_prov_ok", str(plugin_dir))
+    version: Any = provider.dynamic_metadata("version", {}, {})
+    assert version == "1.2.3"
+
+
+def test_load_provider_path_not_shadowed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A same-named module reachable via the normal sys.path ...
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "shadow_prov.py").write_text("WRONG = True\n")
+    monkeypatch.syspath_prepend(str(other))
+
+    # ... must not satisfy a provider-path request that does not contain it.
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(ModuleNotFoundError):
+        load_provider("shadow_prov", str(empty))
