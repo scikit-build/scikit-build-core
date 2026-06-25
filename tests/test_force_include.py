@@ -365,6 +365,52 @@ def test_force_include_sdist_directory_reproducible(chdir_tmp: Path) -> None:
     assert forced == sorted(forced)
 
 
+def test_force_include_sdist_directory_respects_exclude(chdir_tmp: Path) -> None:
+    """A force-included directory's members are still filtered by sdist.exclude."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.exclude = ["vendored/*.tmp"]\n'
+            'sdist.force-include = {"assets" = "vendored"}'
+        ),
+    )
+    assets = chdir_tmp / "assets"
+    assets.mkdir()
+    (assets / "keep.txt").write_text("keep")
+    (assets / "drop.tmp").write_text("drop")
+
+    dist = chdir_tmp / "dist"
+    build_sdist(str(dist), {})
+
+    (sdist,) = dist.glob("pkg-0.1.0.tar.gz")
+    with tarfile.open(sdist) as tf:
+        names = set(tf.getnames())
+
+    assert "pkg-0.1.0/vendored/keep.txt" in names
+    assert "pkg-0.1.0/vendored/drop.tmp" not in names
+
+
+def test_force_include_sdist_file_overrides_exclude(chdir_tmp: Path) -> None:
+    """A force-included file is forced in even if sdist.exclude matches it."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.exclude = ["vendored/blob.tmp"]\n'
+            'sdist.force-include = {"blob.txt" = "vendored/blob.tmp"}'
+        ),
+    )
+    (chdir_tmp / "blob.txt").write_text("forced")
+
+    dist = chdir_tmp / "dist"
+    build_sdist(str(dist), {})
+
+    (sdist,) = dist.glob("pkg-0.1.0.tar.gz")
+    with tarfile.open(sdist) as tf:
+        names = set(tf.getnames())
+
+    assert "pkg-0.1.0/vendored/blob.tmp" in names
+
+
 def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
     """Wheel-target force-includes are baked into the editable wheel (not redirected)."""
     make_pure_pkg(

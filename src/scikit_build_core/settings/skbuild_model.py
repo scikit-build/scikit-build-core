@@ -285,6 +285,11 @@ class SDistSettings:
 
     Force-included files override files at the same destination. A missing source
     is an error.
+
+    A force-included *file* is forced in even if :confval:`sdist.exclude` matches
+    its destination, since naming an exact source is an explicit request. A
+    force-included *directory* stays subject to :confval:`sdist.exclude`, so a
+    bulk copy can still be trimmed by an exclude pattern.
     """
 
 

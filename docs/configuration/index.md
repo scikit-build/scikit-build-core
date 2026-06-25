@@ -387,9 +387,10 @@ to target that wheel tree instead (this requires `experimental = true`, like
 `wheel.install-dir`). Force-included wheel files are placed last, so they
 override discovered package files and CMake output at the same destination.
 
-A force-included _file_ also overrides `wheel.exclude`: naming an exact source
+A force-included _file_ also overrides the matching exclude list
+(`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
 is an explicit request, so it wins even if an exclude pattern matches its
-destination. A force-included _directory_ stays subject to `wheel.exclude`, so a
+destination. A force-included _directory_ stays subject to that exclude, so a
 bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
 directory and exclude `**/*.bzl` to drop the Bazel files from it).
 

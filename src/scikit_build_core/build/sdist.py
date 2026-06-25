@@ -9,6 +9,7 @@ import os
 import tarfile
 from pathlib import Path
 
+import pathspec
 from packaging.utils import canonicalize_name
 
 from .. import __version__
@@ -156,19 +157,21 @@ def build_sdist(
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        # Sort forced entries by archive name so the tar member order (and thus
-        # the reproducible .tar.gz bytes) does not depend on filesystem ordering
-        # when a forced source is a directory.
-        forced = sorted(
-            (
-                (src_file, target)
-                for source, dest in settings.sdist.force_include.items()
-                for src_file, target in iter_force_include(
-                    source, dest, Path(srcdirname)
-                )
-            ),
-            key=lambda pair: pair[1],
-        )
+        # A force-included file is forced in; a force-included directory's
+        # members stay subject to sdist.exclude (mirrors wheel.force-include).
+        sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
+        forced = []
+        for source, dest in settings.sdist.force_include.items():
+            source_is_file = Path(source).expanduser().is_file()
+            for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
+                if not source_is_file and sdist_exclude_spec.match_file(
+                    target.relative_to(srcdirname)
+                ):
+                    continue
+                forced.append((src_file, target))
+        # Sort by archive name so the tar member order (and thus the reproducible
+        # .tar.gz bytes) does not depend on filesystem ordering for directories.
+        forced.sort(key=lambda pair: pair[1])
         for src_file, target in forced:
             tar.add(
                 src_file,
