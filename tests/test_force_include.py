@@ -178,7 +178,7 @@ def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
         chdir_tmp,
         extra='force-include = {"override.py" = "pkg/__init__.py"}',
     )
-    (chdir_tmp / "override.py").write_text("FORCED = True\n")
+    (chdir_tmp / "override.py").write_bytes(b"FORCED = True\n")
 
     dist = chdir_tmp / "dist"
     build_wheel(str(dist), {})
