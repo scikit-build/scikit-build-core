@@ -92,32 +92,6 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
-.. confval:: force-include
-
-  :Type: ``dict[str,str | ForceIncludeTargets]``
-  :Config-settings: ``force-include`` or ``skbuild.force-include``
-  :Environment variable: ``SKBUILD_FORCE_INCLUDE``
-
-  Force-include files into the distributions.
-
-  Keys are source paths relative to the project root; they may point outside
-  it (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may
-  be a file or a directory; directories are copied recursively, skipping VCS
-  and ``__pycache__`` junk.
-
-  A bare string value is the SDist destination. An inline table gives
-  per-target control with any subset of ``sdist`` and ``wheel`` keys, e.g.
-  ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form is only
-  available in ``pyproject.toml``).
-
-  Force-included files override package files and CMake output at the same
-  destination. A missing source errors unless ``strict = false`` is set. When
-  a wheel is built from an SDist rather than a source tree, an entry with an
-  ``sdist`` destination is read from that SDist location instead of the
-  original source.
-```
-
-```{eval-rst}
 .. confval:: metadata
 
   :Type: ``dict[str,dict[str,Any]]``
@@ -668,6 +642,24 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: sdist.force-include
+
+  :Type: ``dict[str,str]``
+  :Config-settings: ``sdist.force-include`` or ``skbuild.sdist.force-include``
+  :Environment variable: ``SKBUILD_SDIST_FORCE_INCLUDE``
+
+  Force-include files into the SDist.
+
+  Maps source paths to destinations relative to the SDist root. Keys are
+  relative to the project root; they may point outside it (e.g. ``../shared``)
+  or be absolute, and ``~`` is expanded. A source may be a file or a directory;
+  directories are copied recursively, skipping VCS and ``__pycache__`` junk.
+
+  Force-included files override files at the same destination. A missing source
+  is an error.
+```
+
+```{eval-rst}
 .. confval:: sdist.include
 
   :Type: ``list[str]``
@@ -781,6 +773,29 @@ print(mk_skbuild_docs())
 
   This adds "x86_64" and "arm64" to the list of platforms when "universal2" is used,
   which helps older Pip's (before 21.0.1) find the correct wheel.
+```
+
+```{eval-rst}
+.. confval:: wheel.force-include
+
+  :Type: ``dict[str,str]``
+  :Config-settings: ``wheel.force-include`` or ``skbuild.wheel.force-include``
+  :Environment variable: ``SKBUILD_WHEEL_FORCE_INCLUDE``
+
+  Force-include files into the wheel.
+
+  Maps source paths to destinations relative to the platlib (the package
+  area). Keys are relative to the project root; they may point outside it
+  (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may be a
+  file or a directory; directories are copied recursively, skipping VCS and
+  ``__pycache__`` junk.
+
+  A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
+  ``/metadata`` destination targets that wheel tree instead of the platlib
+  (this requires :confval:`experimental`).
+
+  Force-included files are placed last, so they override discovered package
+  files and CMake output at the same destination. A missing source is an error.
 ```
 
 ```{eval-rst}

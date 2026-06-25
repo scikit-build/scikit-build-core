@@ -114,7 +114,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "Metadata is not supported for hatch builds"
             raise ValueError(msg)
 
-        if settings.force_include:
+        if settings.sdist.force_include or settings.wheel.force_include:
             msg = "Force-include is not supported for hatch builds"
             raise ValueError(msg)
 

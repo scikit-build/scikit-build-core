@@ -33,7 +33,6 @@ from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
 from ._pathutil import (
-    force_include_targets,
     iter_force_include,
     packages_to_file_mapping,
     resolve_wheel_tree,
@@ -85,33 +84,26 @@ def _force_include_into_wheel(
     *,
     wheel_dirs: dict[str, Path],
     targetlib: str,
-    from_sdist: bool,
     only_metadata: bool = False,
 ) -> None:
     """
-    Copy force-include entries into the staged wheel trees.
+    Copy ``wheel.force-include`` entries into the staged wheel trees.
 
     Run after the package copy and CMake install so force-included files override
     files at the same destination. ``only_metadata`` restricts the copy to the
     metadata tree; the prepare-metadata path uses it so the prepared
     ``.dist-info`` matches the final wheel.
     """
-    for source, fi_value in settings.force_include.items():
-        targets = force_include_targets(fi_value)
-        if targets.wheel is None:
-            continue
+    for source, dest in settings.wheel.force_include.items():
         base, rest = resolve_wheel_tree(
-            targets.wheel,
+            dest,
             wheel_dirs=wheel_dirs,
             targetlib=targetlib,
             experimental=settings.experimental,
         )
         if only_metadata and base != wheel_dirs["metadata"]:
             continue
-        src = targets.sdist if from_sdist and targets.sdist is not None else source
-        for src_file, target in iter_force_include(
-            src, rest, base, strict=targets.strict
-        ):
+        for src_file, target in iter_force_include(source, rest, base):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
 
@@ -245,11 +237,6 @@ def _build_wheel_impl_impl(
 
     # Get the closest (normally) importable name
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
-
-    # A PKG-INFO at the root means we are building from an unpacked SDist rather
-    # than a source tree; force-include entries with an ``sdist`` destination are
-    # then read from that vendored location instead of the original source.
-    from_sdist = Path("PKG-INFO").is_file()
 
     if settings.wheel.cmake:
         cmake = CMake.default_search(version=settings.cmake.version, env=os.environ)
@@ -404,7 +391,6 @@ def _build_wheel_impl_impl(
                 settings,
                 wheel_dirs=wheel_dirs,
                 targetlib=targetlib,
-                from_sdist=from_sdist,
                 only_metadata=True,
             )
             wheel = make_wheel(folder=Path(metadata_directory))
@@ -524,7 +510,6 @@ def _build_wheel_impl_impl(
             settings,
             wheel_dirs=wheel_dirs,
             targetlib=targetlib,
-            from_sdist=from_sdist,
         )
 
         # Normalize script shebangs after force-includes, so force-included

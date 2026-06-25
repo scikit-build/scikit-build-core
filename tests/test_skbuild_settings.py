@@ -60,7 +60,8 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.minimum_version is None
     assert settings.build_dir == ""
     assert settings.metadata == {}
-    assert settings.force_include == {}
+    assert settings.sdist.force_include == {}
+    assert settings.wheel.force_include == {}
     assert settings.editable.mode == "redirect"
     assert not settings.editable.rebuild
     assert settings.editable.verbose
@@ -195,7 +196,8 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.minimum_version == Version("0.12")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
-    assert settings.force_include == {}
+    assert settings.sdist.force_include == {}
+    assert settings.wheel.force_include == {}
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose
@@ -301,7 +303,8 @@ def test_skbuild_settings_config_settings(
     assert settings.minimum_version == Version("0.10")
     assert settings.build_dir == "a/b/c"
     assert settings.metadata == {}
-    assert settings.force_include == {}
+    assert settings.sdist.force_include == {}
+    assert settings.wheel.force_include == {}
     assert settings.editable.mode == "redirect"
     assert settings.editable.rebuild
     assert not settings.editable.verbose

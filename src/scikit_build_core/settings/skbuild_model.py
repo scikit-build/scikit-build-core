@@ -13,7 +13,6 @@ __all__ = [
     "CMakeSettings",
     "CMakeSettingsDefine",
     "EditableSettings",
-    "ForceIncludeTargets",
     "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
@@ -275,6 +274,19 @@ class SDistSettings:
     If set to True, CMake will be run before building the SDist.
     """
 
+    force_include: Dict[str, str] = dataclasses.field(default_factory=dict)
+    """
+    Force-include files into the SDist.
+
+    Maps source paths to destinations relative to the SDist root. Keys are
+    relative to the project root; they may point outside it (e.g. ``../shared``)
+    or be absolute, and ``~`` is expanded. A source may be a file or a directory;
+    directories are copied recursively, skipping VCS and ``__pycache__`` junk.
+
+    Force-included files override files at the same destination. A missing source
+    is an error.
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
@@ -384,6 +396,24 @@ class WheelSettings:
     automatically calculated. This cannot be set in the static
     ``[tool.scikit-build]`` table; use it in an override, config-settings, or an
     environment variable.
+    """
+
+    force_include: Dict[str, str] = dataclasses.field(default_factory=dict)
+    """
+    Force-include files into the wheel.
+
+    Maps source paths to destinations relative to the platlib (the package
+    area). Keys are relative to the project root; they may point outside it
+    (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may be a
+    file or a directory; directories are copied recursively, skipping VCS and
+    ``__pycache__`` junk.
+
+    A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
+    ``/metadata`` destination targets that wheel tree instead of the platlib
+    (this requires :confval:`experimental`).
+
+    Force-included files are placed last, so they override discovered package
+    files and CMake output at the same destination. A missing source is an error.
     """
 
 
@@ -525,31 +555,6 @@ class GenerateSettings:
 
 
 @dataclasses.dataclass
-class ForceIncludeTargets:
-    sdist: Optional[str] = None
-    """
-    The destination path in the SDist, relative to the SDist root. If unset, the
-    source is not added to the SDist.
-    """
-
-    wheel: Optional[str] = None
-    """
-    The destination path in the wheel, relative to platlib.
-
-    A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
-    ``/metadata`` targets that wheel tree instead (this requires
-    :confval:`experimental`). If unset, the source is not added to the wheel.
-    """
-
-    strict: bool = True
-    """
-    Error if the source does not exist. Set to ``false`` to skip a missing
-    source silently instead (e.g. a file expected to already be at the
-    destination when building a wheel from an SDist).
-    """
-
-
-@dataclasses.dataclass
 class MessagesSettings:
     """
     Settings for messages.
@@ -584,29 +589,6 @@ class ScikitBuildSettings:
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.
-    """
-
-    force_include: Dict[str, Union[str, ForceIncludeTargets]] = dataclasses.field(
-        default_factory=dict
-    )
-    """
-    Force-include files into the distributions.
-
-    Keys are source paths relative to the project root; they may point outside
-    it (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may
-    be a file or a directory; directories are copied recursively, skipping VCS
-    and ``__pycache__`` junk.
-
-    A bare string value is the SDist destination. An inline table gives
-    per-target control with any subset of ``sdist`` and ``wheel`` keys, e.g.
-    ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form is only
-    available in ``pyproject.toml``).
-
-    Force-included files override package files and CMake output at the same
-    destination. A missing source errors unless ``strict = false`` is set. When
-    a wheel is built from an SDist rather than a source tree, an entry with an
-    ``sdist`` destination is read from that SDist location instead of the
-    original source.
     """
 
     strict_config: bool = True

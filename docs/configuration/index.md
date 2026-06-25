@@ -363,53 +363,55 @@ assume `wheel.platlib = false` (purelib targeted instead).
 
 Sometimes you need to place a specific file (or directory) at a specific path in
 a distribution, even if it lives outside your package tree or is produced
-elsewhere. `force-include` is a table mapping source paths to destinations:
+elsewhere. Each distribution has its own `force-include` table mapping source
+paths to destinations:
 
 ```toml
-[tool.scikit-build.force-include]
-"vendor/extra.cmake" = "cmake/extra.cmake"
-"assets" = "share/assets"
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"
+
+[tool.scikit-build.wheel.force-include]
+"vendor/lib.so" = "mypackage/_lib.so"
+"tools/run.sh"  = "/scripts/run.sh"
 ```
 
 The keys are source paths relative to the project root; they may point outside
 it (e.g. `../shared`) or be absolute, and `~` is expanded. A source may be a
 file or a directory, and directories are copied recursively (skipping VCS and
-`__pycache__` junk). A bare string value is the SDist destination, relative to
-the SDist root. Force-included files are placed last, so they override
-discovered package files and CMake output at the same destination.
+`__pycache__` junk). A missing source is an error.
 
-For more control, the value can be an inline table targeting the `sdist` and
-`wheel` outputs independently:
+`sdist.force-include` destinations are relative to the SDist root.
+`wheel.force-include` destinations are relative to the platlib (the package
+area), and also accept a leading `/data`, `/scripts`, `/headers`, or `/metadata`
+to target that wheel tree instead (this requires `experimental = true`, like
+`wheel.install-dir`). Force-included wheel files are placed last, so they
+override discovered package files and CMake output at the same destination.
+
+Both tables can be set through any config source, including config-settings and
+the `SKBUILD_SDIST_FORCE_INCLUDE` / `SKBUILD_WHEEL_FORCE_INCLUDE` environment
+variables.
+
+#### Building a wheel from an SDist
+
+When you vendor an external (`../`) source into the SDist, the original path is
+gone when a wheel is later built from the unpacked SDist, so the matching
+`wheel.force-include` entry would error. Use [overrides](#overrides) keyed on
+`from-sdist` to point the wheel at the vendored copy. Because override dicts
+merge rather than replace, keep the external entry in the `from-sdist = false`
+override (not the base table):
 
 ```toml
-[tool.scikit-build.force-include]
-# vendor an external data file into both the SDist and the wheel
-"../shared/data.json" = {sdist = "mypackage/data.json", wheel = "mypackage/data.json"}
-# place a built library into the wheel only
-"vendor/lib.so" = {wheel = "mypackage/_lib.so"}
+[tool.scikit-build.sdist.force-include]
+"../outside.txt" = "vendored/blob.txt"   # vendor it into the SDist
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = false                     # source-tree build: read the original
+wheel.force-include."../outside.txt" = "mypackage/blob.txt"
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = true                      # wheel-from-SDist: read the vendored copy
+wheel.force-include."vendored/blob.txt" = "mypackage/blob.txt"
 ```
-
-The `wheel` destination is relative to the platlib (the package area), and also
-accepts a leading `/data`, `/scripts`, `/headers`, or `/metadata` to target that
-wheel tree instead (this requires `experimental = true`, like
-`wheel.install-dir`). The `sdist` destination is relative to the SDist root.
-
-A missing source is an error by default, unless the entry sets `strict = false`,
-which skips it silently:
-
-```toml
-[tool.scikit-build.force-include]
-"../maybe-built.so" = {wheel = "mypackage/_lib.so", strict = false}
-```
-
-When a wheel is built from an SDist rather than a source tree, an entry with an
-`sdist` destination is read from that vendored SDist location instead of the
-original source. So vendoring an external source into the SDist (via the `sdist`
-target) keeps the wheel buildable from the SDist, where the original `../`
-source is gone.
-
-The inline-table form is only available in `pyproject.toml`; the bare-string
-(SDist) form can also be set via config-settings or `SKBUILD_FORCE_INCLUDE`.
 
 ## Customizing the output wheel
 

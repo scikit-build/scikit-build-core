@@ -190,6 +190,15 @@
           "type": "boolean",
           "default": false,
           "description": "If set to True, CMake will be run before building the SDist."
+        },
+        "force-include": {
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          },
+          "description": "Force-include files into the SDist."
         }
       }
     },
@@ -266,6 +275,15 @@
           },
           "description": "Wheel tags to manually force, {interpreter}-{abi}-{platform} format.",
           "scikit-build:override-only": true
+        },
+        "force-include": {
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          },
+          "description": "Force-include files into the wheel."
         }
       }
     },
@@ -504,38 +522,6 @@
         }
       }
     },
-    "force-include": {
-      "type": "object",
-      "patternProperties": {
-        ".+": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "sdist": {
-                  "type": "string",
-                  "description": "The destination path in the SDist, relative to the SDist root. If unset, the"
-                },
-                "wheel": {
-                  "type": "string",
-                  "description": "The destination path in the wheel, relative to platlib."
-                },
-                "strict": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Error if the source does not exist. Set to ``false`` to skip a missing"
-                }
-              }
-            }
-          ]
-        }
-      },
-      "description": "Force-include files into the distributions."
-    },
     "strict-config": {
       "type": "boolean",
       "default": true,
@@ -612,6 +598,9 @@
                   },
                   "exclude": {
                     "$ref": "#/$defs/inherit"
+                  },
+                  "force-include": {
+                    "$ref": "#/$defs/inherit"
                   }
                 }
               },
@@ -629,6 +618,9 @@
                     "$ref": "#/$defs/inherit"
                   },
                   "tags": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "force-include": {
                     "$ref": "#/$defs/inherit"
                   }
                 }
@@ -701,9 +693,6 @@
           },
           "metadata": {
             "$ref": "#/properties/metadata"
-          },
-          "force-include": {
-            "$ref": "#/properties/force-include"
           },
           "strict-config": {
             "$ref": "#/properties/strict-config"

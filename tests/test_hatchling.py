@@ -36,7 +36,7 @@ def test_hatchling_sdist_cmake_error_message() -> None:
 def test_hatchling_force_include_rejected() -> None:
     pyproject = {
         "project": {"name": "x", "version": "0.1.0"},
-        "tool": {"scikit-build": {"force-include": {"a.txt": "pkg/a.txt"}}},
+        "tool": {"scikit-build": {"wheel": {"force-include": {"a.txt": "pkg/a.txt"}}}},
     }
     with pytest.raises(ValueError, match="Force-include is not supported"):
         _validate_settings(pyproject)

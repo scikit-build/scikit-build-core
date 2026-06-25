@@ -1069,3 +1069,36 @@ def test_skbuild_overrides_matched_version_if_any_match(
 
     with pytest.raises(TypeError, match="not_real"):
         SettingsReader.from_file(pyproject_toml)
+
+
+@pytest.mark.parametrize("from_sdist", [True, False])
+def test_skbuild_overrides_force_include_from_sdist(
+    from_sdist: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """wheel.force-include entries merge across a from-sdist override (the
+    documented recipe for redirecting an external source to its vendored copy)."""
+    monkeypatch.chdir(tmp_path)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = false
+            wheel.force-include."../outside.txt" = "pkg/blob.txt"
+
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = true
+            wheel.force-include."vendored/blob.txt" = "pkg/blob.txt"
+            """
+        ),
+        encoding="utf-8",
+    )
+    if from_sdist:
+        (tmp_path / "PKG-INFO").write_text("Metadata-Version: 2.1\nName: pkg\n")
+
+    settings = SettingsReader.from_file(pyproject_toml, state="wheel").settings
+
+    if from_sdist:
+        assert settings.wheel.force_include == {"vendored/blob.txt": "pkg/blob.txt"}
+    else:
+        assert settings.wheel.force_include == {"../outside.txt": "pkg/blob.txt"}

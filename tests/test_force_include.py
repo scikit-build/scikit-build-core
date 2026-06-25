@@ -15,8 +15,9 @@ from scikit_build_core.build import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
     from pathlib import Path
+
+    from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 PYPROJECT = """\
 [build-system]
@@ -78,7 +79,7 @@ def chdir_tmp(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
 def test_force_include_file_into_wheel(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"extra/data.txt" = {wheel = "pkg/data.txt"}}',
+        extra='wheel.force-include = {"extra/data.txt" = "pkg/data.txt"}',
     )
     (chdir_tmp / "extra").mkdir()
     (chdir_tmp / "extra" / "data.txt").write_text("hello")
@@ -93,7 +94,7 @@ def test_force_include_file_into_wheel(chdir_tmp: Path) -> None:
 def test_force_include_directory_recurses_and_skips_junk(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"assets" = {wheel = "pkg/assets"}}',
+        extra='wheel.force-include = {"assets" = "pkg/assets"}',
     )
     assets = chdir_tmp / "assets"
     (assets / "sub").mkdir(parents=True)
@@ -117,7 +118,7 @@ def test_force_include_directory_recurses_and_skips_junk(chdir_tmp: Path) -> Non
 def test_force_include_external_source(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"../outside.txt" = {wheel = "pkg/outside.txt"}}',
+        extra='wheel.force-include = {"../outside.txt" = "pkg/outside.txt"}',
     )
     (chdir_tmp.parent / "outside.txt").write_text("external")
 
@@ -130,7 +131,7 @@ def test_force_include_external_source(chdir_tmp: Path) -> None:
 def test_force_include_leading_slash_targets_scripts(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"run.sh" = {wheel = "/scripts/run.sh"}}',
+        extra='wheel.force-include = {"run.sh" = "/scripts/run.sh"}',
     )
     (chdir_tmp / "run.sh").write_text("#!/bin/sh\n")
 
@@ -144,7 +145,7 @@ def test_force_include_script_shebang_normalized(chdir_tmp: Path) -> None:
     """A force-included script's python shebang is normalized to #!python."""
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"run.py" = {wheel = "/scripts/run.py"}}',
+        extra='wheel.force-include = {"run.py" = "/scripts/run.py"}',
     )
     (chdir_tmp / "run.py").write_text("#!/usr/bin/env python\nprint('hi')\n")
 
@@ -159,7 +160,7 @@ def test_force_include_metadata_in_prepare(chdir_tmp: Path) -> None:
     """A force-included metadata file appears in prepared metadata and the wheel."""
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"extra.txt" = {wheel = "/metadata/extra/extra.txt"}}',
+        extra='wheel.force-include = {"extra.txt" = "/metadata/extra/extra.txt"}',
     )
     (chdir_tmp / "extra.txt").write_text("meta")
 
@@ -178,7 +179,7 @@ def test_force_include_metadata_in_prepare(chdir_tmp: Path) -> None:
 def test_force_include_leading_slash_requires_experimental(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"run.sh" = {wheel = "/scripts/run.sh"}}',
+        extra='wheel.force-include = {"run.sh" = "/scripts/run.sh"}',
         experimental=False,
     )
     (chdir_tmp / "run.sh").write_text("#!/bin/sh\n")
@@ -202,7 +203,7 @@ def test_force_include_rejects_escaping_sdist_dest(chdir_tmp: Path, bad: str) ->
     bad_toml = bad.replace("\\", "\\\\")  # escape backslashes for the TOML string
     make_pure_pkg(
         chdir_tmp,
-        extra=f'force-include = {{"blob.txt" = {{sdist = "{bad_toml}"}}}}',
+        extra=f'sdist.force-include = {{"blob.txt" = "{bad_toml}"}}',
     )
     (chdir_tmp / "blob.txt").write_text("x")
 
@@ -214,7 +215,7 @@ def test_force_include_rejects_escaping_sdist_dest(chdir_tmp: Path, bad: str) ->
 def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"blob.txt" = {wheel = "../escape.txt"}}',
+        extra='wheel.force-include = {"blob.txt" = "../escape.txt"}',
     )
     (chdir_tmp / "blob.txt").write_text("x")
 
@@ -226,7 +227,7 @@ def test_force_include_rejects_escaping_wheel_dest(chdir_tmp: Path) -> None:
 def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"override.py" = {wheel = "pkg/__init__.py"}}',
+        extra='wheel.force-include = {"override.py" = "pkg/__init__.py"}',
     )
     (chdir_tmp / "override.py").write_bytes(b"FORCED = True\n")
 
@@ -236,11 +237,10 @@ def test_force_include_overrides_package_file(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/__init__.py") == b"FORCED = True\n"
 
 
-def test_force_include_missing_source_bare_errors(chdir_tmp: Path) -> None:
-    # The bare-string (SDist) form is strict by default, so a missing source errors.
+def test_force_include_missing_sdist_source_errors(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"does-not-exist.txt" = "missing.txt"}',
+        extra='sdist.force-include = {"does-not-exist.txt" = "missing.txt"}',
     )
 
     dist = chdir_tmp / "dist"
@@ -248,11 +248,10 @@ def test_force_include_missing_source_bare_errors(chdir_tmp: Path) -> None:
         build_sdist(str(dist), {})
 
 
-def test_force_include_missing_source_table_errors(chdir_tmp: Path) -> None:
-    # The inline-table form errors on a missing source by default.
+def test_force_include_missing_wheel_source_errors(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"does-not-exist.txt" = {wheel = "pkg/missing.txt"}}',
+        extra='wheel.force-include = {"does-not-exist.txt" = "pkg/missing.txt"}',
     )
 
     dist = chdir_tmp / "dist"
@@ -260,29 +259,22 @@ def test_force_include_missing_source_table_errors(chdir_tmp: Path) -> None:
         build_wheel(str(dist), {})
 
 
-def test_force_include_missing_source_not_strict_skipped(chdir_tmp: Path) -> None:
+def test_force_include_from_sdist_via_overrides(chdir_tmp: Path) -> None:
+    """The documented overrides recipe redirects the wheel source when from-sdist."""
     make_pure_pkg(
         chdir_tmp,
-        extra=(
-            'force-include = {"does-not-exist.txt" = '
-            '{wheel = "pkg/missing.txt", strict = false}}'
-        ),
-    )
+        extra=textwrap.dedent("""\
+            [tool.scikit-build.sdist.force-include]
+            "../outside.txt" = "vendored/blob.txt"
 
-    dist = chdir_tmp / "dist"
-    build_wheel(str(dist), {})
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = false
+            wheel.force-include."../outside.txt" = "pkg/blob.txt"
 
-    assert "pkg/missing.txt" not in wheel_names(dist)
-
-
-def test_force_include_from_sdist_reads_vendored_location(chdir_tmp: Path) -> None:
-    """A wheel built from an unpacked SDist reads the vendored ``sdist`` path."""
-    make_pure_pkg(
-        chdir_tmp,
-        extra=(
-            'force-include = {"../outside.txt" = '
-            '{sdist = "vendored/blob.txt", wheel = "pkg/blob.txt"}}'
-        ),
+            [[tool.scikit-build.overrides]]
+            if.from-sdist = true
+            wheel.force-include."vendored/blob.txt" = "pkg/blob.txt"
+            """),
     )
     # Simulate an unpacked SDist: a PKG-INFO at the root, the original external
     # source gone, but the vendored copy present at the sdist destination.
@@ -300,7 +292,7 @@ def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
     """Wheel-target force-includes are baked into the editable wheel (not redirected)."""
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"extra/data.txt" = {wheel = "pkg/data.txt"}}',
+        extra='wheel.force-include = {"extra/data.txt" = "pkg/data.txt"}',
     )
     (chdir_tmp / "extra").mkdir()
     (chdir_tmp / "extra" / "data.txt").write_text("hello")
@@ -316,7 +308,7 @@ def test_force_include_editable_script_shebang_normalized(chdir_tmp: Path) -> No
     """A force-included script's shebang is normalized in an editable wheel too."""
     make_pure_pkg(
         chdir_tmp,
-        extra='force-include = {"run.py" = {wheel = "/scripts/run.py"}}',
+        extra='wheel.force-include = {"run.py" = "/scripts/run.py"}',
     )
     (chdir_tmp / "run.py").write_text("#!/usr/bin/env python\nprint('hi')\n")
 
@@ -331,9 +323,8 @@ def test_force_include_sdist_target(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
         extra=(
-            "force-include = {"
-            '"vendor/blob.txt" = "vendored/blob.txt", '
-            '"wheel-only.txt" = {wheel = "pkg/wheel_only.txt"}}'
+            'sdist.force-include = {"vendor/blob.txt" = "vendored/blob.txt"}\n'
+            'wheel.force-include = {"wheel-only.txt" = "pkg/wheel_only.txt"}'
         ),
     )
     (chdir_tmp / "vendor").mkdir()
@@ -347,18 +338,17 @@ def test_force_include_sdist_target(chdir_tmp: Path) -> None:
     with tarfile.open(sdist) as tf:
         names = set(tf.getnames())
 
-    # A bare string is the SDist destination.
     assert "pkg-0.1.0/vendored/blob.txt" in names
     # A wheel-only entry must not appear in the SDist.
     assert not any("wheel_only" in n for n in names)
 
 
-def _read_force_include(
+def _read_settings(
     tmp_path: Path,
     toml: str = "",
     config_settings: dict[str, str] | None = None,
     env: dict[str, str] | None = None,
-) -> Mapping[str, object]:
+) -> ScikitBuildSettings:
     import scikit_build_core.settings.skbuild_read_settings as rs
 
     pyproject_toml = tmp_path / "pyproject.toml"
@@ -367,35 +357,47 @@ def _read_force_include(
         pyproject_toml, config_settings or {}, env=env or {}
     )
     assert list(reader.unrecognized_options()) == []
-    return reader.settings.force_include
+    return reader.settings
 
 
-def test_settings_force_include_toml_forms(tmp_path: Path) -> None:
-    from scikit_build_core.settings.skbuild_model import ForceIncludeTargets
-
-    fi = _read_force_include(
+def test_settings_force_include_toml(tmp_path: Path) -> None:
+    settings = _read_settings(
         tmp_path,
         toml=textwrap.dedent("""\
-            [tool.scikit-build.force-include]
+            [tool.scikit-build.sdist.force-include]
+            "vendor/data" = "data"
+
+            [tool.scikit-build.wheel.force-include]
             "vendor/lib.so" = "pkg/_lib.so"
-            "../data" = {sdist = "data", wheel = "pkg/data"}
-            "maybe.so" = {wheel = "pkg/maybe.so", strict = false}
+            "tools/run.sh" = "/scripts/run.sh"
             """),
     )
-    assert fi["vendor/lib.so"] == "pkg/_lib.so"
-    assert fi["../data"] == ForceIncludeTargets(sdist="data", wheel="pkg/data")
-    assert fi["maybe.so"] == ForceIncludeTargets(wheel="pkg/maybe.so", strict=False)
+    assert settings.sdist.force_include == {"vendor/data": "data"}
+    assert settings.wheel.force_include == {
+        "vendor/lib.so": "pkg/_lib.so",
+        "tools/run.sh": "/scripts/run.sh",
+    }
 
 
-def test_settings_force_include_envvar_bare_string(tmp_path: Path) -> None:
-    fi = _read_force_include(
-        tmp_path, env={"SKBUILD_FORCE_INCLUDE": "a.txt=pkg/a.txt;b.txt=pkg/b.txt"}
+def test_settings_force_include_envvar(tmp_path: Path) -> None:
+    settings = _read_settings(
+        tmp_path,
+        env={
+            "SKBUILD_SDIST_FORCE_INCLUDE": "a.txt=data/a.txt",
+            "SKBUILD_WHEEL_FORCE_INCLUDE": "b.so=pkg/b.so;c.so=pkg/c.so",
+        },
     )
-    assert fi == {"a.txt": "pkg/a.txt", "b.txt": "pkg/b.txt"}
+    assert settings.sdist.force_include == {"a.txt": "data/a.txt"}
+    assert settings.wheel.force_include == {"b.so": "pkg/b.so", "c.so": "pkg/c.so"}
 
 
-def test_settings_force_include_config_settings_bare_string(tmp_path: Path) -> None:
-    fi = _read_force_include(
-        tmp_path, config_settings={"force-include.c.txt": "pkg/c.txt"}
+def test_settings_force_include_config_settings(tmp_path: Path) -> None:
+    settings = _read_settings(
+        tmp_path,
+        config_settings={
+            "sdist.force-include.a.txt": "data/a.txt",
+            "wheel.force-include.b.so": "pkg/b.so",
+        },
     )
-    assert fi == {"c.txt": "pkg/c.txt"}
+    assert settings.sdist.force_include == {"a.txt": "data/a.txt"}
+    assert settings.wheel.force_include == {"b.so": "pkg/b.so"}

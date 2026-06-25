@@ -7,15 +7,12 @@ from typing import TYPE_CHECKING, Literal
 
 import pathspec
 
-from .._logging import logger
-from ..settings.skbuild_model import ForceIncludeTargets
 from ._file_processor import EXCLUDE_LINES, each_unignored_file
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 
 __all__ = [
-    "force_include_targets",
     "is_module",
     "is_trackable",
     "iter_force_include",
@@ -120,20 +117,8 @@ def resolve_wheel_tree(
     return wheel_dirs[targetlib], dest
 
 
-def force_include_targets(fi_value: str | ForceIncludeTargets) -> ForceIncludeTargets:
-    """
-    Normalize a force-include value into a :class:`ForceIncludeTargets`.
-
-    A bare string is the SDist destination only. An inline table is returned
-    unchanged.
-    """
-    if isinstance(fi_value, str):
-        return ForceIncludeTargets(sdist=fi_value)
-    return fi_value
-
-
 def iter_force_include(
-    source: str, dest: str, base: Path, *, strict: bool = True
+    source: str, dest: str, base: Path
 ) -> Iterator[tuple[Path, Path]]:
     """
     Yield ``(source_file, target_path)`` pairs for a force-include entry.
@@ -143,10 +128,7 @@ def iter_force_include(
     pair mapped to ``base / dest``; a directory is walked recursively (skipping
     VCS and ``__pycache__`` junk) with each file mapped under ``base / dest``.
 
-    If the source does not exist, a :class:`FileNotFoundError` is raised unless
-    ``strict`` is ``False``, in which case it yields nothing -- the source is
-    assumed to already be present at the destination (e.g. when building a wheel
-    from an SDist).
+    A missing source raises :class:`FileNotFoundError`.
 
     ``dest`` must be a relative path within ``base``; anything that could escape
     it is rejected -- an absolute path, ``..`` components, a backslash, or a
@@ -175,8 +157,6 @@ def iter_force_include(
             rel_path = filepath.relative_to(src)
             if not exclude_spec.match_file(rel_path):
                 yield filepath, base / dest / rel_path
-    elif not strict:
-        logger.debug("Force-include source {!r} not found, skipping", source)
     else:
         msg = f"Force-include source {source!r} not found"
         raise FileNotFoundError(msg)
