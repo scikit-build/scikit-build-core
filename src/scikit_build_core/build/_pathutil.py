@@ -19,6 +19,7 @@ __all__ = [
     "module_loader_rank",
     "packages_to_file_mapping",
     "path_to_module",
+    "resolve_from_sdist_force_include",
     "resolve_wheel_tree",
     "scantree",
 ]
@@ -119,6 +120,43 @@ def resolve_wheel_tree(
             raise AssertionError(msg)
         return wheel_dirs[tree], rest
     return wheel_dirs[targetlib], dest
+
+
+def resolve_from_sdist_force_include(
+    source: str, sdist_force_include: Mapping[str, str]
+) -> str:
+    """
+    Resolve a ``wheel.force-include`` source through the ``sdist.force-include`` map.
+
+    A common pattern vendors an external file into the sdist with
+    ``sdist.force-include`` and then ships that output via ``wheel.force-include``
+    (e.g. source ``mypackage/data.json`` for both). The file only exists on disk
+    when building from an unpacked sdist; a source-tree or editable build never
+    materialized it. In that case, map ``source`` back through
+    ``sdist_force_include`` (``{sdist_source: sdist_dest}``) to the original
+    source so the file is found either way.
+
+    An on-disk file always wins: if ``source`` exists it is returned unchanged.
+    Otherwise the longest ``sdist_dest`` that equals ``source`` or is a parent
+    directory of it wins, and its ``sdist_source`` (plus any remainder) is
+    returned -- ``~`` / ``..`` are left intact for :func:`iter_force_include` to
+    expand. With no match, ``source`` is returned unchanged and the caller raises
+    :class:`FileNotFoundError`.
+    """
+    if Path(source).expanduser().exists():
+        return source
+    src = PurePosixPath(source)
+    best_depth = -1
+    resolved = source
+    for sdist_source, sdist_dest in sdist_force_include.items():
+        dest = PurePosixPath(sdist_dest)
+        if src != dest and dest not in src.parents:
+            continue
+        depth = len(dest.parts)
+        if depth > best_depth:
+            best_depth = depth
+            resolved = str(PurePosixPath(sdist_source) / src.relative_to(dest))
+    return resolved
 
 
 def iter_force_include(

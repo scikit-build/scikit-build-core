@@ -288,6 +288,81 @@ def test_force_include_from_sdist_via_overrides(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/blob.txt") == b"vendored"
 
 
+def test_force_include_resolves_through_sdist(chdir_tmp: Path) -> None:
+    """A wheel source naming an sdist output is read via sdist.force-include."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.force-include = {"../shared/data.json" = "pkg/data.json"}\n'
+            'wheel.force-include = {"pkg/data.json" = "pkg/data.json"}'
+        ),
+    )
+    shared = chdir_tmp.parent / "shared"
+    shared.mkdir()
+    (shared / "data.json").write_text("external")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert wheel_read(dist, "pkg/data.json") == b"external"
+
+
+def test_force_include_resolves_through_sdist_directory(chdir_tmp: Path) -> None:
+    """A wheel source under a force-included sdist directory resolves by prefix."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.force-include = {"../shared" = "pkg/vendor"}\n'
+            'wheel.force-include = {"pkg/vendor/a.txt" = "pkg/vendor/a.txt"}'
+        ),
+    )
+    shared = chdir_tmp.parent / "shared"
+    shared.mkdir()
+    (shared / "a.txt").write_text("vendored-a")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert wheel_read(dist, "pkg/vendor/a.txt") == b"vendored-a"
+
+
+def test_force_include_on_disk_source_wins_over_sdist(chdir_tmp: Path) -> None:
+    """An existing wheel source is used directly, not remapped through the sdist."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.force-include = {"../shared/data.json" = "data/data.json"}\n'
+            'wheel.force-include = {"data/data.json" = "pkg/data.json"}'
+        ),
+    )
+    # The sdist source is absent, but the wheel source exists on disk (the
+    # from-sdist case): it must be used directly without a remap (which would
+    # otherwise look up the missing sdist source and raise).
+    (chdir_tmp / "data").mkdir()
+    (chdir_tmp / "data" / "data.json").write_text("ondisk")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert wheel_read(dist, "pkg/data.json") == b"ondisk"
+
+
+def test_force_include_unresolvable_through_sdist_errors(chdir_tmp: Path) -> None:
+    """A missing wheel source that matches no sdist destination still errors."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'sdist.force-include = {"blob.txt" = "vendored/blob.txt"}\n'
+            'wheel.force-include = {"does-not-exist.txt" = "pkg/x.txt"}'
+        ),
+    )
+    (chdir_tmp / "blob.txt").write_text("x")
+
+    dist = chdir_tmp / "dist"
+    with pytest.raises(FileNotFoundError, match=r"does-not-exist\.txt"):
+        build_wheel(str(dist), {})
+
+
 def test_force_include_survives_wheel_exclude(chdir_tmp: Path) -> None:
     """A force-included file overrides a matching wheel.exclude pattern."""
     make_pure_pkg(

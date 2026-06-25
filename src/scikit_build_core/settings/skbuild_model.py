@@ -424,6 +424,12 @@ class WheelSettings:
     an exact source is an explicit request for that file. A force-included
     *directory* stays subject to :confval:`wheel.exclude`, so a bulk copy can
     still be trimmed by an exclude pattern.
+
+    If a source is missing on disk, it is looked up through
+    :confval:`sdist.force-include` (by exact destination or under a force-included
+    directory) and read from that original source instead. This lets a source
+    that names an sdist output (vendored via :confval:`sdist.force-include`) build
+    from both a source tree and an unpacked sdist.
     """
 
 

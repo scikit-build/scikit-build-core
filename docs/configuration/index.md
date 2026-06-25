@@ -400,11 +400,29 @@ variables.
 
 #### Building a wheel from an SDist
 
-When you vendor an external (`../`) source into the SDist, the original path is
-gone when a wheel is later built from the unpacked SDist, so the matching
-`wheel.force-include` entry would error. Use [overrides](#overrides) keyed on
-`from-sdist` to point the wheel at the vendored copy. Because override dicts
-merge rather than replace, keep the external entry in the `from-sdist = false`
+A common pattern vendors an external (`../`) source into the SDist and then
+ships that output in the wheel. Reference the SDist destination as the wheel
+source and it works in both build modes:
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"   # vendor it into the SDist
+
+[tool.scikit-build.wheel.force-include]
+"mypackage/data.json" = "mypackage/data.json"    # ship the SDist output
+```
+
+When the wheel is built from the unpacked SDist, `mypackage/data.json` exists
+and is used directly. When it is built from the source tree (or an editable
+install) the file was never materialized; a `wheel.force-include` source missing
+on disk is then resolved through `sdist.force-include` (by exact destination, or
+under a force-included directory) and read from that original source instead. An
+on-disk file always wins, so the vendored copy is preferred when present.
+
+For cases the automatic resolution cannot express — e.g. the wheel source is the
+_original_ external path rather than the SDist output — use
+[overrides](#overrides) keyed on `from-sdist`. Because override dicts merge
+rather than replace, keep the external entry in the `from-sdist = false`
 override (not the base table):
 
 ```toml

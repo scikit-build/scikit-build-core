@@ -35,6 +35,7 @@ from ._init import setup_logging
 from ._pathutil import (
     iter_force_include,
     packages_to_file_mapping,
+    resolve_from_sdist_force_include,
     resolve_wheel_tree,
 )
 from ._scripts import process_script_dir
@@ -109,6 +110,10 @@ def _force_include_into_wheel(
         )
         if only_metadata and base != wheel_dirs["metadata"]:
             continue
+        # A source that names an sdist output exists only in an unpacked-sdist
+        # build; from a source tree or editable build, fall back through the
+        # sdist.force-include map to the original source.
+        source = resolve_from_sdist_force_include(source, settings.sdist.force_include)
         source_is_file = Path(source).expanduser().is_file()
         for src_file, target in iter_force_include(source, rest, base):
             target.parent.mkdir(parents=True, exist_ok=True)
