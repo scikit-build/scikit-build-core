@@ -321,37 +321,6 @@ def test_force_include_sdist_target(chdir_tmp: Path) -> None:
     assert not any("wheel_only" in n for n in names)
 
 
-@pytest.mark.compile
-@pytest.mark.configure
-def test_force_include_build_target_visible_to_cmake(chdir_tmp: Path) -> None:
-    """A {build=...} entry lands in the CMake build dir before configure."""
-    make_pure_pkg(
-        chdir_tmp,
-        extra='force-include = {"injected.cmake" = {build = "injected.cmake"}}',
-        cmake=True,
-    )
-    (chdir_tmp / "injected.cmake").write_text("set(INJECTED_OK TRUE)\n")
-    (chdir_tmp / "CMakeLists.txt").write_text(
-        textwrap.dedent("""\
-        cmake_minimum_required(VERSION 3.15)
-        project(pkg LANGUAGES NONE)
-        if(NOT EXISTS "${CMAKE_BINARY_DIR}/injected.cmake")
-          message(FATAL_ERROR "force-include build target missing")
-        endif()
-        include("${CMAKE_BINARY_DIR}/injected.cmake")
-        if(NOT INJECTED_OK)
-          message(FATAL_ERROR "injected.cmake did not run")
-        endif()
-        install(CODE "message(STATUS configured)")
-        """)
-    )
-
-    dist = chdir_tmp / "dist"
-    build_wheel(str(dist), {})
-    # Build succeeds only if the injected file was present at configure time.
-    assert list(dist.glob("pkg-0.1.0-*.whl"))
-
-
 def _read_force_include(
     tmp_path: Path,
     toml: str = "",
@@ -378,13 +347,11 @@ def test_settings_force_include_toml_forms(tmp_path: Path) -> None:
             [tool.scikit-build.force-include]
             "vendor/lib.so" = "pkg/_lib.so"
             "../data" = {sdist = "data", wheel = "pkg/data"}
-            "toolchain.cmake" = {build = "toolchain.cmake"}
             "maybe.so" = {wheel = "pkg/maybe.so", missing-ok = true}
             """),
     )
     assert fi["vendor/lib.so"] == "pkg/_lib.so"
     assert fi["../data"] == ForceIncludeTargets(sdist="data", wheel="pkg/data")
-    assert fi["toolchain.cmake"] == ForceIncludeTargets(build="toolchain.cmake")
     assert fi["maybe.so"] == ForceIncludeTargets(wheel="pkg/maybe.so", missing_ok=True)
 
 

@@ -524,10 +524,6 @@
                   "type": "string",
                   "description": "The destination path in the wheel, relative to platlib."
                 },
-                "build": {
-                  "type": "string",
-                  "description": "The destination path in the CMake build directory, relative to its root."
-                },
                 "missing-ok": {
                   "type": "boolean",
                   "default": false,

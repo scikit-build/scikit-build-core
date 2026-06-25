@@ -541,14 +541,6 @@ class ForceIncludeTargets:
     :confval:`experimental`). If unset, the source is not added to the wheel.
     """
 
-    build: Optional[str] = None
-    """
-    The destination path in the CMake build directory, relative to its root.
-
-    The file is copied in before CMake configures, so the build can consume it.
-    If unset, the source is not added to the build directory.
-    """
-
     missing_ok: bool = False
     """
     Do not error if the source does not exist; skip it silently instead.
@@ -607,15 +599,15 @@ class ScikitBuildSettings:
     and ``__pycache__`` junk.
 
     A bare string value is the wheel destination (the common case). An inline
-    table gives per-target control with any subset of ``sdist``, ``wheel``, and
-    ``build`` keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline
-    table form is only available in ``pyproject.toml``).
+    table gives per-target control with any subset of ``sdist`` and ``wheel``
+    keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form
+    is only available in ``pyproject.toml``).
 
     Force-included files override package files and CMake output at the same
     destination. A missing source errors unless ``missing-ok`` is set (the
-    bare-string form sets it). When a wheel or build is produced from an SDist
-    rather than a source tree, an entry with an ``sdist`` destination is read
-    from that SDist location instead of the original source.
+    bare-string form sets it). When a wheel is built from an SDist rather than a
+    source tree, an entry with an ``sdist`` destination is read from that SDist
+    location instead of the original source.
     """
 
     strict_config: bool = True

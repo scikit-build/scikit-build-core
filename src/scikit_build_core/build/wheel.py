@@ -447,21 +447,6 @@ def _build_wheel_impl_impl(
                 config=config,
             )
 
-            for source, fi_value in settings.force_include.items():
-                targets = force_include_targets(fi_value)
-                if targets.build is None:
-                    continue
-                src = (
-                    targets.sdist
-                    if from_sdist and targets.sdist is not None
-                    else source
-                )
-                for src_file, target in iter_force_include(
-                    src, targets.build, build_dir, missing_ok=targets.missing_ok
-                ):
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(src_file, target)
-
             rich_print("{green}***", "{bold}Configuring CMake...")
             # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
             # Otherwise `cmake --install --prefix` would work by itself

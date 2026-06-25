@@ -106,15 +106,15 @@ print(mk_skbuild_docs())
   and ``__pycache__`` junk.
 
   A bare string value is the wheel destination (the common case). An inline
-  table gives per-target control with any subset of ``sdist``, ``wheel``, and
-  ``build`` keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline
-  table form is only available in ``pyproject.toml``).
+  table gives per-target control with any subset of ``sdist`` and ``wheel``
+  keys, e.g. ``{sdist = "data", wheel = "pkg/data"}`` (the inline table form
+  is only available in ``pyproject.toml``).
 
   Force-included files override package files and CMake output at the same
   destination. A missing source errors unless ``missing-ok`` is set (the
-  bare-string form sets it). When a wheel or build is produced from an SDist
-  rather than a source tree, an entry with an ``sdist`` destination is read
-  from that SDist location instead of the original source.
+  bare-string form sets it). When a wheel is built from an SDist rather than a
+  source tree, an entry with an ``sdist`` destination is read from that SDist
+  location instead of the original source.
 ```
 
 ```{eval-rst}
