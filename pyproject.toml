@@ -176,6 +176,10 @@ build.targets.sdist.exclude = [".git"]
 
 [tool.uv]
 exclude-newer = "7 days"
+# These provide CMake helpers used by the init templates (f2py_add_module,
+# cython helpers); allow their freshly released versions so the generated
+# example projects build under the global exclude-newer window.
+exclude-newer-package = { f2py-cmake = false, cython-cmake = false }
 workspace.members = ["tmp/hello/hello"]
 
 
@@ -293,7 +297,7 @@ ignore = ["W002"]  # Triggers on __init__.py's
 
 [tool.ruff]
 show-fixes = true
-exclude = ["src/scikit_build_core/_vendor/*"]
+exclude = ["src/scikit_build_core/_vendor/*", "docs/examples/generated/*"]
 
 [tool.ruff.lint]
 select = ["ALL"]

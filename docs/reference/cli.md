@@ -26,7 +26,7 @@ These are available through the `scikit-build` command (also runnable as
 Example:
 
 ```{command-output} scikit-build build requires
-:cwd: ../examples/getting_started/c
+:cwd: ../examples/generated/c
 
 ```
 
@@ -39,7 +39,7 @@ Example:
 Example:
 
 ```{command-output} scikit-build build project-table
-:cwd: ../examples/getting_started/c
+:cwd: ../examples/generated/c
 
 ```
 
@@ -80,5 +80,14 @@ Example:
 ```
 
 ```{program-output} scikit-build file-api reply --help
+
+```
+
+## Starter projects
+
+The `init` command generates a minimal CMake + scikit-build-core project for the
+selected binding backend. Run it without `--backend` to pick one interactively.
+
+```{program-output} scikit-build init --help
 
 ```

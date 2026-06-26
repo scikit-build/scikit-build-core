@@ -6,7 +6,17 @@ source /usr/share/beakerlib/beakerlib.sh || exit 1
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
-		    rlRun "rsync -r .$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
+        case "$TMT_TEST_NAME" in
+            */getting_started/*)
+                # Generate the example from the init templates (single source of
+                # truth); the last path component is the backend name.
+                backend="${TMT_TEST_NAME##*/}"
+                rlRun "python3 -m scikit_build_core.init $tmp --backend $backend --name example --force" 0 "Generate example from templates"
+                ;;
+            *)
+                rlRun "rsync -r .$TMT_TEST_NAME/ $tmp" 0 "Copy example project"
+                ;;
+        esac
         if [ "${HAS_PYTEST}" != True ]; then
 		      rlRun "rsync -r ./docs/examples/getting_started/test.py $tmp" 0 "Copy test.py file"
         fi
