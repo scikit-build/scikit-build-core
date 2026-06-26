@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import difflib
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
@@ -24,7 +25,6 @@ from .skbuild_overrides import process_overrides
 from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
 if TYPE_CHECKING:
-    import os
     from collections.abc import Generator, Mapping
 
     from .skbuild_overrides import OverrideRecord
@@ -245,6 +245,7 @@ class SettingsReader:
         retry: bool = False,
     ) -> None:
         self.state = state
+        environ = os.environ if env is None else env
 
         # Handle overrides
         pyproject = copy.deepcopy(pyproject)
@@ -314,6 +315,16 @@ class SettingsReader:
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+
+        # CMake 3.22+ reads CMAKE_BUILD_TYPE from the environment, but only as a
+        # default for the first configure; the -DCMAKE_BUILD_TYPE we always pass
+        # (default "Release") would override it. Honor the environment value when
+        # build-type wasn't configured, which also works on older CMake.
+        if "CMAKE_BUILD_TYPE" in environ and not self.sources.has_item(
+            "cmake", "build_type", is_dict=False
+        ):
+            self.settings.cmake.build_type = environ["CMAKE_BUILD_TYPE"]
+
         validate_variant_settings(self.settings)
 
         static_settings = SourceChain(

@@ -428,6 +428,12 @@ You can select a different build type, such as `Debug`:
 
 ```
 
+If `cmake.build-type` is left at its default and `CMAKE_BUILD_TYPE` is set in
+the environment, that value is used instead. This lets you override the build
+type without editing `pyproject.toml` (for example
+`CMAKE_BUILD_TYPE=RelWithDebInfo`), mirroring CMake's own handling of the
+variable.
+
 You can specify CMake defines as strings or bools:
 
 ````{tab} pyproject.toml

@@ -72,6 +72,41 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.messages.after_success == ""
 
 
+def test_skbuild_settings_cmake_build_type_envvar(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """CMAKE_BUILD_TYPE in the environment is honored when build-type is unset."""
+    monkeypatch.setenv("CMAKE_BUILD_TYPE", "RelWithAssert")
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert list(settings_reader.unrecognized_options()) == []
+    assert settings_reader.settings.cmake.build_type == "RelWithAssert"
+
+
+def test_skbuild_settings_cmake_build_type_explicit_wins(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """An explicitly configured cmake.build-type beats CMAKE_BUILD_TYPE."""
+    monkeypatch.setenv("CMAKE_BUILD_TYPE", "RelWithAssert")
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.build-type = "Debug"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert settings_reader.settings.cmake.build_type == "Debug"
+
+
 def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         scikit_build_core.settings.skbuild_read_settings, "__version__", "0.12.0"
