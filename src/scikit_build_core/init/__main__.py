@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import string
 import sys
 from pathlib import Path
@@ -21,13 +22,26 @@ def __dir__() -> list[str]:
     return __all__
 
 
-# Order shown in the interactive menu.
-BACKENDS = ("pybind11", "nanobind", "c", "cython", "swig", "fortran", "abi3")
+@dataclasses.dataclass(frozen=True)
+class _Backend:
+    """Backend-specific pieces spliced into the shared ``pyproject.toml``."""
 
-# Template files that live in the project root rather than in the package.
-_ROOT_FILES = frozenset({"pyproject.toml", "CMakeLists.txt"})
+    requires: tuple[str, ...] = ()
+    dependencies: tuple[str, ...] = ()
+    tool: str = ""
 
-_INIT_PY = 'from ._core import square\n\n__all__ = ["square"]\n'
+
+# Insertion order is the order shown in the interactive menu.
+_BACKENDS = {
+    "pybind11": _Backend(requires=("pybind11",)),
+    "nanobind": _Backend(requires=("nanobind",)),
+    "c": _Backend(),
+    "cython": _Backend(requires=("cython", "cython-cmake")),
+    "swig": _Backend(requires=("swig",)),
+    "fortran": _Backend(requires=("numpy", "f2py-cmake"), dependencies=("numpy",)),
+    "abi3": _Backend(tool='\n[tool.scikit-build]\nwheel.py-api = "cp38"\n'),
+}
+BACKENDS = tuple(_BACKENDS)
 
 
 def _select_backend() -> str:
@@ -47,33 +61,49 @@ def _select_backend() -> str:
         rich_print("{yellow}Invalid selection, try again.{normal}")
 
 
+def _toml_list(items: tuple[str, ...]) -> str:
+    return ", ".join(f'"{item}"' for item in items)
+
+
 def _generate(
     directory: Path, backend: str, project_name: str, module: str
 ) -> list[Path]:
-    """Write the rendered template for ``backend`` into ``directory``."""
-    template_dir = resources / "templates" / backend
-    package_dir = directory / "src" / module
-    package_dir.mkdir(parents=True, exist_ok=True)
+    """Render the ``common`` and ``backend`` template trees into ``directory``."""
+    data = _BACKENDS[backend]
+    dependencies = (
+        f"\ndependencies = [{_toml_list(data.dependencies)}]"
+        if data.dependencies
+        else ""
+    )
+    substitutions = {
+        "project_name": project_name,
+        "module": module,
+        "requires": _toml_list(("scikit-build-core", *data.requires)),
+        "dependencies": dependencies,
+        "tool": data.tool,
+    }
 
-    substitutions = {"project_name": project_name, "module": module}
     written: list[Path] = []
-    for entry in sorted(template_dir.iterdir(), key=lambda p: p.name):
-        if not entry.is_file():
-            continue
-        text = string.Template(entry.read_text(encoding="utf-8")).safe_substitute(
-            substitutions
-        )
-        dest = (
-            directory / entry.name
-            if entry.name in _ROOT_FILES
-            else package_dir / entry.name
-        )
-        dest.write_text(text, encoding="utf-8")
-        written.append(dest)
-
-    init_py = package_dir / "__init__.py"
-    init_py.write_text(_INIT_PY, encoding="utf-8")
-    written.append(init_py)
+    for root in (resources / "templates" / "common", resources / "templates" / backend):
+        # Walk the tree; path components are templated too (e.g. ``${module}``).
+        stack = [(root, Path())]
+        while stack:
+            node, rel = stack.pop()
+            for entry in node.iterdir():
+                name = string.Template(entry.name).safe_substitute(substitutions)
+                if entry.is_dir():
+                    stack.append((entry, rel / name))
+                    continue
+                # A ".in" suffix marks a template rendered to its bare name.
+                if name.endswith(".in"):
+                    name = name[:-3]
+                text = string.Template(
+                    entry.read_text(encoding="utf-8")
+                ).safe_substitute(substitutions)
+                dest = directory / rel / name
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(text.rstrip() + "\n", encoding="utf-8")
+                written.append(dest)
     return sorted(written)
 
 
@@ -101,7 +131,6 @@ def _report(directory: Path, backend: str, module: str, written: list[Path]) -> 
 
 
 def main_init(args: argparse.Namespace, /) -> None:
-    backend: str = args.backend or _select_backend()
     directory: Path = args.directory.resolve()
     raw_name: str = args.name or directory.name
     project_name = canonicalize_name(raw_name)
@@ -118,6 +147,7 @@ def main_init(args: argparse.Namespace, /) -> None:
             directory=directory,
         )
 
+    backend: str = args.backend or _select_backend()
     written = _generate(directory, backend, project_name, module)
     _report(directory, backend, module, written)
 
