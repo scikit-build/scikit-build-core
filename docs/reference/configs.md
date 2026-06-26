@@ -493,6 +493,26 @@ print(mk_skbuild_docs())
      0.5-0.10.5 also incorrectly set this for debug builds.
 ```
 
+```{eval-rst}
+.. confval:: install.targets
+
+  :Type: ``list[str]``
+  :Config-settings: ``install.targets`` or ``skbuild.install.targets``
+  :Environment variable: ``SKBUILD_INSTALL_TARGETS``
+
+  Build targets to run during the install step via ``cmake --build --target``.
+
+  This is intended for projects that group their install rules under an
+  umbrella "distribution" build target (such as LLVM's ``install-distribution``)
+  rather than using CMake install ``COMPONENT``\ s. Each listed target is built,
+  which triggers its install rules into the staging prefix.
+
+  This relies on the configure-time ``CMAKE_INSTALL_PREFIX`` (set automatically
+  by scikit-build-core to the wheel staging directory); the ``--strip`` and
+  ``--component`` options of ``cmake --install`` do not apply to these targets.
+  ``components`` and ``targets`` may be combined; both will run.
+```
+
 ## logging
 
 ```{eval-rst}

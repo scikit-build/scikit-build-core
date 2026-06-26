@@ -342,6 +342,13 @@
           },
           "description": "The components to install."
         },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Build targets to run during the install step via ``cmake --build --target``."
+        },
         "strip": {
           "type": "boolean",
           "description": "Whether to strip the binaries."
@@ -609,6 +616,9 @@
                 "additionalProperties": false,
                 "properties": {
                   "components": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "targets": {
                     "$ref": "#/$defs/inherit"
                   }
                 }

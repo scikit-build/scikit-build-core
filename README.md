@@ -255,6 +255,9 @@ build.requires = []
 # The components to install.
 install.components = []
 
+# Build targets to run during the install step via ``cmake --build --target``.
+install.targets = []
+
 # Whether to strip the binaries.
 install.strip = true
 

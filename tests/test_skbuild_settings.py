@@ -64,6 +64,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.editable.verbose
     assert settings.build.tool_args == []
     assert settings.install.components == []
+    assert settings.install.targets == []
     assert settings.install.strip
     assert settings.generate == []
     assert not settings.fail
@@ -109,6 +110,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_BUILD_TARGETS", "a;b;c")
     monkeypatch.setenv("SKBUILD_BUILD_TOOL_ARGS", "a;b")
     monkeypatch.setenv("SKBUILD_INSTALL_COMPONENTS", "a;b;c")
+    monkeypatch.setenv("SKBUILD_INSTALL_TARGETS", "x;y;z")
     monkeypatch.setenv("SKBUILD_INSTALL_STRIP", "False")
     monkeypatch.setenv("SKBUILD_FAIL", "1")
     monkeypatch.setenv(
@@ -163,6 +165,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
+    assert settings.install.targets == ["x", "y", "z"]
     assert not settings.install.strip
     assert settings.fail
     assert settings.messages.after_failure == "This is a test failure message"
@@ -215,6 +218,7 @@ def test_skbuild_settings_config_settings(
         "build.targets": ["a", "b", "c"],
         "build.tool-args": ["a", "b"],
         "install.components": ["a", "b", "c"],
+        "install.targets": ["x", "y", "z"],
         "install.strip": "True",
         "fail": "1",
         "messages.after-failure": "This is a test failure message",
@@ -263,6 +267,7 @@ def test_skbuild_settings_config_settings(
     assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
+    assert settings.install.targets == ["x", "y", "z"]
     assert settings.install.strip
     assert settings.fail
     assert settings.messages.after_failure == "This is a test failure message"
@@ -311,6 +316,7 @@ def test_skbuild_settings_pyproject_toml(
             build.targets = ["a", "b", "c"]
             build.tool-args = ["a", "b"]
             install.components = ["a", "b", "c"]
+            install.targets = ["x", "y", "z"]
             install.strip = true
             fail = true
             messages.after-failure = "This is a test failure message"
@@ -364,6 +370,7 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.build.targets == ["a", "b", "c"]
     assert settings.build.tool_args == ["a", "b"]
     assert settings.install.components == ["a", "b", "c"]
+    assert settings.install.targets == ["x", "y", "z"]
     assert settings.install.strip
     assert settings.generate == [
         GenerateSettings(path=Path("a/b/c"), template="hello", location="install"),

@@ -276,6 +276,59 @@ def test_cmake_defines(
     )
 
 
+def test_install_targets(tmp_path: Path, fp):
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    build_dir = tmp_path / "build"
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=build_dir,
+        build_type="Release",
+        single_config=True,
+    )
+
+    fp.register([fp.program("cmake"), fp.any()], occurrences=10)
+
+    config.install(tmp_path / "prefix", strip=False, targets=["install-distribution"])
+
+    build_calls = [c for c in fp.calls if "--build" in c]
+    assert len(build_calls) == 1
+    call = [os.fspath(arg) for arg in build_calls[0]]
+    assert "--target" in call
+    assert call[call.index("--target") + 1] == "install-distribution"
+    assert os.fspath(build_dir) in call
+    # Target installs are emitted via `cmake --build`, not `cmake --install`.
+    assert not any("--install" in c for c in fp.calls)
+
+
+def test_install_targets_and_components(tmp_path: Path, fp):
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    build_dir = tmp_path / "build"
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=build_dir,
+        build_type="Release",
+        single_config=True,
+    )
+
+    fp.register([fp.program("cmake"), fp.any()], occurrences=10)
+
+    config.install(
+        tmp_path / "prefix",
+        strip=False,
+        components=["runtime"],
+        targets=["install-distribution"],
+    )
+
+    assert any("--install" in c and "--component" in c for c in fp.calls)
+    assert any("--build" in c and "--target" in c for c in fp.calls)
+
+
 def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
     monkeypatch.setattr("shutil.which", lambda x: x)
     cmake_path = Path("some-prog")
