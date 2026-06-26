@@ -69,6 +69,7 @@ def _make_editable(
     settings: ScikitBuildSettings,
     wheel: WheelWriter,
     packages: Iterable[str],
+    install_prefix: str | None = None,
 ) -> None:
     for filename, contents in editable_redirect_files(
         build_options=build_options,
@@ -79,6 +80,7 @@ def _make_editable(
         packages=packages,
         reload_dir=reload_dir,
         settings=settings,
+        install_prefix=install_prefix,
     ).items():
         wheel.writestr(filename, contents)
 
@@ -301,6 +303,26 @@ def _build_wheel_impl_impl(
             settings, wheel_dirs=wheel_dirs, targetlib=targetlib
         )
 
+        # A rebuildable redirect editable (one with a persistent build-dir)
+        # installs the platlib into a persistent tree inside the build directory
+        # instead of the temporary wheel-staging dir, and the redirect references
+        # the compiled artifacts there by absolute path. This bakes
+        # SKBUILD_<targetlib>_DIR / CMAKE_INSTALL_PREFIX at the final location at
+        # configure time, so import-triggered rebuilds need no reconfigure (#1135).
+        editable_rebuild = (
+            editable
+            and settings.editable.mode == "redirect"
+            and settings.editable.rebuild
+            and bool(settings.build_dir)
+        )
+        if editable_rebuild:
+            targetlib_dir = (build_dir / "install" / targetlib).resolve()
+            if targetlib_dir.exists():
+                shutil.rmtree(targetlib_dir)
+            targetlib_dir.mkdir(parents=True)
+        else:
+            targetlib_dir = wheel_dirs[targetlib]
+
         # The metadata-only and full-wheel paths build identical WheelWriters
         # except for the output folder; share a single constructor.
         make_wheel = functools.partial(
@@ -317,6 +339,16 @@ def _build_wheel_impl_impl(
                 wheel_variant.dist_info_contents if wheel_variant else None
             ),
         )
+
+        # A rebuildable editable cannot use an absolute wheel.install-dir (an
+        # AssertionError is raised earlier), so install_dir sits under the target
+        # lib; re-point it into the persistent install tree, and bake the same
+        # SKBUILD_<targetlib>_DIR so an absolute ${SKBUILD_*_DIR}/... destination
+        # also lands there.
+        editable_rebuild_cache: dict[str, str | Path] | None = None
+        if editable_rebuild:
+            install_dir = targetlib_dir / install_dir.relative_to(wheel_dirs[targetlib])
+            editable_rebuild_cache = {f"SKBUILD_{targetlib.upper()}_DIR": targetlib_dir}
 
         # Include the metadata license.file entry if provided
         if metadata.license_files is not None:
@@ -391,7 +423,7 @@ def _build_wheel_impl_impl(
             if gen.location == "build":
                 path = build_dir / gen.path
             elif gen.location == "install":
-                path = wheel_dirs[targetlib] / gen.path
+                path = targetlib_dir / gen.path
             else:
                 assert_never(gen.location)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -408,6 +440,7 @@ def _build_wheel_impl_impl(
                 install_dir=install_dir,
                 build_dir=build_dir,
                 state=state,
+                extra_cache_entries=editable_rebuild_cache,
                 name=metadata.name,
                 version=metadata.version,
             )
@@ -425,6 +458,7 @@ def _build_wheel_impl_impl(
                 name=metadata.name,
                 version=metadata.version,
                 editable=editable,
+                extra_cache_entries=editable_rebuild_cache,
             )
 
         assert wheel_directory is not None
@@ -437,7 +471,7 @@ def _build_wheel_impl_impl(
         assert settings.sdist.inclusion_mode is not None
         mapping = packages_to_file_mapping(
             packages=packages,
-            platlib_dir=wheel_dirs[targetlib],
+            platlib_dir=targetlib_dir,
             include=settings.sdist.include,
             src_exclude=settings.sdist.exclude,
             target_exclude=settings.wheel.exclude,
@@ -481,13 +515,14 @@ def _build_wheel_impl_impl(
                 _make_editable(
                     build_options=build_options,
                     install_options=install_options,
-                    libdir=wheel_dirs[targetlib],
+                    libdir=targetlib_dir,
                     mapping=mapping,
                     reload_dir=reload_dir,
                     settings=settings,
                     wheel=wheel,
                     name=normalized_name,
                     packages=str_pkgs,
+                    install_prefix=os.fspath(install_dir) if editable_rebuild else None,
                 )
             elif editable and settings.editable.mode == "inplace":
                 if not packages:
