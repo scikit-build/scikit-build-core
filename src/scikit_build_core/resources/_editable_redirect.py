@@ -443,6 +443,21 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
 
         try:
             lock.acquire()
+            # ``cmake --install --prefix`` is silently ignored for install rules
+            # with an absolute DESTINATION (e.g. ``${SKBUILD_PLATLIB_DIR}/...``).
+            # scikit-build-core bakes those SKBUILD_*_DIR cache variables at the
+            # temporary wheel-staging directory, which no longer exists, so a
+            # plain ``--prefix`` install would silently write nowhere useful.
+            # Re-point them at the editable target via an in-place reconfigure so
+            # the install lands in site-packages regardless of how the DESTINATION
+            # was written. The rewrite persists in the build directory's cache, so
+            # it only has to run once: skip it when the cache is already current.
+            # See https://github.com/scikit-build/scikit-build-core/issues/1135
+            if self._needs_reconfigure():
+                reconfigure = [
+                    f"-D{key}={value}" for key, value in self._reinstall_cache()
+                ]
+                run_checked(["cmake", *reconfigure, "."])
             run_checked(["cmake", "--build", ".", *self.build_options])
             run_checked(
                 [
@@ -456,6 +471,54 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             )
         finally:
             lock.release()
+
+    def _reinstall_cache(self) -> list[tuple[str, str]]:
+        """
+        Cache entries that re-point the install destinations at the editable target.
+
+        The original build baked ``SKBUILD_<scheme>_DIR`` (and
+        ``CMAKE_INSTALL_PREFIX``) at the temporary wheel-staging directory, which
+        no longer exists. For an editable install the platlib content lives next
+        to this redirect file (``self.dir``), so re-point the platlib-relative
+        destinations there. The other wheel schemes (data/headers/scripts) are
+        not reconstructable from here, so install rules targeting them are not
+        re-pointed.
+        """
+        platlib = self.dir
+        entries = [
+            ("SKBUILD_PLATLIB_DIR", platlib),
+            ("SKBUILD_PURELIB_DIR", platlib),
+            ("CMAKE_INSTALL_PREFIX", self.install_dir),
+        ]
+        return [(key, value.replace("\\", "/")) for key, value in entries]
+
+    def _needs_reconfigure(self) -> bool:
+        """
+        Whether the install destinations still need to be re-pointed.
+
+        The reconfigure rewrites the SKBUILD_*_DIR / CMAKE_INSTALL_PREFIX entries
+        in the persistent build directory's ``CMakeCache.txt``, and that rewrite
+        survives subsequent rebuilds. Reading the cache and skipping the
+        reconfigure when it already matches keeps steady-state rebuilds to just
+        ``cmake --build`` + ``cmake --install`` -- the reconfigure runs only on
+        the first rebuild after an install (or if the cache is missing).
+        """
+        if not self.path:
+            return True
+        try:
+            with open(os.path.join(self.path, "CMakeCache.txt"), encoding="utf-8") as f:
+                cache_text = f.read()
+        except OSError:
+            return True
+        # CMakeCache.txt lines are ``NAME:TYPE=VALUE``; CMake stores paths with
+        # forward slashes, matching the normalization in _reinstall_cache.
+        cached: dict[str, str] = {}
+        for line in cache_text.splitlines():
+            name_type, sep, value = line.partition("=")
+            if not sep or ":" not in name_type:
+                continue
+            cached[name_type.partition(":")[0]] = value.replace("\\", "/")
+        return any(cached.get(key) != value for key, value in self._reinstall_cache())
 
 
 def install(
