@@ -687,6 +687,75 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.define == {"a": "A", "b": "B", "c": "C"}
 
 
+@pytest.mark.parametrize("inherit", ["none", "append", "prepend"])
+def test_skbuild_overrides_inherit_force_include(inherit: str, tmp_path: Path):
+    """Free-form dicts (force-include, whose keys are file paths with dots and
+    slashes) follow the same inherit rules as cmake.define: append/prepend merge
+    the base and override tables, while none replaces the base outright."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            f"""\
+            [tool.scikit-build.sdist.force-include]
+            "a/b.txt" = "A"
+            "c.d.txt" = "B"
+
+            [tool.scikit-build.wheel.force-include]
+            "a/b.txt" = "A"
+            "c.d.txt" = "B"
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            inherit.sdist.force-include = "{inherit}"
+            inherit.wheel.force-include = "{inherit}"
+            sdist.force-include."c.d.txt" = "X"
+            sdist.force-include."e/f.txt" = "C"
+            wheel.force-include."c.d.txt" = "X"
+            wheel.force-include."e/f.txt" = "C"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings = SettingsReader.from_file(pyproject_toml, state="wheel").settings
+
+    if inherit == "none":
+        # The whole table is replaced; the base "a/b.txt" entry is dropped.
+        expected = {"c.d.txt": "X", "e/f.txt": "C"}
+    elif inherit == "append":
+        # Merged, with the override winning the "c.d.txt" conflict.
+        expected = {"a/b.txt": "A", "c.d.txt": "X", "e/f.txt": "C"}
+    else:  # prepend
+        # Merged, with the base winning the "c.d.txt" conflict.
+        expected = {"a/b.txt": "A", "c.d.txt": "B", "e/f.txt": "C"}
+
+    assert settings.sdist.force_include == expected
+    assert settings.wheel.force_include == expected
+
+
+def test_skbuild_overrides_force_include_default_replaces(tmp_path: Path):
+    """Without an inherit entry the override replaces the whole force-include
+    table rather than merging into it (the default mode is "none")."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build.wheel.force-include]
+            "a/b.txt" = "A"
+            "c.d.txt" = "B"
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            wheel.force-include."e/f.txt" = "C"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings = SettingsReader.from_file(pyproject_toml, state="wheel").settings
+    assert settings.wheel.force_include == {"e/f.txt": "C"}
+
+
 def test_skbuild_overrides_inherit_with_scalar_key(tmp_path: Path):
     """An override mixing inherit.<table>.<key> with a top-level scalar key
     must not crash (previously asserted the whole inherit table was empty)."""

@@ -394,10 +394,6 @@ destination. A force-included _directory_ stays subject to that exclude, so a
 bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
 directory and exclude `**/*.bzl` to drop the Bazel files from it).
 
-Both tables can be set through any config source, including config-settings and
-the `SKBUILD_SDIST_FORCE_INCLUDE` / `SKBUILD_WHEEL_FORCE_INCLUDE` environment
-variables.
-
 #### Building a wheel from an SDist
 
 A common pattern vendors an external (`../`) source into the SDist and then
@@ -421,9 +417,9 @@ on-disk file always wins, so the vendored copy is preferred when present.
 
 For cases the automatic resolution cannot express — e.g. the wheel source is the
 _original_ external path rather than the SDist output — use
-[overrides](#overrides) keyed on `from-sdist`. Because override dicts merge
-rather than replace, keep the external entry in the `from-sdist = false`
-override (not the base table):
+[overrides](#overrides) keyed on `from-sdist`, with a separate
+`wheel.force-include` entry gated on each build mode (source tree vs.
+wheel-from-SDist):
 
 ```toml
 [tool.scikit-build.sdist.force-include]

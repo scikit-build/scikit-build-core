@@ -115,7 +115,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             raise ValueError(msg)
 
         if settings.sdist.force_include or settings.wheel.force_include:
-            msg = "Force-include is not supported for hatch builds"
+            msg = "scikit-build.*.force-include is not supported, use hatch's force-include instead"
             raise ValueError(msg)
 
     # Requires Hatchling 1.22.0 to have an effect

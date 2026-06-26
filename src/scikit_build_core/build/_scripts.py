@@ -35,6 +35,6 @@ def process_script_dir(script_dir: Path) -> None:
         if content:
             # newline="\n" keeps the rewritten shebang on LF on every platform;
             # the default text mode would emit CRLF on Windows, which is wrong in
-            # a "#!" line and made the wheel script bytes platform-dependent.
+            # a "#!" line and would make the wheel script bytes platform-dependent.
             with item.open("w", encoding="utf-8", newline="\n") as f:
                 f.writelines(content)

@@ -38,7 +38,9 @@ def test_hatchling_force_include_rejected() -> None:
         "project": {"name": "x", "version": "0.1.0"},
         "tool": {"scikit-build": {"wheel": {"force-include": {"a.txt": "pkg/a.txt"}}}},
     }
-    with pytest.raises(ValueError, match="Force-include is not supported"):
+    with pytest.raises(
+        ValueError, match=r"force-include is not supported, use hatch's force-include"
+    ):
         _validate_settings(pyproject)
 
 
