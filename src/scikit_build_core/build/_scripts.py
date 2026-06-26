@@ -33,5 +33,8 @@ def process_script_dir(script_dir: Path) -> None:
             if match:
                 content = [f"#!python{match.group(1) or ''}\n", *file_iter]
         if content:
-            with item.open("w", encoding="utf-8") as f:
+            # newline="\n" keeps the rewritten shebang on LF on every platform;
+            # the default text mode would emit CRLF on Windows, which is wrong in
+            # a "#!" line and would make the wheel script bytes platform-dependent.
+            with item.open("w", encoding="utf-8", newline="\n") as f:
                 f.writelines(content)

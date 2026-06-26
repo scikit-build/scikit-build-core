@@ -359,6 +359,81 @@ assume `wheel.platlib = false` (purelib targeted instead).
 
 :::
 
+### Force-including files
+
+Sometimes you need to place a specific file (or directory) at a specific path in
+a distribution, even if it lives outside your package tree or is produced
+elsewhere. Each distribution has its own `force-include` table mapping source
+paths to destinations:
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"
+
+[tool.scikit-build.wheel.force-include]
+"vendor/lib.so" = "mypackage/_lib.so"
+"tools/run.sh"  = "/scripts/run.sh"
+```
+
+The keys are source paths relative to the project root; they may point outside
+it (e.g. `../shared`) or be absolute, and `~` is expanded. A source may be a
+file or a directory, and directories are copied recursively (skipping VCS and
+`__pycache__` junk). A missing source is an error.
+
+`sdist.force-include` destinations are relative to the SDist root.
+`wheel.force-include` destinations are relative to the platlib (the package
+area), and also accept a leading `/data`, `/scripts`, `/headers`, or `/metadata`
+to target that wheel tree instead (this requires `experimental = true`, like
+`wheel.install-dir`). Force-included wheel files are placed last, so they
+override discovered package files and CMake output at the same destination.
+
+A force-included _file_ also overrides the matching exclude list
+(`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
+is an explicit request, so it wins even if an exclude pattern matches its
+destination. A force-included _directory_ stays subject to that exclude, so a
+bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
+directory and exclude `**/*.bzl` to drop the Bazel files from it).
+
+#### Building a wheel from an SDist
+
+A common pattern vendors an external (`../`) source into the SDist and then
+ships that output in the wheel. Reference the SDist destination as the wheel
+source and it works in both build modes:
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"   # vendor it into the SDist
+
+[tool.scikit-build.wheel.force-include]
+"mypackage/data.json" = "mypackage/data.json"    # ship the SDist output
+```
+
+When the wheel is built from the unpacked SDist, `mypackage/data.json` exists
+and is used directly. When it is built from the source tree (or an editable
+install) the file was never materialized; a `wheel.force-include` source missing
+on disk is then resolved through `sdist.force-include` (by exact destination, or
+under a force-included directory) and read from that original source instead. An
+on-disk file always wins, so the vendored copy is preferred when present.
+
+For cases the automatic resolution cannot express — e.g. the wheel source is the
+_original_ external path rather than the SDist output — use
+[overrides](#overrides) keyed on `from-sdist`, with a separate
+`wheel.force-include` entry gated on each build mode (source tree vs.
+wheel-from-SDist):
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../outside.txt" = "vendored/blob.txt"   # vendor it into the SDist
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = false                     # source-tree build: read the original
+wheel.force-include."../outside.txt" = "mypackage/blob.txt"
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = true                      # wheel-from-SDist: read the vendored copy
+wheel.force-include."vendored/blob.txt" = "mypackage/blob.txt"
+```
+
 ## Customizing the output wheel
 
 The python API tags for your wheel will be correct assuming you are building a

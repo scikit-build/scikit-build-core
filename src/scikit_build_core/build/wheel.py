@@ -33,7 +33,10 @@ from ..settings.skbuild_read_settings import SettingsReader
 from ._editable import editable_inplace_files, editable_redirect_files, get_packages
 from ._init import setup_logging
 from ._pathutil import (
+    iter_force_include,
     packages_to_file_mapping,
+    resolve_from_sdist_force_include,
+    resolve_wheel_tree,
 )
 from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
@@ -75,6 +78,51 @@ def _make_editable(
         settings=settings,
     ).items():
         wheel.writestr(filename, contents)
+
+
+def _force_include_into_wheel(
+    settings: ScikitBuildSettings,
+    *,
+    wheel_dirs: dict[str, Path],
+    targetlib: str,
+    only_metadata: bool = False,
+) -> set[Path]:
+    """
+    Copy ``wheel.force-include`` entries into the staged wheel trees.
+
+    Run after the package copy and CMake install so force-included files override
+    files at the same destination. ``only_metadata`` restricts the copy to the
+    metadata tree; the prepare-metadata path uses it so the prepared
+    ``.dist-info`` matches the final wheel.
+
+    Returns the resolved target paths of force-included *files*, so the caller
+    can exempt them from ``wheel.exclude`` (naming an exact file forces it past
+    an exclude pattern). Files copied from a force-included *directory* are not
+    returned, so a bulk directory copy stays subject to ``wheel.exclude``.
+    """
+    written: set[Path] = set()
+    for source, dest in settings.wheel.force_include.items():
+        base, rest = resolve_wheel_tree(
+            dest,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            experimental=settings.experimental,
+        )
+        if only_metadata and base != wheel_dirs["metadata"]:
+            continue
+        # A source that names an sdist output exists only in an unpacked-sdist
+        # build; from a source tree or editable build, fall back through the
+        # sdist.force-include map to the original source.
+        resolved = resolve_from_sdist_force_include(
+            source, settings.sdist.force_include
+        )
+        source_is_file = Path(resolved).expanduser().is_file()
+        for src_file, target in iter_force_include(resolved, rest, base):
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, target)
+            if source_is_file:
+                written.add(target.resolve())
+    return written
 
 
 @dataclasses.dataclass
@@ -299,19 +347,13 @@ def _build_wheel_impl_impl(
             ),
         )
 
-        if ".." in settings.wheel.install_dir:
-            msg = "wheel.install_dir must not contain '..'"
-            raise AssertionError(msg)
-        if settings.wheel.install_dir.startswith("/"):
-            if not settings.experimental:
-                msg = "Experimental features must be enabled to use absolute paths in wheel.install_dir"
-                raise AssertionError(msg)
-            if settings.wheel.install_dir[1:].split("/")[0] not in wheel_dirs:
-                msg = "Must target a valid wheel directory"
-                raise AssertionError(msg)
-            install_dir = wheel_dir / settings.wheel.install_dir[1:]
-        else:
-            install_dir = wheel_dirs[targetlib] / settings.wheel.install_dir
+        install_base, install_rest = resolve_wheel_tree(
+            settings.wheel.install_dir,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+            experimental=settings.experimental,
+        )
+        install_dir = install_base / install_rest
 
         # Include the metadata license.file entry if provided
         if metadata.license_files is not None:
@@ -360,6 +402,14 @@ def _build_wheel_impl_impl(
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
+            # Metadata-tree force-includes must land here too, so the prepared
+            # .dist-info matches the final wheel (it is compared on build).
+            _force_include_into_wheel(
+                settings,
+                wheel_dirs=wheel_dirs,
+                targetlib=targetlib,
+                only_metadata=True,
+            )
             wheel = make_wheel(folder=Path(metadata_directory))
             dist_info_contents = wheel.dist_info_contents()
             dist_info = Path(metadata_directory) / f"{wheel.name_ver}.dist-info"
@@ -470,10 +520,27 @@ def _build_wheel_impl_impl(
                 Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
                 shutil.copy2(filepath, package_dir)
 
-            process_script_dir(wheel_dirs["scripts"])
+        # Force-include into the wheel, always (even for editable installs, as
+        # these files are not redirectable) and after the package copy, so they
+        # override package files and CMake output at the same destination.
+        force_included = _force_include_into_wheel(
+            settings,
+            wheel_dirs=wheel_dirs,
+            targetlib=targetlib,
+        )
+
+        # Normalize script shebangs after force-includes, so force-included
+        # scripts (e.g. wheel = "/scripts/...") are processed too. Editable
+        # installs still ship scripts (CMake-installed or force-included), so
+        # normalize them as well.
+        process_script_dir(wheel_dirs["scripts"])
 
         with make_wheel(folder=Path(wheel_directory)) as wheel:
-            wheel.build(wheel_dirs, exclude=settings.wheel.exclude)
+            wheel.build(
+                wheel_dirs,
+                exclude=settings.wheel.exclude,
+                exclude_exempt=force_included,
+            )
 
             str_pkgs = (
                 str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()

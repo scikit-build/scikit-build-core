@@ -642,6 +642,29 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: sdist.force-include
+
+  :Type: ``dict[str,str]``
+  :Config-settings: ``sdist.force-include`` or ``skbuild.sdist.force-include``
+  :Environment variable: ``SKBUILD_SDIST_FORCE_INCLUDE``
+
+  Force-include files into the SDist.
+
+  Maps source paths to destinations relative to the SDist root. Keys are
+  relative to the project root; they may point outside it (e.g. ``../shared``)
+  or be absolute, and ``~`` is expanded. A source may be a file or a directory;
+  directories are copied recursively, skipping VCS and ``__pycache__`` junk.
+
+  Force-included files override files at the same destination. A missing source
+  is an error.
+
+  A force-included *file* is forced in even if :confval:`sdist.exclude` matches
+  its destination, since naming an exact source is an explicit request. A
+  force-included *directory* stays subject to :confval:`sdist.exclude`, so a
+  bulk copy can still be trimmed by an exclude pattern.
+```
+
+```{eval-rst}
 .. confval:: sdist.include
 
   :Type: ``list[str]``
@@ -755,6 +778,40 @@ print(mk_skbuild_docs())
 
   This adds "x86_64" and "arm64" to the list of platforms when "universal2" is used,
   which helps older Pip's (before 21.0.1) find the correct wheel.
+```
+
+```{eval-rst}
+.. confval:: wheel.force-include
+
+  :Type: ``dict[str,str]``
+  :Config-settings: ``wheel.force-include`` or ``skbuild.wheel.force-include``
+  :Environment variable: ``SKBUILD_WHEEL_FORCE_INCLUDE``
+
+  Force-include files into the wheel.
+
+  Maps source paths to destinations relative to the platlib (the package
+  area). Keys are relative to the project root; they may point outside it
+  (e.g. ``../shared``) or be absolute, and ``~`` is expanded. A source may be a
+  file or a directory; directories are copied recursively, skipping VCS and
+  ``__pycache__`` junk.
+
+  A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
+  ``/metadata`` destination targets that wheel tree instead of the platlib
+  (this requires :confval:`experimental`).
+
+  Force-included files are placed last, so they override discovered package
+  files and CMake output at the same destination. A missing source is an error.
+
+  A force-included *file* also overrides :confval:`wheel.exclude`, since naming
+  an exact source is an explicit request for that file. A force-included
+  *directory* stays subject to :confval:`wheel.exclude`, so a bulk copy can
+  still be trimmed by an exclude pattern.
+
+  If a source is missing on disk, it is looked up through
+  :confval:`sdist.force-include` (by exact destination or under a force-included
+  directory) and read from that original source instead. This lets a source
+  that names an sdist output (vendored via :confval:`sdist.force-include`) build
+  from both a source tree and an unpacked sdist.
 ```
 
 ```{eval-rst}

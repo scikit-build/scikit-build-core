@@ -204,6 +204,9 @@ sdist.reproducible = true
 # If set to True, CMake will be run before building the SDist.
 sdist.cmake = false
 
+# Force-include files into the SDist.
+sdist.force-include = {}
+
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]
 
@@ -230,6 +233,9 @@ wheel.exclude = []
 
 # The build tag to use for the wheel. If empty, no build tag is used.
 wheel.build-tag = ""
+
+# Force-include files into the wheel.
+wheel.force-include = {}
 
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"

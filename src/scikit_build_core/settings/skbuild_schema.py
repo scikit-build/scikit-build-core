@@ -173,7 +173,9 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     inherit_props: dict[str, Any] = {
         k: {
             kk: {"$ref": "#/$defs/inherit"}
-            for kk, vv in v["properties"].items()
+            # Free-form dicts (patternProperties, e.g. force-include) have no
+            # fixed sub-keys to mark inheritable.
+            for kk, vv in v.get("properties", {}).items()
             if vv.get("type", "") in {"object", "array"}
             or any(
                 vvv.get("type", "") in {"object", "array"}

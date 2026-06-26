@@ -190,6 +190,15 @@
           "type": "boolean",
           "default": false,
           "description": "If set to True, CMake will be run before building the SDist."
+        },
+        "force-include": {
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          },
+          "description": "Force-include files into the SDist."
         }
       }
     },
@@ -266,6 +275,15 @@
           },
           "description": "Wheel tags to manually force, {interpreter}-{abi}-{platform} format.",
           "scikit-build:override-only": true
+        },
+        "force-include": {
+          "type": "object",
+          "patternProperties": {
+            ".+": {
+              "type": "string"
+            }
+          },
+          "description": "Force-include files into the wheel."
         }
       }
     },
@@ -580,6 +598,9 @@
                   },
                   "exclude": {
                     "$ref": "#/$defs/inherit"
+                  },
+                  "force-include": {
+                    "$ref": "#/$defs/inherit"
                   }
                 }
               },
@@ -597,6 +618,9 @@
                     "$ref": "#/$defs/inherit"
                   },
                   "tags": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "force-include": {
                     "$ref": "#/$defs/inherit"
                   }
                 }
