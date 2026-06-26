@@ -108,6 +108,11 @@
           "type": "boolean",
           "default": true,
           "description": "Do not pass the current environment's python hints such as ``Python_EXECUTABLE``."
+        },
+        "use-sysconfig-compiler": {
+          "type": "boolean",
+          "default": true,
+          "description": "Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the"
         }
       }
     },

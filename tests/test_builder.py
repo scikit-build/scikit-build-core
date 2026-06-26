@@ -726,6 +726,43 @@ def test_set_environment_for_gen_strips_cc_cxx_flags(
     assert env["CXX"] == "c++"
 
 
+def test_set_environment_for_gen_use_sysconfig_compiler(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    # With use_sysconfig_compiler=True (default), CC/CXX from sysconfig are
+    # injected; with False they are left untouched. See #1367.
+    from scikit_build_core.builder import generator as gen_mod
+    from scikit_build_core.program_search import Program
+    from scikit_build_core.settings.skbuild_model import NinjaSettings
+
+    fake_ninja = Program(Path("/usr/bin/ninja"), Version("1.11.0"))
+    monkeypatch.setattr(gen_mod, "get_ninja_programs", lambda: [fake_ninja])
+    config_vars = {"CC": "gcc -pthread", "CXX": "c++ -pthread"}
+    monkeypatch.setattr(sysconfig, "get_config_var", config_vars.get)
+
+    env_default: dict[str, str] = {}
+    gen_mod.set_environment_for_gen(
+        "Ninja",
+        CMake(Version("3.30"), Path("cmake")),
+        env_default,
+        NinjaSettings(),
+        use_sysconfig_compiler=True,
+    )
+    assert env_default["CC"] == "gcc"
+    assert env_default["CXX"] == "c++"
+
+    env_off: dict[str, str] = {}
+    gen_mod.set_environment_for_gen(
+        "Ninja",
+        CMake(Version("3.30"), Path("cmake")),
+        env_off,
+        NinjaSettings(),
+        use_sysconfig_compiler=False,
+    )
+    assert "CC" not in env_off
+    assert "CXX" not in env_off
+
+
 def test_set_environment_for_gen_ninja_multi_config_missing(
     monkeypatch: pytest.MonkeyPatch,
 ):

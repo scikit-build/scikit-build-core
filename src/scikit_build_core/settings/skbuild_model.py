@@ -153,6 +153,18 @@ class CMakeSettings:
     instead.
     """
 
+    use_sysconfig_compiler: bool = True
+    """
+    Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the
+    environment.
+
+    When ``false``, scikit-build-core will not set these, letting CMake pick the
+    compiler from ``PATH``. This is useful for projects whose compiler probes
+    (e.g. ``FindBLAS``, ``FindOpenMP``) break on the sysconfig compiler, such as a
+    conda narrow sysroot or a stale venv gcc. A user-set ``CC``/``CXX`` in the
+    environment is always respected regardless of this setting.
+    """
+
 
 @dataclasses.dataclass
 class SearchSettings:
