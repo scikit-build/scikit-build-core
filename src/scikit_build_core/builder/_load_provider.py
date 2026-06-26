@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, Union, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Generator
 
     StrMapping = Mapping[str, Any]
 else:
@@ -28,10 +28,10 @@ def __dir__() -> list[str]:
 class DynamicMetadataProtocol(Protocol):
     def dynamic_metadata(
         self,
-        fields: Iterable[str],
+        field: str,
         settings: dict[str, Any],
         project: Mapping[str, Any],
-    ) -> dict[str, Any]: ...
+    ) -> Any: ...
 
 
 @runtime_checkable
