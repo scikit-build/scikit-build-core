@@ -470,8 +470,34 @@ def test_validate_settings_raises_setup_error():
 def test_wrapper_setup_raises_setup_error():
     with pytest.raises(SetupError, match="cmake_with_sdist not supported"):
         wrapper.setup(cmake_with_sdist=True)
-    with pytest.raises(SetupError, match="cmake_install_target not supported"):
-        wrapper.setup(cmake_install_target="custom")
+
+
+def test_cmake_install_target_keyword_validates_type():
+    with pytest.raises(SetupError, match="cmake_install_target must be a string"):
+        build_cmake.cmake_install_target(
+            setuptools.Distribution(),
+            "cmake_install_target",
+            object(),  # type: ignore[arg-type]
+        )
+
+
+def test_cmake_install_target_maps_to_install_targets():
+    settings = build_cmake._load_settings()
+    settings.install.targets = ["existing"]
+    dist = setuptools.Distribution()
+    dist.cmake_install_target = "install-distribution"  # type: ignore[attr-defined]
+    build_cmake._apply_cmake_install_target(settings, dist)
+    assert settings.install.targets == ["existing", "install-distribution"]
+
+
+@pytest.mark.parametrize("target", [None, "install"])
+def test_cmake_install_target_default_is_noop(target):
+    settings = build_cmake._load_settings()
+    dist = setuptools.Distribution()
+    if target is not None:
+        dist.cmake_install_target = target  # type: ignore[attr-defined]
+    build_cmake._apply_cmake_install_target(settings, dist)
+    assert settings.install.targets == []
 
 
 def test_load_settings_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

@@ -54,11 +54,15 @@ These are the currently supported `setup.py` options:
   installed by CMake, relative to the setuptools build root, and returns the
   subset that should be kept. For editable installs the omitted files are
   removed from the source tree.
+- `cmake_install_target`: The build target that performs the install. The
+  default, `"install"`, runs `cmake --install`. Any other value installs by
+  running `cmake --build --target <value>` (equivalent to setting
+  `install.targets`), for projects with an umbrella install target.
 
 These options from scikit-build (classic) are not currently supported:
-`cmake_with_sdist` and `cmake_install_target`. `cmake_languages` has no effect.
-And `cmake_minimum_required_version` is now specified via `pyproject.toml`
-config, so has no effect here.
+`cmake_with_sdist`. `cmake_languages` has no effect. And
+`cmake_minimum_required_version` is now specified via `pyproject.toml` config,
+so has no effect here.
 
 A compatibility shim, `scikit_build_core.setuptools.wrapper.setup` is provided;
 it will eventually behave as close to scikit-build (classic)'s `skbuild.setup`

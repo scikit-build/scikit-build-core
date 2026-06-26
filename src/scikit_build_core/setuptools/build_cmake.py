@@ -47,6 +47,18 @@ def __dir__() -> list[str]:
     return __all__
 
 
+def _apply_cmake_install_target(
+    settings: ScikitBuildSettings, dist: Distribution
+) -> None:
+    # Classic scikit-build's cmake_install_target picks the build target that
+    # performs the install; "install" is the default cmake --install path. A
+    # custom target installs via `cmake --build --target`, which is exactly what
+    # install.targets does.
+    target = getattr(dist, "cmake_install_target", None) or "install"
+    if target != "install":
+        settings.install.targets = [*settings.install.targets, target]
+
+
 def _validate_settings(
     settings: ScikitBuildSettings, *, editable_mode: bool = False
 ) -> None:
@@ -524,6 +536,7 @@ class BuildCMake(setuptools.Command):
         # overrides (if.state = "wheel"/"editable") are applied correctly.
         settings = _load_settings(state="editable" if self.editable_mode else "wheel")
         _validate_settings(settings, editable_mode=self.editable_mode)
+        _apply_cmake_install_target(settings, self.distribution)
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"
@@ -768,10 +781,10 @@ def cmake_install_target(
     dist: Distribution, attr: Literal["cmake_install_target"], value: str
 ) -> None:
     assert attr == "cmake_install_target"
-    assert value is not None
     _cmake_extension(dist)
-    msg = "cmake_install_target is not supported - please use components and build targets instead"
-    raise SetupError(msg)
+    if not isinstance(value, str):
+        msg = "cmake_install_target must be a string"
+        raise SetupError(msg)
 
 
 def cmake_with_sdist(
