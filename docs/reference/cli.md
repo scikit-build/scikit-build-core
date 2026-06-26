@@ -26,7 +26,7 @@ These are available through the `scikit-build` command (also runnable as
 Example:
 
 ```{command-output} scikit-build build requires
-:cwd: ../examples/getting_started/c
+:cwd: ../examples/generated/c
 
 ```
 
@@ -39,7 +39,7 @@ Example:
 Example:
 
 ```{command-output} scikit-build build project-table
-:cwd: ../examples/getting_started/c
+:cwd: ../examples/generated/c
 
 ```
 
