@@ -226,9 +226,7 @@ class Builder:
             canonical_name = name.replace("-", "_").replace(".", "_")
             cache_config["SKBUILD_PROJECT_NAME"] = canonical_name
         if version is not None:
-            # Cap to four components so it is valid for project(VERSION ...),
-            # which accepts up to major.minor.patch.tweak. No padding is needed;
-            # SKBUILD_PROJECT_VERSION_FULL retains the full version.
+            # Cap to four components so it is valid for project(VERSION ...)
             cache_config["SKBUILD_PROJECT_VERSION"] = ".".join(
                 str(v) for v in version.release[:4]
             )
