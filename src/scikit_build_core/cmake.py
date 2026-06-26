@@ -337,18 +337,14 @@ class CMaker:
         if strip:
             opts.append("--strip")
 
-        # Umbrella install targets (e.g. LLVM's install-distribution) install
-        # via `cmake --build --target`; they rely on the configure-time
-        # CMAKE_INSTALL_PREFIX, so --prefix/--strip/--component do not apply.
+        # These are "built", so --prefix/--strip/--component do not apply.
         for target in targets:
             logger.info("Installing target {}", target)
             build_args = list(self._compute_build_args(verbose=False))
             self._build(*build_args, "--target", target)
 
         if not components:
-            # With no components and no targets, run the default install. If
-            # only targets were requested, the target builds above already
-            # installed, so skip the plain install.
+            # With no components and no targets, run the default install.
             if not targets:
                 self._install(opts)
             return
