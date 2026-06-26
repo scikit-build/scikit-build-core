@@ -1,7 +1,8 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind"]
+requires = [${requires}]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "${project_name}"
-version = "0.0.1"
+version = "0.0.1"${dependencies}
+${tool}

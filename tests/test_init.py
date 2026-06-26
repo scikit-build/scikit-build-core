@@ -82,6 +82,22 @@ def test_init_force_into_nonempty_directory(tmp_path: Path) -> None:
     assert (tmp_path / "existing.txt").is_file()
 
 
+def test_init_nonempty_errors_before_prompt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A non-empty directory must error out without ever prompting for a backend.
+    (tmp_path / "existing.txt").write_text("hi")
+    monkeypatch.setattr("sys.stdin.isatty", lambda: True)
+
+    def _no_input(_prompt: str) -> str:
+        msg = "input() should not be called for a non-empty directory"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr("builtins.input", _no_input)
+    with pytest.raises(SystemExit):
+        main(["init", str(tmp_path)])
+
+
 def test_init_non_interactive_requires_backend(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
