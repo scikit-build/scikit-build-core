@@ -200,6 +200,45 @@ def test_rebuild_success_runs_build_and_install(
     assert calls[1][:2] == ["cmake", "--install"]
 
 
+def test_rebuild_runs_once_per_process(tmp_path: Path):
+    """Regression (#1367): rebuild fires at most once per finder, not per import.
+
+    Importing a project like pytorch resolves many compiled modules at
+    ``import torch``; each known wheel file should not re-trigger an (otherwise
+    no-op) ``cmake --build``/``--install`` cycle.
+    """
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={
+            "pkg._mod_a": "pkg/_mod_a.so",
+            "pkg._mod_b": "pkg/_mod_b.so",
+        },
+        known_directories={},
+        known_packages=[],
+        path=str(tmp_path),
+        rebuild=True,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path),
+        install_dir="",
+    )
+
+    calls = 0
+
+    def fake_rebuild() -> None:
+        nonlocal calls
+        calls += 1
+
+    finder.rebuild = fake_rebuild  # type: ignore[method-assign]
+
+    finder.find_spec("pkg._mod_a")
+    finder.find_spec("pkg._mod_a")
+    finder.find_spec("pkg._mod_b")
+
+    assert calls == 1
+
+
 def test_mapping_to_modules_prefers_py():
     """Test that mapping_to_modules prefers __init__.py over __init__.pxd."""
     from scikit_build_core.build._editable import mapping_to_modules
