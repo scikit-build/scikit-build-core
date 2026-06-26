@@ -91,6 +91,7 @@ def editable_redirect_files(
     reload_dir: Path | None,
     settings: ScikitBuildSettings,
     use_start: bool | None = None,
+    install_prefix: str | None = None,
 ) -> dict[str, bytes]:
     """
     Build the editable redirect files for a package.
@@ -100,12 +101,23 @@ def editable_redirect_files(
     file, and the ``.pth`` keeps only the ``sys.path`` entries. ``use_start``
     overrides this auto-detection (used by tests); leave it ``None`` to select
     based on the running interpreter.
+
+    ``install_prefix`` selects where the redirect looks for CMake-installed
+    files. When ``None`` (the default), they are recorded relative to the
+    redirect file -- the install tree ships in the wheel and lands in
+    site-packages. When set (a rebuildable editable with a persistent build-dir),
+    the install tree lives outside the wheel: ``installed`` and the install-tree
+    search locations are absolute, and ``install_prefix`` is the
+    ``cmake --install --prefix`` used on rebuild.
     """
     if use_start is None:
         use_start = sys.version_info >= (3, 15)
+    external_install = install_prefix is not None
     modules = mapping_to_modules(mapping, libdir)
-    installed = libdir_to_installed(libdir)
-    directories, known_packages = collect_search_locations(mapping, libdir)
+    installed = libdir_to_installed(libdir, absolute=external_install)
+    directories, known_packages = collect_search_locations(
+        mapping, libdir, absolute=external_install
+    )
     if settings.editable.rebuild and settings.wheel.install_dir.startswith("/"):
         msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
         raise AssertionError(msg)
@@ -119,7 +131,9 @@ def editable_redirect_files(
         verbose=settings.editable.verbose,
         build_options=build_options,
         install_options=install_options,
-        install_dir=settings.wheel.install_dir,
+        install_dir=install_prefix
+        if install_prefix is not None
+        else settings.wheel.install_dir,
         as_entrypoint=use_start,
     )
     package_paths = tuple(packages)
@@ -191,12 +205,16 @@ def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
     return result
 
 
-def libdir_to_installed(libdir: Path) -> dict[str, str]:
+def libdir_to_installed(libdir: Path, *, absolute: bool = False) -> dict[str, str]:
     """
     Map importable module names to their installed files (relative to ``libdir``).
 
     Only importable files are included; data/resource files are tracked
     separately by :func:`collect_search_locations`.
+
+    With ``absolute``, the paths are emitted absolute rather than relative to
+    ``libdir`` -- used when the install tree lives outside the wheel (a
+    rebuildable editable pointing at a persistent build-dir).
     """
     result: dict[str, str] = {}
     selected: dict[str, Path] = {}
@@ -207,13 +225,13 @@ def libdir_to_installed(libdir: Path) -> dict[str, str]:
         module = path_to_module(pth)
         if module in result and not _prefer_module(pth, selected[module]):
             continue
-        result[module] = str(pth)
+        result[module] = str(v if absolute else pth)
         selected[module] = pth
     return result
 
 
 def collect_search_locations(
-    mapping: dict[str, str], libdir: Path
+    mapping: dict[str, str], libdir: Path, *, absolute: bool = False
 ) -> tuple[dict[str, list[str]], list[str]]:
     """
     Build the package search-location map and the list of regular packages.
@@ -225,8 +243,10 @@ def collect_search_locations(
     module-resolution maps means a non-importable file is never a module's origin.
 
     Source-tree directories are absolute, install-tree ones relative to
-    ``libdir``. Returns ``(directories, packages)`` where ``packages`` are the
-    modules whose directory holds an ``__init__`` (including ``.pxd``/``.pyx``).
+    ``libdir`` (or absolute when ``absolute`` is set, for an install tree that
+    lives outside the wheel). Returns ``(directories, packages)`` where
+    ``packages`` are the modules whose directory holds an ``__init__`` (including
+    ``.pxd``/``.pyx``).
     """
     # Collect (module, directory, is_init) entries. Source tree: the absolute
     # source file's parent. Install tree: the directory relative to libdir.
@@ -239,7 +259,8 @@ def collect_search_locations(
     for v in scantree(libdir):
         rel = v.relative_to(libdir)
         if is_trackable(rel):
-            entries.append((path_to_module(rel), str(rel.parent), _is_init(rel.name)))
+            directory = str(v.parent if absolute else rel.parent)
+            entries.append((path_to_module(rel), directory, _is_init(rel.name)))
 
     directories: dict[str, set[str]] = {}
     packages: set[str] = set()

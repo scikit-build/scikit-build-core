@@ -303,6 +303,40 @@ def test_navigate_editable_remapped_namespace(
     assert virtualenv.execute(read_data) == "payload"
 
 
+def test_editable_redirect_files_external_install_prefix(tmp_path: Path):
+    # A rebuildable editable (#1135) records the install tree as absolute paths
+    # and bakes the install prefix as the rebuild --prefix, so imports resolve to
+    # the persistent build tree and rebuilds skip the reconfigure.
+    import importlib.machinery
+
+    from scikit_build_core.settings.skbuild_model import EditableSettings
+
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    libdir = tmp_path / "build" / "install" / "platlib"
+    mod = libdir / "pkg" / f"_module{ext}"
+    mod.parent.mkdir(parents=True)
+    mod.touch()
+    install_prefix = str(libdir)
+
+    files = editable_redirect_files(
+        libdir=libdir,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(editable=EditableSettings(rebuild=True)),
+        use_start=False,
+        install_prefix=install_prefix,
+    )
+
+    redirect = files["_editable_skbc_pkg.py"].decode()
+    # The compiled module is referenced by its absolute build-tree path ...
+    assert repr(str(mod)) in redirect
+    # ... and the install prefix passed to the redirect is the build tree, not a
+    # site-packages-relative value.
+    assert repr(install_prefix) in redirect
+
+
 def test_editable_redirect_files_legacy_pth(tmp_path: Path):
     files = editable_redirect_files(
         libdir=tmp_path,

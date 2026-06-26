@@ -255,6 +255,87 @@ def test_mapping_to_modules_prefers_py():
     assert result["pkg"].endswith("__init__.py")
 
 
+def test_libdir_to_installed_absolute(tmp_path: Path):
+    """With absolute=True the install-tree files are recorded as absolute paths.
+
+    Used by rebuildable editables that point at a persistent build-dir install
+    tree (#1135): the redirect references the compiled artifacts there directly,
+    so they need no copy in site-packages and no reconfigure on rebuild.
+    """
+    import importlib.machinery
+
+    from scikit_build_core.build._editable import libdir_to_installed
+
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    libdir = tmp_path / "install" / "platlib"
+    mod = libdir / "pkg" / f"_module{ext}"
+    mod.parent.mkdir(parents=True)
+    mod.touch()
+
+    relative = libdir_to_installed(libdir)
+    assert relative == {"pkg._module": str(Path(f"pkg/_module{ext}"))}
+
+    absolute = libdir_to_installed(libdir, absolute=True)
+    assert absolute == {"pkg._module": str(mod)}
+    assert Path(absolute["pkg._module"]).is_absolute()
+
+
+def test_collect_search_locations_absolute(tmp_path: Path):
+    """With absolute=True the install-tree __path__ entries are absolute."""
+    import importlib.machinery
+
+    from scikit_build_core.build._editable import collect_search_locations
+
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    libdir = tmp_path / "install" / "platlib"
+    mod = libdir / "pkg" / f"_module{ext}"
+    mod.parent.mkdir(parents=True)
+    mod.touch()
+
+    directories, packages = collect_search_locations({}, libdir, absolute=True)
+    assert packages == []
+    assert directories == {"pkg": [str(libdir / "pkg")]}
+
+
+def test_editable_redirect_external_install_tree(tmp_path: Path):
+    """An external (absolute) install tree resolves and rebuilds in place (#1135).
+
+    A rebuildable editable bakes the persistent install prefix at build time, so
+    the redirect resolves compiled modules to absolute build-tree paths and the
+    rebuild's ``cmake --install --prefix`` points there -- no reconfigure needed.
+    """
+    import importlib.machinery
+
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    install_prefix = tmp_path / "build" / "install" / "platlib"
+    mod = install_prefix / "pkg" / f"_module{ext}"
+    mod.parent.mkdir(parents=True)
+    mod.touch()
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={"pkg._module": str(mod)},
+        known_directories={"pkg": [str(install_prefix / "pkg")]},
+        known_packages=[],
+        path=str(tmp_path / "build"),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path / "site-packages"),
+        install_dir=str(install_prefix),
+    )
+
+    # An absolute known_wheel_file is used verbatim, not joined under site-packages.
+    spec = finder.find_spec("pkg._module")
+    assert spec is not None
+    assert spec.origin == str(mod)
+
+    # The rebuild --prefix is the absolute install tree, so the cached
+    # SKBUILD_<targetlib>_DIR / CMAKE_INSTALL_PREFIX stay valid without a redo.
+    assert finder.install_dir == str(install_prefix)
+
+
 def test_mapping_to_modules_keeps_symlink_in_package_dir(tmp_path: Path):
     """A symlinked-in module keeps its in-package directory, not the link target (#647)."""
     from scikit_build_core.build._editable import mapping_to_modules
