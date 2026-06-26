@@ -2,10 +2,8 @@ tag: examples
 require:
   - python3-devel
   - python3-pip
+  - python3-virtualenv
   - cmake
   - gcc
-  - rsync
-  - tree
-framework: beakerlib
 path: /
-test: ./docs/examples/test.sh
+test: ./docs/examples/test.py
