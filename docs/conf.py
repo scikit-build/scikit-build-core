@@ -44,6 +44,22 @@ except ModuleNotFoundError:
 release = version.split("+")[0]
 
 
+# -- Generate the getting-started examples from the init templates -----------
+# The init command's templates (resources/templates) are the single source of
+# truth for example projects. Render each backend here so literalinclude and
+# command-output pull from real, build-tested projects rather than duplicates.
+EXAMPLE_BACKENDS = ["pybind11", "nanobind", "swig", "cython", "c", "abi3", "fortran"]
+GENERATED_EXAMPLES = ROOT / "docs/examples/generated"
+if scikit_build_core is not None:
+    import shutil
+
+    from scikit_build_core.init.__main__ import generate_project
+
+    shutil.rmtree(GENERATED_EXAMPLES, ignore_errors=True)
+    for _backend in EXAMPLE_BACKENDS:
+        generate_project(GENERATED_EXAMPLES / _backend, _backend, "example")
+
+
 # -- Project information -----------------------------------------------------
 
 project = "scikit-build-core"
@@ -89,6 +105,7 @@ exclude_patterns = [
     ".env",
     "**.venv",
     "examples/downstream",
+    "examples/generated",
 ]
 
 

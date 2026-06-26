@@ -15,7 +15,7 @@ from ..resources import resources
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ["main", "populate_parser"]
+__all__ = ["generate_project", "main", "populate_parser"]
 
 
 def __dir__() -> list[str]:
@@ -105,6 +105,19 @@ def _generate(
                 dest.write_text(text.rstrip() + "\n", encoding="utf-8")
                 written.append(dest)
     return sorted(written)
+
+
+def generate_project(
+    directory: Path, backend: str, name: str = "example"
+) -> list[Path]:
+    """Render the ``backend`` template into ``directory`` as project ``name``.
+
+    Shared entry point for the CLI, the docs example generation, and tests so
+    the ``resources/templates`` tree stays the single source of truth.
+    """
+    project_name = canonicalize_name(name)
+    module = project_name.replace("-", "_").replace(".", "_")
+    return _generate(directory, backend, project_name, module)
 
 
 def _display(path: Path) -> str:

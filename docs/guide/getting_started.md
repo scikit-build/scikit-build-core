@@ -20,6 +20,10 @@ We also keep
 
 There are several mechanisms to quickly get started with a package:
 
+- Scikit-build-core ships an `init` command:
+  `scikit-build init --backend pybind11 myproject` scaffolds the exact project
+  this page builds (run without `--backend` to pick one interactively). The rest
+  of this page walks through what it generates.
 - [uv][] has built-in support for scikit-build-core. Just make a directory for
   your package and run: `uv init --lib --build-backend=scikit`.
 - [scientific-python/cookie][] has a cookiecutter/copier template for making a
@@ -33,15 +37,24 @@ scratch.
 
 ## Writing an extension
 
+```{tip}
+The fastest way to lay these files out is `scikit-build init --backend pybind11`
+(or any backend below), which generates exactly the project shown here. Read on
+to understand each piece.
+```
+
 We will be writing these files:
 
 ````{tab} pybind11
 
 ```
-example-project
-├── example.cpp
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.cpp
 ```
 
 ````
@@ -49,10 +62,13 @@ example-project
 ````{tab} nanobind
 
 ```
-example-project
-├── example.cpp
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.cpp
 ```
 
 ````
@@ -60,11 +76,14 @@ example-project
 ````{tab} SWIG
 
 ```
-example-project
-├── example.c
-├── example.i
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        ├── _core.c
+        └── _core.i
 ```
 
 ````
@@ -72,10 +91,13 @@ example-project
 ````{tab} Cython
 
 ```
-example-project
-├── example.pyx
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.pyx
 ```
 
 ````
@@ -83,10 +105,13 @@ example-project
 ````{tab} C
 
 ```
-example-project
-├── example.c
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
 ```
 
 ````
@@ -94,10 +119,13 @@ example-project
 ````{tab} ABI3
 
 ```
-example-project
-├── example.c
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
 ```
 
 ````
@@ -105,10 +133,13 @@ example-project
 ````{tab} Fortran
 
 ```
-example-project
-├── example.f
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.f
 ```
 
 ````
@@ -117,10 +148,12 @@ example-project
 
 For this tutorial, you can either write a C extension yourself, or you can use
 pybind11 and C++. Select your preferred version using the tabs - compare them!
+The compiled extension is built as `_core` and lives inside the `example`
+package at `src/example/_core.*`.
 
 ````{tab} pybind11
 
-```{literalinclude} ../examples/getting_started/pybind11/example.cpp
+```{literalinclude} ../examples/generated/pybind11/src/example/_core.cpp
 :language: cpp
 ```
 
@@ -128,7 +161,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} nanobind
 
-```{literalinclude} ../examples/getting_started/nanobind/example.cpp
+```{literalinclude} ../examples/generated/nanobind/src/example/_core.cpp
 :language: cpp
 ```
 
@@ -136,11 +169,11 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} SWIG
 
-```{literalinclude} ../examples/getting_started/swig/example.c
+```{literalinclude} ../examples/generated/swig/src/example/_core.c
 :language: c
 ```
 
-```{literalinclude} ../examples/getting_started/swig/example.i
+```{literalinclude} ../examples/generated/swig/src/example/_core.i
 :language: swig
 ```
 
@@ -148,7 +181,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} Cython
 
-```{literalinclude} ../examples/getting_started/cython/example.pyx
+```{literalinclude} ../examples/generated/cython/src/example/_core.pyx
 :language: cython
 ```
 
@@ -156,7 +189,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} C
 
-```{literalinclude} ../examples/getting_started/c/example.c
+```{literalinclude} ../examples/generated/c/src/example/_core.c
 :language: c
 ```
 
@@ -164,7 +197,7 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} ABI3
 
-```{literalinclude} ../examples/getting_started/abi3/example.c
+```{literalinclude} ../examples/generated/abi3/src/example/_core.c
 :language: c
 ```
 
@@ -172,11 +205,21 @@ pybind11 and C++. Select your preferred version using the tabs - compare them!
 
 ````{tab} Fortran
 
-```{literalinclude} ../examples/getting_started/fortran/example.f
-:language: fortran
+```{literalinclude} ../examples/generated/fortran/src/example/_core.f
+:language: fortranfixed
 ```
 
 ````
+
+### Package init
+
+The `src/example/__init__.py` re-exports the pieces of the compiled `_core`
+extension you want as your public API, so users write `import example` rather
+than reaching into `example._core`:
+
+```{literalinclude} ../examples/generated/pybind11/src/example/__init__.py
+:language: python
+```
 
 ### Python package configuration
 
@@ -184,7 +227,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} pybind11
 
-```{literalinclude} ../examples/getting_started/pybind11/pyproject.toml
+```{literalinclude} ../examples/generated/pybind11/pyproject.toml
 :language: toml
 ```
 
@@ -192,7 +235,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} nanobind
 
-```{literalinclude} ../examples/getting_started/nanobind/pyproject.toml
+```{literalinclude} ../examples/generated/nanobind/pyproject.toml
 :language: toml
 ```
 
@@ -200,7 +243,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} SWIG
 
-```{literalinclude} ../examples/getting_started/swig/pyproject.toml
+```{literalinclude} ../examples/generated/swig/pyproject.toml
 :language: toml
 ```
 
@@ -208,7 +251,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} Cython
 
-```{literalinclude} ../examples/getting_started/cython/pyproject.toml
+```{literalinclude} ../examples/generated/cython/pyproject.toml
 :language: toml
 ```
 
@@ -216,7 +259,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} C
 
-```{literalinclude} ../examples/getting_started/c/pyproject.toml
+```{literalinclude} ../examples/generated/c/pyproject.toml
 :language: toml
 ```
 
@@ -224,7 +267,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} ABI3
 
-```{literalinclude} ../examples/getting_started/abi3/pyproject.toml
+```{literalinclude} ../examples/generated/abi3/pyproject.toml
 :language: toml
 ```
 
@@ -232,7 +275,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} Fortran
 
-```{literalinclude} ../examples/getting_started/fortran/pyproject.toml
+```{literalinclude} ../examples/generated/fortran/pyproject.toml
 :language: toml
 ```
 
@@ -269,7 +312,7 @@ Now, you'll need a file called `CMakeLists.txt`. This one will do:
 
 ````{tab} pybind11
 
-```{literalinclude} ../examples/getting_started/pybind11/CMakeLists.txt
+```{literalinclude} ../examples/generated/pybind11/CMakeLists.txt
 :language: cmake
 ```
 
@@ -293,7 +336,7 @@ to `pybind11::module`, your choice.
 
 ````{tab} nanobind
 
-```{literalinclude} ../examples/getting_started/nanobind/CMakeLists.txt
+```{literalinclude} ../examples/generated/nanobind/CMakeLists.txt
 :language: cmake
 ```
 
@@ -310,7 +353,7 @@ Nanobind places its config file such that CMake can find it from site-packages.
 
 ````{tab} SWIG
 
-```{literalinclude} ../examples/getting_started/swig/CMakeLists.txt
+```{literalinclude} ../examples/generated/swig/CMakeLists.txt
 :language: cmake
 ```
 
@@ -327,7 +370,7 @@ You'll need to handle the generation of files by SWIG directly.
 
 ````{tab} Cython
 
-```{literalinclude} ../examples/getting_started/cython/CMakeLists.txt
+```{literalinclude} ../examples/generated/cython/CMakeLists.txt
 :language: cmake
 ```
 
@@ -345,7 +388,7 @@ A helper (similar to scikit-build classic) might be added in the future.
 
 ````{tab} C
 
-```{literalinclude} ../examples/getting_started/c/CMakeLists.txt
+```{literalinclude} ../examples/generated/c/CMakeLists.txt
 :language: cmake
 ```
 
@@ -369,7 +412,7 @@ without it).
 
 ````{tab} ABI3
 
-```{literalinclude} ../examples/getting_started/abi3/CMakeLists.txt
+```{literalinclude} ../examples/generated/abi3/CMakeLists.txt
 :language: cmake
 ```
 
@@ -395,7 +438,7 @@ support PyPy).
 
 ````{tab} Fortran
 
-```{literalinclude} ../examples/getting_started/fortran/CMakeLists.txt
+```{literalinclude} ../examples/generated/fortran/CMakeLists.txt
 :language: cmake
 ```
 
@@ -412,10 +455,11 @@ need gfortran on macOS.
 
 ````
 
-Finally, you install your module. The default install path will go directly to
-`site-packages`, so if you are creating anything other than a single
-c-extension, you will want to install to the package directory (possibly
-`${SKBUILD_PROJECT_NAME}`) instead.
+Finally, you install your module. The `install(...)` line above targets the
+`${SKBUILD_PROJECT_NAME}` package directory rather than `site-packages`
+directly, which is what you want for a `src/example/` package layout - the
+compiled `_core` lands next to `__init__.py`. A bare install (`DESTINATION .`)
+would instead drop a single top-level extension into `site-packages`.
 
 ### Building and installing
 
