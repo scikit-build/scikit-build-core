@@ -46,9 +46,6 @@ def setup(
     if cmake_with_sdist:
         msg = "cmake_with_sdist not supported yet"
         raise SetupError(msg)
-    if cmake_install_target != "install":
-        msg = "cmake_install_target not supported yet"
-        raise SetupError(msg)
 
     if cmake_languages is not None:
         warnings.warn("cmake_languages no longer has any effect", stacklevel=2)
@@ -85,6 +82,7 @@ def setup(
         cmake_with_sdist=cmake_with_sdist,
         cmake_args=list(cmake_args),
         cmake_install_dir=cmake_install_dir,
+        cmake_install_target=cmake_install_target,
         cmake_process_manifest_hook=cmake_process_manifest_hook,
         distclass=distribution_class,
         **kw,
