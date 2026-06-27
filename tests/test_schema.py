@@ -67,6 +67,8 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {"metadata": {"invalid": {"provider": "correct"}}},
         {"cmake": {"define": {"FOO": {"env": ""}}}},
         {"cmake": {"define": {"FOO": {"default": False}}}},
+        {"env": {"FOO": {"unknown": "x"}}},
+        {"env": {"FOO": {"force": "not-a-bool"}}},
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -109,6 +111,10 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
         {"cmake": {"define": {"FOO": "BAR"}}},
         {"cmake": {"define": {"FOO": {"env": "FOO"}}}},
         {"cmake": {"define": {"FOO": {"env": "FOO", "default": False}}}},
+        {"env": {"FOO": "bar"}},
+        {"env": {"CMAKE_BUILD_PARALLEL_LEVEL": {"env": "MAX_JOBS"}}},
+        {"env": {"FOO": {"env": "BAR", "default": "baz"}}},
+        {"env": {"FOO": {"default": "bar", "force": True}}},
     ],
 )
 def test_valid_schemas(addition: dict[str, Any]) -> None:

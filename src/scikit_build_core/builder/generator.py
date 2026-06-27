@@ -13,7 +13,7 @@ from ..program_search import best_program, get_make_programs, get_ninja_programs
 from .sysconfig import get_cmake_platform
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, MutableMapping
+    from collections.abc import Collection, Iterable, Mapping, MutableMapping
 
     from ..cmake import CMake
     from ..settings.skbuild_model import NinjaSettings
@@ -100,7 +100,7 @@ def set_environment_for_gen(
     env: MutableMapping[str, str],
     ninja_settings: NinjaSettings,
     *,
-    use_sysconfig_compiler: bool = True,
+    env_managed_keys: Collection[str] = (),
 ) -> Mapping[str, str]:
     """
     This function modifies the environment as needed to safely set a generator.
@@ -134,19 +134,19 @@ def set_environment_for_gen(
     # Set Python's recommended CC and CXX if not already set by the user. Only
     # the executable is kept; sysconfig may append flags (e.g. "c++ -pthread"),
     # which would otherwise leak into tools like autotools sub-builds. CMake adds
-    # any flags it needs itself. See #1330. This can be disabled with
-    # cmake.use-sysconfig-compiler for projects whose compiler probes break on
-    # the sysconfig compiler. See #1367.
-    if use_sysconfig_compiler:
-        if "CC" not in env:
-            cc = sysconfig.get_config_var("CC")
-            if cc:
-                env["CC"] = shlex.split(cc)[0]
+    # any flags it needs itself. See #1330. A key the user manages via the
+    # ``env`` table is left alone (even when it resolves to nothing), letting
+    # CMake pick the compiler from ``PATH`` for projects whose compiler probes
+    # break on the sysconfig compiler. See #1367.
+    if "CC" not in env and "CC" not in env_managed_keys:
+        cc = sysconfig.get_config_var("CC")
+        if cc:
+            env["CC"] = shlex.split(cc)[0]
 
-        if "CXX" not in env:
-            cxx = sysconfig.get_config_var("CXX")
-            if cxx:
-                env["CXX"] = shlex.split(cxx)[0]
+    if "CXX" not in env and "CXX" not in env_managed_keys:
+        cxx = sysconfig.get_config_var("CXX")
+        if cxx:
+            env["CXX"] = shlex.split(cxx)[0]
 
     if "Ninja" in (generator or "Ninja"):
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)

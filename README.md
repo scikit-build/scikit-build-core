@@ -177,9 +177,6 @@ cmake.source-dir = "."
 # Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
 cmake.python-hints = true
 
-# Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the
-cmake.use-sysconfig-compiler = true
-
 # The versions of Ninja to allow.
 ninja.version = ">=1.5"
 
@@ -293,6 +290,9 @@ search.site-packages = true
 
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
+
+# A table of environment variables to set for the CMake subprocesses.
+env = {}
 
 # Strictly check all config options.
 strict-config = true
