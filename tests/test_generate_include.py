@@ -9,6 +9,7 @@ from scikit_build_core.build import build_sdist, build_wheel
 # Using [[tool.scikit-build.generate]] in with `location = "source"` mode should
 # automatically add the generated file to the sdist/wheel includes
 
+
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.parametrize("package", ["generate_include"], indirect=True)
