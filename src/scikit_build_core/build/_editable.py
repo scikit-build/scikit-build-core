@@ -106,8 +106,10 @@ def editable_redirect_files(
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
     directories, known_packages = collect_search_locations(mapping, libdir)
-    if settings.editable.rebuild and settings.wheel.install_dir.startswith("/"):
-        msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
+    if settings.editable.rebuild and settings.wheel.install_dir.startswith(
+        ("/", "${SKBUILD_")
+    ):
+        msg = "Editable installs cannot rebuild a non-platlib wheel.install-dir. Use an override to change if needed."
         raise AssertionError(msg)
     editable_txt = editable_redirect(
         modules=modules,

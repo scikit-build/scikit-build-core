@@ -795,9 +795,11 @@ print(mk_skbuild_docs())
   file or a directory; directories are copied recursively, skipping VCS and
   ``__pycache__`` junk.
 
-  A leading ``/data``, ``/scripts``, ``/headers``, ``/platlib``, or
-  ``/metadata`` destination targets that wheel tree instead of the platlib
-  (this requires :confval:`experimental`).
+  A ``${SKBUILD_<TREE>_DIR}`` prefix (e.g. ``${SKBUILD_DATA_DIR}/foo``) targets
+  that wheel tree instead of the platlib, matching the ``SKBUILD_*_DIR`` CMake
+  cache variables (``DATA``, ``SCRIPTS``, ``HEADERS``, ``PLATLIB``,
+  ``METADATA``, ...). The deprecated leading-slash form (``/data``, ``/scripts``,
+  ...) selects the same trees but requires :confval:`experimental`.
 
   Force-included files are placed last, so they override discovered package
   files and CMake output at the same destination. A missing source is an error.
@@ -829,9 +831,15 @@ print(mk_skbuild_docs())
   The original dir is still at ``SKBUILD_PLATLIB_DIR`` (also ``SKBUILD_DATA_DIR``, etc.
   are available).
 
+  A ``${SKBUILD_<TREE>_DIR}`` prefix (e.g. ``${SKBUILD_DATA_DIR}/foo``) targets that
+  wheel tree instead of the platlib, matching the ``SKBUILD_*_DIR`` CMake cache
+  variables. Available trees: ``PLATLIB``/``PURELIB``, ``DATA``, ``HEADERS``,
+  ``SCRIPTS``, ``METADATA``, ``NULL``.
+
   .. warning::
-     EXPERIMENTAL An absolute path will be one level higher than the platlib
-     root, giving access to "/platlib", "/data", "/headers", and "/scripts".
+     EXPERIMENTAL A leading-slash absolute path (``/platlib``, ``/data``,
+     ``/headers``, ``/scripts``, ...) is the deprecated spelling of the
+     ``${SKBUILD_<TREE>_DIR}`` form and is one level higher than the platlib root.
 ```
 
 ```{eval-rst}
