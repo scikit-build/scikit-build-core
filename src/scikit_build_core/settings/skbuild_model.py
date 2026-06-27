@@ -91,9 +91,25 @@ class EnvValue:
         if extra:
             msg = f"Unrecognized env table keys: {sorted(extra)}"
             raise TypeError(msg)
-        self.env = raw.get("env")
-        self.default = raw.get("default")
-        self.force = bool(raw.get("force", False))
+
+        env = raw.get("env")
+        if env is not None and not isinstance(env, str):
+            msg = f"env table 'env' must be a string, got {type(env).__name__}"
+            raise TypeError(msg)
+        default = raw.get("default")
+        if default is not None and not isinstance(default, str):
+            msg = f"env table 'default' must be a string, got {type(default).__name__}"
+            raise TypeError(msg)
+        # Note: bool is an int subclass, so this rejects 0/1 as well as strings;
+        # the value must be a real TOML boolean (not coerced like ``bool("false")``).
+        force = raw.get("force", False)
+        if not isinstance(force, bool):
+            msg = f"env table 'force' must be a boolean, got {type(force).__name__}"
+            raise TypeError(msg)
+
+        self.env = env
+        self.default = default
+        self.force = force
 
     def resolve(self, env: Dict[str, str]) -> Optional[str]:
         """

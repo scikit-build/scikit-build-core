@@ -12,6 +12,7 @@ from packaging.version import Version
 
 import scikit_build_core._logging
 import scikit_build_core.settings.skbuild_read_settings
+from scikit_build_core._compat.builtins import ExceptionGroup
 from scikit_build_core.settings.skbuild_model import EnvValue, GenerateSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
@@ -105,6 +106,44 @@ def test_skbuild_settings_env_table(tmp_path: Path):
     }
     assert env["FORCED"].force
     assert not env["LITERAL"].force
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        {"force": "false"},
+        {"force": 1},
+        {"default": 8},
+        {"env": True},
+        {"unknown": "x"},
+    ],
+)
+def test_env_value_rejects_bad_types(raw: object):
+    """Wrong TOML types are rejected at conversion, not silently coerced.
+
+    Notably ``force = "false"`` must not coerce to ``True`` via ``bool(...)``.
+    """
+    from scikit_build_core.settings.skbuild_model import EnvValue
+
+    with pytest.raises(TypeError):
+        EnvValue(raw)  # type: ignore[arg-type]
+
+
+def test_skbuild_settings_env_table_bad_force_rejected(tmp_path: Path):
+    """A malformed env table in pyproject.toml errors instead of coercing."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build.env]
+            FOO = { default = "x", force = "false" }
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ExceptionGroup):
+        SettingsReader.from_file(pyproject_toml, {})
 
 
 def test_skbuild_settings_cmake_build_type_envvar(
