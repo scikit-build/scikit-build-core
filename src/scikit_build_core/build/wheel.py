@@ -396,7 +396,7 @@ def _build_wheel_impl_impl(
             if gen.location == "source":
                 contents = generate_file_contents(gen, metadata)
                 gen.path.write_text(contents, encoding="utf-8")
-                settings.sdist.include.append(str(gen.path))
+                settings.sdist.include.append(gen.path.as_posix())
 
         if wheel_directory is None and not exit_after_config:
             if metadata_directory is None:
