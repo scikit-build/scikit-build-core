@@ -151,7 +151,10 @@ class WheelTag:
                     if ft_tags:
                         target = ft_tags[0]
                         if target.minor <= sys.version_info.minor:
-                            pyvers = [str(target)]
+                            # Free-threadedness lives in the abi3t ABI tag only;
+                            # the interpreter tag is GIL-independent (cp315, not
+                            # cp315t), matching PEP 803 / packaging's sys_tags().
+                            pyvers = [f"cp3{target.minor}"]
                             abi = "abi3t"
                         else:
                             logger.debug(
