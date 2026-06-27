@@ -678,32 +678,14 @@ class ScikitBuildSettings:
         default_factory=dict
     )
     """
-    A table of environment variables to set for the CMake subprocesses. Additive.
+    A table of environment variables to set for the CMake subprocesses.
 
-    These are applied to the CMake configure, build, and install steps. By
-    default a variable is only set if it is not already present in the
-    environment (like a ``setdefault``); pass ``force = true`` to overwrite an
-    existing value. Each value is either a literal string or a table with
-    ``env`` (read the value from another environment variable), ``default`` (the
-    value to use, or the fallback when ``env`` is unset), and ``force``. An entry
-    that resolves to nothing (an unset source ``env`` with no ``default``) is
-    skipped.
-
-    This is independent of the ``if.env`` override condition: ``if.env`` only
-    matches against the ambient process environment and never sees variables
-    defined here.
-
-    For example, to forward a ``MAX_JOBS``-style variable to the
-    generator-agnostic parallel-build control::
-
-        [tool.scikit-build.env]
-        CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
-
-    By default scikit-build-core sets ``CC``/``CXX`` from Python's ``sysconfig``
-    compiler when they are not already set. Listing ``CC`` or ``CXX`` here
-    suppresses that default for the listed variable, even when the entry resolves
-    to nothing -- so ``CC = { env = "CC" }`` lets CMake pick the compiler from
-    ``PATH`` instead.
+    Applied to the configure, build, and install steps. A variable is only set if
+    not already present (like a ``setdefault``); pass ``force = true`` to
+    overwrite. Each value is a literal string or a table with ``env`` (read from
+    another environment variable), ``default``, and ``force``; an entry that
+    resolves to nothing is skipped. Independent of the ``if.env`` override
+    condition.
     """
 
     strict_config: bool = True

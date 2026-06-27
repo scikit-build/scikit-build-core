@@ -545,7 +545,7 @@
           ]
         }
       },
-      "description": "A table of environment variables to set for the CMake subprocesses. Additive."
+      "description": "A table of environment variables to set for the CMake subprocesses."
     },
     "strict-config": {
       "type": "boolean",

@@ -638,6 +638,86 @@ You can pass raw arguments directly to the build tool, as well:
 
 ```
 
+## Environment variables for the build
+
+The `[tool.scikit-build.env]` table sets environment variables for the CMake
+configure, build, and install subprocesses. Use it for things CMake or the
+generator read _from the environment_ — `CC`/`CXX`, `CFLAGS`,
+`CMAKE_PREFIX_PATH`, compiler launchers, parallel-build level, and so on. For
+CMake `-D` cache entries, use `cmake.define` instead.
+
+Each value is a literal string, or a table that reads from another environment
+variable (`{ env = "OTHER", default = "..." }`). By default a variable is only
+set if it is not already present (`setdefault`); add `force = true` to overwrite
+an existing value. If a value resolves to nothing (its `env` source is unset and
+there is no `default`), the key is skipped. This pairs well with
+`[[tool.scikit-build.overrides]]` for platform- or state-specific values.
+
+```toml
+[tool.scikit-build.env]
+SOME_VAR = "some-value"
+CMAKE_PREFIX_PATH = { env = "CMAKE_PREFIX_PATH", default = "/opt/mydeps" }
+```
+
+A common use is forwarding a project's historical parallelism variable (such as
+`MAX_JOBS`) to `CMAKE_BUILD_PARALLEL_LEVEL`:
+
+```toml
+[tool.scikit-build.env]
+CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
+```
+
+A directly-set `CMAKE_BUILD_PARALLEL_LEVEL` still wins, since `env` entries use
+`setdefault` semantics unless `force = true` is given.
+
+```{note}
+This table is independent of the `if.env` override _condition_. `if.env` only
+matches against the ambient process environment and does not see variables you
+define here.
+```
+
+The table form (`{ env = ..., default = ..., force = ... }`) is `pyproject.toml`
+only; via config-settings or `SKBUILD_ENV_*` you can only set a literal value.
+
+### Selecting a compiler
+
+To pick a specific compiler — for example, to use GCC instead of MSVC on a
+Windows runner — set `CC`/`CXX`, optionally scoped to a platform with an
+override:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.platform-system = "win32"
+env.CC = "gcc"
+env.CXX = "g++"
+```
+
+These take precedence over the compiler scikit-build-core would otherwise pull
+from Python's `sysconfig`, even without `force`.
+
+By default, scikit-build-core sets `CC`/`CXX` from Python's `sysconfig` compiler
+when they are not already set. If a project's compiler probes break on that
+compiler (a conda narrow sysroot, a stale venv gcc, a cross or oneAPI
+toolchain), list the variable in the `env` table to suppress that default and
+let CMake detect the compiler from `PATH` — an entry that reads from the same
+name does this without pinning a value:
+
+```toml
+[tool.scikit-build.env]
+CC = { env = "CC" }
+CXX = { env = "CXX" }
+```
+
+### Search paths for dependencies
+
+To point CMake at extra prefixes (vcpkg, Homebrew, a custom install tree) when
+locating dependencies, set `CMAKE_PREFIX_PATH`:
+
+```toml
+[tool.scikit-build.env]
+CMAKE_PREFIX_PATH = "/opt/mydeps;/usr/local"
+```
+
 ## Editable installs
 
 Support for editable installs is provided, with some caveats and configuration.

@@ -291,7 +291,7 @@ search.site-packages = true
 # List dynamic metadata fields and hook locations in this table.
 metadata = {}
 
-# A table of environment variables to set for the CMake subprocesses. Additive.
+# A table of environment variables to set for the CMake subprocesses.
 env = {}
 
 # Strictly check all config options.
