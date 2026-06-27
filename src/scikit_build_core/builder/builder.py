@@ -36,6 +36,7 @@ __all__ = [
     "archs_to_tags",
     "get_archs",
     "get_cmake_args_from_settings",
+    "set_environment_from_settings",
 ]
 
 DIR = Path(__file__).parent.resolve()
@@ -116,6 +117,24 @@ def get_cmake_args_from_settings(
     return [*settings.cmake.args, *_filter_env_cmake_args(env_cmake_args)]
 
 
+def set_environment_from_settings(
+    env: dict[str, str], settings: ScikitBuildSettings
+) -> None:
+    """
+    Apply the ``tool.scikit-build.env`` table to ``env`` (mutated in place).
+
+    Each entry is resolved against ``env`` and written back unless it is already
+    set (``setdefault`` semantics), with ``force = true`` overriding. Entries
+    that resolve to nothing are skipped.
+    """
+    for name, value in settings.env.items():
+        resolved = value.resolve(env)
+        if resolved is None:
+            continue
+        if value.force or name not in env:
+            env[name] = resolved
+
+
 def _sanitize_path(path: Any) -> list[Path]:
     # This handles classes like:
     # MultiplexedPath from importlib.resources.readers (3.11+)
@@ -132,6 +151,12 @@ def _sanitize_path(path: Any) -> list[Path]:
 class Builder:
     settings: ScikitBuildSettings
     config: CMaker
+
+    def __post_init__(self) -> None:
+        # Apply the user's env table before configure/build/install so it is
+        # visible to all CMake subprocesses (which share ``config.env``).
+        if self.settings.env:
+            set_environment_from_settings(self.config.env, self.settings)
 
     def get_cmake_args(self) -> list[str]:
         """
@@ -217,7 +242,7 @@ class Builder:
             self.config.cmake,
             self.config.env,
             self.settings.ninja,
-            use_sysconfig_compiler=self.settings.cmake.use_sysconfig_compiler,
+            env_managed_keys=self.settings.env.keys(),
         )
         cmake_defines.update(local_def)
 

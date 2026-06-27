@@ -108,11 +108,6 @@
           "type": "boolean",
           "default": true,
           "description": "Do not pass the current environment's python hints such as ``Python_EXECUTABLE``."
-        },
-        "use-sysconfig-compiler": {
-          "type": "boolean",
-          "default": true,
-          "description": "Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the"
         }
       }
     },
@@ -522,6 +517,36 @@
         }
       }
     },
+    "env": {
+      "type": "object",
+      "patternProperties": {
+        ".+": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "env": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": {
+                  "type": "string"
+                },
+                "force": {
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "description": "A table of environment variables to set for the CMake subprocesses. Additive."
+    },
     "strict-config": {
       "type": "boolean",
       "default": true,
@@ -693,6 +718,9 @@
           },
           "metadata": {
             "$ref": "#/properties/metadata"
+          },
+          "env": {
+            "$ref": "#/properties/env"
           },
           "strict-config": {
             "$ref": "#/properties/strict-config"
