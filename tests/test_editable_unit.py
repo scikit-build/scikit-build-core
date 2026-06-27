@@ -414,7 +414,28 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
         editable=EditableSettings(rebuild=True),
     )
 
-    with pytest.raises(AssertionError, match=r"absolute wheel\.install-dir"):
+    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
+        editable_redirect_files(
+            libdir=tmp_path,
+            mapping={},
+            name="pkg",
+            packages=[],
+            reload_dir=None,
+            settings=settings,
+            use_start=False,
+        )
+
+
+def test_editable_redirect_files_var_install_dir_with_rebuild(tmp_path: Path):
+    # The ${SKBUILD_*_DIR} install-dir form is also incompatible with rebuild.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="${SKBUILD_DATA_DIR}/pkg"),
+        editable=EditableSettings(rebuild=True),
+    )
+
+    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
         editable_redirect_files(
             libdir=tmp_path,
             mapping={},
