@@ -128,7 +128,7 @@ def build_sdist(
         if gen.location == "source":
             contents = generate_file_contents(gen, metadata)
             gen.path.write_text(contents, encoding="utf-8")
-            settings.sdist.include.append(str(gen.path))
+            settings.sdist.include.append(gen.path.as_posix())
 
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
