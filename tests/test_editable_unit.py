@@ -406,7 +406,7 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
         editable=EditableSettings(rebuild=True),
     )
 
-    with pytest.raises(AssertionError, match=r"absolute wheel\.install-dir"):
+    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
         editable_redirect_files(
             libdir=tmp_path,
             mapping={},
@@ -416,6 +416,59 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
             settings=settings,
             use_start=False,
         )
+
+
+def test_editable_redirect_files_var_install_dir_with_rebuild(tmp_path: Path):
+    # A non-platlib ${SKBUILD_*_DIR} install-dir is incompatible with rebuild.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="${SKBUILD_DATA_DIR}/pkg"),
+        editable=EditableSettings(rebuild=True),
+    )
+
+    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
+        editable_redirect_files(
+            libdir=tmp_path,
+            mapping={},
+            name="pkg",
+            packages=[],
+            reload_dir=None,
+            settings=settings,
+            use_start=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "install_dir", ["${SKBUILD_PLATLIB_DIR}/pkg", "${SKBUILD_PURELIB_DIR}/pkg"]
+)
+def test_editable_redirect_files_platlib_var_install_dir_with_rebuild(
+    tmp_path: Path, install_dir: str
+):
+    # A platlib/purelib selector resolves to the target lib (equivalent to a
+    # plain relative dir), so it stays compatible with rebuild. The shim must get
+    # the reduced remainder, not the raw ${...} string.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir=install_dir),
+        editable=EditableSettings(rebuild=True),
+    )
+
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=None,
+        settings=settings,
+        use_start=False,
+    )
+    shim = files["_editable_skbc_pkg.py"].decode()
+    # The reduced remainder is passed; the raw selector never reaches the shim.
+    assert "'pkg'" in shim
+    assert "SKBUILD_PLATLIB_DIR" not in shim
+    assert "SKBUILD_PURELIB_DIR" not in shim
 
 
 def test_is_trackable():
