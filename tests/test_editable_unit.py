@@ -427,7 +427,7 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
 
 
 def test_editable_redirect_files_var_install_dir_with_rebuild(tmp_path: Path):
-    # The ${SKBUILD_*_DIR} install-dir form is also incompatible with rebuild.
+    # A non-platlib ${SKBUILD_*_DIR} install-dir is incompatible with rebuild.
     from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
 
     settings = ScikitBuildSettings(
@@ -503,6 +503,38 @@ def test_get_packages_not_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     # A namespace dir with no __init__ on the leaf is not a discoverable package.
     (tmp_path / "src" / "ns" / "pkg").mkdir(parents=True)
     assert get_packages(packages=None, name="ns.pkg") == {}
+
+
+@pytest.mark.parametrize(
+    "install_dir", ["${SKBUILD_PLATLIB_DIR}/pkg", "${SKBUILD_PURELIB_DIR}/pkg"]
+)
+def test_editable_redirect_files_platlib_var_install_dir_with_rebuild(
+    tmp_path: Path, install_dir: str
+):
+    # A platlib/purelib selector resolves to the target lib (equivalent to a
+    # plain relative dir), so it stays compatible with rebuild. The shim must get
+    # the reduced remainder, not the raw ${...} string.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir=install_dir),
+        editable=EditableSettings(rebuild=True),
+    )
+
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=None,
+        settings=settings,
+        use_start=False,
+    )
+    shim = files["_editable_skbc_pkg.py"].decode()
+    # The reduced remainder is passed; the raw selector never reaches the shim.
+    assert "'pkg'" in shim
+    assert "SKBUILD_PLATLIB_DIR" not in shim
+    assert "SKBUILD_PURELIB_DIR" not in shim
 
 
 def test_is_trackable():

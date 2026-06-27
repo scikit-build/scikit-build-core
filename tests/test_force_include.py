@@ -728,17 +728,61 @@ def test_resolve_wheel_tree_var_rejects_traversal(tmp_path: Path) -> None:
         )
 
 
-def test_resolve_wheel_tree_unknown_var_is_literal(tmp_path: Path) -> None:
-    """A non-matching $-string (wrong shape) is a plain platlib-relative dest."""
+@pytest.mark.parametrize(
+    "dest",
+    [
+        "${SKBUILD_DATA}/x",  # missing _DIR suffix
+        "${SKBUILD_NOPE_DIR}/x",  # unknown tree name
+        "${HOME}/x",  # not a SKBUILD variable at all
+        "${SKBUILD_DATA_DIR",  # unterminated
+    ],
+)
+def test_resolve_wheel_tree_bad_leading_var_rejected(tmp_path: Path, dest: str) -> None:
+    """A leading ${...} that is not a valid tree variable is an error (typo guard)."""
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError):
+        resolve_wheel_tree(
+            dest,
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )
+
+
+def test_resolve_wheel_tree_var_not_leading_is_literal(tmp_path: Path) -> None:
+    """A ${...} later in the path is an ordinary component, not a selector."""
     from scikit_build_core.build._pathutil import resolve_wheel_tree
 
     wheel_dirs = _wheel_dirs(tmp_path)
-    # Lowercase / no _DIR suffix: not a wheel-tree token, treated literally.
     base, rest = resolve_wheel_tree(
-        "${SKBUILD_DATA}/x",
+        "pkg/${NOT_A_VAR}/x",
         wheel_dirs=wheel_dirs,
         targetlib="platlib",
         experimental=False,
     )
     assert base == wheel_dirs["platlib"]
-    assert rest == "${SKBUILD_DATA}/x"
+    assert rest == "pkg/${NOT_A_VAR}/x"
+
+
+@pytest.mark.parametrize(
+    "dest",
+    [
+        "${SKBUILD_DATA_DIR}//pkg",  # absolute remainder discards the base
+        "${SKBUILD_DATA_DIR}/C:/pkg",  # drive-qualified remainder
+        "${SKBUILD_DATA_DIR}/a\\b",  # backslash remainder
+        "/data//pkg",  # same hazard via the leading-slash form
+    ],
+)
+def test_resolve_wheel_tree_rejects_escaping_remainder(
+    tmp_path: Path, dest: str
+) -> None:
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError, match=r"remainder"):
+        resolve_wheel_tree(
+            dest,
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )
