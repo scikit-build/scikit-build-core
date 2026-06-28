@@ -1,0 +1,18 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "generate-include"
+version = "0.0.1"
+
+[tool.scikit-build]
+wheel.cmake = false
+sdist.cmake = false
+
+[[tool.scikit-build.generate]]
+path = "src/generate_include/_version.py"
+location = "source"
+template = """
+version = "${version}"
+"""
