@@ -450,9 +450,7 @@ newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
 `Development.SABIModule` when targeting ABI3 or ABI3T, and is an empty string
 otherwise. For free-threaded Python (PEP 703), you can use `cp315t` to target
 the free-threaded stable ABI, which sets `Py_TARGET_ABI3T` (if using CMake
-4.4+). The emitted wheel tag is `cp315-abi3t-*`: per PEP 803, free-threadedness
-is carried by the `abi3t` ABI tag, while the interpreter tag stays
-GIL-independent.
+4.4+). The emitted wheel tag is `cp315-abi3t-*` following per PEP 803.
 
 If you are not using CPython at all, you can specify any version of Python is
 fine:
