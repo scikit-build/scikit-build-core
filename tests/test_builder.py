@@ -596,7 +596,7 @@ def test_wheel_tag_with_abi3t_darwin(monkeypatch):
     monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
 
     tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
-    assert str(tags) == "cp315t-abi3t-macosx_10_10_x86_64"
+    assert str(tags) == "cp315-abi3t-macosx_10_10_x86_64"
 
     tags = WheelTag.compute_best(["x86_64"], py_api="cp316t")
     assert "abi3t" not in str(tags)
