@@ -32,6 +32,13 @@ if typing.TYPE_CHECKING:
 # versioned-soname collisions cannot occur).
 EXT_SUFFIX = importlib.machinery.EXTENSION_SUFFIXES[-1]
 SO_IMPORTABLE = ".so" in importlib.machinery.EXTENSION_SUFFIXES
+# The stable-ABI suffix for this interpreter, if any: .abi3.so on classic
+# builds, .abi3t.so on free-threaded 3.15+, absent on PyPy and free-threaded
+# builds without stable-ABI support.
+ABI3_SUFFIX = next(
+    (s for s in importlib.machinery.EXTENSION_SUFFIXES if s.startswith(".abi3")),
+    None,
+)
 
 
 class EditablePackage(NamedTuple):
@@ -458,7 +465,8 @@ def test_is_module():
 )
 def test_is_module_rejects_versioned_sonames():
     assert is_module(Path("tango/_tango.so"))
-    assert is_module(Path("tango/_tango.abi3.so"))
+    if ABI3_SUFFIX:
+        assert is_module(Path(f"tango/_tango{ABI3_SUFFIX}"))
 
     # Versioned sonames are not importable (PEP 3149); they alias the real
     # _tango.so and must not resolve as the module (issue #1144).
