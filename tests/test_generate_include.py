@@ -10,8 +10,6 @@ from scikit_build_core.build import build_sdist, build_wheel
 # automatically add the generated file to the sdist/wheel includes
 
 
-@pytest.mark.compile
-@pytest.mark.configure
 @pytest.mark.parametrize("package", ["generate_include"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_generate_include_sdist(tmp_path: Path):
@@ -25,8 +23,6 @@ def test_generate_include_sdist(tmp_path: Path):
         assert "generate_include-0.0.1/src/generate_include/_version.py" in file_names
 
 
-@pytest.mark.compile
-@pytest.mark.configure
 @pytest.mark.parametrize("package", ["generate_include"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_generate_include_wheel(tmp_path: Path):
