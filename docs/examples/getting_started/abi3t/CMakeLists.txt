@@ -6,8 +6,8 @@ find_package(
   COMPONENTS Interpreter Development.SABIModule
   REQUIRED)
 
-# Use the Stable ABI version and SOABI suffix scikit-build-core resolved
-# (3.15 / abi3t for a free-threaded build, or abi3 for a GIL build).
+# Use the Stable ABI version and SOABI suffix scikit-build-core resolved (3.15 /
+# abi3t for a free-threaded build, or abi3 for a GIL build).
 if(SKBUILD_SOABI)
   set(Python_SOABI ${SKBUILD_SOABI})
 endif()
