@@ -1,0 +1,13 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "example"
+version = "0.0.1"
+
+[tool.scikit-build]
+# Request both Stable ABIs. On a free-threaded build this emits the combined
+# cp315-abi3.abi3t tag (one binary installable on every CPython 3.15+); on a
+# GIL build it falls back to cp315-abi3.
+wheel.py-api = "cp315.cp315t"
