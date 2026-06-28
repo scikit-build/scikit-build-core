@@ -938,9 +938,13 @@ print(mk_skbuild_docs())
   ABI / Limited API (only on CPython and if the version is sufficient,
   otherwise this has no effect). For free-threaded Python, you can use
   "cp315t" to enable the free-threaded stable ABI (only on CPython
-  free-threaded builds and if the version is sufficient). Or you can set
-  it to "py3" or "py2.py3" to ignore Python ABI compatibility. The ABI
-  tag is inferred from this tag.
+  free-threaded builds and if the version is sufficient). You can request
+  both with "cp315.cp315t". On a free-threaded build this emits a combined
+  "cp315-abi3.abi3t" tag: abi3t is a subset of abi3 (PEP 803), so the single
+  free-threaded binary also loads under a GIL-enabled CPython 3.15+. On a
+  GIL build only abi3 can be produced, so it falls back to "cp315-abi3". Or
+  you can set it to "py3" or "py2.py3" to ignore Python ABI compatibility.
+  The ABI tag is inferred from this tag.
 
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
 ```

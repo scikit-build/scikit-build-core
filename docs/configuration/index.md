@@ -471,6 +471,12 @@ otherwise. For free-threaded Python (PEP 703), you can use `cp315t` to target
 the free-threaded stable ABI, which sets `Py_TARGET_ABI3T` (if using CMake
 4.4+). The emitted wheel tag is `cp315-abi3t-*` following per PEP 803.
 
+You can request both stable ABIs with `cp315.cp315t`. On a free-threaded build
+this emits a combined `cp315-abi3.abi3t-*` tag: `abi3t` is a subset of `abi3`
+(PEP 803), so the single free-threaded binary also loads under a GIL-enabled
+CPython 3.15+, and the one wheel is installable on every CPython 3.15+. On a GIL
+build only `abi3` can be produced, so it falls back to `cp315-abi3-*`.
+
 If you are not using CPython at all, you can specify any version of Python is
 fine:
 
