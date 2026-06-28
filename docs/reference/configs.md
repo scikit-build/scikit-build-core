@@ -71,6 +71,23 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: env
+
+  :Type: ``dict[str,EnvValue]``
+  :Config-settings: ``env`` or ``skbuild.env``
+  :Environment variable: ``SKBUILD_ENV``
+
+  A table of environment variables to set for the CMake subprocesses.
+
+  Applied to the configure, build, and install steps. A variable is only set if
+  not already present (like a ``setdefault``); pass ``force = true`` to
+  overwrite. Each value is a literal string or a table with ``env`` (read from
+  another environment variable), ``default``, and ``force``; an entry that
+  resolves to nothing is skipped. Independent of the ``if.env`` override
+  condition.
+```
+
+```{eval-rst}
 .. confval:: experimental
 
   :Type: ``bool``
@@ -336,24 +353,6 @@ print(mk_skbuild_docs())
   The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-```
-
-```{eval-rst}
-.. confval:: cmake.use-sysconfig-compiler
-
-  :Type: ``bool``
-  :Default: true
-  :Config-settings: ``cmake.use-sysconfig-compiler`` or ``skbuild.cmake.use-sysconfig-compiler``
-  :Environment variable: ``SKBUILD_CMAKE_USE_SYSCONFIG_COMPILER``
-
-  Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the
-  environment.
-
-  When ``false``, scikit-build-core will not set these, letting CMake pick the
-  compiler from ``PATH``. This is useful for projects whose compiler probes
-  (e.g. ``FindBLAS``, ``FindOpenMP``) break on the sysconfig compiler, such as a
-  conda narrow sysroot or a stale venv gcc. A user-set ``CC``/``CXX`` in the
-  environment is always respected regardless of this setting.
 ```
 
 ```{eval-rst}

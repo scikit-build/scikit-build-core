@@ -12,7 +12,8 @@ from packaging.version import Version
 
 import scikit_build_core._logging
 import scikit_build_core.settings.skbuild_read_settings
-from scikit_build_core.settings.skbuild_model import GenerateSettings
+from scikit_build_core._compat.builtins import ExceptionGroup
+from scikit_build_core.settings.skbuild_model import EnvValue, GenerateSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
@@ -36,7 +37,6 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert not settings.build.verbose
     assert settings.cmake.build_type == "Release"
     assert settings.cmake.source_dir == Path()
-    assert settings.cmake.use_sysconfig_compiler
     assert settings.build.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
@@ -60,6 +60,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert settings.minimum_version is None
     assert settings.build_dir == ""
     assert settings.metadata == {}
+    assert settings.env == {}
     assert settings.sdist.force_include == {}
     assert settings.wheel.force_include == {}
     assert settings.editable.mode == "redirect"
@@ -73,6 +74,76 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert not settings.fail
     assert settings.messages.after_failure == ""
     assert settings.messages.after_success == ""
+
+
+def test_skbuild_settings_env_table(tmp_path: Path):
+    """The top-level env table parses literal, env-indirection, and force forms."""
+    from scikit_build_core.settings.skbuild_model import EnvValue
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build.env]
+            LITERAL = "hello"
+            CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
+            WITH_DEFAULT = { env = "NOT_SET", default = "fallback" }
+            FORCED = { default = "forced", force = true }
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert list(settings_reader.unrecognized_options()) == []
+    env = settings_reader.settings.env
+
+    assert env == {
+        "LITERAL": EnvValue("hello"),
+        "CMAKE_BUILD_PARALLEL_LEVEL": EnvValue({"env": "MAX_JOBS"}),
+        "WITH_DEFAULT": EnvValue({"env": "NOT_SET", "default": "fallback"}),
+        "FORCED": EnvValue({"default": "forced", "force": True}),
+    }
+    assert env["FORCED"].force
+    assert not env["LITERAL"].force
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        {"force": "false"},
+        {"force": 1},
+        {"default": 8},
+        {"env": True},
+        {"unknown": "x"},
+    ],
+)
+def test_env_value_rejects_bad_types(raw: object):
+    """Wrong TOML types are rejected at conversion, not silently coerced.
+
+    Notably ``force = "false"`` must not coerce to ``True`` via ``bool(...)``.
+    """
+    from scikit_build_core.settings.skbuild_model import EnvValue
+
+    with pytest.raises(TypeError):
+        EnvValue(raw)  # type: ignore[arg-type]
+
+
+def test_skbuild_settings_env_table_bad_force_rejected(tmp_path: Path):
+    """A malformed env table in pyproject.toml errors instead of coercing."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build.env]
+            FOO = { default = "x", force = "false" }
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ExceptionGroup):
+        SettingsReader.from_file(pyproject_toml, {})
 
 
 def test_skbuild_settings_cmake_build_type_envvar(
@@ -232,7 +303,7 @@ def test_skbuild_settings_config_settings(
         "cmake.define.b": "2",
         "cmake.build-type": "Debug",
         "cmake.source-dir": "a/b/c",
-        "cmake.use-sysconfig-compiler": "false",
+        "env.SOME_VAR": "some-value",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
         "sdist.exclude": "d;e;f",
@@ -281,7 +352,7 @@ def test_skbuild_settings_config_settings(
     assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
-    assert not settings.cmake.use_sysconfig_compiler
+    assert settings.env == {"SOME_VAR": EnvValue("some-value")}
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]
@@ -481,8 +552,8 @@ def test_skbuild_settings_pyproject_toml_broken(
         "you",
         "mean:",
         "tool.scikit-build.logging,",
-        "tool.scikit-build.generate,",
-        "tool.scikit-build.search?",
+        "tool.scikit-build.env,",
+        "tool.scikit-build.generate?",
     ]
 
 

@@ -771,11 +771,11 @@ def test_set_environment_for_gen_strips_cc_cxx_flags(
     assert env["CXX"] == "c++"
 
 
-def test_set_environment_for_gen_use_sysconfig_compiler(
+def test_set_environment_for_gen_sysconfig_compiler(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    # With use_sysconfig_compiler=True (default), CC/CXX from sysconfig are
-    # injected; with False they are left untouched. See #1367.
+    # By default CC/CXX from sysconfig are injected; a key managed via the env
+    # table suppresses that default, letting CMake detect the compiler. See #1367.
     from scikit_build_core.builder import generator as gen_mod
     from scikit_build_core.program_search import Program
     from scikit_build_core.settings.skbuild_model import NinjaSettings
@@ -791,7 +791,6 @@ def test_set_environment_for_gen_use_sysconfig_compiler(
         CMake(Version("3.30"), Path("cmake")),
         env_default,
         NinjaSettings(),
-        use_sysconfig_compiler=True,
     )
     assert env_default["CC"] == "gcc"
     assert env_default["CXX"] == "c++"
@@ -802,7 +801,7 @@ def test_set_environment_for_gen_use_sysconfig_compiler(
         CMake(Version("3.30"), Path("cmake")),
         env_off,
         NinjaSettings(),
-        use_sysconfig_compiler=False,
+        env_managed_keys={"CC", "CXX"},
     )
     assert "CC" not in env_off
     assert "CXX" not in env_off
@@ -826,3 +825,77 @@ def test_set_environment_for_gen_ninja_multi_config_missing(
             {},
             NinjaSettings(),
         )
+
+
+def _settings_with_env(env: dict[str, typing.Any]) -> ScikitBuildSettings:
+    from scikit_build_core.settings.skbuild_model import EnvValue
+
+    return ScikitBuildSettings(env={k: EnvValue(v) for k, v in env.items()})
+
+
+def test_set_environment_from_settings_setdefault():
+    from scikit_build_core.builder.builder import set_environment_from_settings
+
+    settings = _settings_with_env(
+        {
+            "LITERAL": "hello",
+            "CMAKE_BUILD_PARALLEL_LEVEL": {"env": "MAX_JOBS"},
+            "WITH_DEFAULT": {"env": "NOT_SET", "default": "fallback"},
+        }
+    )
+    # MAX_JOBS provides the value; an already-set target var is preserved.
+    env = {"MAX_JOBS": "7", "CMAKE_BUILD_PARALLEL_LEVEL": "keep"}
+    set_environment_from_settings(env, settings)
+
+    assert env["LITERAL"] == "hello"
+    assert env["CMAKE_BUILD_PARALLEL_LEVEL"] == "keep"
+    assert env["WITH_DEFAULT"] == "fallback"
+
+
+def test_set_environment_from_settings_max_jobs_alias():
+    """Regression for the PyTorch wrapper: MAX_JOBS -> CMAKE_BUILD_PARALLEL_LEVEL."""
+    from scikit_build_core.builder.builder import set_environment_from_settings
+
+    settings = _settings_with_env({"CMAKE_BUILD_PARALLEL_LEVEL": {"env": "MAX_JOBS"}})
+
+    env = {"MAX_JOBS": "3"}
+    set_environment_from_settings(env, settings)
+    assert env["CMAKE_BUILD_PARALLEL_LEVEL"] == "3"
+
+    # No MAX_JOBS and no default -> the variable is left unset.
+    env_empty: dict[str, str] = {}
+    set_environment_from_settings(env_empty, settings)
+    assert "CMAKE_BUILD_PARALLEL_LEVEL" not in env_empty
+
+
+def test_set_environment_from_settings_force():
+    from scikit_build_core.builder.builder import set_environment_from_settings
+
+    settings = _settings_with_env(
+        {
+            "SOFT": "soft-value",
+            "HARD": {"default": "hard-value", "force": True},
+        }
+    )
+    env = {"SOFT": "existing", "HARD": "existing"}
+    set_environment_from_settings(env, settings)
+
+    assert env["SOFT"] == "existing"
+    assert env["HARD"] == "hard-value"
+
+
+def test_builder_applies_env_table(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Builder construction applies the env table to the shared CMaker env."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MAX_JOBS", "5")
+    monkeypatch.delenv("CMAKE_BUILD_PARALLEL_LEVEL", raising=False)
+
+    builder = Builder(
+        settings=_settings_with_env(
+            {"CMAKE_BUILD_PARALLEL_LEVEL": {"env": "MAX_JOBS"}}
+        ),
+        config=CMaker(
+            CMake(Version("4.0"), Path("no-cmake")), Path(), Path(), "Release"
+        ),
+    )
+    assert builder.config.env["CMAKE_BUILD_PARALLEL_LEVEL"] == "5"

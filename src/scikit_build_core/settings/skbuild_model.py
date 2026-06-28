@@ -13,6 +13,7 @@ __all__ = [
     "CMakeSettings",
     "CMakeSettingsDefine",
     "EditableSettings",
+    "EnvValue",
     "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
@@ -59,6 +60,84 @@ class CMakeSettingsDefine(str):
             value = raw
 
         return super().__new__(cls, value)
+
+
+class EnvValue:
+    """
+    A single entry in the top-level ``env`` table.
+
+    Accepts either a literal string or a table with ``env`` / ``default`` /
+    ``force`` keys. Resolution against the build environment is deferred to
+    :meth:`resolve` so that the ``force`` flag survives parsing (unlike the
+    ``cmake.define`` ``EnvVar`` form, which resolves at parse time). A bare
+    string is shorthand for ``{ default = "<string>" }``.
+    """
+
+    __slots__ = ("default", "env", "force")
+
+    def __init__(self, raw: Union[str, Dict[str, Any]]) -> None:
+        self.env: Optional[str] = None
+        self.default: Optional[str] = None
+        self.force: bool = False
+
+        if isinstance(raw, str):
+            self.default = raw
+            return
+        if not isinstance(raw, dict):
+            msg = f"Expected str or table for an env value, got {type(raw).__name__}"
+            raise TypeError(msg)
+
+        extra = set(raw) - {"env", "default", "force"}
+        if extra:
+            msg = f"Unrecognized env table keys: {sorted(extra)}"
+            raise TypeError(msg)
+
+        env = raw.get("env")
+        if env is not None and not isinstance(env, str):
+            msg = f"env table 'env' must be a string, got {type(env).__name__}"
+            raise TypeError(msg)
+        default = raw.get("default")
+        if default is not None and not isinstance(default, str):
+            msg = f"env table 'default' must be a string, got {type(default).__name__}"
+            raise TypeError(msg)
+        # Note: bool is an int subclass, so this rejects 0/1 as well as strings;
+        # the value must be a real TOML boolean (not coerced like ``bool("false")``).
+        force = raw.get("force", False)
+        if not isinstance(force, bool):
+            msg = f"env table 'force' must be a boolean, got {type(force).__name__}"
+            raise TypeError(msg)
+
+        self.env = env
+        self.default = default
+        self.force = force
+
+    def resolve(self, env: Dict[str, str]) -> Optional[str]:
+        """
+        Resolve to the final string value (or ``None`` if unset) against ``env``.
+
+        ``env`` (if set) is looked up in the environment with ``default`` as the
+        fallback. ``None`` means "leave the variable unset".
+        """
+        got = env.get(self.env, self.default) if self.env is not None else self.default
+        return None if got is None else str(got)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, EnvValue):
+            return NotImplemented
+        return (self.env, self.default, self.force) == (
+            other.env,
+            other.default,
+            other.force,
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.env, self.default, self.force))
+
+    def __repr__(self) -> str:
+        return (
+            f"EnvValue(env={self.env!r}, default={self.default!r}, "
+            f"force={self.force!r})"
+        )
 
 
 @dataclasses.dataclass
@@ -151,18 +230,6 @@ class CMakeSettings:
     Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
     Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
     instead.
-    """
-
-    use_sysconfig_compiler: bool = True
-    """
-    Set ``CC``/``CXX`` from Python's sysconfig compiler when not already set in the
-    environment.
-
-    When ``false``, scikit-build-core will not set these, letting CMake pick the
-    compiler from ``PATH``. This is useful for projects whose compiler probes
-    (e.g. ``FindBLAS``, ``FindOpenMP``) break on the sysconfig compiler, such as a
-    conda narrow sysroot or a stale venv gcc. A user-set ``CC``/``CXX`` in the
-    environment is always respected regardless of this setting.
     """
 
 
@@ -605,6 +672,20 @@ class ScikitBuildSettings:
     metadata: Dict[str, Dict[str, Any]] = dataclasses.field(default_factory=dict)
     """
     List dynamic metadata fields and hook locations in this table.
+    """
+
+    env: Annotated[Dict[str, EnvValue], "EnvTable"] = dataclasses.field(
+        default_factory=dict
+    )
+    """
+    A table of environment variables to set for the CMake subprocesses.
+
+    Applied to the configure, build, and install steps. A variable is only set if
+    not already present (like a ``setdefault``); pass ``force = true`` to
+    overwrite. Each value is a literal string or a table with ``env`` (read from
+    another environment variable), ``default``, and ``force``; an entry that
+    resolves to nothing is skipped. Independent of the ``if.env`` override
+    condition.
     """
 
     strict_config: bool = True

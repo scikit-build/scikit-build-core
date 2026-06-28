@@ -31,6 +31,20 @@ CMAKE_BUILD_PARALLEL_LEVEL=8 pip install .
 The default generator on Unix-like platforms is Ninja, which automatically tries
 to run in parallel with the number of cores on your machine.
 
+If your project has historically used a different environment variable (such as
+`MAX_JOBS`) to control this, you can forward it to `CMAKE_BUILD_PARALLEL_LEVEL`
+with the `[tool.scikit-build.env]` table:
+
+```toml
+[tool.scikit-build.env]
+CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
+```
+
+A directly-set `CMAKE_BUILD_PARALLEL_LEVEL` still wins, since `env` entries use
+`setdefault` semantics unless `force = true` is given. See
+[](../configuration/index.md#environment-variables-for-the-build) for the full
+`env` table reference, including selecting a compiler and setting search paths.
+
 ## Dynamic setup.py options
 
 While we will eventually have some dynamic options, most common needs can be

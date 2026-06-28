@@ -67,6 +67,25 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
                 }
                 props[field.name] = full
                 continue
+            if get_args(field.type)[1] == "EnvTable":
+                # Each value is a literal string or a table reading from another
+                # environment variable, with an optional ``force`` overwrite.
+                table_branch = {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "env": {"type": "string", "minLength": 1},
+                        "default": {"type": "string"},
+                        "force": {"type": "boolean", "default": False},
+                    },
+                }
+                props[field.name] = {
+                    "type": "object",
+                    "patternProperties": {
+                        ".+": {"oneOf": [{"type": "string"}, table_branch]}
+                    },
+                }
+                continue
             msg = "Only EnvVar is supported for Annotated"
             raise FailedConversionError(msg)
 
