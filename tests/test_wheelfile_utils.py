@@ -79,6 +79,20 @@ def test_wheel_write_permissions_posix(tmp_path, monkeypatch):
             assert stat.S_IMODE(info.external_attr >> 16) == expected
 
 
+def test_wheel_reproducible_normalizes_generated_metadata(tmp_path, monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    wheel = _make_writer(tmp_path)
+    platlib = tmp_path / "platlib"
+    platlib.mkdir()
+    with wheel:
+        wheel.build({"platlib": platlib})
+    with zipfile.ZipFile(wheel.wheelpath) as zf:
+        # Generated .dist-info entries are written via writestr, not write; they
+        # must be normalized too in reproducible mode.
+        for info in zf.infolist():
+            assert stat.S_IMODE(info.external_attr >> 16) == 0o644
+
+
 def test_wheel_metadata() -> None:
     metadata = scikit_build_core.build._wheelfile.WheelMetadata(
         generator="scikit-build-core 1.2.3"

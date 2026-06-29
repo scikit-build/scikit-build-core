@@ -247,7 +247,8 @@ class WheelWriter:
                 date_time=self.timestamp(),
             )
             zinfo.compress_type = zipfile.ZIP_DEFLATED
-            zinfo.external_attr = (0o664 | stat.S_IFREG) << 16
+            mode = 0o644 if self.reproducible else 0o664
+            zinfo.external_attr = (mode | stat.S_IFREG) << 16
         assert "\\" not in zinfo.filename, (
             f"\\ not supported in zip; got {zinfo.filename!r}"
         )
