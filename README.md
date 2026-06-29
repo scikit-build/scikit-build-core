@@ -242,6 +242,9 @@ wheel.build-tag = ""
 # Force-include files into the wheel.
 wheel.force-include = {}
 
+# Try to build a reproducible wheel.
+wheel.reproducible = true
+
 # If CMake is less than this value, backport a copy of FindPython.
 backport.find-python = "3.26.1"
 
