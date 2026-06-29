@@ -13,7 +13,12 @@ from types import SimpleNamespace
 import pytest
 from packaging.version import Version
 
-from scikit_build_core.builder.builder import Builder, archs_to_tags, get_archs
+from scikit_build_core.builder.builder import (
+    Builder,
+    _sanitize_path,
+    archs_to_tags,
+    get_archs,
+)
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
     _config_var_is_set,
@@ -899,3 +904,26 @@ def test_builder_applies_env_table(tmp_path: Path, monkeypatch: pytest.MonkeyPat
         ),
     )
     assert builder.config.env["CMAKE_BUILD_PARALLEL_LEVEL"] == "5"
+
+
+def test_sanitize_path_plain(tmp_path: Path):
+    """A normal Path passes through as a single-element list."""
+    assert _sanitize_path(tmp_path) == [tmp_path]
+
+
+def test_sanitize_path_multiplexed():
+    """A MultiplexedPath-like object (namespace package) yields all real paths.
+
+    ``importlib.resources.files`` returns one of these for a namespace package,
+    and it does not stringify to a usable filesystem path (issue #682).
+    """
+
+    class FakeMultiplexedPath:
+        def __init__(self, *paths: str) -> None:
+            self._paths = [Path(p) for p in paths]
+
+    one = FakeMultiplexedPath("/a/ns/pkg")
+    assert _sanitize_path(one) == [Path("/a/ns/pkg")]
+
+    many = FakeMultiplexedPath("/a/ns/pkg", "/b/ns/pkg")
+    assert _sanitize_path(many) == [Path("/a/ns/pkg"), Path("/b/ns/pkg")]

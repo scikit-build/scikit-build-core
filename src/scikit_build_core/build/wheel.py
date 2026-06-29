@@ -502,7 +502,7 @@ def _build_wheel_impl_impl(
         rich_print("{green}***", f"{{bold}}Making {state}...")
         packages = get_packages(
             packages=settings.wheel.packages,
-            name=normalized_name,
+            name=metadata.name,
         )
         assert settings.sdist.inclusion_mode is not None
         mapping = packages_to_file_mapping(

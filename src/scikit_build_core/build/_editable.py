@@ -156,16 +156,28 @@ def get_packages(
             return dict(packages)
         return {str(Path(p).name): p for p in packages}
 
-    discovered_packages = {}
-    for base_path in (Path("src"), Path("python"), Path()):
-        path = base_path / name
-        if path.is_dir() and (
-            (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
-        ):
-            discovered_packages[name] = str(path)
-            break
+    # ``name`` is the raw distribution name. A '.' marks a namespace-package
+    # (PEP 420) boundary and maps to a directory separator; '-' (and the
+    # already-equivalent '_') within a component become an import-safe '_'.
+    parts = [part.replace("-", "_") for part in name.split(".")]
 
-    return discovered_packages
+    # The flat, single-directory name ("ns_pkg") is tried first so ordinary
+    # packages keep their existing behavior exactly. A dotted name also tries
+    # the nested namespace layout ("ns/pkg"), where only the leaf needs an
+    # ``__init__`` -- the namespace dirs above it intentionally have none.
+    rel_candidates = ["_".join(parts)]
+    if len(parts) > 1:
+        rel_candidates.append("/".join(parts))
+
+    for base_path in (Path("src"), Path("python"), Path()):
+        for rel in rel_candidates:
+            path = base_path / rel
+            if path.is_dir() and (
+                (path / "__init__.py").is_file() or (path / "__init__.pyi").is_file()
+            ):
+                return {rel: str(path)}
+
+    return {}
 
 
 def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:

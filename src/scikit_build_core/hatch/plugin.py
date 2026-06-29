@@ -299,7 +299,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             ).replace(".", "_")
             packages = get_packages(
                 packages=settings.wheel.packages,
-                name=normalized_name,
+                name=self.build_config.builder.metadata.name,
             )
             package_paths = [
                 str(Path.cwd().joinpath(package).parent.resolve())
