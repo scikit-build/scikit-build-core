@@ -22,6 +22,7 @@ from ..build._editable import (
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
 from ..build.common_wheel_helpers import (
+    build_install_extra_build_types,
     build_wheel,
     configure_wheel,
     editable_rebuild_options,
@@ -194,6 +195,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         build_data["tag"] = str(tags)
         build_data["pure_python"] = False
 
+        extra_cache_entries = {
+            "SKBUILD_HATCHLING": importlib.metadata.version("hatchling")
+        }
         builder = configure_wheel(
             cmake=cmake,
             settings=settings,
@@ -203,13 +207,22 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             state=state,
             name=self.build_config.builder.metadata.name,
             version=Version(self.build_config.builder.metadata.version),
-            extra_cache_entries={
-                "SKBUILD_HATCHLING": importlib.metadata.version("hatchling")
-            },
+            extra_cache_entries=extra_cache_entries,
         )
         build_wheel(builder)
         install_wheel(builder, install_dir=install_dir, editable=editable)
         build_options, install_options = editable_rebuild_options(builder)
+        build_install_extra_build_types(
+            builder,
+            settings=settings,
+            wheel_dirs=wheel_dirs,
+            install_dir=install_dir,
+            state=state,
+            name=self.build_config.builder.metadata.name,
+            version=Version(self.build_config.builder.metadata.version),
+            editable=editable,
+            extra_cache_entries=extra_cache_entries,
+        )
 
         files = list(wheel_dirs["headers"].iterdir())
         if files:

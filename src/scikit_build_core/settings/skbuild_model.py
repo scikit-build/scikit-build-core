@@ -31,6 +31,18 @@ def __dir__() -> List[str]:
     return __all__
 
 
+def normalize_build_types(build_type: Union[str, List[str]]) -> List[str]:
+    """
+    Normalize ``cmake.build-type`` into a non-empty list of build types.
+
+    A plain string becomes a single-element list. An empty list is treated as
+    a single empty build type, preserving the "no explicit build type" behavior.
+    """
+    if isinstance(build_type, str):
+        return [build_type]
+    return build_type or [""]
+
+
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
@@ -193,13 +205,23 @@ class CMakeSettings:
     DEPRECATED in 0.10, use build.verbose instead.
     """
 
-    build_type: str = "Release"
+    build_type: Union[str, List[str]] = "Release"
     """
     The build type to use when building the project.
 
     Pre-defined CMake options are: ``Debug``, ``Release``, ``RelWithDebInfo``, ``MinSizeRel``
 
     Custom values can also be used.
+
+    A list of build types can be given to build and install more than one
+    configuration into the same wheel: ``["Release", "Debug"]`` in TOML, a
+    repeated ``-Ccmake.build-type=...`` config-setting, or ``Release;Debug`` as
+    an environment variable.
+    Single-config generators (Ninja, Makefiles) are reconfigured in place for
+    each extra build type; multi-config generators (Visual Studio, Xcode,
+    Ninja Multi-Config) build each ``--config``. Every build type is installed
+    to the same prefix, so use ``CMAKE_<CONFIG>_POSTFIX`` to avoid clobbering
+    files between configurations.
     """
 
     source_dir: Path = Path()

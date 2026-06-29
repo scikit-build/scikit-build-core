@@ -82,7 +82,17 @@
           "deprecated": true
         },
         "build-type": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
           "default": "Release",
           "description": "The build type to use when building the project."
         },
@@ -614,6 +624,9 @@
                     "$ref": "#/$defs/inherit"
                   },
                   "define": {
+                    "$ref": "#/$defs/inherit"
+                  },
+                  "build-type": {
                     "$ref": "#/$defs/inherit"
                   },
                   "targets": {

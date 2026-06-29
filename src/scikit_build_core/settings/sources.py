@@ -71,6 +71,7 @@ When setting up your dataclasses, these types are handled:
 - Any callable (`Path`, `Version`): Passed the string input.
 - ``Optional[T]``: Treated like T. Default should be None, since no input format supports None's.
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
+- ``Union[str, List[str]]``: A single string, or a list (a repeated option in config form, ``;`` separated in EnvVar/config forms, or native in TOML).
 - ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms. T can be a dataclass (TOML only).
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
 - ``Union[list[T], Dict[str, T]]`` (TOML only): A list or dict of items.
@@ -390,6 +391,15 @@ class EnvSource(Source):
 
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
+            # A str+list union (e.g. cmake.build-type) takes a single string or
+            # a ``;``-separated list, like a plain List[str] field.
+            if str in args and list in args:
+                if ";" in item:
+                    return [
+                        cls.convert(i.strip(), get_inner_type(args[list]))
+                        for i in item.split(";")
+                    ]
+                return item
             if str in args:
                 return item
             if dict in args and "=" in item:
@@ -563,6 +573,17 @@ class ConfSource(Source):
             return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
+            # A str+list union (e.g. cmake.build-type) takes a single string or
+            # a list. The preferred way to pass a list is to repeat the option
+            # (``-Ccmake.build-type=A -Ccmake.build-type=B``), which the backend
+            # delivers as a real list (handled by the ``str in args`` branch
+            # below). A ``;``-separated string is also accepted, matching a
+            # plain List[str] field.
+            if str in args and list in args and isinstance(item, str) and ";" in item:
+                return [
+                    cls.convert(i.strip(), get_inner_type(args[list]))
+                    for i in item.split(";")
+                ]
             if str in args:
                 return item
             if dict in args and isinstance(item, dict):

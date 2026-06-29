@@ -321,7 +321,10 @@ def test_build_tool_args():
     )
     tmpbuilder.build(["a"])
     config.build.assert_called_once_with(
-        build_args=["a", "--", "b"], targets=[], verbose=settings.build.verbose
+        build_args=["a", "--", "b"],
+        targets=[],
+        verbose=settings.build.verbose,
+        build_type=None,
     )
 
 

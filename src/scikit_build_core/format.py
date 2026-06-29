@@ -8,6 +8,8 @@ import typing
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
+from .settings.skbuild_model import normalize_build_types
+
 if TYPE_CHECKING:
     from typing import Literal
 
@@ -106,7 +108,7 @@ def pyproject_format(
         # We are assuming the Path.cwd always evaluates to the folder containing pyproject.toml
         # as part of PEP517 standard.
         root=RootPathResolver(),
-        build_type=settings.cmake.build_type,
+        build_type=normalize_build_types(settings.cmake.build_type)[0],
     )
     # Then compute all optional keys depending on the function input
     if tags is not None:

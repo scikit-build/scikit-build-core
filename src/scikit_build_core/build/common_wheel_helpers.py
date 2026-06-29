@@ -25,6 +25,7 @@ from ..builder.builder import (
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
 from ..format import pyproject_format
+from ..settings.skbuild_model import normalize_build_types
 from ._pathutil import resolve_wheel_tree
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [
+    "build_install_extra_build_types",
     "build_wheel",
     "configure_wheel",
     "editable_rebuild_options",
@@ -150,20 +152,33 @@ def configure_wheel(
     name: str,
     version: Version,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
+    build_type: str | None = None,
 ) -> Builder:
     """
     Configure the CMake project, returning the
     :class:`~scikit_build_core.builder.builder.Builder` to build with.
+
+    Defaults to the primary (first) build type. It is rerunnable: pass an extra
+    ``build_type`` to reconfigure a single-config generator into a fresh builder
+    for that build type (see :func:`build_install_extra_build_types`).
     """
+    if build_type is None:
+        build_type = normalize_build_types(settings.cmake.build_type)[0]
+        rich_print("{green}***", "{bold}Configuring CMake...")
+    else:
+        rich_print(
+            "{green}***",
+            f"{{bold}}Reconfiguring CMake for {{blue}}{build_type}{{default}}...",
+        )
+
     config = CMaker(
         cmake,
         source_dir=settings.cmake.source_dir,
         build_dir=build_dir,
-        build_type=settings.cmake.build_type,
+        build_type=build_type,
     )
     builder = Builder(settings=settings, config=config)
 
-    rich_print("{green}***", "{bold}Configuring CMake...")
     # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
     # Otherwise `cmake --install --prefix` would work by itself
     defines = {"CMAKE_INSTALL_PREFIX": install_dir}
@@ -205,6 +220,78 @@ def install_wheel(builder: Builder, *, install_dir: Path, editable: bool) -> Non
         return
     rich_print("{green}***", "{bold}Installing project into wheel...")
     builder.install(install_dir)
+
+
+def build_install_extra_build_types(
+    builder: Builder,
+    *,
+    settings: ScikitBuildSettings,
+    wheel_dirs: Mapping[str, Path],
+    install_dir: Path,
+    state: WheelState,
+    name: str,
+    version: Version,
+    editable: bool,
+    extra_cache_entries: Mapping[str, str | Path] | None = None,
+) -> None:
+    """
+    Build and install build types beyond the primary into the same wheel.
+
+    Single-config generators (Ninja, Makefiles) are reconfigured into a fresh
+    builder for each extra build type; multi-config generators just build the
+    extra ``--config`` with the original builder. Everything installs to the same
+    prefix. Call this after the primary build and install.
+    """
+    build_types = normalize_build_types(settings.cmake.build_type)
+    for extra_build_type in build_types[1:]:
+        if builder.config.single_config:
+            builder = configure_wheel(
+                cmake=builder.config.cmake,
+                build_dir=builder.config.build_dir,
+                build_type=extra_build_type,
+                settings=settings,
+                wheel_dirs=wheel_dirs,
+                install_dir=install_dir,
+                state=state,
+                name=name,
+                version=version,
+                extra_cache_entries=extra_cache_entries,
+            )
+        rich_print(
+            "{green}***",
+            f"{{bold}}Building {{blue}}{extra_build_type}{{default}} project...",
+        )
+        builder.build(build_args=[], build_type=extra_build_type)
+        if not (editable and settings.editable.mode == "inplace"):
+            rich_print(
+                "{green}***",
+                f"{{bold}}Installing {{blue}}{extra_build_type}{{default}} project into wheel...",
+            )
+            builder.install(install_dir, build_type=extra_build_type)
+
+    # A single-config rebuild shim shares this build directory and runs
+    # ``cmake --build`` without a ``--config`` (it was given the primary build
+    # type's options), so the loop above must not leave it on the last extra
+    # type. Restore the primary configuration so import-time rebuilds refresh it.
+    if (
+        len(build_types) > 1
+        and builder.config.single_config
+        and editable
+        and settings.editable.mode == "redirect"
+        and settings.editable.rebuild
+    ):
+        configure_wheel(
+            cmake=builder.config.cmake,
+            build_dir=builder.config.build_dir,
+            build_type=build_types[0],
+            settings=settings,
+            wheel_dirs=wheel_dirs,
+            install_dir=install_dir,
+            state=state,
+            name=name,
+            version=version,
+            extra_cache_entries=extra_cache_entries,
+        )
 
 
 def editable_rebuild_options(builder: Builder) -> tuple[list[str], list[str]]:

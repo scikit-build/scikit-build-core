@@ -19,6 +19,7 @@ from .._logging import LEVEL_VALUE, raw_logger
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
+from ..settings.skbuild_model import normalize_build_types
 from ..settings.skbuild_read_settings import SettingsReader
 
 if TYPE_CHECKING:
@@ -570,7 +571,7 @@ class BuildCMake(setuptools.Command):
             cmake,
             source_dir=Path(source_dir),
             build_dir=build_temp,
-            build_type=settings.cmake.build_type,
+            build_type=normalize_build_types(settings.cmake.build_type)[0],
         )
 
         builder = Builder(
@@ -587,7 +588,11 @@ class BuildCMake(setuptools.Command):
             orig_macos = normalize_macos_version(orig_macos_str, arm=arm_only)
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
-        builder.config.build_type = "Debug" if self.debug else settings.cmake.build_type
+        builder.config.build_type = (
+            "Debug"
+            if self.debug
+            else normalize_build_types(settings.cmake.build_type)[0]
+        )
 
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
