@@ -359,6 +359,24 @@ class SDistSettings:
     bulk copy can still be trimmed by an exclude pattern.
     """
 
+    resolve_symlinks: Optional[Literal["all", "none"]] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(display_default='"all"'),
+    )
+    """
+    Which symlinks to resolve in the SDist, storing the target's contents instead.
+
+    The modes are:
+
+    * "all": Resolve every symlink, copying its target's contents.
+    * "none": Store symlinks as-is.
+
+    If you don't set this, it will be "all" unless you set the minimum version
+    below 1.0, in which case it will be "none" to preserve backward compatibility.
+
+    .. versionadded: 1.0
+    """
+
 
 @dataclasses.dataclass
 class WheelSettings:
