@@ -56,7 +56,7 @@ repos:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
-        exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md"
+        exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md|^docs/_templates/"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: d2823d321df3af8f878f7ee3414dc94d037145b9 # frozen: v2.1.0
