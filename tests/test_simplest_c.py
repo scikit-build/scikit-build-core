@@ -112,7 +112,7 @@ def test_pep517_wheel_reproducible(tmp_path, monkeypatch):
     def build_members() -> list[tuple[str, tuple[int, int, int, int, int, int], int]]:
         dist = tmp_path / f"dist{len(list(tmp_path.glob('dist*')))}"
         dist.mkdir()
-        build_wheel(str(dist))
+        build_wheel(str(dist), {"wheel.reproducible": "true"})
         (wheel,) = dist.glob("simplest-0.0.1-*.whl")
         with zipfile.ZipFile(wheel.resolve()) as zf:
             return [(i.filename, i.date_time, i.external_attr) for i in zf.infolist()]

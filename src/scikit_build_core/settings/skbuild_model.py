@@ -553,9 +553,10 @@ class WheelSettings:
     from both a source tree and an unpacked sdist.
     """
 
-    reproducible: bool = True
+    reproducible: bool = False
     """
-    Try to build a reproducible wheel.
+    Try to build a reproducible wheel. Opt-in, as normalizing permissions can
+    change the result for some projects.
 
     Unix and Python 3.9+ recommended.
 

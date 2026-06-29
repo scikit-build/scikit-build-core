@@ -949,11 +949,12 @@ print(mk_skbuild_docs())
 .. confval:: wheel.reproducible
 
   :Type: ``bool``
-  :Default: true
+  :Default: false
   :Config-settings: ``wheel.reproducible`` or ``skbuild.wheel.reproducible``
   :Environment variable: ``SKBUILD_WHEEL_REPRODUCIBLE``
 
-  Try to build a reproducible wheel.
+  Try to build a reproducible wheel. Opt-in, as normalizing permissions can
+  change the result for some projects.
 
   Unix and Python 3.9+ recommended.
 

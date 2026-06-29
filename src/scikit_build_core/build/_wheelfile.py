@@ -82,7 +82,7 @@ class WheelWriter:
     metadata_dir: Path | None
     variant_label: str = ""
     variant_dist_info_contents: bytes | None = None
-    reproducible: bool = True
+    reproducible: bool = False
     _zipfile: zipfile.ZipFile | None = None
 
     @property
