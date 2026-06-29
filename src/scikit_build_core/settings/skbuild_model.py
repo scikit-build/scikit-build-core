@@ -359,17 +359,23 @@ class SDistSettings:
     bulk copy can still be trimmed by an exclude pattern.
     """
 
-    resolve_symlinks: Optional[bool] = dataclasses.field(
+    resolve_symlinks: Optional[Literal["all", "none"]] = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(display_default="true"),
+        metadata=SettingsFieldMetadata(display_default='"all"'),
     )
     """
-    Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
+    Which symlinks to resolve in the SDist, copying file contents instead of
+    storing the symlink.
 
-    If not set, it will be ``true`` unless you set the minimum version below 0.13,
-    in which case it will be ``false`` to preserve backward compatibility.
+    The modes are:
 
-    .. versionadded: 0.13
+    * "all": Resolve every symlink, copying its target's contents.
+    * "none": Store symlinks as-is.
+
+    If you don't set this, it will be "all" unless you set the minimum version
+    below 1.0, in which case it will be "none" to preserve backward compatibility.
+
+    .. versionadded: 1.0
     """
 
 

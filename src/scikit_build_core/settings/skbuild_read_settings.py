@@ -457,18 +457,18 @@ class SettingsReader:
         if self.settings.sdist.resolve_symlinks is not None:
             if (
                 self.settings.minimum_version is not None
-                and self.settings.minimum_version < Version("0.13")
+                and self.settings.minimum_version < Version("1.0")
             ):
                 rich_error(
-                    "minimum-version can't be less than 0.13 to use sdist.resolve-symlinks"
+                    "minimum-version can't be less than 1.0 to use sdist.resolve-symlinks"
                 )
         elif (
             self.settings.minimum_version is not None
-            and self.settings.minimum_version < Version("0.13")
+            and self.settings.minimum_version < Version("1.0")
         ):
-            self.settings.sdist.resolve_symlinks = False
+            self.settings.sdist.resolve_symlinks = "none"
         else:
-            self.settings.sdist.resolve_symlinks = True
+            self.settings.sdist.resolve_symlinks = "all"
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

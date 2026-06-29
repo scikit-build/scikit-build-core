@@ -204,8 +204,8 @@ sdist.cmake = false
 # Force-include files into the SDist.
 sdist.force-include = {}
 
-# Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
-sdist.resolve-symlinks = true
+# Which symlinks to resolve in the SDist, copying file contents instead of
+sdist.resolve-symlinks = "all"
 
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["src/<package>", "python/<package>", "<package>"]

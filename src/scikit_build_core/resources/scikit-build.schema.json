@@ -196,8 +196,11 @@
           "description": "Force-include files into the SDist."
         },
         "resolve-symlinks": {
-          "type": "boolean",
-          "description": "Resolve symlinks in the SDist, copying file contents instead of storing symlinks."
+          "enum": [
+            "all",
+            "none"
+          ],
+          "description": "Which symlinks to resolve in the SDist, copying file contents instead of"
         }
       }
     },

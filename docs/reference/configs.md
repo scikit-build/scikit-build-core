@@ -717,15 +717,24 @@ print(mk_skbuild_docs())
 
 ```{eval-rst}
 .. confval:: sdist.resolve-symlinks
-  :type: ``bool``
-  :default: true
 
-  Resolve symlinks in the SDist, copying file contents instead of storing symlinks.
+  :Type: ``"all" | "none"``
+  :Default: "all"
+  :Config-settings: ``sdist.resolve-symlinks`` or ``skbuild.sdist.resolve-symlinks``
+  :Environment variable: ``SKBUILD_SDIST_RESOLVE_SYMLINKS``
 
-  If not set, it will be ``true`` unless you set the minimum version below 0.13,
-  in which case it will be ``false`` to preserve backward compatibility.
+  Which symlinks to resolve in the SDist, copying file contents instead of
+  storing the symlink.
 
-  .. versionadded: 0.13
+  The modes are:
+
+  * "all": Resolve every symlink, copying its target's contents.
+  * "none": Store symlinks as-is.
+
+  If you don't set this, it will be "all" unless you set the minimum version
+  below 1.0, in which case it will be "none" to preserve backward compatibility.
+
+  .. versionadded: 1.0
 ```
 
 ## search

@@ -142,7 +142,7 @@ def build_sdist(
                 fileobj=gzip_container,
                 mode="w",
                 format=tarfile.PAX_FORMAT,
-                dereference=settings.sdist.resolve_symlinks,
+                dereference=settings.sdist.resolve_symlinks == "all",
             )
         )
         assert settings.sdist.inclusion_mode is not None

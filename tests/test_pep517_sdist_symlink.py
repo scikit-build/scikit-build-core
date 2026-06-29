@@ -25,8 +25,8 @@ def can_symlink(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("config_settings", "expected_type"),
     [
-        pytest.param({}, "reg", id="dereference_default"),
-        pytest.param({"sdist.resolve-symlinks": "false"}, "sym", id="no_dereference"),
+        pytest.param({}, "reg", id="resolve_all_default"),
+        pytest.param({"sdist.resolve-symlinks": "none"}, "sym", id="resolve_none"),
     ],
 )
 def test_pep517_sdist_symlink(
