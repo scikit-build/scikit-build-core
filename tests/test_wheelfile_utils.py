@@ -1,11 +1,63 @@
 import stat
+import time
 import zipfile
+from pathlib import Path
 
 import pytest
 from packaging.tags import Tag
 
 import scikit_build_core.build._wheelfile
+from scikit_build_core._reproducible import get_reproducible_epoch
 from scikit_build_core._vendor.pyproject_metadata import StandardMetadata
+from scikit_build_core.build._wheelfile import WheelWriter
+
+
+def _make_writer(tmp_path: Path, *, reproducible: bool = True) -> WheelWriter:
+    metadata = StandardMetadata.from_pyproject(
+        {"project": {"name": "something", "version": "1.2.3"}},
+        metadata_version="2.3",
+    )
+    return scikit_build_core.build._wheelfile.WheelWriter(
+        metadata,
+        tmp_path / "out",
+        {Tag("py3", "none", "any")},
+        scikit_build_core.build._wheelfile.WheelMetadata(),
+        None,
+        reproducible=reproducible,
+    )
+
+
+def test_wheel_timestamp_reproducible_fixed_epoch(tmp_path, monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    wheel = _make_writer(tmp_path)
+    expected = time.gmtime(get_reproducible_epoch())[0:6]
+    # A per-file mtime is ignored in reproducible mode.
+    assert wheel.timestamp(0) == expected
+    assert wheel.timestamp() == expected
+
+
+def test_wheel_timestamp_non_reproducible_uses_mtime(tmp_path, monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    wheel = _make_writer(tmp_path, reproducible=False)
+    mtime = 1234567890
+    assert wheel.timestamp(mtime) == time.gmtime(mtime)[0:6]
+
+
+def test_wheel_write_normalizes_permissions(tmp_path, monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    src = tmp_path / "src.txt"
+    src.write_text("data")
+    src.chmod(0o777)
+
+    out_dir = tmp_path / "out"
+    for reproducible, expected in [(True, 0o755), (False, 0o777)]:
+        wheel = _make_writer(tmp_path, reproducible=reproducible)
+        wheel.folder = out_dir / str(reproducible)
+        with wheel:
+            wheel.write(str(src), "src.txt")
+        with zipfile.ZipFile(wheel.wheelpath) as zf:
+            info = zf.getinfo("src.txt")
+            assert stat.S_IMODE(info.external_attr >> 16) == expected
 
 
 def test_wheel_metadata() -> None:

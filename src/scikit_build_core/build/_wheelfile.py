@@ -18,6 +18,11 @@ from zipfile import ZipInfo
 import pathspec
 
 from .. import __version__
+from .._reproducible import (
+    MIN_TIMESTAMP,
+    get_reproducible_epoch,
+    normalize_file_permissions,
+)
 from .._variants import VARIANT_DIST_INFO_FILENAME
 
 if TYPE_CHECKING:
@@ -30,8 +35,6 @@ if TYPE_CHECKING:
     from .._vendor.pyproject_metadata import StandardMetadata
 
 EMAIL_POLICY = EmailPolicy(max_line_length=0, mangle_from_=False, utf8=True)
-
-MIN_TIMESTAMP = 315532800  # 1980-01-01 00:00:00 UTC
 
 
 def _b64encode(data: bytes) -> bytes:
@@ -79,6 +82,7 @@ class WheelWriter:
     metadata_dir: Path | None
     variant_label: str = ""
     variant_dist_info_contents: bytes | None = None
+    reproducible: bool = True
     _zipfile: zipfile.ZipFile | None = None
 
     @property
@@ -107,9 +111,14 @@ class WheelWriter:
     def dist_info(self) -> str:
         return f"{self.name_ver}.dist-info"
 
-    @staticmethod
-    def timestamp(mtime: float | None = None) -> tuple[int, int, int, int, int, int]:
-        timestamp = int(os.environ.get("SOURCE_DATE_EPOCH", mtime or time.time()))
+    def timestamp(
+        self, mtime: float | None = None
+    ) -> tuple[int, int, int, int, int, int]:
+        if self.reproducible:
+            # Honor SOURCE_DATE_EPOCH, else a fixed epoch (ignore per-file mtime).
+            timestamp = get_reproducible_epoch()
+        else:
+            timestamp = int(os.environ.get("SOURCE_DATE_EPOCH", mtime or time.time()))
         # The ZIP file format does not support timestamps before 1980.
         timestamp = max(timestamp, MIN_TIMESTAMP)
         return time.gmtime(timestamp)[0:6]
@@ -220,7 +229,10 @@ class WheelWriter:
             date_time=self.timestamp(st.st_mtime),
         )
         zinfo.compress_type = zipfile.ZIP_DEFLATED
-        zinfo.external_attr = (stat.S_IMODE(st.st_mode) | stat.S_IFMT(st.st_mode)) << 16
+        mode = (
+            normalize_file_permissions(st.st_mode) if self.reproducible else st.st_mode
+        )
+        zinfo.external_attr = (stat.S_IMODE(mode) | stat.S_IFMT(st.st_mode)) << 16
         self.writestr(zinfo, data)
 
     def writestr(self, zinfo_or_arcname: str | ZipInfo, data: bytes) -> None:

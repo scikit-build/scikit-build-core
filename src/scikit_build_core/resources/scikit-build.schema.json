@@ -297,6 +297,11 @@
             }
           },
           "description": "Force-include files into the wheel."
+        },
+        "reproducible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try to build a reproducible wheel."
         }
       }
     },
