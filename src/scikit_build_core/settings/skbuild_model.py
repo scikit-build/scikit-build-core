@@ -583,6 +583,20 @@ class EditableSettings:
     :confval:`build-dir` must be set.
     """
 
+    rebuild_dir: str = ""
+    """
+    Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``).
+
+    Setting this turns on rebuild-on-import by itself; the :confval:`editable.rebuild`
+    flag is ignored when it is set. The compiled artifacts are installed here at
+    first build and re-installed in place on every import-triggered rebuild, and
+    the redirect references them by absolute path. Must be an absolute (or
+    source-relative) path that is stable between build and run time, and supports
+    the same template substitutions as :confval:`build-dir`. This relocates only
+    the install tree; :confval:`build-dir` is still required and still hosts the
+    CMake build that the rebuild re-runs.
+    """
+
 
 @dataclasses.dataclass
 class BuildSettings:

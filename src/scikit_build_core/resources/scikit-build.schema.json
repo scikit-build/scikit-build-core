@@ -332,6 +332,11 @@
           "type": "boolean",
           "default": false,
           "description": "Rebuild the project when the package is imported."
+        },
+        "rebuild-dir": {
+          "type": "string",
+          "default": "",
+          "description": "Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``)."
         }
       }
     },

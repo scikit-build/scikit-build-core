@@ -790,6 +790,16 @@ extra reconfigure -- including projects that install to an absolute
 `${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
 the install, but a rebuildable editable already depends on it.
 
+As a newer, parallel alternative, `editable.rebuild-dir` selects the install
+tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
+flag is ignored when it is set). It accepts the same template substitutions as
+`build-dir`, and the path must be absolute, or relative to the source directory,
+and stable between build and run time, since it is baked at configure time and
+referenced by absolute path on rebuild. This only moves the install tree;
+`build-dir` is still required and still hosts the CMake build that the rebuild
+re-runs. The classic `editable.rebuild` (which installs into a tree inside
+`build-dir`) is left as-is, so the two approaches can be compared.
+
 The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
 combine the static CMake install dir with the original source code. Python code
 added via scikit-build-core's package discovery will be found in the original

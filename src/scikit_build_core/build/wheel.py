@@ -37,6 +37,7 @@ from .common_wheel_helpers import (
     configure_wheel,
     editable_rebuild_options,
     get_build_dir,
+    get_editable_rebuild_dir,
     get_install_dir,
     get_targetlib,
     get_wheel_tag,
@@ -304,19 +305,30 @@ def _build_wheel_impl_impl(
         )
 
         # A rebuildable redirect editable (one with a persistent build-dir)
-        # installs the platlib into a persistent tree inside the build directory
-        # instead of the temporary wheel-staging dir, and the redirect references
-        # the compiled artifacts there by absolute path. This bakes
-        # SKBUILD_<targetlib>_DIR / CMAKE_INSTALL_PREFIX at the final location at
-        # configure time, so import-triggered rebuilds need no reconfigure (#1135).
+        # installs the platlib into a persistent tree instead of the temporary
+        # wheel-staging dir, and the redirect references the compiled artifacts
+        # there by absolute path. This bakes SKBUILD_<targetlib>_DIR /
+        # CMAKE_INSTALL_PREFIX at the final location at configure time, so
+        # import-triggered rebuilds need no reconfigure (#1135).
+        #
+        # Two triggers: the classic editable.rebuild installs into a tree inside
+        # build-dir; setting editable.rebuild-dir is the newer, parallel path that
+        # installs into a user-chosen tree and turns on rebuilds by itself (the
+        # editable.rebuild flag is then ignored). Both still require build-dir.
         editable_rebuild = (
             editable
             and settings.editable.mode == "redirect"
-            and settings.editable.rebuild
+            and (settings.editable.rebuild or bool(settings.editable.rebuild_dir))
             and bool(settings.build_dir)
         )
         if editable_rebuild:
-            targetlib_dir = (build_dir / "install" / targetlib).resolve()
+            targetlib_dir = get_editable_rebuild_dir(
+                settings,
+                build_dir=build_dir,
+                targetlib=targetlib,
+                tags=tags,
+                state=state,
+            )
             if targetlib_dir.exists():
                 shutil.rmtree(targetlib_dir)
             targetlib_dir.mkdir(parents=True)

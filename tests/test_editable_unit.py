@@ -633,6 +633,28 @@ def test_editable_redirect_files_platlib_var_install_dir_with_rebuild(
     assert "SKBUILD_PURELIB_DIR" not in shim
 
 
+def test_editable_redirect_files_rebuild_dir_implies_rebuild(tmp_path: Path):
+    # editable.rebuild-dir turns on rebuild-on-import by itself, so the
+    # non-platlib install-dir guard fires even with editable.rebuild left False.
+    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="/data"),
+        editable=EditableSettings(rebuild=False, rebuild_dir=str(tmp_path / "tree")),
+    )
+
+    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
+        editable_redirect_files(
+            libdir=tmp_path,
+            mapping={},
+            name="pkg",
+            packages=[],
+            reload_dir=None,
+            settings=settings,
+            use_start=False,
+        )
+
+
 def test_is_trackable():
     # Importable modules and data/resource files are both tracked, so the
     # redirect registers their directories for importlib.resources.
