@@ -373,6 +373,58 @@ def test_regex_remove(
     assert version == ("1.2.3dev1" if dev else "1.2.3")
 
 
+def test_array_dynamic_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End-to-end check of the standard top-level [[tool.dynamic-metadata]]."""
+    d = tmp_path / "test_array"
+    d.mkdir()
+    monkeypatch.chdir(d)
+
+    Path("version.txt").write_text("VERSION = '1.2.3'\n", encoding="utf-8")
+    Path("local_plugins").mkdir()
+    Path("local_plugins/req_plugin.py").write_text(
+        "def dynamic_metadata(settings, project):\n"
+        "    return {'requires-python': '>=' + project['version']}\n"
+        "def get_requires_for_dynamic_metadata(settings):\n"
+        "    return ['extra-build-dep']\n",
+        encoding="utf-8",
+    )
+    Path("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "test-array"
+            dynamic = ["version", "requires-python"]
+
+            [[tool.dynamic-metadata]]
+            provider = "scikit_build_core.metadata.regex"
+            field = "version"
+            input = "version.txt"
+
+            [[tool.dynamic-metadata]]
+            provider = "req_plugin"
+            provider-path = "local_plugins"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings = SettingsReader(pyproject, {}, state="metadata_wheel").settings
+
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
+    assert str(metadata.version) == "1.2.3"
+    assert str(metadata.requires_python) == ">=1.2.3"
+
+    assert "extra-build-dep" in set(GetRequires().dynamic_metadata())
+
+
 @pytest.mark.parametrize("override", [None, "env", "sdist"])
 @pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")

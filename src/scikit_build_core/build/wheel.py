@@ -244,7 +244,7 @@ def _build_wheel_impl_impl(
     Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
     """
 
-    metadata = get_standard_metadata(pyproject, settings)
+    metadata = get_standard_metadata(pyproject, settings, build_state=state)
 
     if metadata.version is None:
         msg = "project.version is not specified, must be statically present or tool.scikit-build metadata.version.provider configured when dynamic"

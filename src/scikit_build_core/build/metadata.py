@@ -13,11 +13,15 @@ from .._vendor.pyproject_metadata import (
     extras_build_system,
     extras_top_level,
 )
-from ..builder._load_provider import process_dynamic_metadata
+from ..builder._load_provider import (
+    process_dynamic_metadata,
+    process_legacy_dynamic_metadata,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from ..builder._load_provider import BuildState
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["get_standard_metadata"]
@@ -37,13 +41,26 @@ if sys.version_info < (3, 11):
 def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
+    build_state: BuildState = "metadata_wheel",
 ) -> StandardMetadata:
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
+    project = new_pyproject_dict["project"]
 
-    # Handle any dynamic metadata
-    new_pyproject_dict["project"] = process_dynamic_metadata(
-        new_pyproject_dict["project"], settings.metadata
-    )
+    # Handle the deprecated tool.scikit-build.metadata table, then the standard
+    # top-level [[tool.dynamic-metadata]] entries (dynamic-metadata 0.3). Both
+    # forms may be present; the legacy table is resolved first.
+    if settings.metadata:
+        logger.warning(
+            "tool.scikit-build.metadata is deprecated; move your providers to the "
+            "standard top-level [[tool.dynamic-metadata]] array of tables"
+        )
+        project = process_legacy_dynamic_metadata(project, settings.metadata)
+
+    entries = new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
+    if entries:
+        project = process_dynamic_metadata(project, entries, build_state)
+
+    new_pyproject_dict["project"] = project
 
     if settings.strict_config:
         extra_keys_top = extras_top_level(new_pyproject_dict)

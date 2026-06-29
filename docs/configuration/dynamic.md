@@ -12,6 +12,50 @@ change between _minor_ versions.
 
 :::
 
+## The `[[tool.dynamic-metadata]]` table
+
+```{versionadded} 1.0
+Support for the standard
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 specification.
+```
+
+The standard, cross-backend way to configure plugins is the top-level
+`[[tool.dynamic-metadata]]` **ordered array of tables**. Each entry names a
+`provider` (a module, or `"<module>:<Class>"`); every other key is passed to
+that plugin as its settings. Entries run **in order**, so a later entry sees
+every field an earlier one produced (no dependency graph, no cycles), and a
+plugin can read an already-resolved field with `project[...]`.
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["version"]
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.regex"
+field = "version"
+input = "src/mypackage/__init__.py"
+```
+
+Generic plugins (`regex`, `template`) take the field they target from a `field`
+setting. A `provider-path` key may point at a local directory so a plugin can
+live inside your own project. Following [PEP 808][], a list or table field can
+be given a static value in `[project]` _and_ listed in `dynamic`, in which case
+a provider only **adds** to it; the single-value fields (`version`,
+`description`, `requires-python`, `license`, `readme`) cannot be both static and
+dynamic.
+
+[PEP 808]: https://peps.python.org/pep-0808/
+
+:::{warning}
+
+The older `[tool.scikit-build.metadata.<field>]` table (a field-keyed mapping
+rather than an ordered array) is **deprecated** in favor of
+`[[tool.dynamic-metadata]]` and will be removed in a future release. It still
+works (and is shown in the examples below), but emits a deprecation warning.
+
+:::
+
 ## `version`: Setuptools-scm
 
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the

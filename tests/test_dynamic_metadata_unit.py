@@ -6,6 +6,7 @@ import pytest
 from scikit_build_core.builder._load_provider import (
     load_provider,
     process_dynamic_metadata,
+    process_legacy_dynamic_metadata,
 )
 from scikit_build_core.metadata import _process_dynamic_metadata
 from scikit_build_core.metadata.regex import dynamic_metadata as regex_dynamic_metadata
@@ -15,7 +16,7 @@ from scikit_build_core.metadata.template import (
 
 
 def test_template_basic() -> None:
-    pyproject = process_dynamic_metadata(
+    pyproject = process_legacy_dynamic_metadata(
         {
             "name": "test",
             "version": "0.1.0",
@@ -34,7 +35,7 @@ def test_template_basic() -> None:
 
 def test_template_needs() -> None:
     # These are intentionally out of order to test the order of processing
-    pyproject = process_dynamic_metadata(
+    pyproject = process_legacy_dynamic_metadata(
         {
             "name": "test",
             "version": "0.1.0",
@@ -60,7 +61,7 @@ def test_template_needs() -> None:
 
 
 def test_regex() -> None:
-    pyproject = process_dynamic_metadata(
+    pyproject = process_legacy_dynamic_metadata(
         {
             "name": "test",
             "version": "0.1.0",
@@ -152,8 +153,8 @@ def test_load_provider_path_loads_local(tmp_path: Path) -> None:
     )
 
     provider = load_provider("local_prov_ok", str(plugin_dir))
-    version: Any = provider.dynamic_metadata("version", {}, {})
-    assert version == "1.2.3"
+    hook: Any = provider.dynamic_metadata
+    assert hook("version", {}, {}) == "1.2.3"
 
 
 def test_load_provider_path_not_shadowed(
@@ -170,3 +171,167 @@ def test_load_provider_path_not_shadowed(
     empty.mkdir()
     with pytest.raises(ModuleNotFoundError):
         load_provider("shadow_prov", str(empty))
+
+
+def test_array_regex_via_field_setting() -> None:
+    # The bundled (legacy-signature) regex plugin works in the 0.3 array form;
+    # the adapter sources the target field from the entry's ``field`` setting.
+    project = process_dynamic_metadata(
+        {"name": "test", "version": "0.1.0", "dynamic": ["requires-python"]},
+        [
+            {
+                "provider": "scikit_build_core.metadata.regex",
+                "field": "requires-python",
+                "input": "pyproject.toml",
+                "regex": r"name = \"(?P<name>.+)\"",
+                "result": ">={name}",
+            }
+        ],
+    )
+    assert project["requires-python"] == ">=scikit_build_core"
+    assert "requires-python" not in project["dynamic"]
+
+
+def test_array_runs_in_order() -> None:
+    # A later entry reads a field an earlier entry produced.
+    project = process_dynamic_metadata(
+        {"name": "test", "version": "0.1.0", "dynamic": ["requires-python", "license"]},
+        [
+            {
+                "provider": "scikit_build_core.metadata.template",
+                "field": "requires-python",
+                "result": ">={project[version]}",
+            },
+            {
+                "provider": "scikit_build_core.metadata.template",
+                "field": "license",
+                "result": "needs {project[requires-python]}",
+            },
+        ],
+    )
+    assert project["requires-python"] == ">=0.1.0"
+    assert project["license"] == "needs >=0.1.0"
+
+
+def test_array_forward_reference_raises() -> None:
+    # Unlike the legacy table, the array resolves strictly in order, so reading
+    # a not-yet-produced field is a plain KeyError.
+    with pytest.raises(KeyError):
+        process_dynamic_metadata(
+            {
+                "name": "t",
+                "version": "0.1.0",
+                "dynamic": ["requires-python", "license"],
+            },
+            [
+                {
+                    "provider": "scikit_build_core.metadata.template",
+                    "field": "requires-python",
+                    "result": "{project[license]}",
+                },
+                {
+                    "provider": "scikit_build_core.metadata.template",
+                    "field": "license",
+                    "result": "MIT",
+                },
+            ],
+        )
+
+
+def _write_provider(tmp_path: Path, name: str, body: str) -> str:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir(exist_ok=True)
+    (plugin_dir / f"{name}.py").write_text(body)
+    return str(plugin_dir)
+
+
+def test_array_new_style_multi_field(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "multi_prov",
+        "def dynamic_metadata(settings, project):\n"
+        "    return {'version': '1.2.3', 'description': 'hi'}\n",
+    )
+    project = process_dynamic_metadata(
+        {"name": "t", "dynamic": ["version", "description"]},
+        [{"provider": "multi_prov", "provider-path": path}],
+    )
+    assert project["version"] == "1.2.3"
+    assert project["description"] == "hi"
+    assert project["dynamic"] == []
+
+
+def test_array_pep808_add_only_list(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "deps_prov",
+        "def dynamic_metadata(settings, project):\n"
+        "    return {'dependencies': ['numpy']}\n",
+    )
+    project = process_dynamic_metadata(
+        {"name": "t", "dependencies": ["torch"], "dynamic": ["dependencies"]},
+        [{"provider": "deps_prov", "provider-path": path}],
+    )
+    # Existing static entries kept first, provider additions appended.
+    assert project["dependencies"] == ["torch", "numpy"]
+
+
+def test_array_scalar_static_and_dynamic_raises(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "ver_prov",
+        "def dynamic_metadata(settings, project):\n    return {'version': '9'}\n",
+    )
+    with pytest.raises(ValueError, match="both statically and dynamically"):
+        process_dynamic_metadata(
+            {"name": "t", "version": "1.0", "dynamic": ["version"]},
+            [{"provider": "ver_prov", "provider-path": path}],
+        )
+
+
+def test_array_field_not_in_dynamic_raises(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "ver_prov2",
+        "def dynamic_metadata(settings, project):\n    return {'version': '9'}\n",
+    )
+    with pytest.raises(KeyError, match="must be listed in project"):
+        process_dynamic_metadata(
+            {"name": "t", "dynamic": []},
+            [{"provider": "ver_prov2", "provider-path": path}],
+        )
+
+
+def test_array_build_state_hook(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "state_prov",
+        "class Provider:\n"
+        "    def build_state(self, build_state):\n"
+        "        self.state = build_state\n"
+        "    def dynamic_metadata(self, settings, project):\n"
+        "        return {'version': self.state}\n",
+    )
+    project = process_dynamic_metadata(
+        {"name": "t", "dynamic": ["version"]},
+        [{"provider": "state_prov:Provider", "provider-path": path}],
+        build_state="sdist",
+    )
+    assert project["version"] == "sdist"
+
+
+def test_array_bad_build_state_raises() -> None:
+    with pytest.raises(ValueError, match="build_state must be one of"):
+        process_dynamic_metadata(
+            {"name": "t", "dynamic": ["version"]},
+            [],
+            build_state="bogus",  # type: ignore[arg-type]
+        )
+
+
+def test_array_missing_provider_raises() -> None:
+    with pytest.raises(KeyError, match="must set a 'provider'"):
+        process_dynamic_metadata(
+            {"name": "t", "dynamic": ["version"]},
+            [{"field": "version"}],
+        )
