@@ -142,13 +142,18 @@ def _build_wheel_impl(
     *,
     exit_after_config: bool = False,
     editable: bool,
+    cmake_install_dir: Path | None = None,
 ) -> WheelImplReturn:
     """
     Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
     Handles one retry attempt if "failed" override present.
+
+    ``cmake_install_dir`` (the ``sdist.install-dir`` path) runs a full
+    configure + build + install and copies the staged install tree there,
+    returning before any wheel is assembled.
     """
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
-    if exit_after_config:
+    if exit_after_config or cmake_install_dir is not None:
         state = "sdist"
     elif wheel_directory is None:
         state = "metadata_editable" if editable else "metadata_wheel"
@@ -192,6 +197,7 @@ def _build_wheel_impl(
             metadata_directory,
             exit_after_config=exit_after_config,
             editable=editable,
+            cmake_install_dir=cmake_install_dir,
             state=state,
             settings=settings_reader.settings,
             pyproject=pyproject,
@@ -221,6 +227,7 @@ def _build_wheel_impl(
                 metadata_directory,
                 exit_after_config=exit_after_config,
                 editable=editable,
+                cmake_install_dir=cmake_install_dir,
                 state=state,
                 settings=settings_reader.settings,
                 pyproject=pyproject,
@@ -236,6 +243,7 @@ def _build_wheel_impl_impl(
     *,
     exit_after_config: bool = False,
     editable: bool,
+    cmake_install_dir: Path | None = None,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
     settings: ScikitBuildSettings,
     pyproject: dict[str, Any],
@@ -361,7 +369,11 @@ def _build_wheel_impl_impl(
                 gen.path.write_text(contents, encoding="utf-8")
                 settings.sdist.include.append(gen.path.as_posix())
 
-        if wheel_directory is None and not exit_after_config:
+        if (
+            wheel_directory is None
+            and not exit_after_config
+            and cmake_install_dir is None
+        ):
             if metadata_directory is None:
                 msg = "metadata_directory must be specified if wheel_directory is None"
                 raise AssertionError(msg)
@@ -426,6 +438,17 @@ def _build_wheel_impl_impl(
                 version=metadata.version,
                 editable=editable,
             )
+
+        # sdist.cmake = "install": vendor the staged install tree, then stop
+        # before any wheel is assembled.
+        if cmake_install_dir is not None:
+            if cmake is None:
+                msg = "sdist.cmake = 'install' requires CMake; wheel.cmake must not be false during the SDist build"
+                raise AssertionError(msg)
+            shutil.copytree(
+                install_dir, cmake_install_dir, dirs_exist_ok=True, symlinks=True
+            )
+            return WheelImplReturn(wheel_filename="", settings=settings)
 
         assert wheel_directory is not None
 

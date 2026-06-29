@@ -1,0 +1,23 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "sdist_cmake_install"
+version = "0.2.0"
+
+[tool.scikit-build]
+# sdist.install-dir upgrades the sdist CMake run to a full configure+build+install
+# and vendors the install tree into the sdist, so a build from the unpacked sdist
+# needs no CMake.
+sdist.cmake = true
+sdist.install-dir = ".cmake-install"
+# Pure package: no compiled module, so the CMake build is purelib / py3-none-any
+# (matching the from-sdist build below).
+wheel.platlib = false
+wheel.license-files = []
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = true
+wheel.cmake = false
+wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"

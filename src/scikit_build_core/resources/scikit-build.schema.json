@@ -195,7 +195,12 @@
         "cmake": {
           "type": "boolean",
           "default": false,
-          "description": "If set to True, CMake will be run before building the SDist."
+          "description": "Run CMake before building the SDist."
+        },
+        "install-dir": {
+          "type": "string",
+          "default": "",
+          "description": "SDist-relative directory to vendor the CMake install tree into."
         },
         "force-include": {
           "type": "object",

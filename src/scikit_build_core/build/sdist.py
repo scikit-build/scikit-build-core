@@ -7,6 +7,7 @@ import gzip
 import io
 import os
 import tarfile
+import tempfile
 from pathlib import Path
 
 import pathspec
@@ -14,7 +15,7 @@ from packaging.utils import canonicalize_name
 
 from .. import __version__
 from .._compat import tomllib
-from .._logging import rich_print
+from .._logging import logger, rich_print
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
@@ -106,6 +107,12 @@ def build_sdist(
 
     settings_reader.validate_may_exit()
 
+    if settings.sdist.install_dir and not settings.sdist.cmake:
+        logger.warning(
+            "sdist.install-dir is set but sdist.cmake is false; no install tree "
+            "will be vendored. Set sdist.cmake = true to enable it."
+        )
+
     sdist_dir = Path(sdist_directory)
 
     reproducible = settings.sdist.reproducible
@@ -119,19 +126,34 @@ def build_sdist(
     srcdirname = f"{sdist_name}-{metadata.version}"
     filename = f"{srcdirname}.tar.gz"
 
-    if settings.sdist.cmake:
-        _build_wheel_impl(
-            None, config_settings, None, exit_after_config=True, editable=False
-        )
-
-    for gen in settings.generate:
-        if gen.location == "source":
-            contents = generate_file_contents(gen, metadata)
-            gen.path.write_text(contents, encoding="utf-8")
-            settings.sdist.include.append(gen.path.as_posix())
-
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
+        # With sdist.install-dir set, a full CMake install tree is staged into a
+        # temp dir kept alive (via this ExitStack) until it is added to the tar
+        # below; otherwise sdist.cmake is a configure-only run.
+        cmake_install_root: Path | None = None
+        if settings.sdist.cmake and settings.sdist.install_dir:
+            cmake_install_root = Path(
+                stack.enter_context(tempfile.TemporaryDirectory())
+            )
+            _build_wheel_impl(
+                None,
+                config_settings,
+                None,
+                editable=False,
+                cmake_install_dir=cmake_install_root,
+            )
+        elif settings.sdist.cmake:
+            _build_wheel_impl(
+                None, config_settings, None, exit_after_config=True, editable=False
+            )
+
+        for gen in settings.generate:
+            if gen.location == "source":
+                contents = generate_file_contents(gen, metadata)
+                gen.path.write_text(contents, encoding="utf-8")
+                settings.sdist.include.append(gen.path.as_posix())
+
         gzip_container = stack.enter_context(
             gzip.GzipFile(
                 sdist_dir / filename, mode="wb", compresslevel=9, mtime=timestamp
@@ -183,6 +205,24 @@ def build_sdist(
                 arcname=target,
                 filter=normalize_tar_info if reproducible else lambda x: x,
             )
+
+        # Vendor the staged CMake install tree under sdist.install-dir, sorted
+        # for reproducible tar member order.
+        if cmake_install_root is not None:
+            staged = sorted(
+                iter_force_include(
+                    str(cmake_install_root),
+                    settings.sdist.install_dir,
+                    Path(srcdirname),
+                ),
+                key=lambda pair: pair[1],
+            )
+            for src_file, target in staged:
+                tar.add(
+                    src_file,
+                    arcname=target,
+                    filter=normalize_tar_info if reproducible else lambda x: x,
+                )
 
         add_bytes_to_tar(
             tar, pkg_info, f"{srcdirname}/PKG-INFO", normalize=reproducible

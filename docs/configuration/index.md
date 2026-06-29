@@ -266,6 +266,35 @@ sdist.include = [
 
 :::
 
+### Building a CMake-free wheel from the SDist
+
+For a package whose wheel is effectively pure (only headers, CMake config files,
+and other generated-at-configure/install-time text — no compiled extension), you
+can run the CMake generation once during the SDist build and ship its install
+tree _inside_ the SDist. A wheel built from that SDist then needs no CMake at
+all:
+
+```toml
+[tool.scikit-build]
+sdist.cmake = true
+# Setting sdist.install-dir upgrades the SDist CMake run to a full
+# configure + build + install, vendoring the install tree into the SDist here.
+sdist.install-dir = ".cmake-install"
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = true       # only when building from an unpacked SDist
+wheel.cmake = false        # no CMake: a pure py3-none-any wheel
+wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"
+```
+
+Building a wheel directly from the source tree is unchanged — `from-sdist` is
+false, so the override does not apply and CMake runs as usual. Only the
+SDist→wheel path becomes CMake-free. The `sdist.install-dir` tree is written
+into the SDist root (it is _not_ added to your source tree), and the
+`if.from-sdist` override repackages it into the wheel. If your wheel is normally
+non-pure, set `wheel.platlib = false` so the source-tree build is also pure and
+the two wheels match.
+
 ## Customizing the built wheel
 
 The wheel will automatically look for Python packages at `src/<package_name>`,

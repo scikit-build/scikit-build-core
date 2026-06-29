@@ -198,8 +198,11 @@ sdist.inclusion-mode = "default"  # "classic"
 # Try to build a reproducible distribution.
 sdist.reproducible = true
 
-# If set to True, CMake will be run before building the SDist.
+# Run CMake before building the SDist.
 sdist.cmake = false
+
+# SDist-relative directory to vendor the CMake install tree into.
+sdist.install-dir = ""
 
 # Force-include files into the SDist.
 sdist.force-include = {}

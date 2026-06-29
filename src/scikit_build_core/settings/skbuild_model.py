@@ -363,7 +363,23 @@ class SDistSettings:
 
     cmake: bool = False
     """
-    If set to True, CMake will be run before building the SDist.
+    Run CMake before building the SDist.
+
+    By default this is a configure-only run, for projects that need a configure
+    artifact (e.g. a FetchContent-populated source tree) vendored into the SDist.
+    Set :confval:`sdist.install-dir` as well to instead run a full configure +
+    build + install and vendor the install tree, so a build from the unpacked
+    SDist can repackage it with ``wheel.cmake = false`` and no CMake.
+    """
+
+    install_dir: str = ""
+    """
+    SDist-relative directory to vendor the CMake install tree into.
+
+    When set (and :confval:`sdist.cmake` is true), the SDist build runs a full
+    configure + build + install and writes the install tree here, rather than a
+    configure-only run. Force-include it back into the wheel from the unpacked
+    SDist, e.g. ``wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"``.
     """
 
     force_include: Dict[str, str] = dataclasses.field(default_factory=dict)
