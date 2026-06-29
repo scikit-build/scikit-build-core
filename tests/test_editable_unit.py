@@ -445,8 +445,9 @@ def test_get_packages_flat_discovery(tmp_path: Path, monkeypatch: pytest.MonkeyP
     monkeypatch.chdir(tmp_path)
 
     # The distribution name's separators all normalize to the flat dir name.
+    expected = {"ns_pkg": str(Path("src") / "ns_pkg")}
     for name in ("ns-pkg", "ns_pkg", "ns.pkg"):
-        assert get_packages(packages=None, name=name) == {"ns_pkg": "src/ns_pkg"}
+        assert get_packages(packages=None, name=name) == expected
 
 
 def test_get_packages_namespace_discovery(
@@ -459,15 +460,20 @@ def test_get_packages_namespace_discovery(
     monkeypatch.chdir(tmp_path)
 
     # A '.' marks the namespace boundary and maps to a nested path; a '-' within
-    # a component is import-normalized to '_'.
-    assert get_packages(packages=None, name="ns.pkg") == {"ns/pkg": "src/ns/pkg"}
+    # a component is import-normalized to '_'. The key is a forward-slash rel
+    # path, but the discovered source uses the OS-native separator.
+    assert get_packages(packages=None, name="ns.pkg") == {
+        "ns/pkg": str(Path("src") / "ns" / "pkg")
+    }
     assert get_packages(packages=None, name="ns.my-pkg") == {}
 
     # The flat layout still wins when it exists (back-compat over the namespace).
     flat = tmp_path / "src" / "ns_pkg"
     flat.mkdir()
     (flat / "__init__.py").touch()
-    assert get_packages(packages=None, name="ns.pkg") == {"ns_pkg": "src/ns_pkg"}
+    assert get_packages(packages=None, name="ns.pkg") == {
+        "ns_pkg": str(Path("src") / "ns_pkg")
+    }
 
 
 def test_get_packages_not_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
