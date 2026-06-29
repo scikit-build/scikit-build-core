@@ -425,6 +425,29 @@ def test_array_dynamic_metadata(
     assert "extra-build-dep" in set(GetRequires().dynamic_metadata())
 
 
+def test_mixing_metadata_forms_rejected() -> None:
+    pyproject = {
+        "project": {"name": "t", "dynamic": ["version"]},
+        "tool": {
+            "scikit-build": {
+                "metadata": {
+                    "version": {"provider": "scikit_build_core.metadata.setuptools_scm"}
+                }
+            },
+            "dynamic-metadata": [
+                {
+                    "provider": "scikit_build_core.metadata.regex",
+                    "field": "version",
+                    "input": "x",
+                }
+            ],
+        },
+    }
+    reader = SettingsReader(pyproject, {}, state="metadata_wheel")
+    with pytest.raises(SystemExit):
+        reader.validate_may_exit()
+
+
 @pytest.mark.parametrize("override", [None, "env", "sdist"])
 @pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")

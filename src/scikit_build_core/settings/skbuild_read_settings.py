@@ -278,6 +278,10 @@ class SettingsReader:
             pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
 
+        # Standard top-level [[tool.dynamic-metadata]] entries (0.3); kept for
+        # validation only (cannot be combined with tool.scikit-build.metadata).
+        self._dynamic_metadata = pyproject.get("tool", {}).get("dynamic-metadata", [])
+
         # Support for cmake.version='CMakeLists.txt'
         # We will save the value for now since we need the CMakeLists location
         force_auto_cmake = (
@@ -537,6 +541,13 @@ class SettingsReader:
             dynamic_sources=self._dynamic_srcs,
             toml_sources=self._toml_srcs,
         )
+
+        if self.settings.metadata and self._dynamic_metadata:
+            sys.stdout.flush()
+            rich_error(
+                "tool.scikit-build.metadata cannot be combined with the standard "
+                "top-level [[tool.dynamic-metadata]]; use only one"
+            )
 
         for key, value in self.settings.metadata.items():
             if "provider" not in value:

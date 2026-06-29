@@ -52,7 +52,8 @@ dynamic.
 The older `[tool.scikit-build.metadata.<field>]` table (a field-keyed mapping
 rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]` and
 is expected to be deprecated in a future release. It still works and is shown in
-the examples below.
+the examples below, but the two forms **cannot be combined** in one project; use
+one or the other.
 
 :::
 
