@@ -182,7 +182,8 @@
           "enum": [
             "classic",
             "default",
-            "manual"
+            "manual",
+            "explicit"
           ],
           "description": "Method to use to compute the files to include and exclude."
         },

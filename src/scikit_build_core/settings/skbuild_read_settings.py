@@ -451,6 +451,14 @@ class SettingsReader:
                 rich_error(
                     "minimum-version can't be less than 0.12 to use sdist.inclusion-mode"
                 )
+            if (
+                self.settings.sdist.inclusion_mode == "explicit"
+                and self.settings.minimum_version is not None
+                and self.settings.minimum_version < Version("1.0")
+            ):
+                rich_error(
+                    'minimum-version must be at least 1.0 to use sdist.inclusion-mode = "explicit"'
+                )
         elif (
             self.settings.minimum_version is not None
             and self.settings.minimum_version < Version("0.12")

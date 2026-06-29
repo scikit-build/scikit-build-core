@@ -62,7 +62,7 @@ def packages_to_file_mapping(
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
     build_dir: str,
-    mode: Literal["classic", "default", "manual"],
+    mode: Literal["classic", "default", "manual", "explicit"],
 ) -> dict[str, str]:
     """
     This will output a mapping of source files to target files.

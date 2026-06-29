@@ -709,6 +709,96 @@ def test_consecutive_excluded_dirs_not_descended(
     assert Path("excluded_b") not in descended_paths
 
 
+def test_explicit_is_opt_in(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    In "explicit" mode nothing is packaged unless it matches an include pattern.
+    """
+    monkeypatch.chdir(tmp_path)
+    _setup_test_filesystem(tmp_path)
+
+    # No include -> nothing, even though many files exist.
+    assert set(each_unignored_file(Path(), mode="explicit")) == set()
+
+    # Only included files appear; siblings are dropped (the opposite of the other
+    # modes, which include everything by default).
+    result = set(each_unignored_file(Path(), include=["*.py"], mode="explicit"))
+    assert result == {
+        Path(s)
+        for s in [
+            "setup.py",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+            "tests/test_main.py",
+            "tests/test_utils.py",
+            "tests/tmp.py",
+        ]
+    }
+
+
+def test_explicit_exclude_wins_over_include(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    In "explicit" mode exclude is applied after the opt-in, so it trims included
+    files back out (in every other mode, include would win).
+    """
+    monkeypatch.chdir(tmp_path)
+    _setup_test_filesystem(tmp_path)
+
+    result = set(
+        each_unignored_file(
+            Path(),
+            include=["src/**"],
+            exclude=["src/utils.py"],
+            mode="explicit",
+        )
+    )
+    assert result == {Path("src/__init__.py"), Path("src/main.py")}
+
+    # Sanity check: in "manual" mode the same include/exclude keeps utils.py,
+    # because there include overrides exclude.
+    manual = set(
+        each_unignored_file(
+            Path(),
+            include=["src/**"],
+            exclude=["src/utils.py"],
+            mode="manual",
+        )
+    )
+    assert Path("src/utils.py") in manual
+
+
+def test_explicit_ignores_gitignore(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    "explicit" mode does not read git ignore files (like "manual").
+    """
+    monkeypatch.chdir(tmp_path)
+    _setup_test_filesystem(tmp_path)
+
+    # src/.gitignore would hide utils.py in default/classic mode; explicit ignores
+    # it, so an include still picks utils.py (and the nested .gitignore itself).
+    (tmp_path / "src" / ".gitignore").write_text("utils.py\n")
+
+    result = set(each_unignored_file(Path(), include=["src/**"], mode="explicit"))
+    assert result == {
+        Path(s)
+        for s in [
+            "src/.gitignore",
+            "src/__init__.py",
+            "src/main.py",
+            "src/utils.py",
+        ]
+    }
+
+
 def test_nonexistent_patterns(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
