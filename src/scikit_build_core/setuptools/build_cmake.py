@@ -589,7 +589,9 @@ class BuildCMake(setuptools.Command):
             config.env.setdefault("MACOSX_DEPLOYMENT_TARGET", str(orig_macos))
 
         builder.config.build_type = (
-            "Debug" if self.debug else normalize_build_types(settings.cmake.build_type)[0]
+            "Debug"
+            if self.debug
+            else normalize_build_types(settings.cmake.build_type)[0]
         )
 
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
