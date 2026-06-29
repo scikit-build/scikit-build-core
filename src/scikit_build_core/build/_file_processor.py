@@ -50,22 +50,24 @@ def each_unignored_file(
     exclude: Sequence[str] = (),
     build_dir: str = "",
     *,
-    mode: Literal["classic", "default", "manual"],
+    mode: Literal["classic", "default", "manual", "explicit"],
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
     """
+    # "manual" and "explicit" do not consult git ignore files at all.
+    reads_gitignore = mode in {"classic", "default"}
+    explicit = mode == "explicit"
+
     global_exclude_lines = []
-    if mode != "manual":
+    if reads_gitignore:
         for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
             ignore_errs = [FileNotFoundError, NotADirectoryError]
             with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
                 global_exclude_lines += f.readlines()
 
     nested_excludes = (
-        {}
-        if mode == "manual"
-        else {
+        {
             Path(dirpath): pathspec.GitIgnoreSpec.from_lines(
                 (Path(dirpath) / filename).read_text(encoding="utf-8").splitlines()
             )
@@ -73,6 +75,8 @@ def each_unignored_file(
             for filename in filenames
             if filename == ".gitignore" and dirpath != "."
         }
+        if reads_gitignore
+        else {}
     )
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
@@ -123,6 +127,7 @@ def each_unignored_file(
                     user_exclude_spec,
                     nested_excludes,
                     is_path=True,
+                    explicit=explicit,
                 ):
                     # Only prune if no include pattern could match a file below
                     # this directory. A literal include deeper than the dir, or
@@ -143,6 +148,7 @@ def each_unignored_file(
                 user_exclude_spec,
                 nested_excludes,
                 is_path=False,
+                explicit=explicit,
             ):
                 yield path
 
@@ -188,8 +194,38 @@ def match_path(
     nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
     *,
     is_path: bool,
+    explicit: bool = False,
 ) -> bool:
     ptype = "directory" if is_path else "file"
+
+    # In "explicit" mode the set is purely include minus exclude: nothing is in
+    # unless an include matches it, and exclude is applied after (so it wins over
+    # include). git ignore files are not consulted (they are empty here anyway).
+    if explicit:
+        if (c := user_exclude_spec.check_file(p)).include:
+            assert c.index is not None
+            logger.debug(
+                "Excluding {} {} because it is explicitly excluded by the user with {!r}.",
+                ptype,
+                p,
+                user_exclude_spec.patterns[c.index].pattern,
+            )
+            return False
+        if (c := include_spec.check_file(p)).include:
+            assert c.index is not None
+            logger.debug(
+                "Including {} {} because it is explicitly included by rule {!r}.",
+                ptype,
+                p,
+                include_spec.patterns[c.index].pattern,
+            )
+            return True
+        logger.debug(
+            "Excluding {} {} because no include rule opts it in (explicit mode).",
+            ptype,
+            p,
+        )
+        return False
 
     # Always include something included
     if (c := include_spec.check_file(p)).include:

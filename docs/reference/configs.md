@@ -681,7 +681,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.inclusion-mode
 
-  :Type: ``"classic" | "default" | "manual"``
+  :Type: ``"classic" | "default" | "manual" | "explicit"``
   :Default: "default"  # "classic"
   :Config-settings: ``sdist.inclusion-mode`` or ``skbuild.sdist.inclusion-mode``
   :Environment variable: ``SKBUILD_SDIST_INCLUSION_MODE``
@@ -693,6 +693,9 @@ print(mk_skbuild_docs())
   * "default": Process the git ignore files. Shortcuts on ignored directories.
   * "classic": The behavior before 0.12, like "default" but does not shortcut directories.
   * "manual": No extra logic, based on include/exclude only.
+  * "explicit": Opt-in only. Nothing is included unless it matches an ``include``
+    pattern, and ``exclude`` is applied after, so it can trim included files back
+    out. Like "manual", git ignore files are not read. (1.0+)
 
   If you don't set this, it will be "default" unless you set the minimum
   version below 0.12, in which case it will be "classic".

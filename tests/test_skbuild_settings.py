@@ -1182,3 +1182,38 @@ def test_backcompat_sdist_resolve_symlinks(
 
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
     assert settings_reader.settings.sdist.resolve_symlinks == "all"
+
+
+def test_sdist_inclusion_mode_explicit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("SKBUILD_SDIST_INCLUSION_MODE", "explicit")
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert list(settings_reader.unrecognized_options()) == []
+    assert settings_reader.settings.sdist.inclusion_mode == "explicit"
+
+
+def test_sdist_inclusion_mode_explicit_requires_minimum_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    # Pin the reported version so the generic "backend too old" check passes and
+    # the explicit-specific 1.0 gate is what fires (CI builds report 0.1.dev*).
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.0.0"
+    )
+    monkeypatch.setenv("SKBUILD_SDIST_INCLUSION_MODE", "explicit")
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "0.12"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {})
+    assert "1.0" in capsys.readouterr().err
