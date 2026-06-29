@@ -269,6 +269,30 @@ def build_install_extra_build_types(
             )
             builder.install(install_dir, build_type=extra_build_type)
 
+    # A single-config rebuild shim shares this build directory and runs
+    # ``cmake --build`` without a ``--config`` (it was given the primary build
+    # type's options), so the loop above must not leave it on the last extra
+    # type. Restore the primary configuration so import-time rebuilds refresh it.
+    if (
+        len(build_types) > 1
+        and builder.config.single_config
+        and editable
+        and settings.editable.mode == "redirect"
+        and settings.editable.rebuild
+    ):
+        configure_wheel(
+            cmake=builder.config.cmake,
+            build_dir=builder.config.build_dir,
+            build_type=build_types[0],
+            settings=settings,
+            wheel_dirs=wheel_dirs,
+            install_dir=install_dir,
+            state=state,
+            name=name,
+            version=version,
+            extra_cache_entries=extra_cache_entries,
+        )
+
 
 def editable_rebuild_options(builder: Builder) -> tuple[list[str], list[str]]:
     """
