@@ -5,12 +5,18 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from packaging.specifiers import SpecifierSet
 
 from scikit_build_core.build import build_wheel
+from scikit_build_core.program_search import best_program, get_cmake_programs
 
 DIR = Path(__file__).parent.absolute()
 
 has_ninja = shutil.which("ninja") is not None
+# Ninja Multi-Config requires CMake 3.17+.
+has_multi_config = (
+    best_program(get_cmake_programs(), version=SpecifierSet(">=3.17")) is not None
+)
 
 
 @pytest.fixture(
@@ -22,7 +28,13 @@ has_ninja = shutil.which("ninja") is not None
         ),
         pytest.param(
             "Ninja Multi-Config",
-            marks=pytest.mark.skipif(not has_ninja, reason="ninja required"),
+            marks=[
+                pytest.mark.skipif(not has_ninja, reason="ninja required"),
+                pytest.mark.skipif(
+                    not has_multi_config,
+                    reason="CMake 3.17+ required for Ninja Multi-Config",
+                ),
+            ],
         ),
     ]
 )
