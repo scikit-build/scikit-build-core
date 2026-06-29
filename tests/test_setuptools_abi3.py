@@ -11,7 +11,7 @@ from scikit_build_core.setuptools.build_meta import build_wheel
 try:
     from vcs_versioning.overrides import GlobalOverrides
 except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing dependency
-    GlobalOverrides = None
+    GlobalOverrides = None  # type: ignore[assignment, misc]
 
 pytestmark = pytest.mark.setuptools
 
