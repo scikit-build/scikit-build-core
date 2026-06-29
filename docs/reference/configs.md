@@ -287,7 +287,9 @@ print(mk_skbuild_docs())
   Custom values can also be used.
 
   A list of build types can be given to build and install more than one
-  configuration into the same wheel (for example ``["Release", "Debug"]``).
+  configuration into the same wheel: ``["Release", "Debug"]`` in TOML, a
+  repeated ``-Ccmake.build-type=...`` config-setting, or ``Release;Debug`` as
+  an environment variable.
   Single-config generators (Ninja, Makefiles) are reconfigured in place for
   each extra build type; multi-config generators (Visual Studio, Xcode,
   Ninja Multi-Config) build each ``--config``. Every build type is installed
