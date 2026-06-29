@@ -723,8 +723,7 @@ print(mk_skbuild_docs())
   :Config-settings: ``sdist.resolve-symlinks`` or ``skbuild.sdist.resolve-symlinks``
   :Environment variable: ``SKBUILD_SDIST_RESOLVE_SYMLINKS``
 
-  Which symlinks to resolve in the SDist, copying file contents instead of
-  storing the symlink.
+  Which symlinks to resolve in the SDist, storing the target's contents instead.
 
   The modes are:
 

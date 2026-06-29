@@ -364,8 +364,7 @@ class SDistSettings:
         metadata=SettingsFieldMetadata(display_default='"all"'),
     )
     """
-    Which symlinks to resolve in the SDist, copying file contents instead of
-    storing the symlink.
+    Which symlinks to resolve in the SDist, storing the target's contents instead.
 
     The modes are:
 
