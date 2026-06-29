@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from scikit_build_core.build.std_wheel_build import (
+from scikit_build_core.build.common_wheel_helpers import (
     get_build_dir,
     get_install_dir,
     get_targetlib,

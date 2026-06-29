@@ -9,6 +9,14 @@ scikit\_build\_core.build package
 Submodules
 ----------
 
+scikit\_build\_core.build.common\_wheel\_helpers module
+-------------------------------------------------------
+
+.. automodule:: scikit_build_core.build.common_wheel_helpers
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.build.generate module
 -----------------------------------------
 
@@ -29,14 +37,6 @@ scikit\_build\_core.build.sdist module
 --------------------------------------
 
 .. automodule:: scikit_build_core.build.sdist
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-scikit\_build\_core.build.std\_wheel\_build module
---------------------------------------------------
-
-.. automodule:: scikit_build_core.build.std_wheel_build
    :members:
    :show-inheritance:
    :undoc-members:

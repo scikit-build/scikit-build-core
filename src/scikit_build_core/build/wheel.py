@@ -31,9 +31,7 @@ from ._pathutil import (
 )
 from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
-from .generate import generate_file_contents
-from .metadata import get_standard_metadata
-from .std_wheel_build import (
+from .common_wheel_helpers import (
     build_wheel,
     configure_wheel,
     editable_rebuild_options,
@@ -44,6 +42,8 @@ from .std_wheel_build import (
     install_wheel,
     prepare_wheel_dirs,
 )
+from .generate import generate_file_contents
+from .metadata import get_standard_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence

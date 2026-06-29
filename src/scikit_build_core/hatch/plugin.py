@@ -21,7 +21,7 @@ from ..build._editable import (
 )
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
-from ..build.std_wheel_build import (
+from ..build.common_wheel_helpers import (
     build_wheel,
     configure_wheel,
     editable_rebuild_options,
