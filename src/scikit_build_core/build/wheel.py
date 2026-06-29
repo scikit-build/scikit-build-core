@@ -149,11 +149,16 @@ def _build_wheel_impl(
     Handles one retry attempt if "failed" override present.
 
     ``cmake_install_dir`` (the ``sdist.install-dir`` path) runs a full
-    configure + build + install and copies the staged install tree there,
+    configure + build + install and copies the staged wheel trees there,
     returning before any wheel is assembled.
     """
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
-    if exit_after_config or cmake_install_dir is not None:
+    if cmake_install_dir is not None:
+        # The sdist.install-dir pass produces the tree later repackaged as the
+        # wheel, so it configures as a wheel build: if.state = "wheel" overrides
+        # and SKBUILD_STATE == "wheel" checks must apply, not the sdist ones.
+        state = "wheel"
+    elif exit_after_config:
         state = "sdist"
     elif wheel_directory is None:
         state = "metadata_editable" if editable else "metadata_wheel"
@@ -439,15 +444,26 @@ def _build_wheel_impl_impl(
                 editable=editable,
             )
 
-        # sdist.cmake = "install": vendor the staged install tree, then stop
-        # before any wheel is assembled.
+        # sdist.install-dir: vendor every staged wheel tree, then stop before any
+        # wheel is assembled. All trees are captured (not just the install
+        # prefix) so files placed via SKBUILD_HEADERS_DIR / SKBUILD_SCRIPTS_DIR /
+        # SKBUILD_DATA_DIR / SKBUILD_METADATA_DIR survive into the sdist. Each
+        # non-empty tree lands under its own subdirectory (platlib/purelib, data,
+        # headers, scripts, metadata) for the from-sdist force-include to remap;
+        # the discard tree ("null") and empty trees are skipped.
         if cmake_install_dir is not None:
             if cmake is None:
-                msg = "sdist.cmake = 'install' requires CMake; wheel.cmake must not be false during the SDist build"
+                msg = "sdist.install-dir requires CMake; wheel.cmake must not be false during the SDist build"
                 raise AssertionError(msg)
-            shutil.copytree(
-                install_dir, cmake_install_dir, dirs_exist_ok=True, symlinks=True
-            )
+            for tree_name, tree in wheel_dirs.items():
+                if tree_name == "null" or not any(tree.iterdir()):
+                    continue
+                shutil.copytree(
+                    tree,
+                    cmake_install_dir / tree_name,
+                    dirs_exist_ok=True,
+                    symlinks=True,
+                )
             return WheelImplReturn(wheel_filename="", settings=settings)
 
         assert wheel_directory is not None

@@ -377,9 +377,11 @@ class SDistSettings:
     SDist-relative directory to vendor the CMake install tree into.
 
     When set (and :confval:`sdist.cmake` is true), the SDist build runs a full
-    configure + build + install and writes the install tree here, rather than a
-    configure-only run. Force-include it back into the wheel from the unpacked
-    SDist, e.g. ``wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"``.
+    configure + build + install and writes the staged wheel trees here, one
+    subdirectory per tree (``platlib``/``purelib``, ``data``, ``headers``,
+    ``scripts``, ``metadata``). Force-include each back into the wheel from the
+    unpacked SDist, e.g.
+    ``wheel.force-include.".cmake-install/platlib" = "${SKBUILD_PLATLIB_DIR}"``.
     """
 
     force_include: Dict[str, str] = dataclasses.field(default_factory=dict)

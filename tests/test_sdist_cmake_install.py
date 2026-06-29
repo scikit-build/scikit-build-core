@@ -47,20 +47,25 @@ def test_sdist_cmake_install_vendors_install_tree(src: Path) -> None:
     with tarfile.open(sdist) as tar:
         names = set(tar.getnames())
         config = tar.extractfile(
-            "sdist_cmake_install-0.2.0/.cmake-install/sdist_cmake_install/cmake/example-config.cmake"
+            "sdist_cmake_install-0.2.0/.cmake-install/purelib/sdist_cmake_install/cmake/example-config.cmake"
         )
         assert config is not None
         config_text = config.read().decode()
 
     assert {
-        "sdist_cmake_install-0.2.0/.cmake-install/sdist_cmake_install/include/example.h",
-        "sdist_cmake_install-0.2.0/.cmake-install/sdist_cmake_install/cmake/example-config.cmake",
+        "sdist_cmake_install-0.2.0/.cmake-install/purelib/sdist_cmake_install/include/example.h",
+        "sdist_cmake_install-0.2.0/.cmake-install/purelib/sdist_cmake_install/cmake/example-config.cmake",
+        # A tree outside the install prefix (headers) is captured too.
+        "sdist_cmake_install-0.2.0/.cmake-install/headers/example.h",
         # The original sources are still shipped too.
         "sdist_cmake_install-0.2.0/CMakeLists.txt",
         "sdist_cmake_install-0.2.0/pyproject.toml",
     } <= names
     # The configure-time substitution was captured (proves install, not just configure).
     assert 'set(EXAMPLE_VERSION "0.2.0")' in config_text
+    # The install pass runs as a "wheel" build (its output becomes the wheel),
+    # so if.state = "wheel" overrides and SKBUILD_STATE checks apply.
+    assert 'set(EXAMPLE_STATE "wheel")' in config_text
 
 
 def test_wheel_from_sdist_needs_no_cmake(
@@ -99,6 +104,8 @@ def test_wheel_from_sdist_needs_no_cmake(
 
     assert "sdist_cmake_install/include/example.h" in names
     assert "sdist_cmake_install/cmake/example-config.cmake" in names
+    # The headers tree (outside the install prefix) made it through too.
+    assert any(n.endswith(".data/headers/example.h") for n in names)
     # The vendored, version-stamped config -- only reproducible if CMake had run
     # during the sdist build, not now.
     assert 'set(EXAMPLE_VERSION "0.2.0")' in config_text

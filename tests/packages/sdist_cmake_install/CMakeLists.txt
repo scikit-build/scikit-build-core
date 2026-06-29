@@ -16,3 +16,8 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/example.h"
         DESTINATION sdist_cmake_install/include)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/example-config.cmake"
         DESTINATION sdist_cmake_install/cmake)
+
+# Also install into the headers wheel tree, outside the install prefix, to
+# exercise capturing trees beyond platlib/purelib (SKBUILD_HEADERS_DIR et al.).
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/example.h"
+        DESTINATION "${SKBUILD_HEADERS_DIR}")

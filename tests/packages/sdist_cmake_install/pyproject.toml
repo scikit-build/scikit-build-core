@@ -17,7 +17,10 @@ sdist.install-dir = ".cmake-install"
 wheel.platlib = false
 wheel.license-files = []
 
+# The vendored tree keeps one subdirectory per wheel tree; from the unpacked
+# sdist, remap each back to its wheel tree with no CMake.
 [[tool.scikit-build.overrides]]
 if.from-sdist = true
 wheel.cmake = false
-wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"
+wheel.force-include.".cmake-install/purelib" = "${SKBUILD_PURELIB_DIR}"
+wheel.force-include.".cmake-install/headers" = "${SKBUILD_HEADERS_DIR}"

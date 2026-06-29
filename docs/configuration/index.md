@@ -284,8 +284,21 @@ sdist.install-dir = ".cmake-install"
 [[tool.scikit-build.overrides]]
 if.from-sdist = true       # only when building from an unpacked SDist
 wheel.cmake = false        # no CMake: a pure py3-none-any wheel
-wheel.force-include.".cmake-install" = "${SKBUILD_PLATLIB_DIR}"
+wheel.force-include.".cmake-install/platlib" = "${SKBUILD_PLATLIB_DIR}"
 ```
+
+The vendored tree keeps one subdirectory per wheel tree, so anything CMake
+installs into the `data`, `headers`, `scripts`, or `metadata` trees (via the
+`SKBUILD_*_DIR` cache variables) is preserved too. Map back each tree your
+project installs into — for example, a project using headers and scripts adds:
+
+```toml
+wheel.force-include.".cmake-install/headers" = "${SKBUILD_HEADERS_DIR}"
+wheel.force-include.".cmake-install/scripts" = "${SKBUILD_SCRIPTS_DIR}"
+```
+
+The lib subdirectory is named `platlib` or `purelib` to match the wheel the
+SDist build produced (use `purelib` if you set `wheel.platlib = false`).
 
 Building a wheel directly from the source tree is unchanged — `from-sdist` is
 false, so the override does not apply and CMake runs as usual. Only the
