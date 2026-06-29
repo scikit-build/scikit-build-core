@@ -33,7 +33,15 @@ from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
-from .std_wheel_build import configure_build_install, prepare_wheel_dirs
+from .std_wheel_build import (
+    build_install_wheel,
+    configure_wheel,
+    get_build_dir,
+    get_install_dir,
+    get_targetlib,
+    get_wheel_tag,
+    prepare_wheel_dirs,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -275,19 +283,20 @@ def _build_wheel_impl_impl(
         wheel_dir = build_tmp_folder / "wheel"
         wheel_variant = get_wheel_variant(settings, pyproject, metadata)
 
-        wheel_layout = prepare_wheel_dirs(
-            settings=settings,
-            wheel_root=wheel_dir,
-            build_tmp_folder=build_tmp_folder,
+        targetlib = get_targetlib(settings)
+        tags = get_wheel_tag(settings, targetlib=targetlib)
+        build_dir = get_build_dir(
+            settings,
+            tags=tags,
             state=state,
             editable=editable,
             has_cmake=cmake is not None,
+            fallback=build_tmp_folder / "build",
         )
-        tags = wheel_layout.tags
-        build_dir = wheel_layout.build_dir
-        wheel_dirs = wheel_layout.wheel_dirs
-        install_dir = wheel_layout.install_dir
-        targetlib = wheel_layout.targetlib
+        wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
+        install_dir = get_install_dir(
+            settings, wheel_dirs=wheel_dirs, targetlib=targetlib
+        )
 
         # The metadata-only and full-wheel paths build identical WheelWriters
         # except for the output folder; share a single constructor.
@@ -389,7 +398,7 @@ def _build_wheel_impl_impl(
         install_options: list[str] = []
 
         if cmake is not None:
-            _builder, build_options, install_options = configure_build_install(
+            builder = configure_wheel(
                 cmake=cmake,
                 settings=settings,
                 wheel_dirs=wheel_dirs,
@@ -398,11 +407,12 @@ def _build_wheel_impl_impl(
                 state=state,
                 name=metadata.name,
                 version=metadata.version,
-                editable=editable,
-                exit_after_config=exit_after_config,
             )
             if exit_after_config:
                 return WheelImplReturn("", settings=settings)
+            build_options, install_options = build_install_wheel(
+                builder, install_dir=install_dir, editable=editable
+            )
 
         assert wheel_directory is not None
 

@@ -21,7 +21,15 @@ from ..build._editable import (
 )
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
-from ..build.std_wheel_build import configure_build_install, prepare_wheel_dirs
+from ..build.std_wheel_build import (
+    build_install_wheel,
+    configure_wheel,
+    get_build_dir,
+    get_install_dir,
+    get_targetlib,
+    get_wheel_tag,
+    prepare_wheel_dirs,
+)
 from ..builder.get_requires import GetRequires
 from ..cmake import CMake
 from ..settings.skbuild_model import ScikitBuildSettings
@@ -163,27 +171,28 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         self.__tmp_dir = Path(tempfile.mkdtemp()).resolve()
         wheel_dir = self.__tmp_dir / "wheel"
 
-        wheel_layout = prepare_wheel_dirs(
-            settings=settings,
-            wheel_root=wheel_dir,
-            build_tmp_folder=self.__tmp_dir,
+        # _validate guarantees wheel.cmake is true and rejects a falsy
+        # wheel.platlib (purelib), so this is always a platlib build.
+        targetlib = get_targetlib(settings)
+        assert targetlib == "platlib"
+        tags = get_wheel_tag(settings, targetlib=targetlib)
+        build_dir = get_build_dir(
+            settings,
+            tags=tags,
             state=state,
             editable=editable,
             has_cmake=True,
+            fallback=self.__tmp_dir / "build",
         )
-        tags = wheel_layout.tags
-        build_dir = wheel_layout.build_dir
-        wheel_dirs = wheel_layout.wheel_dirs
-        install_dir = wheel_layout.install_dir
-        targetlib = wheel_layout.targetlib
-        # _validate guarantees wheel.cmake is true and rejects a falsy
-        # wheel.platlib (purelib), so this is always a platlib build.
-        assert targetlib == "platlib"
+        wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
+        install_dir = get_install_dir(
+            settings, wheel_dirs=wheel_dirs, targetlib=targetlib
+        )
 
         build_data["tag"] = str(tags)
         build_data["pure_python"] = False
 
-        _builder, build_options, install_options = configure_build_install(
+        builder = configure_wheel(
             cmake=cmake,
             settings=settings,
             wheel_dirs=wheel_dirs,
@@ -192,10 +201,12 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             state=state,
             name=self.build_config.builder.metadata.name,
             version=Version(self.build_config.builder.metadata.version),
-            editable=editable,
             extra_cache_entries={
                 "SKBUILD_HATCHLING": importlib.metadata.version("hatchling")
             },
+        )
+        build_options, install_options = build_install_wheel(
+            builder, install_dir=install_dir, editable=editable
         )
 
         files = list(wheel_dirs["headers"].iterdir())

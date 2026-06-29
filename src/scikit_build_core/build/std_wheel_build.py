@@ -10,7 +10,6 @@ configure/build/install. The wheel-assembly side (WheelWriter vs hatchling
 
 from __future__ import annotations
 
-import dataclasses
 import os
 import sysconfig
 from pathlib import Path
@@ -36,46 +35,40 @@ if TYPE_CHECKING:
     from ..cmake import CMake
     from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["WheelDirs", "configure_build_install", "prepare_wheel_dirs"]
+__all__ = [
+    "build_install_wheel",
+    "configure_wheel",
+    "get_build_dir",
+    "get_install_dir",
+    "get_targetlib",
+    "get_wheel_tag",
+    "prepare_wheel_dirs",
+]
 
 WheelState = Literal[
     "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
 ]
+TargetLib = Literal["platlib", "purelib"]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
-@dataclasses.dataclass
-class WheelDirs:
-    wheel_dirs: dict[str, Path]
-    install_dir: Path
-    build_dir: Path
-    tags: WheelTag
-    targetlib: str
-
-
-def prepare_wheel_dirs(
-    *,
-    settings: ScikitBuildSettings,
-    wheel_root: Path,
-    build_tmp_folder: Path,
-    state: WheelState,
-    editable: bool,
-    has_cmake: bool,
-) -> WheelDirs:
+def get_targetlib(settings: ScikitBuildSettings) -> TargetLib:
     """
-    Compute the wheel tag, build directory, the ``wheel_dirs`` layout, and the
-    install directory. Creates the ``wheel_dirs`` directories.
+    The wheel lib directory the build targets. ``wheel.platlib`` forces the
+    choice; otherwise a CMake build is platlib and a Python-only build purelib.
     """
     if settings.wheel.platlib is None:
-        targetlib = "platlib" if settings.wheel.cmake else "purelib"
-    else:
-        targetlib = "platlib" if settings.wheel.platlib else "purelib"
+        return "platlib" if settings.wheel.cmake else "purelib"
+    return "platlib" if settings.wheel.platlib else "purelib"
 
+
+def get_wheel_tag(settings: ScikitBuildSettings, *, targetlib: TargetLib) -> WheelTag:
+    """Compute the best wheel tag for the current environment."""
     cmake_args = get_cmake_args_from_settings(settings, os.environ)
-    tags = WheelTag.compute_best(
+    return WheelTag.compute_best(
         archs_to_tags(get_archs(os.environ, cmake_args)),
         settings.wheel.py_api,
         expand_macos=settings.wheel.expand_macos_universal_tags,
@@ -85,20 +78,36 @@ def prepare_wheel_dirs(
         cmake_args=cmake_args,
     )
 
+
+def get_build_dir(
+    settings: ScikitBuildSettings,
+    *,
+    tags: WheelTag,
+    state: WheelState,
+    editable: bool,
+    has_cmake: bool,
+    fallback: Path,
+) -> Path:
+    """
+    Where CMake configures and builds: the source dir for inplace editable
+    builds, the (formatted) configured ``build-dir``, or ``fallback`` otherwise.
+    """
     if has_cmake and editable and settings.editable.mode == "inplace":
         build_dir = Path(settings.cmake.source_dir)
-    else:
-        build_dir = (
-            Path(
-                settings.build_dir.format(
-                    **pyproject_format(settings=settings, tags=tags, state=state)
-                )
+    elif settings.build_dir:
+        build_dir = Path(
+            settings.build_dir.format(
+                **pyproject_format(settings=settings, tags=tags, state=state)
             )
-            if settings.build_dir
-            else build_tmp_folder / "build"
         )
+    else:
+        build_dir = fallback
     logger.info("Build directory: {}", build_dir.resolve())
+    return build_dir
 
+
+def prepare_wheel_dirs(wheel_root: Path, *, targetlib: TargetLib) -> dict[str, Path]:
+    """Create the staging wheel tree under ``wheel_root`` and return its dirs."""
     wheel_dirs = {
         targetlib: wheel_root / targetlib,
         "data": wheel_root / "data",
@@ -109,46 +118,40 @@ def prepare_wheel_dirs(
     }
     for d in wheel_dirs.values():
         d.mkdir(parents=True)
+    return wheel_dirs
 
-    install_base, install_rest = resolve_wheel_tree(
+
+def get_install_dir(
+    settings: ScikitBuildSettings,
+    *,
+    wheel_dirs: Mapping[str, Path],
+    targetlib: TargetLib,
+) -> Path:
+    """Resolve ``wheel.install-dir`` to an absolute path inside the wheel tree."""
+    base, rest = resolve_wheel_tree(
         settings.wheel.install_dir,
         wheel_dirs=wheel_dirs,
         targetlib=targetlib,
         experimental=settings.experimental,
     )
-    install_dir = install_base / install_rest
-
-    return WheelDirs(
-        wheel_dirs=wheel_dirs,
-        install_dir=install_dir,
-        build_dir=build_dir,
-        tags=tags,
-        targetlib=targetlib,
-    )
+    return base / rest
 
 
-def configure_build_install(
+def configure_wheel(
     *,
     cmake: CMake,
     settings: ScikitBuildSettings,
-    wheel_dirs: dict[str, Path],
+    wheel_dirs: Mapping[str, Path],
     install_dir: Path,
     build_dir: Path,
     state: WheelState,
     name: str,
     version: Version,
-    editable: bool,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
-    exit_after_config: bool = False,
-) -> tuple[Builder, list[str], list[str]]:
+) -> Builder:
     """
-    Configure, build, and install the CMake project into ``wheel_dirs``.
-
-    Returns the :class:`~scikit_build_core.builder.builder.Builder` along with the ``build_options`` and
-    ``install_options`` (``--config``/``-v``) derived from the resolved
-    generator. The install step is skipped for editable inplace builds. When
-    ``exit_after_config`` is set, returns right after configuring (with empty
-    option lists) so callers can stop early.
+    Configure the CMake project, returning the
+    :class:`~scikit_build_core.builder.builder.Builder` to build with.
     """
     config = CMaker(
         cmake,
@@ -174,13 +177,20 @@ def configure_build_install(
         name=name,
         version=version,
     )
+    return builder
 
-    build_options: list[str] = []
-    install_options: list[str] = []
 
-    if exit_after_config:
-        return builder, build_options, install_options
+def build_install_wheel(
+    builder: Builder, *, install_dir: Path, editable: bool
+) -> tuple[list[str], list[str]]:
+    """
+    Build the configured project and install it into the wheel tree.
 
+    Returns the ``build_options`` and ``install_options`` (``--config``/``-v``)
+    derived from the resolved generator. The install step is skipped for editable
+    inplace builds, which load from the build tree directly.
+    """
+    settings = builder.settings
     default_gen = (
         "MSVC" if sysconfig.get_platform().startswith("win") else "Default Generator"
     )
@@ -195,10 +205,12 @@ def configure_build_install(
         rich_print("{green}***", "{bold}Installing project into wheel...")
         builder.install(install_dir)
 
+    build_options: list[str] = []
+    install_options: list[str] = []
     if not builder.config.single_config and builder.config.build_type:
         build_options += ["--config", builder.config.build_type]
         install_options += ["--config", builder.config.build_type]
-    if builder.settings.cmake.verbose:
+    if settings.cmake.verbose:
         build_options.append("-v")
 
-    return builder, build_options, install_options
+    return build_options, install_options
