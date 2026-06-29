@@ -43,14 +43,6 @@ def normalize_build_types(build_type: Union[str, List[str]]) -> List[str]:
     return build_type or [""]
 
 
-def primary_build_type(build_type: Union[str, List[str]]) -> str:
-    """
-    The first (primary) build type, used wherever a single build type is needed
-    (for example the ``{build_type}`` format variable).
-    """
-    return normalize_build_types(build_type)[0]
-
-
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: Optional[str]
     deprecated: bool
