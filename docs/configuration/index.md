@@ -333,10 +333,10 @@ This matches the cache variables available from within CMake.
 
 When passing this through PEP 517 `config-settings` on a command line, quote it
 so the shell does not expand `${SKBUILD_DATA_DIR}` as an environment variable
-(e.g. `--config-settings='wheel.install-dir=${SKBUILD_DATA_DIR}/mypackage'`).
+(e.g. `-C 'wheel.install-dir=${SKBUILD_DATA_DIR}/mypackage'`).
 
 The older leading-slash spelling (`/data`, `/scripts`, ...) selects the same
-trees but is still gated behind `experimental = true`.
+trees but is gated behind `experimental = true`, and deprecated.
 
 :::
 
