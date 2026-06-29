@@ -46,14 +46,10 @@ def get_standard_metadata(
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
 
-    # Handle the deprecated tool.scikit-build.metadata table, then the standard
+    # Handle the legacy tool.scikit-build.metadata table, then the standard
     # top-level [[tool.dynamic-metadata]] entries (dynamic-metadata 0.3). Both
     # forms may be present; the legacy table is resolved first.
     if settings.metadata:
-        logger.warning(
-            "tool.scikit-build.metadata is deprecated; move your providers to the "
-            "standard top-level [[tool.dynamic-metadata]] array of tables"
-        )
         project = process_legacy_dynamic_metadata(project, settings.metadata)
 
     entries = new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
