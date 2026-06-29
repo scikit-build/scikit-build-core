@@ -34,12 +34,14 @@ from ._wheelfile import WheelMetadata, WheelWriter
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
 from .std_wheel_build import (
-    build_install_wheel,
+    build_wheel,
     configure_wheel,
+    editable_rebuild_options,
     get_build_dir,
     get_install_dir,
     get_targetlib,
     get_wheel_tag,
+    install_wheel,
     prepare_wheel_dirs,
 )
 
@@ -410,9 +412,9 @@ def _build_wheel_impl_impl(
             )
             if exit_after_config:
                 return WheelImplReturn("", settings=settings)
-            build_options, install_options = build_install_wheel(
-                builder, install_dir=install_dir, editable=editable
-            )
+            build_wheel(builder)
+            install_wheel(builder, install_dir=install_dir, editable=editable)
+            build_options, install_options = editable_rebuild_options(builder)
 
         assert wheel_directory is not None
 

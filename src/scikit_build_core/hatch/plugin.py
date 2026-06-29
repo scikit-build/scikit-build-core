@@ -22,12 +22,14 @@ from ..build._editable import (
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
 from ..build.std_wheel_build import (
-    build_install_wheel,
+    build_wheel,
     configure_wheel,
+    editable_rebuild_options,
     get_build_dir,
     get_install_dir,
     get_targetlib,
     get_wheel_tag,
+    install_wheel,
     prepare_wheel_dirs,
 )
 from ..builder.get_requires import GetRequires
@@ -205,9 +207,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 "SKBUILD_HATCHLING": importlib.metadata.version("hatchling")
             },
         )
-        build_options, install_options = build_install_wheel(
-            builder, install_dir=install_dir, editable=editable
-        )
+        build_wheel(builder)
+        install_wheel(builder, install_dir=install_dir, editable=editable)
+        build_options, install_options = editable_rebuild_options(builder)
 
         files = list(wheel_dirs["headers"].iterdir())
         if files:

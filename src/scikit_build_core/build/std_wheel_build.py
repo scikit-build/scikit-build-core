@@ -36,12 +36,14 @@ if TYPE_CHECKING:
     from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [
-    "build_install_wheel",
+    "build_wheel",
     "configure_wheel",
+    "editable_rebuild_options",
     "get_build_dir",
     "get_install_dir",
     "get_targetlib",
     "get_wheel_tag",
+    "install_wheel",
     "prepare_wheel_dirs",
 ]
 
@@ -180,17 +182,8 @@ def configure_wheel(
     return builder
 
 
-def build_install_wheel(
-    builder: Builder, *, install_dir: Path, editable: bool
-) -> tuple[list[str], list[str]]:
-    """
-    Build the configured project and install it into the wheel tree.
-
-    Returns the ``build_options`` and ``install_options`` (``--config``/``-v``)
-    derived from the resolved generator. The install step is skipped for editable
-    inplace builds, which load from the build tree directly.
-    """
-    settings = builder.settings
+def build_wheel(builder: Builder) -> None:
+    """Build the configured CMake project."""
     default_gen = (
         "MSVC" if sysconfig.get_platform().startswith("win") else "Default Generator"
     )
@@ -201,16 +194,32 @@ def build_install_wheel(
     )
     builder.build(build_args=[])
 
-    if not (editable and settings.editable.mode == "inplace"):
-        rich_print("{green}***", "{bold}Installing project into wheel...")
-        builder.install(install_dir)
 
+def install_wheel(builder: Builder, *, install_dir: Path, editable: bool) -> None:
+    """
+    Install the built project into the wheel tree.
+
+    Skipped for editable inplace builds, which load from the build tree directly.
+    """
+    if editable and builder.settings.editable.mode == "inplace":
+        return
+    rich_print("{green}***", "{bold}Installing project into wheel...")
+    builder.install(install_dir)
+
+
+def editable_rebuild_options(builder: Builder) -> tuple[list[str], list[str]]:
+    """
+    Flags so an editable rebuild reproduces this build's config selection.
+
+    Returns ``(build_options, install_options)`` for the redirect shim's runtime
+    ``cmake --build`` / ``cmake --install``. Deliberately a subset: it excludes
+    ``--prefix`` (the shim supplies its own), ``--strip``, and components.
+    """
     build_options: list[str] = []
     install_options: list[str] = []
     if not builder.config.single_config and builder.config.build_type:
         build_options += ["--config", builder.config.build_type]
         install_options += ["--config", builder.config.build_type]
-    if settings.cmake.verbose:
+    if builder.settings.cmake.verbose:
         build_options.append("-v")
-
     return build_options, install_options
