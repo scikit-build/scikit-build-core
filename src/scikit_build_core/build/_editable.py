@@ -156,15 +156,13 @@ def get_packages(
             return dict(packages)
         return {str(Path(p).name): p for p in packages}
 
-    # ``name`` is the raw distribution name. A '.' marks a namespace-package
-    # (PEP 420) boundary and maps to a directory separator; '-' (and the
-    # already-equivalent '_') within a component become an import-safe '_'.
+    # ``name`` is the raw distribution name. A '.' may mark a namespace-package
+    # (PEP 420) boundary; '-' always becomes '_' (importable)
     parts = [part.replace("-", "_") for part in name.split(".")]
 
-    # The flat, single-directory name ("ns_pkg") is tried first so ordinary
-    # packages keep their existing behavior exactly. A dotted name also tries
-    # the nested namespace layout ("ns/pkg"), where only the leaf needs an
-    # ``__init__`` -- the namespace dirs above it intentionally have none.
+    # The flat, single-directory name ("ns_pkg") is tried first. A dotted name
+    # also tries the nested namespace layout ("ns/pkg"), where only the leaf
+    # needs an ``__init__``.
     rel_candidates = ["_".join(parts)]
     if len(parts) > 1:
         rel_candidates.append("/".join(parts))
