@@ -150,8 +150,9 @@ def _run_configure(
     name: str,
     version: Version,
     extra_cache_entries: Mapping[str, str | Path] | None,
+    build_type: str | None = None,
 ) -> None:
-    """Run ``cmake`` configure for ``builder.config.build_type``."""
+    """Run ``cmake`` configure, optionally overriding the build type."""
     # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
     # Otherwise `cmake --install --prefix` would work by itself
     defines = {"CMAKE_INSTALL_PREFIX": install_dir}
@@ -166,6 +167,7 @@ def _run_configure(
         cache_entries=cache_entries,
         name=name,
         version=version,
+        build_type=build_type,
     )
 
 
@@ -254,13 +256,12 @@ def build_install_extra_build_types(
     each extra build type; multi-config generators just build the extra
     ``--config``. Everything installs to the same prefix.
 
-    Call this after the primary build and install, and after
-    :func:`editable_rebuild_options` (which reads ``builder.config.build_type``,
-    mutated here).
+    The build type is passed per call, so ``builder.config.build_type`` keeps
+    pointing at the primary build type. Call this after the primary build and
+    install.
     """
     build_types = normalize_build_types(settings.cmake.build_type)
     for extra_build_type in build_types[1:]:
-        builder.config.build_type = extra_build_type
         if builder.config.single_config:
             rich_print(
                 "{green}***",
@@ -274,18 +275,19 @@ def build_install_extra_build_types(
                 name=name,
                 version=version,
                 extra_cache_entries=extra_cache_entries,
+                build_type=extra_build_type,
             )
         rich_print(
             "{green}***",
             f"{{bold}}Building {{blue}}{extra_build_type}{{default}} project...",
         )
-        builder.build(build_args=[])
+        builder.build(build_args=[], build_type=extra_build_type)
         if not (editable and settings.editable.mode == "inplace"):
             rich_print(
                 "{green}***",
                 f"{{bold}}Installing {{blue}}{extra_build_type}{{default}} project into wheel...",
             )
-            builder.install(install_dir)
+            builder.install(install_dir, build_type=extra_build_type)
 
 
 def editable_rebuild_options(builder: Builder) -> tuple[list[str], list[str]]:

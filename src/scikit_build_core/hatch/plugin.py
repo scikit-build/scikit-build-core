@@ -211,7 +211,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         )
         build_wheel(builder)
         install_wheel(builder, install_dir=install_dir, editable=editable)
-        # Read the primary build type before extra build types mutate it.
         build_options, install_options = editable_rebuild_options(builder)
         build_install_extra_build_types(
             builder,

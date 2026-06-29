@@ -266,7 +266,11 @@ class CMaker:
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
         toolchain: os.PathLike[str] | None = None,
+        build_type: str | None = None,
     ) -> None:
+        # ``build_type`` overrides ``self.build_type`` for this call only, e.g.
+        # to reconfigure a single-config generator for an extra build type.
+        build_type = self.build_type if build_type is None else build_type
         _cmake_args = self._compute_cmake_args(defines or {}, toolchain)
         all_args = [*_cmake_args, *cmake_args]
 
@@ -274,8 +278,8 @@ class CMaker:
         if gen:
             self.single_config = gen == "Ninja" or "Makefiles" in gen
 
-        if self.single_config and self.build_type:
-            all_args.insert(2, f"-DCMAKE_BUILD_TYPE:STRING={self.build_type}")
+        if self.single_config and build_type:
+            all_args.insert(2, f"-DCMAKE_BUILD_TYPE:STRING={build_type}")
 
         try:
             Run(env=self.env).live(self.cmake, *all_args)
@@ -294,12 +298,14 @@ class CMaker:
         self,
         *,
         verbose: bool,
+        build_type: str | None = None,
     ) -> Generator[str, None, None]:
+        build_type = self.build_type if build_type is None else build_type
         if verbose:
             yield "-v"
-        if self.build_type and not self.single_config:
+        if build_type and not self.single_config:
             yield "--config"
-            yield self.build_type
+            yield build_type
 
     def build(
         self,
@@ -307,8 +313,11 @@ class CMaker:
         *,
         targets: Sequence[str] = (),
         verbose: bool = False,
+        build_type: str | None = None,
     ) -> None:
-        local_args = list(self._compute_build_args(verbose=verbose))
+        local_args = list(
+            self._compute_build_args(verbose=verbose, build_type=build_type)
+        )
         if not targets:
             self._build(*local_args, *build_args)
             return
@@ -330,17 +339,21 @@ class CMaker:
         strip: bool = False,
         components: Sequence[str] = (),
         targets: Sequence[str] = (),
+        build_type: str | None = None,
     ) -> None:
+        build_type = self.build_type if build_type is None else build_type
         opts = ["--prefix", str(prefix)] if prefix else []
-        if not self.single_config and self.build_type:
-            opts += ["--config", self.build_type]
+        if not self.single_config and build_type:
+            opts += ["--config", build_type]
         if strip:
             opts.append("--strip")
 
         # These are "built", so --prefix/--strip/--component do not apply.
         for target in targets:
             logger.info("Installing target {}", target)
-            build_args = list(self._compute_build_args(verbose=False))
+            build_args = list(
+                self._compute_build_args(verbose=False, build_type=build_type)
+            )
             self._build(*build_args, "--target", target)
 
         if not components:

@@ -193,6 +193,7 @@ class Builder:
         version: Version | None = None,
         limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
+        build_type: str | None = None,
     ) -> None:
         cmake_defines = {
             k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else str(v)
@@ -381,9 +382,12 @@ class Builder:
             defines=cmake_defines,
             cmake_args=[*self.get_cmake_args(), *configure_args],
             toolchain=self.settings.cmake.toolchain_file,
+            build_type=build_type,
         )
 
-    def build(self, build_args: Sequence[str]) -> None:
+    def build(
+        self, build_args: Sequence[str], *, build_type: str | None = None
+    ) -> None:
         build_tool_args = self.settings.build.tool_args
         if build_tool_args:
             build_args = [*build_args, "--", *build_tool_args]
@@ -392,9 +396,12 @@ class Builder:
             build_args=build_args,
             targets=self.settings.build.targets,
             verbose=self.settings.build.verbose,
+            build_type=build_type,
         )
 
-    def install(self, install_dir: Path | None) -> None:
+    def install(
+        self, install_dir: Path | None, *, build_type: str | None = None
+    ) -> None:
         """
         Install to a path.
 
@@ -407,5 +414,9 @@ class Builder:
         strip = self.settings.install.strip
         assert strip is not None
         self.config.install(
-            install_dir, strip=strip, components=components, targets=targets
+            install_dir,
+            strip=strip,
+            components=components,
+            targets=targets,
+            build_type=build_type,
         )
