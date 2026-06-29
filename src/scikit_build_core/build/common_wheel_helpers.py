@@ -141,18 +141,44 @@ def get_install_dir(
     return base / rest
 
 
-def _run_configure(
-    builder: Builder,
+def configure_wheel(
     *,
+    cmake: CMake,
+    settings: ScikitBuildSettings,
     wheel_dirs: Mapping[str, Path],
     install_dir: Path,
+    build_dir: Path,
     state: WheelState,
     name: str,
     version: Version,
-    extra_cache_entries: Mapping[str, str | Path] | None,
+    extra_cache_entries: Mapping[str, str | Path] | None = None,
     build_type: str | None = None,
-) -> None:
-    """Run ``cmake`` configure, optionally overriding the build type."""
+) -> Builder:
+    """
+    Configure the CMake project, returning the
+    :class:`~scikit_build_core.builder.builder.Builder` to build with.
+
+    Defaults to the primary (first) build type. It is rerunnable: pass an extra
+    ``build_type`` to reconfigure a single-config generator into a fresh builder
+    for that build type (see :func:`build_install_extra_build_types`).
+    """
+    if build_type is None:
+        build_type = normalize_build_types(settings.cmake.build_type)[0]
+        rich_print("{green}***", "{bold}Configuring CMake...")
+    else:
+        rich_print(
+            "{green}***",
+            f"{{bold}}Reconfiguring CMake for {{blue}}{build_type}{{default}}...",
+        )
+
+    config = CMaker(
+        cmake,
+        source_dir=settings.cmake.source_dir,
+        build_dir=build_dir,
+        build_type=build_type,
+    )
+    builder = Builder(settings=settings, config=config)
+
     # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
     # Otherwise `cmake --install --prefix` would work by itself
     defines = {"CMAKE_INSTALL_PREFIX": install_dir}
@@ -167,47 +193,6 @@ def _run_configure(
         cache_entries=cache_entries,
         name=name,
         version=version,
-        build_type=build_type,
-    )
-
-
-def configure_wheel(
-    *,
-    cmake: CMake,
-    settings: ScikitBuildSettings,
-    wheel_dirs: Mapping[str, Path],
-    install_dir: Path,
-    build_dir: Path,
-    state: WheelState,
-    name: str,
-    version: Version,
-    extra_cache_entries: Mapping[str, str | Path] | None = None,
-) -> Builder:
-    """
-    Configure the CMake project, returning the
-    :class:`~scikit_build_core.builder.builder.Builder` to build with.
-
-    Only the primary (first) build type is configured here; extra build types
-    are handled by :func:`build_install_extra_build_types` after the primary
-    build and install.
-    """
-    config = CMaker(
-        cmake,
-        source_dir=settings.cmake.source_dir,
-        build_dir=build_dir,
-        build_type=normalize_build_types(settings.cmake.build_type)[0],
-    )
-    builder = Builder(settings=settings, config=config)
-
-    rich_print("{green}***", "{bold}Configuring CMake...")
-    _run_configure(
-        builder,
-        wheel_dirs=wheel_dirs,
-        install_dir=install_dir,
-        state=state,
-        name=name,
-        version=version,
-        extra_cache_entries=extra_cache_entries,
     )
     return builder
 
@@ -252,30 +237,25 @@ def build_install_extra_build_types(
     """
     Build and install build types beyond the primary into the same wheel.
 
-    Single-config generators (Ninja, Makefiles) are reconfigured in place for
-    each extra build type; multi-config generators just build the extra
-    ``--config``. Everything installs to the same prefix.
-
-    The build type is passed per call, so ``builder.config.build_type`` keeps
-    pointing at the primary build type. Call this after the primary build and
-    install.
+    Single-config generators (Ninja, Makefiles) are reconfigured into a fresh
+    builder for each extra build type; multi-config generators just build the
+    extra ``--config`` with the original builder. Everything installs to the same
+    prefix. Call this after the primary build and install.
     """
     build_types = normalize_build_types(settings.cmake.build_type)
     for extra_build_type in build_types[1:]:
         if builder.config.single_config:
-            rich_print(
-                "{green}***",
-                f"{{bold}}Reconfiguring CMake for {{blue}}{extra_build_type}{{default}}...",
-            )
-            _run_configure(
-                builder,
+            builder = configure_wheel(
+                cmake=builder.config.cmake,
+                build_dir=builder.config.build_dir,
+                build_type=extra_build_type,
+                settings=settings,
                 wheel_dirs=wheel_dirs,
                 install_dir=install_dir,
                 state=state,
                 name=name,
                 version=version,
                 extra_cache_entries=extra_cache_entries,
-                build_type=extra_build_type,
             )
         rich_print(
             "{green}***",

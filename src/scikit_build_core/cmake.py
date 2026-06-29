@@ -266,11 +266,7 @@ class CMaker:
         defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
         cmake_args: Sequence[str] = (),
         toolchain: os.PathLike[str] | None = None,
-        build_type: str | None = None,
     ) -> None:
-        # ``build_type`` overrides ``self.build_type`` for this call only, e.g.
-        # to reconfigure a single-config generator for an extra build type.
-        build_type = self.build_type if build_type is None else build_type
         _cmake_args = self._compute_cmake_args(defines or {}, toolchain)
         all_args = [*_cmake_args, *cmake_args]
 
@@ -278,8 +274,8 @@ class CMaker:
         if gen:
             self.single_config = gen == "Ninja" or "Makefiles" in gen
 
-        if self.single_config and build_type:
-            all_args.insert(2, f"-DCMAKE_BUILD_TYPE:STRING={build_type}")
+        if self.single_config and self.build_type:
+            all_args.insert(2, f"-DCMAKE_BUILD_TYPE:STRING={self.build_type}")
 
         try:
             Run(env=self.env).live(self.cmake, *all_args)

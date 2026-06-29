@@ -193,7 +193,6 @@ class Builder:
         version: Version | None = None,
         limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
-        build_type: str | None = None,
     ) -> None:
         cmake_defines = {
             k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else str(v)
@@ -382,7 +381,6 @@ class Builder:
             defines=cmake_defines,
             cmake_args=[*self.get_cmake_args(), *configure_args],
             toolchain=self.settings.cmake.toolchain_file,
-            build_type=build_type,
         )
 
     def build(
