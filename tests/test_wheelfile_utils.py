@@ -1,4 +1,5 @@
 import stat
+import sys
 import time
 import zipfile
 from pathlib import Path
@@ -47,16 +48,34 @@ def test_wheel_write_normalizes_permissions(tmp_path, monkeypatch):
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     src = tmp_path / "src.txt"
     src.write_text("data")
+    src.chmod(0o600)
+
+    wheel = _make_writer(tmp_path)
+    with wheel:
+        wheel.write(str(src), "src.txt")
+    with zipfile.ZipFile(wheel.wheelpath) as zf:
+        info = zf.getinfo("src.txt")
+        # A non-executable file normalizes to 0o644 on every platform.
+        assert stat.S_IMODE(info.external_attr >> 16) == 0o644
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="POSIX permissions")
+def test_wheel_write_permissions_posix(tmp_path, monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    src = tmp_path / "exe"
+    src.write_text("data")
     src.chmod(0o777)
 
     out_dir = tmp_path / "out"
+    # Reproducible mode normalizes an executable to 0o755; otherwise the raw mode
+    # is preserved.
     for reproducible, expected in [(True, 0o755), (False, 0o777)]:
         wheel = _make_writer(tmp_path, reproducible=reproducible)
         wheel.folder = out_dir / str(reproducible)
         with wheel:
-            wheel.write(str(src), "src.txt")
+            wheel.write(str(src), "exe")
         with zipfile.ZipFile(wheel.wheelpath) as zf:
-            info = zf.getinfo("src.txt")
+            info = zf.getinfo("exe")
             assert stat.S_IMODE(info.external_attr >> 16) == expected
 
 
