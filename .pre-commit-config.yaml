@@ -85,7 +85,7 @@ repos:
           - pytest<9 # pytest 9 requires Python 3.10+
           - pytest-subprocess
           - rich
-          - setuptools-scm
+          - setuptools-scm>=10.1 # 10.1 pulls in typed vcs-versioning>=2.0
           - tomli
           - types-setuptools>=80.9
 
