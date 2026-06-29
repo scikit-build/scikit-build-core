@@ -275,7 +275,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.build-type
 
-  :Type: ``str``
+  :Type: ``str | list[str]``
   :Default: "Release"
   :Config-settings: ``cmake.build-type`` or ``skbuild.cmake.build-type``
   :Environment variable: ``SKBUILD_CMAKE_BUILD_TYPE``
@@ -285,6 +285,14 @@ print(mk_skbuild_docs())
   Pre-defined CMake options are: ``Debug``, ``Release``, ``RelWithDebInfo``, ``MinSizeRel``
 
   Custom values can also be used.
+
+  A list of build types can be given to build and install more than one
+  configuration into the same wheel (for example ``["Release", "Debug"]``).
+  Single-config generators (Ninja, Makefiles) are reconfigured in place for
+  each extra build type; multi-config generators (Visual Studio, Xcode,
+  Ninja Multi-Config) build each ``--config``. Every build type is installed
+  to the same prefix, so use ``CMAKE_<CONFIG>_POSTFIX`` to avoid clobbering
+  files between configurations.
 ```
 
 ```{eval-rst}

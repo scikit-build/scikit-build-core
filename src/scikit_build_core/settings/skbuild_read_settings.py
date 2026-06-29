@@ -20,7 +20,12 @@ from ..errors import CMakeConfigError
 from ..utils.typing import get_target_raw_type
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
-from .skbuild_model import CMakeSettings, NinjaSettings, ScikitBuildSettings
+from .skbuild_model import (
+    CMakeSettings,
+    NinjaSettings,
+    ScikitBuildSettings,
+    normalize_build_types,
+)
 from .skbuild_overrides import process_overrides
 from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
@@ -360,9 +365,9 @@ class SettingsReader:
             or self.settings.minimum_version >= Version("0.5")
         )
         if self.settings.install.strip is None:
-            self.settings.install.strip = (
-                install_policy
-                and self.settings.cmake.build_type in {"Release", "MinSizeRel"}
+            self.settings.install.strip = install_policy and all(
+                bt in {"Release", "MinSizeRel"}
+                for bt in normalize_build_types(self.settings.cmake.build_type)
             )
 
         # If we noted earlier that auto-cmake was requested, handle it now

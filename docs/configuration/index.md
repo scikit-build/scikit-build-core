@@ -509,6 +509,21 @@ type without editing `pyproject.toml` (for example
 `CMAKE_BUILD_TYPE=RelWithDebInfo`), mirroring CMake's own handling of the
 variable.
 
+You can also pass a _list_ of build types to build and install more than one
+configuration into the same wheel:
+
+```{conftabs} cmake.build-type ["Release", "Debug"]
+
+```
+
+Single-config generators (Ninja, Makefiles) are reconfigured in place for each
+extra build type, then rebuilt; multi-config generators (Visual Studio, Xcode,
+Ninja Multi-Config) build each `--config`. Every configuration installs to the
+same prefix, so set `CMAKE_<CONFIG>_POSTFIX` (such as `CMAKE_DEBUG_POSTFIX=_d`)
+on your targets to keep the configurations from clobbering each other, and
+select the right module at runtime in your package's `__init__.py`. This is
+currently only supported by the default (native) and Hatchling backends.
+
 You can specify CMake defines as strings or bools:
 
 ````{tab} pyproject.toml

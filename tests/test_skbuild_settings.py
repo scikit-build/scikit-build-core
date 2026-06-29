@@ -160,6 +160,30 @@ def test_skbuild_settings_cmake_build_type_envvar(
     assert settings_reader.settings.cmake.build_type == "RelWithAssert"
 
 
+def test_skbuild_settings_cmake_build_type_list(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """cmake.build-type accepts a list of build types."""
+    monkeypatch.delenv("CMAKE_BUILD_TYPE", raising=False)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            cmake.build-type = ["Release", "Debug"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, {})
+    assert list(settings_reader.unrecognized_options()) == []
+    assert settings_reader.settings.cmake.build_type == ["Release", "Debug"]
+    # A Debug configuration in the list disables the default strip.
+    assert settings_reader.settings.install.strip is False
+
+
 def test_skbuild_settings_cmake_build_type_explicit_wins(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

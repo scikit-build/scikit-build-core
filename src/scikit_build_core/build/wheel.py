@@ -32,6 +32,7 @@ from ._pathutil import (
 from ._scripts import process_script_dir
 from ._wheelfile import WheelMetadata, WheelWriter
 from .common_wheel_helpers import (
+    build_install_extra_build_types,
     build_wheel,
     configure_wheel,
     editable_rebuild_options,
@@ -414,7 +415,18 @@ def _build_wheel_impl_impl(
                 return WheelImplReturn("", settings=settings)
             build_wheel(builder)
             install_wheel(builder, install_dir=install_dir, editable=editable)
+            # Read the primary build type before extra build types mutate it.
             build_options, install_options = editable_rebuild_options(builder)
+            build_install_extra_build_types(
+                builder,
+                settings=settings,
+                wheel_dirs=wheel_dirs,
+                install_dir=install_dir,
+                state=state,
+                name=metadata.name,
+                version=metadata.version,
+                editable=editable,
+            )
 
         assert wheel_directory is not None
 
