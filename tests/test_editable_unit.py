@@ -13,6 +13,7 @@ from scikit_build_core.build._editable import (
     collect_search_locations,
     editable_redirect,
     editable_redirect_files,
+    get_packages,
     libdir_to_installed,
     mapping_to_modules,
 )
@@ -423,6 +424,64 @@ def test_editable_redirect_files_absolute_install_dir_with_rebuild(tmp_path: Pat
             settings=settings,
             use_start=False,
         )
+
+
+def test_get_packages_explicit_passthrough():
+    # An explicit mapping is returned as-is.
+    assert get_packages(packages={"ns/pkg": "src/ns/pkg"}, name="ignored") == {
+        "ns/pkg": "src/ns/pkg"
+    }
+    # An explicit sequence is keyed by the final path component.
+    assert get_packages(packages=["src/foo", "other/bar"], name="ignored") == {
+        "foo": "src/foo",
+        "bar": "other/bar",
+    }
+
+
+def test_get_packages_flat_discovery(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    pkg = tmp_path / "src" / "ns_pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").touch()
+    monkeypatch.chdir(tmp_path)
+
+    # The distribution name's separators all normalize to the flat dir name.
+    expected = {"ns_pkg": str(Path("src") / "ns_pkg")}
+    for name in ("ns-pkg", "ns_pkg", "ns.pkg"):
+        assert get_packages(packages=None, name=name) == expected
+
+
+def test_get_packages_namespace_discovery(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # PEP 420 namespace package: the namespace dir has no __init__, the leaf does.
+    leaf = tmp_path / "src" / "ns" / "pkg"
+    leaf.mkdir(parents=True)
+    (leaf / "__init__.py").touch()
+    monkeypatch.chdir(tmp_path)
+
+    # A '.' marks the namespace boundary and maps to a nested path; a '-' within
+    # a component is import-normalized to '_'. The key is a forward-slash rel
+    # path, but the discovered source uses the OS-native separator.
+    assert get_packages(packages=None, name="ns.pkg") == {
+        "ns/pkg": str(Path("src") / "ns" / "pkg")
+    }
+    assert get_packages(packages=None, name="ns.my-pkg") == {}
+
+    # The flat layout still wins when it exists (back-compat over the namespace).
+    flat = tmp_path / "src" / "ns_pkg"
+    flat.mkdir()
+    (flat / "__init__.py").touch()
+    assert get_packages(packages=None, name="ns.pkg") == {
+        "ns_pkg": str(Path("src") / "ns_pkg")
+    }
+
+
+def test_get_packages_not_found(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    assert get_packages(packages=None, name="ns.pkg") == {}
+    # A namespace dir with no __init__ on the leaf is not a discoverable package.
+    (tmp_path / "src" / "ns" / "pkg").mkdir(parents=True)
+    assert get_packages(packages=None, name="ns.pkg") == {}
 
 
 def test_is_trackable():
