@@ -141,6 +141,49 @@ def test_force_include_leading_slash_targets_scripts(chdir_tmp: Path) -> None:
     assert "pkg-0.1.0.data/scripts/run.sh" in wheel_names(dist)
 
 
+def test_force_include_var_targets_scripts(chdir_tmp: Path) -> None:
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"run.sh" = "${SKBUILD_SCRIPTS_DIR}/run.sh"}',
+    )
+    (chdir_tmp / "run.sh").write_text("#!/bin/sh\n")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg-0.1.0.data/scripts/run.sh" in wheel_names(dist)
+
+
+def test_force_include_var_no_experimental(chdir_tmp: Path) -> None:
+    """The ${SKBUILD_*_DIR} form is not gated on experimental (only the / form is)."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"run.sh" = "${SKBUILD_SCRIPTS_DIR}/run.sh"}',
+        experimental=False,
+    )
+    (chdir_tmp / "run.sh").write_text("#!/bin/sh\n")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg-0.1.0.data/scripts/run.sh" in wheel_names(dist)
+
+
+def test_force_include_var_pure_wheel_platlib_tree(chdir_tmp: Path) -> None:
+    """${SKBUILD_PLATLIB_DIR} resolves to purelib on a pure wheel, like /platlib."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"extra.txt" = "${SKBUILD_PLATLIB_DIR}/pkg/extra.txt"}',
+        experimental=False,
+    )
+    (chdir_tmp / "extra.txt").write_text("x")
+
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+
+    assert "pkg/extra.txt" in wheel_names(dist)
+
+
 def test_force_include_script_shebang_normalized(chdir_tmp: Path) -> None:
     """A force-included script's python shebang is normalized to #!python."""
     make_pure_pkg(
@@ -619,3 +662,127 @@ def test_settings_force_include_config_settings(tmp_path: Path) -> None:
     )
     assert settings.sdist.force_include == {"a.txt": "data/a.txt"}
     assert settings.wheel.force_include == {"b.so": "pkg/b.so"}
+
+
+def _wheel_dirs(tmp_path: Path) -> dict[str, Path]:
+    return {
+        "platlib": tmp_path / "platlib",
+        "data": tmp_path / "data",
+        "headers": tmp_path / "headers",
+        "scripts": tmp_path / "scripts",
+        "null": tmp_path / "null",
+        "metadata": tmp_path / "metadata",
+    }
+
+
+@pytest.mark.parametrize(
+    ("dest", "tree", "rest"),
+    [
+        ("${SKBUILD_DATA_DIR}/foo/bar", "data", "foo/bar"),
+        ("${SKBUILD_SCRIPTS_DIR}/run.sh", "scripts", "run.sh"),
+        ("${SKBUILD_HEADERS_DIR}/pkg.h", "headers", "pkg.h"),
+        ("${SKBUILD_METADATA_DIR}/x.txt", "metadata", "x.txt"),
+        ("${SKBUILD_NULL_DIR}/junk", "null", "junk"),
+        # No remainder resolves to the tree root itself.
+        ("${SKBUILD_DATA_DIR}", "data", ""),
+        # platlib/purelib both alias the actual target lib.
+        ("${SKBUILD_PLATLIB_DIR}/pkg/x", "platlib", "pkg/x"),
+        ("${SKBUILD_PURELIB_DIR}/pkg/x", "platlib", "pkg/x"),
+    ],
+)
+def test_resolve_wheel_tree_var(
+    tmp_path: Path, dest: str, tree: str, rest: str
+) -> None:
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    wheel_dirs = _wheel_dirs(tmp_path)
+    # The var form does not require experimental.
+    base, resolved_rest = resolve_wheel_tree(
+        dest, wheel_dirs=wheel_dirs, targetlib="platlib", experimental=False
+    )
+    assert base == wheel_dirs[tree]
+    assert resolved_rest == rest
+
+
+def test_resolve_wheel_tree_var_bad_name(tmp_path: Path) -> None:
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError, match=r"valid wheel directory"):
+        resolve_wheel_tree(
+            "${SKBUILD_NOPE_DIR}/x",
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )
+
+
+def test_resolve_wheel_tree_var_rejects_traversal(tmp_path: Path) -> None:
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError, match=r"'\.\.' path component"):
+        resolve_wheel_tree(
+            "${SKBUILD_DATA_DIR}/../escape",
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )
+
+
+@pytest.mark.parametrize(
+    "dest",
+    [
+        "${SKBUILD_DATA}/x",  # missing _DIR suffix
+        "${SKBUILD_NOPE_DIR}/x",  # unknown tree name
+        "${HOME}/x",  # not a SKBUILD variable at all
+        "${SKBUILD_DATA_DIR",  # unterminated
+    ],
+)
+def test_resolve_wheel_tree_bad_leading_var_rejected(tmp_path: Path, dest: str) -> None:
+    """A leading ${...} that is not a valid tree variable is an error (typo guard)."""
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError):
+        resolve_wheel_tree(
+            dest,
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )
+
+
+def test_resolve_wheel_tree_var_not_leading_is_literal(tmp_path: Path) -> None:
+    """A ${...} later in the path is an ordinary component, not a selector."""
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    wheel_dirs = _wheel_dirs(tmp_path)
+    base, rest = resolve_wheel_tree(
+        "pkg/${NOT_A_VAR}/x",
+        wheel_dirs=wheel_dirs,
+        targetlib="platlib",
+        experimental=False,
+    )
+    assert base == wheel_dirs["platlib"]
+    assert rest == "pkg/${NOT_A_VAR}/x"
+
+
+@pytest.mark.parametrize(
+    "dest",
+    [
+        "${SKBUILD_DATA_DIR}//pkg",  # absolute remainder discards the base
+        "${SKBUILD_DATA_DIR}/C:/pkg",  # drive-qualified remainder
+        "${SKBUILD_DATA_DIR}/a\\b",  # backslash remainder
+        "/data//pkg",  # same hazard via the leading-slash form
+    ],
+)
+def test_resolve_wheel_tree_rejects_escaping_remainder(
+    tmp_path: Path, dest: str
+) -> None:
+    from scikit_build_core.build._pathutil import resolve_wheel_tree
+
+    with pytest.raises(AssertionError, match=r"remainder"):
+        resolve_wheel_tree(
+            dest,
+            wheel_dirs=_wheel_dirs(tmp_path),
+            targetlib="platlib",
+            experimental=True,
+        )

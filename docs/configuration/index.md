@@ -316,11 +316,27 @@ For example, to mimic scikit-build classic:
 wheel.install-dir = "mypackage"
 ```
 
+You can target a different wheel tree by prefixing the install dir with the
+matching `SKBUILD_*_DIR` CMake variable name:
+
+```toml
+[tool.scikit-build]
+wheel.install-dir = "${SKBUILD_DATA_DIR}/mypackage"
+```
+
+The available trees are `${SKBUILD_PLATLIB_DIR}` (the default),
+`${SKBUILD_PURELIB_DIR}`, `${SKBUILD_DATA_DIR}`, `${SKBUILD_HEADERS_DIR}`,
+`${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_METADATA_DIR}`, and `${SKBUILD_NULL_DIR}`.
+This matches the cache variables available from within CMake.
+
 :::{warning}
 
-You can select a different wheel target directory, as well, but that syntax is
-experimental; install to `${SKBUILD_DATA_DIR}`, etc. from within CMake instead
-for now.
+When passing this through PEP 517 `config-settings` on a command line, quote it
+so the shell does not expand `${SKBUILD_DATA_DIR}` as an environment variable
+(e.g. `-C 'wheel.install-dir=${SKBUILD_DATA_DIR}/mypackage'`).
+
+The older leading-slash spelling (`/data`, `/scripts`, ...) selects the same
+trees but is gated behind `experimental = true`, and deprecated.
 
 :::
 
@@ -372,7 +388,7 @@ paths to destinations:
 
 [tool.scikit-build.wheel.force-include]
 "vendor/lib.so" = "mypackage/_lib.so"
-"tools/run.sh"  = "/scripts/run.sh"
+"tools/run.sh"  = "${SKBUILD_SCRIPTS_DIR}/run.sh"
 ```
 
 The keys are source paths relative to the project root; they may point outside
@@ -382,10 +398,13 @@ file or a directory, and directories are copied recursively (skipping VCS and
 
 `sdist.force-include` destinations are relative to the SDist root.
 `wheel.force-include` destinations are relative to the platlib (the package
-area), and also accept a leading `/data`, `/scripts`, `/headers`, or `/metadata`
-to target that wheel tree instead (this requires `experimental = true`, like
-`wheel.install-dir`). Force-included wheel files are placed last, so they
-override discovered package files and CMake output at the same destination.
+area), and also accept a `${SKBUILD_<TREE>_DIR}` prefix (e.g.
+`${SKBUILD_DATA_DIR}`, `${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_HEADERS_DIR}`,
+`${SKBUILD_METADATA_DIR}`) to target that wheel tree instead, matching the
+`SKBUILD_*_DIR` CMake cache variables. The older leading-slash spelling
+(`/data`, `/scripts`, ...) does the same but requires `experimental = true`.
+Force-included wheel files are placed last, so they override discovered package
+files and CMake output at the same destination.
 
 A force-included _file_ also overrides the matching exclude list
 (`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
@@ -872,9 +891,10 @@ The following features currently require this flag:
 - **Third-party dynamic-metadata plugins**: dynamic metadata providers not
   shipped with scikit-build-core (anything using `provider-path` or a provider
   outside the `scikit_build_core.*` namespace). See [](./dynamic.md).
-- **Absolute `wheel.install-dir`**: an absolute install dir is placed one level
-  above the platlib root, giving access to `/platlib`, `/data`, `/headers`,
-  `/scripts`, and `/metadata`. See
+- **Leading-slash wheel trees**: the deprecated absolute spelling (`/platlib`,
+  `/data`, `/headers`, `/scripts`, `/metadata`) for `wheel.install-dir` and
+  `wheel.force-include`, placed one level above the platlib root. The
+  `${SKBUILD_<TREE>_DIR}` prefix is the non-experimental replacement. See
   [`wheel.install-dir`](../reference/configs.md).
 
 The [rebuild-on-import feature](#editable-installs) for editable installs is

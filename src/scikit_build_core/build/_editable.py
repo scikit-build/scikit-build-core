@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ..resources import resources
 from ._pathutil import (
+    editable_rebuild_install_dir,
     is_module,
     is_trackable,
     module_loader_rank,
@@ -106,9 +107,11 @@ def editable_redirect_files(
     modules = mapping_to_modules(mapping, libdir)
     installed = libdir_to_installed(libdir)
     directories, known_packages = collect_search_locations(mapping, libdir)
-    if settings.editable.rebuild and settings.wheel.install_dir.startswith("/"):
-        msg = "Editable installs cannot rebuild an absolute wheel.install-dir. Use an override to change if needed."
-        raise AssertionError(msg)
+    install_dir = settings.wheel.install_dir
+    if settings.editable.rebuild:
+        # The shim joins install_dir onto the platlib root; a platlib/purelib
+        # selector reduces to its remainder, any other tree is rejected.
+        install_dir = editable_rebuild_install_dir(install_dir)
     editable_txt = editable_redirect(
         modules=modules,
         installed=installed,
@@ -119,7 +122,7 @@ def editable_redirect_files(
         verbose=settings.editable.verbose,
         build_options=build_options,
         install_options=install_options,
-        install_dir=settings.wheel.install_dir,
+        install_dir=install_dir,
         as_entrypoint=use_start,
     )
     package_paths = tuple(packages)

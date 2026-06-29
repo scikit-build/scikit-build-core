@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.machinery
 import os
+import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import TYPE_CHECKING, Literal
 
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 
 __all__ = [
+    "editable_rebuild_install_dir",
     "is_module",
     "is_trackable",
     "iter_force_include",
@@ -88,6 +90,31 @@ def packages_to_file_mapping(
     return mapping
 
 
+# Matches a ``${SKBUILD_<TREE>_DIR}`` prefix, capturing the tree name and any
+# remainder after the following '/'. Tree names are single words (no
+# underscores), so ``[A-Z]+`` cannot swallow the trailing ``_DIR``.
+_WHEEL_TREE_VAR = re.compile(r"\$\{SKBUILD_([A-Z]+)_DIR\}(?:/(.*))?$")
+
+_VALID_TREE_HINT = "PLATLIB, PURELIB, DATA, HEADERS, SCRIPTS, METADATA, NULL"
+
+
+def _reject_unsafe_remainder(rest: str, dest: str) -> None:
+    """
+    Reject a wheel-tree remainder that would escape the selected tree base.
+
+    The remainder is joined onto the tree base with ``base / rest``; an absolute
+    path, a Windows drive, or a backslash would discard the base (e.g.
+    ``${SKBUILD_DATA_DIR}//pkg`` -> ``/pkg``), so those are errors. A ``..``
+    component is already rejected for the whole ``dest`` by the caller.
+    """
+    if "\\" in rest or PureWindowsPath(rest).drive or PurePosixPath(rest).is_absolute():
+        msg = (
+            f"Wheel destination {dest!r} has a remainder {rest!r} that must be a "
+            "relative path without a leading '/', a drive, or backslashes"
+        )
+        raise AssertionError(msg)
+
+
 def resolve_wheel_tree(
     dest: str,
     *,
@@ -98,21 +125,25 @@ def resolve_wheel_tree(
     """
     Resolve a wheel destination into a ``(base_dir, relative_dest)`` pair.
 
-    A plain ``dest`` is relative to the target lib (platlib/purelib). A leading
-    ``/`` selects a wheel tree (``/data``, ``/scripts``, ``/headers``,
-    ``/platlib``, ``/metadata``, ...) and requires experimental features, since
-    this gives access one level above the platlib root.
+    A plain ``dest`` is relative to the target lib (platlib/purelib). A
+    ``${SKBUILD_<TREE>_DIR}`` prefix selects a wheel tree
+    (``${SKBUILD_DATA_DIR}``, ``${SKBUILD_SCRIPTS_DIR}``,
+    ``${SKBUILD_HEADERS_DIR}``, ``${SKBUILD_PLATLIB_DIR}``,
+    ``${SKBUILD_METADATA_DIR}``, ...), matching the ``SKBUILD_*_DIR`` CMake cache
+    variables. The deprecated leading-``/`` form (``/data``, ``/scripts``, ...)
+    selects the same trees but requires experimental features, since it gives
+    access one level above the platlib root.
+
+    A leading ``${...}`` that is not a recognized tree variable is an error (to
+    catch typos); a ``${...}`` later in the path is an ordinary path component.
     """
     # Reject a '..' parent-directory component (the traversal risk), but allow
     # adjacent dots inside a normal filename like 'data..json'.
     if ".." in PurePosixPath(dest).parts:
         msg = f"Wheel destination must not contain a '..' path component, got {dest!r}"
         raise AssertionError(msg)
-    if dest.startswith("/"):
-        if not experimental:
-            msg = "Experimental features must be enabled to use absolute paths (a leading '/') in a wheel destination"
-            raise AssertionError(msg)
-        tree, _, rest = dest[1:].partition("/")
+
+    def select(tree: str, rest: str) -> tuple[Path, str]:
         # platlib/purelib both name the target lib; map either to whichever this
         # wheel actually has (pure wheels are keyed by purelib, not platlib).
         if tree in {"platlib", "purelib"}:
@@ -120,8 +151,52 @@ def resolve_wheel_tree(
         if tree not in wheel_dirs:
             msg = f"Must target a valid wheel directory, not {tree!r}"
             raise AssertionError(msg)
+        _reject_unsafe_remainder(rest, dest)
         return wheel_dirs[tree], rest
+
+    if dest.startswith("${"):
+        var_match = _WHEEL_TREE_VAR.fullmatch(dest)
+        if var_match is None:
+            msg = (
+                f"Wheel destination {dest!r} has an unrecognized '${{...}}' prefix; "
+                f"use '${{SKBUILD_<TREE>_DIR}}/...' with a valid tree ({_VALID_TREE_HINT})"
+            )
+            raise AssertionError(msg)
+        return select(var_match.group(1).lower(), var_match.group(2) or "")
+    if dest.startswith("/"):
+        if not experimental:
+            msg = "Experimental features must be enabled to use absolute paths (a leading '/') in a wheel destination"
+            raise AssertionError(msg)
+        tree, _, rest = dest[1:].partition("/")
+        return select(tree, rest)
     return wheel_dirs[targetlib], dest
+
+
+def editable_rebuild_install_dir(install_dir: str) -> str:
+    """
+    Reduce ``wheel.install-dir`` to a platlib-relative path for the editable shim.
+
+    The rebuild shim joins ``install_dir`` onto the platlib root, so it only
+    understands a relative path. A platlib/purelib tree selector
+    (``${SKBUILD_PLATLIB_DIR}/pkg`` or ``/platlib/pkg``) is equivalent to a plain
+    ``pkg`` and is reduced to its remainder. A selector for any other tree
+    escapes the platlib and cannot be rebuilt on import, so it raises.
+    """
+    if install_dir.startswith("${"):
+        var_match = _WHEEL_TREE_VAR.fullmatch(install_dir)
+        if var_match:
+            tree = var_match.group(1).lower()
+            rest = var_match.group(2) or ""
+        else:
+            tree = rest = ""
+    elif install_dir.startswith("/"):
+        tree, _, rest = install_dir[1:].partition("/")
+    else:
+        return install_dir
+    if tree in {"platlib", "purelib"}:
+        return rest
+    msg = "Editable installs cannot rebuild a non-platlib wheel.install-dir. Use an override to change if needed."
+    raise AssertionError(msg)
 
 
 def resolve_from_sdist_force_include(
@@ -177,8 +252,9 @@ def iter_force_include(
     ``dest`` must be a relative path within ``base``; anything that could escape
     it is rejected -- an absolute path, ``..`` components, a backslash, or a
     Windows drive (e.g. ``C:/x``), which would otherwise escape on Windows where
-    ``base / dest`` treats those as filesystem syntax. Wheel-tree selection (a
-    leading ``/``) is handled earlier by :func:`resolve_wheel_tree`.
+    ``base / dest`` treats those as filesystem syntax. Wheel-tree selection
+    (``${SKBUILD_<TREE>_DIR}`` or a leading ``/``) is handled earlier by
+    :func:`resolve_wheel_tree`.
     """
     posix_dest = PurePosixPath(dest)
     if (
