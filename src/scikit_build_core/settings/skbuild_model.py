@@ -597,6 +597,16 @@ class EditableSettings:
     CMake build that the rebuild re-runs.
     """
 
+    @property
+    def rebuild_enabled(self) -> bool:
+        """
+        True when rebuild-on-import is active.
+
+        Setting ``rebuild-dir`` turns this on by itself, so the ``rebuild`` flag
+        is ignored when it is set.
+        """
+        return self.rebuild or bool(self.rebuild_dir)
+
 
 @dataclasses.dataclass
 class BuildSettings:

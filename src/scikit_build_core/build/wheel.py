@@ -312,13 +312,12 @@ def _build_wheel_impl_impl(
         # import-triggered rebuilds need no reconfigure (#1135).
         #
         # Two triggers: the classic editable.rebuild installs into a tree inside
-        # build-dir; setting editable.rebuild-dir is the newer, parallel path that
-        # installs into a user-chosen tree and turns on rebuilds by itself (the
-        # editable.rebuild flag is then ignored). Both still require build-dir.
+        # build-dir; setting editable.rebuild-dir installs into a user-chosen tree
+        # (see EditableSettings.rebuild_enabled). Both still require build-dir.
         editable_rebuild = (
             editable
             and settings.editable.mode == "redirect"
-            and (settings.editable.rebuild or bool(settings.editable.rebuild_dir))
+            and settings.editable.rebuild_enabled
             and bool(settings.build_dir)
         )
         if editable_rebuild:

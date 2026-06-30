@@ -119,9 +119,7 @@ def editable_redirect_files(
     directories, known_packages = collect_search_locations(
         mapping, libdir, absolute=external_install
     )
-    # editable.rebuild-dir turns on rebuild-on-import by itself; the
-    # editable.rebuild flag is ignored when it is set.
-    rebuild = settings.editable.rebuild or bool(settings.editable.rebuild_dir)
+    rebuild = settings.editable.rebuild_enabled
     if install_prefix is not None:
         # The persistent install tree lives outside the wheel, so the shim is
         # given an absolute prefix (os.path.join drops DIR for an absolute path)
