@@ -445,10 +445,11 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         return spec
 
     def rebuild(self, *, required: bool = False) -> None:
-        # Without a persistent build directory there is nothing to rebuild. The
-        # import-time auto-rebuild treats this as a silent no-op; an explicit
-        # caller (module.__loader__.rebuild()) sets required=True to get an error
-        # instead.
+        # Without a persistent build directory there is nothing to rebuild.
+        # Enabling auto-rebuild already requires a build-dir, so the import-time
+        # path never reaches this with path unset; the lenient no-op is just
+        # defensive (don't crash imports). An explicit caller
+        # (module.__loader__.rebuild()) sets required=True to get an error.
         if not self.path:
             if required:
                 msg = (

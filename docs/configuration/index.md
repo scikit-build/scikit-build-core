@@ -849,8 +849,9 @@ $ pip install --no-build-isolation -Cbuild-dir=build -ve .
 ```
 
 If the editable install was built without a persistent `build-dir`, there is
-nothing to rebuild and the call raises `RuntimeError`. (The automatic
-rebuild-on-import path, by contrast, silently does nothing in that case.)
+nothing to rebuild and the call raises `RuntimeError`. This only comes up for
+manual calls: enabling `editable.rebuild` already requires a `build-dir`, so the
+automatic rebuild-on-import path always has one.
 
 If you don't have a handle on a redirected module, the finder itself is on
 `sys.meta_path` and carries the same method:
