@@ -2,13 +2,14 @@
 
 Scikit-build-core supports dynamic metadata with four built-in plugins.
 
-:::{warning}
+:::{note}
 
-Your package and third-party packages can also extend these with new plugins,
-but this is currently not ready for development outside of scikit-build-core;
-`tool.scikit-build.experimental=true` is required to use plugins that are not
-shipped with scikit-build-core, since the interface is provisional and may
-change between _minor_ versions.
+Beyond the built-in plugins, your package and third parties can provide their
+own. These are fully supported through the standard `[[tool.dynamic-metadata]]`
+interface described below. The legacy `tool.scikit-build.metadata` table still
+treats them as provisional: there, plugins not shipped with scikit-build-core
+require `tool.scikit-build.experimental=true`, since that interface may change
+between _minor_ versions.
 
 :::
 
@@ -37,13 +38,13 @@ field = "version"
 input = "src/mypackage/__init__.py"
 ```
 
-Generic plugins (`regex`, `template`) take the field they target from a `field`
-setting. A `provider-path` key may point at a local directory so a plugin can
-live inside your own project. Following [PEP 808][], a list or table field can
-be given a static value in `[project]` _and_ listed in `dynamic`, in which case
-a provider only **adds** to it; the single-value fields (`version`,
-`description`, `requires-python`, `license`, `readme`) cannot be both static and
-dynamic.
+The field-agnostic plugins (`regex`, `template`) can target any field, chosen
+with a `field` setting. A `provider-path` key may point at a local directory so
+a plugin can live inside your own project. Following [PEP 808][], a list or
+table field can be given a static value in `[project]` _and_ listed in
+`dynamic`, in which case a provider only **adds** to it; the single-value fields
+(`version`, `description`, `requires-python`, `license`, `readme`) cannot be
+both static and dynamic.
 
 [PEP 808]: https://peps.python.org/pep-0808/
 
@@ -57,7 +58,16 @@ one or the other.
 
 :::
 
-## `version`: Setuptools-scm
+## Built-in plugins
+
+We provide some built-in plugins in `scikit_build_core.metadata`. These work in
+either mode, though they always require a `field =` key in the modern
+`[[tool.dynamic-metadata]]` mode.
+
+Third party plugins (like those inside the `dynamic-metadata` package) and
+custom plugins are fully supported in the new mode.
+
+### `version`: Setuptools-scm
 
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
@@ -121,7 +131,7 @@ dynamic_version()
 project(MyPackage VERSION ${PROJECT_VERSION})
 ```
 
-## Regex
+### Regex
 
 If you want to pull a string-valued expression (usually version) from an
 existing file, you can the integrated `regex` plugin to pull the information.
@@ -207,7 +217,7 @@ Support for `result` and `remove` added.
 
 ```
 
-## `readme`: Fancy-pypi-readme
+### `readme`: Fancy-pypi-readme
 
 You can use
 [hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
@@ -252,7 +262,7 @@ the version in the `[[tool.dynamic-metadata]]` mode.
 The version number feature now works.
 ```
 
-## Template
+### Template
 
 You can access other metadata fields and produce templated outputs.
 
@@ -289,6 +299,32 @@ static in `[project]`).
 
 ```{versionadded} 0.11.2
 
+```
+
+## Custom plugins
+
+You can write your own plugins. Full details are in the
+[dynamic metadata docs](https://dynamic-metadata.readthedocs.io/en/latest/plugin_authors.html).
+Here's a quick overview.
+
+There's one required hook:
+
+```python
+def dynamic_metadata(
+    settings: Mapping[str, Any],
+    project: Mapping[str, Any],
+) -> dict[str, Any]: ...  # return a fragment of [project], e.g. {"version": ...}
+```
+
+And several optional ones (`build_state`, `dynamic_wheel`, and
+`get_requires_for_dynamic_metadata`). You can optionally use a class, as well.
+
+To use a local plugin, you need to set both `provider` and `provider-path`:
+
+```toml
+[[tool.dynamic-metadata]]
+provider = "my_plugin"
+provider-path = "helpers/plugins"
 ```
 
 ## `build-system.requires`: Scikit-build-core's `build.requires`
