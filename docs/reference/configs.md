@@ -443,6 +443,10 @@ print(mk_skbuild_docs())
   the same template substitutions as :confval:`build-dir`. This relocates only
   the install tree; :confval:`build-dir` is still required and still hosts the
   CMake build that the rebuild re-runs.
+
+  The tree is wiped and recreated on each build, so it must be a fresh or
+  scikit-build-core-managed directory -- pointing it at a populated directory
+  such as your source tree is refused to avoid deleting those files.
 ```
 
 ```{eval-rst}

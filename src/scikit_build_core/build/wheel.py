@@ -42,6 +42,7 @@ from .common_wheel_helpers import (
     get_targetlib,
     get_wheel_tag,
     install_wheel,
+    prepare_editable_rebuild_dir,
     prepare_wheel_dirs,
 )
 from .generate import generate_file_contents
@@ -328,9 +329,9 @@ def _build_wheel_impl_impl(
                 tags=tags,
                 state=state,
             )
-            if targetlib_dir.exists():
-                shutil.rmtree(targetlib_dir)
-            targetlib_dir.mkdir(parents=True)
+            prepare_editable_rebuild_dir(
+                targetlib_dir, guard=bool(settings.editable.rebuild_dir)
+            )
         else:
             targetlib_dir = wheel_dirs[targetlib]
 

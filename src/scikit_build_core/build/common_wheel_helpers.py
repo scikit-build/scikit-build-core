@@ -11,6 +11,7 @@ configure/build/install. The wheel-assembly side (WheelWriter vs hatchling
 from __future__ import annotations
 
 import os
+import shutil
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -47,8 +48,13 @@ __all__ = [
     "get_targetlib",
     "get_wheel_tag",
     "install_wheel",
+    "prepare_editable_rebuild_dir",
     "prepare_wheel_dirs",
 ]
+
+# Dropped into a user-chosen editable.rebuild-dir so a later build knows the tree
+# is ours and is safe to wipe and refresh.
+REBUILD_DIR_MARKER = ".skbuild-editable"
 
 WheelState = Literal[
     "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
@@ -134,6 +140,35 @@ def get_editable_rebuild_dir(
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()
+
+
+def prepare_editable_rebuild_dir(targetlib_dir: Path, *, guard: bool) -> None:
+    """
+    Clean and (re)create the persistent install tree for a rebuildable editable.
+
+    The tree is wiped so stale artifacts from a previous build don't linger (a
+    ``cmake --install`` only ever adds files). The default tree lives inside
+    ``build-dir`` and is fully owned by scikit-build-core, so wiping is always
+    safe (``guard=False``).
+
+    A user-chosen ``editable.rebuild-dir`` (``guard=True``) may accidentally
+    point at a populated directory -- e.g. the package's own source tree. Wiping
+    that would delete the user's source (#1135), so refuse unless the directory
+    is empty or carries the marker we drop on a tree we created ourselves.
+    """
+    if targetlib_dir.exists():
+        marker = targetlib_dir / REBUILD_DIR_MARKER
+        if guard and not marker.is_file() and any(targetlib_dir.iterdir()):
+            msg = (
+                f"editable.rebuild-dir {targetlib_dir} is not empty and was not "
+                "created by scikit-build-core; refusing to delete it. Point "
+                "rebuild-dir at a new or empty directory -- not at a source tree."
+            )
+            raise FileExistsError(msg)
+        shutil.rmtree(targetlib_dir)
+    targetlib_dir.mkdir(parents=True)
+    if guard:
+        (targetlib_dir / REBUILD_DIR_MARKER).touch()
 
 
 def prepare_wheel_dirs(wheel_root: Path, *, targetlib: TargetLib) -> dict[str, Path]:
