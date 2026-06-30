@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import sys
 from collections import defaultdict
@@ -39,8 +40,11 @@ __all__ = [
     "finalize_distribution_options",
 ]
 
-WRAPPER_CMAKE_INSTALL_DIR_COMPAT = "_scikit_build_wrapper_cmake_install_dir_compat"
-WRAPPER_CLASSIC_LAYOUT_COMPAT = "_scikit_build_wrapper_classic_layout_compat"
+# Marker set on the Distribution by the classic scikit-build compatibility shim
+# (scikit_build_core.setuptools.wrapper.setup) to opt into its behaviors:
+# install-dir translation, classic source-layout staging, and the
+# SKBUILD_CONFIGURE_OPTIONS / SKBUILD_BUILD_OPTIONS environment variables.
+WRAPPER_COMPAT = "_scikit_build_wrapper_compat"
 ORIGINAL_DATA_FILES = "_scikit_build_original_data_files"
 
 
@@ -408,7 +412,7 @@ class BuildCMake(setuptools.Command):
         dist_cmake_install_dir = (
             getattr(self.distribution, "cmake_install_dir", "") or ""
         )
-        if getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
+        if self._wrapper_compat_enabled():
             return _translate_wrapper_install_dir(
                 self.distribution, dist_cmake_install_dir
             )
@@ -463,11 +467,13 @@ class BuildCMake(setuptools.Command):
                 if line
             )
 
+    def _wrapper_compat_enabled(self) -> bool:
+        # True only when the classic scikit-build compatibility wrapper
+        # (scikit_build_core.setuptools.wrapper.setup) created the distribution.
+        return bool(getattr(self.distribution, WRAPPER_COMPAT, False))
+
     def _wrapper_classic_layout_compat_enabled(self) -> bool:
-        return bool(
-            not self.editable_mode
-            and getattr(self.distribution, WRAPPER_CLASSIC_LAYOUT_COMPAT, False)
-        )
+        return not self.editable_mode and self._wrapper_compat_enabled()
 
     def _apply_wrapper_classic_layout_compat(
         self, *, staged_install_dir: Path, install_subdir: Path
@@ -556,6 +562,13 @@ class BuildCMake(setuptools.Command):
         configure_args = list(self.cmake_args or [])
         dist_cmake_args = getattr(self.distribution, "cmake_args", None)
         configure_args.extend(dist_cmake_args or [])
+        wrapper_compat = self._wrapper_compat_enabled()
+        if wrapper_compat:
+            # Classic scikit-build compatibility env var (the wrapper's analog of
+            # the backend's SKBUILD_CMAKE_ARGS / cmake.args).
+            configure_args.extend(
+                shlex.split(os.environ.get("SKBUILD_CONFIGURE_OPTIONS", ""))
+            )
 
         bdist_wheel = dist.get_command_obj("bdist_wheel")
         assert bdist_wheel is not None
@@ -625,6 +638,11 @@ class BuildCMake(setuptools.Command):
         # build_ext call, not supported by pip or PyPA-build.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env and self.parallel:
             build_args.append(f"-j{self.parallel}")
+
+        if wrapper_compat:
+            # Classic scikit-build compatibility env var; forwarded to `cmake
+            # --build` (use a leading `--` to pass native build-tool options).
+            build_args.extend(shlex.split(os.environ.get("SKBUILD_BUILD_OPTIONS", "")))
 
         builder.build(build_args=build_args)
         builder.install(install_dir=cmake_install_prefix)
