@@ -76,6 +76,19 @@ _not_ supported, as setuptools has very poor support for config-settings.
 Eventually, the build hook might pre-process options, but it's tricky to pass
 them through, so it will probably require use cases to be presented.
 
+For classic scikit-build compatibility, two environment variables are honored,
+but only when using the `scikit_build_core.setuptools.wrapper.setup` shim (they
+have no effect in the general setuptools plugin or the main build backend):
+
+- `SKBUILD_CONFIGURE_OPTIONS`: extra arguments appended when configuring (the
+  wrapper's analog of the backend's `SKBUILD_CMAKE_ARGS`).
+- `SKBUILD_BUILD_OPTIONS`: extra arguments forwarded to `cmake --build`. Use a
+  leading `--` to pass native build-tool options, e.g.
+  `SKBUILD_BUILD_OPTIONS="-- -l4"`.
+
+Both are split following shell quoting rules, so quoted values with spaces are
+preserved.
+
 ## Editable installs
 
 PEP 660 editable installs (`pip install -e .`) are supported when the active

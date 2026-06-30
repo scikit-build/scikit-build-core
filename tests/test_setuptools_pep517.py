@@ -447,6 +447,71 @@ def test_manifest_hook_wheel(virtualenv, tmp_path: Path):
     assert add.strip() == "3"
 
 
+@pytest.mark.parametrize("wrapper_compat", [True, False], ids=["wrapper", "plugin"])
+def test_skbuild_configure_and_build_options(
+    wrapper_compat: bool, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    # Classic scikit-build compatibility env vars, honored only by the wrapper
+    # (scikit_build_core.setuptools.wrapper.setup), not the general plugin.
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "CMakeLists.txt").touch()
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setenv("SKBUILD_CONFIGURE_OPTIONS", "-DFOO=ON -DBAR='a b'")
+    monkeypatch.setenv("SKBUILD_BUILD_OPTIONS", "-- -l4")
+
+    captured: dict[str, list[str]] = {}
+
+    class StopRunError(Exception):
+        pass
+
+    class FakeConfig:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            self.env: dict[str, str] = {}
+            self.build_type = "Release"
+
+    class FakeBuilder:
+        def __init__(self, *, config: object, **_kwargs: object) -> None:
+            self.config = config
+
+        def get_cmake_args(self) -> list[str]:
+            return []
+
+        def configure(self, *, configure_args: list[str], **_kwargs: object) -> None:
+            captured["configure"] = list(configure_args)
+
+        def build(self, *, build_args: list[str]) -> None:
+            captured["build"] = list(build_args)
+            raise StopRunError
+
+    monkeypatch.setattr(
+        "scikit_build_core.cmake.CMake.default_search",
+        classmethod(lambda *_args, **_kwargs: object()),
+    )
+    monkeypatch.setattr(build_cmake, "CMaker", FakeConfig)
+    monkeypatch.setattr(build_cmake, "Builder", FakeBuilder)
+
+    dist = setuptools.Distribution({"name": "x", "version": "0.0.1"})
+    if wrapper_compat:
+        setattr(dist, build_cmake.WRAPPER_CMAKE_INSTALL_DIR_COMPAT, True)
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.build_lib = str(tmp_path / "build")
+    cmd.build_temp = str(tmp_path / "tmp")
+    cmd.plat_name = "linux-x86_64"
+    cmd.source_dir = "."
+    cmd.cmake_args = ["-DDIST=1"]
+
+    with pytest.raises(StopRunError):
+        cmd.run()
+
+    if wrapper_compat:
+        assert captured["configure"] == ["-DDIST=1", "-DFOO=ON", "-DBAR=a b"]
+        assert captured["build"] == ["--", "-l4"]
+    else:
+        assert captured["configure"] == ["-DDIST=1"]
+        assert captured["build"] == []
+
+
 def test_manifest_hook_must_be_callable():
     with pytest.raises(
         SetupError,

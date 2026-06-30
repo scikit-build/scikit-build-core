@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import sys
 from collections import defaultdict
@@ -469,6 +470,11 @@ class BuildCMake(setuptools.Command):
             and getattr(self.distribution, WRAPPER_CLASSIC_LAYOUT_COMPAT, False)
         )
 
+    def _wrapper_compat_enabled(self) -> bool:
+        # True only when the classic scikit-build compatibility wrapper
+        # (scikit_build_core.setuptools.wrapper.setup) created the distribution.
+        return bool(getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False))
+
     def _apply_wrapper_classic_layout_compat(
         self, *, staged_install_dir: Path, install_subdir: Path
     ) -> None:
@@ -556,6 +562,13 @@ class BuildCMake(setuptools.Command):
         configure_args = list(self.cmake_args or [])
         dist_cmake_args = getattr(self.distribution, "cmake_args", None)
         configure_args.extend(dist_cmake_args or [])
+        wrapper_compat = self._wrapper_compat_enabled()
+        if wrapper_compat:
+            # Classic scikit-build compatibility env var (the wrapper's analog of
+            # the backend's SKBUILD_CMAKE_ARGS / cmake.args).
+            configure_args.extend(
+                shlex.split(os.environ.get("SKBUILD_CONFIGURE_OPTIONS", ""))
+            )
 
         bdist_wheel = dist.get_command_obj("bdist_wheel")
         assert bdist_wheel is not None
@@ -625,6 +638,11 @@ class BuildCMake(setuptools.Command):
         # build_ext call, not supported by pip or PyPA-build.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in builder.config.env and self.parallel:
             build_args.append(f"-j{self.parallel}")
+
+        if wrapper_compat:
+            # Classic scikit-build compatibility env var; forwarded to `cmake
+            # --build` (use a leading `--` to pass native build-tool options).
+            build_args.extend(shlex.split(os.environ.get("SKBUILD_BUILD_OPTIONS", "")))
 
         builder.build(build_args=build_args)
         builder.install(install_dir=cmake_install_prefix)
