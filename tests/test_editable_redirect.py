@@ -226,7 +226,7 @@ def test_rebuild_runs_once_per_process(tmp_path: Path):
 
     calls = 0
 
-    def fake_rebuild(*, required: bool = False) -> None:  # noqa: ARG001
+    def fake_rebuild() -> None:
         nonlocal calls
         calls += 1
 
@@ -278,9 +278,8 @@ def test_loader_exposes_rebuild(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
     calls = 0
 
-    def fake_rebuild(*, required: bool = False) -> None:
+    def fake_rebuild() -> None:
         nonlocal calls
-        assert required  # loader hooks must request the strict (error-on-fail) mode
         calls += 1
 
     monkeypatch.setattr(finder, "rebuild", fake_rebuild)
@@ -308,11 +307,12 @@ def test_loader_exposes_rebuild(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
 
 
 def test_loader_rebuild_without_build_dir_errors(tmp_path: Path):
-    """module.__loader__.rebuild() errors when there is no build dir to rebuild.
+    """rebuild() errors when there is no build dir to rebuild.
 
-    The import-time auto-rebuild silently no-ops without a persistent build-dir
-    (path=None); an explicit user call must instead raise so the missing
-    configuration is visible.
+    A non-rebuildable editable (no persistent build-dir, path=None) still
+    installs the finder and exposes the loader hook, so a rebuild request must
+    raise to make the missing configuration visible. Enabling auto-rebuild
+    already requires a build-dir, so the import-time path never hits this.
     """
     init = tmp_path / "pkg" / "__init__.py"
     init.parent.mkdir()
@@ -332,8 +332,8 @@ def test_loader_rebuild_without_build_dir_errors(tmp_path: Path):
         install_dir="",
     )
 
-    # Import-time path stays a silent no-op.
-    finder.rebuild()
+    with pytest.raises(RuntimeError, match="no persistent build directory"):
+        finder.rebuild()
 
     spec = finder.find_spec("pkg")
     assert spec is not None

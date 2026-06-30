@@ -828,11 +828,10 @@ location, so changes there are picked up on import, regardless of the
 
 ### Triggering a rebuild manually
 
-You don't have to enable `editable.rebuild` to rebuild on demand. The
-redirecting finder installs a loader for each redirected module, and that loader
-exposes a `rebuild()` method, so you can run the same
-`cmake --build`/`--install` cycle whenever you like using only the standard
-library:
+You don't have to enable `editable.rebuild` to rebuild on demand for the
+redirect mode. The redirecting finder installs a loader for each redirected
+module, and that loader exposes a `rebuild()` method, so you can run the same
+`cmake --build`/`--install` cycle whenever you like:
 
 ```python
 import some_package
@@ -849,9 +848,7 @@ $ pip install --no-build-isolation -Cbuild-dir=build -ve .
 ```
 
 If the editable install was built without a persistent `build-dir`, there is
-nothing to rebuild and the call raises `RuntimeError`. This only comes up for
-manual calls: enabling `editable.rebuild` already requires a `build-dir`, so the
-automatic rebuild-on-import path always has one.
+nothing to rebuild and the call raises `RuntimeError`.
 
 If you don't have a handle on a redirected module, the finder itself is on
 `sys.meta_path` and carries the same method:

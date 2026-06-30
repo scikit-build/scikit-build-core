@@ -217,9 +217,7 @@ class _ScikitBuildLoaderWrapper:
         return getattr(self._skbuild_loader, name)
 
     def rebuild(self) -> None:
-        # User-initiated, so a missing build directory is an error rather than
-        # the silent no-op the import-time auto-rebuild uses.
-        self._skbuild_finder.rebuild(required=True)
+        self._skbuild_finder.rebuild()
 
 
 class _ScikitBuildResourceLoaderWrapper(_ScikitBuildLoaderWrapper):
@@ -273,9 +271,7 @@ class _ScikitBuildNamespaceLoader:
         return _ScikitBuildEditableReader(self._skbuild_paths)
 
     def rebuild(self) -> None:
-        # User-initiated, so a missing build directory is an error rather than
-        # the silent no-op the import-time auto-rebuild uses.
-        self._skbuild_finder.rebuild(required=True)
+        self._skbuild_finder.rebuild()
 
 
 def _patch_importlib_resources_for_python39() -> None:
@@ -444,21 +440,18 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
                 spec.loader = _ScikitBuildLoaderWrapper(spec.loader, self)  # type: ignore[assignment]
         return spec
 
-    def rebuild(self, *, required: bool = False) -> None:
+    def rebuild(self) -> None:
         # Without a persistent build directory there is nothing to rebuild.
         # Enabling auto-rebuild already requires a build-dir, so the import-time
-        # path never reaches this with path unset; the lenient no-op is just
-        # defensive (don't crash imports). An explicit caller
-        # (module.__loader__.rebuild()) sets required=True to get an error.
+        # path never reaches this with path unset; only a manual
+        # module.__loader__.rebuild() on a non-rebuildable editable can.
         if not self.path:
-            if required:
-                msg = (
-                    "Cannot rebuild: this editable install has no persistent "
-                    "build directory. Reinstall with a 'build-dir' set (e.g. "
-                    "-Cbuild-dir=build) to enable on-demand rebuilds."
-                )
-                raise RuntimeError(msg)
-            return
+            msg = (
+                "Cannot rebuild: this editable install has no persistent build "
+                "directory. Reinstall with a 'build-dir' set (e.g. "
+                "-Cbuild-dir=build) to enable on-demand rebuilds."
+            )
+            raise RuntimeError(msg)
 
         env = os.environ.copy()
         # Protect against recursion
