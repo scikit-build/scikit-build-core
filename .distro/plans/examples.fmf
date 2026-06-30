@@ -9,5 +9,6 @@ prepare+:
     how: artifact
     provide:
       - copr.repository:lecris/scikit-build-helpers
+    verify: false
 execute:
   how: tmt
