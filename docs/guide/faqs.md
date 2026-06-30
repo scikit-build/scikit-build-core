@@ -90,9 +90,9 @@ If you build a shared dependency as part of your project (for example via
 installed to `site-packages/bin` (Windows) or `site-packages/lib` (Linux/macOS)
 instead of next to your extension module. The `install(TARGETS ...)` command
 sends its artifacts to the [GNUInstallDirs][] defaults — `bin` for Windows DLLs
-(a `RUNTIME` artifact) and `lib` for `.so`/`.dylib` (a `LIBRARY` artifact) —
-and scikit-build-core copies the whole install tree into the wheel. A library
-placed there generally will not be found at import time, either.
+(a `RUNTIME` artifact) and `lib` for `.so`/`.dylib` (a `LIBRARY` artifact) — and
+scikit-build-core copies the whole install tree into the wheel. A library placed
+there generally will not be found at import time, either.
 
 The cleanest fix is usually to link the dependency statically so there is no
 runtime library to place. If you need it shared, you can redirect the install
