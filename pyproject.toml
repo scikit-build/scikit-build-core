@@ -74,7 +74,10 @@ Homepage = "https://github.com/scikit-build/scikit-build-core"
 Issues = "https://github.com/scikit-build/scikit-build-core/issues"
 
 [project.scripts]
+# Recommended entry point
 scikit-build = "scikit_build_core.__main__:main"
+# This is to make `uvx scikit-build-core` work
+scikit-build-core = "scikit_build_core.__main__:main"
 
 [project.entry-points]
 "distutils.commands".build_cmake = "scikit_build_core.setuptools.build_cmake:BuildCMake"
