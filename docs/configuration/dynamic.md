@@ -62,6 +62,28 @@ one or the other.
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
 
+````{tab} `[[tool.dynamic-metadata]]`
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["version"]
+
+[tool.scikit-build]
+sdist.include = ["src/package/_version.py"]
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.setuptools_scm"
+field = "version"
+
+[tool.setuptools_scm]  # Section required
+write_to = "src/package/_version.py"
+```
+
+````
+
+````{tab} `tool.scikit-build.metadata`
+
 ```toml
 [project]
 name = "mypackage"
@@ -74,6 +96,8 @@ sdist.include = ["src/package/_version.py"]
 [tool.setuptools_scm]  # Section required
 write_to = "src/package/_version.py"
 ```
+
+````
 
 This sets the python project version according to
 [git tags](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
@@ -102,6 +126,23 @@ project(MyPackage VERSION ${PROJECT_VERSION})
 If you want to pull a string-valued expression (usually version) from an
 existing file, you can the integrated `regex` plugin to pull the information.
 
+````{tab} `[[tool.dynamic-metadata]]`
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["version"]
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.regex"
+field = "version"
+input = "src/mypackage/__init__.py"
+```
+
+````
+
+````{tab} `tool.scikit-build.metadata`
+
 ```toml
 [project]
 name = "mypackage"
@@ -112,12 +153,35 @@ provider = "scikit_build_core.metadata.regex"
 input = "src/mypackage/__init__.py"
 ```
 
+````
+
 You can set a custom regex with `regex=`. By default when targeting version, you
 get a reasonable regex for python files,
 `'(?i)^(__version__|VERSION)(?: ?\: ?str)? *= *([\'"])v?(?P<value>.+?)\2'`. You
 can set `result` to a format string to process the matches; the default is
 `"{value}"`. You can also specify a regex for `remove=` which will strip any
 matches from the final result. A more complex example:
+
+````{tab} `[[tool.dynamic-metadata]]`
+
+```toml
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.regex"
+field = "version"
+input = "src/mypackage/version.hpp"
+regex = '''(?sx)
+\#define \s+ VERSION_MAJOR \s+ (?P<major>\d+) .*?
+\#define \s+ VERSION_MINOR \s+ (?P<minor>\d+) .*?
+\#define \s+ VERSION_PATCH \s+ (?P<patch>\d+) .*?
+\#define \s+ VERSION_DEV   \s+ (?P<dev>\d+)   .*?
+'''
+result = "{major}.{minor}.{patch}dev{dev}"
+remove = "dev0"
+```
+
+````
+
+````{tab} `tool.scikit-build.metadata`
 
 ```toml
 [tool.scikit-build.metadata.version]
@@ -133,6 +197,8 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
+````
+
 This will remove the "dev" tag when it is equal to 0.
 
 ```{versionchanged} 0.10
@@ -147,6 +213,24 @@ You can use
 [hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
 render your README:
 
+````{tab} `[[tool.dynamic-metadata]]`
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["readme"]
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.fancy_pypi_readme"
+field = "readme"
+
+# tool.hatch.metadata.hooks.fancy-pypi-readme options here
+```
+
+````
+
+````{tab} `tool.scikit-build.metadata`
+
 ```toml
 [project]
 name = "mypackage"
@@ -158,6 +242,8 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
+````
+
 ```{versionchanged} 0.11.2
 
 The version number feature now works.
@@ -167,16 +253,36 @@ The version number feature now works.
 
 You can access other metadata fields and produce templated outputs.
 
+````{tab} `[[tool.dynamic-metadata]]`
+
+```toml
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.template"
+field = "optional-dependencies"
+result = {"dev" = ["{project[name]}=={project[version]}"]}
+```
+
+````
+
+````{tab} `tool.scikit-build.metadata`
+
 ```toml
 [tool.scikit-build.metadata.optional-dependencies]
 provider = "scikit_build_core.metadata.template"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-You can use `project` to access the current metadata values. You can reference
-other dynamic metadata fields, and they will be computed before this one. You
-can use `result` to specify the output. The result must match the type of the
-metadata field you are writing to.
+````
+
+You can use `project` to access the current metadata values. You can use
+`result` to specify the output. The result must match the type of the metadata
+field you are writing to.
+
+You can reference other dynamic metadata fields. With the legacy
+`tool.scikit-build.metadata` table they are resolved on demand, so the order in
+the file does not matter; with `[[tool.dynamic-metadata]]` entries run top to
+bottom, so any referenced field must be produced by an earlier entry (or be
+static in `[project]`).
 
 ```{versionadded} 0.11.2
 
