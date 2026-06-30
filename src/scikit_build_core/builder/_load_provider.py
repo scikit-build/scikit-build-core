@@ -8,7 +8,16 @@ import inspect
 import sys
 from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, Union, runtime_checkable
+from types import MappingProxyType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Protocol,
+    Union,
+    get_args,
+    runtime_checkable,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
@@ -19,39 +28,70 @@ if TYPE_CHECKING:
 else:
     StrMapping = Mapping
 
-from ..metadata import _ALL_FIELDS
+from ..metadata import (
+    _ALL_FIELDS,
+    _DICT_STR_FIELDS,
+    _EXTENDABLE_FIELDS,
+    _LIST_DICT_FIELDS,
+    _LIST_STR_FIELDS,
+    _SCALAR_FIELDS,
+)
 
-__all__ = ["load_provider", "process_dynamic_metadata"]
+__all__ = [
+    "BUILD_STATES",
+    "BuildState",
+    "load_dynamic_metadata",
+    "load_provider",
+    "process_dynamic_metadata",
+    "process_legacy_dynamic_metadata",
+]
 
 
 def __dir__() -> list[str]:
     return __all__
 
 
+# The five build states a backend can report to a provider's ``build_state``
+# hook; the last two are the ``prepare_metadata_for_build_*`` phases.
+BuildState = Literal[
+    "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
+]
+BUILD_STATES: frozenset[str] = frozenset(get_args(BuildState))
+
+# Per-entry keys consumed by the loader itself; everything else is plugin
+# settings, passed through verbatim to the provider.
+_RESERVED_KEYS = frozenset(["provider", "provider-path"])
+
+
 @runtime_checkable
 class DynamicMetadataProtocol(Protocol):
     def dynamic_metadata(
         self,
-        field: str,
-        settings: dict[str, Any],
+        settings: Mapping[str, Any],
         project: Mapping[str, Any],
     ) -> Any: ...
 
 
 @runtime_checkable
+class DynamicMetadataBuildStateProtocol(DynamicMetadataProtocol, Protocol):
+    def build_state(self, build_state: BuildState) -> None: ...
+
+
+@runtime_checkable
 class DynamicMetadataRequirementsProtocol(DynamicMetadataProtocol, Protocol):
     def get_requires_for_dynamic_metadata(
-        self, settings: dict[str, Any]
+        self, settings: Mapping[str, Any]
     ) -> list[str]: ...
 
 
 @runtime_checkable
 class DynamicMetadataWheelProtocol(DynamicMetadataProtocol, Protocol):
-    def dynamic_wheel(self, field: str, settings: Mapping[str, Any]) -> bool: ...
+    def dynamic_wheel(self, settings: Mapping[str, Any]) -> dict[str, bool]: ...
 
 
 DMProtocols = Union[
     DynamicMetadataProtocol,
+    DynamicMetadataBuildStateProtocol,
     DynamicMetadataRequirementsProtocol,
     DynamicMetadataWheelProtocol,
 ]
@@ -96,19 +136,187 @@ def load_provider(
     provider: str,
     provider_path: str | None = None,
 ) -> DMProtocols:
+    """Load a provider, returning the object whose hooks are called.
+
+    ``provider`` is either a module path (``"pkg.mod"``) or a module path and a
+    class within it (``"pkg.mod:Class"``). A bare module is returned as-is, so
+    its hooks are plain module-level functions; a class is instantiated with no
+    arguments and the instance is returned, so its hooks are bound methods and
+    may share state through ``self`` (e.g. the optional ``build_state`` hook
+    stashing the build state for ``dynamic_metadata`` to read).
+    """
+    module_name, _, class_name = provider.partition(":")
+
     if provider_path is None:
-        return importlib.import_module(provider)
+        module = importlib.import_module(module_name)
+    else:
+        if not Path(provider_path).is_dir():
+            msg = "provider-path must be an existing directory"
+            raise AssertionError(msg)
+        finder = _ProviderPathFinder([provider_path], module_name)
+        sys.meta_path.insert(0, finder)
+        try:
+            module = importlib.import_module(module_name)
+        finally:
+            sys.meta_path.remove(finder)
 
-    if not Path(provider_path).is_dir():
-        msg = "provider-path must be an existing directory"
-        raise AssertionError(msg)
+    return getattr(module, class_name)() if class_name else module
 
-    finder = _ProviderPathFinder([provider_path], provider)
-    sys.meta_path.insert(0, finder)
-    try:
-        return importlib.import_module(provider)
-    finally:
-        sys.meta_path.remove(finder)
+
+def load_dynamic_metadata(
+    entries: Sequence[Mapping[str, Any]],
+) -> Generator[tuple[DMProtocols, dict[str, Any]], None, None]:
+    """Load each ``[[tool.dynamic-metadata]]`` entry's provider in order.
+
+    ``provider`` and ``provider-path`` are consumed here; the remaining keys are
+    returned as that provider's plugin settings.
+    """
+    for entry in entries:
+        if "provider" not in entry:
+            msg = "Each [[tool.dynamic-metadata]] entry must set a 'provider'"
+            raise KeyError(msg)
+        settings = {k: v for k, v in entry.items() if k not in _RESERVED_KEYS}
+        provider = load_provider(entry["provider"], entry.get("provider-path"))
+        yield provider, settings
+
+
+def _merge_dict(
+    field: str, base: Mapping[str, Any], additions: Mapping[str, Any]
+) -> dict[str, Any]:
+    """Add new keys to a table; a provider may not change existing values."""
+    merged = dict(base)
+    for key, value in additions.items():
+        if key in merged and merged[key] != value:
+            msg = f"Provider for {field!r} may not modify existing key {key!r}"
+            raise ValueError(msg)
+        merged[key] = value
+    return merged
+
+
+def _merge_metadata(field: str, static: Any, dynamic: Any) -> Any:
+    """Merge a current value with a provider's additions (PEP 808).
+
+    Existing entries are preserved as-is and kept first; the provider's value is
+    appended after them. Single-value fields cannot be extended; merging onto a
+    static value of one is the invalid "static *and* dynamic" case and raises.
+    """
+    if field not in _EXTENDABLE_FIELDS:
+        msg = f"Field {field!r} cannot be given both statically and dynamically"
+        raise ValueError(msg)
+
+    if field in _LIST_STR_FIELDS or field in _LIST_DICT_FIELDS:
+        return [*static, *dynamic]
+
+    if field in _DICT_STR_FIELDS:
+        return _merge_dict(field, static, dynamic)
+
+    if field == "optional-dependencies":
+        merged_extras = {extra: list(deps) for extra, deps in static.items()}
+        for extra, deps in dynamic.items():
+            merged_extras.setdefault(extra, []).extend(deps)
+        return merged_extras
+
+    # entry-points: a table of groups, each a table of name -> object reference
+    merged_groups = {group: dict(eps) for group, eps in static.items()}
+    for group, eps in dynamic.items():
+        merged_groups[group] = _merge_dict(
+            f"entry-points group {group!r}", merged_groups.get(group, {}), eps
+        )
+    return merged_groups
+
+
+def _call_dynamic_metadata(
+    provider: DMProtocols,
+    settings: Mapping[str, Any],
+    snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Call a provider's ``dynamic_metadata`` hook, returning a project fragment.
+
+    Supports both the 0.3 hook ``dynamic_metadata(settings, project) -> dict``
+    and the legacy ``dynamic_metadata(field, settings[, project]) -> value``
+    used by scikit-build-core's bundled plugins. A legacy hook is detected by
+    its first parameter being named ``field``; the target field comes from the
+    entry's ``field`` setting and its scalar return is wrapped into a fragment.
+    """
+    # Legacy hooks have a different shape, so they are called untyped.
+    hook: Any = provider.dynamic_metadata
+    params = list(inspect.signature(hook).parameters)
+    if params and params[0] == "field":
+        field = settings.get("field")
+        if not isinstance(field, str):
+            msg = "This plugin requires a 'field' setting naming the target field"
+            raise RuntimeError(msg)
+        sub = {k: v for k, v in settings.items() if k != "field"}
+        if len(params) >= 3:
+            value = hook(field, sub, snapshot)
+        elif sub:
+            value = hook(field, sub)
+        else:
+            value = hook(field)
+        return {field: value}
+
+    fragment: dict[str, Any] = hook(settings, snapshot)
+    return fragment
+
+
+def process_dynamic_metadata(
+    project: Mapping[str, Any],
+    entries: Sequence[Mapping[str, Any]],
+    build_state: BuildState = "metadata_wheel",
+) -> dict[str, Any]:
+    """Resolve ``[[tool.dynamic-metadata]]`` entries (the 0.3 spec).
+
+    Entries run in list order; each provider is called with a read-only snapshot
+    of the project as resolved so far, so a later entry can read a field an
+    earlier one produced via ``project[...]``. A provider returns a ``dict``
+    fragment of ``[project]`` which is merged in (PEP 808 add-only for list and
+    table fields; a later entry replaces a scalar). ``build_state`` is reported
+    to any provider implementing the optional ``build_state`` hook before its
+    ``dynamic_metadata`` is called.
+    """
+    if build_state not in BUILD_STATES:
+        msg = f"build_state must be one of {sorted(BUILD_STATES)}, got {build_state!r}"
+        raise ValueError(msg)
+
+    result = dict(project)
+    result["dynamic"] = list(result.get("dynamic", []))
+    declared_dynamic = set(result["dynamic"])
+    snapshot = MappingProxyType(result)
+
+    # Fields already written by an earlier entry: a further entry merges onto
+    # that result (and may *replace* a scalar), as opposed to a static value
+    # still sitting in [project], which is the PEP 808 add-only case.
+    produced: set[str] = set()
+
+    for provider, settings in load_dynamic_metadata(entries):
+        if isinstance(provider, DynamicMetadataBuildStateProtocol):
+            provider.build_state(build_state)
+        fragment = _call_dynamic_metadata(provider, settings, snapshot)
+
+        for field in fragment:
+            if field not in _ALL_FIELDS:
+                msg = f"{field!r} is not a settable dynamic-metadata field"
+                raise KeyError(msg)
+            if field not in declared_dynamic:
+                msg = f"{field!r} must be listed in project.dynamic to be set"
+                raise KeyError(msg)
+
+        for field, value in fragment.items():
+            if field in produced:
+                result[field] = (
+                    value
+                    if field in _SCALAR_FIELDS
+                    else _merge_metadata(field, result[field], value)
+                )
+            elif field in result:
+                result[field] = _merge_metadata(field, result[field], value)
+            else:
+                result[field] = value
+            produced.add(field)
+            if field in result["dynamic"]:
+                result["dynamic"].remove(field)
+
+    return result
 
 
 def _load_dynamic_metadata(
@@ -148,14 +356,14 @@ class DynamicPyProject(StrMapping):
             raise ValueError(msg)
 
         provider = self.providers.pop(key)
-        sig = inspect.signature(provider.dynamic_metadata)
+        # Legacy hooks have a different shape, so they are called untyped.
+        hook: Any = provider.dynamic_metadata
+        sig = inspect.signature(hook)
         if len(sig.parameters) < 3:
             # Backcompat for dynamic_metadata without metadata dict
-            self.project[key] = provider.dynamic_metadata(  # type: ignore[call-arg]
-                key, self.settings[key]
-            )
+            self.project[key] = hook(key, self.settings[key])
         else:
-            self.project[key] = provider.dynamic_metadata(key, self.settings[key], self)
+            self.project[key] = hook(key, self.settings[key], self)
         self.project["dynamic"].remove(key)
 
         return self.project[key]
@@ -175,15 +383,26 @@ class DynamicPyProject(StrMapping):
         return key in self.project or key in self.providers
 
 
-def process_dynamic_metadata(
+def process_legacy_dynamic_metadata(
     project: Mapping[str, Any],
     metadata: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
+    """Resolve the deprecated ``tool.scikit-build.metadata`` table.
+
+    Each field names a provider; fields resolve lazily, so a provider may read
+    another field (even one defined later in the table) via ``project[...]``,
+    with circular references detected and reported.
+    """
     initial = {f: (p, c) for (f, p, c) in _load_dynamic_metadata(metadata)}
+
+    # Copy the mutable project, including the "dynamic" list that providers
+    # remove resolved fields from, so the caller's dict is left untouched.
+    project_copy = dict(project)
+    project_copy["dynamic"] = list(project_copy.get("dynamic", []))
 
     settings = DynamicPyProject(
         settings={f: c for f, (_, c) in initial.items()},
-        project=dict(project),
+        project=project_copy,
         providers={k: v for k, (v, _) in initial.items()},
     )
 

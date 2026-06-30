@@ -117,9 +117,10 @@ def test_dynamic_metadata():
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 
 
+@pytest.mark.parametrize("source", ["plugin_project.toml", "plugin_array_project.toml"])
 @pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
-def test_plugin_metadata():
+def test_plugin_metadata(source):
     reason_msg = (
         "install hatch-fancy-pypi-readme and setuptools-scm to test the "
         "dynamic metadata plugins"
@@ -131,7 +132,7 @@ def test_plugin_metadata():
 
     hfpr_version = Version(importlib.metadata.version("hatch_fancy_pypi_readme"))
 
-    shutil.copy("plugin_project.toml", "pyproject.toml")
+    shutil.copy(source, "pyproject.toml")
 
     subprocess.run(["git", "init", "--initial-branch=main"], check=True)
     subprocess.run(["git", "config", "user.name", "bot"], check=True)
@@ -371,6 +372,184 @@ def test_regex_remove(
     )
 
     assert version == ("1.2.3dev1" if dev else "1.2.3")
+
+
+def test_array_dynamic_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End-to-end check of the standard top-level [[tool.dynamic-metadata]]."""
+    d = tmp_path / "test_array"
+    d.mkdir()
+    monkeypatch.chdir(d)
+
+    Path("version.txt").write_text("VERSION = '1.2.3'\n", encoding="utf-8")
+    Path("local_plugins").mkdir()
+    Path("local_plugins/req_plugin.py").write_text(
+        "def dynamic_metadata(settings, project):\n"
+        "    return {'requires-python': '>=' + project['version']}\n"
+        "def get_requires_for_dynamic_metadata(settings):\n"
+        "    return ['extra-build-dep']\n",
+        encoding="utf-8",
+    )
+    Path("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "test-array"
+            dynamic = ["version", "requires-python"]
+
+            [[tool.dynamic-metadata]]
+            provider = "scikit_build_core.metadata.regex"
+            field = "version"
+            input = "version.txt"
+
+            [[tool.dynamic-metadata]]
+            provider = "req_plugin"
+            provider-path = "local_plugins"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings = SettingsReader(pyproject, {}, state="metadata_wheel").settings
+
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
+    assert str(metadata.version) == "1.2.3"
+    assert str(metadata.requires_python) == ">=1.2.3"
+
+    assert "extra-build-dep" in set(GetRequires().dynamic_metadata())
+
+
+def test_regex_both_forms(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The bundled regex plugin gives the same result in both config forms."""
+    from scikit_build_core.builder._load_provider import (
+        process_dynamic_metadata,
+        process_legacy_dynamic_metadata,
+    )
+
+    monkeypatch.chdir(tmp_path)
+    Path("__init__.py").write_text("__version__ = '0.1.0'\n", encoding="utf-8")
+
+    def project() -> dict[str, Any]:
+        return {"name": "p", "dynamic": ["version"]}
+
+    legacy = process_legacy_dynamic_metadata(
+        project(),
+        {
+            "version": {
+                "provider": "scikit_build_core.metadata.regex",
+                "input": "__init__.py",
+            }
+        },
+    )
+    array = process_dynamic_metadata(
+        project(),
+        [
+            {
+                "provider": "scikit_build_core.metadata.regex",
+                "field": "version",
+                "input": "__init__.py",
+            }
+        ],
+    )
+    assert legacy["version"] == array["version"] == "0.1.0"
+
+
+def test_template_both_forms() -> None:
+    """The bundled template plugin gives the same result in both config forms."""
+    from scikit_build_core.builder._load_provider import (
+        process_dynamic_metadata,
+        process_legacy_dynamic_metadata,
+    )
+
+    result = {"dev": ["{project[name]}=={project[version]}"]}
+
+    def project() -> dict[str, Any]:
+        return {"name": "pkg", "version": "1.0", "dynamic": ["optional-dependencies"]}
+
+    legacy = process_legacy_dynamic_metadata(
+        project(),
+        {
+            "optional-dependencies": {
+                "provider": "scikit_build_core.metadata.template",
+                "result": result,
+            }
+        },
+    )
+    array = process_dynamic_metadata(
+        project(),
+        [
+            {
+                "provider": "scikit_build_core.metadata.template",
+                "field": "optional-dependencies",
+                "result": result,
+            }
+        ],
+    )
+    assert legacy["optional-dependencies"] == array["optional-dependencies"]
+    assert array["optional-dependencies"] == {"dev": ["pkg==1.0"]}
+
+
+def test_legacy_does_not_mutate_input(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The legacy table must not mutate the caller's project dict."""
+    from scikit_build_core.builder._load_provider import process_legacy_dynamic_metadata
+
+    monkeypatch.chdir(tmp_path)
+    Path("__init__.py").write_text("__version__ = '0.1.0'\n", encoding="utf-8")
+
+    project = {"name": "p", "dynamic": ["version"]}
+    process_legacy_dynamic_metadata(
+        project,
+        {
+            "version": {
+                "provider": "scikit_build_core.metadata.regex",
+                "input": "__init__.py",
+            }
+        },
+    )
+    assert project == {"name": "p", "dynamic": ["version"]}
+
+
+def test_array_legacy_plugin_requires_field() -> None:
+    """A bundled (legacy-signature) plugin in the array form needs a 'field'."""
+    from scikit_build_core.builder._load_provider import process_dynamic_metadata
+
+    with pytest.raises(RuntimeError, match="field"):
+        process_dynamic_metadata(
+            {"name": "p", "dynamic": ["version"]},
+            [{"provider": "scikit_build_core.metadata.regex", "input": "x"}],
+        )
+
+
+def test_mixing_metadata_forms_rejected() -> None:
+    pyproject = {
+        "project": {"name": "t", "dynamic": ["version"]},
+        "tool": {
+            "scikit-build": {
+                "metadata": {
+                    "version": {"provider": "scikit_build_core.metadata.setuptools_scm"}
+                }
+            },
+            "dynamic-metadata": [
+                {
+                    "provider": "scikit_build_core.metadata.regex",
+                    "field": "version",
+                    "input": "x",
+                }
+            ],
+        },
+    }
+    reader = SettingsReader(pyproject, {}, state="metadata_wheel")
+    with pytest.raises(SystemExit):
+        reader.validate_may_exit()
 
 
 @pytest.mark.parametrize("override", [None, "env", "sdist"])

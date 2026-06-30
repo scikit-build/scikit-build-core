@@ -111,7 +111,7 @@ def build_sdist(
     reproducible = settings.sdist.reproducible
     timestamp = get_reproducible_epoch() if reproducible else None
 
-    metadata = get_standard_metadata(pyproject, settings)
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
     pkg_info = bytes(metadata.as_rfc822())
 
     # Names must be normalized per PEP 625

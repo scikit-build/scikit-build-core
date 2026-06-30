@@ -1,11 +1,15 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
 
 from .._compat import tomllib
 from .._logging import rich_warning
-from ..builder._load_provider import process_dynamic_metadata
+from ..builder._load_provider import (
+    BuildState,
+    process_dynamic_metadata,
+    process_legacy_dynamic_metadata,
+)
 from . import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
@@ -13,15 +17,19 @@ from . import (
 )
 
 
-def main_project_table(_args: argparse.Namespace, /) -> None:
+def main_project_table(args: argparse.Namespace, /) -> None:
     """Get the full project table, including dynamic metadata."""
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
     project = pyproject.get("project", {})
-    metadata = pyproject.get("tool", {}).get("scikit-build", {}).get("metadata", {})
-    new_project = process_dynamic_metadata(project, metadata)
-    print(json.dumps(new_project, indent=2))
+    legacy = pyproject.get("tool", {}).get("scikit-build", {}).get("metadata", {})
+    if legacy:
+        project = process_legacy_dynamic_metadata(project, legacy)
+    entries = pyproject.get("tool", {}).get("dynamic-metadata", [])
+    if entries:
+        project = process_dynamic_metadata(project, entries, build_state=args.state)
+    print(json.dumps(project, indent=2))
 
 
 def main_requires(args: argparse.Namespace, /) -> None:
@@ -69,6 +77,12 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
         description="Processes static and dynamic metadata without triggering the backend, only handles scikit-build-core's dynamic metadata.",
     )
     project_table.set_defaults(func=main_project_table)
+    project_table.add_argument(
+        "--state",
+        choices=get_args(BuildState),
+        default="metadata_wheel",
+        help="The build state reported to [[tool.dynamic-metadata]] providers",
+    )
 
 
 def main() -> None:

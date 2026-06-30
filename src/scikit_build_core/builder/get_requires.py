@@ -6,7 +6,8 @@ import importlib.util
 import os
 import shlex
 import sysconfig
-from typing import TYPE_CHECKING, Literal
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal
 
 from packaging.tags import sys_tags
 
@@ -22,7 +23,7 @@ from ..program_search import (
 )
 from ..resources import resources
 from ..settings.skbuild_read_settings import SettingsReader
-from ._load_provider import load_provider
+from ._load_provider import load_dynamic_metadata, load_provider
 from .generator import parse_generator
 
 if TYPE_CHECKING:
@@ -72,6 +73,19 @@ def _load_scikit_build_settings(
     return SettingsReader.from_file(
         "pyproject.toml", config_settings, state=state
     ).settings
+
+
+def _read_dynamic_metadata() -> list[dict[str, Any]]:
+    """Read the top-level ``[[tool.dynamic-metadata]]`` entries (0.3)."""
+    try:
+        with Path("pyproject.toml").open("rb") as f:
+            pyproject = tomllib.load(f)
+    except FileNotFoundError:
+        return []
+    entries: list[dict[str, Any]] = pyproject.get("tool", {}).get(
+        "dynamic-metadata", []
+    )
+    return entries
 
 
 @dataclasses.dataclass(frozen=True)
@@ -157,6 +171,7 @@ class GetRequires:
                 )
             )
 
+        # Deprecated tool.scikit-build.metadata table.
         for dynamic_metadata in self.settings.metadata.values():
             if "provider" in dynamic_metadata:
                 config = dynamic_metadata.copy()
@@ -166,6 +181,12 @@ class GetRequires:
                 yield from getattr(
                     module, "get_requires_for_dynamic_metadata", lambda _: []
                 )(config)
+
+        # Standard top-level [[tool.dynamic-metadata]] entries (0.3).
+        for provider, settings in load_dynamic_metadata(_read_dynamic_metadata()):
+            get_requires = getattr(provider, "get_requires_for_dynamic_metadata", None)
+            if get_requires is not None:
+                yield from get_requires(settings)
 
     def variants(self) -> Generator[str, None, None]:
         if self.settings.fail:

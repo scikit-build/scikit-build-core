@@ -6,7 +6,12 @@ if typing.TYPE_CHECKING:
     from collections.abc import Callable
 
 
-__all__: list[str] = ["_ALL_FIELDS", "_process_dynamic_metadata"]
+__all__: list[str] = [
+    "_ALL_FIELDS",
+    "_EXTENDABLE_FIELDS",
+    "_SCALAR_FIELDS",
+    "_process_dynamic_metadata",
+]
 
 
 # Name is not dynamically settable, so not in this list
@@ -44,6 +49,10 @@ _LIST_DICT_FIELDS = frozenset(
     ]
 )
 
+# Single-value fields: a later entry replaces the value rather than extending
+# it, and PEP 808 forbids giving them both statically and dynamically.
+_SCALAR_FIELDS = _STR_FIELDS | frozenset(["readme"])
+
 # "dynamic" and "name" can't be set or requested
 _ALL_FIELDS = (
     _STR_FIELDS
@@ -58,6 +67,11 @@ _ALL_FIELDS = (
         ]
     )
 )
+
+# Fields PEP 808 allows to be given statically in [project] *and* listed in
+# dynamic, so a provider may add to the static portion: everything except the
+# scalar fields, which hold a single value and so cannot be extended.
+_EXTENDABLE_FIELDS = _ALL_FIELDS - _SCALAR_FIELDS
 
 T = typing.TypeVar(
     "T",
