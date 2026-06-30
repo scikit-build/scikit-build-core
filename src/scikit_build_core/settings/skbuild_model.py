@@ -553,6 +553,21 @@ class WheelSettings:
     from both a source tree and an unpacked sdist.
     """
 
+    reproducible: bool = False
+    """
+    Try to build a reproducible wheel.
+
+    Unix and Python 3.9+ recommended.
+
+    When enabled, archive timestamps and file permissions are normalized, and
+    ``SOURCE_DATE_EPOCH`` is exported to the CMake build (if not already set) so
+    compilers that honor it can produce deterministic output. ``SOURCE_DATE_EPOCH``
+    is used for timestamps if set, or a fixed value if not.
+
+    .. seealso::
+       :confval:`sdist.reproducible`
+    """
+
 
 @dataclasses.dataclass
 class BackportSettings:

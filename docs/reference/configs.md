@@ -946,6 +946,27 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: wheel.reproducible
+
+  :Type: ``bool``
+  :Default: false
+  :Config-settings: ``wheel.reproducible`` or ``skbuild.wheel.reproducible``
+  :Environment variable: ``SKBUILD_WHEEL_REPRODUCIBLE``
+
+  Try to build a reproducible wheel.
+
+  Unix and Python 3.9+ recommended.
+
+  When enabled, archive timestamps and file permissions are normalized, and
+  ``SOURCE_DATE_EPOCH`` is exported to the CMake build (if not already set) so
+  compilers that honor it can produce deterministic output. ``SOURCE_DATE_EPOCH``
+  is used for timestamps if set, or a fixed value if not.
+
+  .. seealso::
+     :confval:`sdist.reproducible`
+```
+
+```{eval-rst}
 .. confval:: wheel.tags
 
   :Type: ``list[str]``

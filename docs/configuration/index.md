@@ -514,6 +514,17 @@ And you can turn off binary stripping:
 
 ```
 
+You can opt in to reproducible wheels (unlike SDists, this is off by default).
+When enabled, archive timestamps and file permissions are normalized, and
+`SOURCE_DATE_EPOCH` is exported to the CMake build (if not already set) so
+compilers that honor it can produce deterministic output. This cannot make the
+compiled binaries themselves reproducible on its own — that also depends on a
+recent compiler and flags like `-ffile-prefix-map`.
+
+```{conftabs} wheel.reproducible True
+
+```
+
 ## Configuring CMake arguments and defines
 
 You can select a different build type, such as `Debug`:

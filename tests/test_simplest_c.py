@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tarfile
 import zipfile
 from pathlib import Path
@@ -98,6 +100,24 @@ def test_pep517_wheel(tmp_path, monkeypatch, virtualenv, component):
 
     version = virtualenv.execute("from simplest import square; print(square(2))")
     assert version == "4.0"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+def test_pep517_wheel_reproducible(tmp_path, monkeypatch):
+    """The wheel archive metadata is identical across builds (SOURCE_DATE_EPOCH unset)."""
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    monkeypatch.chdir(SIMPLEST)
+
+    def build_members() -> list[tuple[str, tuple[int, int, int, int, int, int], int]]:
+        dist = tmp_path / f"dist{len(list(tmp_path.glob('dist*')))}"
+        dist.mkdir()
+        build_wheel(str(dist), {"wheel.reproducible": "true"})
+        (wheel,) = dist.glob("simplest-0.0.1-*.whl")
+        with zipfile.ZipFile(wheel.resolve()) as zf:
+            return [(i.filename, i.date_time, i.external_attr) for i in zf.infolist()]
+
+    assert build_members() == build_members()
 
 
 @pytest.mark.compile

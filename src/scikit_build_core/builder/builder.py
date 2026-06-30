@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from .. import __version__
 from .._compat.importlib import metadata, resources
 from .._logging import logger
+from .._reproducible import get_reproducible_epoch
 from ..resources import find_python
 from .generator import set_environment_for_gen
 from .sysconfig import (
@@ -157,6 +158,14 @@ class Builder:
         # visible to all CMake subprocesses (which share ``config.env``).
         if self.settings.env:
             set_environment_from_settings(self.config.env, self.settings)
+
+        # Export SOURCE_DATE_EPOCH so compilers that honor it (recent GCC/Clang)
+        # can produce deterministic output. setdefault preserves an explicit value
+        # from the environment or the user's env table.
+        if self.settings.wheel.reproducible:
+            self.config.env.setdefault(
+                "SOURCE_DATE_EPOCH", str(get_reproducible_epoch())
+            )
 
     def get_cmake_args(self) -> list[str]:
         """

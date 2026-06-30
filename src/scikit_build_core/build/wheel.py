@@ -316,6 +316,7 @@ def _build_wheel_impl_impl(
             variant_dist_info_contents=(
                 wheel_variant.dist_info_contents if wheel_variant else None
             ),
+            reproducible=settings.wheel.reproducible,
         )
 
         # Include the metadata license.file entry if provided

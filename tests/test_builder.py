@@ -32,6 +32,7 @@ from scikit_build_core.settings.skbuild_model import (
     BuildSettings,
     CMakeSettings,
     CMakeSettingsDefine,
+    EnvValue,
     ScikitBuildSettings,
     SearchSettings,
     WheelSettings,
@@ -312,8 +313,52 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
     assert tmpbuilder.get_cmake_args() == answer
 
 
+def test_builder_exports_source_date_epoch(monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    builder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings(reproducible=True)),
+        config=tmpcfg,
+    )
+    assert builder.config.env["SOURCE_DATE_EPOCH"] == "1667997441"
+
+
+def test_builder_keeps_existing_source_date_epoch(monkeypatch):
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1234567890")
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    builder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings(reproducible=True)),
+        config=tmpcfg,
+    )
+    assert builder.config.env["SOURCE_DATE_EPOCH"] == "1234567890"
+
+
+def test_builder_env_table_wins_over_source_date_epoch(monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    builder = Builder(
+        settings=ScikitBuildSettings(
+            wheel=WheelSettings(reproducible=True),
+            env={"SOURCE_DATE_EPOCH": EnvValue("42")},
+        ),
+        config=tmpcfg,
+    )
+    assert builder.config.env["SOURCE_DATE_EPOCH"] == "42"
+
+
+def test_builder_no_source_date_epoch_when_not_reproducible(monkeypatch):
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    builder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings(reproducible=False)),
+        config=tmpcfg,
+    )
+    assert "SOURCE_DATE_EPOCH" not in builder.config.env
+
+
 def test_build_tool_args():
     config = unittest.mock.create_autospec(CMaker)
+    config.env = {}
     settings = ScikitBuildSettings(build=BuildSettings(tool_args=["b"]))
     tmpbuilder = Builder(
         settings=settings,
