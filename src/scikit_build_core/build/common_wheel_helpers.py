@@ -11,6 +11,7 @@ configure/build/install. The wheel-assembly side (WheelWriter vs hatchling
 from __future__ import annotations
 
 import os
+import shutil
 import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -47,8 +48,21 @@ __all__ = [
     "get_targetlib",
     "get_wheel_tag",
     "install_wheel",
+    "prepare_editable_rebuild_dir",
     "prepare_wheel_dirs",
 ]
+
+# A cache-directory tag (https://bford.info/cachedir/) dropped into a user-chosen
+# editable.rebuild-dir. The standard first line opts the tree out of backups; the
+# scikit-build-core line doubles as our ownership marker, so a later build knows
+# the tree is ours and is safe to wipe and refresh.
+CACHEDIR_TAG_NAME = "CACHEDIR.TAG"
+CACHEDIR_TAG_CONTENT = (
+    "Signature: 8a477f597d28d172789f06886806bc55\n"
+    "# This file marks a scikit-build-core editable rebuild-dir install tree.\n"
+    "# It is wiped and refreshed on every build; do not store anything here.\n"
+    "# For information about cache directory tags see https://bford.info/cachedir/\n"
+)
 
 WheelState = Literal[
     "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
@@ -134,6 +148,52 @@ def get_editable_rebuild_dir(
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()
+
+
+def _is_owned_rebuild_dir(targetlib_dir: Path) -> bool:
+    """True if ``targetlib_dir`` carries our cache-tag, i.e. we created it."""
+    tag = targetlib_dir / CACHEDIR_TAG_NAME
+    return tag.is_file() and "scikit-build-core" in tag.read_text(encoding="utf-8")
+
+
+def prepare_editable_rebuild_dir(targetlib_dir: Path, *, guard: bool) -> None:
+    """
+    Clean and (re)create the persistent install tree for a rebuildable editable.
+
+    The tree is wiped so stale artifacts from a previous build don't linger (a
+    ``cmake --install`` only ever adds files). The default tree lives inside
+    ``build-dir`` and is fully owned by scikit-build-core, so wiping is always
+    safe (``guard=False``).
+
+    A user-chosen ``editable.rebuild-dir`` (``guard=True``) may accidentally
+    point at a populated directory -- e.g. the package's own source tree. Wiping
+    that would delete the user's source (#1135), so refuse unless the directory
+    is empty or carries the cache-tag we drop on a tree we created ourselves. A
+    guarded tree also gets a ``.gitignore`` so its compiled artifacts stay out of
+    version control.
+    """
+    if targetlib_dir.exists():
+        if (
+            guard
+            and not _is_owned_rebuild_dir(targetlib_dir)
+            and any(targetlib_dir.iterdir())
+        ):
+            msg = (
+                f"editable.rebuild-dir {targetlib_dir} is not empty and was not "
+                "created by scikit-build-core; refusing to delete it. Point "
+                "rebuild-dir at a new or empty directory -- not at a source tree."
+            )
+            raise FileExistsError(msg)
+        shutil.rmtree(targetlib_dir)
+    targetlib_dir.mkdir(parents=True)
+    if guard:
+        (targetlib_dir / CACHEDIR_TAG_NAME).write_text(
+            CACHEDIR_TAG_CONTENT, encoding="utf-8"
+        )
+        (targetlib_dir / ".gitignore").write_text(
+            "# Created by scikit-build-core; an editable rebuild install tree.\n*\n",
+            encoding="utf-8",
+        )
 
 
 def prepare_wheel_dirs(wheel_root: Path, *, targetlib: TargetLib) -> dict[str, Path]:

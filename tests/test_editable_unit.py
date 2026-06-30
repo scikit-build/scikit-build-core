@@ -655,6 +655,65 @@ def test_editable_redirect_files_rebuild_dir_implies_rebuild(tmp_path: Path):
         )
 
 
+def test_prepare_editable_rebuild_dir_refuses_populated(tmp_path: Path):
+    from scikit_build_core.build.common_wheel_helpers import (
+        prepare_editable_rebuild_dir,
+    )
+
+    # A user-chosen rebuild-dir pointing at populated source must not be wiped.
+    source = tmp_path / "python" / "src" / "mypackage"
+    source.mkdir(parents=True)
+    keep = source / "__init__.py"
+    keep.write_text("x = 1\n")
+
+    with pytest.raises(FileExistsError, match="refusing to delete"):
+        prepare_editable_rebuild_dir(source, guard=True)
+
+    assert keep.read_text() == "x = 1\n"
+
+
+def test_prepare_editable_rebuild_dir_refreshes_own_tree(tmp_path: Path):
+    from scikit_build_core.build.common_wheel_helpers import (
+        CACHEDIR_TAG_NAME,
+        prepare_editable_rebuild_dir,
+    )
+
+    tree = tmp_path / "rebuild_tree"
+
+    # First build creates the tree with a cache-tag and a .gitignore.
+    prepare_editable_rebuild_dir(tree, guard=True)
+    tag = tree / CACHEDIR_TAG_NAME
+    assert tag.read_text().startswith("Signature: 8a477f597d28d172789f06886806bc55")
+    assert (tree / ".gitignore").read_text().endswith("*\n")
+
+    # Stale artifacts from a prior build are wiped on the next build because the
+    # cache-tag proves the tree is ours.
+    stale = tree / "_module.so"
+    stale.write_text("stale\n")
+    prepare_editable_rebuild_dir(tree, guard=True)
+    assert not stale.exists()
+    assert tag.is_file()
+
+
+def test_prepare_editable_rebuild_dir_default_tree_unguarded(tmp_path: Path):
+    from scikit_build_core.build.common_wheel_helpers import (
+        CACHEDIR_TAG_NAME,
+        prepare_editable_rebuild_dir,
+    )
+
+    # The default install/<targetlib> tree lives inside build-dir and is fully
+    # owned by scikit-build-core, so it is wiped without the cache-tag guard and
+    # no tag/.gitignore is written.
+    tree = tmp_path / "build" / "install" / "platlib"
+    tree.mkdir(parents=True)
+    (tree / "old.so").write_text("old\n")
+
+    prepare_editable_rebuild_dir(tree, guard=False)
+    assert not (tree / "old.so").exists()
+    assert not (tree / CACHEDIR_TAG_NAME).exists()
+    assert not (tree / ".gitignore").exists()
+
+
 def test_is_trackable():
     # Importable modules and data/resource files are both tracked, so the
     # redirect registers their directories for importlib.resources.
