@@ -38,6 +38,7 @@ from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
 from ..utils.typing import get_target_raw_type
+from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import (
@@ -46,7 +47,7 @@ from .skbuild_model import (
     ScikitBuildSettings,
     normalize_build_types,
 )
-from .skbuild_overrides import process_overrides
+from .skbuild_overrides import process_overrides, strtobool
 from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
 TYPE_CHECKING = False
@@ -300,6 +301,8 @@ class SettingsReader:
                 )
             pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
+        # Human-readable names parallel to ``toml_srcs`` (used by suggestions).
+        toml_src_names = ["pyproject.toml"]
 
         # Standard top-level [[tool.dynamic-metadata]] entries (0.3); kept for
         # validation only (cannot be combined with tool.scikit-build.metadata).
@@ -324,6 +327,42 @@ class SettingsReader:
             self.overrides |= extra_matched
             self.overridden_items.update(extra_overridden)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
+            toml_src_names.insert(0, "extra settings")
+
+        # Configuration contributed by installed packages via the
+        # "scikit-build-core.config" entry-point group (e.g. a Linux distro
+        # shipping build defaults for all its package builds). The entry-point
+        # name selects the precedence level: "override" sources sit above
+        # pyproject.toml (and extra_settings), "default" sources sit below it,
+        # just above the hard-coded defaults. Either way the user's per-build
+        # env vars and config-settings still win. Opt out entirely with
+        # SKBUILD_NO_ENTRYPOINT_CONFIG.
+        if not strtobool(environ.get("SKBUILD_NO_ENTRYPOINT_CONFIG", "")):
+            override_index = 0
+            for level, ep_name, ep_table in load_config_providers(
+                state=state, env=environ
+            ):
+                # ep config is environment policy, not project semantics: it must
+                # not silently drive the minimum-version back-compat machinery.
+                ep_table.pop("minimum-version", None)
+                ep_skb = copy.deepcopy(ep_table)
+                ep_matched, ep_overridden = process_overrides(
+                    ep_skb, state=state, env=env, retry=retry
+                )
+                self.overrides |= ep_matched
+                ep_source = TOMLSource(settings=ep_skb)
+                ep_display = f"entry-point config ({ep_name})"
+                if level == "override":
+                    self.overridden_items.update(ep_overridden)
+                    toml_srcs.insert(override_index, ep_source)
+                    toml_src_names.insert(override_index, ep_display)
+                    override_index += 1
+                else:
+                    # Lowest priority: never clobber higher-priority records.
+                    for key, record in ep_overridden.items():
+                        self.overridden_items.setdefault(key, record)
+                    toml_srcs.append(ep_source)
+                    toml_src_names.append(ep_display)
 
         prefixed = {
             k: v for k, v in config_settings.items() if k.startswith("skbuild.")
@@ -341,6 +380,7 @@ class SettingsReader:
         # are forbidden here outside of an [[overrides]] section.
         self._dynamic_srcs = tuple(dynamic_srcs)
         self._toml_srcs = tuple(toml_srcs)
+        self._toml_src_names = tuple(toml_src_names)
         self.sources = SourceChain(
             *dynamic_srcs,
             *toml_srcs,
@@ -530,16 +570,13 @@ class SettingsReader:
         return result
 
     def print_suggestions(self) -> None:
-        # Index 0 is the env source (skipped); the config-settings sources follow,
-        # then the TOML sources. The last TOML source is always pyproject.toml;
-        # any earlier ones are extra settings injected by a plugin (e.g. hatch).
+        # Index 0 is the env source (skipped); the config-settings sources
+        # follow, then the TOML sources, named in order by ``_toml_src_names``
+        # (pyproject.toml plus any extra-settings/entry-point config sources).
         n_dynamic = len(self._dynamic_srcs)
         names = dict.fromkeys(range(1, n_dynamic), "config-settings")
-        for offset in range(len(self._toml_srcs)):
-            is_pyproject = offset == len(self._toml_srcs) - 1
-            names[n_dynamic + offset] = (
-                "pyproject.toml" if is_pyproject else "extra settings"
-            )
+        for offset, src_name in enumerate(self._toml_src_names):
+            names[n_dynamic + offset] = src_name
         for index, name in names.items():
             suggestions_dict = self.suggestions(index)
             if suggestions_dict:

@@ -46,6 +46,7 @@ configuration/overrides
 configuration/dynamic
 configuration/formatted
 configuration/search_paths
+configuration/entrypoint_config
 ```
 
 ```{toctree}
