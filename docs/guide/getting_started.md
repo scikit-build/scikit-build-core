@@ -130,6 +130,20 @@ example
 
 ````
 
+````{tab} ABI3t
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
+```
+
+````
+
 ````{tab} Fortran
 
 ```
@@ -203,6 +217,14 @@ package at `src/example/_core.*`.
 
 ````
 
+````{tab} ABI3t
+
+```{literalinclude} ../examples/generated/abi3t/src/example/_core.c
+:language: c
+```
+
+````
+
 ````{tab} Fortran
 
 ```{literalinclude} ../examples/generated/fortran/src/example/_core.f
@@ -268,6 +290,14 @@ To create your first compiled package, start with a pyproject.toml like this:
 ````{tab} ABI3
 
 ```{literalinclude} ../examples/generated/abi3/pyproject.toml
+:language: toml
+```
+
+````
+
+````{tab} ABI3t
+
+```{literalinclude} ../examples/generated/abi3t/pyproject.toml
 :language: toml
 ```
 
@@ -432,6 +462,30 @@ PRIVATE define of `Py_LIMITED_API` for you.
 ```{note}
 This will not support pypy, so you'll want to provide an alternative if you
 support PyPy).
+```
+
+````
+
+````{tab} ABI3t
+
+```{literalinclude} ../examples/generated/abi3t/CMakeLists.txt
+:language: cmake
+```
+
+The free-threaded Stable ABI (`abi3t`, PEP 803) is requested with
+`wheel.py-api = "cp315.cp315t"`. Since `abi3t` is a subset of `abi3`, a single
+free-threaded build emits the combined `cp315-abi3.abi3t` tag and loads on
+every CPython 3.15+, free-threaded or not; a GIL build falls back to
+`cp315-abi3`.
+
+`USE_SABI` is set from `${SKBUILD_SABI_VERSION}` (3.15 for `abi3t`) rather than
+hardcoded. CMake before 4.4 has no `abi3t` awareness, so the SOABI suffix is
+taken from `${SKBUILD_SOABI}` and `Py_TARGET_ABI3T` is defined manually; both
+become unnecessary on CMake 4.4+.
+
+```{note}
+`abi3t` requires CPython 3.15+ and the PEP 793 module export mechanism, so the
+classic single-phase `PyInit_` entry point cannot be used.
 ```
 
 ````

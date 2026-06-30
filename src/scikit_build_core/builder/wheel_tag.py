@@ -134,6 +134,7 @@ class WheelTag:
             abi = "none"
             pyvers = ["py3"]
 
+        abis = [abi]
         if py_api:
             pyvers_new = py_api.split(".")
             pytags = [_PyTag(x) for x in pyvers_new]
@@ -142,54 +143,75 @@ class WheelTag:
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
                     raise AssertionError(msg)
-
-                classic_tags = [t for t in pytags if t.is_classic_abi3]
-                ft_tags = [t for t in pytags if t.is_ft_abi3]
-
-                if sys.implementation.name == "cpython" and gil_disabled:
-                    # Free-threaded: only accept cp3XXt tags
-                    if ft_tags:
-                        target = ft_tags[0]
-                        if target.minor <= sys.version_info.minor:
-                            # Free-threadedness lives in the abi3t ABI tag only
-                            pyvers = [f"cp3{target.minor}"]
-                            abi = "abi3t"
-                        else:
-                            logger.debug(
-                                "Ignoring py-api, version (3.{}) is too high",
-                                target.minor,
-                            )
-                    elif classic_tags:
-                        logger.debug(
-                            "Ignoring py-api, free-threaded Python doesn't support the classic Stable ABI"
-                        )
-                # Classic CPython
-                elif classic_tags:
-                    target = classic_tags[0]
-                    if (
-                        sys.implementation.name == "cpython"
-                        and target.minor <= sys.version_info.minor
-                    ):
-                        pyvers = [str(target)]
-                        abi = "abi3"
-                    else:
-                        logger.debug(
-                            "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high",
-                            sys.implementation.name,
-                            target.minor,
-                        )
-                elif ft_tags:
-                    logger.debug(
-                        "Ignoring py-api, free-threaded CPython is required for abi3t"
-                    )
+                stable = cls._stable_abi_tag(pytags, gil_disabled=gil_disabled)
+                if stable is not None:
+                    pyvers, abis = stable
             elif all(x.startswith("py") and x[2:].isdecimal() for x in pyvers_new):
                 pyvers = pyvers_new
-                abi = "none"
+                abis = ["none"]
             else:
                 msg = f"Unexpected py-api, must be abi3 (e.g. cp39), abi3t (e.g. cp315t), or Pythonless (e.g. py2.py3), not {py_api}"
                 raise AssertionError(msg)
 
-        return cls(pyvers=pyvers, abis=[abi], archs=plats, build_tag=build_tag)
+        return cls(pyvers=pyvers, abis=abis, archs=plats, build_tag=build_tag)
+
+    @staticmethod
+    def _stable_abi_tag(
+        pytags: list[_PyTag], *, gil_disabled: bool
+    ) -> tuple[list[str], list[str]] | None:
+        """Resolve a Stable ABI py-api request to (pyvers, abis), or None to ignore."""
+        classic_tags = [t for t in pytags if t.is_classic_abi3]
+        ft_tags = [t for t in pytags if t.is_ft_abi3]
+        is_cpython = sys.implementation.name == "cpython"
+
+        if is_cpython and gil_disabled:
+            # Free-threaded: only accept cp3XXt tags
+            if not ft_tags:
+                logger.debug(
+                    "Ignoring py-api, free-threaded Python doesn't support the classic Stable ABI"
+                )
+                return None
+            target = ft_tags[0]
+            if target.minor > sys.version_info.minor:
+                logger.debug(
+                    "Ignoring py-api, version (3.{}) is too high", target.minor
+                )
+                return None
+            # Free-threadedness lives in the abi3t ABI tag only. abi3t is a
+            # subset of abi3 (PEP 803), so the single free-threaded build also
+            # loads under a GIL-enabled CPython; if the classic ABI was also
+            # requested (e.g. "cp315.cp315t"), advertise both.
+            if classic_tags:
+                # The combined tag shares one minor (the abi3t one), so the
+                # classic abi3 request must not be newer; otherwise the emitted
+                # abi3 tag would advertise GIL support below the requested
+                # version (e.g. "cp316.cp315t" -> cp315-abi3).
+                if classic_tags[0].minor > target.minor:
+                    msg = (
+                        f"Unexpected py-api: the classic Stable ABI ({classic_tags[0]}) "
+                        f"must not be newer than the free-threaded one ({target}); a "
+                        "combined abi3.abi3t wheel shares one minor version"
+                    )
+                    raise AssertionError(msg)
+                abis = ["abi3", "abi3t"]
+            else:
+                abis = ["abi3t"]
+            return [f"cp3{target.minor}"], abis
+
+        # Classic CPython
+        if classic_tags:
+            target = classic_tags[0]
+            if is_cpython and target.minor <= sys.version_info.minor:
+                return [str(target)], ["abi3"]
+            logger.debug(
+                "Ignoring py-api, not a CPython interpreter ({}) or version (3.{}) is too high",
+                sys.implementation.name,
+                target.minor,
+            )
+            return None
+
+        logger.debug("Ignoring py-api, free-threaded CPython is required for abi3t")
+        return None
 
     @property
     def pyver(self) -> str:

@@ -468,6 +468,33 @@ def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
     assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
 
 
+@pytest.mark.parametrize(
+    ("gil", "soabi", "is_ft"),
+    [("t", "abi3t", True), (None, "abi3", False)],
+    ids=["free_threaded", "gil"],
+)
+def test_builder_combined_abi3_abi3t(tmp_path, monkeypatch, gil, soabi, is_ft):
+    """Combined py-api builds the one binary matching the current interpreter."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: gil if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api="cp315.cp315t"
+    )
+
+    expected_soabi = "" if sysconfig.get_platform().startswith("win") else soabi
+    assert "Development.SABIModule" in cache
+    assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
+    assert "set(SKBUILD_SABI_VERSION [===[3.15]===] CACHE STRING" in cache
+    assert ("Py_TARGET_ABI3T" in cache) == is_ft
+
+
 def configure_builder_with_version(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -654,6 +681,78 @@ def test_wheel_tag_with_abi3t_darwin(monkeypatch):
     tags = WheelTag.compute_best(["x86_64"], py_api="cp316t")
     assert "abi3t" not in str(tags)
     assert "cp316t" not in str(tags)
+
+
+def test_wheel_tag_with_combined_abi3_abi3t_free_threaded(monkeypatch):
+    """On a free-threaded build, cp315.cp315t broadens the abi3t tag to abi3.abi3t.
+
+    abi3t is a subset of abi3 (PEP 803), so the single free-threaded binary
+    also loads under a GIL-enabled CPython, justifying the combined tag.
+    """
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp315.cp315t")
+    assert str(tags) == "cp315-abi3.abi3t-macosx_10_10_x86_64"
+    assert {str(t) for t in tags.as_tags_set()} == {
+        "cp315-abi3-macosx_10_10_x86_64",
+        "cp315-abi3t-macosx_10_10_x86_64",
+    }
+
+    # Too-high combined request falls back to the default interpreter tag
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp316.cp316t")
+    assert "abi3" not in str(tags)
+
+
+def test_wheel_tag_combined_rejects_higher_classic_minor(monkeypatch):
+    """A combined abi3.abi3t tag shares one minor, so the classic abi3 request
+    must not be newer than the free-threaded one. cp316.cp315t would otherwise
+    emit cp315-abi3, advertising GIL abi3 support below the requested 3.16."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 16))
+
+    with pytest.raises(AssertionError, match="must not be newer"):
+        WheelTag.compute_best(["x86_64"], py_api="cp316.cp315t")
+
+    # Equal or lower classic minor is fine (advertises no broader than requested).
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp314.cp315t")
+    assert str(tags) == "cp315-abi3.abi3t-macosx_10_10_x86_64"
+
+
+def test_wheel_tag_with_combined_abi3_abi3t_gil(monkeypatch):
+    """On a GIL build, only abi3 can be produced, so cp315.cp315t emits abi3."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp315.cp315t")
+    assert str(tags) == "cp315-abi3-macosx_10_10_x86_64"
 
 
 def test_wheel_tag_with_classic_abi3_ignored_on_free_threaded(monkeypatch):

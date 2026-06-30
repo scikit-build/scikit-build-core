@@ -274,6 +274,7 @@ class Builder:
         gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
         sabi = _SabiMode.NONE
+        sabi_minor: int | None = None
         if limited_api is True:
             # Handle externally-set limited_api (e.g. from setuptools)
             if sys.implementation.name != "cpython":
@@ -283,26 +284,41 @@ class Builder:
             else:
                 sabi = _SabiMode.ABI3
         elif limited_api is None and py_api.startswith("cp3"):
-            target_minor_version = int(py_api[3:].rstrip("t"))
+            # py-api may request abi3, abi3t, or both (e.g. "cp315.cp315t").
+            # A single build produces one binary, so build the ABI matching
+            # the current interpreter's GIL mode.
+            parts = py_api.split(".")
+            classic = next((p for p in parts if p[3:].isdigit()), None)
+            ft = next((p for p in parts if p.endswith("t") and p[3:-1].isdigit()), None)
             if sys.implementation.name != "cpython":
                 logger.info("py-api {} requires CPython, ignoring", py_api)
-            elif py_api.endswith("t"):
-                # Free-threaded stable ABI (PEP 803 / abi3t)
-                if gil_disabled and target_minor_version <= sys.version_info.minor:
-                    sabi = _SabiMode.ABI3T
-                else:
-                    logger.info(
-                        "py-api {} requires free-threaded CPython >= 3.{}, ignoring",
-                        py_api,
-                        target_minor_version,
-                    )
-            # Classic stable ABI (abi3)
             elif gil_disabled:
+                # Free-threaded stable ABI (PEP 803 / abi3t)
+                if ft is None:
+                    logger.info(
+                        "Free-threaded Python doesn't support the classic Limited API, ignoring"
+                    )
+                else:
+                    target_minor_version = int(ft[3:-1])
+                    if target_minor_version <= sys.version_info.minor:
+                        sabi = _SabiMode.ABI3T
+                        sabi_minor = target_minor_version
+                    else:
+                        logger.info(
+                            "py-api {} requires free-threaded CPython >= 3.{}, ignoring",
+                            ft,
+                            target_minor_version,
+                        )
+            # Classic stable ABI (abi3)
+            elif classic is None:
                 logger.info(
-                    "Free-threaded Python doesn't support the classic Limited API, ignoring"
+                    "py-api {} requires free-threaded CPython, ignoring", py_api
                 )
-            elif target_minor_version <= sys.version_info.minor:
-                sabi = _SabiMode.ABI3
+            else:
+                target_minor_version = int(classic[3:])
+                if target_minor_version <= sys.version_info.minor:
+                    sabi = _SabiMode.ABI3
+                    sabi_minor = target_minor_version
 
         python_library = get_python_library(self.config.env, abi3=False)
         python_sabi_library = None
@@ -360,11 +376,8 @@ class Builder:
         )
 
         # Allow users to detect the version requested in settings
-        if sabi != _SabiMode.NONE and py_api.startswith("cp"):
-            version_str = py_api[2:]
-            if version_str.endswith("t"):
-                version_str = version_str[:-1]
-            cache_config["SKBUILD_SABI_VERSION"] = f"{version_str[0]}.{version_str[1:]}"
+        if sabi != _SabiMode.NONE and sabi_minor is not None:
+            cache_config["SKBUILD_SABI_VERSION"] = f"3.{sabi_minor}"
         else:
             cache_config["SKBUILD_SABI_VERSION"] = ""
 
