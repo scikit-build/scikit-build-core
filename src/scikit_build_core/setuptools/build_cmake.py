@@ -40,8 +40,11 @@ __all__ = [
     "finalize_distribution_options",
 ]
 
-WRAPPER_CMAKE_INSTALL_DIR_COMPAT = "_scikit_build_wrapper_cmake_install_dir_compat"
-WRAPPER_CLASSIC_LAYOUT_COMPAT = "_scikit_build_wrapper_classic_layout_compat"
+# Marker set on the Distribution by the classic scikit-build compatibility shim
+# (scikit_build_core.setuptools.wrapper.setup) to opt into its behaviors:
+# install-dir translation, classic source-layout staging, and the
+# SKBUILD_CONFIGURE_OPTIONS / SKBUILD_BUILD_OPTIONS environment variables.
+WRAPPER_COMPAT = "_scikit_build_wrapper_compat"
 ORIGINAL_DATA_FILES = "_scikit_build_original_data_files"
 
 
@@ -409,7 +412,7 @@ class BuildCMake(setuptools.Command):
         dist_cmake_install_dir = (
             getattr(self.distribution, "cmake_install_dir", "") or ""
         )
-        if getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False):
+        if self._wrapper_compat_enabled():
             return _translate_wrapper_install_dir(
                 self.distribution, dist_cmake_install_dir
             )
@@ -464,16 +467,13 @@ class BuildCMake(setuptools.Command):
                 if line
             )
 
-    def _wrapper_classic_layout_compat_enabled(self) -> bool:
-        return bool(
-            not self.editable_mode
-            and getattr(self.distribution, WRAPPER_CLASSIC_LAYOUT_COMPAT, False)
-        )
-
     def _wrapper_compat_enabled(self) -> bool:
         # True only when the classic scikit-build compatibility wrapper
         # (scikit_build_core.setuptools.wrapper.setup) created the distribution.
-        return bool(getattr(self.distribution, WRAPPER_CMAKE_INSTALL_DIR_COMPAT, False))
+        return bool(getattr(self.distribution, WRAPPER_COMPAT, False))
+
+    def _wrapper_classic_layout_compat_enabled(self) -> bool:
+        return not self.editable_mode and self._wrapper_compat_enabled()
 
     def _apply_wrapper_classic_layout_compat(
         self, *, staged_install_dir: Path, install_subdir: Path

@@ -11,10 +11,7 @@ if TYPE_CHECKING:
 
 from .._compat.setuptools.errors import SetupError
 from .._compat.typing import TypeVar
-from .build_cmake import (
-    WRAPPER_CLASSIC_LAYOUT_COMPAT,
-    WRAPPER_CMAKE_INSTALL_DIR_COMPAT,
-)
+from .build_cmake import WRAPPER_COMPAT
 
 __all__ = ["setup"]
 
@@ -66,10 +63,7 @@ def setup(
         type(
             "DistributionClass",
             (distclass,),
-            {
-                WRAPPER_CLASSIC_LAYOUT_COMPAT: True,
-                WRAPPER_CMAKE_INSTALL_DIR_COMPAT: True,
-            },
+            {WRAPPER_COMPAT: True},
         ),
     )
 

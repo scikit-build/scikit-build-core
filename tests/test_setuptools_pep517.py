@@ -492,7 +492,7 @@ def test_skbuild_configure_and_build_options(
 
     dist = setuptools.Distribution({"name": "x", "version": "0.0.1"})
     if wrapper_compat:
-        setattr(dist, build_cmake.WRAPPER_CMAKE_INSTALL_DIR_COMPAT, True)
+        setattr(dist, build_cmake.WRAPPER_COMPAT, True)
     cmd = build_cmake.BuildCMake(dist)
     cmd.initialize_options()
     cmd.build_lib = str(tmp_path / "build")
