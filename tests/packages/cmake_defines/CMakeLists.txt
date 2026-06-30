@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15...4.3)
 project(cmake_defines LANGUAGES NONE)
 
 set(ONE_LEVEL_LIST
