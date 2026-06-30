@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 import os
+import platform
 import re
 import shlex
 import sys
@@ -14,6 +15,7 @@ from .. import __version__
 from .._compat.importlib import metadata, resources
 from .._logging import logger
 from .._reproducible import get_reproducible_epoch
+from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
 from .generator import set_environment_for_gen
 from .sysconfig import (
@@ -83,6 +85,32 @@ def archs_to_tags(archs: list[str]) -> list[str]:
     if sys.platform.startswith("darwin") and set(archs) == {"arm64", "x86_64"}:
         return ["universal2"]
     return archs
+
+
+def _warn_macos_arch_mismatch(cmake_path: Path, *, explicit_arch: bool) -> None:
+    """
+    Warn when CMake is about to build an x86_64 extension that the running
+    arm64 (Apple Silicon) interpreter cannot import (#1167).
+
+    CMake only gained Apple Silicon host detection in 3.19.2, the first release
+    shipped as a universal binary. An older, x86_64-only CMake runs under
+    Rosetta, sees the host as x86_64, and builds x86_64 extensions; importing
+    one under an arm64 interpreter then fails with an "incompatible
+    architecture" error. Skipped if the architecture was pinned explicitly
+    (ARCHFLAGS / CMAKE_OSX_ARCHITECTURES), which is a deliberate cross-compile.
+    """
+    if (
+        not explicit_arch
+        and platform.machine() == "arm64"
+        and _macos_binary_is_x86(cmake_path)
+    ):
+        logger.warning(
+            "CMake ({}) is an x86_64-only binary and will build x86_64 "
+            "extensions, but this is an arm64 (Apple Silicon) interpreter, so "
+            "the result will fail to import. Use CMake >= 3.19.2, or set "
+            "ARCHFLAGS / CMAKE_OSX_ARCHITECTURES to cross-compile on purpose.",
+            cmake_path,
+        )
 
 
 def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, None]:
@@ -395,6 +423,17 @@ class Builder:
             archs = get_archs(self.config.env, self.get_cmake_args())
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
+            else:
+                explicit_arch = (
+                    "CMAKE_OSX_ARCHITECTURES" in self.settings.cmake.define
+                    or any(
+                        "CMAKE_OSX_ARCHITECTURES" in arg
+                        for arg in self.get_cmake_args()
+                    )
+                )
+                _warn_macos_arch_mismatch(
+                    self.config.cmake.cmake_path, explicit_arch=explicit_arch
+                )
 
         # Add the pre-defined or passed CMake defines
         cmake_defines.update(self.settings.cmake.define)

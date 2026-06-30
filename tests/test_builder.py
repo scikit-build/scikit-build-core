@@ -16,6 +16,7 @@ from packaging.version import Version
 from scikit_build_core.builder.builder import (
     Builder,
     _sanitize_path,
+    _warn_macos_arch_mismatch,
     archs_to_tags,
     get_archs,
 )
@@ -279,6 +280,32 @@ def test_builder_macos_arch_cmake_system_processor(monkeypatch):
     assert get_archs(env, cmake_args) == ["arm64"]
     # Without the cmake arg, ARCHFLAGS wins.
     assert get_archs(env) == ["x86_64"]
+
+
+@pytest.mark.parametrize(
+    ("machine", "cmake_is_x86", "explicit_arch", "warns"),
+    [
+        ("arm64", True, False, True),  # #1167: x86_64 CMake on Apple Silicon
+        ("arm64", True, True, False),  # arch pinned -> deliberate cross-compile
+        ("arm64", False, False, False),  # universal/arm64 CMake builds arm64
+        ("x86_64", True, False, False),  # Rosetta interpreter wants x86_64 too
+    ],
+)
+def test_warn_macos_arch_mismatch(
+    monkeypatch, caplog, machine, cmake_is_x86, explicit_arch, warns
+):
+    monkeypatch.setattr(platform, "machine", lambda: machine)
+    monkeypatch.setattr(
+        "scikit_build_core.builder.builder._macos_binary_is_x86",
+        lambda _path: cmake_is_x86,
+    )
+    caplog.set_level("WARNING")
+    _warn_macos_arch_mismatch(Path("/usr/bin/cmake"), explicit_arch=explicit_arch)
+    messages = [str(r.msg) for r in caplog.records]
+    if warns:
+        assert any("fail to import" in m for m in messages)
+    else:
+        assert not messages
 
 
 def test_builder_macos_arch_extra(monkeypatch):
