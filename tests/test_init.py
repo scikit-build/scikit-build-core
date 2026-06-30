@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.utils import InvalidName
 
 from scikit_build_core.__main__ import main
 from scikit_build_core._compat import tomllib
-from scikit_build_core.init.__main__ import BACKENDS
+from scikit_build_core.init.__main__ import BACKENDS, generate_project
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -105,6 +106,28 @@ def test_init_non_interactive_requires_backend(
     with pytest.raises(SystemExit):
         main(["init", str(tmp_path)])
     assert not (tmp_path / "pyproject.toml").exists()
+
+
+@pytest.mark.parametrize(
+    "name", ["/abs/foo", "../evil", "foo bar", 'foo"bar', "foo/bar"]
+)
+def test_init_rejects_unsafe_name(name: str, tmp_path: Path) -> None:
+    # An unsafe ``--name`` must error out before any files are written; otherwise
+    # a slash in the derived module is substituted into template paths and writes
+    # files outside the target directory.
+    project = tmp_path / "proj"
+    with pytest.raises(SystemExit):
+        main(["init", str(project), "--backend", "c", "--name", name])
+    assert not (project / "pyproject.toml").exists()
+    assert list(tmp_path.iterdir()) in ([], [project])
+    if project.exists():
+        assert not any(project.iterdir())
+
+
+@pytest.mark.parametrize("name", ["/abs/foo", "../evil", "foo bar"])
+def test_generate_project_rejects_unsafe_name(name: str, tmp_path: Path) -> None:
+    with pytest.raises(InvalidName):
+        generate_project(tmp_path / "proj", "c", name)
 
 
 def test_init_interactive_selection(

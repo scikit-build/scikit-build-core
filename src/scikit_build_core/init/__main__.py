@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from packaging.utils import canonicalize_name
+from packaging.utils import InvalidName, canonicalize_name
 
 from .._logging import rich_error, rich_print
 from ..resources import resources
@@ -114,8 +114,13 @@ def generate_project(
 
     Shared entry point for the CLI, the docs example generation, and tests so
     the ``resources/templates`` tree stays the single source of truth.
+
+    Raises :class:`packaging.utils.InvalidName` if ``name`` is not a valid
+    distribution name; the derived module is substituted into template paths, so
+    an unsanitized name (e.g. one containing a slash) could otherwise write
+    files outside ``directory``.
     """
-    project_name = canonicalize_name(name)
+    project_name = canonicalize_name(name, validate=True)
     module = project_name.replace("-", "_").replace(".", "_")
     return _generate(directory, backend, project_name, module)
 
@@ -146,8 +151,9 @@ def _report(directory: Path, backend: str, module: str, written: list[Path]) -> 
 def main_init(args: argparse.Namespace, /) -> None:
     directory: Path = args.directory.resolve()
     raw_name: str = args.name or directory.name
-    project_name = canonicalize_name(raw_name)
-    if not project_name:
+    try:
+        project_name = canonicalize_name(raw_name, validate=True)
+    except InvalidName:
         rich_error(
             "Could not derive a valid project name from {raw_name!r}; pass {bold}--name{normal}.",
             raw_name=raw_name,
