@@ -6,10 +6,10 @@ Scikit-build-core supports dynamic metadata with four built-in plugins.
 
 Beyond the built-in plugins, your package and third parties can provide their
 own. These are fully supported through the standard `[[tool.dynamic-metadata]]`
-interface described below. The legacy `tool.scikit-build.metadata` table still
-treats them as provisional: there, plugins not shipped with scikit-build-core
-require `tool.scikit-build.experimental=true`, since that interface may change
-between _minor_ versions.
+interface described below. The legacy `tool.scikit-build.metadata` table was
+provisional: there, plugins not shipped with scikit-build-core require
+`tool.scikit-build.experimental=true`, since that interface was not stable
+(now replaced by the new one). We are providing backward compatiblity for now.
 
 :::
 
