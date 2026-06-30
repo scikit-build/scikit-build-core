@@ -107,3 +107,55 @@ def test_metadata_command(
         "dynamic": [],
         "dependencies": ["self==0.1.3"],
     }
+
+
+PYPROJECT_STATE = """
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+[project]
+name = "test"
+dynamic = ["version"]
+
+[[tool.dynamic-metadata]]
+provider = "state_plugin:DynamicMetadata"
+provider-path = "plugins"
+"""
+
+STATE_PLUGIN = """
+class DynamicMetadata:
+    def build_state(self, build_state):
+        self._state = build_state
+
+    def dynamic_metadata(self, settings, project):
+        return {"version": self._state}
+"""
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        ([], "metadata_wheel"),
+        (["--state", "sdist"], "sdist"),
+        (["--state", "editable"], "editable"),
+    ],
+)
+def test_metadata_command_state(
+    args: list[str],
+    expected: str,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        sys, "argv", ["scikit_build_core.build", "project-table", *args]
+    )
+    (tmp_path / "pyproject.toml").write_text(PYPROJECT_STATE)
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "plugins" / "state_plugin.py").write_text(STATE_PLUGIN)
+    monkeypatch.chdir(tmp_path)
+
+    main()
+    out, _ = capsys.readouterr()
+    jout = json.loads(out)
+    assert jout["version"] == expected
