@@ -182,7 +182,7 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
     # Note: This is sensitive to the types of quotes for SKBUILD_CMAKE_ARGS
     monkeypatch.setenv(env_var, setting)
     dist = tmp_path / "dist"
-    build_wheel(str(dist), {"cmake.targets": ["cmake_example"]})  # Could leave empty
+    build_wheel(str(dist), {"build.targets": ["cmake_example"]})  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-py3-none-*.whl")
     wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
     wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
@@ -206,7 +206,7 @@ def test_passing_cxx_flags(monkeypatch, env_var, setting, tmp_path: Path):
 def test_pep517_wheel(virtualenv, tmp_path: Path):
     dist = tmp_path / "dist"
     out = build_wheel(
-        str(dist), {"cmake.targets": ["cmake_example"]}
+        str(dist), {"build.targets": ["cmake_example"]}
     )  # Could leave empty
     (wheel,) = dist.glob("cmake_example-0.0.1-*.whl")
     wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this

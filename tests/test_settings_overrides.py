@@ -630,7 +630,7 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
             f"""\
             [tool.scikit-build]
             cmake.args = ["a", "b"]
-            cmake.targets = ["a", "b"]
+            build.targets = ["a", "b"]
             wheel.packages = ["a", "b"]
             wheel.license-files = ["a.txt", "b.txt"]
             wheel.exclude = ["x", "y"]
@@ -640,14 +640,14 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
             [[tool.scikit-build.overrides]]
             if.state = "wheel"
             inherit.cmake.args = "{inherit}"
-            inherit.cmake.targets = "{inherit}"
+            inherit.build.targets = "{inherit}"
             inherit.wheel.packages = "{inherit}"
             inherit.wheel.license-files = "{inherit}"
             inherit.wheel.exclude = "{inherit}"
             inherit.install.components = "{inherit}"
             inherit.cmake.define = "{inherit}"
             cmake.args = ["c", "d"]
-            cmake.targets = ["c", "d"]
+            build.targets = ["c", "d"]
             wheel.packages = ["c", "d"]
             wheel.license-files = ["c.txt", "d.txt"]
             wheel.exclude = ["xx", "yy"]
@@ -663,7 +663,7 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
 
     if inherit == "none":
         assert settings.cmake.args == ["c", "d"]
-        assert settings.cmake.targets == ["c", "d"]
+        assert settings.build.targets == ["c", "d"]
         assert settings.wheel.packages == ["c", "d"]
         assert settings.wheel.license_files == ["c.txt", "d.txt"]
         assert settings.wheel.exclude == ["xx", "yy"]
@@ -671,7 +671,7 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.define == {"b": "X", "c": "C"}
     elif inherit == "append":
         assert settings.cmake.args == ["a", "b", "c", "d"]
-        assert settings.cmake.targets == ["a", "b", "c", "d"]
+        assert settings.build.targets == ["a", "b", "c", "d"]
         assert settings.wheel.packages == ["a", "b", "c", "d"]
         assert settings.wheel.license_files == ["a.txt", "b.txt", "c.txt", "d.txt"]
         assert settings.wheel.exclude == ["x", "y", "xx", "yy"]
@@ -679,7 +679,7 @@ def test_skbuild_overrides_inherit(inherit: str, tmp_path: Path):
         assert settings.cmake.define == {"a": "A", "b": "X", "c": "C"}
     elif inherit == "prepend":
         assert settings.cmake.args == ["c", "d", "a", "b"]
-        assert settings.cmake.targets == ["c", "d", "a", "b"]
+        assert settings.build.targets == ["c", "d", "a", "b"]
         assert settings.wheel.packages == ["c", "d", "a", "b"]
         assert settings.wheel.license_files == ["c.txt", "d.txt", "a.txt", "b.txt"]
         assert settings.wheel.exclude == ["xx", "yy", "x", "y"]

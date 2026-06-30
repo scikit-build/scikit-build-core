@@ -758,9 +758,9 @@ def test_skbuild_settings_min_version_versions(
     cmakelists = tmp_path / "CMakeLists.txt"
     cmakelists.write_text("cmake_minimum_required(VERSION 3.20)", encoding="utf-8")
 
-    settings_reader = SettingsReader.from_file(pyproject_toml, {})
-    settings = settings_reader.settings
-    assert settings.cmake.version == SpecifierSet(">=3.21")
+    # Unset minimum-version (latest) no longer honors the deprecated field.
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {})
 
     settings_reader = SettingsReader.from_file(
         pyproject_toml, {"minimum-version": "0.7"}
@@ -875,6 +875,65 @@ def test_backcompat_cmake_build_env(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     settings_reader = SettingsReader.from_file(pyproject_toml, {})
     assert settings_reader.settings.build.verbose
     assert settings_reader.settings.build.targets == ["a", "b"]
+
+
+# The deprecated fields keep working only when an old minimum-version explicitly
+# opts back into the legacy behavior; unset (latest) or 1.0+ is an error.
+@pytest.mark.parametrize(
+    "field",
+    [
+        "cmake.minimum-version = '3.21'",
+        "ninja.minimum-version = '1.11'",
+        "cmake.verbose = true",
+        "cmake.targets = ['a', 'b']",
+    ],
+)
+@pytest.mark.parametrize("min_version", [None, "1.0"])
+def test_deprecated_field_errors(
+    field: str,
+    min_version: str | None,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.0.0"
+    )
+    lines = ["[tool.scikit-build]", field]
+    if min_version is not None:
+        lines.insert(1, f'minimum-version = "{min_version}"')
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("\n".join(lines), encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml)
+
+
+@pytest.mark.parametrize(
+    ("field", "min_version"),
+    [
+        ("cmake.minimum-version = '3.21'", "0.7"),
+        ("ninja.minimum-version = '1.11'", "0.7"),
+        ("cmake.verbose = true", "0.9"),
+        ("cmake.targets = ['a', 'b']", "0.9"),
+    ],
+)
+def test_deprecated_field_old_pin_allowed(
+    field: str,
+    min_version: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.0.0"
+    )
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        f'[tool.scikit-build]\nminimum-version = "{min_version}"\n{field}\n',
+        encoding="utf-8",
+    )
+
+    # Old pins keep the legacy behavior without raising.
+    SettingsReader.from_file(pyproject_toml)
 
 
 def test_auto_minimum_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
