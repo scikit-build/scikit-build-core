@@ -83,6 +83,24 @@ printout of the current settings using:
 scikit-build builder
 ```
 
+## A dependency's library ends up in `site-packages/bin` or `lib`
+
+If you build a shared dependency as part of your project (for example via
+`add_subdirectory(...)` on a vendored library), you may find its library
+installed to `site-packages/bin` (Windows) or `site-packages/lib` (Linux/macOS)
+instead of next to your extension module. The `install(TARGETS ...)` command
+sends its artifacts to the [GNUInstallDirs][] defaults — `bin` for Windows DLLs
+(a `RUNTIME` artifact) and `lib` for `.so`/`.dylib` (a `LIBRARY` artifact) —
+and scikit-build-core copies the whole install tree into the wheel. A library
+placed there generally will not be found at import time, either.
+
+The cleanest fix is usually to link the dependency statically so there is no
+runtime library to place. If you need it shared, you can redirect the install
+into your package directory and add the runtime hints yourself, or run a
+wheel-repair tool. See [](#dynamic-linking) for all of the options.
+
+[GNUInstallDirs]: inv:cmake:cmake:module#module:GNUInstallDirs
+
 ## Repairing wheels
 
 Like most other backends[^1], scikit-build-core produces `linux` wheels, which
