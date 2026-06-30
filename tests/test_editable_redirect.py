@@ -239,6 +239,109 @@ def test_rebuild_runs_once_per_process(tmp_path: Path):
     assert calls == 1
 
 
+def test_loader_exposes_rebuild(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """A redirected module's loader exposes rebuild() (module.__loader__.rebuild()).
+
+    Covers the three loader kinds the finder produces: a single-location package
+    (simple wrapper), a compiled module resolved via known_wheel_files (simple
+    wrapper, not a package), and a namespace package. Each must delegate to the
+    finder's rebuild while still delegating other loader attributes.
+    """
+    import importlib.machinery
+
+    pkg_dir = tmp_path / "src" / "pkg"
+    pkg_dir.mkdir(parents=True)
+    init = pkg_dir / "__init__.py"
+    init.touch()
+
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    so = tmp_path / "build" / "pkg" / f"_ext{ext}"
+    so.parent.mkdir(parents=True)
+    so.touch()
+
+    ns_dir = tmp_path / "src" / "ns"
+    ns_dir.mkdir()
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg": str(init)},
+        known_wheel_files={"pkg._ext": str(so)},
+        known_directories={"pkg": [str(pkg_dir)], "ns": [str(ns_dir)]},
+        known_packages=["pkg"],
+        path=str(tmp_path / "build"),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path / "site-packages"),
+        install_dir="",
+    )
+
+    calls = 0
+
+    def fake_rebuild() -> None:
+        nonlocal calls
+        calls += 1
+
+    monkeypatch.setattr(finder, "rebuild", fake_rebuild)
+
+    # Single-location package: simple wrapper, get_filename still delegates.
+    pkg_spec = finder.find_spec("pkg")
+    assert pkg_spec is not None
+    assert pkg_spec.loader is not None
+    pkg_spec.loader.rebuild()  # type: ignore[attr-defined]
+    assert pkg_spec.loader.get_filename("pkg") == str(init)  # type: ignore[attr-defined]
+
+    # Compiled (non-package) module resolved via known_wheel_files.
+    ext_spec = finder.find_spec("pkg._ext")
+    assert ext_spec is not None
+    assert ext_spec.loader is not None
+    ext_spec.loader.rebuild()  # type: ignore[attr-defined]
+
+    # Namespace package.
+    ns_spec = finder.find_spec("ns")
+    assert ns_spec is not None
+    assert ns_spec.loader is not None
+    ns_spec.loader.rebuild()  # type: ignore[attr-defined]
+
+    assert calls == 3
+
+
+def test_loader_rebuild_without_build_dir_errors(tmp_path: Path):
+    """rebuild() errors when there is no build dir to rebuild.
+
+    A non-rebuildable editable (no persistent build-dir, path=None) still
+    installs the finder and exposes the loader hook, so a rebuild request must
+    raise to make the missing configuration visible. Enabling auto-rebuild
+    already requires a build-dir, so the import-time path never hits this.
+    """
+    init = tmp_path / "pkg" / "__init__.py"
+    init.parent.mkdir()
+    init.touch()
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg": str(init)},
+        known_wheel_files={},
+        known_directories={"pkg": [str(init.parent)]},
+        known_packages=["pkg"],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path),
+        install_dir="",
+    )
+
+    with pytest.raises(RuntimeError, match="no persistent build directory"):
+        finder.rebuild()
+
+    spec = finder.find_spec("pkg")
+    assert spec is not None
+    assert spec.loader is not None
+    with pytest.raises(RuntimeError, match="no persistent build directory"):
+        spec.loader.rebuild()  # type: ignore[attr-defined]
+
+
 def test_mapping_to_modules_prefers_py():
     """Test that mapping_to_modules prefers __init__.py over __init__.pxd."""
     from scikit_build_core.build._editable import mapping_to_modules
