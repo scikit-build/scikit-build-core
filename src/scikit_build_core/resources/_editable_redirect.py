@@ -199,21 +199,46 @@ class _ScikitBuildEditableReader:
         return (item.name for item in self.files().iterdir())  # type: ignore[attr-defined]
 
 
-class _ScikitBuildResourceLoaderWrapper:
+class _ScikitBuildLoaderWrapper:
     """
-    Thin wrapper around a module loader that provides multi-path resource reading.
+    Thin wrapper around a module loader that adds an on-demand ``rebuild()`` hook.
 
-    Delegates all loader functionality to the wrapped loader, overriding only
+    Delegates all loader functionality to the wrapped loader, adding only a
+    ``rebuild()`` method that runs the same CMake build/install the import-time
+    auto-rebuild uses. This lets a user trigger a rebuild explicitly via
+    ``module.__loader__.rebuild()`` without enabling ``editable.rebuild``.
+    """
+
+    def __init__(self, loader: object, finder: ScikitBuildRedirectingFinder) -> None:
+        self._skbuild_loader = loader
+        self._skbuild_finder = finder
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._skbuild_loader, name)
+
+    def rebuild(self) -> None:
+        # User-initiated, so a missing build directory is an error rather than
+        # the silent no-op the import-time auto-rebuild uses.
+        self._skbuild_finder.rebuild(required=True)
+
+
+class _ScikitBuildResourceLoaderWrapper(_ScikitBuildLoaderWrapper):
+    """
+    Loader wrapper that also provides multi-path resource reading.
+
+    Extends the rebuild hook of the base wrapper, additionally overriding
     get_resource_reader() to return a reader covering all search paths (both
     source and CMake install trees).
     """
 
-    def __init__(self, loader: object, search_paths: list[str]) -> None:
-        self._skbuild_loader = loader
+    def __init__(
+        self,
+        loader: object,
+        finder: ScikitBuildRedirectingFinder,
+        search_paths: list[str],
+    ) -> None:
+        super().__init__(loader, finder)
         self._skbuild_paths = search_paths
-
-    def __getattr__(self, name: str) -> object:
-        return getattr(self._skbuild_loader, name)
 
     def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
         return _ScikitBuildEditableReader(self._skbuild_paths)
@@ -232,8 +257,11 @@ class _ScikitBuildNamespaceLoader:
     _NamespacePath, which cannot be constructed from remapped directories.
     """
 
-    def __init__(self, search_paths: list[str]) -> None:
+    def __init__(
+        self, search_paths: list[str], finder: ScikitBuildRedirectingFinder
+    ) -> None:
         self._skbuild_paths = search_paths
+        self._skbuild_finder = finder
 
     def create_module(self, spec: object) -> object:
         return None
@@ -243,6 +271,11 @@ class _ScikitBuildNamespaceLoader:
 
     def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
         return _ScikitBuildEditableReader(self._skbuild_paths)
+
+    def rebuild(self) -> None:
+        # User-initiated, so a missing build directory is an error rather than
+        # the silent no-op the import-time auto-rebuild uses.
+        self._skbuild_finder.rebuild(required=True)
 
 
 def _patch_importlib_resources_for_python39() -> None:
@@ -370,7 +403,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         # A tracked package directory without an importable __init__ is a
         # namespace package.
         if submodule_search_locations is not None:
-            loader = _ScikitBuildNamespaceLoader(submodule_search_locations)
+            loader = _ScikitBuildNamespaceLoader(submodule_search_locations, self)
             spec = importlib.util.spec_from_loader(
                 fullname,
                 loader,  # type: ignore[arg-type]
@@ -393,18 +426,37 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
             origin,
             submodule_search_locations=submodule_search_locations if is_pkg else None,
         )
-        # For packages with multiple search locations (e.g. a source tree and a
-        # CMake install tree), wrap the loader so importlib.resources.files()
-        # can see resources from every location, not just origin's directory.
-        if spec is not None and is_pkg and submodule_search_locations:
-            spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
-                spec.loader, submodule_search_locations
-            )
+        # Wrap the loader so it exposes a rebuild() hook (reachable as
+        # module.__loader__.rebuild()). Packages with more than one search
+        # location (e.g. a source tree and a CMake install tree) additionally get
+        # a resource reader so importlib.resources.files() can see resources from
+        # every location, not just origin's directory.
+        if spec is not None and spec.loader is not None:
+            if (
+                is_pkg
+                and submodule_search_locations
+                and len(submodule_search_locations) > 1
+            ):
+                spec.loader = _ScikitBuildResourceLoaderWrapper(  # type: ignore[assignment]
+                    spec.loader, self, submodule_search_locations
+                )
+            else:
+                spec.loader = _ScikitBuildLoaderWrapper(spec.loader, self)  # type: ignore[assignment]
         return spec
 
-    def rebuild(self) -> None:
-        # Don't rebuild if not set to a local path
+    def rebuild(self, *, required: bool = False) -> None:
+        # Without a persistent build directory there is nothing to rebuild. The
+        # import-time auto-rebuild treats this as a silent no-op; an explicit
+        # caller (module.__loader__.rebuild()) sets required=True to get an error
+        # instead.
         if not self.path:
+            if required:
+                msg = (
+                    "Cannot rebuild: this editable install has no persistent "
+                    "build directory. Reinstall with a 'build-dir' set (e.g. "
+                    "-Cbuild-dir=build) to enable on-demand rebuilds."
+                )
+                raise RuntimeError(msg)
             return
 
         env = os.environ.copy()

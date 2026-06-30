@@ -826,6 +826,44 @@ added via scikit-build-core's package discovery will be found in the original
 location, so changes there are picked up on import, regardless of the
 `editable.rebuild` setting.
 
+### Triggering a rebuild manually
+
+You don't have to enable `editable.rebuild` to rebuild on demand. The
+redirecting finder installs a loader for each redirected module, and that loader
+exposes a `rebuild()` method, so you can run the same
+`cmake --build`/`--install` cycle whenever you like using only the standard
+library:
+
+```python
+import some_package
+
+some_package.__loader__.rebuild()
+```
+
+This works for any importable object the editable install provides -- a package,
+a plain module, or a compiled extension. A rebuild needs a persistent build
+directory to run in, so install with a `build-dir` set:
+
+```console
+$ pip install --no-build-isolation -Cbuild-dir=build -ve .
+```
+
+If the editable install was built without a persistent `build-dir`, there is
+nothing to rebuild and the call raises `RuntimeError`. (The automatic
+rebuild-on-import path, by contrast, silently does nothing in that case.)
+
+If you don't have a handle on a redirected module, the finder itself is on
+`sys.meta_path` and carries the same method:
+
+```python
+import sys
+
+finder = next(
+    f for f in sys.meta_path if type(f).__name__ == "ScikitBuildRedirectingFinder"
+)
+finder.rebuild()
+```
+
 The redirecting finder is installed at interpreter startup. On Python 3.15+,
 this uses a [PEP 829][] `.start` file (the slightly safer, structured
 replacement for the deprecated `import` line in a `.pth` file); on older Pythons
