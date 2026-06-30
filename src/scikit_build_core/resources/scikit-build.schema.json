@@ -301,7 +301,7 @@
         "reproducible": {
           "type": "boolean",
           "default": false,
-          "description": "Try to build a reproducible wheel. Opt-in, as normalizing permissions can"
+          "description": "Try to build a reproducible wheel."
         }
       }
     },
