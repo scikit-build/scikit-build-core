@@ -225,7 +225,7 @@ def _build_and_test_example(session: nox.Session) -> None:
     session.install(
         ".",
         "--no-build-isolation",
-        "--config-settings=cmake.verbose=true",
+        "--config-settings=build.verbose=true",
         env={"PYTHONWARNINGS": "error"},
     )
     session.run("pip", "list")
