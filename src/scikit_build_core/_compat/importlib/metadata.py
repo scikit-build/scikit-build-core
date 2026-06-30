@@ -24,10 +24,6 @@ def entry_points(*, group: str) -> EntryPoints:
         return importlib.metadata.entry_points(group=group)
 
     epg = importlib.metadata.entry_points()
-    # On a genuine 3.8/3.9 this is a dict keyed by group. Tests may simulate an
-    # old version on a newer runtime, where it is the modern selectable object.
-    if hasattr(epg, "select"):
-        return epg.select(group=group)
     return epg.get(group, [])  # pylint: disable=no-member
 
 
