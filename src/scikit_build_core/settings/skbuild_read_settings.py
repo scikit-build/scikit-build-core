@@ -76,12 +76,12 @@ def _handle_minimum_version(
             f"Cannot set {name}.version if minimum-version is set to less than 0.8 (which is where it was introduced)"
         )
 
-    # Backwards compatibility for minimum_version
+    # Backwards compatibility for minimum_version. It is only honored when an
+    # old minimum-version (< 0.8) explicitly opts back into it; unset (latest)
+    # or >= 0.8 is an error.
     if dc.minimum_version is not None:
         msg = f"Use {name}.version instead of {name}.minimum-version with scikit-build-core >= 0.8"
-        if minimum_version is None:
-            rich_warning(msg)
-        elif minimum_version >= Version("0.8"):
+        if minimum_version is None or minimum_version >= Version("0.8"):
             rich_error(msg)
 
         if dc.version is not None and dc.version != version_default:
@@ -135,8 +135,10 @@ def _handle_move(
     if before is None:
         return after
 
+    # The renamed field is only honored when an old minimum-version (<
+    # introduced_in) explicitly opts back into it; unset (latest) is an error.
     if minimum_version is None:
-        rich_warning(
+        rich_error(
             f"Use {after_name} instead of {before_name} for scikit-build-core >= {introduced_in}"
         )
 
