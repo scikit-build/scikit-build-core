@@ -613,7 +613,9 @@ class EditableSettings:
 
     The tree is wiped and recreated on each build, so it must be a fresh or
     scikit-build-core-managed directory -- pointing it at a populated directory
-    such as your source tree is refused to avoid deleting those files.
+    such as your source tree is refused to avoid deleting those files. A managed
+    tree gets a ``CACHEDIR.TAG`` and a ``.gitignore`` so its compiled artifacts
+    stay out of backups and version control.
     """
 
     @property
