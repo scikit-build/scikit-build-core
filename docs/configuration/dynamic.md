@@ -244,6 +244,9 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 
 `````
 
+In order to use the version number in readme feature, this must be listed after
+the version in the `[[tool.dynamic-metadata]]` mode.
+
 ```{versionchanged} 0.11.2
 
 The version number feature now works.

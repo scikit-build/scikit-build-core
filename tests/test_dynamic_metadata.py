@@ -117,9 +117,10 @@ def test_dynamic_metadata():
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 
 
+@pytest.mark.parametrize("source", ["plugin_project.toml", "plugin_array_project.toml"])
 @pytest.mark.parametrize("package", ["dynamic_metadata"], indirect=True)
 @pytest.mark.usefixtures("package")
-def test_plugin_metadata():
+def test_plugin_metadata(source):
     reason_msg = (
         "install hatch-fancy-pypi-readme and setuptools-scm to test the "
         "dynamic metadata plugins"
@@ -131,7 +132,7 @@ def test_plugin_metadata():
 
     hfpr_version = Version(importlib.metadata.version("hatch_fancy_pypi_readme"))
 
-    shutil.copy("plugin_project.toml", "pyproject.toml")
+    shutil.copy(source, "pyproject.toml")
 
     subprocess.run(["git", "init", "--initial-branch=main"], check=True)
     subprocess.run(["git", "config", "user.name", "bot"], check=True)
@@ -423,6 +424,87 @@ def test_array_dynamic_metadata(
     assert str(metadata.requires_python) == ">=1.2.3"
 
     assert "extra-build-dep" in set(GetRequires().dynamic_metadata())
+
+
+def test_regex_both_forms(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The bundled regex plugin gives the same result in both config forms."""
+    from scikit_build_core.builder._load_provider import (
+        process_dynamic_metadata,
+        process_legacy_dynamic_metadata,
+    )
+
+    monkeypatch.chdir(tmp_path)
+    Path("__init__.py").write_text("__version__ = '0.1.0'\n", encoding="utf-8")
+
+    def project() -> dict[str, Any]:
+        return {"name": "p", "dynamic": ["version"]}
+
+    legacy = process_legacy_dynamic_metadata(
+        project(),
+        {
+            "version": {
+                "provider": "scikit_build_core.metadata.regex",
+                "input": "__init__.py",
+            }
+        },
+    )
+    array = process_dynamic_metadata(
+        project(),
+        [
+            {
+                "provider": "scikit_build_core.metadata.regex",
+                "field": "version",
+                "input": "__init__.py",
+            }
+        ],
+    )
+    assert legacy["version"] == array["version"] == "0.1.0"
+
+
+def test_template_both_forms() -> None:
+    """The bundled template plugin gives the same result in both config forms."""
+    from scikit_build_core.builder._load_provider import (
+        process_dynamic_metadata,
+        process_legacy_dynamic_metadata,
+    )
+
+    result = {"dev": ["{project[name]}=={project[version]}"]}
+
+    def project() -> dict[str, Any]:
+        return {"name": "pkg", "version": "1.0", "dynamic": ["optional-dependencies"]}
+
+    legacy = process_legacy_dynamic_metadata(
+        project(),
+        {
+            "optional-dependencies": {
+                "provider": "scikit_build_core.metadata.template",
+                "result": result,
+            }
+        },
+    )
+    array = process_dynamic_metadata(
+        project(),
+        [
+            {
+                "provider": "scikit_build_core.metadata.template",
+                "field": "optional-dependencies",
+                "result": result,
+            }
+        ],
+    )
+    assert legacy["optional-dependencies"] == array["optional-dependencies"]
+    assert array["optional-dependencies"] == {"dev": ["pkg==1.0"]}
+
+
+def test_array_legacy_plugin_requires_field() -> None:
+    """A bundled (legacy-signature) plugin in the array form needs a 'field'."""
+    from scikit_build_core.builder._load_provider import process_dynamic_metadata
+
+    with pytest.raises(RuntimeError, match="field"):
+        process_dynamic_metadata(
+            {"name": "p", "dynamic": ["version"]},
+            [{"provider": "scikit_build_core.metadata.regex", "input": "x"}],
+        )
 
 
 def test_mixing_metadata_forms_rejected() -> None:
