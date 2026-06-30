@@ -496,6 +496,28 @@ def test_template_both_forms() -> None:
     assert array["optional-dependencies"] == {"dev": ["pkg==1.0"]}
 
 
+def test_legacy_does_not_mutate_input(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The legacy table must not mutate the caller's project dict."""
+    from scikit_build_core.builder._load_provider import process_legacy_dynamic_metadata
+
+    monkeypatch.chdir(tmp_path)
+    Path("__init__.py").write_text("__version__ = '0.1.0'\n", encoding="utf-8")
+
+    project = {"name": "p", "dynamic": ["version"]}
+    process_legacy_dynamic_metadata(
+        project,
+        {
+            "version": {
+                "provider": "scikit_build_core.metadata.regex",
+                "input": "__init__.py",
+            }
+        },
+    )
+    assert project == {"name": "p", "dynamic": ["version"]}
+
+
 def test_array_legacy_plugin_requires_field() -> None:
     """A bundled (legacy-signature) plugin in the array form needs a 'field'."""
     from scikit_build_core.builder._load_provider import process_dynamic_metadata

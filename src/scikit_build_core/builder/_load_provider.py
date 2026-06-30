@@ -395,9 +395,14 @@ def process_legacy_dynamic_metadata(
     """
     initial = {f: (p, c) for (f, p, c) in _load_dynamic_metadata(metadata)}
 
+    # Copy the mutable project, including the "dynamic" list that providers
+    # remove resolved fields from, so the caller's dict is left untouched.
+    project_copy = dict(project)
+    project_copy["dynamic"] = list(project_copy.get("dynamic", []))
+
     settings = DynamicPyProject(
         settings={f: c for f, (_, c) in initial.items()},
-        project=dict(project),
+        project=project_copy,
         providers={k: v for k, (v, _) in initial.items()},
     )
 
