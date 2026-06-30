@@ -120,21 +120,26 @@ the minimum to get started.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...3.30)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
+cmake_minimum_required(VERSION 3.15...4.3)
+project(scikit_build_simplest LANGUAGES C)
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 Python_add_library(_module MODULE src/module.c WITH_SOABI)
-install(TARGETS _module DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS _module DESTINATION scikit_build_simplest)
 ```
 
-Scikit-build-core will backport FindPython from CMake 3.26.1 to older versions
-of Python, and will handle PyPy for you if you are building from PyPy. You will
-need to install everything you want into the full final path inside site-modules
-(so you will usually prefix everything by the package name).
+The `install(DESTINATION ...)` is relative to site-packages, so the `_module`
+extension above lands at `scikit_build_simplest/_module.*` when the package is
+`pip install`ed. Scikit-build-core will backport FindPython from CMake 3.26.1 to
+older versions of Python, and will handle PyPy for you if you are building from
+PyPy. You will need to install everything you want into the full final path
+inside site-packages (so you will usually prefix everything by the package name)
+— including any `__init__.py`, which CMake can place alongside the extension
+with `install(FILES src/__init__.py DESTINATION scikit_build_simplest)`.
 
-More examples are in the
+The [Getting started guide][getting-started] walks through a complete package
+step by step. More examples are in the
 [tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
 
 ## Configuration
@@ -364,6 +369,7 @@ Science Foundation.
 [download-badge]:           https://static.pepy.tech/badge/scikit-build-core/month
 [download-link]:            https://pepy.tech/project/scikit-build-core
 [enscons]:                  https://pypi.org/project/enscons
+[getting-started]:          https://scikit-build-core.readthedocs.io/en/latest/guide/getting_started.html
 [github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
 [github-discussions-link]:  https://github.com/orgs/scikit-build/discussions
 [hatchling]:                https://hatch.pypa.io/latest

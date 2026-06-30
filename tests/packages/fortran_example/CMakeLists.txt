@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.2...3.29)
+cmake_minimum_required(VERSION 3.17.2...4.3)
 
 project(
   fibby
