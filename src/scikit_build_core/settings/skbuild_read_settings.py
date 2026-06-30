@@ -549,6 +549,15 @@ class SettingsReader:
                 "top-level [[tool.dynamic-metadata]]; use only one"
             )
 
+        if self.settings.metadata and (
+            self.settings.minimum_version is None
+            or self.settings.minimum_version >= Version("1.0")
+        ):
+            rich_warning(
+                "tool.scikit-build.metadata is deprecated; use the standard "
+                "top-level [[tool.dynamic-metadata]] instead"
+            )
+
         for key, value in self.settings.metadata.items():
             if "provider" not in value:
                 sys.stdout.flush()

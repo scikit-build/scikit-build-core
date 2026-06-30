@@ -14,6 +14,8 @@ import pytest
 from packaging.requirements import Requirement
 from packaging.version import Version
 
+import scikit_build_core._logging
+import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core._compat import tomllib
 from scikit_build_core._vendor import pyproject_metadata
 from scikit_build_core.build import build_wheel
@@ -550,6 +552,60 @@ def test_mixing_metadata_forms_rejected() -> None:
     reader = SettingsReader(pyproject, {}, state="metadata_wheel")
     with pytest.raises(SystemExit):
         reader.validate_may_exit()
+
+
+@pytest.mark.parametrize("minimum_version", [None, "1.0", "1.1"])
+def test_legacy_metadata_table_deprecation_warning(
+    minimum_version: str | None,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The current version is < 1.0, so pin a higher one to reach the >=1.0 branch.
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.1.0"
+    )
+    # rich_warning is memoized; clear so the warning is re-emitted for this test.
+    scikit_build_core._logging.rich_warning.cache_clear()
+
+    skbuild: dict[str, object] = {
+        "metadata": {
+            "version": {"provider": "scikit_build_core.metadata.setuptools_scm"}
+        }
+    }
+    if minimum_version is not None:
+        skbuild["minimum-version"] = minimum_version
+    pyproject = {
+        "project": {"name": "t", "dynamic": ["version"]},
+        "tool": {"scikit-build": skbuild},
+    }
+    reader = SettingsReader(pyproject, {}, state="metadata_wheel")
+    reader.validate_may_exit()
+
+    err = capsys.readouterr().err
+    assert "tool.scikit-build.metadata is deprecated" in err
+
+
+@pytest.mark.parametrize("minimum_version", ["0.10", "0.11"])
+def test_legacy_metadata_table_no_warning_below_1(
+    minimum_version: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    scikit_build_core._logging.rich_warning.cache_clear()
+    pyproject = {
+        "project": {"name": "t", "dynamic": ["version"]},
+        "tool": {
+            "scikit-build": {
+                "minimum-version": minimum_version,
+                "metadata": {
+                    "version": {"provider": "scikit_build_core.metadata.setuptools_scm"}
+                },
+            }
+        },
+    }
+    reader = SettingsReader(pyproject, {}, state="metadata_wheel")
+    reader.validate_may_exit()
+
+    err = capsys.readouterr().err
+    assert "deprecated" not in err
 
 
 @pytest.mark.parametrize("override", [None, "env", "sdist"])

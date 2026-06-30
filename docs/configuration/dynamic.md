@@ -51,10 +51,10 @@ both static and dynamic.
 :::{warning}
 
 The older `[tool.scikit-build.metadata.<field>]` table (a field-keyed mapping
-rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]` and
-is expected to be deprecated in a future release. It still works and is shown in
-the examples below, but the two forms **cannot be combined** in one project; use
-one or the other.
+rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]`. It
+is deprecated and emits a warning unless `minimum-version` is set below `1.0`.
+It still works and is shown in the examples below, but the two forms **cannot be
+combined** in one project; use one or the other.
 
 :::
 
