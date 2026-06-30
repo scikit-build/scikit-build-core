@@ -80,7 +80,7 @@ field = "version"
 write_to = "src/package/_version.py"
 ```
 
-````
+`````
 
 ````{tab} `tool.scikit-build.metadata`
 
@@ -97,7 +97,7 @@ sdist.include = ["src/package/_version.py"]
 write_to = "src/package/_version.py"
 ```
 
-````
+`````
 
 This sets the python project version according to
 [git tags](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
@@ -139,7 +139,7 @@ field = "version"
 input = "src/mypackage/__init__.py"
 ```
 
-````
+`````
 
 ````{tab} `tool.scikit-build.metadata`
 
@@ -153,7 +153,7 @@ provider = "scikit_build_core.metadata.regex"
 input = "src/mypackage/__init__.py"
 ```
 
-````
+`````
 
 You can set a custom regex with `regex=`. By default when targeting version, you
 get a reasonable regex for python files,
@@ -179,7 +179,7 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
-````
+`````
 
 ````{tab} `tool.scikit-build.metadata`
 
@@ -197,7 +197,7 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
-````
+`````
 
 This will remove the "dev" tag when it is equal to 0.
 
@@ -227,7 +227,7 @@ field = "readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
-````
+`````
 
 ````{tab} `tool.scikit-build.metadata`
 
@@ -242,7 +242,7 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
-````
+`````
 
 ```{versionchanged} 0.11.2
 
@@ -262,7 +262,7 @@ field = "optional-dependencies"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-````
+`````
 
 ````{tab} `tool.scikit-build.metadata`
 
@@ -272,7 +272,7 @@ provider = "scikit_build_core.metadata.template"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-````
+`````
 
 You can use `project` to access the current metadata values. You can use
 `result` to specify the output. The result must match the type of the metadata
