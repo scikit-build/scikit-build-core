@@ -47,8 +47,6 @@ dependencies = [
 # present (user controllable) - but a system version is fine.
 
 [project.optional-dependencies]
-pyproject = [
-]
 wheels = [
     "cmake",
     "ninja; sys_platform!='win32'",
