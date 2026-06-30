@@ -311,6 +311,68 @@ def test_navigate_editable_remapped_namespace(
     assert virtualenv.execute(read_data) == "payload"
 
 
+def test_packages_to_file_mapping_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A wheel.packages entry may point at a single module file, not just a
+    # directory (#888). It is installed as one top-level file.
+    (tmp_path / "hello.py").write_text("def run(): ...\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    mapping = packages_to_file_mapping(
+        packages={"hello.py": "hello.py"},
+        platlib_dir=tmp_path / "out",
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    assert mapping == {"hello.py": str(tmp_path / "out" / "hello.py")}
+
+
+def test_packages_to_file_mapping_module_nested(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # The table form may place a module under a subpackage path.
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "hello.py").write_text("def run(): ...\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    mapping = packages_to_file_mapping(
+        packages={"pkg/hello.py": str(Path("src/hello.py"))},
+        platlib_dir=tmp_path / "out",
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    assert mapping == {
+        str(Path("src/hello.py")): str(tmp_path / "out" / "pkg" / "hello.py")
+    }
+
+
+def test_packages_to_file_mapping_missing_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A source that is neither a file nor a directory used to be silently
+    # dropped; it must now raise instead (#888).
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(FileNotFoundError, match="nope"):
+        packages_to_file_mapping(
+            packages={"nope": "nope"},
+            platlib_dir=tmp_path / "out",
+            include=[],
+            src_exclude=[],
+            target_exclude=[],
+            build_dir="",
+            mode="classic",
+        )
+
+
 def test_editable_redirect_files_legacy_pth(tmp_path: Path):
     files = editable_redirect_files(
         libdir=tmp_path,

@@ -75,6 +75,20 @@ def packages_to_file_mapping(
         package_dir = Path(package_str)
         source_dir = Path(source_str)
 
+        # A package may point at a single module file (e.g. ``hello.py``), not
+        # just a directory (#888). It installs as one file at ``package_dir``,
+        # which already carries the module's name.
+        if source_dir.is_file():
+            if not exclude_spec.match_file(package_dir):
+                target_path = platlib_dir / package_dir
+                if not target_path.is_file():
+                    mapping[str(source_dir)] = str(target_path)
+            continue
+
+        if not source_dir.is_dir():
+            msg = f"Package source {source_str!r} is neither a file nor a directory"
+            raise FileNotFoundError(msg)
+
         for filepath in each_unignored_file(
             source_dir,
             include=include,

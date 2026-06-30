@@ -418,6 +418,9 @@ class WheelSettings:
     ``<package>`` if they exist.  The prefix(s) will be stripped from the
     package name inside the wheel.
 
+    An entry may also point at a single module file (e.g. ``hello.py``), which is
+    copied in as a top-level module rather than a package directory.
+
     If a dict, provides a mapping of package name to source directory.
     """
 
