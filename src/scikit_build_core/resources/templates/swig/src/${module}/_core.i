@@ -1,4 +1,4 @@
-%module example
+%module _core
 %{
 /* Put header files here or function declarations like below */
 extern float square(float x);

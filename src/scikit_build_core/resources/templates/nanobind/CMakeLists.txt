@@ -5,6 +5,6 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 
 find_package(nanobind CONFIG REQUIRED)
 
-nanobind_add_module(example NB_STATIC example.cpp)
+nanobind_add_module(_core NB_STATIC src/${SKBUILD_PROJECT_NAME}/_core.cpp)
 
-install(TARGETS example LIBRARY DESTINATION .)
+install(TARGETS _core LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})

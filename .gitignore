@@ -72,6 +72,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# Generated from resources/templates at docs build time
+docs/examples/generated/
+
 # PyBuilder
 .pybuilder/
 target/

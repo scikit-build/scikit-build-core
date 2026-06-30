@@ -8,6 +8,6 @@ find_package(
 
 include(UseF2Py)
 
-f2py_add_module(example example.f)
+f2py_add_module(_core src/${SKBUILD_PROJECT_NAME}/_core.f)
 
-install(TARGETS example DESTINATION .)
+install(TARGETS _core DESTINATION ${SKBUILD_PROJECT_NAME})

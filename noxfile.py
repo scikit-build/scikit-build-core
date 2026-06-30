@@ -208,21 +208,19 @@ def build(session: nox.Session) -> None:
     session.run("python", "-m", "build", *session.posargs)
 
 
-EXAMPLES = ["c", "abi3", "pybind11", "nanobind", "swig", "cython"]
+# Getting-started examples are generated from the init templates (the single
+# source of truth); downstream examples are committed projects under docs.
+GETTING_STARTED = ["c", "abi3", "pybind11", "nanobind", "swig", "cython"]
 if not sys.platform.startswith("win") and shutil.which("gfortran"):
-    EXAMPLES.append("fortran")
-EXAMPLES = [f"getting_started/{n}" for n in EXAMPLES]
+    GETTING_STARTED.append("fortran")
+EXAMPLES = [f"getting_started:{n}" for n in GETTING_STARTED]
 EXAMPLES += ["downstream/pybind11_example", "downstream/nanobind_example"]
 
 
-@nox.session
-@nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
-def test_doc_examples(session: nox.Session, example: str) -> None:
-    _prepare_cmake_ninja(session)
-    session.install("-e.", "pip")
-    session.chdir(f"docs/examples/{example}")
+def _build_and_test_example(session: nox.Session) -> None:
+    """Install the example project in the current directory and check it."""
     reqs = nox.project.load_toml("pyproject.toml")["build-system"]["requires"]
-    freqs = (r for r in reqs if "scikit-build-core" not in r.replace("_", "-"))
+    freqs = [r for r in reqs if "scikit-build-core" not in r.replace("_", "-")]
     session.install(*freqs, "pytest")
     session.install(
         ".",
@@ -231,10 +229,38 @@ def test_doc_examples(session: nox.Session, example: str) -> None:
         env={"PYTHONWARNINGS": "error"},
     )
     session.run("pip", "list")
-    if Path("../test.py").is_file():
-        session.run("python", "../test.py")
-    else:
-        session.run("pytest")
+
+
+@nox.session
+@nox.parametrize("example", EXAMPLES, ids=EXAMPLES)
+def test_doc_examples(session: nox.Session, example: str) -> None:
+    _prepare_cmake_ninja(session)
+    session.install("-e.", "pip")
+
+    if example.startswith("getting_started:"):
+        backend = example.split(":", 1)[1]
+        target = Path(session.create_tmp()) / backend
+        # Render the example from the templates with the project name "example",
+        # matching docs/examples/getting_started/test.py (`import example`).
+        session.run(
+            "python",
+            "-m",
+            "scikit_build_core.init",
+            str(target),
+            "--backend",
+            backend,
+            "--name",
+            "example",
+            "--force",
+        )
+        session.chdir(str(target))
+        _build_and_test_example(session)
+        session.run("python", str(DIR / "docs/examples/getting_started/test.py"))
+        return
+
+    session.chdir(f"docs/examples/{example}")
+    _build_and_test_example(session)
+    session.run("pytest")
 
 
 @nox.session(default=False)

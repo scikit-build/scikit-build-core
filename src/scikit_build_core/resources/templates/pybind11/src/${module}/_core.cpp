@@ -4,6 +4,4 @@ namespace py = pybind11;
 
 float square(float x) { return x * x; }
 
-PYBIND11_MODULE(example, m) {
-    m.def("square", &square);
-}
+PYBIND11_MODULE(_core, m) { m.def("square", &square); }
