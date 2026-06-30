@@ -332,6 +332,12 @@ The available trees are `${SKBUILD_PLATLIB_DIR}` (the default),
 `${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_METADATA_DIR}`, and `${SKBUILD_NULL_DIR}`.
 This matches the cache variables available from within CMake.
 
+:::{versionadded} 1.0
+
+Targeting other wheel trees with the `${SKBUILD_<TREE>_DIR}` prefix.
+
+:::
+
 :::{warning}
 
 When passing this through PEP 517 `config-settings` on a command line, quote it
@@ -379,6 +385,10 @@ assume `wheel.platlib = false` (purelib targeted instead).
 :::
 
 ### Force-including files
+
+:::{versionadded} 1.0
+
+:::
 
 Sometimes you need to place a specific file (or directory) at a specific path in
 a distribution, even if it lives outside your package tree or is produced
@@ -480,6 +490,13 @@ this emits a combined `cp315-abi3.abi3t-*` tag: `abi3t` is a subset of `abi3`
 CPython 3.15+, and the one wheel is installable on every CPython 3.15+. On a GIL
 build only `abi3` can be produced, so it falls back to `cp315-abi3-*`.
 
+:::{versionadded} 1.0
+
+The free-threaded stable ABI (`cp315t`, [PEP 803][]) and the combined
+`cp315.cp315t` tag.
+
+:::
+
 If you are not using CPython at all, you can specify any version of Python is
 fine:
 
@@ -534,6 +551,10 @@ recent compiler and flags like `-ffile-prefix-map`.
 
 ```
 
+:::{versionadded} 1.0
+
+:::
+
 ## Configuring CMake arguments and defines
 
 You can select a different build type, such as `Debug`:
@@ -547,6 +568,13 @@ the environment, that value is used instead. This lets you override the build
 type without editing `pyproject.toml` (for example
 `CMAKE_BUILD_TYPE=RelWithDebInfo`), mirroring CMake's own handling of the
 variable.
+
+:::{versionadded} 1.0
+
+Honoring `CMAKE_BUILD_TYPE` from the environment when `cmake.build-type` is left
+at its default.
+
+:::
 
 You can also pass a _list_ of build types to build and install more than one
 configuration into the same wheel:
@@ -562,6 +590,12 @@ same prefix, so set `CMAKE_<CONFIG>_POSTFIX` (such as `CMAKE_DEBUG_POSTFIX=_d`)
 on your targets to keep the configurations from clobbering each other, and
 select the right module at runtime in your package's `__init__.py`. This is
 currently only supported by the default (native) and Hatchling backends.
+
+:::{versionadded} 1.0
+
+Passing a list of build types.
+
+:::
 
 You can specify CMake defines as strings or bools:
 
@@ -694,6 +728,10 @@ You can pass raw arguments directly to the build tool, as well:
 
 ## Environment variables for the build
 
+:::{versionadded} 1.0
+
+:::
+
 The `[tool.scikit-build.env]` table sets environment variables for the CMake
 configure, build, and install subprocesses. Use it for things CMake or the
 generator read _from the environment_ — `CC`/`CXX`, `CFLAGS`,
@@ -820,6 +858,12 @@ referenced by absolute path on rebuild. This only moves the install tree;
 re-runs. The classic `editable.rebuild` (which installs into a tree inside
 `build-dir`) is left as-is, so the two approaches can be compared.
 
+:::{versionadded} 1.0
+
+`editable.rebuild-dir`, a persistent install tree for editable rebuilds.
+
+:::
+
 The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
 combine the static CMake install dir with the original source code. Python code
 added via scikit-build-core's package discovery will be found in the original
@@ -831,6 +875,12 @@ this uses a [PEP 829][] `.start` file (the slightly safer, structured
 replacement for the deprecated `import` line in a `.pth` file); on older Pythons
 it uses the classic `.pth` `import` line. This is handled automatically based on
 the interpreter running the editable install.
+
+:::{versionadded} 1.0
+
+[PEP 829][] `.start` file support for the redirecting finder on Python 3.15+.
+
+:::
 
 [PEP 829]: https://peps.python.org/pep-0829/
 [PEP 817]: https://peps.python.org/pep-0817/
@@ -927,7 +977,7 @@ experimental = true
 The following features currently require this flag:
 
 - **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
-  `variant-label`, and `null-variant`). See
+  `variant-label`, and `null-variant`), added in 1.0. See
   [](../guide/faqs.md#building-wheel-variants-experimental).
 - **Legacy `tool.scikit-build.metadata` plugins**: dynamic metadata providers
   not shipped with scikit-build-core (anything using `provider-path` or a

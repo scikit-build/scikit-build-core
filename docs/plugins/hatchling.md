@@ -14,6 +14,14 @@ separate package in the future.
 
 :::
 
+:::{versionchanged} 1.0
+
+The plugin is no longer experimental (the `experimental = true` toggle is no
+longer required), and the `[hatchling]` extra is the recommended way to depend
+on it.
+
+:::
+
 ## Basic usage
 
 To use the plugin, make sure hatchling and scikit-build-core are in your

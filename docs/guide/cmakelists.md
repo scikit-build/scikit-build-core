@@ -22,6 +22,11 @@ Scikit-build-core provides several useful variables:
 - `${SKBUILD_STATE}`: The run state, one of `sdist`, `wheel`, `metadata_wheel`,
   `editable`, or `metadata_editable`.
 
+```{versionchanged} 1.0
+`${SKBUILD_PROJECT_VERSION}` is now capped to four release components
+(`major.minor.patch.tweak`) so it is always valid for `project(VERSION ...)`.
+```
+
 ## Finding Python
 
 You can directly use FindPython:

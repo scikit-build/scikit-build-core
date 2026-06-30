@@ -10,6 +10,10 @@ project (run without `--backend` to pick a binding interactively). See the
 [getting started guide](getting_started.md) for a walkthrough of what it
 generates.
 
+```{versionadded} 1.0
+The `scikit-build init` command.
+```
+
 For a fully-featured project layout, use the [Scientific Python cookie][], which
 makes a new project following the [Scientific Python Development Guidelines][].
 Scikit-build-core is one of the backends you can select. The project will have a
@@ -49,6 +53,10 @@ A directly-set `CMAKE_BUILD_PARALLEL_LEVEL` still wins, since `env` entries use
 [](../configuration/index.md#environment-variables-for-the-build) for the full
 `env` table reference, including selecting a compiler and setting search paths.
 
+```{versionadded} 1.0
+The `[tool.scikit-build.env]` table.
+```
+
 ## Dynamic setup.py options
 
 Most common needs can be moved into your `CMakeLists.txt`. For example, if you
@@ -85,6 +93,11 @@ printout of the current settings using:
 
 ```bash
 scikit-build builder
+```
+
+```{versionchanged} 1.0
+This is now a subcommand of the unified `scikit-build` CLI (previously
+`python -m scikit_build_core.builder`).
 ```
 
 ## A dependency's library ends up in `site-packages/bin` or `lib`
@@ -154,6 +167,10 @@ Windows currently requires a little extra care. You should set the C define
 config files, Python cannot set it for you on the free-threaded variant.
 
 ## Building wheel variants (experimental)
+
+```{versionadded} 1.0
+
+```
 
 ```{warning}
 This is an early preview of [PEP 817][] wheel variant support. The interface may

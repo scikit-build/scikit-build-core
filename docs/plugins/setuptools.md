@@ -12,6 +12,12 @@ version of setuptools (recommended!).
 
 :::
 
+:::{versionadded} 1.0
+
+The `[setuptools]` extra.
+
+:::
+
 ## Basic usage
 
 To use the plugin, make sure you have both setuptools and scikit-build-core in
@@ -59,6 +65,11 @@ These are the currently supported `setup.py` options:
   running `cmake --build --target <value>` (equivalent to setting
   `install.targets`), for projects with an umbrella install target.
 
+```{versionadded} 1.0
+Support for the `cmake_install_dir`, `cmake_process_manifest_hook`, and
+`cmake_install_target` options.
+```
+
 These options from scikit-build (classic) are not currently supported:
 `cmake_with_sdist`. `cmake_languages` has no effect. And
 `cmake_minimum_required_version` is now specified via `pyproject.toml` config,
@@ -89,7 +100,16 @@ have no effect in the general setuptools plugin or the main build backend):
 Both are split following shell quoting rules, so quoted values with spaces are
 preserved.
 
+```{versionadded} 1.0
+The `SKBUILD_CONFIGURE_OPTIONS` and `SKBUILD_BUILD_OPTIONS` environment
+variables (honored by the `wrapper.setup` shim).
+```
+
 ## Editable installs
+
+```{versionadded} 1.0
+
+```
 
 PEP 660 editable installs (`pip install -e .`) are supported when the active
 setuptools version provides `build_editable` (setuptools 63+).
