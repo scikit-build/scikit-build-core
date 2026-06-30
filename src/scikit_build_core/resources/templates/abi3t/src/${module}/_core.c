@@ -17,17 +17,18 @@ static PyObject *square_wrapper(PyObject *self, PyObject *args) {
   return PyFloat_FromDouble(result);
 }
 
-static PyMethodDef example_methods[] = {
+static PyMethodDef _core_methods[] = {
     {"square", square_wrapper, METH_VARARGS, "Square function"},
     {NULL, NULL, 0, NULL}};
 
-PyABIInfo_VAR(example_abi_info);
+PyABIInfo_VAR(_core_abi_info);
 
-PyMODEXPORT_FUNC PyModExport_example(void) {
+/* name here must match extension name, with PyModExport_ prefix */
+PyMODEXPORT_FUNC PyModExport__core(void) {
   static PySlot slots[] = {
-      PySlot_DATA(Py_mod_abi, &example_abi_info),
-      PySlot_STATIC_DATA(Py_mod_name, "example"),
-      PySlot_STATIC_DATA(Py_mod_methods, example_methods),
+      PySlot_DATA(Py_mod_abi, &_core_abi_info),
+      PySlot_STATIC_DATA(Py_mod_name, "_core"),
+      PySlot_STATIC_DATA(Py_mod_methods, _core_methods),
       PySlot_DATA(Py_mod_gil, Py_MOD_GIL_NOT_USED),
       PySlot_END,
   };

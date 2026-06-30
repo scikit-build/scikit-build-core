@@ -48,7 +48,16 @@ release = version.split("+")[0]
 # The init command's templates (resources/templates) are the single source of
 # truth for example projects. Render each backend here so literalinclude and
 # command-output pull from real, build-tested projects rather than duplicates.
-EXAMPLE_BACKENDS = ["pybind11", "nanobind", "swig", "cython", "c", "abi3", "fortran"]
+EXAMPLE_BACKENDS = [
+    "pybind11",
+    "nanobind",
+    "swig",
+    "cython",
+    "c",
+    "abi3",
+    "abi3t",
+    "fortran",
+]
 GENERATED_EXAMPLES = ROOT / "docs/examples/generated"
 if scikit_build_core is not None:
     import shutil

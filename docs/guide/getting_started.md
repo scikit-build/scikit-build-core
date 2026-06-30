@@ -133,10 +133,13 @@ example
 ````{tab} ABI3t
 
 ```
-example-project
-├── example.c
+example
 ├── pyproject.toml
-└── CMakeLists.txt
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
 ```
 
 ````
@@ -216,7 +219,7 @@ package at `src/example/_core.*`.
 
 ````{tab} ABI3t
 
-```{literalinclude} ../examples/getting_started/abi3t/example.c
+```{literalinclude} ../examples/generated/abi3t/src/example/_core.c
 :language: c
 ```
 
@@ -294,7 +297,7 @@ To create your first compiled package, start with a pyproject.toml like this:
 
 ````{tab} ABI3t
 
-```{literalinclude} ../examples/getting_started/abi3t/pyproject.toml
+```{literalinclude} ../examples/generated/abi3t/pyproject.toml
 :language: toml
 ```
 
@@ -465,7 +468,7 @@ support PyPy).
 
 ````{tab} ABI3t
 
-```{literalinclude} ../examples/getting_started/abi3t/CMakeLists.txt
+```{literalinclude} ../examples/generated/abi3t/CMakeLists.txt
 :language: cmake
 ```
 

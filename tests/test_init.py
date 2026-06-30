@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 SOURCES = {
     "c": "_core.c",
     "abi3": "_core.c",
+    "abi3t": "_core.c",
     "pybind11": "_core.cpp",
     "nanobind": "_core.cpp",
     "cython": "_core.pyx",
@@ -26,6 +27,7 @@ SOURCES = {
 EXTRA_REQUIRES = {
     "c": [],
     "abi3": [],
+    "abi3t": [],
     "pybind11": ["pybind11"],
     "nanobind": ["nanobind"],
     "cython": ["cython", "cython-cmake"],

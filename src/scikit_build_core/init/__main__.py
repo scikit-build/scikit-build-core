@@ -40,6 +40,14 @@ _BACKENDS = {
     "swig": _Backend(requires=("swig",)),
     "fortran": _Backend(requires=("numpy", "f2py-cmake"), dependencies=("numpy",)),
     "abi3": _Backend(tool='\n[tool.scikit-build]\nwheel.py-api = "cp38"\n'),
+    "abi3t": _Backend(
+        tool=(
+            "\n[tool.scikit-build]\n"
+            "# A free-threaded build emits the combined cp315-abi3.abi3t tag (one\n"
+            "# binary for every CPython 3.15+); a GIL build falls back to abi3.\n"
+            'wheel.py-api = "cp315.cp315t"\n'
+        )
+    ),
 }
 BACKENDS = tuple(_BACKENDS)
 
