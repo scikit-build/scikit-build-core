@@ -555,8 +555,7 @@ class WheelSettings:
 
     reproducible: bool = False
     """
-    Try to build a reproducible wheel. Opt-in, as normalizing permissions can
-    change the result for some projects.
+    Try to build a reproducible wheel.
 
     Unix and Python 3.9+ recommended.
 
