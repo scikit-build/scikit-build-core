@@ -110,21 +110,74 @@ def test_install_dir(isolated, isolate):
         installer="pip",
     )
 
-    # Make sure the package is correctly installed in the subdirectory
-    other_pkg_path = isolated.platlib / "other_pkg"
-    c_module_glob = list(other_pkg_path.glob("simplest/_module*"))
+    # A rebuildable editable installs the platlib into a persistent tree inside
+    # the build-dir; the redirect references it there, so nothing lands in
+    # site-packages and rebuilds need no reconfigure (#1135).
+    assert not list((isolated.platlib / "other_pkg").glob("simplest/_module*"))
+
+    # The compiled module lives under the build tree, honoring wheel.install-dir
+    # (other_pkg/), not at the unprefixed location (simplest/).
+    install_tree = Path("build").glob("*/install/platlib")
+    platlib = next(install_tree)
+    c_module_glob = list(platlib.glob("other_pkg/simplest/_module*"))
     assert len(c_module_glob) == 1
     c_module = c_module_glob[0]
     assert c_module.exists()
-    # If `install-dir` was not taken into account it would install here
-    failed_c_module = other_pkg_path / "../simplest" / c_module.name
+    failed_c_module = platlib / "simplest" / c_module.name
     assert not failed_c_module.exists()
 
-    # Run an import in order to re-trigger the rebuild and check paths again
+    # Run an import in order to re-trigger the rebuild and check paths again. The
+    # module resolves to the build-tree copy, which is refreshed in place.
     out = isolated.execute("import other_pkg.simplest")
     assert "Running cmake" in out
     assert c_module.exists()
     assert not failed_c_module.exists()
+    resolved = isolated.execute(
+        "import other_pkg.simplest._module as m; print(m.__file__)"
+    )
+    assert resolved.splitlines()[-1] == str(c_module.resolve())
+    assert str(isolated.platlib) not in resolved
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
+@pytest.mark.parametrize("isolate", {False}, indirect=True)
+@pytest.mark.usefixtures("package")
+def test_editable_rebuild_dir(isolated, isolate):
+    # editable.rebuild-dir installs into a user-chosen tree (with the same
+    # template substitutions) and turns on rebuild-on-import by itself -- note
+    # editable.rebuild is left unset here.
+    settings_overrides = {
+        "build-dir": "build/{wheel_tag}",
+        "editable.rebuild-dir": "rebuild_tree/{wheel_tag}",
+    }
+
+    isolated.install(
+        "-v",
+        *[f"--config-settings={k}={v}" for k, v in settings_overrides.items()],
+        *isolate.flags,
+        "-e",
+        ".",
+        installer="pip",
+    )
+
+    # The install tree lands under rebuild-dir, not under build-dir/install.
+    assert not list(Path("build").glob("*/install/platlib/simplest/_module*"))
+    rebuild_tree = next(Path("rebuild_tree").glob("*"))
+    c_module_glob = list(rebuild_tree.glob("simplest/_module*"))
+    assert len(c_module_glob) == 1
+    c_module = c_module_glob[0]
+
+    # Nothing compiled lands in site-packages, and imports resolve to the
+    # rebuild-dir copy, which is refreshed in place on rebuild.
+    assert not list((isolated.platlib / "simplest").glob("_module*"))
+    out = isolated.execute("import simplest")
+    assert "Running cmake" in out
+    resolved = isolated.execute("import simplest._module as m; print(m.__file__)")
+    assert resolved.splitlines()[-1] == str(c_module.resolve())
+    assert str(isolated.platlib) not in resolved
 
 
 @pytest.mark.compile

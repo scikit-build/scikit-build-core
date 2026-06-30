@@ -42,6 +42,7 @@ __all__ = [
     "configure_wheel",
     "editable_rebuild_options",
     "get_build_dir",
+    "get_editable_rebuild_dir",
     "get_install_dir",
     "get_targetlib",
     "get_wheel_tag",
@@ -108,6 +109,31 @@ def get_build_dir(
         build_dir = fallback
     logger.info("Build directory: {}", build_dir.resolve())
     return build_dir
+
+
+def get_editable_rebuild_dir(
+    settings: ScikitBuildSettings,
+    *,
+    build_dir: Path,
+    targetlib: TargetLib,
+    tags: WheelTag,
+    state: WheelState,
+) -> Path:
+    """
+    Persistent install tree for a rebuildable redirect editable.
+
+    ``editable.rebuild-dir`` (formatted like ``build-dir``) overrides the default
+    ``install/<targetlib>`` tree inside ``build-dir``. The redirect references the
+    compiled artifacts here by absolute path, so it must be stable between build
+    and run time (#1135).
+    """
+    if settings.editable.rebuild_dir:
+        return Path(
+            settings.editable.rebuild_dir.format(
+                **pyproject_format(settings=settings, tags=tags, state=state)
+            )
+        ).resolve()
+    return (build_dir / "install" / targetlib).resolve()
 
 
 def prepare_wheel_dirs(wheel_root: Path, *, targetlib: TargetLib) -> dict[str, Path]:
@@ -278,7 +304,7 @@ def build_install_extra_build_types(
         and builder.config.single_config
         and editable
         and settings.editable.mode == "redirect"
-        and settings.editable.rebuild
+        and settings.editable.rebuild_enabled
     ):
         configure_wheel(
             cmake=builder.config.cmake,

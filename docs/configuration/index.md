@@ -791,6 +791,26 @@ You can disable the verbose rebuild output with `editable.verbose=false` if you
 want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;
 this will override if non-empty, and `"0"` will disable verbose output).
 
+When `editable.rebuild` is enabled together with a persistent `build-dir`, the
+CMake install targets a tree inside the build directory and the redirecting
+finder loads the compiled artifacts from there directly, rather than from copies
+in site-packages. This means `SKBUILD_PLATLIB_DIR` (or `SKBUILD_PURELIB_DIR`)
+and `CMAKE_INSTALL_PREFIX` are baked at their final location when the editable
+wheel is first built, so import-triggered rebuilds re-install in place with no
+extra reconfigure -- including projects that install to an absolute
+`${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
+the install, but a rebuildable editable already depends on it.
+
+As a newer, parallel alternative, `editable.rebuild-dir` selects the install
+tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
+flag is ignored when it is set). It accepts the same template substitutions as
+`build-dir`, and the path must be absolute, or relative to the source directory,
+and stable between build and run time, since it is baked at configure time and
+referenced by absolute path on rebuild. This only moves the install tree;
+`build-dir` is still required and still hosts the CMake build that the rebuild
+re-runs. The classic `editable.rebuild` (which installs into a tree inside
+`build-dir`) is left as-is, so the two approaches can be compared.
+
 The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
 combine the static CMake install dir with the original source code. Python code
 added via scikit-build-core's package discovery will be found in the original

@@ -257,6 +257,9 @@ editable.verbose = true
 # Rebuild the project when the package is imported.
 editable.rebuild = false
 
+# Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``).
+editable.rebuild-dir = ""
+
 # Extra args to pass directly to the builder in the build step.
 build.tool-args = []
 

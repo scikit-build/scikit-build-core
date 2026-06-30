@@ -357,7 +357,7 @@ class SettingsReader:
                         "wheel.packages table must match in the last component of the paths"
                     )
 
-        if self.settings.editable.rebuild:
+        if self.settings.editable.rebuild_enabled:
             if self.settings.editable.mode == "inplace":
                 rich_error("editable rebuild is incompatible with inplace mode")
 

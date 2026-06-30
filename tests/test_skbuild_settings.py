@@ -1129,6 +1129,27 @@ def test_skbuild_override_renamed_fail(
         SettingsReader.from_file(pyproject_toml)
 
 
+@pytest.mark.parametrize(
+    "trigger", ["editable.rebuild = true", 'editable.rebuild-dir = "tree"']
+)
+def test_editable_rebuild_requires_build_dir(tmp_path: Path, trigger: str):
+    # Both rebuild triggers require build-dir; rebuild-dir alone activates the
+    # rebuild path, so it must be validated like rebuild (PR #1375 review).
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            f"""\
+            [tool.scikit-build]
+            {trigger}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml)
+
+
 def test_skbuild_override_static(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
