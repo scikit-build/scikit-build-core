@@ -330,11 +330,11 @@ class SettingsReader:
             toml_src_names.insert(0, "extra settings")
 
         # Configuration contributed by installed packages via the
-        # "scikit-build-core.config" entry-point group (e.g. a Linux distro
-        # shipping build defaults for all its package builds). The entry-point
-        # name selects the precedence level: "override" sources sit above
-        # pyproject.toml (and extra_settings), "default" sources sit below it,
-        # just above the hard-coded defaults. Either way the user's per-build
+        # "scikit-build-core.config.default" / ".override" entry-point groups
+        # (e.g. a Linux distro shipping build defaults for all its package
+        # builds). The group selects the precedence level: "override" sources sit
+        # above pyproject.toml (and extra_settings), "default" sources sit below
+        # it, just above the hard-coded defaults. Either way the user's per-build
         # env vars and config-settings still win. Opt out entirely with
         # SKBUILD_NO_ENTRYPOINT_CONFIG.
         if not strtobool(environ.get("SKBUILD_NO_ENTRYPOINT_CONFIG", "")):

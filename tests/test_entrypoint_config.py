@@ -1,5 +1,6 @@
 """
-Tests for the ``scikit-build-core.config`` entry-point configuration providers.
+Tests for the ``scikit-build-core.config.default`` / ``.override`` entry-point
+configuration providers.
 """
 
 from __future__ import annotations
@@ -8,12 +9,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-import scikit_build_core._logging
 from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.settings import _load_entrypoint_config
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -29,21 +30,34 @@ class FakeEntryPoint:
 
 
 @pytest.fixture
-def providers(monkeypatch):
-    """Register fake ``scikit-build-core.config`` providers.
+def register(monkeypatch):
+    """Register fake entry-point config providers.
 
-    Yields a dict; assign ``providers[name] = callable`` to register one.
+    Call ``register(level, name, func)`` with ``level`` of "default" or
+    "override" and an arbitrary ``name``.
     """
-    registry: dict[str, object] = {}
+    groups: dict[str, dict[str, object]] = {
+        _load_entrypoint_config.GROUP_DEFAULT: {},
+        _load_entrypoint_config.GROUP_OVERRIDE: {},
+    }
 
     def fake_entry_points(*, group: str):
-        if group != _load_entrypoint_config.GROUP:
-            return []
-        return [FakeEntryPoint(name, func) for name, func in registry.items()]
+        return [
+            FakeEntryPoint(name, func) for name, func in groups.get(group, {}).items()
+        ]
 
     # The loader resolves entry points through this shared compat module.
     monkeypatch.setattr(compat_metadata, "entry_points", fake_entry_points)
-    return registry
+
+    def add(level: str, name: str, func: Callable[..., object]) -> None:
+        group = (
+            _load_entrypoint_config.GROUP_OVERRIDE
+            if level == "override"
+            else _load_entrypoint_config.GROUP_DEFAULT
+        )
+        groups[group][name] = func
+
+    return add
 
 
 def make_reader(tmp_path: Path, body: str = "", **kwargs) -> SettingsReader:
@@ -52,32 +66,42 @@ def make_reader(tmp_path: Path, body: str = "", **kwargs) -> SettingsReader:
     return SettingsReader.from_file(pyproject_toml, {}, **kwargs)
 
 
-def test_default_provider_applies_when_silent(tmp_path, providers):
-    providers["default"] = lambda **_: {
-        "cmake": {"build-type": "RelWithDebInfo"},
-        "install": {"strip": False},
-    }
+def test_default_provider_applies_when_silent(tmp_path, register):
+    register(
+        "default",
+        "distro",
+        lambda **_: {
+            "cmake": {"build-type": "RelWithDebInfo"},
+            "install": {"strip": False},
+        },
+    )
     settings = make_reader(tmp_path, state="wheel").settings
     assert settings.cmake.build_type == "RelWithDebInfo"
     assert settings.install.strip is False
 
 
-def test_default_provider_loses_to_pyproject(tmp_path, providers):
-    providers["default"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+def test_default_provider_loses_to_pyproject(tmp_path, register):
+    register(
+        "default", "distro", lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+    )
     body = "[tool.scikit-build.cmake]\nbuild-type = 'Debug'\n"
     settings = make_reader(tmp_path, body, state="wheel").settings
     assert settings.cmake.build_type == "Debug"
 
 
-def test_override_provider_beats_pyproject(tmp_path, providers):
-    providers["override"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+def test_override_provider_beats_pyproject(tmp_path, register):
+    register(
+        "override", "distro", lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+    )
     body = "[tool.scikit-build.cmake]\nbuild-type = 'Debug'\n"
     settings = make_reader(tmp_path, body, state="wheel").settings
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
-def test_override_still_beaten_by_config_settings(tmp_path, providers):
-    providers["override"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+def test_override_still_beaten_by_config_settings(tmp_path, register):
+    register(
+        "override", "distro", lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+    )
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text("", encoding="utf-8")
     reader = SettingsReader.from_file(
@@ -86,9 +110,11 @@ def test_override_still_beaten_by_config_settings(tmp_path, providers):
     assert reader.settings.cmake.build_type == "Release"
 
 
-def test_dict_fields_merge_across_levels(tmp_path, providers):
-    providers["default"] = lambda **_: {"cmake": {"define": {"FROM_DEFAULT": "1"}}}
-    providers["override"] = lambda **_: {"cmake": {"define": {"SHARED": "ep"}}}
+def test_dict_fields_merge_across_levels(tmp_path, register):
+    register(
+        "default", "distro", lambda **_: {"cmake": {"define": {"FROM_DEFAULT": "1"}}}
+    )
+    register("override", "distro", lambda **_: {"cmake": {"define": {"SHARED": "ep"}}})
     body = (
         "[tool.scikit-build.cmake.define]\nFROM_PYPROJECT = '2'\nSHARED = 'pyproject'\n"
     )
@@ -100,15 +126,15 @@ def test_dict_fields_merge_across_levels(tmp_path, providers):
     }
 
 
-def test_multiple_providers_sorted_deterministically(tmp_path, providers):
-    providers["override.b"] = lambda **_: {"cmake": {"build-type": "Debug"}}
-    providers["override.a"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+def test_multiple_providers_sorted_deterministically(tmp_path, register):
+    # Arbitrary names; the alphabetically-first one wins.
+    register("override", "zzz", lambda **_: {"cmake": {"build-type": "Debug"}})
+    register("override", "aaa", lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}})
     settings = make_reader(tmp_path, state="wheel").settings
-    # Earlier entry-point name wins.
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
-def test_provider_overrides_match_env(tmp_path, providers):
+def test_provider_overrides_match_env(tmp_path, register):
     def fedora(**_):
         return {
             "overrides": [
@@ -120,7 +146,7 @@ def test_provider_overrides_match_env(tmp_path, providers):
             ]
         }
 
-    providers["default"] = fedora
+    register("default", "fedora", fedora)
 
     in_rpm = make_reader(
         tmp_path, state="wheel", env={"RPM_BUILD_ROOT": str(tmp_path)}
@@ -132,53 +158,51 @@ def test_provider_overrides_match_env(tmp_path, providers):
     assert outside.cmake.build_type == "Release"
 
 
-def test_opt_out_disables_providers(tmp_path, providers):
-    providers["default"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+def test_opt_out_disables_providers(tmp_path, register):
+    register(
+        "default", "distro", lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
+    )
     settings = make_reader(
         tmp_path, state="wheel", env={"SKBUILD_NO_ENTRYPOINT_CONFIG": "1"}
     ).settings
     assert settings.cmake.build_type == "Release"
 
 
-def test_unknown_level_warns_and_skips(tmp_path, providers, capsys):
-    providers["bogus"] = lambda **_: {"cmake": {"build-type": "RelWithDebInfo"}}
-    scikit_build_core._logging.rich_warning.cache_clear()
-    settings = make_reader(tmp_path, state="wheel").settings
-    assert settings.cmake.build_type == "Release"
-    assert "must start with 'default' or 'override'" in capsys.readouterr().err
-
-
-def test_minimum_version_stripped(tmp_path, providers):
-    providers["default"] = lambda **_: {
-        "minimum-version": "0.5",
-        "cmake": {"build-type": "RelWithDebInfo"},
-    }
+def test_minimum_version_stripped(tmp_path, register):
+    register(
+        "default",
+        "distro",
+        lambda **_: {
+            "minimum-version": "0.5",
+            "cmake": {"build-type": "RelWithDebInfo"},
+        },
+    )
     settings = make_reader(tmp_path, state="wheel").settings
     assert settings.minimum_version is None
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
-def test_zero_arg_provider_supported(tmp_path, providers):
+def test_zero_arg_provider_supported(tmp_path, register):
     def provider() -> dict[str, object]:
         return {"cmake": {"build-type": "RelWithDebInfo"}}
 
-    providers["default"] = provider
+    register("default", "distro", provider)
     settings = make_reader(tmp_path, state="wheel").settings
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
-def test_override_only_field_rejected(tmp_path, providers):
+def test_override_only_field_rejected(tmp_path, register):
     # cmake.toolchain-file is an override_only field: hard-coding it in a static
     # source (including ep config) is rejected under strict_config.
     toolchain = str(tmp_path / "tc.cmake")
-    providers["default"] = lambda **_: {"cmake": {"toolchain-file": toolchain}}
+    register("default", "distro", lambda **_: {"cmake": {"toolchain-file": toolchain}})
     reader = make_reader(tmp_path, state="wheel")
     with pytest.raises(SystemExit):
         reader.validate_may_exit()
 
 
-def test_suggestions_name_entry_point_source(tmp_path, providers):
-    providers["default"] = lambda **_: {"not-a-real-field": "x"}
+def test_suggestions_name_entry_point_source(tmp_path, register):
+    register("default", "distro", lambda **_: {"not-a-real-field": "x"})
     reader = make_reader(tmp_path, state="wheel")
-    assert "entry-point config (default)" in reader._toml_src_names
+    assert "entry-point config (distro)" in reader._toml_src_names
     assert "not-a-real-field" in list(reader.unrecognized_options())

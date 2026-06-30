@@ -1,10 +1,10 @@
 # Entry-point configuration
 
 An installed package can contribute scikit-build-core configuration to _every_
-build in the environment through the `scikit-build-core.config` entry-point
-group. This is primarily intended for Linux distributions and other packagers
-that need to set build defaults (such as the CMake build type or symbol
-stripping) for all packages without editing each one's `pyproject.toml`.
+build in the environment through two entry-point groups. This is primarily
+intended for Linux distributions and other packagers that need to set build
+defaults (such as the CMake build type or symbol stripping) for all packages
+without editing each one's `pyproject.toml`.
 
 A provider is a callable that returns a `[tool.scikit-build]`-shaped table:
 
@@ -21,14 +21,14 @@ def config(*, state, env):
 The callable may also take no arguments; `state` (the build state, e.g.
 `"wheel"`) and `env` (the environment mapping) are passed when accepted.
 
-It is registered under the `scikit-build-core.config` group. The part of the
-entry-point **name** before the first `.` selects the precedence level:
+It is registered under one of two groups; the **group** selects the precedence
+level, and the entry-point name is arbitrary:
 
 ```{code-block} toml
 :caption: pyproject.toml of the provider package
 
-[project.entry-points."scikit-build-core.config"]
-default = "my_distro_config:config"
+[project.entry-points."scikit-build-core.config.default"]
+my-distro = "my_distro_config:config"
 ```
 
 Any installed package registering a provider is picked up automatically; the
@@ -36,15 +36,15 @@ project being built does not need to opt in.
 
 ## Precedence levels
 
-The name controls where the contributed table lands in the configuration
+The group controls where the contributed table lands in the configuration
 precedence order:
 
-- **`default`** — applied _below_ `pyproject.toml`, just above the built-in
-  defaults. The provider suggests defaults; the project's own configuration
-  always wins. This is the recommended level.
-- **`override`** — applied _above_ `pyproject.toml`, so the project cannot
-  accidentally undo it. It is still below the user's per-build environment
-  variables and config-settings.
+- **`scikit-build-core.config.default`** — applied _below_ `pyproject.toml`,
+  just above the built-in defaults. The provider suggests defaults; the
+  project's own configuration always wins. This is the recommended level.
+- **`scikit-build-core.config.override`** — applied _above_ `pyproject.toml`, so
+  the project cannot accidentally undo it. It is still below the user's
+  per-build environment variables and config-settings.
 
 The full precedence order, highest to lowest, is:
 
@@ -56,10 +56,10 @@ The full precedence order, highest to lowest, is:
 6. `default` entry-point providers
 7. built-in defaults
 
-A package may register both a `default` and an `override` provider, and the name
-may be sub-scoped (`default.mydistro`, `override.mydistro`) to be descriptive or
-to register more than one table per level. When several providers target the
-same level, the alphabetically-first name wins on conflicts.
+A package may register providers in both groups, and the entry-point name is
+free-form. When several providers are registered in the same group, they are
+applied in sorted name order and the alphabetically-first name wins on
+conflicts.
 
 ## Conditional configuration
 
