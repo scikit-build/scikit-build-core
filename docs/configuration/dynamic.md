@@ -134,7 +134,8 @@ project(MyPackage VERSION ${PROJECT_VERSION})
 ### Regex
 
 If you want to pull a string-valued expression (usually version) from an
-existing file, you can the integrated `regex` plugin to pull the information.
+existing file, you can use the integrated `regex` plugin to pull the
+information.
 
 ````{tab} `[[tool.dynamic-metadata]]`
 

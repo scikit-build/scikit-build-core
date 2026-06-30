@@ -352,7 +352,7 @@ The project line can optionally use `SKBUILD_PROJECT_NAME` and
 your `pyproject.toml`. You should specify exactly what language you use to keep
 CMake from searching for both `C` and `CXX` compilers (the default).
 
-If you place find Python first, pybind11 will respect it instead of the classic
+If you place find Python first, pybind11 will respect it instead of the older
 FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
 Here we set `PYBIND11_FINDPYTHON` to `ON` instead of doing the find Python
 ourselves. Pybind11 places its config file such that CMake can find it from
@@ -543,7 +543,7 @@ That's it for a basic package!
 [nanobind example]:                  https://github.com/wjakob/nanobind_example
 [packaging.python.org's tutorial]:   https://packaging.python.org/en/latest/tutorials/packaging-projects
 [pybind11/scikit_build_example]:     https://github.com/pybind/scikit_build_example
-[scientific python developer guide]: https://github.com/scikit-build/scikit-build-sample-projects
+[scientific python developer guide]: https://learn.scientific-python.org/development
 [scientific-python/cookie]:          https://github.com/scientific-python/cookie
 [scikit-build-sample-projects]:      https://github.com/scikit-build/scikit-build-sample-projects
 [uv]:                                https://docs.astral.sh/uv/

@@ -11,7 +11,7 @@ using `find_package`. This variable is populated by the dependent project's
 entry-point `cmake.root`.
 
 To configure the `cmake.root` entry-point to export to other projects, you can
-use the CMake standard install paths in you `CMakeLists.txt` if you use
+use the CMake standard install paths in your `CMakeLists.txt` if you use
 `wheel.install-dir` option, e.g.
 
 ```{code-block} cmake
@@ -66,7 +66,7 @@ search.site-packages = false
 ```
 
 Additionally, scikit-build-core reads the entry-point `cmake.prefix` of the
-dependent projects, which is similarly export as
+dependent projects, which is similarly exported as
 
 ```toml
 [project.entry-points."cmake.prefix"]
@@ -84,5 +84,3 @@ projects, which is similarly exported as
 [project.entry-points."cmake.module"]
 MyProject = "myproject"
 ```
-
-[`CMAKE_PREFIX_PATH`]: #cmake-prefix-path

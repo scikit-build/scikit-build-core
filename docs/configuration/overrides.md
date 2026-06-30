@@ -22,7 +22,7 @@ At least one must be provided. Then you can specify any collection of valid
 options, and those will override if all the items in the `if` are true. They
 will match top to bottom, overriding previous matches.
 
-If an override does not match, it's contents are ignored, including invalid
+If an override does not match, its contents are ignored, including invalid
 options. Combined with the `if.scikit-build-version` override, this allows using
 overrides to support a range of scikit-build-core versions that added settings
 you want to use.
@@ -202,8 +202,8 @@ wheel.cmake = true
 ### `failed` (bool)
 
 This override is a bit special. If a build fails, scikit-build-core will check
-to see if there's a matching `failed = true` override. If there is, the the
-build will be retried once with the new settings. This can be used to build a
+to see if there's a matching `failed = true` override. If there is, the build
+will be retried once with the new settings. This can be used to build a
 pure-Python fallback if a build fails, for example:
 
 ```toml

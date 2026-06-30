@@ -48,9 +48,9 @@ supported by hatchling for plugins.
 
 Key limitations:
 
-- You need to leave `cmake.wheel` on. No `wheel.platlib = False` builds.
+- You need to leave `wheel.cmake` on. No `wheel.platlib = false` builds.
 - Using cmake in SDist step is not supported yet.
-- `scikit-build.generate` and `scikit-build.metadata` is not supported.
+- `scikit-build.generate` and `scikit-build.metadata` are not supported.
 - `${SKBUILD_HEADER_DIR}` is not supported, request support in Hatchling if
   needed.
 - Anything in `${SKBUILD_METADATA_DIR}` must be placed in an `extra_metadata`

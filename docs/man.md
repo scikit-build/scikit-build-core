@@ -26,6 +26,7 @@ for inspecting the build environment:
 - **scikit-build builder sysconfig** -- show information from sysconfig.
 - **scikit-build file-api query** -- request the CMake file API.
 - **scikit-build file-api reply** -- process the CMake file API.
+- **scikit-build init** -- generate a starter project for a binding backend.
 
 See the CLI reference for the full set of options.
 

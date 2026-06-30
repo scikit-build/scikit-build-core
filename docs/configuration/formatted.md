@@ -1,9 +1,10 @@
 # Formattable fields
 
-The following configure keys are formatted as Python f-strings:
+The following configure keys are formatted as Python `str.format` templates:
 
 - `build-dir`
 - `build.requires`
+- `editable.rebuild-dir`
 
 The available variables are documented in the members of
 {py:class}`scikit_build_core.format.PyprojectFormatter` copied here for
