@@ -713,6 +713,30 @@ def test_wheel_tag_with_combined_abi3_abi3t_free_threaded(monkeypatch):
     assert "abi3" not in str(tags)
 
 
+def test_wheel_tag_combined_rejects_higher_classic_minor(monkeypatch):
+    """A combined abi3.abi3t tag shares one minor, so the classic abi3 request
+    must not be newer than the free-threaded one. cp316.cp315t would otherwise
+    emit cp315-abi3, advertising GIL abi3 support below the requested 3.16."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 16))
+
+    with pytest.raises(AssertionError, match="must not be newer"):
+        WheelTag.compute_best(["x86_64"], py_api="cp316.cp315t")
+
+    # Equal or lower classic minor is fine (advertises no broader than requested).
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp314.cp315t")
+    assert str(tags) == "cp315-abi3.abi3t-macosx_10_10_x86_64"
+
+
 def test_wheel_tag_with_combined_abi3_abi3t_gil(monkeypatch):
     """On a GIL build, only abi3 can be produced, so cp315.cp315t emits abi3."""
     get_config_var = sysconfig.get_config_var

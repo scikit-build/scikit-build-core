@@ -181,7 +181,21 @@ class WheelTag:
             # subset of abi3 (PEP 803), so the single free-threaded build also
             # loads under a GIL-enabled CPython; if the classic ABI was also
             # requested (e.g. "cp315.cp315t"), advertise both.
-            abis = ["abi3", "abi3t"] if classic_tags else ["abi3t"]
+            if classic_tags:
+                # The combined tag shares one minor (the abi3t one), so the
+                # classic abi3 request must not be newer; otherwise the emitted
+                # abi3 tag would advertise GIL support below the requested
+                # version (e.g. "cp316.cp315t" -> cp315-abi3).
+                if classic_tags[0].minor > target.minor:
+                    msg = (
+                        f"Unexpected py-api: the classic Stable ABI ({classic_tags[0]}) "
+                        f"must not be newer than the free-threaded one ({target}); a "
+                        "combined abi3.abi3t wheel shares one minor version"
+                    )
+                    raise AssertionError(msg)
+                abis = ["abi3", "abi3t"]
+            else:
+                abis = ["abi3t"]
             return [f"cp3{target.minor}"], abis
 
         # Classic CPython

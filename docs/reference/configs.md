@@ -942,7 +942,9 @@ print(mk_skbuild_docs())
   both with "cp315.cp315t". On a free-threaded build this emits a combined
   "cp315-abi3.abi3t" tag: abi3t is a subset of abi3 (PEP 803), so the single
   free-threaded binary also loads under a GIL-enabled CPython 3.15+. On a
-  GIL build only abi3 can be produced, so it falls back to "cp315-abi3". Or
+  GIL build only abi3 can be produced, so it falls back to "cp315-abi3". The
+  combined tag shares one minor version, so the classic abi3 minor must not be
+  newer than the free-threaded one (e.g. "cp316.cp315t" is rejected). Or
   you can set it to "py3" or "py2.py3" to ignore Python ABI compatibility.
   The ABI tag is inferred from this tag.
 
