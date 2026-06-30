@@ -587,8 +587,15 @@ def test_legacy_metadata_table_deprecation_warning(
 
 @pytest.mark.parametrize("minimum_version", ["0.10", "0.11"])
 def test_legacy_metadata_table_no_warning_below_1(
-    minimum_version: str, capsys: pytest.CaptureFixture[str]
+    minimum_version: str,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Pin a stable version so minimum-version doesn't trip the too-old guard
+    # (the installed dev version is unknown and may be below minimum-version).
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.1.0"
+    )
     scikit_build_core._logging.rich_warning.cache_clear()
     pyproject = {
         "project": {"name": "t", "dynamic": ["version"]},
