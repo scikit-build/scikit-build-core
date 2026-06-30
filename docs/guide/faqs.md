@@ -4,15 +4,19 @@ This section covers common needs.
 
 ## Starting a new project
 
-The easiest way to get started is to use the [Scientific Python cookie][], which
+The quickest way is the built-in `init` command:
+`scikit-build init --backend pybind11 myproject` scaffolds a ready-to-build
+project (run without `--backend` to pick a binding interactively). See the
+[getting started guide](getting_started.md) for a walkthrough of what it
+generates.
+
+For a fully-featured project layout, use the [Scientific Python cookie][], which
 makes a new project following the [Scientific Python Development Guidelines][].
 Scikit-build-core is one of the backends you can select. The project will have a
 lot of tooling prepared for you as well, including pre-commit checks and a
 noxfile; be sure to read the guidelines to see what is there and how it works.
 
 Another option is the [pybind11 example][].
-
-In the future, a CLI interface with a new project generator is planned.
 
 ## Multithreaded builds
 
@@ -47,12 +51,12 @@ A directly-set `CMAKE_BUILD_PARALLEL_LEVEL` still wins, since `env` entries use
 
 ## Dynamic setup.py options
 
-While we will eventually have some dynamic options, most common needs can be
-moved into your `CMakeLists.txt`. For example, if you had a custom `setup.py`
-option (which setuptools has deprecated as well), you can make it a CMake option
-and then pass it with `-Ccmake.define.<OPTION_NAME>=<value>`. If you need to
-customize configuration options, try `[[tool.scikit-build.overrides]]`. If that
-is missing some value you need, please open an issue and let us know.
+Most common needs can be moved into your `CMakeLists.txt`. For example, if you
+had a custom `setup.py` option (which setuptools has deprecated as well), you
+can make it a CMake option and then pass it with
+`-Ccmake.define.<OPTION_NAME>=<value>`. If you need to customize configuration
+options, try `[[tool.scikit-build.overrides]]`. If that is missing some value
+you need, please open an issue and let us know.
 
 ## Finding Python
 
@@ -138,7 +142,7 @@ requirements:
   host:
     - python
     - pip
-    - scikit-build-core >=0.2.0
+    - scikit-build-core >=0.12
   run:
     - python
 ```

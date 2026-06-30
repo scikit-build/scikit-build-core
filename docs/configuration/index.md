@@ -101,7 +101,7 @@ probably keep in sync with your build-system requirements.
 
 ```toml
 [tool.scikit-build]
-minimum-version = "0.2"
+minimum-version = "0.12"
 ```
 
 In your `pyproject.toml`, you can specify the special string
@@ -111,7 +111,7 @@ automatic feature.
 
 ```toml
 [build-system]
-requires = ["scikit-build-core>=0.10"]
+requires = ["scikit-build-core>=0.12"]
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
@@ -135,6 +135,9 @@ The following behaviors are affected by `minimum-version`:
   will be detected if not given.
 - `minimum-version` 0.12+ (or unset) uses `"default"` instead of `"classic"` as
   the default for `sdist.include-mode`.
+- `minimum-version` 1.0+ (or unset) deprecates the `tool.scikit-build.metadata`
+  table in favor of the standard top-level `[[tool.dynamic-metadata]]`; see
+  [](./dynamic.md).
 
 :::
 
@@ -174,8 +177,8 @@ ninja.make-fallback = false
 
 You can also control the FindPython backport; by default, a backport of CMake
 3.26.1's FindPython will be used if the CMake version is less than 3.26.1; you
-can turn this down if you'd like ("3.15", scikit-build-core's minimum version,
-would turn it off).
+can turn this down if you'd like ("3.15", scikit-build-core's minimum supported
+CMake version, would turn it off).
 
 ```toml
 [tool.scikit-build]
@@ -209,7 +212,7 @@ sdist.include-mode = "manual"
 ```
 
 There's also a `"classic"` mode, which fully traverses all directories to check
-rules (default is using scikit-build-core less than 0.12).
+rules (this was the default before scikit-build-core 0.12).
 
 By default, scikit-build-core will respect `SOURCE_DATE_EPOCH`, and will lock
 the modification time to a reproducible value if it's not set. You can disable
@@ -469,7 +472,7 @@ newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
 `Development.SABIModule` when targeting ABI3 or ABI3T, and is an empty string
 otherwise. For free-threaded Python (PEP 703), you can use `cp315t` to target
 the free-threaded stable ABI, which sets `Py_TARGET_ABI3T` (if using CMake
-4.4+). The emitted wheel tag is `cp315-abi3t-*` following per PEP 803.
+4.4+). The emitted wheel tag is `cp315-abi3t-*` following [PEP 803][].
 
 You can request both stable ABIs with `cp315.cp315t`. On a free-threaded build
 this emits a combined `cp315-abi3.abi3t-*` tag: `abi3t` is a subset of `abi3`
@@ -831,6 +834,7 @@ the interpreter running the editable install.
 
 [PEP 829]: https://peps.python.org/pep-0829/
 [PEP 817]: https://peps.python.org/pep-0817/
+[PEP 803]: https://peps.python.org/pep-0803/
 
 :::{note}
 
@@ -925,9 +929,12 @@ The following features currently require this flag:
 - **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
   `variant-label`, and `null-variant`). See
   [](../guide/faqs.md#building-wheel-variants-experimental).
-- **Third-party dynamic-metadata plugins**: dynamic metadata providers not
-  shipped with scikit-build-core (anything using `provider-path` or a provider
-  outside the `scikit_build_core.*` namespace). See [](./dynamic.md).
+- **Legacy `tool.scikit-build.metadata` plugins**: dynamic metadata providers
+  not shipped with scikit-build-core (anything using `provider-path` or a
+  provider outside the `scikit_build_core.*` namespace) used through the
+  deprecated `tool.scikit-build.metadata` table. The standard
+  `[[tool.dynamic-metadata]]` interface supports the same providers without this
+  flag. See [](./dynamic.md).
 - **Leading-slash wheel trees**: the deprecated absolute spelling (`/platlib`,
   `/data`, `/headers`, `/scripts`, `/metadata`) for `wheel.install-dir` and
   `wheel.force-include`, placed one level above the platlib root. The

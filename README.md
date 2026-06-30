@@ -63,8 +63,8 @@ features over classic Scikit-build:
 - Support for writing out to extra wheel folders (scripts, headers, data)
 - Support for selecting install components and build targets
 - Dedicated entrypoints for module and prefix directories
-- Several integrated dynamic metadata plugins (proposing standardized support
-  soon)
+- Several integrated dynamic metadata plugins, supporting the cross-backend
+  `[[tool.dynamic-metadata]]` standard
 - Editable mode support, with optional experimental auto rebuilds on import and
   optional in-place mode
 - Supports WebAssembly (Emscripten/[Pyodide](https://pyodide.org)).
@@ -75,11 +75,10 @@ The following limitations are present compared to classic scikit-build:
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.8 (3.7+ for 0.10.x and older)
 
-Some known missing features that will be developed soon:
+A few limitations remain (covered in detail in the docs):
 
-- Wheels are not fully reproducible yet (nor are they in most others systems,
-  including setuptools)
-- Several editable mode caveats (mentioned in the docs).
+- Wheel reproducibility is opt-in (`wheel.reproducible`)
+- Editable install rebuild mode has some caveats.
 
 Other backends are also available:
 
@@ -94,8 +93,7 @@ scikit-build, and a Hatchling plugin.
 >
 > The setuptools and hatchling backends might move to standalone packages in the
 > future, so depend on them via the `scikit-build-core[setuptools]` and
-> `scikit-build-core[hatchling]` extras to stay protected if they do. The
-> internal API for writing new build extensions is still being solidified.
+> `scikit-build-core[hatchling]` extras to stay protected if they do.
 
 ## Example
 

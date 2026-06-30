@@ -3,10 +3,10 @@
 If you want to support dynamic linkages between python projects or system
 libraries, you will likely encounter some issues in making sure the compiled
 libraries/python bindings work after the wheel is created and the python project
-is installed on the system. The most common issue are the missing hints pointing
-to where the runtime libraries are located, specifically `RPATH` on Linux and
-MacOS systems, and `PATH`/`os.add_dll_directory` on Windows systems. Here are
-some recommendations on how to address them.
+is installed on the system. The most common issues are the missing hints
+pointing to where the runtime libraries are located, specifically `RPATH` on
+Linux and MacOS systems, and `PATH`/`os.add_dll_directory` on Windows systems.
+Here are some recommendations on how to address them.
 
 ## Link to the static libraries
 
@@ -31,7 +31,7 @@ these tools in its [repair wheel] feature.
 These tools also rename the library with a unique hash to avoid any potential
 name collision if the same library is being bundled by a different package, and
 check if the packages conform to standards like [PEP600] (`manylinux_X_Y`).
-These tools do not allow to have cross wheel library dependency.
+These tools do not allow cross-wheel library dependencies.
 
 ## Manual patching
 

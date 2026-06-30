@@ -1,6 +1,6 @@
 # Setuptools
 
-A setuptools plugin is being developed for scikit-build-core, primarily to
+Scikit-build-core includes an experimental setuptools plugin, primarily to
 enable scikit-build-core to be the build backend for scikit-build (classic).
 
 :::{warning}
@@ -65,16 +65,16 @@ These options from scikit-build (classic) are not currently supported:
 so has no effect here.
 
 A compatibility shim, `scikit_build_core.setuptools.wrapper.setup` is provided;
-it will eventually behave as close to scikit-build (classic)'s `skbuild.setup`
-as possible.
+it aims to behave as close to scikit-build (classic)'s `skbuild.setup` as
+possible.
 
 ## Configuration
 
 All other configuration is available as normal `tool.scikit-build` in
 `pyproject.toml` or environment variables as applicable. Config-settings is
-_not_ supported, as setuptools has very poor support for config-settings.
-Eventually, the build hook might pre-process options, but it's tricky to pass
-them through, so it will probably require use cases to be presented.
+_not_ supported, as setuptools has very poor support for config-settings. The
+build hook might pre-process options in the future, but it's tricky to pass them
+through, so it will likely require use cases to be presented.
 
 For classic scikit-build compatibility, two environment variables are honored,
 but only when using the `scikit_build_core.setuptools.wrapper.setup` shim (they

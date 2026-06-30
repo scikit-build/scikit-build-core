@@ -88,7 +88,7 @@ There also is a `PKG-INFO` file with metadata in SDists.
 The wheel is a zip file (ending in `.whl`) with the built code of the project,
 along with required metadata. There is no code that executes on install; it is a
 simple unpack with a few rules about directories. Wheels do not contain
-`pyproject.toml` or other configuration files. To build an wheel, you use the
+`pyproject.toml` or other configuration files. To build a wheel, you use the
 `build` tool with the `--wheel` flag. For example, `pipx run build --wheel`.
 This:
 
@@ -100,7 +100,7 @@ This:
    all the packages requested. This allows a backend to dynamically declare
    dependencies.
 4. Run `.build_wheel(...)` inside the module listed in
-   `build-system.build-backend`. The backend produces an wheel file and returns
+   `build-system.build-backend`. The backend produces a wheel file and returns
    the filename.
 
 Details of the arguments are skipped above, but they allow arbitrary settings

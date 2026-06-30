@@ -1,11 +1,5 @@
 # Migrating from scikit-build
 
-```{warning}
-scikit-build-core is under active development. This guidance will be updated
-on a best-effort basis, but if you are working at the bleeding edge some of it
-may be out of date.
-```
-
 ## Config changes
 
 - The `build-system.build-backend` key in pyproject.toml must be changed to
@@ -57,9 +51,12 @@ find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 ```
 
-- The UseCython CMake module distributed with scikit-build is not currently
-  supported. For examples on how to use Cython, see
-  [our getting started guide](getting_started.md) for now.
+- The UseCython CMake module distributed with scikit-build (classic) is replaced
+  by the standalone [cython-cmake][] package (`include(UseCython)`). See
+  [our getting started guide](getting_started.md) for an example.
+
+[cython-cmake]: https://github.com/scikit-build/cython-cmake
+
 - The `SKBUILD_CONFIGURE_OPTIONS` environment variable is now named
   `SKBUILD_CMAKE_ARGS` for consistency.
 - The `SKBUILD_BUILD_OPTIONS` environment variable is not supported. Some

@@ -1,8 +1,7 @@
 # CLI Reference
 
-Scikit-build-core has a few integrated CLI tools. These are not guaranteed to be
-stable between releases yet, but can still be useful to investigate your
-environment.
+Scikit-build-core has a few integrated CLI tools, useful for scaffolding a
+project and investigating your environment.
 
 These are available through the `scikit-build` command (also runnable as
 `python -m scikit_build_core`), with the modules exposed as subcommands.

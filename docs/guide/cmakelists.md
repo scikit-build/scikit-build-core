@@ -169,7 +169,12 @@ support ABI3 either.
 If you are using `nanobind`'s `nanobind_add_module`, the `STABLE_ABI` flag does
 this automatically for you for 3.12+.
 
-## Future additions
+## Language helpers
 
-Scikit-build-core does not include helpers for F2Py or Cython like scikit-build
-classic yet. These will be carefully reimagined soon.
+Helpers for Cython and F2Py are provided as standalone CMake packages rather
+than being built into scikit-build-core: [cython-cmake][] (`include(UseCython)`)
+and [f2py-cmake][] (`include(UseF2Py)`). Add them to your `build.requires` and
+see the [getting started guide](getting_started.md) for full examples.
+
+[cython-cmake]: https://github.com/scikit-build/cython-cmake
+[f2py-cmake]: https://github.com/scikit-build/f2py-cmake
