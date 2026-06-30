@@ -2,6 +2,11 @@ discover:
   how: fmf
   path: .
 
+prepare:
+  - how: install
+    package:
+      - python3-scikit-build-core
+
 adjust+:
   # Cannot use initiator: fedora-ci reliably yet
   when: initiator is not defined or initiator != packit

@@ -1,5 +1,14 @@
 summary: Documentation examples
 discover+:
   filter: "tag: examples"
+prepare+:
+  # TODO: Remove when the package review is done
+  # https://bugzilla.redhat.com/show_bug.cgi?id=2493460
+  # https://bugzilla.redhat.com/show_bug.cgi?id=2493459
+  - name: Add copr repo for f2py-cmake and cython-cmake
+    how: artifact
+    provide:
+      - copr.repository:lecris/scikit-build-helpers
+    verify: false
 execute:
   how: tmt

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "cython"]
+requires = ["scikit-build-core", "cython", "cython-cmake"]
 build-backend = "scikit_build_core.build"
 
 [project]

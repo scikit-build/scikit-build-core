@@ -1,3 +1,4 @@
 summary+: " (cython)"
 require+:
   - python3dist(cython)
+  - python3dist(cython-cmake)
