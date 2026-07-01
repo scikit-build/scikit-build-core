@@ -272,13 +272,29 @@ sdist.include = [
 ## Customizing the built wheel
 
 The wheel will automatically look for Python packages at `src/<package_name>`,
-`python/<package_name>`, and `<package_name>`, in that order. If you want to
-list packages explicitly, you can. The final path element is the package.
+`python/<package_name>`, and `<package_name>`, in that order, where
+`<package_name>` is your project's name. If you want to list packages
+explicitly, you can. The final path element is the package.
 
 ```toml
 [tool.scikit-build]
 wheel.packages = ["python/src/mypackage"]
 ```
+
+Each entry names a single top-level package directory, and the final path
+element becomes the importable package name. This is **not** a search directory
+like setuptools' `tool.setuptools.packages.find.where`: subpackages and data
+files inside a listed package are copied in automatically (recursively), so you
+never list subpackages. To ship two separate top-level packages, list both:
+
+```toml
+[tool.scikit-build]
+wheel.packages = ["src/pkg_a", "src/pkg_b"]
+```
+
+Auto-detection only looks for a package matching your project name at the three
+locations above; if you have multiple top-level packages, or your package lives
+elsewhere, you must list them explicitly.
 
 This can also be a table, allowing full customization of where a source package
 maps to a wheel directory. The final components of both paths must match due to
