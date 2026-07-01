@@ -174,12 +174,12 @@ def test_minimum_version_applies(tmp_path, register):
         "default",
         "distro",
         lambda **_: {
-            "minimum-version": "0.5",
+            "minimum-version": "0.0",
             "cmake": {"build-type": "RelWithDebInfo"},
         },
     )
     settings = make_reader(tmp_path, state="wheel").settings
-    assert settings.minimum_version == Version("0.5")
+    assert settings.minimum_version == Version("0.0")
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
@@ -189,11 +189,11 @@ def test_minimum_version_applies_via_override(tmp_path, register):
         "default",
         "distro",
         lambda **_: {
-            "overrides": [{"if": {"env": {"SET_MIN": True}}, "minimum-version": "0.5"}]
+            "overrides": [{"if": {"env": {"SET_MIN": True}}, "minimum-version": "0.0"}]
         },
     )
     settings = make_reader(tmp_path, state="wheel", env={"SET_MIN": "1"}).settings
-    assert settings.minimum_version == Version("0.5")
+    assert settings.minimum_version == Version("0.0")
 
 
 def test_zero_arg_provider_supported(tmp_path, register):
