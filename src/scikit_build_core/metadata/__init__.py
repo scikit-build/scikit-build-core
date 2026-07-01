@@ -5,7 +5,8 @@ import typing
 TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
+    from typing import Any
 
 
 __all__: list[str] = [
@@ -13,6 +14,7 @@ __all__: list[str] = [
     "_EXTENDABLE_FIELDS",
     "_SCALAR_FIELDS",
     "_process_dynamic_metadata",
+    "_require_field",
 ]
 
 
@@ -79,6 +81,26 @@ T = typing.TypeVar(
     "T",
     bound="str | list[str] | list[dict[str, str]] | dict[str, str] | dict[str, list[str]] | dict[str, dict[str, str]]",
 )
+
+
+def _require_field(
+    settings: Mapping[str, Any], *, default: str | None = None
+) -> tuple[str, dict[str, Any]]:
+    """Split the target ``field`` out of new-style (0.3) plugin settings.
+
+    The ``[[tool.dynamic-metadata]]`` table has no field key of its own, so a
+    single-value plugin names its target through a ``field`` setting. Returns the
+    field name and the remaining settings (``field`` removed) to forward to the
+    bundled legacy hook. ``default`` supplies the field for a fixed-target plugin
+    (e.g. ``setuptools_scm`` only sets ``version``).
+    """
+    field: Any = settings.get("field", default)
+    if not isinstance(field, str):
+        # Usually a *missing* setting (None), not a wrong type, so not TypeError.
+        msg = "This plugin requires a 'field' setting naming the target field"
+        raise RuntimeError(msg)  # noqa: TRY004
+    rest = {k: v for k, v in settings.items() if k != "field"}
+    return field, rest
 
 
 def _process_dynamic_metadata(field: str, action: Callable[[str], str], result: T) -> T:

@@ -3,13 +3,18 @@ from typing import Any
 
 import pytest
 
+from scikit_build_core._compat.importlib.metadata import entry_points
 from scikit_build_core.builder._load_provider import (
     load_provider,
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
 from scikit_build_core.metadata import _process_dynamic_metadata
+from scikit_build_core.metadata.fancy_pypi_readme import Provider as FancyProvider
+from scikit_build_core.metadata.regex import Provider as RegexProvider
 from scikit_build_core.metadata.regex import dynamic_metadata as regex_dynamic_metadata
+from scikit_build_core.metadata.setuptools_scm import Provider as ScmProvider
+from scikit_build_core.metadata.template import Provider as TemplateProvider
 from scikit_build_core.metadata.template import (
     dynamic_metadata as template_dynamic_metadata,
 )
@@ -174,8 +179,8 @@ def test_load_provider_path_not_shadowed(
 
 
 def test_array_regex_via_field_setting() -> None:
-    # The bundled (legacy-signature) regex plugin works in the 0.3 array form;
-    # the adapter sources the target field from the entry's ``field`` setting.
+    # The bundled regex plugin is reached by its entry-point name in the 0.3
+    # array form; the new-style wrapper sources the target from ``field``.
     project = process_dynamic_metadata(
         {"name": "test", "version": "0.1.0", "dynamic": ["requires-python"]},
         [
@@ -254,7 +259,7 @@ def test_array_new_style_multi_field(tmp_path: Path) -> None:
     )
     project = process_dynamic_metadata(
         {"name": "t", "dynamic": ["version", "description"]},
-        [{"provider": "multi_prov", "provider-path": path}],
+        [{"provider": {"path": path, "module": "multi_prov"}}],
     )
     assert project["version"] == "1.2.3"
     assert project["description"] == "hi"
@@ -270,7 +275,7 @@ def test_array_pep808_add_only_list(tmp_path: Path) -> None:
     )
     project = process_dynamic_metadata(
         {"name": "t", "dependencies": ["torch"], "dynamic": ["dependencies"]},
-        [{"provider": "deps_prov", "provider-path": path}],
+        [{"provider": {"path": path, "module": "deps_prov"}}],
     )
     # Existing static entries kept first, provider additions appended.
     assert project["dependencies"] == ["torch", "numpy"]
@@ -285,7 +290,7 @@ def test_array_scalar_static_and_dynamic_raises(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="both statically and dynamically"):
         process_dynamic_metadata(
             {"name": "t", "version": "1.0", "dynamic": ["version"]},
-            [{"provider": "ver_prov", "provider-path": path}],
+            [{"provider": {"path": path, "module": "ver_prov"}}],
         )
 
 
@@ -298,7 +303,7 @@ def test_array_field_not_in_dynamic_raises(tmp_path: Path) -> None:
     with pytest.raises(KeyError, match="must be listed in project"):
         process_dynamic_metadata(
             {"name": "t", "dynamic": []},
-            [{"provider": "ver_prov2", "provider-path": path}],
+            [{"provider": {"path": path, "module": "ver_prov2"}}],
         )
 
 
@@ -314,7 +319,7 @@ def test_array_build_state_hook(tmp_path: Path) -> None:
     )
     project = process_dynamic_metadata(
         {"name": "t", "dynamic": ["version"]},
-        [{"provider": "state_prov:Provider", "provider-path": path}],
+        [{"provider": {"path": path, "module": "state_prov:Provider"}}],
         build_state="sdist",
     )
     assert project["version"] == "sdist"
@@ -335,3 +340,56 @@ def test_array_missing_provider_raises() -> None:
             {"name": "t", "dynamic": ["version"]},
             [{"field": "version"}],
         )
+
+
+def test_regex_provider_new_style() -> None:
+    # The new-style wrapper takes (settings, project) and reads the target from
+    # the ``field`` setting, returning a {field: value} fragment.
+    fragment = RegexProvider.dynamic_metadata(
+        {
+            "field": "requires-python",
+            "input": "pyproject.toml",
+            "regex": r"name = \"(?P<name>.+)\"",
+            "result": ">={name}",
+        },
+        {},
+    )
+    assert fragment == {"requires-python": ">=scikit_build_core"}
+
+
+def test_template_provider_new_style() -> None:
+    fragment = TemplateProvider.dynamic_metadata(
+        {"field": "requires-python", "result": ">={project[version]}"},
+        {"version": "0.1.0"},
+    )
+    assert fragment == {"requires-python": ">=0.1.0"}
+
+
+def test_provider_requires_field() -> None:
+    with pytest.raises(RuntimeError, match="requires a 'field' setting"):
+        RegexProvider.dynamic_metadata({"input": "pyproject.toml"}, {})
+
+
+def test_scm_provider_defaults_field_and_requires() -> None:
+    # setuptools_scm only ever sets version, so ``field`` defaults to "version".
+    assert ScmProvider.get_requires_for_dynamic_metadata({}) == ["setuptools-scm"]
+
+
+def test_fancy_provider_defaults_field_and_requires() -> None:
+    assert FancyProvider.get_requires_for_dynamic_metadata({}) == [
+        "hatch-fancy-pypi-readme>=23.2"
+    ]
+
+
+def test_bundled_providers_registered_as_entry_points() -> None:
+    eps = {
+        ep.name: ep.value
+        for ep in entry_points(group="dynamic_metadata.provider")
+        if ep.name.startswith("scikit_build_core.")
+    }
+    assert eps == {
+        "scikit_build_core.metadata.regex": "scikit_build_core.metadata.regex:Provider",
+        "scikit_build_core.metadata.template": "scikit_build_core.metadata.template:Provider",
+        "scikit_build_core.metadata.setuptools_scm": "scikit_build_core.metadata.setuptools_scm:Provider",
+        "scikit_build_core.metadata.fancy_pypi_readme": "scikit_build_core.metadata.fancy_pypi_readme:Provider",
+    }

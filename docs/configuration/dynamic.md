@@ -22,10 +22,14 @@ Support for the standard
 
 The standard, cross-backend way to configure plugins is the top-level
 `[[tool.dynamic-metadata]]` **ordered array of tables**. Each entry names a
-`provider` (a module, or `"<module>:<Class>"`); every other key is passed to
-that plugin as its settings. Entries run **in order**, so a later entry sees
-every field an earlier one produced (no dependency graph, no cycles), and a
-plugin can read an already-resolved field with `project[...]`.
+`provider`: either the **name** an installed plugin registers in the
+`dynamic_metadata.provider` entry-point group (scikit-build-core's built-ins
+register their module path, e.g. `scikit_build_core.metadata.regex`), or an
+inline `{ path, module }` table for a plugin living inside your own project.
+Every other key is passed to that plugin as its settings. Entries run **in
+order**, so a later entry sees every field an earlier one produced (no
+dependency graph, no cycles), and a plugin can read an already-resolved field
+with `project[...]`.
 
 ```toml
 [project]
@@ -39,12 +43,12 @@ input = "src/mypackage/__init__.py"
 ```
 
 The field-agnostic plugins (`regex`, `template`) can target any field, chosen
-with a `field` setting. A `provider-path` key may point at a local directory so
-a plugin can live inside your own project. Following [PEP 808][], a list or
-table field can be given a static value in `[project]` _and_ listed in
-`dynamic`, in which case a provider only **adds** to it; the single-value fields
-(`version`, `description`, `requires-python`, `license`, `readme`) cannot be
-both static and dynamic.
+with a `field` setting. An inline `provider = { path, module }` table (see
+[Custom plugins](#custom-plugins)) lets a plugin live inside your own project.
+Following [PEP 808][], a list or table field can be given a static value in
+`[project]` _and_ listed in `dynamic`, in which case a provider only **adds** to
+it; the single-value fields (`version`, `description`, `requires-python`,
+`license`, `readme`) cannot be both static and dynamic.
 
 [PEP 808]: https://peps.python.org/pep-0808/
 
@@ -67,8 +71,9 @@ unless `minimum-version` is set below `1.0`.
 ## Built-in plugins
 
 We provide some built-in plugins in `scikit_build_core.metadata`. These work in
-either mode, though they always require a `field =` key in the modern
-`[[tool.dynamic-metadata]]` mode.
+either mode with the same `provider` string (e.g.
+`scikit_build_core.metadata.regex`), though the modern
+`[[tool.dynamic-metadata]]` mode always requires a `field =` key.
 
 Third party plugins (like those inside the `dynamic-metadata` package) and
 custom plugins are fully supported in the new mode.
@@ -331,13 +336,18 @@ def dynamic_metadata(
 And several optional ones (`build_state`, `dynamic_wheel`, and
 `get_requires_for_dynamic_metadata`). You can optionally use a class, as well.
 
-To use a local plugin, you need to set both `provider` and `provider-path`:
+A plugin distributed as a package is referenced by the name it registers in the
+`dynamic_metadata.provider` entry-point group. A plugin that lives inside your
+own project instead uses an inline `{ path, module }` table — no packaging or
+entry point required:
 
 ```toml
 [[tool.dynamic-metadata]]
-provider = "my_plugin"
-provider-path = "helpers/plugins"
+provider = {path = "helpers/plugins", module = "my_plugin"}
 ```
+
+`module` may also be `"my_plugin:MyClass"` to load a class (instantiated with no
+arguments, so its hooks share state through `self`).
 
 ## `build-system.requires`: Scikit-build-core's `build.requires`
 

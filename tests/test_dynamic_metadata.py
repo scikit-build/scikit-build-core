@@ -411,8 +411,7 @@ def test_array_dynamic_metadata(
             input = "version.txt"
 
             [[tool.dynamic-metadata]]
-            provider = "req_plugin"
-            provider-path = "local_plugins"
+            provider = {path = "local_plugins", module = "req_plugin"}
             """
         ),
         encoding="utf-8",
@@ -521,8 +520,8 @@ def test_legacy_does_not_mutate_input(
     assert project == {"name": "p", "dynamic": ["version"]}
 
 
-def test_array_legacy_plugin_requires_field() -> None:
-    """A bundled (legacy-signature) plugin in the array form needs a 'field'."""
+def test_array_plugin_requires_field() -> None:
+    """A bundled generic plugin in the array form needs a 'field' setting."""
     from scikit_build_core.builder._load_provider import process_dynamic_metadata
 
     with pytest.raises(RuntimeError, match="field"):

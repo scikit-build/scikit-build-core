@@ -10,12 +10,14 @@ from pathlib import Path
 from typing import Any
 
 from .._compat import tomllib
+from . import _require_field
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
+    "Provider",
     "dynamic_metadata",
     "get_requires_for_dynamic_metadata",
 ]
@@ -73,3 +75,24 @@ def get_requires_for_dynamic_metadata(
     _settings: dict[str, object] | None = None,
 ) -> list[str]:
     return ["hatch-fancy-pypi-readme>=23.2"]
+
+
+class Provider:
+    """New-style (dynamic-metadata 0.3) wrapper around :func:`dynamic_metadata`.
+
+    Registered as the ``scikit_build_core.metadata.fancy_pypi_readme`` entry
+    point; only the ``readme`` field is produced, so ``field`` defaults to
+    ``"readme"``.
+    """
+
+    @staticmethod
+    def dynamic_metadata(
+        settings: Mapping[str, Any],
+        project: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        field, rest = _require_field(settings, default="readme")
+        return {field: dynamic_metadata(field, rest, project)}
+
+    @staticmethod
+    def get_requires_for_dynamic_metadata(settings: Mapping[str, Any]) -> list[str]:
+        return get_requires_for_dynamic_metadata(dict(settings))
