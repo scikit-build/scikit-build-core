@@ -93,6 +93,9 @@ def _validate_settings(
     if settings.wheel.py_api:
         msg = "wheel.py_api is not supported in setuptools mode, use bdist_wheel options instead"
         raise SetupError(msg)
+    if len(normalize_build_types(settings.cmake.build_type)) > 1:
+        msg = "cmake.build-type lists (multi-config) are not supported in setuptools mode, use a single build type"
+        raise SetupError(msg)
     if editable_mode:
         if settings.editable.mode != "inplace":
             msg = "setuptools editable installs require editable.mode = 'inplace'"
@@ -442,9 +445,16 @@ class BuildCMake(setuptools.Command):
         if not self.editable_mode:
             return Path(self.build_lib).resolve() / install_subdir
 
-        package_dir = getattr(self.distribution, "package_dir", {}) or {}
-        source_root = package_dir.get("", ".")
-        return Path(source_root).resolve() / install_subdir
+        # The wrapper translates cmake_install_dir relative to the package base
+        # dir (which honors per-package package_dir), so the editable source
+        # root must use the same base or the extension lands beside the wrong
+        # tree (creating a junk directory).
+        if self._wrapper_compat_enabled():
+            source_root = _package_base_dir(self.distribution)
+        else:
+            package_dir = getattr(self.distribution, "package_dir", {}) or {}
+            source_root = Path(package_dir.get("", "."))
+        return source_root.resolve() / install_subdir
 
     def _set_generated_data_files(
         self, data_files: list[tuple[str, list[str]]] | None = None

@@ -51,9 +51,16 @@ SETUPTOOLS_INSTALL_DIR_CASES = [
         editable_dir=Path("src/wrapper_example"),
         wheel_missing="src/wrapper_example/__init__.py",
     ),
+    SetuptoolsInstallDirCase(
+        package="wrapper_setuptools_install_dir_pkgdir",
+        module="wrapper_pkgdir",
+        wheel_prefix="wrapper_pkgdir",
+        editable_dir=Path("src/wrapper_pkgdir"),
+        wheel_missing="src/wrapper_pkgdir/__init__.py",
+    ),
 ]
 
-SETUPTOOLS_INSTALL_DIR_CASE_IDS = ["plugin", "wrapper"]
+SETUPTOOLS_INSTALL_DIR_CASE_IDS = ["plugin", "wrapper", "wrapper_pkgdir"]
 
 
 def _assert_extension_import(venv: VEnv, module: str) -> None:
@@ -397,6 +404,9 @@ def test_wrapper_classic_layout_wheel(tmp_path: Path):
     reason="Cygwin fails here with ld errors",
     strict=False,
 )
+# Per-package package_dir makes setuptools fall back to the meta-path finder,
+# which emits an InformationOnly note (turned into an error by filterwarnings).
+@pytest.mark.filterwarnings("ignore:Editable installation")
 @pytest.mark.parametrize(
     ("package", "case"),
     [(case.package, case) for case in SETUPTOOLS_INSTALL_DIR_CASES],
@@ -530,6 +540,46 @@ def test_validate_settings_raises_setup_error():
     settings.wheel.py_api = "cp39"
     with pytest.raises(SetupError, match=r"wheel\.py_api is not supported"):
         build_cmake._validate_settings(settings)
+
+
+def test_validate_settings_rejects_build_type_list():
+    # The setuptools plugin builds a single config; a multi-config build-type
+    # list would be silently truncated to the first entry, so reject it.
+    settings = build_cmake._load_settings()
+    settings.cmake.build_type = ["Release", "Debug"]
+    with pytest.raises(SetupError, match=r"cmake\.build-type lists"):
+        build_cmake._validate_settings(settings)
+
+
+def test_validate_settings_allows_single_build_type_list():
+    settings = build_cmake._load_settings()
+    settings.cmake.build_type = ["Release"]
+    build_cmake._validate_settings(settings)
+
+
+def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
+    # Per-package package_dir (as opposed to {"": "src"}): the wrapper
+    # translates cmake_install_dir relative to src, so the editable source root
+    # must also be src, not "." (which would create a junk ./wrapper_example).
+    monkeypatch.chdir(tmp_path)
+    dist = setuptools.Distribution(
+        {
+            "name": "wrapper-example",
+            "version": "0.0.1",
+            "packages": ["wrapper_example"],
+            "package_dir": {"wrapper_example": "src/wrapper_example"},
+        }
+    )
+    setattr(dist, build_cmake.WRAPPER_COMPAT, True)
+    dist.cmake_install_dir = "src/wrapper_example"  # type: ignore[attr-defined]
+
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.build_lib = str(tmp_path / "build")
+    cmd.editable_mode = True
+
+    install_dir = cmd._get_install_dir()
+    assert install_dir == (tmp_path / "src" / "wrapper_example").resolve()
 
 
 def test_wrapper_setup_raises_setup_error():

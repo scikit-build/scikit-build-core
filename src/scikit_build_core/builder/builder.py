@@ -324,7 +324,15 @@ class Builder:
             if sys.implementation.name != "cpython":
                 logger.info("PyPy doesn't support the Limited API, ignoring")
             elif gil_disabled:
-                sabi = _SabiMode.ABI3T
+                # The free-threaded stable ABI (PEP 803 / abi3t) only exists on
+                # CPython 3.15+; older free-threaded builds have no abi3t, so a
+                # forced abi3t module would be unimportable. Downgrade instead.
+                if sys.version_info >= (3, 15):
+                    sabi = _SabiMode.ABI3T
+                else:
+                    logger.info(
+                        "Free-threaded Python doesn't support the Limited API currently, ignoring"
+                    )
             else:
                 sabi = _SabiMode.ABI3
         elif limited_api is None and py_api.startswith("cp3"):

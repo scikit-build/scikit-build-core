@@ -1,0 +1,8 @@
+[build-system]
+requires = [
+    "scikit_build_core[setuptools]",
+]
+build-backend = "scikit_build_core.setuptools.build_meta"
+
+[tool.scikit-build]
+editable.mode = "inplace"
