@@ -32,6 +32,10 @@ There are several mechanisms to quickly get started with a package:
   `buildgen new myext -r py/pybind11` (see all with `buildgen list`, includes
   pybind11, nanobind, Cython, and C extensions).
 
+```{versionadded} 1.0
+The `scikit-build init` command.
+```
+
 For the rest of this page, however, we will show you how to get set up from
 scratch.
 
@@ -467,6 +471,10 @@ support PyPy).
 ````
 
 ````{tab} ABI3t
+
+```{versionadded} 1.0
+The free-threaded Stable ABI (`abi3t`) and the combined `cp315.cp315t` tag.
+```
 
 ```{literalinclude} ../examples/generated/abi3t/CMakeLists.txt
 :language: cmake

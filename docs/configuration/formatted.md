@@ -6,6 +6,10 @@ The following configure keys are formatted as Python `str.format` templates:
 - `build.requires`
 - `editable.rebuild-dir`
 
+```{versionadded} 1.0
+`editable.rebuild-dir` is formattable.
+```
+
 The available variables are documented in the members of
 {py:class}`scikit_build_core.format.PyprojectFormatter` copied here for
 visibility

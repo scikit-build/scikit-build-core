@@ -52,9 +52,15 @@ both static and dynamic.
 
 The older `[tool.scikit-build.metadata.<field>]` table (a field-keyed mapping
 rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]`. It
-is deprecated and emits a warning unless `minimum-version` is set below `1.0`.
-It still works and is shown in the examples below, but the two forms **cannot be
+still works and is shown in the examples below, but the two forms **cannot be
 combined** in one project; use one or the other.
+
+:::
+
+:::{versionchanged} 1.0
+
+The legacy `tool.scikit-build.metadata` table now emits a deprecation warning
+unless `minimum-version` is set below `1.0`.
 
 :::
 
@@ -303,6 +309,11 @@ static in `[project]`).
 ```
 
 ## Custom plugins
+
+```{versionadded} 1.0
+Writing a custom dynamic-metadata plugin through the standard
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 interface.
+```
 
 You can write your own plugins. Full details are in the
 [dynamic metadata docs](https://dynamic-metadata.readthedocs.io/en/latest/plugin_authors.html).

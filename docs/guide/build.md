@@ -194,6 +194,10 @@ The three new items here (compared to SDists) are the [compatibility tags][]:
 - `platform tag`: This is the platform the wheel is valid on, such as `any`,
   `linux_x86_64`, or `manylinux_2_17_x86_64`.
 
+```{versionadded} 1.0
+The `abi3t` tag for free-threaded stable ABI wheels.
+```
+
 (repairing-wheels)=
 
 ## Repairing

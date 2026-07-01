@@ -85,6 +85,8 @@ print(mk_skbuild_docs())
   another environment variable), ``default``, and ``force``; an entry that
   resolves to nothing is skipped. Independent of the ``if.env`` override
   condition.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -138,6 +140,8 @@ print(mk_skbuild_docs())
   Experimental PEP 817 null-variant selector.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -165,6 +169,8 @@ print(mk_skbuild_docs())
   Experimental PEP 817 variant properties.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -177,6 +183,8 @@ print(mk_skbuild_docs())
   Experimental PEP 817 wheel variant label override.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -189,6 +197,8 @@ print(mk_skbuild_docs())
   Experimental PEP 817 variant properties used for wheel metadata selection.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+
+  .. versionadded:: 1.0
 ```
 
 ## backport
@@ -295,6 +305,9 @@ print(mk_skbuild_docs())
   Ninja Multi-Config) build each ``--config``. Every build type is installed
   to the same prefix, so use ``CMAKE_<CONFIG>_POSTFIX`` to avoid clobbering
   files between configurations.
+
+  .. versionchanged:: 1.0
+     A list of build types can now be given.
 ```
 
 ```{eval-rst}
@@ -449,6 +462,8 @@ print(mk_skbuild_docs())
   such as your source tree is refused to avoid deleting those files. A managed
   tree gets a ``CACHEDIR.TAG`` and a ``.gitignore`` so its compiled artifacts
   stay out of backups and version control.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -563,6 +578,8 @@ print(mk_skbuild_docs())
   by scikit-build-core to the wheel staging directory); the ``--strip`` and
   ``--component`` options of ``cmake --install`` do not apply to these targets.
   ``components`` and ``targets`` may be combined; both will run.
+
+  .. versionadded:: 1.0
 ```
 
 ## logging
@@ -696,6 +713,8 @@ print(mk_skbuild_docs())
   its destination, since naming an exact source is an explicit request. A
   force-included *directory* stays subject to :confval:`sdist.exclude`, so a
   bulk copy can still be trimmed by an exclude pattern.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -730,12 +749,14 @@ print(mk_skbuild_docs())
   * "manual": No extra logic, based on include/exclude only.
   * "explicit": Opt-in only. Nothing is included unless it matches an ``include``
     pattern, and ``exclude`` is applied after, so it can trim included files back
-    out. Like "manual", git ignore files are not read. (1.0+)
+    out. Like "manual", git ignore files are not read.
 
   If you don't set this, it will be "default" unless you set the minimum
   version below 0.12, in which case it will be "classic".
 
-  .. versionadded: 0.12
+  .. versionadded:: 0.12
+  .. versionchanged:: 1.0
+     Added the "explicit" mode.
 ```
 
 ```{eval-rst}
@@ -771,7 +792,7 @@ print(mk_skbuild_docs())
   If you don't set this, it will be "all" unless you set the minimum version
   below 1.0, in which case it will be "none" to preserve backward compatibility.
 
-  .. versionadded: 1.0
+  .. versionadded:: 1.0
 ```
 
 ## search
@@ -872,6 +893,8 @@ print(mk_skbuild_docs())
   directory) and read from that original source instead. This lets a source
   that names an sdist output (vendored via :confval:`sdist.force-include`) build
   from both a source tree and an unpacked sdist.
+
+  .. versionadded:: 1.0
 ```
 
 ```{eval-rst}
@@ -893,6 +916,9 @@ print(mk_skbuild_docs())
   wheel tree instead of the platlib, matching the ``SKBUILD_*_DIR`` CMake cache
   variables. Available trees: ``PLATLIB``/``PURELIB``, ``DATA``, ``HEADERS``,
   ``SCRIPTS``, ``METADATA``, ``NULL``.
+
+  .. versionchanged:: 1.0
+     Added the ``${SKBUILD_<TREE>_DIR}`` prefix for targeting wheel trees.
 
   .. warning::
      EXPERIMENTAL A leading-slash absolute path (``/platlib``, ``/data``,
@@ -933,6 +959,9 @@ print(mk_skbuild_docs())
   copied in as a top-level module rather than a package directory.
 
   If a dict, provides a mapping of package name to source directory.
+
+  .. versionchanged:: 1.0
+     An entry may point at a single module file.
 ```
 
 ```{eval-rst}
@@ -974,6 +1003,10 @@ print(mk_skbuild_docs())
   The ABI tag is inferred from this tag.
 
   This value is used to construct ``SKBUILD_SABI_COMPONENT`` CMake variable.
+
+  .. versionchanged:: 1.0
+     Added the free-threaded stable ABI ("cp315t") and the combined
+     abi3.abi3t tag ("cp315.cp315t").
 ```
 
 ```{eval-rst}
@@ -992,6 +1025,8 @@ print(mk_skbuild_docs())
   ``SOURCE_DATE_EPOCH`` is exported to the CMake build (if not already set) so
   compilers that honor it can produce deterministic output. ``SOURCE_DATE_EPOCH``
   is used for timestamps if set, or a fixed value if not.
+
+  .. versionadded:: 1.0
 
   .. seealso::
      :confval:`sdist.reproducible`
