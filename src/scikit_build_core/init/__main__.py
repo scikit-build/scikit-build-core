@@ -177,6 +177,18 @@ def main_init(args: argparse.Namespace, /) -> None:
             raw_name=raw_name,
         )
     module = project_name.replace("-", "_").replace(".", "_")
+    if not module.isidentifier():
+        rich_error(
+            "{module!r} (derived from {raw_name!r}) is not a valid Python identifier; pass a {bold}--name{normal} that starts with a letter or underscore.",
+            module=module,
+            raw_name=raw_name,
+        )
+
+    if directory.exists() and not directory.is_dir():
+        rich_error(
+            "{directory} already exists and is not a directory.",
+            directory=directory,
+        )
 
     if directory.is_dir() and any(directory.iterdir()) and not args.force:
         rich_error(
