@@ -44,6 +44,27 @@ def test_hatchling_force_include_rejected() -> None:
         _validate_settings(pyproject)
 
 
+class _FakeHook:
+    def __init__(self, config: dict[str, object]) -> None:
+        self.config = config
+
+
+def test_hatchling_enable_by_default_ignored(tmp_path: Path, monkeypatch) -> None:
+    # enable-by-default is one of hatchling's own reserved build-hook options
+    # (read directly off the hook config by hatchling, see
+    # hatchling.builders.config.BuilderConfig.hook_config); scikit-build-core
+    # must strip it before handing the rest of the config to SettingsReader,
+    # or every enabled build fails validation (regression test, gh-1417).
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "x"\nversion = "0.1.0"\n', encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    fake_hook = _FakeHook({"enable-by-default": False})
+    reader = ScikitBuildHook._read_config(fake_hook, state="wheel")  # type: ignore[arg-type]
+    reader.validate_may_exit()
+
+
 def set_hatchling_editable_mode(mode: str) -> None:
     pyproject = Path("pyproject.toml")
     pyproject.write_text(
