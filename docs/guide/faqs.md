@@ -138,8 +138,8 @@ Then run gcovr against the persistent tree, pointing the root at your source:
 gcovr -r . build
 ```
 
-If you would rather not depend on the paths staying put, make the recorded
-paths relocatable with compiler flags — `-fprofile-abs-path` for gcov and
+If you would rather not depend on the paths staying put, make the recorded paths
+relocatable with compiler flags — `-fprofile-abs-path` for gcov and
 `-ffile-prefix-map=<build>=<src>` (or `-fdebug-prefix-map=...` for debug info
 only) — for example via {confval}`cmake.define` or `CFLAGS`.
 
