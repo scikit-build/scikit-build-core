@@ -100,6 +100,49 @@ This is now a subcommand of the unified `scikit-build` CLI (previously
 `python -m scikit_build_core.builder`).
 ```
 
+## Coverage and debugging (gcov / gcovr / GDB)
+
+Tools like `gcov`/`gcovr` and debuggers like GDB rely on **absolute paths**
+baked into the build artifacts: gcov records the source path and compilation
+directory in the `.gcno` (compile-time) and `.gcda` (run-time) files, and DWARF
+debug info records the source path in the compiled extension. If those paths no
+longer exist when you run the tool, you get errors such as
+
+```console
+$ gcovr --xml coverage.xml -r .
+(ERROR) Trouble processing '.../CMakeFiles/foo.dir/_foo.c.gcda' with working directory '/home'.
+```
+
+or GDB that cannot show source lines even with debug flags enabled. Two default
+behaviors are usually responsible:
+
+- **The build directory is temporary.** Without {confval}`build-dir` set,
+  scikit-build-core builds in a temporary directory that is deleted after the
+  build, taking the `.gcno` files and the compiled extension with it. Set a
+  persistent `build-dir`.
+- **Build isolation copies the source.** `pip install .` and `python -m build`
+  copy your project into a temporary directory before invoking the backend, so
+  the compiler bakes those temporary source paths into the coverage and debug
+  data. After the build the temporary source tree is gone.
+
+The most reliable workflow is a persistent build directory with isolation
+disabled, so both the build tree and the source tree stay in place:
+
+```bash
+pip install --no-build-isolation -Cbuild-dir=build -ve .
+```
+
+Then run gcovr against the persistent tree, pointing the root at your source:
+
+```bash
+gcovr -r . build
+```
+
+If you would rather not depend on the paths staying put, make the recorded paths
+relocatable with compiler flags — `-fprofile-abs-path` for gcov and
+`-ffile-prefix-map=<build>=<src>` (or `-fdebug-prefix-map=...` for debug info
+only) — for example via {confval}`cmake.define` or `CFLAGS`.
+
 ## A dependency's library ends up in `site-packages/bin` or `lib`
 
 If you build a shared dependency as part of your project (for example via
