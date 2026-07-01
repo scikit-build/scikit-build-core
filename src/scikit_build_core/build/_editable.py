@@ -55,7 +55,7 @@ def editable_redirect(
     verbose: bool,
     build_options: Sequence[str],
     install_options: Sequence[str],
-    install_dir: str,
+    install_dir: str | None,
     as_entrypoint: bool = False,
 ) -> str:
     """
@@ -128,17 +128,22 @@ def editable_redirect_files(
         mapping, libdir, absolute=external_install
     )
     rebuild = settings.editable.rebuild_enabled
+    install_dir: str | None
     if install_prefix is not None:
         # The persistent install tree lives outside the wheel, so the shim is
         # given an absolute prefix (os.path.join drops DIR for an absolute path)
         # and references the installed files by absolute path.
         install_dir = install_prefix
     else:
-        install_dir = settings.wheel.install_dir
-        if rebuild:
-            # The shim joins install_dir onto the platlib root; a platlib/purelib
-            # selector reduces to its remainder, any other tree is rejected.
-            install_dir = editable_rebuild_install_dir(install_dir)
+        # The shim joins install_dir onto the platlib root for a manual
+        # module.__loader__.rebuild(), available whenever a build-dir is set even
+        # with rebuild off (#1403). A platlib/purelib selector reduces to its
+        # remainder. When rebuild is enabled any other tree is a hard error;
+        # otherwise it is baked as None (see editable_rebuild_install_dir) so
+        # rebuild() refuses rather than install to a bogus (or root) path.
+        install_dir = editable_rebuild_install_dir(
+            settings.wheel.install_dir, strict=rebuild
+        )
     editable_txt = editable_redirect(
         modules=modules,
         installed=installed,

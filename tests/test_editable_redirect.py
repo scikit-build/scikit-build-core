@@ -344,6 +344,33 @@ def test_loader_rebuild_without_build_dir_errors(tmp_path: Path):
         spec.loader.rebuild()  # type: ignore[attr-defined]
 
 
+def test_rebuild_refuses_nonrebuildable_install_dir(tmp_path: Path):
+    """#1417 Bug A: an install_dir the shim can't reproduce is baked as None.
+
+    A non-rebuild editable with a build-dir still exposes a manual
+    module.__loader__.rebuild(). If wheel.install-dir points outside the platlib
+    (e.g. '/data'), os.path.join(DIR, install_dir) would install to a bogus (or
+    filesystem-root) path, so None is baked and rebuild() must refuse instead.
+    """
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={},
+        known_directories={},
+        known_packages=[],
+        path=str(tmp_path),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path),
+        install_dir=None,
+    )
+    # The sentinel is not joined onto DIR, so no bogus path is produced.
+    assert finder.install_dir is None
+    with pytest.raises(RuntimeError, match="cannot be reproduced"):
+        finder.rebuild()
+
+
 def test_mapping_to_modules_prefers_py():
     """Test that mapping_to_modules prefers __init__.py over __init__.pxd."""
     from scikit_build_core.build._editable import mapping_to_modules

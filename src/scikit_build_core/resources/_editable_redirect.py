@@ -70,12 +70,16 @@ class FileLockIfUnix:
             time.sleep(poll_interval)
 
     def release(self) -> None:
+        # A no-op if the lock was never acquired: acquire() can raise before
+        # setting lock_file_fd (e.g. PermissionError on a read-only build dir),
+        # and the finally-clause release() must not mask that real error.
+        if self.lock_file_fd is None:
+            return
         try:
             import fcntl
         except ImportError:
             return
 
-        assert isinstance(self.lock_file_fd, int)
         fcntl.flock(self.lock_file_fd, fcntl.LOCK_UN)
         os.close(self.lock_file_fd)
 
@@ -414,7 +418,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         build_options: list[str],
         install_options: list[str],
         dir: str,  # noqa: A002
-        install_dir: str,
+        install_dir: str | None,
     ) -> None:
         self.known_source_files = known_source_files
         self.known_wheel_files = known_wheel_files
@@ -425,7 +429,13 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         self.build_options = build_options
         self.install_options = install_options
         self.dir = dir
-        self.install_dir = os.path.join(DIR, install_dir)
+        # install_dir is None when wheel.install-dir cannot be reproduced by a
+        # rebuild (a non-platlib tree); joining it onto DIR would yield a bogus
+        # (or, for a leading '/', filesystem-root) path, so keep the sentinel and
+        # let rebuild() refuse instead.
+        self.install_dir = (
+            os.path.join(DIR, install_dir) if install_dir is not None else None
+        )
 
         # Construct the __path__ of all package-like objects. known_directories
         # maps each package to the directories that make up its __path__,
@@ -536,6 +546,17 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         return spec
 
     def rebuild(self) -> None:
+        if self.install_dir is None:
+            # wheel.install-dir points outside the platlib, so a rebuild's
+            # 'cmake --install --prefix <site-packages>/<install-dir>' cannot
+            # reproduce the wheel's layout. Refuse rather than install anywhere.
+            msg = (
+                "Cannot rebuild: this editable install's wheel.install-dir is "
+                "outside the platlib and cannot be reproduced by a rebuild. "
+                "Reinstall with a platlib wheel.install-dir (or an override) to "
+                "enable on-demand rebuilds."
+            )
+            raise RuntimeError(msg)
         _run_editable_rebuild(
             path=self.path,
             verbose=self.verbose,
@@ -625,7 +646,7 @@ def install(
     verbose: bool = False,
     build_options: list[str] | None = None,
     install_options: list[str] | None = None,
-    install_dir: str = "",
+    install_dir: str | None = "",
 ) -> None:
     """
     Install a meta path finder that redirects imports to the source files, and

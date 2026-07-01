@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 
 __all__ = [
+    "NON_PLATLIB_REBUILD_MSG",
     "editable_rebuild_install_dir",
     "is_module",
     "is_trackable",
@@ -194,7 +195,15 @@ def resolve_wheel_tree(
     return wheel_dirs[targetlib], dest
 
 
-def editable_rebuild_install_dir(install_dir: str) -> str:
+NON_PLATLIB_REBUILD_MSG = (
+    "Editable installs cannot rebuild a non-platlib wheel.install-dir. Use an "
+    "override to change if needed."
+)
+
+
+def editable_rebuild_install_dir(
+    install_dir: str, *, strict: bool = True
+) -> str | None:
     """
     Reduce ``wheel.install-dir`` to a platlib-relative path for the editable shim.
 
@@ -202,7 +211,13 @@ def editable_rebuild_install_dir(install_dir: str) -> str:
     understands a relative path. A platlib/purelib tree selector
     (``${SKBUILD_PLATLIB_DIR}/pkg`` or ``/platlib/pkg``) is equivalent to a plain
     ``pkg`` and is reduced to its remainder. A selector for any other tree
-    escapes the platlib and cannot be rebuilt on import, so it raises.
+    escapes the platlib and cannot be rebuilt.
+
+    With ``strict`` (rebuild enabled on import), such a tree is a hard error.
+    Otherwise -- a non-rebuild editable that still exposes a manual
+    ``module.__loader__.rebuild()`` (#1403) -- ``None`` is returned as a sentinel
+    so the shim can refuse a rebuild rather than install to a bogus (or
+    filesystem-root) path.
     """
     if install_dir.startswith("${"):
         var_match = _WHEEL_TREE_VAR.fullmatch(install_dir)
@@ -217,8 +232,9 @@ def editable_rebuild_install_dir(install_dir: str) -> str:
         return install_dir
     if tree in {"platlib", "purelib"}:
         return rest
-    msg = "Editable installs cannot rebuild a non-platlib wheel.install-dir. Use an override to change if needed."
-    raise AssertionError(msg)
+    if strict:
+        raise AssertionError(NON_PLATLIB_REBUILD_MSG)
+    return None
 
 
 def resolve_from_sdist_force_include(

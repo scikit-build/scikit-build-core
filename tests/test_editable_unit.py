@@ -749,6 +749,65 @@ def test_editable_redirect_files_rebuild_dir_implies_rebuild(tmp_path: Path):
         )
 
 
+@pytest.mark.parametrize("install_dir", ["/data", "${SKBUILD_DATA_DIR}/pkg"])
+def test_editable_redirect_files_nonplatlib_install_dir_no_rebuild_baked_safe(
+    tmp_path: Path, install_dir: str
+):
+    # #1417 Bug A: a non-rebuild editable with a build-dir still exposes a manual
+    # module.__loader__.rebuild() (#1403). The raw non-platlib install-dir must
+    # NOT be baked into the shim, since the shim does os.path.join(DIR,
+    # install_dir): '/data' would install into the filesystem root and
+    # '${SKBUILD_DATA_DIR}/pkg' into a literal '${SKBUILD_DATA_DIR}' dir. A None
+    # sentinel is baked instead so rebuild() refuses cleanly.
+    from scikit_build_core.settings.skbuild_model import WheelSettings
+
+    settings = ScikitBuildSettings(wheel=WheelSettings(install_dir=install_dir))
+    assert not settings.editable.rebuild
+
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=tmp_path,
+        settings=settings,
+        use_start=False,
+    )
+    shim = files["_editable_skbc_pkg.py"].decode()
+    # The install() call's last positional arg is install_dir; it must be None.
+    call = shim.rpartition("install(")[2]
+    assert call.rstrip().endswith("None)")
+    assert "${SKBUILD" not in shim
+
+
+def test_editable_redirect_files_platlib_install_dir_no_rebuild_reduced(
+    tmp_path: Path,
+):
+    # #1417 Bug A: a platlib/purelib selector is reproducible by the shim's
+    # platlib-relative join, so even without rebuild it is reduced to its
+    # remainder (not baked raw) so a manual rebuild() installs correctly.
+    from scikit_build_core.settings.skbuild_model import WheelSettings
+
+    settings = ScikitBuildSettings(
+        wheel=WheelSettings(install_dir="${SKBUILD_PLATLIB_DIR}/pkg")
+    )
+    assert not settings.editable.rebuild
+
+    files = editable_redirect_files(
+        libdir=tmp_path,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=tmp_path,
+        settings=settings,
+        use_start=False,
+    )
+    shim = files["_editable_skbc_pkg.py"].decode()
+    call = shim.rpartition("install(")[2]
+    assert call.rstrip().endswith("'pkg')")
+    assert "SKBUILD_PLATLIB_DIR" not in shim
+
+
 def test_prepare_editable_rebuild_dir_refuses_populated(tmp_path: Path):
     from scikit_build_core.build.common_wheel_helpers import (
         prepare_editable_rebuild_dir,
