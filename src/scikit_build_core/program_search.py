@@ -39,6 +39,7 @@ def __dir__() -> list[str]:
 BASE_TIMEOUT = 5
 
 
+@functools.lru_cache(None)
 def _macos_binary_is_x86(path: Path) -> bool:
     """
     Returns True if the binary is x86. Only run on macOS.
