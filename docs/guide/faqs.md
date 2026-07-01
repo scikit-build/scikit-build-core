@@ -184,9 +184,9 @@ In redirect-mode editable installs (the default), `importlib.resources` finds
 the compiled library through the redirecting finder, so the code above works
 unchanged. Note that accessing a resource does **not** trigger a rebuild — plain
 libraries are not importable modules, so the automatic `editable.rebuild`
-on-import hook does not fire for them. To pick up C/C++ changes, either request a
-rebuild explicitly (this works whenever a persistent `build-dir` is set, with or
-without `editable.rebuild`)…
+on-import hook does not fire for them. To pick up C/C++ changes, either request
+a rebuild explicitly (this works whenever a persistent `build-dir` is set, with
+or without `editable.rebuild`)…
 
 ```python
 import mypackage
