@@ -13,7 +13,9 @@ from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from .documentation import DCDoc
 
 __all__ = ["mk_skbuild_docs"]

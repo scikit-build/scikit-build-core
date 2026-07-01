@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import ClassVar, Literal
 
 import setuptools
 from packaging.version import Version
@@ -23,6 +23,7 @@ from ..cmake import CMake, CMaker
 from ..settings.skbuild_model import normalize_build_types
 from ..settings.skbuild_read_settings import SettingsReader
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Callable
 

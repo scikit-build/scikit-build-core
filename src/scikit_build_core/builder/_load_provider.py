@@ -10,7 +10,6 @@ from collections.abc import Iterator, Mapping
 from pathlib import Path
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Any,
     Literal,
     Protocol,
@@ -18,15 +17,6 @@ from typing import (
     get_args,
     runtime_checkable,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
-    from importlib.machinery import ModuleSpec
-    from types import ModuleType
-
-    StrMapping = Mapping[str, Any]
-else:
-    StrMapping = Mapping
 
 from ..metadata import (
     _ALL_FIELDS,
@@ -36,6 +26,16 @@ from ..metadata import (
     _LIST_STR_FIELDS,
     _SCALAR_FIELDS,
 )
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
+    from importlib.machinery import ModuleSpec
+    from types import ModuleType
+
+    StrMapping = Mapping[str, Any]
+else:
+    StrMapping = Mapping
 
 __all__ = [
     "BUILD_STATES",

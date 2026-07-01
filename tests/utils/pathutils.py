@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import contextlib
-import typing
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
     from pathlib import Path
 

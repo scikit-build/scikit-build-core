@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from scikit_build_core.builder.__main__ import main
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import pytest
 

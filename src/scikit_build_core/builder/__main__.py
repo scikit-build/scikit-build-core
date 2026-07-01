@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from .. import __version__
 from .._logging import rich_print
@@ -12,6 +11,7 @@ from .get_requires import GetRequires
 from .sysconfig import info_print as ip_sysconfig
 from .wheel_tag import WheelTag
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import argparse
 

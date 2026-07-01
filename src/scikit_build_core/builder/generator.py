@@ -5,13 +5,13 @@ import shlex
 import subprocess
 import sys
 import sysconfig
-from typing import TYPE_CHECKING
 
 from .._logging import logger
 from ..errors import NinjaNotFoundError
 from ..program_search import best_program, get_make_programs, get_ninja_programs
 from .sysconfig import get_cmake_platform
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Collection, Iterable, Mapping, MutableMapping
 

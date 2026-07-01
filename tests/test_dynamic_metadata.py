@@ -8,7 +8,7 @@ import textwrap
 import types
 import zipfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from packaging.requirements import Requirement
@@ -26,6 +26,7 @@ from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 from pathutils import contained
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from typing import Literal
 

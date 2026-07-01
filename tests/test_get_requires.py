@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -13,6 +12,7 @@ from scikit_build_core.build import (
 )
 from scikit_build_core.builder.get_requires import GetRequires
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pytest_subprocess import FakeProcess
 

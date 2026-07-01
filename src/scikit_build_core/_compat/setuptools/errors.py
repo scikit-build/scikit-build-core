@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import typing
+TYPE_CHECKING = False
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from setuptools.errors import SetupError
 else:
     try:

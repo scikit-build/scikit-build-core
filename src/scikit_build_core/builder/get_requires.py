@@ -7,7 +7,7 @@ import os
 import shlex
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from packaging.tags import sys_tags
 
@@ -26,6 +26,7 @@ from ..settings.skbuild_read_settings import SettingsReader
 from ._load_provider import load_dynamic_metadata, load_provider
 from .generator import parse_generator
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 

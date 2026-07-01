@@ -5,7 +5,6 @@ import shutil
 import sysconfig
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
 import pytest
 from packaging.specifiers import SpecifierSet
@@ -16,6 +15,7 @@ from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.errors import CMakeNotFoundError
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator
 

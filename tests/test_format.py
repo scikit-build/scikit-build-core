@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from scikit_build_core.format import RootPathResolver, pyproject_format
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

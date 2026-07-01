@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import contextlib
 import sys
-from typing import TYPE_CHECKING
 
 from .._compat import tomllib
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from typing import Literal

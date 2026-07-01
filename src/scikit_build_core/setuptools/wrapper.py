@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 import setuptools
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
 
 from .._compat.setuptools.errors import SetupError
 from .._compat.typing import TypeVar
 from .build_cmake import WRAPPER_COMPAT
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 __all__ = ["setup"]
 

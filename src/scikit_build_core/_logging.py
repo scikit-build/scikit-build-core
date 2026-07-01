@@ -9,8 +9,11 @@ import os
 import platform
 import sys
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Literal, NoReturn
+from typing import Any, Literal, NoReturn
 
+from . import __version__
+
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -19,8 +22,6 @@ if TYPE_CHECKING:
     StrMapping = Mapping[str, "Style"]
 else:
     StrMapping = Mapping
-
-from . import __version__
 
 __all__ = [
     "LEVEL_VALUE",

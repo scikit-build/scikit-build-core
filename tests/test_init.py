@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from packaging.utils import InvalidName
 
@@ -9,6 +7,7 @@ from scikit_build_core.__main__ import main
 from scikit_build_core._compat import tomllib
 from scikit_build_core.init.__main__ import BACKENDS, generate_project
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

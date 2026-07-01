@@ -12,7 +12,9 @@ import scikit_build_core.settings.skbuild_overrides
 from scikit_build_core.settings.skbuild_overrides import regex_match
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from pytest_subprocess import FakeProcess
 
 

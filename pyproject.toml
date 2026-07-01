@@ -349,6 +349,7 @@ docstring-code-format = true
 "typing.Sequence".msg = "Use collections.abc.Sequence instead."
 "typing.Set".msg = "Use collections.abc.Set instead."
 "typing.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
+"typing.TYPE_CHECKING".msg = "Use TYPE_CHECKING = False instead."
 "typing_extensions.Self".msg = "Use scikit_build_core._compat.typing.Self instead."
 "typing.assert_never".msg = "Add scikit_build_core._compat.typing.assert_never instead."
 "tomli".msg = "Use scikit_build_core._compat.tomllib instead."

@@ -3,13 +3,14 @@ from __future__ import annotations
 import contextlib
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pathspec
 
 from .._logging import logger
 from ..format import pyproject_format
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 

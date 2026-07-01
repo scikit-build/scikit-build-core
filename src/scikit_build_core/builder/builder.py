@@ -9,7 +9,7 @@ import shlex
 import sys
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from .. import __version__
 from .._compat.importlib import metadata, resources
@@ -26,6 +26,7 @@ from .sysconfig import (
     get_soabi,
 )
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
 

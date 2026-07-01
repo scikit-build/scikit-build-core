@@ -4,12 +4,13 @@ import os
 import sys
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pytest
 
 from scikit_build_core.build._file_processor import each_unignored_file
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator
 

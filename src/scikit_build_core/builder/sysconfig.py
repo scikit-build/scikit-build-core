@@ -5,12 +5,13 @@ import os
 import sys
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import packaging.tags
 
 from .._logging import logger, rich_print
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import argparse
     from collections.abc import Mapping

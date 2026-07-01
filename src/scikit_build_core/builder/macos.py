@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 import platform
 import re
-from typing import TYPE_CHECKING, NamedTuple
+from typing import NamedTuple
 
 from .._logging import logger
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 

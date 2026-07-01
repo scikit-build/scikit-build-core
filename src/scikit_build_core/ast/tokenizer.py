@@ -5,10 +5,10 @@ import enum
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from .._logging import rich_print
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator
 

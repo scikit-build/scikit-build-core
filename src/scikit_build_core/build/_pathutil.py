@@ -4,12 +4,13 @@ import importlib.machinery
 import os
 import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pathspec
 
 from ._file_processor import EXCLUDE_LINES, each_unignored_file
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 

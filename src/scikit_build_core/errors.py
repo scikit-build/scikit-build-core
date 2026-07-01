@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import subprocess
 

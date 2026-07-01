@@ -10,7 +10,7 @@ import sys
 import sysconfig
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from packaging.version import Version
 
@@ -24,6 +24,7 @@ from .file_api.query import stateless_query
 from .file_api.reply import load_reply_dir
 from .program_search import Program, best_program, get_cmake_program, get_cmake_programs
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
 
