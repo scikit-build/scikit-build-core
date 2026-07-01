@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "copy",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    "packaging",
+    "packaging.version",
+    "typing",
+}
+
 import copy
 import sys
 from typing import Any

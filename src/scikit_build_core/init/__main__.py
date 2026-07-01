@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "argparse",
+    "packaging",
+    "packaging.utils",
+    "pathlib",
+    "scikit_build_core._logging",
+    "scikit_build_core.resources",
+    "string",
+}
+
 import argparse
 import dataclasses
 import string
@@ -8,8 +18,8 @@ from pathlib import Path
 
 from packaging.utils import InvalidName, canonicalize_name
 
-from .._logging import rich_error, rich_print
-from ..resources import resources
+from scikit_build_core._logging import rich_error, rich_print
+from scikit_build_core.resources import resources
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:

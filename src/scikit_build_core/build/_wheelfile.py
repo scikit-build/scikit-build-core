@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "base64",
+    "csv",
+    "email",
+    "email.message",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
+    "hashlib",
+    "io",
+    "pathlib",
+    "pathspec",
+    "zipfile",
+}
+
 import base64
 import csv
 import dataclasses

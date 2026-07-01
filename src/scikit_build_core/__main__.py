@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"argparse", "scikit_build_core._logging"}
+
 import argparse
 
-from ._logging import rich_print
+from scikit_build_core._logging import rich_print
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:

@@ -31,6 +31,16 @@ repos:
         args: ["--fix"]
       - id: ruff-format
 
+  - repo: https://github.com/henryiii/flake8-lazy
+    rev: e50a00f1c8ed0b55d642dbbec274de848d4c2018 # frozen: v0.8.4
+    hooks:
+      - id: flake8-lazy
+        # Only the shipped package benefits from lazy imports; docs, examples,
+        # tests, and the noxfile don't need it.
+        files: ^src/
+        # --strict-typing guards the relative-import form so it passes mypy.
+        args: [--apply=set, --strict-typing]
+
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316 # frozen: v1.10.0
     hooks:

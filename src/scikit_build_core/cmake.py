@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    f"{__spec__.parent}._logging",
+    f"{__spec__.parent}._shutil",
+    f"{__spec__.parent}.builder",
+    f"{__spec__.parent}.errors",
+    f"{__spec__.parent}.program_search",
+    "json",
+    "packaging",
+    "packaging.version",
+    "shutil",
+    "subprocess",
+    "sysconfig",
+    "textwrap",
+    "typing",
+}
+
 import contextlib
 import dataclasses
 import json

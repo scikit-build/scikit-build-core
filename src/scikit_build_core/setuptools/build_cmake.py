@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "collections",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    "fnmatch",
+    "packaging",
+    "packaging.version",
+    "pathlib",
+    "shlex",
+    "shutil",
+    "typing",
+}
+
 import os
 import shlex
 import shutil

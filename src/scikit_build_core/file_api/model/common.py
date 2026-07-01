@@ -1,3 +1,5 @@
+__lazy_modules__ = {"pathlib", "typing"}
+
 import dataclasses
 from pathlib import Path
 from typing import List

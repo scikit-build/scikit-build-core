@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
+    f"{__spec__.parent}.sysconfig",
+    "re",
+    "shlex",
+    "subprocess",
+    "sysconfig",
+}
+
 import re
 import shlex
 import subprocess

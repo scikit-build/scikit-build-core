@@ -1,3 +1,5 @@
+__lazy_modules__ = {f"{__spec__.parent}.common", "typing"}
+
 import dataclasses
 from typing import List
 

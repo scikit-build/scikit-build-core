@@ -1,5 +1,25 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "copy",
+    "dataclasses",
+    "difflib",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils",
+    f"{__spec__.parent}.auto_cmake_version",
+    f"{__spec__.parent}.auto_requires",
+    f"{__spec__.parent}.skbuild_model",
+    f"{__spec__.parent}.sources",
+    "packaging",
+    "packaging.specifiers",
+    "packaging.version",
+    "pathlib",
+}
+
 import copy
 import dataclasses
 import difflib

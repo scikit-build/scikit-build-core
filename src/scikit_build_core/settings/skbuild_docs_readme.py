@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {f"{__spec__.parent}.skbuild_model", "textwrap", "typing"}
+
 import dataclasses
 import textwrap
 import typing

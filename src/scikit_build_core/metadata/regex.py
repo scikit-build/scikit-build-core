@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"functools", "pathlib", "re", "typing"}
+
 import functools
 import re
 from pathlib import Path

@@ -10,6 +10,16 @@ configure/build/install. The wheel-assembly side (WheelWriter vs hatchling
 
 from __future__ import annotations
 
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
+    f"{__spec__.parent}._pathutil",
+    "pathlib",
+    "shutil",
+    "sysconfig",
+}
+
 import os
 import shutil
 import sysconfig

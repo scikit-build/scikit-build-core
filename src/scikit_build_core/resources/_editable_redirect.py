@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"importlib.util", "subprocess"}
+
 import importlib.abc
 import importlib.util
 import os

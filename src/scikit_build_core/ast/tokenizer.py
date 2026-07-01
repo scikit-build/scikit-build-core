@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"re"}
+
 import dataclasses
 import enum
 import re
