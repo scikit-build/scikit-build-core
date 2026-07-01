@@ -5,8 +5,6 @@ configuration providers.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 from packaging.version import Version
 
@@ -14,6 +12,7 @@ from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.settings import _load_entrypoint_config
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path

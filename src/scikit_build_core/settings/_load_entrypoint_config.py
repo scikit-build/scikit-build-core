@@ -25,19 +25,19 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
 }
 
-from typing import TYPE_CHECKING
-
 from .._compat.importlib import metadata
 from .._logging import logger, rich_error
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 __all__ = ["GROUP_DEFAULT", "GROUP_OVERRIDE", "load_config_providers"]
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 GROUP_DEFAULT = "scikit-build-core.config.default"
