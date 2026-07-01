@@ -3,13 +3,15 @@ from __future__ import annotations
 import sys
 import typing
 
+TYPE_CHECKING = False
+
 if sys.version_info < (3, 9):
     from typing_extensions import Annotated, get_args, get_origin
 else:
     from typing import Annotated, get_args, get_origin
 
 if sys.version_info < (3, 11):
-    if typing.TYPE_CHECKING:
+    if TYPE_CHECKING:
         from typing_extensions import Self, assert_never
     else:
         Self = object
@@ -21,7 +23,7 @@ else:
     from typing import Self, assert_never
 
 if sys.version_info < (3, 13):
-    if typing.TYPE_CHECKING:
+    if TYPE_CHECKING:
         from typing_extensions import TypeVar
     else:
         # The final noqa is a false positive, see https://github.com/astral-sh/ruff/issues/22178
