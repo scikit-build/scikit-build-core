@@ -569,9 +569,9 @@ type without editing `pyproject.toml` (for example
 `CMAKE_BUILD_TYPE=RelWithDebInfo`), mirroring CMake's own handling of the
 variable.
 
-:::{versionadded} 1.0
+:::{versionchanged} 1.0
 
-Honoring `CMAKE_BUILD_TYPE` from the environment when `cmake.build-type` is left
+`CMAKE_BUILD_TYPE` is read from the environment when `cmake.build-type` is left
 at its default.
 
 :::
@@ -870,15 +870,10 @@ added via scikit-build-core's package discovery will be found in the original
 location, so changes there are picked up on import, regardless of the
 `editable.rebuild` setting.
 
-The redirecting finder is installed at interpreter startup. On Python 3.15+,
-this uses a [PEP 829][] `.start` file (the slightly safer, structured
-replacement for the deprecated `import` line in a `.pth` file); on older Pythons
-it uses the classic `.pth` `import` line. This is handled automatically based on
-the interpreter running the editable install.
+:::{versionchanged} 1.0
 
-:::{versionadded} 1.0
-
-[PEP 829][] `.start` file support for the redirecting finder on Python 3.15+.
+[PEP 829][] `.start` files are emitted for the redirecting finder on Python
+3.15+. Older interpreters emit only `.pth` files.
 
 :::
 
