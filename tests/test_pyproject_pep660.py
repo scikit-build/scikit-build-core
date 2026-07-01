@@ -32,21 +32,19 @@ def test_pep660_wheel(editable, tmp_path: Path):
         with zf.open("simplest-0.0.1.dist-info/METADATA") as f:
             metadata = f.read().decode("utf-8")
 
-    # PEP 829: redirect mode adds a .start file alongside the .pth on 3.15+
+    # PEP 829: both modes add a .start file alongside the .pth on 3.15+. Both
+    # ship the shim + .pth; only redirect also installs the `simplest` tree
+    # (inplace builds extensions into the source tree, so nothing is installed).
     pep829 = sys.version_info >= (3, 15)
     if editable.mode == "redirect":
         assert len(file_names) == (5 if pep829 else 4)
-    else:
-        assert len(file_names) == 2
-    assert "simplest-0.0.1.dist-info" in file_names
-    if editable.mode == "redirect":
         assert "simplest" in file_names
-        assert "_editable_skbc_simplest.py" in file_names
-        assert ("_editable_skbc_simplest.start" in file_names) == pep829
     else:
+        assert len(file_names) == (4 if pep829 else 3)
         assert "simplest" not in file_names
-        assert "_editable_skbc_simplest.py" not in file_names
-        assert "_editable_skbc_simplest.start" not in file_names
+    assert "simplest-0.0.1.dist-info" in file_names
+    assert "_editable_skbc_simplest.py" in file_names
+    assert ("_editable_skbc_simplest.start" in file_names) == pep829
     assert "_editable_skbc_simplest.pth" in file_names
 
     assert "Metadata-Version: 2.2" in metadata

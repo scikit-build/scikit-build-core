@@ -436,7 +436,8 @@ print(mk_skbuild_docs())
 
   Rebuild the project when the package is imported.
 
-  :confval:`build-dir` must be set.
+  :confval:`build-dir` must be set, except in ``inplace`` mode (where the source
+  directory is the build directory).
 ```
 
 ```{eval-rst}

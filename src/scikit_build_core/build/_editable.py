@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "collect_search_locations",
+    "editable_inplace",
     "editable_inplace_files",
     "editable_redirect",
     "editable_redirect_files",
@@ -165,8 +166,96 @@ def editable_redirect_files(
     return files
 
 
-def editable_inplace_files(*, name: str, packages: Iterable[str]) -> dict[str, bytes]:
-    return {f"_editable_skbc_{name}.pth": "\n".join(packages).encode()}
+def editable_inplace(
+    *,
+    known_packages: Sequence[str],
+    search_paths: Sequence[str],
+    path: str | None,
+    rebuild: bool,
+    verbose: bool,
+    build_options: Sequence[str],
+    as_entrypoint: bool = False,
+) -> str:
+    """
+    Prepare the contents of the inplace editable shim.
+
+    Like :func:`editable_redirect` but appends an ``install_inplace(...)`` call
+    (or an ``entrypoint()`` wrapper for PEP 829 ``.start`` files). The finder it
+    installs leaves import resolution to Python and only adds
+    ``module.__loader__.rebuild()`` to the inplace-built packages.
+    """
+    editable_py = resources / "_editable_redirect.py"
+    editable_txt: str = editable_py.read_text(encoding="utf-8")
+
+    arguments = (
+        list(known_packages),
+        list(search_paths),
+        path,
+        rebuild,
+        verbose,
+        list(build_options),
+    )
+    arguments_str = ", ".join(repr(x) for x in arguments)
+    if as_entrypoint:
+        editable_txt += (
+            f"\n\ndef entrypoint() -> None:\n    install_inplace({arguments_str})\n"
+        )
+    else:
+        editable_txt += f"\n\ninstall_inplace({arguments_str})\n"
+    return editable_txt
+
+
+def editable_inplace_files(
+    *,
+    name: str,
+    packages: Mapping[str, str],
+    package_paths: Sequence[str],
+    source_dir: Path | None,
+    build_options: Sequence[str] = (),
+    settings: ScikitBuildSettings,
+    use_start: bool | None = None,
+) -> dict[str, bytes]:
+    """
+    Build the inplace editable files for a package.
+
+    Emits a shim that installs a finder exposing ``module.__loader__.rebuild()``
+    (and, when :confval:`editable.rebuild` is on, rebuilds on first import), plus
+    a ``.pth`` adding the package source directories to ``sys.path``. Mirrors the
+    file/``use_start`` layout of :func:`editable_redirect_files`.
+    """
+    if use_start is None:
+        use_start = sys.version_info >= (3, 15)
+    # The importable top-level name is the entry's leaf with any module suffix
+    # stripped -- a package dir keeps its name (``mypkg``), a single-module entry
+    # drops the extension (``hello.py`` -> ``hello``, #888) so it matches the
+    # finder's ``fullname.partition(".")[0]`` check.
+    known_packages = sorted({Path(v).name.partition(".")[0] for v in packages.values()})
+    editable_txt = editable_inplace(
+        known_packages=known_packages,
+        search_paths=list(package_paths),
+        path=os.fspath(source_dir) if source_dir else None,
+        rebuild=settings.editable.rebuild_enabled,
+        verbose=settings.editable.verbose,
+        build_options=build_options,
+        as_entrypoint=use_start,
+    )
+    package_lines = list(package_paths)
+    files = {f"_editable_skbc_{name}.py": editable_txt.encode()}
+    if use_start:
+        # PEP 829: the import callable lives in a UTF-8-sig encoded .start file,
+        # and the .pth carries only sys.path entries (if any).
+        files[f"_editable_skbc_{name}.start"] = (
+            f"_editable_skbc_{name}:entrypoint".encode("utf-8-sig")
+        )
+        if package_lines:
+            files[f"_editable_skbc_{name}.pth"] = "\n".join(
+                [*package_lines, ""]
+            ).encode()
+    else:
+        files[f"_editable_skbc_{name}.pth"] = "\n".join(
+            [f"import _editable_skbc_{name}", *package_lines, ""]
+        ).encode()
+    return files
 
 
 def get_packages(

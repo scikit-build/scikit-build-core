@@ -7,8 +7,10 @@ from pathlib import Path
 import pytest
 
 from scikit_build_core.resources._editable_redirect import (
+    ScikitBuildInplaceFinder,
     ScikitBuildRedirectingFinder,
     install,
+    install_inplace,
 )
 
 
@@ -468,3 +470,162 @@ def test_mapping_to_modules_keeps_symlink_in_package_dir(tmp_path: Path):
     # into pkg.__path__ and make shared/unrelated.py importable as pkg.unrelated.
     assert Path(result["pkg.shared_mod"]).parent == pkg_src
     assert Path(result["pkg.shared_mod"]).parent != shared.resolve()
+
+
+def test_inplace_finder_rebuild_runs_build_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The inplace finder rebuilds with cmake --build only -- no cmake --install.
+
+    Inplace editables compile straight into the source tree, so there is no
+    install step (unlike the redirect finder, which runs both).
+    """
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        **kwargs: object,  # noqa: ARG001
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(list(command))
+        return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
+    )
+
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(tmp_path / "src")],
+        path=str(tmp_path),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+    )
+    finder.rebuild()
+
+    assert len(calls) == 1
+    assert calls[0][:2] == ["cmake", "--build"]
+
+
+def test_inplace_loader_exposes_rebuild(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """An inplace-built module's loader exposes rebuild() and delegates the rest.
+
+    The finder does not change resolution (it delegates to PathFinder), it only
+    wraps the loader so module.__loader__.rebuild() works. Both the top-level
+    package and a submodule get wrapped.
+    """
+    import importlib
+
+    src = tmp_path / "src"
+    pkg_dir = src / "pkg"
+    pkg_dir.mkdir(parents=True)
+    init = pkg_dir / "__init__.py"
+    init.touch()
+    mod = pkg_dir / "mod.py"
+    mod.touch()
+    importlib.invalidate_caches()
+
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(src)],
+        path=str(tmp_path),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+    )
+
+    calls = 0
+
+    def fake_rebuild() -> None:
+        nonlocal calls
+        calls += 1
+
+    monkeypatch.setattr(finder, "rebuild", fake_rebuild)
+
+    pkg_spec = finder.find_spec("pkg")
+    assert pkg_spec is not None
+    assert pkg_spec.loader is not None
+    pkg_spec.loader.rebuild()  # type: ignore[attr-defined]
+    # Non-rebuild attributes still delegate to the real loader.
+    assert pkg_spec.loader.get_filename("pkg") == str(init)  # type: ignore[attr-defined]
+
+    # A submodule is resolved against the package __path__ and also wrapped.
+    mod_spec = finder.find_spec("pkg.mod", [str(pkg_dir)])
+    assert mod_spec is not None
+    assert mod_spec.loader is not None
+    mod_spec.loader.rebuild()  # type: ignore[attr-defined]
+
+    assert calls == 2
+
+
+def test_inplace_finder_ignores_unknown(tmp_path: Path):
+    """Imports outside the known packages fall through to native resolution."""
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(tmp_path)],
+        path=str(tmp_path),
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+    )
+    assert finder.find_spec("othermod") is None
+
+
+def test_inplace_import_time_rebuild_debounced(tmp_path: Path):
+    """With rebuild=True, importing a known package rebuilds once per process."""
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(tmp_path)],
+        path=str(tmp_path),
+        rebuild=True,
+        verbose=False,
+        build_options=[],
+    )
+
+    calls = 0
+
+    def fake_rebuild() -> None:
+        nonlocal calls
+        calls += 1
+
+    finder.rebuild = fake_rebuild  # type: ignore[method-assign]
+
+    finder.find_spec("pkg")
+    finder.find_spec("pkg")
+    finder.find_spec("pkg.sub", [str(tmp_path)])
+
+    assert calls == 1
+
+
+def test_inplace_rebuild_without_path_errors(tmp_path: Path):
+    """rebuild() errors when there is no source/build dir (path=None)."""
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(tmp_path)],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+    )
+    with pytest.raises(RuntimeError, match="no known source directory"):
+        finder.rebuild()
+
+
+@pytest.mark.usefixtures("_restore_meta_path")
+def test_install_inplace_is_idempotent():
+    """install_inplace dedups its own finder (PEP 829 .start may run twice)."""
+
+    def count_finders() -> int:
+        return sum(isinstance(f, ScikitBuildInplaceFinder) for f in sys.meta_path)
+
+    assert count_finders() == 0
+    install_inplace(["pkg_a"], ["/src"])
+    assert count_finders() == 1
+    install_inplace(["pkg_a"], ["/src"])
+    assert count_finders() == 1
+    # A different package still registers its own finder.
+    install_inplace(["pkg_b"], ["/src"])
+    assert count_finders() == 2
