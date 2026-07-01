@@ -225,7 +225,11 @@ def editable_inplace_files(
     """
     if use_start is None:
         use_start = sys.version_info >= (3, 15)
-    known_packages = sorted({Path(v).name for v in packages.values()})
+    # The importable top-level name is the entry's leaf with any module suffix
+    # stripped -- a package dir keeps its name (``mypkg``), a single-module entry
+    # drops the extension (``hello.py`` -> ``hello``, #888) so it matches the
+    # finder's ``fullname.partition(".")[0]`` check.
+    known_packages = sorted({Path(v).name.partition(".")[0] for v in packages.values()})
     editable_txt = editable_inplace(
         known_packages=known_packages,
         search_paths=list(package_paths),
