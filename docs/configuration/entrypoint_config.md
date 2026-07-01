@@ -1,10 +1,12 @@
 # Entry-point configuration
 
+> [!CAUTION] This is an advanced feature primarily for Linux distributions and
+> other packagers that need to set build defaults, like the CMake build type or
+> symbol stripping.
+
 An installed package can contribute scikit-build-core configuration to _every_
-build in the environment through two entry-point groups. This is primarily
-intended for Linux distributions and other packagers that need to set build
-defaults (such as the CMake build type or symbol stripping) for all packages
-without editing each one's `pyproject.toml`.
+build in the environment through two entry-point groups. This can affect all
+packages without editing each one's `pyproject.toml`.
 
 A provider is a callable that returns a `[tool.scikit-build]`-shaped table:
 
