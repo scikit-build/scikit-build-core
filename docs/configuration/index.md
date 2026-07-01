@@ -923,6 +923,8 @@ On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
 
 :::
 
+(triggering-a-rebuild-manually)=
+
 ### Triggering a rebuild manually
 
 You don't have to enable `editable.rebuild` to rebuild on demand for the
