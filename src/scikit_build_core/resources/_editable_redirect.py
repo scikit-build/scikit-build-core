@@ -581,12 +581,12 @@ class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
             self.rebuilt = True
             self.rebuild()
 
-        import importlib.machinery
+        from importlib.machinery import PathFinder
 
         # ``path`` is the parent package's __path__ for submodules, None for a
         # top-level import; fall back to our recorded search locations.
         search = self.search_paths if path is None else path
-        spec = importlib.machinery.PathFinder.find_spec(fullname, search)  # type: ignore[arg-type]
+        spec = PathFinder.find_spec(fullname, search)  # type: ignore[arg-type]
         # Namespace packages have no concrete loader to wrap; leaving them to
         # native resolution also avoids truncating a namespace whose parts span
         # locations beyond our search paths.
