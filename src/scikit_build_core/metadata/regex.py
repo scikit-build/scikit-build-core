@@ -7,13 +7,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from . import _process_dynamic_metadata
+from . import _process_dynamic_metadata, _require_field
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-__all__ = ["dynamic_metadata"]
+__all__ = ["Provider", "dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -68,3 +68,19 @@ def dynamic_metadata(
     return _process_dynamic_metadata(
         field, functools.partial(_process, match, remove), result
     )
+
+
+class Provider:
+    """New-style (dynamic-metadata 0.3) wrapper around :func:`dynamic_metadata`.
+
+    Registered as the ``scikit_build_core.metadata.regex`` entry point; the
+    target field comes from a ``field`` setting instead of the legacy table key.
+    """
+
+    @staticmethod
+    def dynamic_metadata(
+        settings: Mapping[str, Any],
+        _project: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        field, rest = _require_field(settings)
+        return {field: dynamic_metadata(field, rest)}

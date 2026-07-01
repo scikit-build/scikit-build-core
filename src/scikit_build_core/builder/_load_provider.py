@@ -20,6 +20,7 @@ from typing import (
     Literal,
     Protocol,
     Union,
+    cast,
     get_args,
     runtime_checkable,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "BUILD_STATES",
     "BuildState",
     "load_dynamic_metadata",
+    "load_entry_provider",
     "load_provider",
     "process_dynamic_metadata",
     "process_legacy_dynamic_metadata",
@@ -63,10 +65,6 @@ BuildState = Literal[
     "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
 ]
 BUILD_STATES: frozenset[str] = frozenset(get_args(BuildState))
-
-# Per-entry keys consumed by the loader itself; everything else is plugin
-# settings, passed through verbatim to the provider.
-_RESERVED_KEYS = frozenset(["provider", "provider-path"])
 
 
 @runtime_checkable
@@ -169,20 +167,57 @@ def load_provider(
     return getattr(module, class_name)() if class_name else module
 
 
+def load_entry_provider(provider: str | Mapping[str, Any]) -> DMProtocols:
+    """Resolve a ``[[tool.dynamic-metadata]]`` provider (dynamic-metadata 0.3).
+
+    A string is a name registered in the ``dynamic_metadata.provider``
+    entry-point group; a class-valued entry point is instantiated, a
+    module-valued one used as-is. An inline table ``{path, module}`` names a
+    local in-project plugin: ``module`` (``"pkg.mod"`` or ``"pkg.mod:Class"``) is
+    imported from the ``path`` directory via the same finder as ``load_provider``.
+
+    Unlike the deprecated ``tool.scikit-build.metadata`` table, a bare import
+    string is not accepted here -- an installed plugin is reached through its
+    entry point, a local one through the inline table.
+    """
+    if not isinstance(provider, str):
+        module = provider.get("module")
+        path = provider.get("path")
+        if not isinstance(module, str) or not isinstance(path, str):
+            msg = "A table provider must set string 'path' and 'module' keys"
+            raise TypeError(msg)
+        return load_provider(module, path)
+
+    from .._compat.importlib.metadata import entry_points
+
+    eps = entry_points(group="dynamic_metadata.provider")
+    matches = [ep for ep in eps if ep.name == provider]
+    if not matches:
+        import difflib
+
+        names = sorted(ep.name for ep in eps)
+        close = difflib.get_close_matches(provider, names, n=1)
+        hint = f"; did you mean {close[0]!r}?" if close else ""
+        msg = f"Unknown dynamic-metadata provider {provider!r}{hint}"
+        raise ModuleNotFoundError(msg)
+    obj: Any = matches[0].load()
+    return cast("DMProtocols", obj() if isinstance(obj, type) else obj)
+
+
 def load_dynamic_metadata(
     entries: Sequence[Mapping[str, Any]],
 ) -> Generator[tuple[DMProtocols, dict[str, Any]], None, None]:
     """Load each ``[[tool.dynamic-metadata]]`` entry's provider in order.
 
-    ``provider`` and ``provider-path`` are consumed here; the remaining keys are
-    returned as that provider's plugin settings.
+    ``provider`` is consumed here; the remaining keys are returned as that
+    provider's plugin settings.
     """
     for entry in entries:
         if "provider" not in entry:
             msg = "Each [[tool.dynamic-metadata]] entry must set a 'provider'"
             raise KeyError(msg)
-        settings = {k: v for k, v in entry.items() if k not in _RESERVED_KEYS}
-        provider = load_provider(entry["provider"], entry.get("provider-path"))
+        settings = {k: v for k, v in entry.items() if k != "provider"}
+        provider = load_entry_provider(entry["provider"])
         yield provider, settings
 
 
@@ -231,40 +266,6 @@ def _merge_metadata(field: str, static: Any, dynamic: Any) -> Any:
     return merged_groups
 
 
-def _call_dynamic_metadata(
-    provider: DMProtocols,
-    settings: Mapping[str, Any],
-    snapshot: Mapping[str, Any],
-) -> dict[str, Any]:
-    """Call a provider's ``dynamic_metadata`` hook, returning a project fragment.
-
-    Supports both the 0.3 hook ``dynamic_metadata(settings, project) -> dict``
-    and the legacy ``dynamic_metadata(field, settings[, project]) -> value``
-    used by scikit-build-core's bundled plugins. A legacy hook is detected by
-    its first parameter being named ``field``; the target field comes from the
-    entry's ``field`` setting and its scalar return is wrapped into a fragment.
-    """
-    # Legacy hooks have a different shape, so they are called untyped.
-    hook: Any = provider.dynamic_metadata
-    params = list(inspect.signature(hook).parameters)
-    if params and params[0] == "field":
-        field = settings.get("field")
-        if not isinstance(field, str):
-            msg = "This plugin requires a 'field' setting naming the target field"
-            raise RuntimeError(msg)
-        sub = {k: v for k, v in settings.items() if k != "field"}
-        if len(params) >= 3:
-            value = hook(field, sub, snapshot)
-        elif sub:
-            value = hook(field, sub)
-        else:
-            value = hook(field)
-        return {field: value}
-
-    fragment: dict[str, Any] = hook(settings, snapshot)
-    return fragment
-
-
 def process_dynamic_metadata(
     project: Mapping[str, Any],
     entries: Sequence[Mapping[str, Any]],
@@ -297,7 +298,7 @@ def process_dynamic_metadata(
     for provider, settings in load_dynamic_metadata(entries):
         if isinstance(provider, DynamicMetadataBuildStateProtocol):
             provider.build_state(build_state)
-        fragment = _call_dynamic_metadata(provider, settings, snapshot)
+        fragment: dict[str, Any] = provider.dynamic_metadata(settings, snapshot)
 
         for field in fragment:
             if field not in _ALL_FIELDS:

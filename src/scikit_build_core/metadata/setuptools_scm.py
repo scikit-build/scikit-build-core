@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-__all__ = ["dynamic_metadata", "get_requires_for_dynamic_metadata"]
+from . import _require_field
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from typing import Any
+
+__all__ = ["Provider", "dynamic_metadata", "get_requires_for_dynamic_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -52,3 +59,23 @@ def get_requires_for_dynamic_metadata(
     _settings: dict[str, object] | None = None,
 ) -> list[str]:
     return ["setuptools-scm"]
+
+
+class Provider:
+    """New-style (dynamic-metadata 0.3) wrapper around :func:`dynamic_metadata`.
+
+    Registered as the ``scikit_build_core.metadata.setuptools_scm`` entry point;
+    only the ``version`` field is produced, so ``field`` defaults to ``"version"``.
+    """
+
+    @staticmethod
+    def dynamic_metadata(
+        settings: Mapping[str, Any],
+        _project: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        field, rest = _require_field(settings, default="version")
+        return {field: dynamic_metadata(field, rest)}
+
+    @staticmethod
+    def get_requires_for_dynamic_metadata(settings: Mapping[str, Any]) -> list[str]:
+        return get_requires_for_dynamic_metadata(dict(settings))

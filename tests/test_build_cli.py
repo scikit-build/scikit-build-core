@@ -118,8 +118,7 @@ name = "test"
 dynamic = ["version"]
 
 [[tool.dynamic-metadata]]
-provider = "state_plugin:DynamicMetadata"
-provider-path = "plugins"
+provider = {module = "state_plugin:DynamicMetadata", path = "plugins"}
 """
 
 STATE_PLUGIN = """
