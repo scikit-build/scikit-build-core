@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 from packaging.version import Version
 
+import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.settings import _load_entrypoint_config
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
@@ -217,11 +218,16 @@ def test_override_only_field_allowed(tmp_path, register):
     assert str(reader.settings.cmake.toolchain_file) == toolchain
 
 
-def test_minimum_version_gate_not_triggered(tmp_path, register):
+def test_minimum_version_gate_not_triggered(tmp_path, register, monkeypatch):
     # A field gated behind a newer minimum-version (build.verbose, introduced in
     # 0.10) set by entry-point config must not hard-fail a project pinning an
     # older minimum-version. Machine-level config is dynamic, like env vars and
     # config-settings, which are exempt from the project's version pin.
+    # Pin the running version so the project's minimum-version = '0.9' is not
+    # itself rejected as "too old" in dev/shallow builds (version 0.1.dev*).
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "0.10.0"
+    )
     register("default", "distro", lambda **_: {"build": {"verbose": True}})
     body = "[tool.scikit-build]\nminimum-version = '0.9'\n"
     settings = make_reader(tmp_path, body, state="wheel").settings
