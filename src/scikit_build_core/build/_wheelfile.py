@@ -32,9 +32,11 @@ import pathspec
 
 from .. import __version__
 from .._reproducible import (
+    MAX_TIMESTAMP,
     MIN_TIMESTAMP,
     get_reproducible_epoch,
     normalize_file_permissions,
+    parse_source_date_epoch,
 )
 from .._variants import VARIANT_DIST_INFO_FILENAME
 
@@ -132,9 +134,15 @@ class WheelWriter:
             # Honor SOURCE_DATE_EPOCH, else a fixed epoch (ignore per-file mtime).
             timestamp = get_reproducible_epoch()
         else:
-            timestamp = int(os.environ.get("SOURCE_DATE_EPOCH", mtime or time.time()))
-        # The ZIP file format does not support timestamps before 1980.
-        timestamp = max(timestamp, MIN_TIMESTAMP)
+            raw = os.environ.get("SOURCE_DATE_EPOCH")
+            timestamp = (
+                parse_source_date_epoch(raw)
+                if raw is not None
+                else int(mtime or time.time())
+            )
+        # The ZIP file format only supports timestamps from 1980-01-01 to
+        # 2107-12-31 23:59:59 (inclusive); clamp rather than let zipfile crash.
+        timestamp = min(max(timestamp, MIN_TIMESTAMP), MAX_TIMESTAMP)
         return time.gmtime(timestamp)[0:6]
 
     def dist_info_contents(self) -> dict[str, bytes]:
