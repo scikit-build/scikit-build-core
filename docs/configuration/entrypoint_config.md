@@ -63,6 +63,20 @@ free-form. When several providers are registered in the same group, they are
 applied in sorted name order and the alphabetically-first name wins on
 conflicts.
 
+## Validation
+
+Because entry-point config comes from the machine environment rather than the
+project, it is treated like `SKBUILD_*` environment variables and
+`-C`/config-settings for validation purposes, not like static `pyproject.toml`
+content:
+
+- Override-only fields (such as `cmake.toolchain-file`) may be set directly,
+  without wrapping them in an [`overrides`](./overrides.md) block. This is the
+  distro cross-compile use case this feature targets.
+- The project's `minimum-version` pin does not gate machine-level config, so a
+  provider may set newer fields even when a project pins an older
+  `minimum-version`.
+
 ## Conditional configuration
 
 Because the returned table is treated like a `[tool.scikit-build]` table, it may

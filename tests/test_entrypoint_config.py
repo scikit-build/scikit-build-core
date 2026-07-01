@@ -204,14 +204,28 @@ def test_zero_arg_provider_supported(tmp_path, register):
     assert settings.cmake.build_type == "RelWithDebInfo"
 
 
-def test_override_only_field_rejected(tmp_path, register):
-    # cmake.toolchain-file is an override_only field: hard-coding it in a static
-    # source (including ep config) is rejected under strict_config.
+def test_override_only_field_allowed(tmp_path, register):
+    # cmake.toolchain-file is an override_only field, but entry-point config
+    # comes from the machine environment (installed distro packages), not the
+    # project's static pyproject.toml, so it may set it directly -- just like
+    # env vars / config-settings -- without wrapping it in an [[overrides]]
+    # block. This is the distro cross-compile use case the feature targets.
     toolchain = str(tmp_path / "tc.cmake")
     register("default", "distro", lambda **_: {"cmake": {"toolchain-file": toolchain}})
     reader = make_reader(tmp_path, state="wheel")
-    with pytest.raises(SystemExit):
-        reader.validate_may_exit()
+    reader.validate_may_exit()
+    assert str(reader.settings.cmake.toolchain_file) == toolchain
+
+
+def test_minimum_version_gate_not_triggered(tmp_path, register):
+    # A field gated behind a newer minimum-version (build.verbose, introduced in
+    # 0.10) set by entry-point config must not hard-fail a project pinning an
+    # older minimum-version. Machine-level config is dynamic, like env vars and
+    # config-settings, which are exempt from the project's version pin.
+    register("default", "distro", lambda **_: {"build": {"verbose": True}})
+    body = "[tool.scikit-build]\nminimum-version = '0.9'\n"
+    settings = make_reader(tmp_path, body, state="wheel").settings
+    assert settings.build.verbose is True
 
 
 def test_suggestions_name_entry_point_source(tmp_path, register):
