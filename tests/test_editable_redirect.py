@@ -610,7 +610,7 @@ def test_inplace_rebuild_without_path_errors(tmp_path: Path):
         verbose=False,
         build_options=[],
     )
-    with pytest.raises(RuntimeError, match="no persistent build directory"):
+    with pytest.raises(RuntimeError, match="no known source directory"):
         finder.rebuild()
 
 

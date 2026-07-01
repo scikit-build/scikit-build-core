@@ -331,11 +331,19 @@ def _run_editable_rebuild(
     # path never reaches this with path unset; only a manual
     # module.__loader__.rebuild() on a non-rebuildable editable can.
     if not path:
-        msg = (
-            "Cannot rebuild: this editable install has no persistent build "
-            "directory. Reinstall with a 'build-dir' set (e.g. "
-            "-Cbuild-dir=build) to enable on-demand rebuilds."
-        )
+        if install_dir is None:
+            # Inplace: the source tree is the build dir, so 'build-dir' does not
+            # apply -- a missing path just means we have no source directory.
+            msg = (
+                "Cannot rebuild: this inplace editable install has no known "
+                "source directory to rebuild in."
+            )
+        else:
+            msg = (
+                "Cannot rebuild: this editable install has no persistent build "
+                "directory. Reinstall with a 'build-dir' set (e.g. "
+                "-Cbuild-dir=build) to enable on-demand rebuilds."
+            )
         raise RuntimeError(msg)
 
     env = os.environ.copy()
@@ -688,6 +696,7 @@ def install_inplace(
     :param rebuild: Whether to rebuild on first import
     :param verbose: Whether to print the cmake commands (also controlled by the
                     SKBUILD_EDITABLE_VERBOSE environment variable)
+    :param build_options: Extra options passed to ``cmake --build``
     """
     # Dedupe as install() does (PEP 829 .start files may run twice), keyed to
     # this package's own maps so several inplace editables can share an env.
