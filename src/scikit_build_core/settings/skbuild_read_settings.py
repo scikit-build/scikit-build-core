@@ -342,9 +342,6 @@ class SettingsReader:
             for level, ep_name, ep_table in load_config_providers(
                 state=state, env=environ
             ):
-                # ep config is environment policy, not project semantics: it must
-                # not silently drive the minimum-version back-compat machinery.
-                ep_table.pop("minimum-version", None)
                 ep_skb = copy.deepcopy(ep_table)
                 ep_matched, ep_overridden = process_overrides(
                     ep_skb, state=state, env=env, retry=retry

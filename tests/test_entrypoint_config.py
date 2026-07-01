@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.version import Version
 
 from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.settings import _load_entrypoint_config
@@ -168,7 +169,7 @@ def test_opt_out_disables_providers(tmp_path, register):
     assert settings.cmake.build_type == "Release"
 
 
-def test_minimum_version_stripped(tmp_path, register):
+def test_minimum_version_applies(tmp_path, register):
     register(
         "default",
         "distro",
@@ -178,8 +179,21 @@ def test_minimum_version_stripped(tmp_path, register):
         },
     )
     settings = make_reader(tmp_path, state="wheel").settings
-    assert settings.minimum_version is None
+    assert settings.minimum_version == Version("0.5")
     assert settings.cmake.build_type == "RelWithDebInfo"
+
+
+def test_minimum_version_applies_via_override(tmp_path, register):
+    # A provider may also set minimum-version inside an overrides block.
+    register(
+        "default",
+        "distro",
+        lambda **_: {
+            "overrides": [{"if": {"env": {"SET_MIN": True}}, "minimum-version": "0.5"}]
+        },
+    )
+    settings = make_reader(tmp_path, state="wheel", env={"SET_MIN": "1"}).settings
+    assert settings.minimum_version == Version("0.5")
 
 
 def test_zero_arg_provider_supported(tmp_path, register):

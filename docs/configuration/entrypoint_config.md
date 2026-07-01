@@ -88,11 +88,3 @@ def config(*, state, env):
 Set `SKBUILD_NO_ENTRYPOINT_CONFIG=1` to ignore all entry-point providers for a
 build, which is useful for reproducible builds or debugging. Loaded providers
 are reported in the debug log.
-
-:::{note}
-
-A provider's `minimum-version` is ignored; entry-point configuration is
-environment policy and must not silently change a project's backward-compatible
-behavior.
-
-:::
