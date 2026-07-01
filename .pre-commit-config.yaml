@@ -35,10 +35,7 @@ repos:
     rev: e50a00f1c8ed0b55d642dbbec274de848d4c2018 # frozen: v0.8.4
     hooks:
       - id: flake8-lazy
-        # Only the shipped package benefits from lazy imports; docs, examples,
-        # tests, and the noxfile don't need it.
         files: ^src/
-        # --strict-typing guards the relative-import form so it passes mypy.
         args: [--apply=set, --strict-typing]
 
   - repo: https://github.com/pre-commit/pygrep-hooks
