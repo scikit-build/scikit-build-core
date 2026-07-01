@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    f"{__spec__.parent}._compat",
+    f"{__spec__.parent}._logging",
+    "packaging",
+    "packaging.requirements",
+    "packaging.utils",
+    "pathlib",
+}
+
 from pathlib import Path
 
 from packaging.requirements import InvalidRequirement, Requirement

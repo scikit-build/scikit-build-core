@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"typing"}
+
 from typing import Any
 
 from . import _process_dynamic_metadata

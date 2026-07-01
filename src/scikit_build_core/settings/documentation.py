@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "ast",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    "inspect",
+    "packaging",
+    "packaging.specifiers",
+    "packaging.version",
+    "pathlib",
+    "textwrap",
+    "typing",
+}
+
 import ast
 import dataclasses
 import inspect

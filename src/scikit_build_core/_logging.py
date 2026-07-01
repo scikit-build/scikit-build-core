@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "platform", "typing"}
+
 import contextlib
 import dataclasses
 import enum

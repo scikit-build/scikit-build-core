@@ -1,5 +1,13 @@
 # pylint: disable=duplicate-code
 
+__lazy_modules__ = {
+    "cattr",
+    "cattr.preconf",
+    "cattr.preconf.json",
+    f"{__spec__.parent}.model",
+    "json",
+}
+
 import builtins
 import json
 from pathlib import Path

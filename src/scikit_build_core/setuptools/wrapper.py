@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {f"{__spec__.parent}.build_cmake", "pathlib", "typing", "warnings"}
+
 import warnings
 from pathlib import Path
 from typing import Any, cast

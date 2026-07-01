@@ -85,6 +85,12 @@ Integers/floats would be easy to add, but haven't been needed yet.
 
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "dataclasses",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils",
+}
+
 import dataclasses
 import os
 from typing import Any, Literal, Protocol, TypeVar

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.metadata",
+    "inspect",
+    "pathlib",
+}
+
 import dataclasses
 import importlib
 import importlib.abc

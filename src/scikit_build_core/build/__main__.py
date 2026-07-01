@@ -1,19 +1,30 @@
+__lazy_modules__ = {
+    "argparse",
+    "json",
+    "pathlib",
+    "scikit_build_core._compat",
+    "scikit_build_core._logging",
+    "scikit_build_core.builder",
+    "scikit_build_core.builder._load_provider",
+    "typing",
+}
+
 import argparse
 import json
 from pathlib import Path
 from typing import Literal, get_args
 
-from .._compat import tomllib
-from .._logging import rich_warning
-from ..builder._load_provider import (
-    BuildState,
-    process_dynamic_metadata,
-    process_legacy_dynamic_metadata,
-)
-from . import (
+from scikit_build_core._compat import tomllib
+from scikit_build_core._logging import rich_warning
+from scikit_build_core.build import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
     get_requires_for_build_wheel,
+)
+from scikit_build_core.builder._load_provider import (
+    BuildState,
+    process_dynamic_metadata,
+    process_legacy_dynamic_metadata,
 )
 
 

@@ -1,5 +1,23 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "copy",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.build",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings",
+    "importlib",
+    "importlib.metadata",
+    "packaging",
+    "packaging.version",
+    "pathlib",
+    "shutil",
+    "tempfile",
+    "typing",
+}
+
 import copy
 import importlib.metadata
 import os

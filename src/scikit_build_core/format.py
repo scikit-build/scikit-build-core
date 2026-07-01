@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = {f"{__spec__.parent}.settings", "pathlib"}
+
 import dataclasses
 import sys
 import typing

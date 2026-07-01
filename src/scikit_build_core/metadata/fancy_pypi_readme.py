@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    "pathlib",
+    "typing",
+}
+
 from pathlib import Path
 from typing import Any
 

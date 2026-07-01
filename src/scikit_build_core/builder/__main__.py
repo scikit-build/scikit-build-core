@@ -1,15 +1,24 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "pathlib",
+    "scikit_build_core._logging",
+    "scikit_build_core.builder.get_requires",
+    "scikit_build_core.builder.sysconfig",
+    "scikit_build_core.builder.wheel_tag",
+    "scikit_build_core.program_search",
+}
+
 import sys
 from pathlib import Path
 
-from .. import __version__
-from .._logging import rich_print
-from ..program_search import info_print as ip_program_search
-from . import sysconfig, wheel_tag
-from .get_requires import GetRequires
-from .sysconfig import info_print as ip_sysconfig
-from .wheel_tag import WheelTag
+from scikit_build_core import __version__
+from scikit_build_core._logging import rich_print
+from scikit_build_core.builder import sysconfig, wheel_tag
+from scikit_build_core.builder.get_requires import GetRequires
+from scikit_build_core.builder.sysconfig import info_print as ip_sysconfig
+from scikit_build_core.builder.wheel_tag import WheelTag
+from scikit_build_core.program_search import info_print as ip_program_search
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"dataclasses", "string"}
+
 __all__ = ["generate_file_contents"]
 
 import dataclasses

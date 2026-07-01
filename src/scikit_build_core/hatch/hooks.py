@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {f"{__spec__.parent}.plugin", "typing"}
+
 from typing import Any
 
 from hatchling.plugin import hookimpl

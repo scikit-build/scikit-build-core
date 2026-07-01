@@ -1,6 +1,28 @@
 # pylint: disable=duplicate-code
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "copy",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings",
+    f"{__spec__.parent}._file_processor",
+    f"{__spec__.parent}._init",
+    f"{__spec__.parent}._pathutil",
+    f"{__spec__.parent}.generate",
+    f"{__spec__.parent}.metadata",
+    f"{__spec__.parent}.wheel",
+    "gzip",
+    "io",
+    "packaging",
+    "packaging.utils",
+    "pathlib",
+    "pathspec",
+    "tarfile",
+}
+
 import contextlib
 import copy
 import gzip

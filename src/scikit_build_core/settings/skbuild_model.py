@@ -1,3 +1,11 @@
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    "packaging",
+    "packaging.specifiers",
+    "packaging.version",
+    "pathlib",
+}
+
 import dataclasses
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
