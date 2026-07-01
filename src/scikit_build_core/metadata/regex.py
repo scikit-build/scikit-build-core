@@ -3,10 +3,11 @@ from __future__ import annotations
 import functools
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from . import _process_dynamic_metadata
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

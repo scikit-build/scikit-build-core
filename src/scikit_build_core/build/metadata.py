@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from packaging.version import Version
 
@@ -18,6 +18,7 @@ from ..builder._load_provider import (
     process_legacy_dynamic_metadata,
 )
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

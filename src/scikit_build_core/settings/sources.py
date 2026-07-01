@@ -87,7 +87,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import typing
 from typing import Any, Literal, Protocol, TypeVar
 
 from .._compat.builtins import ExceptionGroup
@@ -100,7 +99,9 @@ from ..utils.typing import (
     process_union,
 )
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Mapping, Sequence
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
@@ -9,6 +8,7 @@ from packaging.utils import canonicalize_name
 from ._compat import tomllib
 from ._logging import rich_warning
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterable
 

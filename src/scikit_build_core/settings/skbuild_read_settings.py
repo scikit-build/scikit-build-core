@@ -6,7 +6,7 @@ import difflib
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -29,6 +29,7 @@ from .skbuild_model import (
 from .skbuild_overrides import process_overrides
 from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 

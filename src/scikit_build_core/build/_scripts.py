@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import contextlib
 import re
-from typing import TYPE_CHECKING
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

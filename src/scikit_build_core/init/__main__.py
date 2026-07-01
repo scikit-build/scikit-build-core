@@ -5,13 +5,13 @@ import dataclasses
 import string
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from packaging.utils import InvalidName, canonicalize_name
 
 from .._logging import rich_error, rich_print
 from ..resources import resources
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Sequence
 

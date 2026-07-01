@@ -3,8 +3,9 @@ from __future__ import annotations
 import dataclasses
 import importlib
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from ._vendor.pyproject_metadata import StandardMetadata
     from .settings.skbuild_model import ScikitBuildSettings

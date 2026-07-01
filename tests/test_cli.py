@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from scikit_build_core.__main__ import main
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

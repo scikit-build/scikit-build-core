@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import platform
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pytest import CaptureFixture, MonkeyPatch
 
 import scikit_build_core._logging
 from scikit_build_core import __version__
 from scikit_build_core._logging import Style, colors, rich_print
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from pytest import CaptureFixture, MonkeyPatch
 
 
 def test_colors_no_stdout(monkeypatch: MonkeyPatch):

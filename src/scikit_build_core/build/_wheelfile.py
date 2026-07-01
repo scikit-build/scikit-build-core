@@ -12,7 +12,6 @@ import zipfile
 from email.message import Message
 from email.policy import EmailPolicy
 from pathlib import Path
-from typing import TYPE_CHECKING
 from zipfile import ZipInfo
 
 import pathspec
@@ -25,6 +24,7 @@ from .._reproducible import (
 )
 from .._variants import VARIANT_DIST_INFO_FILENAME
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from collections.abc import Set as AbstractSet

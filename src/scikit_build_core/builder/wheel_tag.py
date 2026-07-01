@@ -5,13 +5,13 @@ import itertools
 import os
 import sys
 import sysconfig
-from typing import TYPE_CHECKING
 
 import packaging.tags
 
 from .._logging import logger
 from .macos import get_macosx_deployment_target
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import argparse
     from collections.abc import Iterable, Mapping, Sequence

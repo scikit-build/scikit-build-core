@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+from typing import Any
 
 from . import _process_dynamic_metadata
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 __all__ = ["dynamic_metadata"]
 

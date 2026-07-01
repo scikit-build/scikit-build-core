@@ -3,10 +3,11 @@ from __future__ import annotations
 import dataclasses
 import os
 import subprocess
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from ._logging import logger
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterable
 

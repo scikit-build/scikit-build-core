@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-import typing
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -16,7 +15,9 @@ from ._pathutil import (
     scantree,
 )
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from ..settings.skbuild_model import ScikitBuildSettings

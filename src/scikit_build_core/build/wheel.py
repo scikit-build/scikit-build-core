@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from packaging.requirements import Requirement
 from packaging.tags import Tag
@@ -48,6 +48,7 @@ from .common_wheel_helpers import (
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 

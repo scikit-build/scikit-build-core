@@ -6,7 +6,7 @@ import platform
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 import packaging.tags
 from packaging.specifiers import SpecifierSet
@@ -26,6 +26,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

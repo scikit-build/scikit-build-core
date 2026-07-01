@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     import argparse
 

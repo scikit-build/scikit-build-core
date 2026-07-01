@@ -3,7 +3,6 @@ from __future__ import annotations
 import tarfile
 import textwrap
 import zipfile
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -14,6 +13,7 @@ from scikit_build_core.build import (
     prepare_metadata_for_build_wheel,
 )
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

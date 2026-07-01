@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.machinery
 import sys
 import textwrap
-import typing
 from pathlib import Path
 from typing import NamedTuple
 
@@ -25,7 +24,9 @@ from scikit_build_core.build._pathutil import (
 )
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
-if typing.TYPE_CHECKING:
+TYPE_CHECKING = False
+
+if TYPE_CHECKING:
     from conftest import VEnv
 
 # The bare extension-module suffix for this interpreter (.so on Unix, .pyd on

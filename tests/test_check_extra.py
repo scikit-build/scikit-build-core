@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
 
 import pytest
 
 from scikit_build_core._check_extra import _has_extra, warn_missing_extra
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

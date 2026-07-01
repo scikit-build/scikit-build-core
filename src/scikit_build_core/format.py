@@ -6,10 +6,11 @@ import dataclasses
 import sys
 import typing
 from pathlib import Path
-from typing import TYPE_CHECKING, TypedDict
+from typing import TypedDict
 
 from .settings.skbuild_model import normalize_build_types
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from typing import Literal
 

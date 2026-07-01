@@ -14,7 +14,7 @@ import os
 import shutil
 import sysconfig
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from .._logging import logger, rich_print
 from ..builder.builder import (
@@ -29,6 +29,7 @@ from ..format import pyproject_format
 from ..settings.skbuild_model import normalize_build_types
 from ._pathutil import resolve_wheel_tree
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Mapping
 

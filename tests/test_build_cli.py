@@ -4,13 +4,13 @@ import json
 import shutil
 import sys
 import sysconfig
-from typing import TYPE_CHECKING
 
 import pytest
 
 from scikit_build_core._logging import rich_warning
 from scikit_build_core.build.__main__ import main
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 

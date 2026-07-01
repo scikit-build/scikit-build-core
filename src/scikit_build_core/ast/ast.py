@@ -3,11 +3,11 @@ from __future__ import annotations
 import dataclasses
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from .._logging import rich_print
 from .tokenizer import Token, TokenType, tokenize
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator
 

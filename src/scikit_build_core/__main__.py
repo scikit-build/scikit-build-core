@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from typing import TYPE_CHECKING
 
 from ._logging import rich_print
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Sequence
 

@@ -9,13 +9,14 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from typing import Literal, NamedTuple
 
 from packaging.version import InvalidVersion, Version
 
 from ._logging import logger, rich_print
 from ._shutil import Run
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 

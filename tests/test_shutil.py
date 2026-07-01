@@ -3,10 +3,10 @@ from __future__ import annotations
 import shutil
 import stat
 import sys
-from typing import TYPE_CHECKING
 
 import pytest
 
+TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
 
