@@ -36,6 +36,7 @@ from ..build._editable import (
     editable_inplace_files,
     editable_redirect_files,
     get_packages,
+    package_search_dirs,
 )
 from ..build._init import setup_logging
 from ..build._pathutil import packages_to_file_mapping, scantree
@@ -259,10 +260,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 packages=settings.wheel.packages,
                 name=self.build_config.builder.metadata.name,
             )
-            package_paths = [
-                str(Path.cwd().joinpath(package).parent.resolve())
-                for package in packages.values()
-            ]
+            package_paths = package_search_dirs(packages)
             if package_paths:
                 self.build_config.target_config["dev-mode-dirs"] = package_paths
 

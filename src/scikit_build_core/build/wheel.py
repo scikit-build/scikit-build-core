@@ -47,7 +47,12 @@ from .._variants import get_wheel_variant
 from ..cmake import CMake
 from ..errors import FailedLiveProcessError
 from ..settings.skbuild_read_settings import SettingsReader
-from ._editable import editable_inplace_files, editable_redirect_files, get_packages
+from ._editable import (
+    editable_inplace_files,
+    editable_redirect_files,
+    get_packages,
+    package_search_dirs,
+)
 from ._init import setup_logging
 from ._pathutil import (
     iter_force_include,
@@ -546,9 +551,7 @@ def _build_wheel_impl_impl(
                 exclude_exempt=force_included,
             )
 
-            str_pkgs = (
-                str(Path.cwd().joinpath(p).parent.resolve()) for p in packages.values()
-            )
+            str_pkgs = package_search_dirs(packages)
             if editable and settings.editable.mode == "redirect":
                 reload_dir = build_dir.resolve() if settings.build_dir else None
 
