@@ -10,6 +10,7 @@ import pytest
 
 from scikit_build_core.build._editable import (
     collect_search_locations,
+    editable_inplace_files,
     editable_redirect,
     editable_redirect_files,
     get_packages,
@@ -477,6 +478,79 @@ def test_editable_redirect_files_pep829_no_paths(tmp_path: Path):
     )
 
     assert set(files) == {"_editable_skbc_pkg.py", "_editable_skbc_pkg.start"}
+
+
+def test_editable_inplace_files_legacy_pth(tmp_path: Path):
+    files = editable_inplace_files(
+        name="pkg",
+        packages={"pkg": "src/pkg"},
+        package_paths=[str(tmp_path / "src")],
+        source_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(),
+        use_start=False,
+    )
+
+    assert set(files) == {"_editable_skbc_pkg.py", "_editable_skbc_pkg.pth"}
+
+    pth = files["_editable_skbc_pkg.pth"].decode()
+    assert pth.splitlines()[0] == "import _editable_skbc_pkg"
+    assert str(tmp_path / "src") in pth
+
+    py = files["_editable_skbc_pkg.py"].decode()
+    # Inplace installs the rebuild-only finder, not the redirect one.
+    assert "\ninstall_inplace(" in py
+    assert "def entrypoint()" not in py
+    # The package leaf name is wrapped and the source dir is the rebuild path.
+    assert "'pkg'" in py
+    assert repr(str(tmp_path / "build")) in py
+
+
+def test_editable_inplace_files_pep829_start(tmp_path: Path):
+    files = editable_inplace_files(
+        name="pkg",
+        packages={"pkg": "src/pkg"},
+        package_paths=[str(tmp_path / "src")],
+        source_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(),
+        use_start=True,
+    )
+
+    assert set(files) == {
+        "_editable_skbc_pkg.py",
+        "_editable_skbc_pkg.pth",
+        "_editable_skbc_pkg.start",
+    }
+
+    start = files["_editable_skbc_pkg.start"]
+    assert start == "_editable_skbc_pkg:entrypoint".encode("utf-8-sig")
+
+    pth = files["_editable_skbc_pkg.pth"].decode()
+    assert "import _editable_skbc_pkg" not in pth
+    assert str(tmp_path / "src") in pth
+
+    py = files["_editable_skbc_pkg.py"].decode()
+    assert "def entrypoint() -> None:" in py
+    assert "install_inplace(" in py
+
+
+def test_editable_inplace_files_bakes_rebuild_flag(tmp_path: Path):
+    from scikit_build_core.settings.skbuild_model import EditableSettings
+
+    files = editable_inplace_files(
+        name="pkg",
+        packages={"pkg": "src/pkg"},
+        package_paths=[str(tmp_path / "src")],
+        source_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(
+            editable=EditableSettings(mode="inplace", rebuild=True, verbose=False)
+        ),
+        use_start=False,
+    )
+
+    # install_inplace args: known_packages, search_paths, path, rebuild, verbose,
+    # build_options -- so a rebuild-on-import editable bakes ..., True, False, [].
+    py = files["_editable_skbc_pkg.py"].decode()
+    assert f"{str(tmp_path / 'build')!r}, True, False, []" in py
 
 
 def test_editable_redirect_files_absolute_install_dir_no_rebuild(tmp_path: Path):

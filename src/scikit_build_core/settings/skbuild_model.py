@@ -622,7 +622,8 @@ class EditableSettings:
     """
     Rebuild the project when the package is imported.
 
-    :confval:`build-dir` must be set.
+    :confval:`build-dir` must be set, except in ``inplace`` mode (where the source
+    directory is the build directory).
     """
 
     rebuild_dir: str = ""

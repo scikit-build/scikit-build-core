@@ -17,7 +17,7 @@ DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
 VERBOSE = "SKBUILD_EDITABLE_VERBOSE"
 
-__all__ = ["install"]
+__all__ = ["install", "install_inplace"]
 
 
 def __dir__() -> list[str]:
@@ -209,7 +209,11 @@ class _ScikitBuildLoaderWrapper:
     ``module.__loader__.rebuild()`` without enabling ``editable.rebuild``.
     """
 
-    def __init__(self, loader: object, finder: ScikitBuildRedirectingFinder) -> None:
+    def __init__(
+        self,
+        loader: object,
+        finder: ScikitBuildRedirectingFinder | ScikitBuildInplaceFinder,
+    ) -> None:
         self._skbuild_loader = loader
         self._skbuild_finder = finder
 
@@ -304,6 +308,87 @@ def _patch_importlib_resources_for_python39() -> None:
 
     _common.fallback_resources = fallback_resources
     _common._skbuild_editable_patched = True  # pylint: disable=protected-access
+
+
+def _run_editable_rebuild(
+    *,
+    path: str | None,
+    verbose: bool,
+    build_options: list[str],
+    install_options: list[str],
+    install_dir: str | None,
+) -> None:
+    """
+    Run the CMake build (and, unless ``install_dir`` is None, install) that
+    refreshes an editable install.
+
+    ``install_dir`` is None for inplace editables, which compile directly into
+    the source tree and have no separate install step -- they run ``cmake
+    --build`` only.
+    """
+    # Without a persistent build directory there is nothing to rebuild.
+    # Enabling auto-rebuild already requires a build-dir, so the import-time
+    # path never reaches this with path unset; only a manual
+    # module.__loader__.rebuild() on a non-rebuildable editable can.
+    if not path:
+        msg = (
+            "Cannot rebuild: this editable install has no persistent build "
+            "directory. Reinstall with a 'build-dir' set (e.g. "
+            "-Cbuild-dir=build) to enable on-demand rebuilds."
+        )
+        raise RuntimeError(msg)
+
+    env = os.environ.copy()
+    # Protect against recursion
+    if path in env.get(MARKER, "").split(os.pathsep):
+        return
+
+    env[MARKER] = os.pathsep.join((env.get(MARKER, ""), path))
+
+    verbose = verbose or bool(env.get(VERBOSE, ""))
+    if env.get(VERBOSE, "") == "0":
+        verbose = False
+    if verbose:
+        action = "cmake --build" if install_dir is None else "cmake --build & --install"
+        print(f"Running {action} in {path}")  # noqa: T201
+
+    def run_checked(command: list[str]) -> None:
+        result = subprocess.run(
+            command,
+            cwd=path,
+            stdout=sys.stderr if verbose else subprocess.PIPE,
+            env=env,
+            check=False,
+            text=True,
+        )
+        # When verbose, output was already streamed live to stderr. When not
+        # verbose, stdout was captured, so surface it here so build errors
+        # (e.g. from MSBuild, which writes to stdout) are not lost.
+        if result.returncode and not verbose:
+            print(  # noqa: T201
+                f"ERROR: {result.stdout}",
+                file=sys.stderr,
+            )
+        result.check_returncode()
+
+    lock = FileLockIfUnix(os.path.join(path, "editable_rebuild.lock"))
+
+    try:
+        lock.acquire()
+        run_checked(["cmake", "--build", ".", *build_options])
+        if install_dir is not None:
+            run_checked(
+                [
+                    "cmake",
+                    "--install",
+                    ".",
+                    "--prefix",
+                    install_dir,
+                    *install_options,
+                ]
+            )
+    finally:
+        lock.release()
 
 
 class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
@@ -441,67 +526,83 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         return spec
 
     def rebuild(self) -> None:
-        # Without a persistent build directory there is nothing to rebuild.
-        # Enabling auto-rebuild already requires a build-dir, so the import-time
-        # path never reaches this with path unset; only a manual
-        # module.__loader__.rebuild() on a non-rebuildable editable can.
-        if not self.path:
-            msg = (
-                "Cannot rebuild: this editable install has no persistent build "
-                "directory. Reinstall with a 'build-dir' set (e.g. "
-                "-Cbuild-dir=build) to enable on-demand rebuilds."
-            )
-            raise RuntimeError(msg)
+        _run_editable_rebuild(
+            path=self.path,
+            verbose=self.verbose,
+            build_options=self.build_options,
+            install_options=self.install_options,
+            install_dir=self.install_dir,
+        )
 
-        env = os.environ.copy()
-        # Protect against recursion
-        if self.path in env.get(MARKER, "").split(os.pathsep):
-            return
 
-        env[MARKER] = os.pathsep.join((env.get(MARKER, ""), self.path))
+class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
+    """
+    Meta path finder for inplace editable installs.
 
-        verbose = self.verbose or bool(env.get(VERBOSE, ""))
-        if env.get(VERBOSE, "") == "0":
-            verbose = False
-        if verbose:
-            print(f"Running cmake --build & --install in {self.path}")  # noqa: T201
+    Inplace editables compile extensions directly into the source tree and rely
+    on a plain ``.pth`` for import resolution. This finder does not change how
+    imports resolve -- it delegates to the standard ``PathFinder`` against the
+    same search locations -- but wraps the resolved loader so
+    ``module.__loader__.rebuild()`` can trigger a ``cmake --build`` in the source
+    tree (which is also the CMake build directory for inplace builds). Namespace
+    packages and imports outside the installed packages are left entirely to
+    native resolution.
+    """
 
-        def run_checked(command: list[str]) -> None:
-            result = subprocess.run(
-                command,
-                cwd=self.path,
-                stdout=sys.stderr if verbose else subprocess.PIPE,
-                env=env,
-                check=False,
-                text=True,
-            )
-            # When verbose, output was already streamed live to stderr. When not
-            # verbose, stdout was captured, so surface it here so build errors
-            # (e.g. from MSBuild, which writes to stdout) are not lost.
-            if result.returncode and not verbose:
-                print(  # noqa: T201
-                    f"ERROR: {result.stdout}",
-                    file=sys.stderr,
-                )
-            result.check_returncode()
+    def __init__(
+        self,
+        known_packages: list[str],
+        search_paths: list[str],
+        path: str | None,
+        rebuild: bool,
+        verbose: bool,
+        build_options: list[str],
+    ) -> None:
+        self.known_packages = frozenset(known_packages)
+        self.search_paths = search_paths
+        self.path = path
+        self.rebuild_flag = rebuild
+        self.rebuilt = False
+        self.verbose = verbose
+        self.build_options = build_options
 
-        lock = FileLockIfUnix(os.path.join(self.path, "editable_rebuild.lock"))
+    def find_spec(
+        self,
+        fullname: str,
+        path: object = None,
+        target: object = None,
+    ) -> ModuleSpec | None:
+        if fullname.partition(".")[0] not in self.known_packages:
+            return None
 
-        try:
-            lock.acquire()
-            run_checked(["cmake", "--build", ".", *self.build_options])
-            run_checked(
-                [
-                    "cmake",
-                    "--install",
-                    ".",
-                    "--prefix",
-                    self.install_dir,
-                    *self.install_options,
-                ]
-            )
-        finally:
-            lock.release()
+        # Debounce to once per process, like the redirect finder: importing a
+        # package resolves many submodules, but a single build covers them all.
+        if self.rebuild_flag and not self.rebuilt:
+            self.rebuilt = True
+            self.rebuild()
+
+        import importlib.machinery
+
+        # ``path`` is the parent package's __path__ for submodules, None for a
+        # top-level import; fall back to our recorded search locations.
+        search = self.search_paths if path is None else path
+        spec = importlib.machinery.PathFinder.find_spec(fullname, search)  # type: ignore[arg-type]
+        # Namespace packages have no concrete loader to wrap; leaving them to
+        # native resolution also avoids truncating a namespace whose parts span
+        # locations beyond our search paths.
+        if spec is None or spec.loader is None:
+            return None
+        spec.loader = _ScikitBuildLoaderWrapper(spec.loader, self)  # type: ignore[assignment]
+        return spec
+
+    def rebuild(self) -> None:
+        _run_editable_rebuild(
+            path=self.path,
+            verbose=self.verbose,
+            build_options=self.build_options,
+            install_options=[],
+            install_dir=None,
+        )
 
 
 def install(
@@ -562,5 +663,49 @@ def install(
             install_options or [],
             DIR,
             install_dir,
+        ),
+    )
+
+
+def install_inplace(
+    known_packages: list[str],
+    search_paths: list[str],
+    path: str | None = None,
+    rebuild: bool = False,
+    verbose: bool = False,
+    build_options: list[str] | None = None,
+) -> None:
+    """
+    Install a meta path finder for an inplace editable install.
+
+    Imports resolve natively (the finder delegates to PathFinder); the finder
+    only wraps the loader so ``module.__loader__.rebuild()`` runs ``cmake
+    --build`` in the source tree, and optionally rebuilds on first import.
+
+    :param known_packages: The top-level importable names to wrap
+    :param search_paths: The package parent directories (as added to sys.path)
+    :param path: The source directory (also the CMake build directory), or None
+    :param rebuild: Whether to rebuild on first import
+    :param verbose: Whether to print the cmake commands (also controlled by the
+                    SKBUILD_EDITABLE_VERBOSE environment variable)
+    """
+    # Dedupe as install() does (PEP 829 .start files may run twice), keyed to
+    # this package's own maps so several inplace editables can share an env.
+    for finder in sys.meta_path:
+        if (
+            isinstance(finder, ScikitBuildInplaceFinder)
+            and finder.known_packages == frozenset(known_packages)
+            and finder.search_paths == search_paths
+        ):
+            return
+    sys.meta_path.insert(
+        0,
+        ScikitBuildInplaceFinder(
+            known_packages,
+            search_paths,
+            path,
+            rebuild,
+            verbose,
+            build_options or [],
         ),
     )

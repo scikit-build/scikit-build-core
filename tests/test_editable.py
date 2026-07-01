@@ -183,6 +183,31 @@ def test_editable_rebuild_dir(isolated, isolate):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.integration
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
+@pytest.mark.parametrize("isolate", {False}, indirect=True)
+@pytest.mark.usefixtures("package")
+def test_inplace_loader_rebuild(isolated, isolate):
+    # Inplace editables expose module.__loader__.rebuild(), which runs
+    # cmake --build in the source tree (editable verbose is on by default).
+    isolated.install(
+        "-v",
+        "--config-settings=editable.mode=inplace",
+        *isolate.flags,
+        "-e",
+        ".",
+        installer="pip",
+    )
+
+    out = isolated.execute(
+        "import simplest; simplest.__loader__.rebuild(); print('rebuilt')"
+    )
+    assert "Running cmake --build" in out
+    assert out.splitlines()[-1] == "rebuilt"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
 @pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_direct_import(editable, isolated):
@@ -200,6 +225,14 @@ def test_direct_import(editable, isolated):
     isolated.execute("import pkg")
     isolated.execute("import pmod")
     isolated.execute("import emod")
+
+    if editable.mode:
+        # Both editable modes wrap the loader so module.__loader__.rebuild() is
+        # available on demand (redirect via #1403, inplace via its finder).
+        out = isolated.execute(
+            "import pkg; print(callable(getattr(pkg.__loader__, 'rebuild', None)))"
+        )
+        assert out.splitlines()[-1] == "True"
 
 
 @pytest.mark.compile

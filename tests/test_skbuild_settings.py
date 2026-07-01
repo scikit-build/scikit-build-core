@@ -1209,6 +1209,43 @@ def test_editable_rebuild_requires_build_dir(tmp_path: Path, trigger: str):
         SettingsReader.from_file(pyproject_toml)
 
 
+def test_editable_inplace_rebuild_allowed(tmp_path: Path):
+    # Inplace builds in the source tree, so editable.rebuild needs no build-dir.
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            editable.mode = "inplace"
+            editable.rebuild = true
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    reader = SettingsReader.from_file(pyproject_toml)
+    assert reader.settings.editable.rebuild is True
+    assert reader.settings.editable.mode == "inplace"
+
+
+def test_editable_inplace_rebuild_dir_rejected(tmp_path: Path):
+    # rebuild-dir relocates the install tree, which inplace mode does not have.
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            editable.mode = "inplace"
+            editable.rebuild-dir = "tree"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml)
+
+
 def test_skbuild_override_static(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

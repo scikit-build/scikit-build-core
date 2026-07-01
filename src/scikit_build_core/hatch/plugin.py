@@ -280,7 +280,11 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                     raise AssertionError(msg)
                 editable_files = editable_inplace_files(
                     name=normalized_name,
-                    packages=package_paths,
+                    packages=packages,
+                    package_paths=package_paths,
+                    source_dir=build_dir.resolve(),
+                    build_options=build_options,
+                    settings=settings,
                 )
 
             editable_dir = self.__tmp_dir / "editable"

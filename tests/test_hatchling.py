@@ -156,30 +156,28 @@ def test_hatchling_editable_wheel(editable_mode: str, tmp_path: Path) -> None:
             "utf-8"
         )
 
-    # PEP 829: redirect mode moves the import line into a .start file on 3.15+
+    # PEP 829: both modes move the import line into a .start file on 3.15+
     pep829 = sys.version_info >= (3, 15)
 
     assert "hatchling_example-0.1.0.dist-info/METADATA" in file_names
     assert "_editable_skbc_hatchling_example.pth" in file_names
     assert "Root-Is-Purelib: false" in wheel_metadata
-    if editable_mode == "redirect":
-        assert "_editable_skbc_hatchling_example.py" in file_names
-        assert f"hatchling_example/_core{ext_suffix}" in file_names
-        if pep829:
-            assert (
-                start_contents
-                == "_editable_skbc_hatchling_example:entrypoint".encode("utf-8-sig")
-            )
-            # The .pth keeps only the path entries, no import line
-            assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
-        else:
-            assert start_contents is None
-            assert pth_lines[0] == "import _editable_skbc_hatchling_example"
-    else:
-        assert "_editable_skbc_hatchling_example.py" not in file_names
-        assert start_contents is None
-        assert f"hatchling_example/_core{ext_suffix}" not in file_names
+    # Both modes ship the shim (which installs the finder exposing rebuild());
+    # only redirect also ships the compiled extension (inplace builds it into
+    # the source tree).
+    assert "_editable_skbc_hatchling_example.py" in file_names
+    assert (f"hatchling_example/_core{ext_suffix}" in file_names) == (
+        editable_mode == "redirect"
+    )
+    if pep829:
+        assert start_contents == "_editable_skbc_hatchling_example:entrypoint".encode(
+            "utf-8-sig"
+        )
+        # The .pth keeps only the path entries, no import line
         assert Path(pth_lines[0]).resolve().samefile(Path("src").resolve())
+    else:
+        assert start_contents is None
+        assert pth_lines[0] == "import _editable_skbc_hatchling_example"
 
 
 @pytest.mark.compile

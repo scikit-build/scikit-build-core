@@ -545,7 +545,11 @@ def _build_wheel_impl_impl(
 
                 for filename, editable_contents in editable_inplace_files(
                     name=normalized_name,
-                    packages=str_pkgs,
+                    packages=packages,
+                    package_paths=list(str_pkgs),
+                    source_dir=build_dir.resolve(),
+                    build_options=build_options,
+                    settings=settings,
                 ).items():
                     wheel.writestr(filename, editable_contents)
 

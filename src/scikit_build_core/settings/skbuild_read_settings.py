@@ -362,9 +362,12 @@ class SettingsReader:
 
         if self.settings.editable.rebuild_enabled:
             if self.settings.editable.mode == "inplace":
-                rich_error("editable rebuild is incompatible with inplace mode")
-
-            if not self.settings.build_dir:
+                # Inplace builds in the source tree, which serves as the
+                # persistent build dir, so no separate build-dir is required.
+                # rebuild-dir relocates the install tree, which inplace lacks.
+                if self.settings.editable.rebuild_dir:
+                    rich_error("editable rebuild-dir is incompatible with inplace mode")
+            elif not self.settings.build_dir:
                 rich_error("editable mode with rebuild requires build-dir")
 
         install_policy = (

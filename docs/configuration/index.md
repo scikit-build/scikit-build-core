@@ -908,10 +908,10 @@ etc. Also, to make your binaries importable, you should set
 `$<0:>` for multi-config generator support, like MSVC, so you don't have to set
 all possible `*_<CONFIG>` variations) to make sure they are placed inside your
 source directory inside the Python packages; this will be run from the build
-directory, rather than installed. This will also not support automatic rebuilds.
-The build directory setting will be ignored if you use this and perform an
-editable install. You can detect this mode by checking for an in-place build and
-checking `SKBUILD` being set.
+directory, rather than installed. The build directory setting will be ignored if
+you use this and perform an editable install (the source directory doubles as
+the build directory). You can detect this mode by checking for an in-place build
+and checking `SKBUILD` being set.
 
 With all the caveats, this is very logically simple (one directory) and a near
 identical replacement for `python setup.py build_ext --inplace`. Some third
@@ -920,6 +920,9 @@ install a `.pth` file that points at your source package(s) and do an inplace
 CMake build.
 
 On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
+Inplace installs support both automatic (`editable.rebuild`) and manual rebuilds
+(see below); since the source directory doubles as the build directory, no
+separate `build-dir` is needed.
 
 :::
 
@@ -927,10 +930,9 @@ On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
 
 ### Triggering a rebuild manually
 
-You don't have to enable `editable.rebuild` to rebuild on demand for the
-redirect mode. The redirecting finder installs a loader for each redirected
-module, and that loader exposes a `rebuild()` method, so you can run the same
-`cmake --build`/`--install` cycle whenever you like:
+You don't have to enable `editable.rebuild` to rebuild on demand. Both editable
+modes install a loader that exposes a `rebuild()` method, so you can recompile
+whenever you like:
 
 ```python
 import some_package
@@ -938,28 +940,43 @@ import some_package
 some_package.__loader__.rebuild()
 ```
 
-This works for any importable object the editable install provides -- a package,
-a plain module, or a compiled extension. A rebuild needs a persistent build
-directory to run in, so install with a `build-dir` set:
+For redirect installs this runs the same `cmake --build`/`--install` cycle used
+by the automatic rebuild, and works for any importable object the install
+provides -- a package, a plain module, or a compiled extension. A redirect
+rebuild needs a persistent build directory, so install with a `build-dir` set:
 
 ```console
 $ pip install --no-build-isolation -Cbuild-dir=build -ve .
 ```
 
-If the editable install was built without a persistent `build-dir`, there is
+If a redirect editable was built without a persistent `build-dir`, there is
 nothing to rebuild and the call raises `RuntimeError`.
 
+For inplace installs, `rebuild()` runs `cmake --build` in the source tree (there
+is no install step); the source directory is always the build directory, so no
+`build-dir` is required.
+
 If you don't have a handle on a redirected module, the finder itself is on
-`sys.meta_path` and carries the same method:
+`sys.meta_path` and carries the same method (`ScikitBuildRedirectingFinder` for
+redirect installs, `ScikitBuildInplaceFinder` for inplace):
 
 ```python
 import sys
 
 finder = next(
-    f for f in sys.meta_path if type(f).__name__ == "ScikitBuildRedirectingFinder"
+    f
+    for f in sys.meta_path
+    if type(f).__name__ in {"ScikitBuildRedirectingFinder", "ScikitBuildInplaceFinder"}
 )
 finder.rebuild()
 ```
+
+:::{versionadded} 1.0
+
+Manual `__loader__.rebuild()` for redirect installs, and both manual and
+automatic (`editable.rebuild`) rebuilds for inplace installs.
+
+:::
 
 ## Messages
 
