@@ -37,15 +37,16 @@ def _has_extra(reqlist: Iterable[str], extra: str) -> bool:
 
 
 def warn_missing_extra(
-    extra: str, *, pyproject_path: Path | str = "pyproject.toml"
+    extra: str, *alt_extras: str, pyproject_path: Path | str = "pyproject.toml"
 ) -> None:
     """
-    Warn if ``scikit-build-core[{extra}]`` is missing from
-    ``build-system.requires``.
+    Warn if none of ``scikit-build-core[{extra}]`` (or the ``alt_extras``
+    alternatives) are in ``build-system.requires``.
 
     The setuptools and hatchling plugins may eventually move to separate
     packages; depending on the extra keeps the plugin's requirements installed
-    if that happens.
+    if that happens. Any of the given extras satisfies the check (e.g. the
+    setuptools plugin accepts both ``setuptools`` and ``wheel-free-setuptools``).
     """
     path = Path(pyproject_path)
     if not path.is_file():
@@ -53,9 +54,13 @@ def warn_missing_extra(
     with path.open("rb") as f:
         pyproject = tomllib.load(f)
     reqlist = pyproject.get("build-system", {}).get("requires", [])
-    if not _has_extra(reqlist, extra):
+    extras = (extra, *alt_extras)
+    if not any(_has_extra(reqlist, e) for e in extras):
+        names = " or ".join(
+            f"{{bold}}scikit-build-core[{canonicalize_name(e)}]{{normal}}"
+            for e in extras
+        )
         rich_warning(
-            f"{{bold}}scikit-build-core[{extra}]{{normal}} is not in "
-            "build-system.requires. Add it to keep working if the plugin moves "
-            "to a separate package in the future."
+            f"{names} is not in build-system.requires. Add it to keep working "
+            "if the plugin moves to a separate package in the future."
         )
