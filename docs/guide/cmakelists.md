@@ -91,6 +91,8 @@ included in that section.
 See [search paths section](../configuration/search_paths.md) for more details on
 how the search paths are constructed.
 
+(install-directories)=
+
 ## Install directories
 
 Scikit-build-core will install directly into platlib, which will end up in
