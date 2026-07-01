@@ -121,6 +121,22 @@ def test_macos_version(monkeypatch, pycom, envvar, answer):
             "10.13",
             id="arg_typed",
         ),
+        # Two-token `-D VAR=value` form, as produced by a shell-split
+        # CMAKE_ARGS="-D CMAKE_OSX_DEPLOYMENT_TARGET=10.13" (#1417).
+        pytest.param(
+            None,
+            {},
+            ("-D", "CMAKE_OSX_DEPLOYMENT_TARGET=10.13"),
+            "10.13",
+            id="arg_only_two_token",
+        ),
+        pytest.param(
+            None,
+            {},
+            ("-D", "CMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.13"),
+            "10.13",
+            id="arg_typed_two_token",
+        ),
         # cmake.define / cmake.args win over the env var fallback.
         pytest.param(
             "12.0",
@@ -265,6 +281,39 @@ library_dirs=C:\\Python\\libs
     assert lib3 == Path("C:\\Python\\libs\\python3t.lib")
 
 
+def test_get_python_library_xcompile_free_threaded(tmp_path, monkeypatch):
+    # Regression test (#1417): a non-SABI cross-compile (e.g. cibuildwheel
+    # win_arm64 cp313t) must consult Py_GIL_DISABLED and request the
+    # free-threaded import library, not the GIL one. This DIST_EXTRA_CONFIG
+    # path isn't gated on the host platform, so it's testable everywhere.
+    real = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda name: "1" if name == "Py_GIL_DISABLED" else real(name),
+    )
+
+    config_path = tmp_path / "tmp.cfg"
+    config_path.write_text(
+        """\
+[build_ext]
+library_dirs=C:\\Python\\libs
+    """
+    )
+    env = {"DIST_EXTRA_CONFIG": str(config_path)}
+
+    libdir = Path("C:\\Python\\libs")
+    lib = get_python_library(env)
+    assert lib == libdir / f"python3{sys.version_info[1]}t.lib"
+
+    # Stable-ABI abi3 (non-t) is unaffected by free-threading.
+    abi3_lib = get_python_library(env, abi3=True)
+    assert abi3_lib == libdir / "python3.lib"
+
+    abi3t_lib = get_python_library(env, abi3t=True)
+    assert abi3t_lib == libdir / "python3t.lib"
+
+
 @pytest.mark.parametrize("archs", [["x86_64"], ["arm64", "universal2"]])
 def test_builder_macos_arch(monkeypatch, archs):
     archflags = " ".join(f"-arch {arch}" for arch in archs)
@@ -280,6 +329,24 @@ def test_builder_macos_arch_cmake_system_processor(monkeypatch):
     assert get_archs(env, cmake_args) == ["arm64"]
     # Without the cmake arg, ARCHFLAGS wins.
     assert get_archs(env) == ["x86_64"]
+
+
+def test_builder_macos_arch_cmake_system_processor_two_token(monkeypatch):
+    # Two-token `-D VAR=value` form, mirroring the CMAKE_OSX_DEPLOYMENT_TARGET
+    # two-token fix (#1417).
+    monkeypatch.setattr(sys, "platform", "darwin")
+    env: dict[str, str] = {}
+    cmake_args = ["-D", "CMAKE_SYSTEM_PROCESSOR=arm64"]
+    assert get_archs(env, cmake_args) == ["arm64"]
+
+
+def test_builder_macos_arch_cmake_system_processor_false_positive(monkeypatch):
+    # A substring match on an unrelated arg must not be mistaken for a real
+    # -DCMAKE_SYSTEM_PROCESSOR=... definition (#1417).
+    monkeypatch.setattr(sys, "platform", "darwin")
+    env = {"ARCHFLAGS": "-arch x86_64"}
+    cmake_args = ["-DFOO=CMAKE_SYSTEM_PROCESSOR"]
+    assert get_archs(env, cmake_args) == ["x86_64"]
 
 
 @pytest.mark.parametrize(

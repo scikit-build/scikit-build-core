@@ -120,7 +120,9 @@ def get_python_library(
         if result:
             logger.info("Reading DIST_EXTRA_CONFIG:build_ext.library_dirs={}", result)
             minor = "" if (abi3 or abi3t) else sys.version_info[1]
-            suffix = "t" if abi3t else ""
+            # Stable-ABI abi3 has no free-threaded variant of its own; only
+            # abi3t (already handled) and non-SABI builds pick up the "t" flag.
+            suffix = "t" if abi3t or (not abi3 and _is_free_threaded()) else ""
             return Path(result) / f"python3{minor}{suffix}.lib"
 
     # Windows CPython has no LIBDIR/LDLIBRARY/LIBRARY config vars, so construct

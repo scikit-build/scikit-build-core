@@ -84,9 +84,26 @@ def get_archs(env: Mapping[str, str], cmake_args: Sequence[str] = ()) -> list[st
     """
 
     if sys.platform.startswith("darwin"):
+        # Handles both the joined -DVAR=value and two-token -D VAR=value
+        # forms; a plain substring test would false-positive on any arg
+        # merely containing "CMAKE_SYSTEM_PROCESSOR" (e.g. -DFOO=CMAKE_SYSTEM_PROCESSOR).
+        expecting_value = False
         for cmake_arg in cmake_args:
-            if "CMAKE_SYSTEM_PROCESSOR" in cmake_arg:
-                return [cmake_arg.split("=")[1]]
+            if expecting_value:
+                match = re.fullmatch(
+                    r"CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg.strip()
+                )
+                if match:
+                    return [match.group(1)]
+                expecting_value = False
+            elif cmake_arg == "-D":
+                expecting_value = True
+            else:
+                match = re.fullmatch(
+                    r"-D\s*CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg
+                )
+                if match:
+                    return [match.group(1)]
         return re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
     if sys.platform.startswith("win") and get_platform(env) == "win-arm64":
         return ["win_arm64"]
