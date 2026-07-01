@@ -25,6 +25,17 @@ class VersionInfo(typing.NamedTuple):
     releaselevel: str = "final"
 
 
+@pytest.fixture(autouse=True)
+def _no_entrypoint_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Several tests here patch sys.version_info to exercise override matching.
+    # That patch must not reach the version-sensitive entry-point metadata shim
+    # via config-provider discovery, which is unrelated to override resolution.
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.load_config_providers",
+        lambda **_: [],
+    )
+
+
 def test_disallow_hardcoded(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
