@@ -158,7 +158,10 @@ docs = [
     "erbsland-sphinx-ansi <1.2; python_version>='3.10'",
     "furo",
     "hatchling",
-    "myst-parser >=0.13",
+    # 5.1 adds the "alert" extension (GitHub-style admonitions); it needs 3.11+,
+    # and docs only build on modern Python, so keep an older floor elsewhere.
+    "myst-parser >=5.1; python_version>='3.11'",
+    "myst-parser >=0.13; python_version<'3.11'",
     "setuptools",
     "sphinx >=7.0",
     "sphinx-autodoc-typehints != 3.9.6",

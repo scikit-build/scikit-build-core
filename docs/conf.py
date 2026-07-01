@@ -189,6 +189,7 @@ html_css_files = [
 
 # -- Extension configuration -------------------------------------------------
 myst_enable_extensions = [
+    "alert",  # GitHub-style > [!NOTE] blockquote admonitions
     "colon_fence",
     "substitution",
     "deflist",
