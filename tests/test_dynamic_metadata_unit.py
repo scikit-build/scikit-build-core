@@ -178,6 +178,50 @@ def test_load_provider_path_not_shadowed(
         load_provider("shadow_prov", str(empty))
 
 
+def test_load_provider_path_missing_dir_raises(tmp_path: Path) -> None:
+    # A non-existent provider-path is a user config error and must raise a real
+    # exception (not an AssertionError, which vanishes under python -O).
+    missing = tmp_path / "does-not-exist"
+    with pytest.raises(FileNotFoundError, match="existing directory"):
+        load_provider("whatever", str(missing))
+
+
+class _FakeDist:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class _FakeEP:
+    def __init__(self, name: str, obj: object, dist: str) -> None:
+        self.name = name
+        self._obj = obj
+        self.dist = _FakeDist(dist)
+
+    def load(self) -> object:
+        return self._obj
+
+
+def test_duplicate_provider_names_warn(monkeypatch, capsys) -> None:
+    from scikit_build_core._compat.importlib import metadata as compat_metadata
+    from scikit_build_core._logging import rich_warning
+    from scikit_build_core.builder._load_provider import load_entry_provider
+
+    rich_warning.cache_clear()
+
+    class Prov:
+        def dynamic_metadata(self, *_args):
+            return {}
+
+    eps = [_FakeEP("dup", Prov, "dist-a"), _FakeEP("dup", Prov, "dist-b")]
+    monkeypatch.setattr(compat_metadata, "entry_points", lambda **_: eps)
+
+    load_entry_provider("dup")
+    err = capsys.readouterr().err
+    assert "dup" in err
+    assert "dist-a" in err
+    assert "dist-b" in err
+
+
 def test_array_regex_via_field_setting() -> None:
     # The bundled regex plugin is reached by its entry-point name in the 0.3
     # array form; the new-style wrapper sources the target from ``field``.

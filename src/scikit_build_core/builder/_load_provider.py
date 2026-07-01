@@ -155,8 +155,8 @@ def load_provider(
         module = importlib.import_module(module_name)
     else:
         if not Path(provider_path).is_dir():
-            msg = "provider-path must be an existing directory"
-            raise AssertionError(msg)
+            msg = f"provider-path {provider_path!r} must be an existing directory"
+            raise FileNotFoundError(msg)
         finder = _ProviderPathFinder([provider_path], module_name)
         sys.meta_path.insert(0, finder)
         try:
@@ -200,6 +200,17 @@ def load_entry_provider(provider: str | Mapping[str, Any]) -> DMProtocols:
         hint = f"; did you mean {close[0]!r}?" if close else ""
         msg = f"Unknown dynamic-metadata provider {provider!r}{hint}"
         raise ModuleNotFoundError(msg)
+    if len(matches) > 1:
+        from .._logging import rich_warning
+
+        dists = ", ".join(
+            getattr(getattr(ep, "dist", None), "name", None) or "unknown distribution"
+            for ep in matches
+        )
+        rich_warning(
+            f"Multiple 'dynamic_metadata.provider' entry points named "
+            f"{provider!r} found (from {dists}); using the first"
+        )
     obj: Any = matches[0].load()
     return cast("DMProtocols", obj() if isinstance(obj, type) else obj)
 

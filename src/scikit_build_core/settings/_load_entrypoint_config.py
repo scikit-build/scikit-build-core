@@ -23,10 +23,13 @@ from __future__ import annotations
 __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    "inspect",
 }
 
+import inspect
+
 from .._compat.importlib import metadata
-from .._logging import logger, rich_error
+from .._logging import logger, rich_error, rich_warning
 
 __all__ = ["GROUP_DEFAULT", "GROUP_OVERRIDE", "load_config_providers"]
 
@@ -37,25 +40,62 @@ def __dir__() -> list[str]:
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
+    from importlib.metadata import EntryPoint
 
 
 GROUP_DEFAULT = "scikit-build-core.config.default"
 GROUP_OVERRIDE = "scikit-build-core.config.override"
 
 
+def _dist_name(ep: object) -> str:
+    """Best-effort distribution name for an entry point (for diagnostics)."""
+    dist = getattr(ep, "dist", None)
+    return getattr(dist, "name", None) or "unknown distribution"
+
+
+def _call_provider(
+    func: Callable[..., object], *, state: str, env: Mapping[str, str]
+) -> object:
+    """Call a provider with exactly the ``state``/``env`` arguments it accepts.
+
+    The documented contract is per-argument: ``state`` and ``env`` are each
+    passed only when the callable accepts them (a ``**kwargs`` provider accepts
+    both). The callable is invoked exactly once, so an argument-binding retry
+    can never re-run a provider's side effects or swallow a body ``TypeError``.
+    """
+    params = inspect.signature(func).parameters
+    accepts_var_kw = any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+    kwargs: dict[str, object] = {}
+    if accepts_var_kw or "state" in params:
+        kwargs["state"] = state
+    if accepts_var_kw or "env" in params:
+        kwargs["env"] = env
+    return func(**kwargs)
+
+
 def _load_group(
     level: str, group: str, *, state: str, env: Mapping[str, str]
 ) -> list[tuple[str, str, dict[str, object]]]:
     providers: list[tuple[str, str, dict[str, object]]] = []
-    for ep in sorted(metadata.entry_points(group=group), key=lambda e: e.name):
+    by_name: dict[str, list[EntryPoint]] = {}
+    for ep in metadata.entry_points(group=group):
+        by_name.setdefault(ep.name, []).append(ep)
+    for name in sorted(by_name):
+        eps = by_name[name]
+        if len(eps) > 1:
+            dists = ", ".join(_dist_name(e) for e in eps)
+            rich_warning(
+                f"Multiple {group!r} providers named {name!r} found "
+                f"(from {dists}); using the first"
+            )
+        ep = eps[0]
         func = ep.load()
         if not callable(func):
             rich_error(f"{group} provider {ep.name!r} must be callable")
-        try:
-            table = func(state=state, env=env)
-        except TypeError:
-            table = func()
+        table = _call_provider(func, state=state, env=env)
         if not isinstance(table, dict):
             rich_error(
                 f"{group} provider {ep.name!r} must return a tool.scikit-build "

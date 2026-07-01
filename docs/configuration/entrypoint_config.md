@@ -20,8 +20,10 @@ def config(*, state, env):
     }
 ```
 
-The callable may also take no arguments; `state` (the build state, e.g.
-`"wheel"`) and `env` (the environment mapping) are passed when accepted.
+Each argument is passed only when the callable accepts it: `state` (the build
+state, e.g. `"wheel"`) and `env` (the environment mapping) are matched by
+parameter name, and a `**kwargs` provider receives both. A provider may accept
+any subset -- both, either one, or none. The callable is invoked exactly once.
 
 It is registered under one of two groups; the **group** selects the precedence
 level, and the entry-point name is arbitrary:

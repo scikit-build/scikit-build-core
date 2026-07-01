@@ -18,12 +18,18 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+class FakeDist:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
 class FakeEntryPoint:
     """Minimal stand-in for ``importlib.metadata.EntryPoint``."""
 
-    def __init__(self, name: str, func: object) -> None:
+    def __init__(self, name: str, func: object, dist: str | None = None) -> None:
         self.name = name
         self._func = func
+        self.dist = FakeDist(dist) if dist is not None else None
 
     def load(self) -> object:
         return self._func
@@ -212,6 +218,78 @@ def test_override_only_field_rejected(tmp_path, register):
     reader = make_reader(tmp_path, state="wheel")
     with pytest.raises(SystemExit):
         reader.validate_may_exit()
+
+
+def test_provider_body_typeerror_not_retried(tmp_path, register):
+    # A TypeError raised inside the provider body must propagate as-is and the
+    # provider must run exactly once (no silent bare-argument retry).
+    calls = []
+
+    def provider(**kwargs):
+        calls.append(kwargs)
+        msg = "boom in body"
+        raise TypeError(msg)
+
+    register("default", "distro", provider)
+    with pytest.raises(TypeError, match="boom in body"):
+        _ = make_reader(tmp_path, state="wheel").settings
+    assert len(calls) == 1
+
+
+def test_provider_accepts_only_state(tmp_path, register):
+    def provider(*, state):
+        assert state == "wheel"
+        return {"cmake": {"build-type": "RelWithDebInfo"}}
+
+    register("default", "distro", provider)
+    settings = make_reader(tmp_path, state="wheel").settings
+    assert settings.cmake.build_type == "RelWithDebInfo"
+
+
+def test_provider_accepts_only_env(tmp_path, register):
+    def provider(*, env):
+        assert isinstance(env, dict) or hasattr(env, "get")
+        return {"cmake": {"build-type": "RelWithDebInfo"}}
+
+    register("default", "distro", provider)
+    settings = make_reader(tmp_path, state="wheel").settings
+    assert settings.cmake.build_type == "RelWithDebInfo"
+
+
+def test_provider_var_kwargs_receives_both(tmp_path, register):
+    seen: dict[str, object] = {}
+
+    def provider(**kwargs):
+        seen.update(kwargs)
+        return {}
+
+    register("default", "distro", provider)
+    _ = make_reader(tmp_path, state="wheel").settings
+    assert set(seen) == {"state", "env"}
+    assert seen["state"] == "wheel"
+
+
+def test_duplicate_entry_point_names_warn(monkeypatch, capsys):
+    from scikit_build_core._logging import rich_warning
+
+    rich_warning.cache_clear()
+
+    eps = [
+        FakeEntryPoint("dup", lambda **_: {"cmake": {"build-type": "Debug"}}, "dist-a"),
+        FakeEntryPoint(
+            "dup", lambda **_: {"cmake": {"build-type": "Release"}}, "dist-b"
+        ),
+    ]
+
+    def fake_entry_points(*, group):
+        return eps if group == _load_entrypoint_config.GROUP_DEFAULT else []
+
+    monkeypatch.setattr(compat_metadata, "entry_points", fake_entry_points)
+    _load_entrypoint_config.load_config_providers(state="wheel", env={})
+    err = capsys.readouterr().err
+    assert "dup" in err
+    assert "dist-a" in err
+    assert "dist-b" in err
 
 
 def test_suggestions_name_entry_point_source(tmp_path, register):
