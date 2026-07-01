@@ -6,6 +6,7 @@ they stay fast and hermetic while covering #1417 bugs B and C.
 
 from __future__ import annotations
 
+import ast
 import zipfile
 
 import pytest
@@ -83,9 +84,17 @@ def test_editable_inplace_no_build_dir_bakes_none_path(chdir_tmp: Path) -> None:
     build_editable(str(dist), {})
 
     shim = read_shim(dist)
-    call = shim.rpartition("install_inplace(")[2]
     # install_inplace args: known_packages, search_paths, path, rebuild,
-    # verbose, build_options. The path (3rd, right after the search_paths list)
-    # must be the None sentinel, not a since-deleted temp build dir.
-    assert "], None, " in call
-    assert "tmp" not in call.partition("], None, ")[0]
+    # verbose, build_options. The path (3rd) must be the None sentinel, not a
+    # since-deleted temp build dir. Parse the call so the check does not depend
+    # on the source paths' text (e.g. a /tmp build root on Linux).
+    (call,) = [
+        node.value
+        for node in ast.parse(shim).body
+        if isinstance(node, ast.Expr)
+        and isinstance(node.value, ast.Call)
+        and getattr(node.value.func, "id", None) == "install_inplace"
+    ]
+    path_arg = call.args[2]
+    assert isinstance(path_arg, ast.Constant)
+    assert path_arg.value is None
