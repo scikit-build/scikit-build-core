@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     "types",
     "typing",
 }

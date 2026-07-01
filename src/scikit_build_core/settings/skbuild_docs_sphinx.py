@@ -6,7 +6,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{__spec__.parent}.skbuild_model",
     "textwrap",
     "typing",

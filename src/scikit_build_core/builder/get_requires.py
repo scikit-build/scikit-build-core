@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
     f"{__spec__.parent}._load_provider",
     f"{__spec__.parent}.generator",
     "importlib",

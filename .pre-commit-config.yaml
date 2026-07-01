@@ -32,7 +32,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: e50a00f1c8ed0b55d642dbbec274de848d4c2018 # frozen: v0.8.4
+    rev: 5fed9a818f2583f0403aed779bf2b6c9aa8d25f4 # frozen: v0.8.5
     hooks:
       - id: flake8-lazy
         files: ^src/

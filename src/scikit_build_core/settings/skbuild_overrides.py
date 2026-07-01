@@ -3,7 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.sysconfig",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",

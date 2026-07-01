@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast"}
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.tokenizer",
+}
 
 from ..ast.ast import parse
 from ..ast.tokenizer import tokenize

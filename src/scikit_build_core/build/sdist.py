@@ -7,7 +7,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
     f"{__spec__.parent}._file_processor",
     f"{__spec__.parent}._init",
     f"{__spec__.parent}._pathutil",

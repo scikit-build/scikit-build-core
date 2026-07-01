@@ -1,9 +1,14 @@
 __lazy_modules__ = {
     "argparse",
     "dataclasses",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils",
-    f"{__spec__.parent}.model",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
+    f"{__spec__.parent}.model.cache",
+    f"{__spec__.parent}.model.cmakefiles",
+    f"{__spec__.parent}.model.codemodel",
+    f"{__spec__.parent}.model.index",
+    f"{__spec__.parent}.model.toolchains",
     "json",
     "pathlib",
 }
