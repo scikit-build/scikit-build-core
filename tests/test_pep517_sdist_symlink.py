@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from scikit_build_core._logging import rich_warning
 from scikit_build_core.build import build_sdist
 
 
@@ -48,3 +49,29 @@ def test_pep517_sdist_symlink(
             assert link_member.issym(), (
                 "The symlink should have been stored as a symlink"
             )
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+def test_pep517_sdist_dangling_symlink(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    A dangling symlink cannot be dereferenced; with the ``resolve-symlinks =
+    "all"`` default the build must fall back to storing it as a symlink member
+    instead of crashing (#1417).
+    """
+    Path("dangling_link.txt").symlink_to("does-not-exist.txt")
+
+    rich_warning.cache_clear()
+    out = build_sdist(str(tmp_path), config_settings=None)
+
+    with tarfile.open(tmp_path / out, "r:gz") as tar:
+        link_member = tar.getmember("cmake_example-0.0.1/dangling_link.txt")
+        assert link_member.issym(), (
+            "A dangling symlink should be stored as a symlink, not dereferenced"
+        )
+
+    err = capsys.readouterr().err
+    assert "dangling_link.txt" in err
+    assert "sdist.resolve-symlinks" in err

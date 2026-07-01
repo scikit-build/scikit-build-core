@@ -35,7 +35,7 @@ from packaging.utils import canonicalize_name
 
 from .. import __version__
 from .._compat import tomllib
-from .._logging import rich_print
+from .._logging import rich_print, rich_warning
 from .._reproducible import get_reproducible_epoch, normalize_file_permissions
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
@@ -44,6 +44,10 @@ from ._pathutil import iter_force_include
 from .generate import generate_file_contents
 from .metadata import get_standard_metadata
 from .wheel import _build_wheel_impl
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = ["build_sdist"]
 
@@ -83,6 +87,37 @@ def add_bytes_to_tar(
     with io.BytesIO(data) as bio:
         tarinfo.size = bio.getbuffer().nbytes
         tar.addfile(tarinfo, bio)
+
+
+def add_path_to_tar(
+    tar: tarfile.TarFile,
+    filepath: Path,
+    arcname: Path,
+    *,
+    tar_filter: Callable[[tarfile.TarInfo], tarfile.TarInfo],
+) -> None:
+    """
+    Add ``filepath`` to ``tar`` at ``arcname``, applying ``tar_filter`` for
+    reproducibility normalization.
+
+    ``tar.dereference`` (``sdist.resolve-symlinks = "all"``) makes ``tar.add``
+    stat through symlinks; a dangling symlink then raises ``FileNotFoundError``
+    instead of being archived (#1417). Fall back to storing the symlink itself
+    in that case, matching the pre-1.0 behavior, and warn.
+    """
+    if tar.dereference and filepath.is_symlink() and not filepath.exists():
+        rich_warning(
+            f"{filepath} is a dangling symlink; storing it as a symlink instead "
+            'of resolving it. Set sdist.resolve-symlinks = "none" to silence '
+            "this warning."
+        )
+        tar.dereference = False
+        try:
+            tar.add(filepath, arcname=arcname, filter=tar_filter)
+        finally:
+            tar.dereference = True
+    else:
+        tar.add(filepath, arcname=arcname, filter=tar_filter)
 
 
 def build_sdist(
@@ -152,10 +187,11 @@ def build_sdist(
             )
         )
         for filepath in paths:
-            tar.add(
+            add_path_to_tar(
+                tar,
                 filepath,
                 arcname=srcdirname / filepath,
-                filter=normalize_tar_info if reproducible else lambda x: x,
+                tar_filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
         # A force-included file is forced in; a force-included directory's
@@ -174,10 +210,11 @@ def build_sdist(
         # .tar.gz bytes) does not depend on filesystem ordering for directories.
         forced.sort(key=lambda pair: pair[1])
         for src_file, target in forced:
-            tar.add(
+            add_path_to_tar(
+                tar,
                 src_file,
                 arcname=target,
-                filter=normalize_tar_info if reproducible else lambda x: x,
+                tar_filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
         add_bytes_to_tar(
