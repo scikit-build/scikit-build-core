@@ -79,6 +79,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         config_dict.pop("dependencies", None)
         config_dict.pop("require-runtime-dependencies", None)
         config_dict.pop("require-runtime-features", None)
+        config_dict.pop("enable-by-default", None)
 
         if state is None:
             state = typing.cast(
