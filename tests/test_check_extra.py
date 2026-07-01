@@ -18,6 +18,11 @@ if TYPE_CHECKING:
     [
         (["scikit-build-core[setuptools]"], "setuptools", True),
         (["scikit_build_core[Setuptools]>=1"], "setuptools", True),
+        (
+            ["scikit-build-core[Wheel_Free_Setuptools]"],
+            "wheel-free-setuptools",
+            True,
+        ),
         (['scikit-build-core[setuptools]; python_version>="3"'], "setuptools", True),
         (["scikit-build-core[hatchling]"], "hatchling", True),
         (["scikit-build-core", "setuptools"], "setuptools", False),
@@ -55,6 +60,24 @@ def test_warn_missing_extra_quiet(tmp_path: Path, capsys: CaptureFixture[str]) -
     path = _write_pyproject(tmp_path, '["scikit-build-core[setuptools]"]')
     warn_missing_extra("setuptools", pyproject_path=path)
     assert capsys.readouterr().err == ""
+
+
+def test_warn_missing_extra_alt_present(
+    tmp_path: Path, capsys: CaptureFixture[str]
+) -> None:
+    path = _write_pyproject(tmp_path, '["scikit-build-core[wheel-free-setuptools]"]')
+    warn_missing_extra("setuptools", "wheel-free-setuptools", pyproject_path=path)
+    assert capsys.readouterr().err == ""
+
+
+def test_warn_missing_extra_lists_alternatives(
+    tmp_path: Path, capsys: CaptureFixture[str]
+) -> None:
+    path = _write_pyproject(tmp_path, '["scikit-build-core", "setuptools"]')
+    warn_missing_extra("setuptools", "wheel-free-setuptools", pyproject_path=path)
+    err = capsys.readouterr().err
+    assert "scikit-build-core[setuptools]" in err
+    assert "scikit-build-core[wheel-free-setuptools]" in err
 
 
 def test_warn_missing_extra_no_pyproject(

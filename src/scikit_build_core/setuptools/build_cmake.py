@@ -536,7 +536,7 @@ class BuildCMake(setuptools.Command):
         assert self.build_temp is not None
         assert self.plat_name is not None
 
-        warn_missing_extra("setuptools")
+        warn_missing_extra("setuptools", "wheel-free-setuptools")
 
         self.editable_mode = self._get_editable_mode()
         # run() is always a wheel or editable build; pass the matching state so
