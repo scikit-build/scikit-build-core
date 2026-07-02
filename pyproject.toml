@@ -184,7 +184,7 @@ docs = [
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
-build.targets.sdist.exclude = [".git"]
+build.targets.sdist.exclude = [".git", ".agents/", ".distro/", ".fmf/", ".github/", ".packit.yaml", ".readthedocs.yaml"]
 
 
 [tool.uv]
