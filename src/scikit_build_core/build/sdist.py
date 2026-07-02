@@ -192,13 +192,20 @@ def build_sdist(
         for filepath in paths:
             # In "external" mode, a file symlink pointing outside the project
             # is stored dereferenced: add its target under the link's name.
+            # A dangling one can't be resolved, so store it as-is and warn.
             name = filepath
             if (
                 resolve_symlinks == "external"
                 and filepath.is_symlink()
                 and symlink_escapes(filepath)
             ):
-                name = filepath.resolve()
+                if filepath.exists():
+                    name = filepath.resolve()
+                else:
+                    rich_warning(
+                        f"{filepath} is a dangling symlink pointing outside the "
+                        "project; storing it as a symlink instead of resolving it."
+                    )
             add_path_to_tar(
                 tar,
                 name,

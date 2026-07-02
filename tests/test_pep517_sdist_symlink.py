@@ -144,3 +144,30 @@ def test_pep517_sdist_dangling_symlink(
     err = capsys.readouterr().err
     assert "dangling_link.txt" in err
     assert "sdist.resolve-symlinks" in err
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+def test_pep517_sdist_dangling_external_symlink(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    In "external" mode, an escaping symlink is normally dereferenced; a
+    dangling one cannot be, so it must be stored as a symlink member instead
+    of crashing.
+    """
+    Path("dangling_ext.txt").symlink_to(tmp_path / "outside" / "gone.txt")
+
+    rich_warning.cache_clear()
+    out = build_sdist(
+        str(tmp_path), config_settings={"sdist.resolve-symlinks": "external"}
+    )
+
+    with tarfile.open(tmp_path / out, "r:gz") as tar:
+        link_member = tar.getmember("cmake_example-0.0.1/dangling_ext.txt")
+        assert link_member.issym(), (
+            "A dangling external symlink should be stored as a symlink"
+        )
+
+    err = capsys.readouterr().err
+    assert "dangling_ext.txt" in err
