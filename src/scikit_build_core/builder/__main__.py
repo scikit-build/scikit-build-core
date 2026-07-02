@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "argparse",
     "pathlib",
     "scikit_build_core._logging",
     "scikit_build_core.builder.get_requires",
@@ -9,6 +10,7 @@ __lazy_modules__ = {
     "scikit_build_core.program_search",
 }
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -19,10 +21,6 @@ from scikit_build_core.builder.get_requires import GetRequires
 from scikit_build_core.builder.sysconfig import info_print as ip_sysconfig
 from scikit_build_core.builder.wheel_tag import WheelTag
 from scikit_build_core.program_search import info_print as ip_program_search
-
-TYPE_CHECKING = False
-if TYPE_CHECKING:
-    import argparse
 
 __all__ = ["main"]
 
@@ -77,7 +75,14 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
 
 
 def main() -> None:
-    main_info()
+    parser = argparse.ArgumentParser(
+        prog="python -m scikit_build_core.builder",
+        allow_abbrev=False,
+        description="Info about the system and build environment.",
+    )
+    populate_parser(parser)
+    args = parser.parse_args()
+    args.func(args)
 
 
 if __name__ == "__main__":

@@ -131,6 +131,25 @@ def test_generate_project_rejects_unsafe_name(name: str, tmp_path: Path) -> None
         generate_project(tmp_path / "proj", "c", name)
 
 
+def test_init_rejects_non_identifier_module(tmp_path: Path) -> None:
+    # "1demo" is a valid distribution name (packaging allows leading digits) but
+    # its derived module "1demo" is not a valid Python identifier; the CLI must
+    # reject it up front instead of scaffolding an unimportable package.
+    project = tmp_path / "proj"
+    with pytest.raises(SystemExit):
+        main(["init", str(project), "--backend", "c", "--name", "1demo"])
+    assert not (project / "pyproject.toml").exists()
+
+
+def test_init_rejects_existing_file_as_directory(tmp_path: Path) -> None:
+    # A plain file at the target path must produce a clear error, not a raw
+    # FileExistsError from deep inside template generation.
+    target = tmp_path / "existing-file"
+    target.write_text("hi")
+    with pytest.raises(SystemExit):
+        main(["init", str(target), "--backend", "c", "--name", "my-pkg"])
+
+
 def test_init_interactive_selection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

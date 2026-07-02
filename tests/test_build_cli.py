@@ -131,6 +131,23 @@ class DynamicMetadata:
 """
 
 
+@pytest.mark.parametrize("subcommand", ["requires", "project-table"])
+def test_missing_pyproject_gives_clear_error(
+    subcommand: str,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    # Running outside a project directory used to raise a raw FileNotFoundError.
+    monkeypatch.setattr(sys, "argv", ["scikit_build_core.build", subcommand])
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(SystemExit):
+        main()
+    _, err = capsys.readouterr()
+    assert "pyproject.toml" in err
+
+
 @pytest.mark.parametrize(
     ("args", "expected"),
     [

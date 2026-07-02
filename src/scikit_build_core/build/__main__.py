@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __lazy_modules__ = {
     "argparse",
     "json",
@@ -12,10 +14,10 @@ __lazy_modules__ = {
 import argparse
 import json
 from pathlib import Path
-from typing import Literal, get_args
+from typing import Any, Literal, get_args
 
 from scikit_build_core._compat import tomllib
-from scikit_build_core._logging import rich_warning
+from scikit_build_core._logging import rich_error, rich_warning
 from scikit_build_core.build import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
@@ -28,10 +30,20 @@ from scikit_build_core.builder._load_provider import (
 )
 
 
+def _load_pyproject() -> dict[str, Any]:
+    """Read ``pyproject.toml`` from the current directory, erroring out clearly if missing."""
+    path = Path("pyproject.toml")
+    if not path.is_file():
+        rich_error(
+            "No {bold}pyproject.toml{normal} found in the current directory; run this from the root of a project."
+        )
+    with path.open("rb") as f:
+        return tomllib.load(f)
+
+
 def main_project_table(args: argparse.Namespace, /) -> None:
     """Get the full project table, including dynamic metadata."""
-    with Path("pyproject.toml").open("rb") as f:
-        pyproject = tomllib.load(f)
+    pyproject = _load_pyproject()
 
     project = pyproject.get("project", {})
     legacy = pyproject.get("tool", {}).get("scikit-build", {}).get("metadata", {})
@@ -50,8 +62,7 @@ def main_requires(args: argparse.Namespace, /) -> None:
 def get_requires(mode: Literal["sdist", "wheel", "editable"]) -> None:
     """Get the build requirements."""
 
-    with Path("pyproject.toml").open("rb") as f:
-        pyproject = tomllib.load(f)
+    pyproject = _load_pyproject()
 
     requires = pyproject.get("build-system", {}).get("requires", [])
     backend = pyproject.get("build-system", {}).get("build-backend", "")
