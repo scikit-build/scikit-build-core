@@ -427,20 +427,21 @@ def test_packages_to_file_mapping_module_nested(
 def test_packages_to_file_mapping_missing_source(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    # A source that is neither a file nor a directory used to be silently
-    # dropped; it must now raise instead (#888).
+    # A wheel.packages source that does not exist on disk is skipped: it may be
+    # a package produced by the CMake install (staged into platlib), so there is
+    # nothing to copy from the source tree (#1436, regression from #1395).
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(FileNotFoundError, match="nope"):
-        packages_to_file_mapping(
-            packages={"nope": "nope"},
-            platlib_dir=tmp_path / "out",
-            include=[],
-            src_exclude=[],
-            target_exclude=[],
-            build_dir="",
-            mode="classic",
-        )
+    mapping = packages_to_file_mapping(
+        packages={"manifold3d": "manifold3d"},
+        platlib_dir=tmp_path / "out",
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    assert mapping == {}
 
 
 def test_editable_redirect_files_external_install_prefix(tmp_path: Path):
