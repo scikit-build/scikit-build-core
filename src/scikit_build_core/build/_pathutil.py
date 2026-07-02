@@ -94,9 +94,11 @@ def packages_to_file_mapping(
                     mapping[str(source_dir)] = str(target_path)
             continue
 
+        # A source that is neither a file nor a directory is skipped: the
+        # package may be produced by the CMake install (staged into platlib),
+        # so it has no counterpart in the source tree to copy from (#1436).
         if not source_dir.is_dir():
-            msg = f"Package source {source_str!r} is neither a file nor a directory"
-            raise FileNotFoundError(msg)
+            continue
 
         for filepath in each_unignored_file(
             source_dir,
