@@ -1,0 +1,23 @@
+{
+  "skill_name": "test-downstream",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I've got some uncommitted changes to the wheel-writing code. Can you check they don't break a downstream project? Try deflate (it's small) both as a normal build and an editable install, compared against the last release.",
+      "expected_output": "Resolves deflate -> https://github.com/dcwatson/deflate via projects.toml, runs downstream_ab.py for both modes against the latest release tag, reports a parity table and points at logs.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "does gemmi still build with my branch?",
+      "expected_output": "Resolves gemmi -> https://github.com/project-gemmi/gemmi, runs the A/B check against the current checkout vs latest release, leads with any regression and quotes the real error from the log if it fails.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I changed how packages get copied into the wheel. Run a downstream build against v0.12.1 and tell me if the wheel contents changed at all. Use the astyle project.",
+      "expected_output": "Resolves astyle -> https://github.com/Freed-Wu/astyle-wheel, runs downstream_ab.py with --tag v0.12.1, focuses on the wheel-contents diff section, and reports added/removed files.",
+      "files": []
+    }
+  ]
+}
