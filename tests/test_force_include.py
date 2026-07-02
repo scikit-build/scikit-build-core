@@ -549,8 +549,12 @@ def test_force_include_sdist_file_overrides_exclude(chdir_tmp: Path) -> None:
     assert "pkg-0.1.0/vendored/blob.tmp" in names
 
 
-def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
-    """Wheel-target force-includes are baked into the editable wheel (not redirected)."""
+def editable_shim(dist: Path) -> str:
+    return wheel_read(dist, "_editable_skbc_pkg.py").decode()
+
+
+def test_force_include_editable_redirects_data(chdir_tmp: Path) -> None:
+    """A same-name platlib data force-include is redirected, not baked in."""
     make_pure_pkg(
         chdir_tmp,
         extra='wheel.force-include = {"extra/data.txt" = "pkg/data.txt"}',
@@ -561,7 +565,167 @@ def test_force_include_into_editable_wheel(chdir_tmp: Path) -> None:
     dist = chdir_tmp / "dist"
     build_editable(str(dist), {})
 
-    assert "pkg/data.txt" in wheel_names(dist)
+    assert "pkg/data.txt" not in wheel_names(dist)
+    # The source directory joins pkg's __path__ so importlib.resources finds it.
+    assert str((chdir_tmp / "extra").resolve()) in editable_shim(dist)
+
+
+def test_force_include_editable_redirects_module(chdir_tmp: Path) -> None:
+    """A platlib module force-include is served live by the redirect, even renamed."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"gen/_ver.py" = "pkg/_version.py"}',
+    )
+    (chdir_tmp / "gen").mkdir()
+    (chdir_tmp / "gen" / "_ver.py").write_text("v = 1\n")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "pkg/_version.py" not in wheel_names(dist)
+    shim = editable_shim(dist)
+    assert "'pkg._version'" in shim
+    assert str((chdir_tmp / "gen" / "_ver.py").resolve()) in shim
+
+
+def test_force_include_editable_top_level_module_redirected(chdir_tmp: Path) -> None:
+    """A top-level module destination is importable by name, so it redirects."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"gen/_ver.py" = "toplevel_ver.py"}',
+    )
+    (chdir_tmp / "gen").mkdir()
+    (chdir_tmp / "gen" / "_ver.py").write_text("v = 1\n")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "toplevel_ver.py" not in wheel_names(dist)
+    assert "'toplevel_ver'" in editable_shim(dist)
+
+
+def test_force_include_editable_renamed_data_copied(chdir_tmp: Path) -> None:
+    """A renamed data file cannot be found through __path__, so it stays a copy."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"extra/data.txt" = "pkg/data.json"}',
+    )
+    (chdir_tmp / "extra").mkdir()
+    (chdir_tmp / "extra" / "data.txt").write_text("hello")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert wheel_read(dist, "pkg/data.json") == b"hello"
+
+
+def test_force_include_editable_top_level_data_copied(chdir_tmp: Path) -> None:
+    """A top-level data file has no package __path__ to ride on; it is copied."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"extra/data.txt" = "data.txt"}',
+    )
+    (chdir_tmp / "extra").mkdir()
+    (chdir_tmp / "extra" / "data.txt").write_text("hello")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "data.txt" in wheel_names(dist)
+
+
+def test_force_include_editable_module_dest_from_data_source_copied(
+    chdir_tmp: Path,
+) -> None:
+    """An importable destination with a non-importable source stays a copy."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"notes.txt" = "pkg/notes_mod.py"}',
+    )
+    (chdir_tmp / "notes.txt").write_text("x = 1\n")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "pkg/notes_mod.py" in wheel_names(dist)
+
+
+def test_force_include_editable_overrides_package_module(chdir_tmp: Path) -> None:
+    """A force-include over a package file wins in the redirect mapping too."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"override.py" = "pkg/__init__.py"}',
+    )
+    (chdir_tmp / "override.py").write_text("FORCED = True\n")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "pkg/__init__.py" not in wheel_names(dist)
+    shim = editable_shim(dist)
+    assert str((chdir_tmp / "override.py").resolve()) in shim
+    assert str((chdir_tmp / "pkg" / "__init__.py").resolve()) not in shim
+
+
+def test_force_include_editable_directory_redirects_members(chdir_tmp: Path) -> None:
+    """Directory members redirect individually and stay subject to wheel.exclude."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'wheel.exclude = ["pkg/assets/*.tmp"]\n'
+            'wheel.force-include = {"assets" = "pkg/assets"}'
+        ),
+    )
+    assets = chdir_tmp / "assets"
+    assets.mkdir()
+    (assets / "mod.py").write_text("m = 1\n")
+    (assets / "a.txt").write_text("a")
+    (assets / "drop.tmp").write_text("drop")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert not any(n.startswith("pkg/assets/") for n in wheel_names(dist))
+    shim = editable_shim(dist)
+    assert "'pkg.assets.mod'" in shim
+    assert str(assets.resolve()) in shim
+
+
+def test_force_include_editable_redirect_removes_stale_copy(chdir_tmp: Path) -> None:
+    """A redirected entry removes an earlier staged file at the same destination."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            "wheel.force-include = "
+            '{"weird.txt" = "pkg/data.txt", "data.txt" = "pkg/data.txt"}'
+        ),
+    )
+    # The first entry is a renamed data file (copied); the second redirects the
+    # same destination and must drop the stale copy from the wheel.
+    (chdir_tmp / "weird.txt").write_text("stale")
+    (chdir_tmp / "data.txt").write_text("live")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert "pkg/data.txt" not in wheel_names(dist)
+
+
+def test_force_include_editable_inplace_still_copied(chdir_tmp: Path) -> None:
+    """Inplace mode has no redirect, so force-includes stay baked copies."""
+    make_pure_pkg(
+        chdir_tmp,
+        extra=(
+            'editable.mode = "inplace"\n'
+            'wheel.force-include = {"extra/data.txt" = "pkg/data.txt"}'
+        ),
+    )
+    (chdir_tmp / "extra").mkdir()
+    (chdir_tmp / "extra" / "data.txt").write_text("hello")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
     assert wheel_read(dist, "pkg/data.txt") == b"hello"
 
 

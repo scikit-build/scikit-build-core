@@ -442,6 +442,15 @@ destination. A force-included _directory_ stays subject to that exclude, so a
 bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
 directory and exclude `**/*.bzl` to drop the Bazel files from it).
 
+In an editable install using redirect mode (the default), platlib entries are
+served live from their sources through the import redirect instead of being
+copied, so edits to a force-included file take effect without reinstalling. This
+covers importable modules (even renamed ones) and data files that keep their
+filename and land inside a package. Anything the redirect cannot express — other
+wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed data files, or top-level data
+files — is still copied at install time, so those snapshots only refresh on
+reinstall.
+
 #### Building a wheel from an SDist
 
 A common pattern vendors an external (`../`) source into the SDist and then
