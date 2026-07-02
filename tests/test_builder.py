@@ -71,6 +71,9 @@ class VersionInfo:
     def __ge__(self, other: tuple[int, ...]) -> bool:
         return (self.major, self.minor, self.micro) >= other[:3]
 
+    def __lt__(self, other: tuple[int, ...]) -> bool:
+        return (self.major, self.minor, self.micro) < other[:3]
+
 
 # The envvar_higher case shouldn't happen, but the compiler should cause the
 # correct failure
@@ -533,6 +536,8 @@ def test_builder_limited_api_override_free_threaded(tmp_path, monkeypatch):
         lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
     )
     patch_cpython_runtime(monkeypatch)
+    # abi3t (PEP 803) requires CPython 3.15+.
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
 
     cache = configure_builder_with_limited_api(tmp_path, monkeypatch, limited_api=True)
 
@@ -540,6 +545,24 @@ def test_builder_limited_api_override_free_threaded(tmp_path, monkeypatch):
     assert "Development.SABIModule" in cache
     assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
     assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
+
+
+def test_builder_limited_api_override_free_threaded_no_abi3t(tmp_path, monkeypatch):
+    # Free-threaded CPython < 3.15 has no abi3t; forcing limited_api=True must
+    # downgrade (no SABI) instead of emitting an unimportable abi3t module.
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, 14))
+
+    cache = configure_builder_with_limited_api(tmp_path, monkeypatch, limited_api=True)
+
+    assert "Development.SABIModule" not in cache
+    assert "Py_TARGET_ABI3T" not in cache
 
 
 def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
