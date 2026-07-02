@@ -23,7 +23,7 @@ TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
-__all__ = ["each_unignored_file"]
+__all__ = ["each_unignored_file", "symlink_escapes"]
 
 EXCLUDE_LINES = [
     ".git",
@@ -39,6 +39,32 @@ EXCLUDE_LINES = [
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def symlink_escapes(path: Path) -> bool:
+    """
+    True if the symlink at ``path`` (relative to the project root, which must
+    be the current directory) has an immediate target pointing outside the
+    subtree the SDist mirrors at that location: an absolute target, a Windows
+    drive, or a relative target that lexically escapes the containment root.
+    Such a link would dangle (or hit the wrong file) once the SDist is
+    extracted somewhere else. The containment root is the project root,
+    unless ``path`` was reached by following an external directory symlink --
+    then it is the nearest symlink ancestor, since only that subtree mirrors
+    the real directory the link resolves against. Only the immediate target
+    is checked, so a chain of internal links to an eventually-external target
+    stays consistent link by link (the last link is the one that gets
+    resolved).
+    """
+    target = os.readlink(path)
+    if os.path.isabs(target) or os.path.splitdrive(target)[0]:  # noqa: PTH117
+        return True
+    joined = os.path.normpath(os.path.join(os.path.dirname(path), target))  # noqa: PTH118, PTH120
+    for parent in path.parents:
+        if parent != Path() and parent.is_symlink():
+            root = str(parent)
+            return joined != root and not joined.startswith(root + os.sep)
+    return joined == os.pardir or joined.startswith(os.pardir + os.sep)
 
 
 def _dir_key(dirstr: str) -> tuple[int, int] | None:
@@ -61,9 +87,22 @@ def each_unignored_file(
     build_dir: str = "",
     *,
     mode: Literal["classic", "default", "manual", "explicit"],
+    resolve_symlinks: Literal["all", "external", "none", "classic"] = "all",
+    yield_loop_symlinks: bool = False,
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
+
+    ``resolve_symlinks`` controls directory symlinks: "all" and "classic"
+    follow them (their contents are walked); "none" yields the link itself as
+    a member instead of descending; "external" does the same only for links
+    staying inside the project, still following links that point outside it.
+    File symlinks are always yielded as-is here; whether they are stored
+    dereferenced is up to the caller.
+
+    A directory symlink loop is never followed; with ``yield_loop_symlinks``
+    the link itself is yielded (the SDist stores it as a symlink member),
+    otherwise it is skipped (wheel copying can't represent it).
     """
     # "manual" and "explicit" do not consult git ignore files at all.
     reads_gitignore = mode in {"classic", "default"}
@@ -123,9 +162,52 @@ def each_unignored_file(
                 dirpath,
             )
             dirs.clear()
+            # A loop symlink can't be followed in any mode; the SDist walk
+            # asks for the link itself so it isn't silently dropped. (On
+            # Windows os.walk may classify it as a file instead, yielding it
+            # below.)
+            if (
+                yield_loop_symlinks
+                and dirpath.is_symlink()
+                and match_path(
+                    dirpath.parent,
+                    dirpath,
+                    include_spec,
+                    global_exclude_spec,
+                    builtin_exclude_spec,
+                    user_exclude_spec,
+                    nested_excludes,
+                    is_path=False,
+                    explicit=explicit,
+                )
+            ):
+                yield dirpath
             continue
         if key is not None:
             ancestor_keys[dirstr] = parent_keys | {key}
+        if resolve_symlinks in {"none", "external"}:
+            for dname in list(dirs):
+                dpath = dirpath / dname
+                if not dpath.is_symlink():
+                    continue
+                if resolve_symlinks == "external" and symlink_escapes(dpath):
+                    # Points outside the mirrored subtree; keep walking it so
+                    # its contents get stored instead of a dangling link.
+                    continue
+                # Store the link itself as a member instead of descending.
+                dirs.remove(dname)
+                if match_path(
+                    dirpath,
+                    dpath,
+                    include_spec,
+                    global_exclude_spec,
+                    builtin_exclude_spec,
+                    user_exclude_spec,
+                    nested_excludes,
+                    is_path=False,
+                    explicit=explicit,
+                ):
+                    yield dpath
         if mode != "classic":
             for dname in list(dirs):
                 if not match_path(

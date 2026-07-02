@@ -778,7 +778,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.resolve-symlinks
 
-  :Type: ``"all" | "none"``
+  :Type: ``"all" | "external" | "none" | "classic"``
   :Default: "all"
   :Config-settings: ``sdist.resolve-symlinks`` or ``skbuild.sdist.resolve-symlinks``
   :Environment variable: ``SKBUILD_SDIST_RESOLVE_SYMLINKS``
@@ -788,10 +788,20 @@ print(mk_skbuild_docs())
   The modes are:
 
   * "all": Resolve every symlink, copying its target's contents.
-  * "none": Store symlinks as-is.
+  * "external": Resolve only symlinks that point outside the project (those
+    would be broken once the SDist is extracted); store symlinks that stay
+    inside the project as-is.
+  * "none": Store every symlink as-is, including directory symlinks.
+  * "classic": Store file symlinks as-is, but follow directory symlinks,
+    copying their contents (scikit-build-core 0.x behavior).
+
+  A symlink that can't be resolved (dangling, or a directory symlink loop)
+  is stored as a symlink in every mode, with a warning if it was supposed to
+  be resolved.
 
   If you don't set this, it will be "all" unless you set the minimum version
-  below 1.0, in which case it will be "none" to preserve backward compatibility.
+  below 1.0, in which case it will be "classic" to preserve backward
+  compatibility.
 
   .. versionadded:: 1.0
 ```

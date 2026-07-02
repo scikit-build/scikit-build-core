@@ -424,6 +424,43 @@ def test_packages_to_file_mapping_module_nested(
     }
 
 
+@pytest.mark.skipif(
+    sys.implementation.name == "pypy" and sys.platform.startswith("win"),
+    reason="PyPy on Windows does not support symlinks",
+)
+def test_packages_to_file_mapping_loop_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A circular directory symlink in a package must not end up in the
+    # mapping: the wheel build shutil.copy2()s every mapped source, which
+    # raises IsADirectoryError on a directory symlink.
+    pkg = tmp_path / "pkg"
+    sub = pkg / "sub"
+    sub.mkdir(parents=True)
+    pkg.joinpath("__init__.py").write_text("", encoding="utf-8")
+    loop = sub / "pkg"
+    try:
+        loop.symlink_to(Path("..") / ".." / "pkg", target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlinks not supported on this platform")
+    if not loop.is_dir():
+        pytest.skip("Symlink support not available")
+    monkeypatch.chdir(tmp_path)
+
+    mapping = packages_to_file_mapping(
+        packages={"pkg": "pkg"},
+        platlib_dir=tmp_path / "out",
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    assert mapping == {
+        str(Path("pkg/__init__.py")): str(tmp_path / "out" / "pkg" / "__init__.py")
+    }
+
+
 def test_packages_to_file_mapping_missing_source(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

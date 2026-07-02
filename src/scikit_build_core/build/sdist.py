@@ -38,7 +38,7 @@ from .._compat import tomllib
 from .._logging import rich_print, rich_warning
 from .._reproducible import get_reproducible_epoch, normalize_file_permissions
 from ..settings.skbuild_read_settings import SettingsReader
-from ._file_processor import each_unignored_file
+from ._file_processor import each_unignored_file, symlink_escapes
 from ._init import setup_logging
 from ._pathutil import iter_force_include
 from .generate import generate_file_contents
@@ -103,13 +103,19 @@ def add_path_to_tar(
     ``tar.dereference`` (``sdist.resolve-symlinks = "all"``) makes ``tar.add``
     stat through symlinks; a dangling symlink then raises ``FileNotFoundError``
     instead of being archived (#1417). Fall back to storing the symlink itself
-    in that case, matching the pre-1.0 behavior, and warn.
+    in that case, matching the pre-1.0 behavior, and warn. The same applies to
+    a symlink resolving to a directory: the only ones that reach here are loop
+    symlinks pruned from the walk, and dereferencing one would recurse forever.
     """
-    if tar.dereference and filepath.is_symlink() and not filepath.exists():
+    if (
+        tar.dereference
+        and filepath.is_symlink()
+        and (not filepath.exists() or filepath.is_dir())
+    ):
         rich_warning(
-            f"{filepath} is a dangling symlink; storing it as a symlink instead "
-            'of resolving it. Set sdist.resolve-symlinks = "none" to silence '
-            "this warning."
+            f"{filepath} is a symlink that can't be resolved (dangling, or a "
+            "directory symlink loop); storing it as a symlink instead. Set "
+            'sdist.resolve-symlinks = "none" to silence this warning.'
         )
         tar.dereference = False
         try:
@@ -168,12 +174,14 @@ def build_sdist(
                 sdist_dir / filename, mode="wb", compresslevel=9, mtime=timestamp
             )
         )
+        resolve_symlinks = settings.sdist.resolve_symlinks
+        assert resolve_symlinks is not None
         tar = stack.enter_context(
             tarfile.TarFile(
                 fileobj=gzip_container,
                 mode="w",
                 format=tarfile.PAX_FORMAT,
-                dereference=settings.sdist.resolve_symlinks == "all",
+                dereference=resolve_symlinks == "all",
             )
         )
         assert settings.sdist.inclusion_mode is not None
@@ -184,12 +192,30 @@ def build_sdist(
                 exclude=settings.sdist.exclude,
                 build_dir=settings.build_dir,
                 mode=settings.sdist.inclusion_mode,
+                resolve_symlinks=resolve_symlinks,
+                yield_loop_symlinks=True,
             )
         )
         for filepath in paths:
+            # In "external" mode, a file symlink pointing outside the project
+            # is stored dereferenced: add its target under the link's name.
+            # A dangling one can't be resolved, so store it as-is and warn.
+            name = filepath
+            if (
+                resolve_symlinks == "external"
+                and filepath.is_symlink()
+                and symlink_escapes(filepath)
+            ):
+                if filepath.exists():
+                    name = filepath.resolve()
+                else:
+                    rich_warning(
+                        f"{filepath} is a dangling symlink pointing outside the "
+                        "project; storing it as a symlink instead of resolving it."
+                    )
             add_path_to_tar(
                 tar,
-                filepath,
+                name,
                 arcname=srcdirname / filepath,
                 tar_filter=normalize_tar_info if reproducible else lambda x: x,
             )
