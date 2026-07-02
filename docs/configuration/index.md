@@ -134,7 +134,7 @@ The following behaviors are affected by `minimum-version`:
   replaced with `build.targets` and `build.verbose`. The CMake minimum version
   will be detected if not given.
 - `minimum-version` 0.12+ (or unset) uses `"default"` instead of `"classic"` as
-  the default for `sdist.include-mode`.
+  the default for `sdist.inclusion-mode`.
 - `minimum-version` 1.0+ (or unset) deprecates the `tool.scikit-build.metadata`
   table in favor of the standard top-level `[[tool.dynamic-metadata]]`; see
   [](./dynamic.md).
@@ -208,7 +208,7 @@ control this, without reading `.gitignore`, use:
 
 ```toml
 [tool.scikit-build]
-sdist.include-mode = "manual"
+sdist.inclusion-mode = "manual"
 ```
 
 There's also a `"classic"` mode, which fully traverses all directories to check

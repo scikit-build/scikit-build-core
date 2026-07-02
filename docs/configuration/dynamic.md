@@ -72,8 +72,10 @@ unless `minimum-version` is set below `1.0`.
 
 We provide some built-in plugins in `scikit_build_core.metadata`. These work in
 either mode with the same `provider` string (e.g.
-`scikit_build_core.metadata.regex`), though the modern
-`[[tool.dynamic-metadata]]` mode always requires a `field =` key.
+`scikit_build_core.metadata.regex`). In the modern `[[tool.dynamic-metadata]]`
+mode, a `field =` key is normally required, but it can be omitted for
+fixed-target plugins that declare a default: `setuptools_scm` defaults to
+`field = "version"` and `fancy_pypi_readme` defaults to `field = "readme"`.
 
 Third party plugins (like those inside the `dynamic-metadata` package) and
 custom plugins are fully supported in the new mode.
