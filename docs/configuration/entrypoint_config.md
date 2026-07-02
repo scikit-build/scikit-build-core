@@ -25,8 +25,10 @@ state, e.g. `"wheel"`) and `env` (the environment mapping) are matched by
 parameter name, and a `**kwargs` provider receives both. A provider may accept
 any subset -- both, either one, or none. The callable is invoked exactly once.
 
-It is registered under one of two groups; the **group** selects the precedence
-level, and the entry-point name is arbitrary:
+The callable is registered under either the `scikit-build-core.config.default`
+or the `scikit-build-core.config.override` entry-point group; the group selects
+the precedence level. The entry-point name is arbitrary (it only affects
+ordering, see below):
 
 ```{code-block} toml
 :caption: pyproject.toml of the provider package
@@ -60,10 +62,9 @@ The full precedence order, highest to lowest, is:
 6. `default` entry-point providers
 7. built-in defaults
 
-A package may register providers in both groups, and the entry-point name is
-free-form. When several providers are registered in the same group, they are
-applied in sorted name order and the alphabetically-first name wins on
-conflicts.
+A package may register providers in both groups. When several providers are
+registered in the same group, they are applied in sorted name order and the
+alphabetically-first name wins on conflicts.
 
 ## Validation
 
@@ -100,6 +101,12 @@ def config(*, state, env):
         ]
     }
 ```
+
+Note that `inherit.append`/`inherit.prepend` in a provider's `overrides` joins
+with the provider's _own_ table only. Merging with the project's configuration
+happens later, per the precedence order above: tables merge key-by-key across
+levels, but a list is taken wholesale from the highest-precedence level that
+sets it.
 
 ## Opting out
 

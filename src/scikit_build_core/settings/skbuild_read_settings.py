@@ -351,6 +351,12 @@ class SettingsReader:
                 state=state, env=environ
             ):
                 ep_skb = copy.deepcopy(ep_table)
+                # Any [[overrides]] in the provider table (including inherit
+                # append/prepend) resolve against the provider's own table
+                # here; cross-source merging happens later in SourceChain,
+                # which merges dicts but takes lists wholesale from the
+                # highest-precedence source. A future refactor could process
+                # overrides on the merged view instead.
                 ep_matched, ep_overridden = process_overrides(
                     ep_skb, state=state, env=env, retry=retry
                 )
