@@ -57,6 +57,7 @@ from ._editable import (
 )
 from ._init import setup_logging
 from ._pathutil import (
+    NON_PLATLIB_REBUILD_MSG,
     iter_force_include,
     packages_to_file_mapping,
     resolve_from_sdist_force_include,
@@ -387,14 +388,19 @@ def _build_wheel_impl_impl(
             reproducible=settings.wheel.reproducible,
         )
 
-        # A rebuildable editable cannot use an absolute wheel.install-dir (an
-        # AssertionError is raised earlier), so install_dir sits under the target
-        # lib; re-point it into the persistent install tree, and bake the same
-        # SKBUILD_<targetlib>_DIR so an absolute ${SKBUILD_*_DIR}/... destination
-        # also lands there.
+        # A rebuildable editable re-points install_dir into the persistent
+        # install tree and bakes the same SKBUILD_<targetlib>_DIR so an absolute
+        # ${SKBUILD_*_DIR}/... destination lands there too. The install tree only
+        # covers the target lib, so wheel.install-dir must resolve under it; a
+        # non-platlib (or absolute) tree cannot be rebuilt and raises the clear
+        # guard here rather than a raw relative_to() ValueError.
         editable_rebuild_cache: dict[str, str | Path] | None = None
         if editable_rebuild:
-            install_dir = targetlib_dir / install_dir.relative_to(wheel_dirs[targetlib])
+            try:
+                install_relative = install_dir.relative_to(wheel_dirs[targetlib])
+            except ValueError:
+                raise AssertionError(NON_PLATLIB_REBUILD_MSG) from None
+            install_dir = targetlib_dir / install_relative
             editable_rebuild_cache = {f"SKBUILD_{targetlib.upper()}_DIR": targetlib_dir}
 
         # Include the metadata license.file entry if provided
@@ -574,11 +580,16 @@ def _build_wheel_impl_impl(
                     msg = "Editable inplace mode requires at least one package"
                     raise AssertionError(msg)
 
+                # Only an inplace CMake build has a persistent build dir to
+                # rebuild in (get_build_dir returns the source dir). Without
+                # CMake, build_dir is a temp dir that is deleted after the build,
+                # so bake None and let rebuild() raise the friendly error instead
+                # of recreating an empty temp dir and failing in CMake.
                 for filename, editable_contents in editable_inplace_files(
                     name=normalized_name,
                     packages=packages,
                     package_paths=list(str_pkgs),
-                    source_dir=build_dir.resolve(),
+                    source_dir=build_dir.resolve() if cmake is not None else None,
                     build_options=build_options,
                     settings=settings,
                 ).items():
