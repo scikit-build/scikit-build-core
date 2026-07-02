@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sysconfig
 import tarfile
 from pathlib import Path
 
@@ -99,6 +100,11 @@ def can_symlink(tmp_path: Path) -> None:
         )
 
 
+@pytest.mark.skipif(
+    sysconfig.get_platform().startswith(("mingw", "msys")),
+    reason="MSYS Python resolves relative symlink targets lexically, so the"
+    " nested escaping links read as dangling",
+)
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
 @pytest.mark.parametrize("mode", [None, "all", "external", "none", "classic"])
 def test_pep517_sdist_symlink(tmp_path: Path, mode: str | None) -> None:
