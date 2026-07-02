@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = {
     "copy",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._vendor.pyproject_metadata.constants",
     "packaging",
     "packaging.version",
     "typing",
