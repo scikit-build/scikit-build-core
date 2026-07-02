@@ -562,10 +562,9 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     # translates cmake_install_dir relative to src, so the editable source root
     # must also be src, not "." (which would create a junk ./wrapper_example).
     monkeypatch.chdir(tmp_path)
-    # Materialize the source tree so Path.resolve() is deterministic: before
-    # Python 3.10, resolving a nonexistent path is unreliable (Windows leaves it
-    # relative, cygwin keeps 8.3 short names). A real editable install always has
-    # the source present.
+    # Materialize the source tree: resolving a nonexistent path is unreliable
+    # before Python 3.10 (Windows leaves it relative), and samefile below needs
+    # to stat it. A real editable install always has the source present.
     (tmp_path / "src" / "wrapper_example").mkdir(parents=True)
     dist = setuptools.Distribution(
         {
@@ -584,7 +583,10 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     cmd.editable_mode = True
 
     install_dir = cmd._get_install_dir()
-    assert install_dir == (tmp_path / "src" / "wrapper_example").resolve()
+    # samefile compares stat identity, immune to Windows 8.3 short-name
+    # aliasing (RUNNER~1 vs runneradmin) that resolve() misses on cygwin.
+    assert install_dir.is_absolute()
+    assert install_dir.samefile(tmp_path / "src" / "wrapper_example")
 
 
 def test_wrapper_setup_raises_setup_error():
