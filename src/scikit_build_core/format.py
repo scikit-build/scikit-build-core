@@ -39,6 +39,8 @@ class PyprojectFormatter(TypedDict, total=False):
 
     cache_tag: str
     """Tag used by the import machinery in the filenames of cached modules, i.e. ``sys.implementation.cache_tag``."""
+    name: str
+    """The normalized project name (canonicalized per :pep:`503`, then ``-`` replaced by ``_``), matching the wheel/sdist filename. Handy to disambiguate a shared ``build-dir`` across a workspace, e.g. ``build-dir = "build/{name}/{wheel_tag}"``. Not available while resolving ``build.requires``, since metadata is not read yet at that point."""
     wheel_tag: str
     """The tags as computed for the wheel."""
     build_type: str
@@ -74,6 +76,7 @@ def pyproject_format(
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
     | None = ...,
     tags: WheelTag | None = ...,
+    name: str | None = ...,
 ) -> PyprojectFormatter: ...
 
 
@@ -89,6 +92,7 @@ def pyproject_format(
         | None
     ) = None,
     tags: WheelTag | None = None,
+    name: str | None = None,
     dummy: bool = False,
 ) -> PyprojectFormatter | dict[str, str]:
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
@@ -118,6 +122,8 @@ def pyproject_format(
         res["wheel_tag"] = str(tags)
     if state is not None:
         res["state"] = state
+    if name is not None:
+        res["name"] = name
     # Construct the final dict including the always known keys
     return res
 

@@ -92,7 +92,9 @@ def test_absolute_install_dir_rejects_unknown_subdir(tmp_path: Path) -> None:
         _install_dir(tmp_path, settings)
 
 
-def _build_dir(tmp_path: Path, settings: ScikitBuildSettings) -> Path:
+def _build_dir(
+    tmp_path: Path, settings: ScikitBuildSettings, *, name: str = "pkg"
+) -> Path:
     tags = get_wheel_tag(settings, targetlib="platlib")
     return get_build_dir(
         settings,
@@ -101,6 +103,7 @@ def _build_dir(tmp_path: Path, settings: ScikitBuildSettings) -> Path:
         editable=False,
         has_cmake=True,
         fallback=tmp_path / "build",
+        name=name,
     )
 
 
@@ -113,6 +116,15 @@ def test_build_dir_explicit(tmp_path: Path) -> None:
     settings.build_dir = "custom-build"
 
     assert _build_dir(tmp_path, settings) == Path("custom-build")
+
+
+def test_build_dir_name_placeholder(tmp_path: Path) -> None:
+    # A shared build-dir setting (e.g. across a uv/hatch workspace) is
+    # disambiguated per-project with {name}.
+    settings = ScikitBuildSettings()
+    settings.build_dir = "build/{name}"
+
+    assert _build_dir(tmp_path, settings, name="my_pkg") == Path("build/my_pkg")
 
 
 def test_build_dir_inplace_editable_uses_source_dir(tmp_path: Path) -> None:
@@ -128,6 +140,7 @@ def test_build_dir_inplace_editable_uses_source_dir(tmp_path: Path) -> None:
         editable=True,
         has_cmake=True,
         fallback=tmp_path / "build",
+        name="pkg",
     )
 
     assert build_dir == tmp_path / "src"

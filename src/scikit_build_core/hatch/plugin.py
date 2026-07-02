@@ -15,6 +15,7 @@ __lazy_modules__ = {
     "importlib",
     "importlib.metadata",
     "packaging",
+    "packaging.utils",
     "packaging.version",
     "pathlib",
     "shutil",
@@ -32,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 from .._check_extra import warn_missing_extra
@@ -207,6 +209,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
         targetlib = get_targetlib(settings)
         assert targetlib == "platlib"
         tags = get_wheel_tag(settings, targetlib=targetlib)
+        # Normalized like the wheel/sdist filename, for the {name} build-dir placeholder
+        placeholder_name = canonicalize_name(
+            self.build_config.builder.metadata.name
+        ).replace("-", "_")
         build_dir = get_build_dir(
             settings,
             tags=tags,
@@ -214,6 +220,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             editable=editable,
             has_cmake=True,
             fallback=self.__tmp_dir / "build",
+            name=placeholder_name,
         )
         wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
         install_dir = get_install_dir(
