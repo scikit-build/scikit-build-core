@@ -373,6 +373,7 @@ docstring-code-format = true
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["T20", "ANN", "FBT001", "INP"]
 "noxfile.py" = ["T20", "TID251"]
+".agents/skills/**/*.py" = ["T20"]
 "src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
 "src/scikit_build_core/settings/**.py" = ["FBT001", "FA"]
