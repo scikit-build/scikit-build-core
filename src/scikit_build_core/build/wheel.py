@@ -334,6 +334,8 @@ def _build_wheel_impl_impl(
 
     # Get the closest (normally) importable name
     normalized_name = metadata.name.replace("-", "_").replace(".", "_")
+    # Normalized like the wheel/sdist filename, for the {name} build-dir placeholder
+    placeholder_name = metadata.canonical_name.replace("-", "_")
 
     if settings.wheel.cmake:
         cmake = CMake.default_search(version=settings.cmake.version, env=os.environ)
@@ -372,6 +374,7 @@ def _build_wheel_impl_impl(
             editable=editable,
             has_cmake=cmake is not None,
             fallback=build_tmp_folder / "build",
+            name=placeholder_name,
         )
         wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
         install_dir = get_install_dir(
@@ -401,6 +404,7 @@ def _build_wheel_impl_impl(
                 targetlib=targetlib,
                 tags=tags,
                 state=state,
+                name=placeholder_name,
             )
             prepare_editable_rebuild_dir(
                 targetlib_dir, guard=bool(settings.editable.rebuild_dir)

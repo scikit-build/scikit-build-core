@@ -21,6 +21,9 @@ visibility
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.cache_tag
    :no-index:
 
+.. autoattribute:: scikit_build_core.format.PyprojectFormatter.name
+   :no-index:
+
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.root
    :no-index:
 

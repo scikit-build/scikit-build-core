@@ -118,17 +118,21 @@ def get_build_dir(
     editable: bool,
     has_cmake: bool,
     fallback: Path,
+    name: str,
 ) -> Path:
     """
     Where CMake configures and builds: the source dir for inplace editable
     builds, the (formatted) configured ``build-dir``, or ``fallback`` otherwise.
+
+    ``name`` is the normalized project name, used to fill a ``{name}``
+    placeholder in ``build-dir``.
     """
     if has_cmake and editable and settings.editable.mode == "inplace":
         build_dir = Path(settings.cmake.source_dir)
     elif settings.build_dir:
         build_dir = Path(
             settings.build_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state)
+                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
             )
         )
     else:
@@ -144,6 +148,7 @@ def get_editable_rebuild_dir(
     targetlib: TargetLib,
     tags: WheelTag,
     state: WheelState,
+    name: str,
 ) -> Path:
     """
     Persistent install tree for a rebuildable redirect editable.
@@ -156,7 +161,7 @@ def get_editable_rebuild_dir(
     if settings.editable.rebuild_dir:
         return Path(
             settings.editable.rebuild_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state)
+                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()

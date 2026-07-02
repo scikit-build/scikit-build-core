@@ -1030,7 +1030,9 @@ speedups.
 ```
 
 There are several values you can access through Python's formatting syntax. See
-[](./formatted.md).
+[](./formatted.md). For example, `{name}` lets a single `build-dir` shared by
+every member of a uv or hatch workspace (e.g. via `SKBUILD_BUILD_DIR`) avoid
+collisions: `SKBUILD_BUILD_DIR=/path/to/cache/{name}/{cache_tag}`.
 
 Scikit-build-core also strictly validates configuration; if you need to disable
 this, you can:

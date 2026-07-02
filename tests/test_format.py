@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from scikit_build_core.format import RootPathResolver, pyproject_format
+from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -51,6 +52,20 @@ def test_dummy_plain_keys() -> None:
     # All known keys are present and produce "*" for a plain format.
     assert dummy["wheel_tag"] == "*"
     assert "{wheel_tag}".format(**dummy) == "*"
+    assert dummy["name"] == "*"
+    assert "{name}".format(**dummy) == "*"
+
+
+def test_name_key_omitted_by_default() -> None:
+    settings = ScikitBuildSettings()
+    assert "name" not in pyproject_format(settings=settings)
+
+
+def test_name_key_present_when_given() -> None:
+    settings = ScikitBuildSettings()
+    formatted = pyproject_format(settings=settings, name="my_pkg")
+    assert formatted["name"] == "my_pkg"
+    assert "build/{name}".format(**formatted) == "build/my_pkg"
 
 
 @pytest.mark.parametrize(
