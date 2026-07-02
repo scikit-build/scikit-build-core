@@ -107,10 +107,17 @@ def get_default(cmake: CMake) -> str | None:
 
 def _strip_flags(compiler: str) -> str:
     """
-    Drop flag-like tokens (starting with "-") from a sysconfig compiler
-    string, keeping any leading compiler-wrapper tokens (e.g. "ccache gcc").
+    Keep only the leading non-flag tokens of a sysconfig compiler string
+    (e.g. a compiler wrapper such as "ccache gcc"), stopping at the first
+    flag-like token (starting with "-"). Tokens after that point are dropped
+    even if they don't start with "-" themselves, since they may be a flag's
+    value argument (e.g. "arm64" in "-arch arm64") rather than a wrapper.
     """
-    tokens = [tok for tok in shlex.split(compiler) if not tok.startswith("-")]
+    tokens = []
+    for tok in shlex.split(compiler):
+        if tok.startswith("-"):
+            break
+        tokens.append(tok)
     return " ".join(tokens)
 
 

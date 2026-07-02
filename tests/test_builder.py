@@ -957,6 +957,11 @@ def test_set_environment_for_gen_strips_cc_cxx_flags(
         ("c++ -pthread", "c++"),
         ("ccache gcc", "ccache gcc"),
         ("sccache cc -O2", "sccache cc"),
+        # macOS/PyPy sysconfig CC includes a flag with a non-flag-like value
+        # argument (e.g. "-arch arm64"); the value must not be mistaken for a
+        # wrapper token and kept. Regression test for the pypy-3.10 macOS CI
+        # failure on #1418.
+        ("gcc -pthread -arch arm64", "gcc"),
     ],
 )
 def test_set_environment_for_gen_keeps_compiler_wrappers(
