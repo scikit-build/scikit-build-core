@@ -630,6 +630,43 @@ def test_dynamic_wheel_defaults_to_static(
     assert dynamic_wheel_fields(entries) == frozenset()
 
 
+def test_dynamic_wheel_same_field_combines_with_or(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two providers reporting the same field combine with OR; True is not retracted."""
+    from scikit_build_core.builder._load_provider import dynamic_wheel_fields
+
+    monkeypatch.chdir(tmp_path)
+    path_true = _write_dynamic_wheel_plugin(
+        "wheel_plugin_or_true",
+        """\
+        def dynamic_metadata(settings, project):
+            return {}
+
+        def dynamic_wheel(settings):
+            return {"dependencies": True}
+        """,
+    )
+    path_false = _write_dynamic_wheel_plugin(
+        "wheel_plugin_or_false",
+        """\
+        def dynamic_metadata(settings, project):
+            return {}
+
+        def dynamic_wheel(settings):
+            return {"dependencies": False}
+        """,
+    )
+    # A later False must not retract an earlier True (and vice versa).
+    entries = [
+        {"provider": {"path": path_true, "module": "wheel_plugin_or_true"}},
+        {"provider": {"path": path_false, "module": "wheel_plugin_or_false"}},
+    ]
+    assert dynamic_wheel_fields(entries) == frozenset({"dependencies"})
+    entries.reverse()
+    assert dynamic_wheel_fields(entries) == frozenset({"dependencies"})
+
+
 def test_array_plugin_requires_field() -> None:
     """A bundled generic plugin in the array form needs a 'field' setting."""
     from scikit_build_core.builder._load_provider import process_dynamic_metadata
