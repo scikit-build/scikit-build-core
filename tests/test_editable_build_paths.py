@@ -87,13 +87,14 @@ def test_editable_inplace_no_build_dir_bakes_none_path(chdir_tmp: Path) -> None:
     # install_inplace args: known_packages, search_paths, path, rebuild,
     # verbose, build_options. The path (3rd) must be the None sentinel, not a
     # since-deleted temp build dir. Parse the call so the check does not depend
-    # on the source paths' text (e.g. a /tmp build root on Linux).
+    # on the source paths' text (e.g. a /tmp build root on Linux). Walk the
+    # whole module: on 3.15+ (PEP 829) the call is wrapped in an entrypoint()
+    # function for the .start file rather than emitted top-level.
     (call,) = [
-        node.value
-        for node in ast.parse(shim).body
-        if isinstance(node, ast.Expr)
-        and isinstance(node.value, ast.Call)
-        and getattr(node.value.func, "id", None) == "install_inplace"
+        node
+        for node in ast.walk(ast.parse(shim))
+        if isinstance(node, ast.Call)
+        and getattr(node.func, "id", None) == "install_inplace"
     ]
     path_arg = call.args[2]
     assert isinstance(path_arg, ast.Constant)
