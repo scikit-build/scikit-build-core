@@ -16,6 +16,7 @@ from scikit_build_core.build._editable import (
     get_packages,
     libdir_to_installed,
     mapping_to_modules,
+    package_search_dirs,
 )
 from scikit_build_core.build._pathutil import (
     is_module,
@@ -313,6 +314,73 @@ def test_navigate_editable_remapped_namespace(
     assert virtualenv.execute(read_data) == "payload"
 
 
+def test_package_search_dirs_namespace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # A nested namespace package's sys.path entry is the src root (stripped by
+    # the key depth), not one level shallower -- otherwise the leaf leaks as a
+    # top-level import (#1417).
+    monkeypatch.chdir(tmp_path)
+    # Build the expected value from Path.cwd() like the code under test does:
+    # deriving it from tmp_path is not alias-proof (on cygwin, TEMP holds a
+    # Windows 8.3 short name like RUNNER~1 while getcwd returns the long form,
+    # and resolve() does not reliably canonicalize between them).
+    src = str(Path.cwd().joinpath("src").resolve())
+    assert package_search_dirs({"myns/mypkg": str(Path("src") / "myns" / "mypkg")}) == [
+        src
+    ]
+    # A plain package strips exactly one level, unchanged from before.
+    assert package_search_dirs({"mypkg": str(Path("src") / "mypkg")}) == [src]
+
+
+def test_navigate_editable_namespace_package(
+    tmp_path: Path, virtualenv: VEnv, monkeypatch: pytest.MonkeyPatch
+):
+    # Regression test for #1417: an auto-discovered nested namespace package
+    # (myns/mypkg) must be importable as `import myns.mypkg`, and must not leak
+    # the leaf as a top-level `import mypkg`.
+    site_packages = virtualenv.purelib
+
+    source_dir = tmp_path / "source"
+    leaf = source_dir / "src" / "myns" / "mypkg"
+    leaf.mkdir(parents=True)
+    monkeypatch.chdir(source_dir)
+    leaf.joinpath("__init__.py").write_text("value = 'ns'\n")
+
+    packages = {"myns/mypkg": str(Path("src") / "myns" / "mypkg")}
+    mapping = packages_to_file_mapping(
+        packages=packages,
+        platlib_dir=site_packages,
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    search_dirs = package_search_dirs(packages)
+    # The sys.path entry is the src root, not src/myns. Expected value built
+    # from Path.cwd() like the code under test, to stay immune to Windows 8.3
+    # short-name aliasing in tmp_path on cygwin.
+    assert search_dirs == [str(Path.cwd().joinpath("src").resolve())]
+
+    files = editable_redirect_files(
+        libdir=site_packages,
+        mapping=mapping,
+        name="myns_mypkg",
+        packages=search_dirs,
+        reload_dir=None,
+        settings=ScikitBuildSettings(),
+        use_start=False,
+    )
+    for fname, content in files.items():
+        site_packages.joinpath(fname).write_bytes(content)
+
+    assert virtualenv.execute("import myns.mypkg; print(myns.mypkg.value)") == "ns"
+    # The leaf must not be importable as a top-level module.
+    out = virtualenv.execute(
+        "import importlib.util; print(importlib.util.find_spec('mypkg') is not None)"
+    )
+    assert out == "False"
+
+
 def test_packages_to_file_mapping_module(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
@@ -550,6 +618,25 @@ def test_editable_inplace_files_module_entry(tmp_path: Path):
     # install_inplace's first argument is the known_packages list.
     assert "install_inplace(['hello']," in py
     assert "hello.py" not in py.partition("install_inplace(")[2].partition("]")[0]
+
+
+def test_editable_inplace_files_namespace_top_level(tmp_path: Path):
+    # A nested namespace package must wrap its top-level namespace name (myns),
+    # not the leaf (mypkg), or `import myns.mypkg` fails while `import mypkg`
+    # wrongly succeeds (#1417).
+    files = editable_inplace_files(
+        name="myns_mypkg",
+        packages={"myns/mypkg": str(Path("src") / "myns" / "mypkg")},
+        package_paths=[str(tmp_path / "src")],
+        source_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(),
+        use_start=False,
+    )
+
+    py = files["_editable_skbc_myns_mypkg.py"].decode()
+    # The finder matches fullname.partition(".")[0], so the wrapped name is the
+    # top-level namespace, and the leaf never appears as a known package.
+    assert "install_inplace(['myns']," in py
 
 
 def test_editable_inplace_files_bakes_rebuild_flag(tmp_path: Path):
@@ -951,6 +1038,55 @@ def test_collect_search_locations_data_only_install_dir(tmp_path: Path):
     assert str(Path("pkg")) in directories["pkg"]
     # The data file itself is not an importable module.
     assert "pkg.data" not in libdir_to_installed(libdir)
+
+
+def test_collect_search_locations_namespace_ancestor(tmp_path: Path):
+    # A nested namespace package (myns/mypkg) must register its namespace
+    # ancestor (myns) as a search location so the redirect finder can synthesize
+    # the namespace package, making `import myns.mypkg` work (#1417).
+    libdir = tmp_path / "site"
+    libdir.mkdir()
+    src = tmp_path / "src"
+    mapping = {
+        str(src / "myns" / "mypkg" / "__init__.py"): str(
+            libdir / "myns" / "mypkg" / "__init__.py"
+        )
+    }
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    # The leaf is a regular package; the namespace ancestor is not.
+    assert packages == ["myns.mypkg"]
+    assert "myns" not in packages
+    # The namespace ancestor is registered, pointing at the parent directory.
+    assert "myns" in directories
+    assert str(src / "myns") in directories["myns"]
+
+
+def test_collect_search_locations_install_dir_prefix_not_namespace(tmp_path: Path):
+    # A wheel.install-dir prefix (other_pkg/) applies only to CMake-installed
+    # files; the Python package (simplest) stays unprefixed. The prefix is not a
+    # namespace package, so it must not be synthesized as a namespace ancestor --
+    # doing so makes the redirect finder claim `other_pkg`, shadowing a real
+    # top-level package and breaking its import/rebuild (#1427).
+    libdir = tmp_path / "site"
+    libdir.mkdir()
+    src = tmp_path / "src"
+    (src / "simplest").mkdir(parents=True)
+    (src / "simplest" / "__init__.py").touch()
+    # CMake output installed under the install-dir prefix, with no __init__.
+    mod_dir = libdir / "other_pkg" / "simplest"
+    mod_dir.mkdir(parents=True)
+    (mod_dir / "_module.py").touch()
+    mapping = {
+        str(src / "simplest" / "__init__.py"): str(libdir / "simplest" / "__init__.py"),
+    }
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    assert packages == ["simplest"]
+    # The install-dir prefix is not registered as a synthesizable namespace.
+    assert "other_pkg" not in directories
 
 
 def test_collect_search_locations_pxd_packages(tmp_path: Path):

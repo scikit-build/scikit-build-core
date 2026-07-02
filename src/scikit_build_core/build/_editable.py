@@ -37,6 +37,7 @@ __all__ = [
     "get_packages",
     "libdir_to_installed",
     "mapping_to_modules",
+    "package_search_dirs",
 ]
 
 
@@ -231,11 +232,13 @@ def editable_inplace_files(
     """
     if use_start is None:
         use_start = sys.version_info >= (3, 15)
-    # The importable top-level name is the entry's leaf with any module suffix
-    # stripped -- a package dir keeps its name (``mypkg``), a single-module entry
-    # drops the extension (``hello.py`` -> ``hello``, #888) so it matches the
-    # finder's ``fullname.partition(".")[0]`` check.
-    known_packages = sorted({Path(v).name.partition(".")[0] for v in packages.values()})
+    # The importable top-level name is the first component of the package key
+    # with any module suffix stripped -- a nested namespace package
+    # (``myns/mypkg``) is imported as ``myns`` (not the leaf ``mypkg``), a plain
+    # package keeps its name (``mypkg``), and a single-module entry drops the
+    # extension (``hello.py`` -> ``hello``, #888). This matches the finder's
+    # ``fullname.partition(".")[0]`` check.
+    known_packages = sorted({Path(k).parts[0].partition(".")[0] for k in packages})
     editable_txt = editable_inplace(
         known_packages=known_packages,
         search_paths=list(package_paths),
@@ -294,6 +297,27 @@ def get_packages(
                 return {rel: str(path)}
 
     return {}
+
+
+def package_search_dirs(packages: Mapping[str, str]) -> list[str]:
+    """
+    Compute the ``sys.path`` search directories for a set of packages.
+
+    Each package key records where the package lands relative to the platlib
+    root, so its source directory must be stripped by as many levels as the key
+    is deep to yield the directory to put on ``sys.path``: a nested namespace
+    package ``{"myns/mypkg": "src/myns/mypkg"}`` yields ``src`` (so
+    ``import myns.mypkg`` works), while a plain ``{"mypkg": "src/mypkg"}`` yields
+    ``src`` too. Stripping only one level (``.parent``) breaks nested packages by
+    exposing the leaf as a top-level import.
+    """
+    result: list[str] = []
+    for key, value in packages.items():
+        search = Path.cwd().joinpath(value)
+        for _ in Path(key).parts:
+            search = search.parent
+        result.append(str(search.resolve()))
+    return result
 
 
 def mapping_to_modules(mapping: dict[str, str], libdir: Path) -> dict[str, str]:
@@ -386,6 +410,23 @@ def collect_search_locations(
             parent = module.rpartition(".")[0]
         if parent:
             directories.setdefault(parent, set()).add(directory)
+            # Register every namespace ancestor (PEP 420) of a *package* -- a
+            # directory with an importable ``__init__`` -- so the redirect finder
+            # can synthesize them. ``directory`` is then the package's own
+            # directory, so each ancestor sits one level up (``myns/mypkg`` ->
+            # ``myns``); without this a nested namespace package's top ancestor is
+            # never registered and ``import myns`` fails. Only packages drive this:
+            # a loose file's containing chain is not a namespace hierarchy, so a
+            # ``wheel.install-dir`` prefix over a bare installed module (e.g.
+            # ``other_pkg/simplest/_module.so``) must not synthesize ``other_pkg``,
+            # which would shadow a real top-level package (#1427).
+            if is_init:
+                ancestor = parent
+                ancestor_dir = directory
+                while "." in ancestor:
+                    ancestor = ancestor.rpartition(".")[0]
+                    ancestor_dir = str(Path(ancestor_dir).parent)
+                    directories.setdefault(ancestor, set()).add(ancestor_dir)
 
     return (
         {pkg: sorted(dirs) for pkg, dirs in directories.items()},
