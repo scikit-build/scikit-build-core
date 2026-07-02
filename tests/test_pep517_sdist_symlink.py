@@ -11,7 +11,8 @@ from scikit_build_core.build import build_sdist
 PREFIX = "cmake_example-0.0.1"
 
 # Expected tar member type per resolve-symlinks mode: "reg", "sym", or None
-# (absent from the archive).
+# (absent from the archive). A directory symlink loop cannot be resolved, so
+# every mode stores it as a symlink member (on any platform).
 EXPECTED = {
     "all": {
         "CMakeLists_link.txt": "reg",
@@ -20,7 +21,7 @@ EXPECTED = {
         "ext_file.txt": "reg",
         "ext_dir": None,
         "ext_dir/data.txt": "reg",
-        "src/loop": None,
+        "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
     "external": {
@@ -50,7 +51,7 @@ EXPECTED = {
         "ext_file.txt": "sym",
         "ext_dir": None,
         "ext_dir/data.txt": "reg",
-        "src/loop": None,
+        "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
 }

@@ -418,6 +418,10 @@ class SDistSettings:
     * "classic": Store file symlinks as-is, but follow directory symlinks,
       copying their contents (scikit-build-core 0.x behavior).
 
+    A symlink that can't be resolved (dangling, or a directory symlink loop)
+    is stored as a symlink in every mode, with a warning if it was supposed to
+    be resolved.
+
     If you don't set this, it will be "all" unless you set the minimum version
     below 1.0, in which case it will be "classic" to preserve backward
     compatibility.

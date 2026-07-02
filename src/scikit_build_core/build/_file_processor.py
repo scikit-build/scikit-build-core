@@ -148,6 +148,21 @@ def each_unignored_file(
                 dirpath,
             )
             dirs.clear()
+            # A loop symlink can't be followed in any mode; store the link
+            # itself so it isn't silently dropped. (On Windows os.walk may
+            # classify it as a file instead, yielding it below.)
+            if dirpath.is_symlink() and match_path(
+                dirpath.parent,
+                dirpath,
+                include_spec,
+                global_exclude_spec,
+                builtin_exclude_spec,
+                user_exclude_spec,
+                nested_excludes,
+                is_path=False,
+                explicit=explicit,
+            ):
+                yield dirpath
             continue
         if key is not None:
             ancestor_keys[dirstr] = parent_keys | {key}

@@ -103,13 +103,19 @@ def add_path_to_tar(
     ``tar.dereference`` (``sdist.resolve-symlinks = "all"``) makes ``tar.add``
     stat through symlinks; a dangling symlink then raises ``FileNotFoundError``
     instead of being archived (#1417). Fall back to storing the symlink itself
-    in that case, matching the pre-1.0 behavior, and warn.
+    in that case, matching the pre-1.0 behavior, and warn. The same applies to
+    a symlink resolving to a directory: the only ones that reach here are loop
+    symlinks pruned from the walk, and dereferencing one would recurse forever.
     """
-    if tar.dereference and filepath.is_symlink() and not filepath.exists():
+    if (
+        tar.dereference
+        and filepath.is_symlink()
+        and (not filepath.exists() or filepath.is_dir())
+    ):
         rich_warning(
-            f"{filepath} is a dangling symlink; storing it as a symlink instead "
-            'of resolving it. Set sdist.resolve-symlinks = "none" to silence '
-            "this warning."
+            f"{filepath} is a symlink that can't be resolved (dangling, or a "
+            "directory symlink loop); storing it as a symlink instead. Set "
+            'sdist.resolve-symlinks = "none" to silence this warning.'
         )
         tar.dereference = False
         try:
