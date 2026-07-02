@@ -240,3 +240,35 @@ def test_uses_ninja_generator(
         monkeypatch.setenv("CMAKE_ARGS", cmake_args)
     settings = ScikitBuildSettings(cmake=CMakeSettings(args=args))
     assert _uses_ninja_generator(settings) is expected
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        pytest.param(["-GNinja"], {"ninja>=1.5"}, id="forced-ninja"),
+        pytest.param([], set(), id="unset"),
+    ],
+)
+def test_ninja_make_fallback_respects_forced_generator(
+    args: list[str],
+    expected: set[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """
+    The make fallback must not suppress the ninja requirement when the Ninja
+    generator is explicitly selected - make cannot substitute for it. See #953.
+    """
+    from scikit_build_core.builder import get_requires
+    from scikit_build_core.settings.skbuild_model import (
+        CMakeSettings,
+        ScikitBuildSettings,
+    )
+
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    # Force the make-fallback branch: unknown platform with make available.
+    monkeypatch.setattr(get_requires, "is_known_platform", lambda _: False)
+    monkeypatch.setattr(
+        get_requires, "get_make_programs", lambda: iter([Path("make/path")])
+    )
+    settings = ScikitBuildSettings(cmake=CMakeSettings(args=args))
+    assert set(GetRequires(settings).ninja()) == expected

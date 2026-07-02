@@ -170,8 +170,11 @@ class GetRequires:
             logger.debug("Found system Ninja: {} - not requiring PyPI package", ninja)
             return
 
+        # Only fall back to Make if the generator wasn't explicitly set to
+        # Ninja - Make can't substitute for a forced Ninja generator (#953).
         if (
-            self.settings.ninja.make_fallback
+            use_ninja is None
+            and self.settings.ninja.make_fallback
             and not is_known_platform(known_wheels("ninja"))
             and list(get_make_programs())
         ):
