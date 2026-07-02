@@ -143,6 +143,72 @@ relocatable with compiler flags — `-fprofile-abs-path` for gcov and
 `-ffile-prefix-map=<build>=<src>` (or `-fdebug-prefix-map=...` for debug info
 only) — for example via {confval}`cmake.define` or `CFLAGS`.
 
+## IDE IntelliSense can't find headers (`compile_commands.json`)
+
+Editor tooling — the VSCode C/C++ extension, clangd, and similar — resolves
+headers like `pybind11/pybind11.h` from your include paths. Two defaults hide
+them:
+
+- **Build dependencies live in a temporary overlay.** With build isolation (the
+  default for `pip install .`, `python -m build`, `uv build`, and `uv sync`),
+  binding libraries such as pybind11 and nanobind are installed into a throwaway
+  environment that is deleted after the build. CMake reports a path such as
+  `.../Temp/pip-build-env-xxxx/overlay/Lib/site-packages/pybind11/include`,
+  which no longer exists when your editor looks for it.
+- **The build directory is temporary.** Without {confval}`build-dir` set,
+  scikit-build-core builds in a temporary directory, so the
+  `compile_commands.json` CMake generates is discarded too.
+
+The fix is to preinstall the build dependencies, disable build isolation, set a
+persistent `build-dir`, and have CMake export a compile database:
+
+````{tab} pip
+
+```bash
+pip install scikit-build-core pybind11
+pip install --no-build-isolation --check-build-dependencies -ve . \
+  -Cbuild-dir=build \
+  -Ccmake.define.CMAKE_EXPORT_COMPILE_COMMANDS=1
+```
+
+````
+
+````{tab} uv
+
+```bash
+uv pip install scikit-build-core pybind11
+uv pip install --no-build-isolation -ve . \
+  -Cbuild-dir=build \
+  -Ccmake.define.CMAKE_EXPORT_COMPILE_COMMANDS=1
+```
+
+In a uv-managed project, disable isolation for your package instead, so
+`uv sync` reuses the environment's build dependencies rather than a discarded
+overlay:
+
+```toml
+[tool.uv]
+no-build-isolation-package = ["mypackage"]
+```
+
+````
+
+This writes `build/compile_commands.json` with real, persistent paths. You can
+set the build directory in `pyproject.toml` instead of on the command line:
+
+```toml
+[tool.scikit-build]
+build-dir = "build"
+```
+
+Then point your editor at the file. For clangd, add
+`--compile-commands-dir=build` (or a `.clangd` with a
+`CompileFlags.CompilationDatabase: build` entry); for the VSCode C/C++
+extension, set
+`"C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"`.
+See [editable installs](../configuration/index.md#editable-installs) for the
+related `--no-build-isolation` recommendations.
+
 ## A dependency's library ends up in `site-packages/bin` or `lib`
 
 If you build a shared dependency as part of your project (for example via
