@@ -161,6 +161,47 @@ wheel-repair tool. See [](#dynamic-linking) for all of the options.
 
 [GNUInstallDirs]: inv:cmake:cmake:module#module:GNUInstallDirs
 
+## Target output paths differ on MSVC (multi-config generators)
+
+Multi-config generators — Visual Studio (the default on Windows), Xcode, and
+Ninja Multi-Config — put each target's build artifact in a per-configuration
+subdirectory. A `main` executable lands at `build/Release/main.exe`, not
+`build/main.exe` the way it would with a single-config generator (Ninja,
+Makefiles). This bites when you reference a built file by an assumed path.
+
+Two rules keep this portable:
+
+- **Get artifacts into the wheel with `install(...)`, not by path.** The install
+  step strips the per-config subdirectory for you, and scikit-build-core only
+  copies the install tree into the wheel — files left in the build directory are
+  never packaged. When you do need the real path of a built target (in a custom
+  command, or `install(FILES ...)`), use the `$<TARGET_FILE:main>` generator
+  expression instead of writing out `Release/main.exe`.
+
+  ```cmake
+  add_executable(main main.cpp)
+  install(TARGETS main DESTINATION ${SKBUILD_SCRIPTS_DIR})
+  ```
+
+- **Pin `*_OUTPUT_DIRECTORY` with an empty generator expression.** If you set
+  `RUNTIME_OUTPUT_DIRECTORY` / `LIBRARY_OUTPUT_DIRECTORY` (for example to place
+  a module for an
+  [inplace editable build](../configuration/index.md#editable-installs)), append
+  `$<0:>` so multi-config generators don't add the config subdirectory back on.
+  This saves setting every `*_OUTPUT_DIRECTORY_<CONFIG>` variant by hand.
+
+  ```cmake
+  set_target_properties(mymod PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/mypkg$<0:>")
+  ```
+
+On Windows you can also sidestep multi-config entirely by building with the
+single-config Ninja generator: set `CMAKE_GENERATOR=Ninja` (or pass
+`cmake.args = ["-G", "Ninja"]`). Unlike the Visual Studio generator, Ninja does
+not set up the MSVC toolchain itself, so build from a Visual Studio Developer
+Command Prompt (or after running `vcvarsall.bat`). scikit-build-core already
+selects Ninja by default on non-MSVC Windows.
+
 ## Shipping a library to load with `ctypes`
 
 If your package is a thin `ctypes` (or `cffi`) wrapper around a CMake-built
