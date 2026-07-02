@@ -105,6 +105,22 @@ def get_default(cmake: CMake) -> str | None:
     return generator
 
 
+def _strip_flags(compiler: str) -> str:
+    """
+    Keep only the leading non-flag tokens of a sysconfig compiler string
+    (e.g. a compiler wrapper such as "ccache gcc"), stopping at the first
+    flag-like token (starting with "-"). Tokens after that point are dropped
+    even if they don't start with "-" themselves, since they may be a flag's
+    value argument (e.g. "arm64" in "-arch arm64") rather than a wrapper.
+    """
+    tokens = []
+    for tok in shlex.split(compiler):
+        if tok.startswith("-"):
+            break
+        tokens.append(tok)
+    return " ".join(tokens)
+
+
 def set_environment_for_gen(
     generator: str | None,
     cmake: CMake,
@@ -143,21 +159,24 @@ def set_environment_for_gen(
         return {}
 
     # Set Python's recommended CC and CXX if not already set by the user. Only
-    # the executable is kept; sysconfig may append flags (e.g. "c++ -pthread"),
-    # which would otherwise leak into tools like autotools sub-builds. CMake adds
-    # any flags it needs itself. See #1330. A key the user manages via the
-    # ``env`` table is left alone (even when it resolves to nothing), letting
-    # CMake pick the compiler from ``PATH`` for projects whose compiler probes
-    # break on the sysconfig compiler. See #1367.
+    # leading non-flag tokens (the compiler, plus any wrapper such as "ccache
+    # gcc") are kept; sysconfig may append flags (e.g. "c++ -pthread"), which
+    # would otherwise leak into tools like autotools sub-builds. CMake adds
+    # any flags it needs itself. See #1330. Trailing flags are dropped but a
+    # leading wrapper is preserved, since CMake understands multi-word CC/CXX
+    # values (the second word becomes CMAKE_<LANG>_COMPILER_ARG1). See #1417.
+    # A key the user manages via the ``env`` table is left alone (even when it
+    # resolves to nothing), letting CMake pick the compiler from ``PATH`` for
+    # projects whose compiler probes break on the sysconfig compiler. See #1367.
     if "CC" not in env and "CC" not in env_managed_keys:
         cc = sysconfig.get_config_var("CC")
         if cc:
-            env["CC"] = shlex.split(cc)[0]
+            env["CC"] = _strip_flags(cc)
 
     if "CXX" not in env and "CXX" not in env_managed_keys:
         cxx = sysconfig.get_config_var("CXX")
         if cxx:
-            env["CXX"] = shlex.split(cxx)[0]
+            env["CXX"] = _strip_flags(cxx)
 
     if "Ninja" in (generator or "Ninja"):
         ninja = best_program(get_ninja_programs(), version=ninja_settings.version)

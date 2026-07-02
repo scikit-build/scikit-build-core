@@ -1040,6 +1040,47 @@ def test_set_environment_for_gen_strips_cc_cxx_flags(
     assert env["CXX"] == "c++"
 
 
+@pytest.mark.parametrize(
+    ("cc", "expected"),
+    [
+        ("gcc", "gcc"),
+        ("c++ -pthread", "c++"),
+        ("ccache gcc", "ccache gcc"),
+        ("sccache cc -O2", "sccache cc"),
+        # macOS/PyPy sysconfig CC includes a flag with a non-flag-like value
+        # argument (e.g. "-arch arm64"); the value must not be mistaken for a
+        # wrapper token and kept. Regression test for the pypy-3.10 macOS CI
+        # failure on #1418.
+        ("gcc -pthread -arch arm64", "gcc"),
+    ],
+)
+def test_set_environment_for_gen_keeps_compiler_wrappers(
+    monkeypatch: pytest.MonkeyPatch, cc: str, expected: str
+) -> None:
+    # sysconfig's CC/CXX may be prefixed with a compiler wrapper (e.g.
+    # "ccache gcc"), common with pyenv/Gentoo/self-built Pythons. Only
+    # flag-like tokens (leading "-") should be stripped, not the wrapper.
+    # Regression test for #1417 (broken by the flag-stripping in #1330/#1331).
+    from scikit_build_core.builder import generator as gen_mod
+    from scikit_build_core.program_search import Program
+    from scikit_build_core.settings.skbuild_model import NinjaSettings
+
+    fake_ninja = Program(Path("/usr/bin/ninja"), Version("1.11.0"))
+    monkeypatch.setattr(gen_mod, "get_ninja_programs", lambda: [fake_ninja])
+    config_vars = {"CC": cc, "CXX": cc}
+    monkeypatch.setattr(sysconfig, "get_config_var", config_vars.get)
+
+    env: dict[str, str] = {}
+    gen_mod.set_environment_for_gen(
+        "Ninja",
+        CMake(Version("3.30"), Path("cmake")),
+        env,
+        NinjaSettings(),
+    )
+    assert env["CC"] == expected
+    assert env["CXX"] == expected
+
+
 def test_set_environment_for_gen_sysconfig_compiler(
     monkeypatch: pytest.MonkeyPatch,
 ):
