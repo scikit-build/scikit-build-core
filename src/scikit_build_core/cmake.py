@@ -2,10 +2,13 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "contextlib",
+    f"{__spec__.parent}._compat.builtins",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}._shutil",
-    f"{__spec__.parent}.builder",
+    f"{__spec__.parent}.builder.generator",
     f"{__spec__.parent}.errors",
+    f"{__spec__.parent}.file_api.query",
+    f"{__spec__.parent}.file_api.reply",
     f"{__spec__.parent}.program_search",
     "json",
     "packaging",

@@ -4,7 +4,11 @@ __lazy_modules__ = {
     "cattr",
     "cattr.preconf",
     "cattr.preconf.json",
-    f"{__spec__.parent}.model",
+    f"{__spec__.parent}.model.cache",
+    f"{__spec__.parent}.model.cmakefiles",
+    f"{__spec__.parent}.model.codemodel",
+    f"{__spec__.parent}.model.index",
+    f"{__spec__.parent}.model.toolchains",
     "json",
 }
 

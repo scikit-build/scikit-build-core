@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.build_cmake", "pathlib", "typing", "warnings"}
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
+    f"{__spec__.parent}.build_cmake",
+    "pathlib",
+    "typing",
+    "warnings",
+}
 
 import warnings
 from pathlib import Path

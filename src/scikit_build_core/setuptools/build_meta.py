@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.get_requires",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
     f"{__spec__.parent}.build_cmake",
     "typing",
 }

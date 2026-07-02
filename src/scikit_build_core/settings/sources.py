@@ -87,8 +87,9 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "dataclasses",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
 }
 
 import dataclasses

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.settings", "pathlib"}
+__lazy_modules__ = {f"{__spec__.parent}.settings.skbuild_model", "pathlib"}
 
 import dataclasses
 import sys
