@@ -242,20 +242,23 @@ def dynamic_wheel_fields(entries: Sequence[Mapping[str, Any]]) -> frozenset[str]
     be. The returned fields are marked ``Dynamic`` in the SDist's PKG-INFO
     (METADATA 2.2).
     """
-    fields: dict[str, bool] = {}
+    fields: set[str] = set()
     for provider, settings in load_dynamic_metadata(entries):
-        if isinstance(provider, DynamicMetadataWheelProtocol):
-            fields.update(provider.dynamic_wheel(settings))
+        if not isinstance(provider, DynamicMetadataWheelProtocol):
+            continue
+        for field, is_dynamic in provider.dynamic_wheel(settings).items():
+            if field not in _ALL_FIELDS:
+                msg = f"{field!r} is not a valid dynamic-metadata field"
+                raise KeyError(msg)
+            if field == "version" and is_dynamic:
+                msg = "'version' may not change between the SDist and wheel"
+                raise ValueError(msg)
+            # A field's merged value can change if any contributing provider's
+            # part may, so reports combine with OR: one True can't be retracted.
+            if is_dynamic:
+                fields.add(field)
 
-    for field, is_dynamic in fields.items():
-        if field not in _ALL_FIELDS:
-            msg = f"{field!r} is not a valid dynamic-metadata field"
-            raise KeyError(msg)
-        if field == "version" and is_dynamic:
-            msg = "'version' may not change between the SDist and wheel"
-            raise ValueError(msg)
-
-    return frozenset(field for field, is_dynamic in fields.items() if is_dynamic)
+    return frozenset(fields)
 
 
 def _merge_dict(
