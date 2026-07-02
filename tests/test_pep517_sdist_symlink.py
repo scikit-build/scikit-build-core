@@ -8,6 +8,53 @@ import pytest
 from scikit_build_core._logging import rich_warning
 from scikit_build_core.build import build_sdist
 
+PREFIX = "cmake_example-0.0.1"
+
+# Expected tar member type per resolve-symlinks mode: "reg", "sym", or None
+# (absent from the archive).
+EXPECTED = {
+    "all": {
+        "CMakeLists_link.txt": "reg",
+        "src_link": None,
+        "src_link/main.cpp": "reg",
+        "ext_file.txt": "reg",
+        "ext_dir": None,
+        "ext_dir/data.txt": "reg",
+        "src/loop": None,
+        "src/loop/main.cpp": None,
+    },
+    "external": {
+        "CMakeLists_link.txt": "sym",
+        "src_link": "sym",
+        "src_link/main.cpp": None,
+        "ext_file.txt": "reg",
+        "ext_dir": None,
+        "ext_dir/data.txt": "reg",
+        "src/loop": "sym",
+        "src/loop/main.cpp": None,
+    },
+    "none": {
+        "CMakeLists_link.txt": "sym",
+        "src_link": "sym",
+        "src_link/main.cpp": None,
+        "ext_file.txt": "sym",
+        "ext_dir": "sym",
+        "ext_dir/data.txt": None,
+        "src/loop": "sym",
+        "src/loop/main.cpp": None,
+    },
+    "classic": {
+        "CMakeLists_link.txt": "sym",
+        "src_link": None,
+        "src_link/main.cpp": "reg",
+        "ext_file.txt": "sym",
+        "ext_dir": None,
+        "ext_dir/data.txt": "reg",
+        "src/loop": None,
+        "src/loop/main.cpp": None,
+    },
+}
+
 
 @pytest.fixture
 def can_symlink(tmp_path: Path) -> None:
@@ -23,32 +70,54 @@ def can_symlink(tmp_path: Path) -> None:
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
-@pytest.mark.parametrize(
-    ("config_settings", "expected_type"),
-    [
-        pytest.param({}, "reg", id="resolve_all_default"),
-        pytest.param({"sdist.resolve-symlinks": "none"}, "sym", id="resolve_none"),
-    ],
-)
-def test_pep517_sdist_symlink(
-    tmp_path: Path,
-    config_settings: dict[str, list[str] | str],
-    expected_type: str,
-) -> None:
-    Path("CMakeLists_link.txt").symlink_to("CMakeLists.txt")
+@pytest.mark.parametrize("mode", [None, "all", "external", "none", "classic"])
+def test_pep517_sdist_symlink(tmp_path: Path, mode: str | None) -> None:
+    # Targets outside the project directory.
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    outside.joinpath("ext.txt").write_text("external file\n", encoding="utf-8")
+    outside.joinpath("extdir").mkdir()
+    outside.joinpath("extdir", "data.txt").write_text(
+        "external data\n", encoding="utf-8"
+    )
 
-    out = build_sdist(str(tmp_path), config_settings=config_settings or None)
+    # Internal file and directory symlinks, external file and directory
+    # symlinks, and a directory symlink loop.
+    Path("CMakeLists_link.txt").symlink_to("CMakeLists.txt")
+    Path("src_link").symlink_to("src", target_is_directory=True)
+    Path("ext_file.txt").symlink_to(outside / "ext.txt")
+    Path("ext_dir").symlink_to(outside / "extdir", target_is_directory=True)
+    Path("src", "loop").symlink_to(Path("..", "src"), target_is_directory=True)
+
+    config_settings: dict[str, list[str] | str] | None = (
+        {"sdist.resolve-symlinks": mode} if mode else None
+    )
+    out = build_sdist(str(tmp_path), config_settings=config_settings)
 
     with tarfile.open(tmp_path / out, "r:gz") as tar:
-        link_member = tar.getmember("cmake_example-0.0.1/CMakeLists_link.txt")
-        if expected_type == "reg":
-            assert link_member.isreg(), (
-                "The symlink should have been stored as a regular file"
-            )
-        else:
-            assert link_member.issym(), (
-                "The symlink should have been stored as a symlink"
-            )
+        members = {m.name: m for m in tar.getmembers()}
+        for name, expected in EXPECTED[mode or "all"].items():
+            member = members.get(f"{PREFIX}/{name}")
+            if expected is None:
+                assert member is None, f"{name} should not be in the SDist"
+            elif expected == "reg":
+                assert member is not None, f"{name} missing from the SDist"
+                assert member.isreg(), f"{name} should be a regular file"
+            else:
+                assert member is not None, f"{name} missing from the SDist"
+                assert member.issym(), f"{name} should be a symlink"
+
+        if mode == "external":
+            # The external file symlink is stored dereferenced.
+            fobj = tar.extractfile(f"{PREFIX}/ext_file.txt")
+            assert fobj is not None
+            assert fobj.read() == b"external file\n"
+        if mode in {"none", "external"}:
+            # Internal symlink targets are preserved as-is.
+            link = members[f"{PREFIX}/CMakeLists_link.txt"]
+            assert link.linkname == "CMakeLists.txt"
+            dir_link = members[f"{PREFIX}/src_link"]
+            assert dir_link.linkname == "src"
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")

@@ -569,7 +569,7 @@ class SettingsReader:
             self.settings.minimum_version is not None
             and self.settings.minimum_version < Version("1.0")
         ):
-            self.settings.sdist.resolve_symlinks = "none"
+            self.settings.sdist.resolve_symlinks = "classic"
         else:
             self.settings.sdist.resolve_symlinks = "all"
 
