@@ -65,6 +65,17 @@ def test_hatchling_enable_by_default_ignored(tmp_path: Path, monkeypatch) -> Non
     reader.validate_may_exit()
 
 
+def test_hatchling_wheel_exclude_rejected() -> None:
+    pyproject = {
+        "project": {"name": "x", "version": "0.1.0"},
+        "tool": {"scikit-build": {"wheel": {"exclude": ["**/*.a"]}}},
+    }
+    with pytest.raises(
+        ValueError, match=r"wheel.exclude is not supported for hatch builds"
+    ):
+        _validate_settings(pyproject)
+
+
 def set_hatchling_editable_mode(mode: str) -> None:
     pyproject = Path("pyproject.toml")
     pyproject.write_text(
