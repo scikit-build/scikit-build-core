@@ -139,6 +139,10 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "scikit-build.*.force-include is not supported, use hatch's force-include instead"
             raise ValueError(msg)
 
+        if settings.wheel.exclude:
+            msg = "wheel.exclude is not supported for hatch builds, use hatch's exclude instead"
+            raise ValueError(msg)
+
     # Requires Hatchling 1.22.0 to have an effect
     def dependencies(self) -> list[str]:
         settings = self._read_config().settings
