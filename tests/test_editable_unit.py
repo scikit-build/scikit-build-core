@@ -1057,6 +1057,32 @@ def test_collect_search_locations_namespace_ancestor(tmp_path: Path):
     assert str(src / "myns") in directories["myns"]
 
 
+def test_collect_search_locations_install_dir_prefix_not_namespace(tmp_path: Path):
+    # A wheel.install-dir prefix (other_pkg/) applies only to CMake-installed
+    # files; the Python package (simplest) stays unprefixed. The prefix is not a
+    # namespace package, so it must not be synthesized as a namespace ancestor --
+    # doing so makes the redirect finder claim `other_pkg`, shadowing a real
+    # top-level package and breaking its import/rebuild (#1427).
+    libdir = tmp_path / "site"
+    libdir.mkdir()
+    src = tmp_path / "src"
+    (src / "simplest").mkdir(parents=True)
+    (src / "simplest" / "__init__.py").touch()
+    # CMake output installed under the install-dir prefix, with no __init__.
+    mod_dir = libdir / "other_pkg" / "simplest"
+    mod_dir.mkdir(parents=True)
+    (mod_dir / "_module.py").touch()
+    mapping = {
+        str(src / "simplest" / "__init__.py"): str(libdir / "simplest" / "__init__.py"),
+    }
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    assert packages == ["simplest"]
+    # The install-dir prefix is not registered as a synthesizable namespace.
+    assert "other_pkg" not in directories
+
+
 def test_collect_search_locations_pxd_packages(tmp_path: Path):
     # .pxd/.pyx __init__ files define packages even though they are not
     # importable; they must be marked as packages and given their own directory

@@ -410,17 +410,23 @@ def collect_search_locations(
             parent = module.rpartition(".")[0]
         if parent:
             directories.setdefault(parent, set()).add(directory)
-            # Register every namespace ancestor (PEP 420) of the package holding
-            # this file, so the redirect finder can synthesize them. ``directory``
-            # is the package's own directory, so each ancestor sits one level up
-            # (``myns/mypkg`` -> ``myns``). Without this a nested namespace
-            # package's top ancestor is never registered and ``import myns`` fails.
-            ancestor = parent
-            ancestor_dir = directory
-            while "." in ancestor:
-                ancestor = ancestor.rpartition(".")[0]
-                ancestor_dir = str(Path(ancestor_dir).parent)
-                directories.setdefault(ancestor, set()).add(ancestor_dir)
+            # Register every namespace ancestor (PEP 420) of a *package* -- a
+            # directory with an importable ``__init__`` -- so the redirect finder
+            # can synthesize them. ``directory`` is then the package's own
+            # directory, so each ancestor sits one level up (``myns/mypkg`` ->
+            # ``myns``); without this a nested namespace package's top ancestor is
+            # never registered and ``import myns`` fails. Only packages drive this:
+            # a loose file's containing chain is not a namespace hierarchy, so a
+            # ``wheel.install-dir`` prefix over a bare installed module (e.g.
+            # ``other_pkg/simplest/_module.so``) must not synthesize ``other_pkg``,
+            # which would shadow a real top-level package (#1427).
+            if is_init:
+                ancestor = parent
+                ancestor_dir = directory
+                while "." in ancestor:
+                    ancestor = ancestor.rpartition(".")[0]
+                    ancestor_dir = str(Path(ancestor_dir).parent)
+                    directories.setdefault(ancestor, set()).add(ancestor_dir)
 
     return (
         {pkg: sorted(dirs) for pkg, dirs in directories.items()},
