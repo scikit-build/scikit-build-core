@@ -33,6 +33,7 @@ guide/dynamic_link
 guide/crosscompile
 guide/migration_guide
 guide/build
+guide/workspaces
 guide/faqs
 ```
 
