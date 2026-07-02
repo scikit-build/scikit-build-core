@@ -56,17 +56,32 @@ def get_cmake_osx_deployment_target(
     """
     Find an explicit ``CMAKE_OSX_DEPLOYMENT_TARGET`` known before the build
     directory exists: a ``cmake.define`` entry or a ``-DCMAKE_OSX_DEPLOYMENT_TARGET=``
-    in ``cmake.args``. The args value wins over the define, mirroring CMake's own
+    in ``cmake.args``. Handles both the joined ``-DVAR=value`` and the
+    two-token ``-D VAR=value`` forms (mirroring ``parse_generator``'s ``-G``
+    handling). The args value wins over the define, mirroring CMake's own
     command-line-over-cache precedence. Settings in ``CMakeLists.txt`` or a
     toolchain file cannot be seen here and are not honored.
     """
     target: str | None = None
     if cmake_defines is not None:
         target = cmake_defines.get("CMAKE_OSX_DEPLOYMENT_TARGET", None)
+    expecting_value = False
     for arg in cmake_args:
-        match = re.fullmatch(r"-D\s*CMAKE_OSX_DEPLOYMENT_TARGET(?::[^=]*)?=(.*)", arg)
-        if match:
-            target = match.group(1)
+        if expecting_value:
+            match = re.fullmatch(
+                r"CMAKE_OSX_DEPLOYMENT_TARGET(?::[^=]*)?=(.*)", arg.strip()
+            )
+            if match:
+                target = match.group(1)
+            expecting_value = False
+        elif arg == "-D":
+            expecting_value = True
+        else:
+            match = re.fullmatch(
+                r"-D\s*CMAKE_OSX_DEPLOYMENT_TARGET(?::[^=]*)?=(.*)", arg
+            )
+            if match:
+                target = match.group(1)
     return target
 
 
