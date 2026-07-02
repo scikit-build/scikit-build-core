@@ -75,11 +75,11 @@ def test_pep517_sdist_symlink(tmp_path: Path, mode: str | None) -> None:
     # Targets outside the project directory.
     outside = tmp_path / "outside"
     outside.mkdir()
-    outside.joinpath("ext.txt").write_text("external file\n", encoding="utf-8")
+    # Bytes, not text: text mode would write \r\n on Windows and break the
+    # dereferenced-content check below.
+    outside.joinpath("ext.txt").write_bytes(b"external file\n")
     outside.joinpath("extdir").mkdir()
-    outside.joinpath("extdir", "data.txt").write_text(
-        "external data\n", encoding="utf-8"
-    )
+    outside.joinpath("extdir", "data.txt").write_bytes(b"external data\n")
 
     # Internal file and directory symlinks, external file and directory
     # symlinks, and a directory symlink loop.
