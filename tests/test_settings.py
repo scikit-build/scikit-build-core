@@ -558,6 +558,22 @@ def test_unrecognized_conf_under_scalar():
     assert list(sources.unrecognized_options(NestedSettingChecker)) == ["one.extra"]
 
 
+def test_unrecognized_conf_scalar_to_dict_field():
+    # A scalar ``-C`` assignment to a dict-valued field (``two.nine=A=1``
+    # instead of ``two.nine.A=1``) can never be consumed, so it must be
+    # reported rather than silently dropped.
+    settings = {
+        "one": "one",
+        "two.nine": "A=1",
+    }
+    sources = SourceChain(
+        EnvSource("SKBUILD"),
+        ConfSource(settings=settings),
+        TOMLSource(settings={}),
+    )
+    assert list(sources.unrecognized_options(NestedSettingChecker)) == ["two.nine"]
+
+
 def test_unrecognized_conf_under_dict_of_dict():
     # Keys nested arbitrarily deep under a dict-typed field (``two.ten`` is
     # Dict[str, Any]) are free-form and must be accepted (no TypeError, no

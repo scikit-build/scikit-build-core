@@ -721,6 +721,27 @@ def test_skbuild_settings_pyproject_conf_broken(
     ]
 
 
+def test_skbuild_settings_scalar_dict_conf(tmp_path: Path):
+    # Scalar ``-C`` assignment to a dict-valued field (e.g. ``cmake.define``
+    # or ``env``) is silently dropped by the loader; it must be flagged
+    # instead of accepted just because the field name is valid. The correct
+    # form is ``cmake.define.FOO=1``.
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("", encoding="utf-8")
+
+    config_settings: dict[str, str | list[str]] = {
+        "cmake.define": "FOO=1",
+        "env": "BAR=2",
+        "cmake.define.OK": "3",
+    }
+
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    assert list(settings_reader.unrecognized_options()) == [
+        "cmake.define",
+        "env",
+    ]
+
+
 def test_skbuild_settings_min_version_defaults_strip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

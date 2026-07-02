@@ -649,10 +649,15 @@ class ConfSource(Source):
                 continue
             if dataclasses.is_dataclass(outer_option):
                 try:
-                    _dig_fields(outer_option, keys[-1])
+                    field_type = _dig_fields(outer_option, keys[-1])
                 except KeyError:
                     yield keystr
                     continue
+                # A dict-valued field is only read via subkeys
+                # (``cmake.define.FOO=1``); a bare scalar assignment
+                # (``cmake.define=FOO=1``) is silently dropped, so flag it.
+                if get_target_raw_type(field_type) is dict:
+                    yield keystr
                 continue
             if get_target_raw_type(outer_option) is dict:
                 continue
