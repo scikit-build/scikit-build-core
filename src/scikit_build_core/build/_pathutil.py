@@ -365,15 +365,17 @@ def editable_redirectable(src: Path, rel: Path) -> bool:
     ``rel`` is the destination relative to the platlib root. An importable
     destination is loaded from ``src`` directly (so a rename is fine), as long
     as ``src`` itself has a loadable suffix. A data file is only reachable
-    through its package's ``__path__`` (its source directory is registered
-    there), so it must keep its filename and sit inside a package; a renamed or
-    top-level data file must still be copied.
+    through its *immediate* parent package's ``__path__`` (its source directory
+    is registered there), so it must keep its filename and sit directly inside
+    a top-level package: any deeper and a package-root traversal like
+    ``files("pkg") / "sub/data.txt"``, which a real wheel supports, would not
+    find it. Renamed, top-level, or nested data files must still be copied.
     """
     if not is_trackable(rel):
         return False
     if is_module(rel):
         return is_module(src)
-    return len(rel.parts) > 1 and src.name == rel.name
+    return len(rel.parts) == 2 and src.name == rel.name
 
 
 def is_module(path: Path) -> bool:

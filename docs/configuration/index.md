@@ -446,10 +446,11 @@ In an editable install using redirect mode (the default), platlib entries are
 served live from their sources through the import redirect instead of being
 copied, so edits to a force-included file take effect without reinstalling. This
 covers importable modules (even renamed ones) and data files that keep their
-filename and land inside a package. Anything the redirect cannot express — other
-wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed data files, or top-level data
-files — is still copied at install time, so those snapshots only refresh on
-reinstall.
+filename and sit directly inside a top-level package. Anything the redirect
+cannot express — other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
+top-level data files, and data files nested below a package subdirectory (kept
+as real files so package-root resource lookups keep the wheel layout) — is still
+copied at install time, so those snapshots only refresh on reinstall.
 
 #### Building a wheel from an SDist
 

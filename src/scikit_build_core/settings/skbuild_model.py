@@ -586,8 +586,8 @@ class WheelSettings:
     In a redirect-mode editable install, platlib entries are served live from
     their sources through the import redirect instead of being copied:
     importable modules always, data files when they keep their filename and
-    land inside a package. Anything else (other wheel trees, renamed or
-    top-level data files) is still copied at install time.
+    sit directly inside a top-level package. Anything else (other wheel trees;
+    renamed, top-level, or nested data files) is still copied at install time.
 
     .. versionadded:: 1.0
     """

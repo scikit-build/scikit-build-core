@@ -553,6 +553,20 @@ def editable_shim(dist: Path) -> str:
     return wheel_read(dist, "_editable_skbc_pkg.py").decode()
 
 
+def shim_path(*parts: str) -> str:
+    """
+    A source path as it appears in the editable shim.
+
+    The shim embeds repr()'d absolute paths built from os.getcwd()
+    (Path.absolute()), so expected values must come from Path.cwd() -- not
+    tmp_path, which cygwin spells with 8.3 short names -- and be repr()'d to
+    match Windows backslash escaping.
+    """
+    from pathlib import Path
+
+    return repr(str(Path.cwd().joinpath(*parts)))
+
+
 def test_force_include_editable_redirects_data(chdir_tmp: Path) -> None:
     """A same-name platlib data force-include is redirected, not baked in."""
     make_pure_pkg(
@@ -567,7 +581,7 @@ def test_force_include_editable_redirects_data(chdir_tmp: Path) -> None:
 
     assert "pkg/data.txt" not in wheel_names(dist)
     # The source directory joins pkg's __path__ so importlib.resources finds it.
-    assert str((chdir_tmp / "extra").resolve()) in editable_shim(dist)
+    assert shim_path("extra") in editable_shim(dist)
 
 
 def test_force_include_editable_redirects_module(chdir_tmp: Path) -> None:
@@ -585,7 +599,7 @@ def test_force_include_editable_redirects_module(chdir_tmp: Path) -> None:
     assert "pkg/_version.py" not in wheel_names(dist)
     shim = editable_shim(dist)
     assert "'pkg._version'" in shim
-    assert str((chdir_tmp / "gen" / "_ver.py").resolve()) in shim
+    assert shim_path("gen", "_ver.py") in shim
 
 
 def test_force_include_editable_top_level_module_redirected(chdir_tmp: Path) -> None:
@@ -663,8 +677,8 @@ def test_force_include_editable_overrides_package_module(chdir_tmp: Path) -> Non
 
     assert "pkg/__init__.py" not in wheel_names(dist)
     shim = editable_shim(dist)
-    assert str((chdir_tmp / "override.py").resolve()) in shim
-    assert str((chdir_tmp / "pkg" / "__init__.py").resolve()) not in shim
+    assert shim_path("override.py") in shim
+    assert shim_path("pkg", "__init__.py") not in shim
 
 
 def test_force_include_editable_directory_redirects_members(chdir_tmp: Path) -> None:
@@ -685,10 +699,34 @@ def test_force_include_editable_directory_redirects_members(chdir_tmp: Path) -> 
     dist = chdir_tmp / "dist"
     build_editable(str(dist), {})
 
-    assert not any(n.startswith("pkg/assets/") for n in wheel_names(dist))
+    names = wheel_names(dist)
+    # The module redirects; the nested data file stays a copy (so package-root
+    # resource lookups keep the wheel layout); the exclude still trims.
+    assert "pkg/assets/mod.py" not in names
+    assert "pkg/assets/a.txt" in names
+    assert "pkg/assets/drop.tmp" not in names
     shim = editable_shim(dist)
     assert "'pkg.assets.mod'" in shim
-    assert str(assets.resolve()) in shim
+    assert shim_path("assets") in shim
+
+
+def test_force_include_editable_nested_data_copied(chdir_tmp: Path) -> None:
+    """A data file below a package subdirectory stays a baked copy.
+
+    The redirect would only register it under 'pkg.sub', breaking
+    files("pkg").joinpath("sub/data.txt") lookups that a real wheel supports.
+    """
+    make_pure_pkg(
+        chdir_tmp,
+        extra='wheel.force-include = {"extra/data.txt" = "pkg/sub/data.txt"}',
+    )
+    (chdir_tmp / "extra").mkdir()
+    (chdir_tmp / "extra" / "data.txt").write_text("hello")
+
+    dist = chdir_tmp / "dist"
+    build_editable(str(dist), {})
+
+    assert wheel_read(dist, "pkg/sub/data.txt") == b"hello"
 
 
 def test_force_include_editable_redirect_removes_stale_copy(chdir_tmp: Path) -> None:
