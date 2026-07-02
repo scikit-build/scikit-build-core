@@ -128,3 +128,7 @@ equivalent of scikit-build-core's `inplace` editable mode, so redirect mode is
 not supported here.
 
 Because of that, `editable.rebuild` is not supported in setuptools mode.
+
+A direct `setup.py build_ext --inplace` builds into the source tree without
+producing an editable wheel, so it works without any `editable.mode` setting,
+just like scikit-build (classic).

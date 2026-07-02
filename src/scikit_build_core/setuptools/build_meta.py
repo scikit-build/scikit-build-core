@@ -34,7 +34,7 @@ if hasattr(setuptools.build_meta, "build_editable"):
             config_settings,
             state=state,
         ).settings
-        _validate_settings(settings, editable_mode=True)
+        _validate_settings(settings, pep660_editable=True)
 
     def build_editable(
         wheel_directory: str,
