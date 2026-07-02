@@ -22,6 +22,7 @@ __lazy_modules__ = {
     "packaging.tags",
     "packaging.utils",
     "pathlib",
+    "pathspec",
     "platform",
     "shutil",
     "tempfile",
@@ -38,6 +39,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Literal
 
+import pathspec
 from packaging.requirements import Requirement
 from packaging.tags import Tag
 from packaging.utils import canonicalize_name
@@ -58,6 +60,7 @@ from ._editable import (
 from ._init import setup_logging
 from ._pathutil import (
     NON_PLATLIB_REBUILD_MSG,
+    editable_redirectable,
     iter_force_include,
     packages_to_file_mapping,
     resolve_from_sdist_force_include,
@@ -128,6 +131,8 @@ def _force_include_into_wheel(
     wheel_dirs: dict[str, Path],
     targetlib: str,
     only_metadata: bool = False,
+    redirect_mapping: dict[str, str] | None = None,
+    redirect_libdir: Path | None = None,
 ) -> set[Path]:
     """
     Copy ``wheel.force-include`` entries into the staged wheel trees.
@@ -137,12 +142,23 @@ def _force_include_into_wheel(
     metadata tree; the prepare-metadata path uses it so the prepared
     ``.dist-info`` matches the final wheel.
 
+    With ``redirect_mapping``/``redirect_libdir`` (a redirect-mode editable
+    build), platlib entries the redirect can serve live (see
+    :func:`editable_redirectable`) are added to the mapping instead of copied,
+    displacing a package file or CMake output at the same destination so the
+    force-include still wins. Everything else falls back to a baked copy.
+
     Returns the resolved target paths of force-included *files*, so the caller
     can exempt them from ``wheel.exclude`` (naming an exact file forces it past
     an exclude pattern). Files copied from a force-included *directory* are not
     returned, so a bulk directory copy stays subject to ``wheel.exclude``.
     """
     written: set[Path] = set()
+    exclude_spec = (
+        pathspec.GitIgnoreSpec.from_lines(settings.wheel.exclude)
+        if redirect_mapping is not None
+        else None
+    )
     for source, dest in settings.wheel.force_include.items():
         base, rest = resolve_wheel_tree(
             dest,
@@ -160,6 +176,28 @@ def _force_include_into_wheel(
         )
         source_is_file = Path(resolved).expanduser().is_file()
         for src_file, target in iter_force_include(resolved, rest, base):
+            if redirect_mapping is not None and base == wheel_dirs[targetlib]:
+                assert exclude_spec is not None
+                assert redirect_libdir is not None
+                rel = target.relative_to(base)
+                # Directory members stay subject to wheel.exclude; with no
+                # baked copy the zip-time filter never sees them, so filter
+                # here. (A file force-include overrides the exclude.)
+                if not source_is_file and exclude_spec.match_file(rel):
+                    continue
+                if editable_redirectable(src_file, rel):
+                    live_target = str(redirect_libdir / rel)
+                    # The force-include wins at its destination: drop a package
+                    # mapping entry and staged/installed file at the same spot,
+                    # since the finder checks installed files before sources.
+                    for key in [
+                        k for k, v in redirect_mapping.items() if v == live_target
+                    ]:
+                        del redirect_mapping[key]
+                    target.unlink(missing_ok=True)
+                    (redirect_libdir / rel).unlink(missing_ok=True)
+                    redirect_mapping[str(src_file)] = live_target
+                    continue
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
             if source_is_file:
@@ -537,13 +575,17 @@ def _build_wheel_impl_impl(
                 Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
                 shutil.copy2(filepath, package_dir)
 
-        # Force-include into the wheel, always (even for editable installs, as
-        # these files are not redirectable) and after the package copy, so they
-        # override package files and CMake output at the same destination.
+        # Force-include into the wheel, after the package copy so entries
+        # override package files and CMake output at the same destination. In a
+        # redirect-mode editable, platlib entries the redirect can serve live
+        # join the mapping instead of being baked in as stale copies.
+        redirecting = editable and settings.editable.mode == "redirect"
         force_included = _force_include_into_wheel(
             settings,
             wheel_dirs=wheel_dirs,
             targetlib=targetlib,
+            redirect_mapping=mapping if redirecting else None,
+            redirect_libdir=targetlib_dir if redirecting else None,
         )
 
         # Normalize script shebangs after force-includes, so force-included
