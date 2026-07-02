@@ -8,7 +8,7 @@ import pytest
 from packaging.tags import Tag
 
 import scikit_build_core.build._wheelfile
-from scikit_build_core._reproducible import get_reproducible_epoch
+from scikit_build_core._reproducible import MAX_TIMESTAMP, get_reproducible_epoch
 from scikit_build_core._vendor.pyproject_metadata import StandardMetadata
 from scikit_build_core.build._wheelfile import WheelWriter
 
@@ -42,6 +42,42 @@ def test_wheel_timestamp_non_reproducible_uses_mtime(tmp_path, monkeypatch):
     wheel = _make_writer(tmp_path, reproducible=False)
     mtime = 1234567890
     assert wheel.timestamp(mtime) == time.gmtime(mtime)[0:6]
+
+
+@pytest.mark.parametrize("reproducible", [True, False])
+def test_wheel_timestamp_clamps_epoch_beyond_zip_range(
+    tmp_path, monkeypatch, reproducible
+):
+    # A SOURCE_DATE_EPOCH beyond 2107-12-31 23:59:59 UTC (e.g. a milliseconds-epoch
+    # mistake) cannot be represented in the ZIP date format and must be clamped
+    # rather than crash deep inside zipfile with a struct.error.
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", str(MAX_TIMESTAMP + 1))
+    wheel = _make_writer(tmp_path, reproducible=reproducible)
+    assert wheel.timestamp() == time.gmtime(MAX_TIMESTAMP)[0:6]
+
+    # The resulting date must actually be writable to a real ZIP archive (the DOS
+    # date format only stores even seconds, so the last field may round down).
+    with wheel:
+        wheel.writestr("data.txt", b"hello")
+    with zipfile.ZipFile(wheel.wheelpath) as zf:
+        assert zf.getinfo("data.txt").date_time[:5] == time.gmtime(MAX_TIMESTAMP)[0:5]
+
+
+def test_reproducible_epoch_non_integer_errors(monkeypatch, capsys):
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1.7e9")
+    with pytest.raises(SystemExit):
+        get_reproducible_epoch()
+    assert "SOURCE_DATE_EPOCH" in capsys.readouterr().err
+
+
+def test_wheel_timestamp_non_reproducible_non_integer_epoch_errors(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "")
+    wheel = _make_writer(tmp_path, reproducible=False)
+    with pytest.raises(SystemExit):
+        wheel.timestamp()
+    assert "SOURCE_DATE_EPOCH" in capsys.readouterr().err
 
 
 def test_wheel_write_normalizes_permissions(tmp_path, monkeypatch):

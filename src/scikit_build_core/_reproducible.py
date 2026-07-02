@@ -2,14 +2,40 @@ from __future__ import annotations
 
 import os
 
-__all__ = ["MIN_TIMESTAMP", "get_reproducible_epoch", "normalize_file_permissions"]
+__all__ = [
+    "MAX_TIMESTAMP",
+    "MIN_TIMESTAMP",
+    "get_reproducible_epoch",
+    "normalize_file_permissions",
+    "parse_source_date_epoch",
+]
 
 # The ZIP file format does not support timestamps before 1980-01-01 00:00:00 UTC.
 MIN_TIMESTAMP = 315532800
+# Nor after 2107-12-31 23:59:59 UTC (the DOS date field's year is a 7-bit offset
+# from 1980, so the last representable year is 1980 + 127 = 2107).
+MAX_TIMESTAMP = 4354819199
 
 
 def __dir__() -> list[str]:
     return __all__
+
+
+def parse_source_date_epoch(raw: str) -> int:
+    """
+    Parse a `SOURCE_DATE_EPOCH` environment variable value.
+
+    Per the reproducible-builds.org spec, a malformed value should cause the
+    build to fail with a clear error rather than being silently ignored.
+    """
+    try:
+        return int(raw)
+    except ValueError:
+        from ._logging import rich_error
+
+        rich_error(
+            f"Invalid SOURCE_DATE_EPOCH value {raw!r}: must be an integer number of seconds since the Unix epoch"
+        )
 
 
 def get_reproducible_epoch() -> int:
@@ -19,7 +45,8 @@ def get_reproducible_epoch() -> int:
     If the `SOURCE_DATE_EPOCH` environment variable is set, use that value. Otherwise,
     always return `1667997441`.
     """
-    return int(os.environ.get("SOURCE_DATE_EPOCH", "1667997441"))
+    raw = os.environ.get("SOURCE_DATE_EPOCH")
+    return 1667997441 if raw is None else parse_source_date_epoch(raw)
 
 
 def normalize_file_permissions(st_mode: int) -> int:
