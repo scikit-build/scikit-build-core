@@ -319,7 +319,11 @@ def test_package_search_dirs_namespace(tmp_path: Path, monkeypatch: pytest.Monke
     # the key depth), not one level shallower -- otherwise the leaf leaks as a
     # top-level import (#1417).
     monkeypatch.chdir(tmp_path)
-    src = str((tmp_path / "src").resolve())
+    # Build the expected value from Path.cwd() like the code under test does:
+    # deriving it from tmp_path is not alias-proof (on cygwin, TEMP holds a
+    # Windows 8.3 short name like RUNNER~1 while getcwd returns the long form,
+    # and resolve() does not reliably canonicalize between them).
+    src = str(Path.cwd().joinpath("src").resolve())
     assert package_search_dirs({"myns/mypkg": str(Path("src") / "myns" / "mypkg")}) == [
         src
     ]
@@ -352,8 +356,10 @@ def test_navigate_editable_namespace_package(
         mode="classic",
     )
     search_dirs = package_search_dirs(packages)
-    # The sys.path entry is the src root, not src/myns.
-    assert search_dirs == [str((source_dir / "src").resolve())]
+    # The sys.path entry is the src root, not src/myns. Expected value built
+    # from Path.cwd() like the code under test, to stay immune to Windows 8.3
+    # short-name aliasing in tmp_path on cygwin.
+    assert search_dirs == [str(Path.cwd().joinpath("src").resolve())]
 
     files = editable_redirect_files(
         libdir=site_packages,
