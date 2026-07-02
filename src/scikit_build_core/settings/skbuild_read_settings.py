@@ -179,10 +179,10 @@ def _validate_overrides(
     Validate all fields with any override information.
 
     ``dynamic_sources`` are the sources that may legitimately set
-    ``override_only`` fields at build time (env vars and PEP 517
-    config-settings); ``toml_sources`` are the static ``pyproject.toml`` (and
-    ``extra_settings``) tables where ``override_only`` fields are forbidden
-    outside of an ``[[overrides]]`` section.
+    ``override_only`` fields at build time (env vars, PEP 517 config-settings,
+    and machine-level entry-point config); ``toml_sources`` are the static
+    ``pyproject.toml`` (and ``extra_settings``) tables where ``override_only``
+    fields are forbidden outside of an ``[[overrides]]`` section.
     """
 
     def validate_field(
@@ -338,6 +338,13 @@ class SettingsReader:
         # it, just above the hard-coded defaults. Either way the user's per-build
         # env vars and config-settings still win. Opt out entirely with
         # SKBUILD_NO_ENTRYPOINT_CONFIG.
+        # Entry-point config comes from the *machine environment* (installed
+        # distro packages), not the project, so for validation gates it is
+        # treated like env vars / config-settings (dynamic), not like static
+        # pyproject content: override-only fields are allowed and the project's
+        # minimum-version pin does not gate it. It still participates in normal
+        # precedence/merging via ``toml_srcs`` (see ``ep_srcs`` below).
+        ep_srcs: list[Source] = []
         if not strtobool(environ.get("SKBUILD_NO_ENTRYPOINT_CONFIG", "")):
             override_index = 0
             for level, ep_name, ep_table in load_config_providers(
@@ -349,6 +356,7 @@ class SettingsReader:
                 )
                 self.overrides |= ep_matched
                 ep_source = TOMLSource(settings=ep_skb)
+                ep_srcs.append(ep_source)
                 ep_display = f"entry-point config ({ep_name})"
                 if level == "override":
                     self.overridden_items.update(ep_overridden)
@@ -374,9 +382,20 @@ class SettingsReader:
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
             ConfSource(settings=remaining, verify=verify_conf),
         ]
-        # Static pyproject.toml (and extra_settings) tables; override-only fields
-        # are forbidden here outside of an [[overrides]] section.
+        # env vars + config-settings; these lead ``self.sources`` (see below),
+        # so ``print_suggestions`` relies on their count.
         self._dynamic_srcs = tuple(dynamic_srcs)
+        # Entry-point config is machine-level (not project-static), so for
+        # validation it is grouped with the dynamic sources: override-only
+        # fields are allowed and the project's minimum-version pin does not
+        # gate it. It still participates in normal precedence via ``toml_srcs``.
+        self._ep_srcs = tuple(ep_srcs)
+        # Static pyproject.toml (and extra_settings) tables; override-only fields
+        # are forbidden here outside of an [[overrides]] section, and their
+        # values are gated by the project's minimum-version pin.
+        self._static_srcs = tuple(s for s in toml_srcs if s not in ep_srcs)
+        # Full TOML precedence chain (including entry-point config), used for
+        # value resolution and unrecognized-option reporting.
         self._toml_srcs = tuple(toml_srcs)
         self._toml_src_names = tuple(toml_src_names)
         self.sources = SourceChain(
@@ -397,8 +416,11 @@ class SettingsReader:
 
         validate_variant_settings(self.settings)
 
+        # Values that come *only* from static project sources (pyproject.toml
+        # and extra_settings), used by the minimum-version move gates below.
+        # Entry-point config is excluded so it behaves like env/config-settings.
         static_settings = SourceChain(
-            *toml_srcs, prefixes=["tool", "scikit-build"]
+            *self._static_srcs, prefixes=["tool", "scikit-build"]
         ).convert_target(ScikitBuildSettings)
 
         if self.settings.minimum_version:
@@ -599,8 +621,8 @@ class SettingsReader:
         _validate_overrides(
             self.settings,
             self.overridden_items,
-            dynamic_sources=self._dynamic_srcs,
-            toml_sources=self._toml_srcs,
+            dynamic_sources=(*self._dynamic_srcs, *self._ep_srcs),
+            toml_sources=self._static_srcs,
         )
 
         if self.settings.metadata and self._dynamic_metadata:
