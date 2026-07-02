@@ -2,7 +2,13 @@
 
 Scikit-build-core populates CMake search paths to take into account any other
 CMake project installed in the same environment. In order to take advantage of
-this the dependent project must populate a `cmake.*` entry-point.
+this the dependent project must populate a `cmake.*` entry-point:
+
+| Entry-point group | CMake variable populated | Typical use                                               |
+| ----------------- | ------------------------ | --------------------------------------------------------- |
+| `cmake.root`      | `<PackageName>_ROOT`     | `find_package(MyProject)` (recommended)                   |
+| `cmake.prefix`    | `CMAKE_PREFIX_PATH`      | catch-all for `find_package`, `find_program`, `find_path` |
+| `cmake.module`    | `CMAKE_MODULE_PATH`      | CMake modules loaded with `include(...)`                  |
 
 ## `<PackageName>_ROOT`
 

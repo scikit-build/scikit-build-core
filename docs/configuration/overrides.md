@@ -8,19 +8,16 @@ override if the `if` condition is true.
 
 ## If conditions
 
-There are three types of conditions. Booleans, strings, and version numbers.
-Booleans take a bool; if the boolean matches the bool you give, the override
-matches. If the value is a string (such as an environment variable), it will
-match non false-like values, and if the variable is unset or empty, that counts
-as false. Strings take a regex which will try to match. Version numbers take a
-specifier set, like `>=1.0`.
+At least one condition must be provided; if multiple conditions are given, all
+must be true (see [`if.any`](#any-matching-condition) to match on any one
+instead). Overrides match top to bottom, overriding previous matches. Each
+condition is one of three types:
 
-If multiple conditions are given, they all must be true. Use `if.any` (below) if
-you would rather matching on any one of multiple conditions being true.
-
-At least one must be provided. Then you can specify any collection of valid
-options, and those will override if all the items in the `if` are true. They
-will match top to bottom, overriding previous matches.
+| Type    | Takes           | Matches when                                                                                            |
+| ------- | --------------- | ------------------------------------------------------------------------------------------------------- |
+| bool    | a boolean       | the value matches the boolean you give                                                                  |
+| string  | a regex         | the regex matches; for env vars, a boolean instead matches non false-like values (unset/empty is false) |
+| version | a specifier set | the version satisfies the specifier set, like `>=1.0`                                                   |
 
 If an override does not match, its contents are ignored, including invalid
 options. Combined with the `if.scikit-build-version` override, this allows using
@@ -143,8 +140,11 @@ The `metadata_wheel` and `metadata_editable` states correspond to the
 517 hooks, respectively; these are metadata-only preparation passes that a
 frontend may run without building the full wheel.
 
-Note that you can build directly to wheel; you don't have to go through an
-SDist.
+:::{note}
+
+You can build directly to wheel; you don't have to go through an SDist.
+
+:::
 
 :::{versionadded} 0.8
 
@@ -216,9 +216,13 @@ wheel.cmake = false
 
 :::
 
+:::{note}
+
 If this override is present in your pyproject.toml file, scikit-build-core will
 not provide the `prepare_metadata_*` hooks, as it can't know without building if
 the build will fail.
+
+:::
 
 ## Any matching condition
 

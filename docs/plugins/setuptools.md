@@ -83,9 +83,7 @@ possible.
 
 All other configuration is available as normal `tool.scikit-build` in
 `pyproject.toml` or environment variables as applicable. Config-settings is
-_not_ supported, as setuptools has very poor support for config-settings. The
-build hook might pre-process options in the future, but it's tricky to pass them
-through, so it will likely require use cases to be presented.
+_not_ supported, as setuptools has very poor support for config-settings.
 
 For classic scikit-build compatibility, two environment variables are honored,
 but only when using the `scikit_build_core.setuptools.wrapper.setup` shim (they

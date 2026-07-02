@@ -1,7 +1,5 @@
 # FAQs
 
-This section covers common needs.
-
 ## Starting a new project
 
 The quickest way is the built-in `init` command:
@@ -83,7 +81,7 @@ When cross compiling, FindPython may not get the correct SOABI extension.
 Scikit-build-core does know the correct extension, however, and sets it as
 `SKBUILD_SOABI`. See [the SOABI docs](#soabi).
 
-## Things to try
+## Debugging a build
 
 If you want to debug a scikit-build-core build, you have several options. If you
 are using `pip`, make sure you are passing the `-v` flag, otherwise `pip`

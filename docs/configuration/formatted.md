@@ -10,9 +10,15 @@ The following configure keys are formatted as Python `str.format` templates:
 `editable.rebuild-dir` is formattable.
 ```
 
-The available variables are documented in the members of
-{py:class}`scikit_build_core.format.PyprojectFormatter` copied here for
-visibility
+For example, to get a persistent build directory per wheel tag:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+```
+
+The available variables are the members of
+{py:class}`scikit_build_core.format.PyprojectFormatter`:
 
 ```{eval-rst}
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.build_type

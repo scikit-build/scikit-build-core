@@ -1,8 +1,16 @@
 # Entry-point configuration
 
-> [!CAUTION] This is an advanced feature primarily for Linux distributions and
-> other packagers that need to set build defaults, like the CMake build type or
-> symbol stripping.
+:::{versionadded} 1.0
+
+:::
+
+:::{caution}
+
+This is an advanced feature primarily for Linux distributions and other
+packagers that need to set build defaults, like the CMake build type or symbol
+stripping.
+
+:::
 
 An installed package can contribute scikit-build-core configuration to _every_
 build in the environment through two entry-point groups. This can affect all

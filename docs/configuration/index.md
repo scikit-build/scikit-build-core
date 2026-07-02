@@ -170,9 +170,8 @@ will fall back on ">=3.15" if it can't read it.
 
 You can also enforce ninja to be required even if make is present on Unix:
 
-```toml
-[tool.scikit-build]
-ninja.make-fallback = false
+```{conftabs} ninja.make-fallback False
+
 ```
 
 You can also control the FindPython backport; by default, a backport of CMake
@@ -225,9 +224,8 @@ sdist.reproducible = false
 
 You can also request CMake to run during this step:
 
-```toml
-[tool.scikit-build]
-sdist.cmake = true
+```{conftabs} sdist.cmake True
+
 ```
 
 :::{note}
@@ -330,9 +328,8 @@ The install directory is normally site-packages; however, you can manually set
 that to a different directory if you'd like to avoid changing your CMake files.
 For example, to mimic scikit-build classic:
 
-```toml
-[tool.scikit-build]
-wheel.install-dir = "mypackage"
+```{conftabs} wheel.install-dir "mypackage"
+
 ```
 
 You can target a different wheel tree by prefixing the install dir with the
@@ -400,121 +397,36 @@ assume `wheel.platlib = false` (purelib targeted instead).
 
 :::
 
-### Force-including files
-
-:::{versionadded} 1.0
-
-:::
-
-Sometimes you need to place a specific file (or directory) at a specific path in
-a distribution, even if it lives outside your package tree or is produced
-elsewhere. Each distribution has its own `force-include` table mapping source
-paths to destinations:
-
-```toml
-[tool.scikit-build.sdist.force-include]
-"../shared/data.json" = "mypackage/data.json"
-
-[tool.scikit-build.wheel.force-include]
-"vendor/lib.so" = "mypackage/_lib.so"
-"tools/run.sh"  = "${SKBUILD_SCRIPTS_DIR}/run.sh"
-```
-
-The keys are source paths relative to the project root; they may point outside
-it (e.g. `../shared`) or be absolute, and `~` is expanded. A source may be a
-file or a directory, and directories are copied recursively (skipping VCS and
-`__pycache__` junk). A missing source is an error.
-
-`sdist.force-include` destinations are relative to the SDist root.
-`wheel.force-include` destinations are relative to the platlib (the package
-area), and also accept a `${SKBUILD_<TREE>_DIR}` prefix (e.g.
-`${SKBUILD_DATA_DIR}`, `${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_HEADERS_DIR}`,
-`${SKBUILD_METADATA_DIR}`) to target that wheel tree instead, matching the
-`SKBUILD_*_DIR` CMake cache variables. The older leading-slash spelling
-(`/data`, `/scripts`, ...) does the same but requires `experimental = true`.
-Force-included wheel files are placed last, so they override discovered package
-files and CMake output at the same destination.
-
-A force-included _file_ also overrides the matching exclude list
-(`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
-is an explicit request, so it wins even if an exclude pattern matches its
-destination. A force-included _directory_ stays subject to that exclude, so a
-bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
-directory and exclude `**/*.bzl` to drop the Bazel files from it).
-
-In an editable install using redirect mode (the default), platlib entries are
-served live from their sources through the import redirect instead of being
-copied, so edits to a force-included file take effect without reinstalling. This
-covers importable modules (even renamed ones) and data files that keep their
-filename and sit directly inside a top-level package. Anything the redirect
-cannot express — other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
-top-level data files, and data files nested below a package subdirectory (kept
-as real files so package-root resource lookups keep the wheel layout) — is still
-copied at install time, so those snapshots only refresh on reinstall.
-
-#### Building a wheel from an SDist
-
-A common pattern vendors an external (`../`) source into the SDist and then
-ships that output in the wheel. Reference the SDist destination as the wheel
-source and it works in both build modes:
-
-```toml
-[tool.scikit-build.sdist.force-include]
-"../shared/data.json" = "mypackage/data.json"   # vendor it into the SDist
-
-[tool.scikit-build.wheel.force-include]
-"mypackage/data.json" = "mypackage/data.json"    # ship the SDist output
-```
-
-When the wheel is built from the unpacked SDist, `mypackage/data.json` exists
-and is used directly. When it is built from the source tree (or an editable
-install) the file was never materialized; a `wheel.force-include` source missing
-on disk is then resolved through `sdist.force-include` (by exact destination, or
-under a force-included directory) and read from that original source instead. An
-on-disk file always wins, so the vendored copy is preferred when present.
-
-For cases the automatic resolution cannot express — e.g. the wheel source is the
-_original_ external path rather than the SDist output — use
-[overrides](#overrides) keyed on `from-sdist`, with a separate
-`wheel.force-include` entry gated on each build mode (source tree vs.
-wheel-from-SDist):
-
-```toml
-[tool.scikit-build.sdist.force-include]
-"../outside.txt" = "vendored/blob.txt"   # vendor it into the SDist
-
-[[tool.scikit-build.overrides]]
-if.from-sdist = false                     # source-tree build: read the original
-wheel.force-include."../outside.txt" = "mypackage/blob.txt"
-
-[[tool.scikit-build.overrides]]
-if.from-sdist = true                      # wheel-from-SDist: read the vendored copy
-wheel.force-include."vendored/blob.txt" = "mypackage/blob.txt"
-```
-
 ## Customizing the output wheel
 
 The python API tags for your wheel will be correct assuming you are building a
-CPython extension. If you are building a Limited ABI extension, you should set
-the wheel tags for the version you support:
+normal CPython extension. For anything else, set `wheel.py-api` to the tag you
+support:
 
-```toml
-[tool.scikit-build]
-wheel.py-api = "cp38"
+```{conftabs} wheel.py-api "cp38"
+
 ```
+
+| `wheel.py-api`   | Use for                                           | Resulting tags     |
+| ---------------- | ------------------------------------------------- | ------------------ |
+| `"cp38"`         | Limited API / Stable ABI extension (CPython 3.8+) | `cp38-abi3`        |
+| `"py3"`          | Extension not using the Python API                | `py3-none`         |
+| `"py2.py3"`      | Same, but installable on Python 2 as well         | `py2.py3-none`     |
+| `"cp315t"`       | Free-threaded stable ABI ([PEP 803][])            | `cp315-abi3t`      |
+| `"cp315.cp315t"` | Both stable ABIs from one free-threaded build     | `cp315-abi3.abi3t` |
 
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
 newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
 `Development.SABIModule` when targeting ABI3 or ABI3T, and is an empty string
-otherwise. For free-threaded Python (PEP 703), you can use `cp315t` to target
-the free-threaded stable ABI, which sets `Py_TARGET_ABI3T` (if using CMake
-4.4+). The emitted wheel tag is `cp315-abi3t-*` following [PEP 803][].
+otherwise. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake 4.4+). For
+`py3`/`py2.py3`, you still need a version of Python scikit-build-core supports
+to build the initial wheel.
 
-You can request both stable ABIs with `cp315.cp315t`. On a free-threaded build
-this emits a combined `cp315-abi3.abi3t-*` tag: `abi3t` is a subset of `abi3`
-(PEP 803), so the single free-threaded binary also loads under a GIL-enabled
-CPython 3.15+, and the one wheel is installable on every CPython 3.15+. On a GIL
-build only `abi3` can be produced, so it falls back to `cp315-abi3-*`.
+With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
+tag: `abi3t` is a subset of `abi3` (PEP 803), so the single free-threaded binary
+also loads under a GIL-enabled CPython 3.15+, and the one wheel is installable
+on every CPython 3.15+. On a GIL build only `abi3` can be produced, so it falls
+back to `cp315-abi3`.
 
 :::{versionadded} 1.0
 
@@ -523,29 +435,12 @@ The free-threaded stable ABI (`cp315t`, [PEP 803][]) and the combined
 
 :::
 
-If you are not using CPython at all, you can specify any version of Python is
-fine:
-
-```toml
-[tool.scikit-build]
-wheel.py-api = "py3"
-```
-
-Or even Python 2 + 3 (you still will need a version of Python scikit-build-core
-supports to build the initial wheel):
-
-```toml
-[tool.scikit-build]
-wheel.py-api = "py2.py3"
-```
-
 Some older versions of pip are unable to load standard universal tags;
 scikit-build-core can expand the macOS universal tags for you for maximum
 historic compatibility if you'd like:
 
-```toml
-[tool.scikit-build]
-wheel.expand-macos-universal-tags = true
+```{conftabs} wheel.expand-macos-universal-tags True
+
 ```
 
 You can also specify a build tag:
@@ -580,6 +475,95 @@ recent compiler and flags like `-ffile-prefix-map`.
 :::{versionadded} 1.0
 
 :::
+
+## Force-including files
+
+:::{versionadded} 1.0
+
+:::
+
+Sometimes you need to place a specific file (or directory) at a specific path in
+a distribution, even if it lives outside your package tree or is produced
+elsewhere. Each distribution has its own `force-include` table mapping source
+paths to destinations:
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"
+
+[tool.scikit-build.wheel.force-include]
+"vendor/lib.so" = "mypackage/_lib.so"
+"tools/run.sh"  = "${SKBUILD_SCRIPTS_DIR}/run.sh"
+```
+
+The keys are source paths relative to the project root; they may point outside
+it (e.g. `../shared`) or be absolute, and `~` is expanded. A source may be a
+file or a directory, and directories are copied recursively (skipping VCS and
+`__pycache__` junk). A missing source is an error.
+
+`sdist.force-include` destinations are relative to the SDist root.
+`wheel.force-include` destinations are relative to the platlib (the package
+area), and also accept a `${SKBUILD_<TREE>_DIR}` prefix to target a different
+wheel tree, exactly as with [`wheel.install-dir`](#customizing-the-built-wheel)
+above. Force-included wheel files are placed last, so they override discovered
+package files and CMake output at the same destination.
+
+A force-included _file_ also overrides the matching exclude list
+(`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
+is an explicit request, so it wins even if an exclude pattern matches its
+destination. A force-included _directory_ stays subject to that exclude, so a
+bulk tree copy can still be trimmed by an exclude pattern (e.g. force-include a
+directory and exclude `**/*.bzl` to drop the Bazel files from it).
+
+In an editable install using redirect mode (the default), platlib entries are
+served live from their sources through the import redirect instead of being
+copied, so edits to a force-included file take effect without reinstalling. This
+covers importable modules (even renamed ones) and data files that keep their
+filename and sit directly inside a top-level package. Anything the redirect
+cannot express — other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
+top-level data files, and data files nested below a package subdirectory (kept
+as real files so package-root resource lookups keep the wheel layout) — is still
+copied at install time, so those snapshots only refresh on reinstall.
+
+### Building a wheel from an SDist
+
+A common pattern vendors an external (`../`) source into the SDist and then
+ships that output in the wheel. Reference the SDist destination as the wheel
+source and it works in both build modes:
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../shared/data.json" = "mypackage/data.json"   # vendor it into the SDist
+
+[tool.scikit-build.wheel.force-include]
+"mypackage/data.json" = "mypackage/data.json"    # ship the SDist output
+```
+
+When the wheel is built from the unpacked SDist, `mypackage/data.json` exists
+and is used directly. When it is built from the source tree (or an editable
+install) the file was never materialized; a `wheel.force-include` source missing
+on disk is then resolved through `sdist.force-include` (by exact destination, or
+under a force-included directory) and read from that original source instead. An
+on-disk file always wins, so the vendored copy is preferred when present.
+
+For cases the automatic resolution cannot express — e.g. the wheel source is the
+_original_ external path rather than the SDist output — use
+[overrides](./overrides.md) keyed on `from-sdist`, with a separate
+`wheel.force-include` entry gated on each build mode (source tree vs.
+wheel-from-SDist):
+
+```toml
+[tool.scikit-build.sdist.force-include]
+"../outside.txt" = "vendored/blob.txt"   # vendor it into the SDist
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = false                     # source-tree build: read the original
+wheel.force-include."../outside.txt" = "mypackage/blob.txt"
+
+[[tool.scikit-build.overrides]]
+if.from-sdist = true                      # wheel-from-SDist: read the vendored copy
+wheel.force-include."vendored/blob.txt" = "mypackage/blob.txt"
+```
 
 ## Configuring CMake arguments and defines
 
@@ -623,7 +607,9 @@ Passing a list of build types.
 
 :::
 
-You can specify CMake defines as strings or bools:
+You can specify CMake defines as strings, bools, or lists of strings (list
+elements are joined with `;`, with semicolons inside an element escaped with a
+backslash):
 
 ````{tab} pyproject.toml
 
@@ -631,35 +617,10 @@ You can specify CMake defines as strings or bools:
 [tool.scikit-build.cmake.define]
 SOME_DEFINE = "Foo"
 SOME_OPTION = true
+FOOD_GROUPS = ["Apple", "Lemon;Lime", "Banana"]
 ```
 
 ````
-
-You can even specify a CMake define as a list of strings:
-
-````{tab} pyproject.toml
-
-```toml
-[tool.scikit-build.cmake.define]
-FOOD_GROUPS = [
-    "Apple",
-    "Lemon;Lime",
-    "Banana",
-    "Pineapple;Mango",
-]
-```
-
-````
-
-Semicolons inside the list elements will be escaped with a backslash (`\`) and
-the resulting list elements will be joined together with semicolons (`;`) before
-being converted to command-line arguments.
-
-:::{versionchanged} 0.11
-
-Support for list of strings.
-
-:::
 
 `````{tab} config-settings
 
@@ -698,6 +659,12 @@ SKBUILD_CMAKE_DEFINE: SOME_DEFINE=ON
 ```
 
 ````
+
+:::{versionchanged} 0.11
+
+Support for list of strings.
+
+:::
 
 You can also (`pyproject.toml` only) specify a dict, with `env=` to load a
 define from an environment variable, with optional `default=`.
@@ -1006,14 +973,11 @@ need them. Currently, there are several formatter-style keywords available:
 `sys`, `platform` (parenthesis will be added for items like `platform.platform`
 for you), `__version__` for scikit-build-core's version, and style keywords.
 
-For styles, the colors are `default`, `red`, `green`, `yellow`, `blue`,
-`magenta`, `cyan`, and `white`. These can be accessed as `fg.*` or `bg.*`,
-without a qualifier the foreground is assumed. Styles like `normal`, `bold`,
-`italic`, `underline`, `reverse` are also provided. A full clearing of all
-styles is possible with `reset`. These all can be chained, as well, so
-`bold.red.bg.blue` is valid, and will produce an optimized escape code. Remember
-that you need to set the environment variable `FORCE_COLOR` to see colors with
-pip.
+The style keywords are the standard ANSI colors (`red`, `green`, `blue`, ...)
+and styles (`normal`, `bold`, `italic`, `underline`, `reverse`), chainable with
+dots: `bold.red.bg.blue` is valid (`fg.`/`bg.` select foreground/background,
+foreground being the default, and `reset` clears all styles). Remember that you
+need to set the environment variable `FORCE_COLOR` to see colors with pip.
 
 ```{versionadded} 0.10
 
@@ -1081,11 +1045,8 @@ dependencies like `"cmake"` will not be requested.
 
 ```
 
-## Overrides
+## See also
 
-The overrides system allows you to customize for a wide variety of situations.
-It is described at [](#overrides).
-
-## Full Schema
-
-You can see the full schema at [](#schema).
+- [Overrides](./overrides.md): customize settings for a wide variety of
+  situations.
+- [Full schema](#schema) for all settings.

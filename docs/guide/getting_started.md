@@ -36,21 +36,10 @@ There are several mechanisms to quickly get started with a package:
 The `scikit-build init` command.
 ```
 
-For the rest of this page, however, we will show you how to get set up from
-scratch.
-
 ## Writing an extension
-
-```{tip}
-The fastest way to lay these files out is `scikit-build init --backend pybind11`
-(or any backend below), which generates exactly the project shown here. Read on
-to understand each piece.
-```
 
 We will be writing these files:
 
-````{tab} pybind11
-
 ```
 example
 ├── pyproject.toml
@@ -58,116 +47,16 @@ example
 └── src
     └── example
         ├── __init__.py
-        └── _core.cpp
+        └── _core.*
 ```
 
-````
-
-````{tab} nanobind
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.cpp
-```
-
-````
-
-````{tab} SWIG
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        ├── _core.c
-        └── _core.i
-```
-
-````
-
-````{tab} Cython
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.pyx
-```
-
-````
-
-````{tab} C
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.c
-```
-
-````
-
-````{tab} ABI3
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.c
-```
-
-````
-
-````{tab} ABI3t
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.c
-```
-
-````
-
-````{tab} Fortran
-
-```
-example
-├── pyproject.toml
-├── CMakeLists.txt
-└── src
-    └── example
-        ├── __init__.py
-        └── _core.f
-```
-
-````
+The `_core.*` source suffix depends on the language you pick below (`.cpp`,
+`.c`, `.pyx`, or `.f`); SWIG additionally has a `_core.i` interface file.
 
 ### Source code
 
-For this tutorial, you can either write a C extension yourself, or you can use
-pybind11 and C++. Select your preferred version using the tabs - compare them!
 The compiled extension is built as `_core` and lives inside the `example`
-package at `src/example/_core.*`.
+package at `src/example/_core.*`. Select your binding tool using the tabs:
 
 ````{tab} pybind11
 
@@ -247,6 +136,8 @@ than reaching into `example._core`:
 :language: python
 ```
 
+(python-package-configuration)=
+
 ### Python package configuration
 
 To create your first compiled package, start with a pyproject.toml like this:
@@ -314,13 +205,8 @@ To create your first compiled package, start with a pyproject.toml like this:
 ```
 
 ```{warning}
-The module you build will require an equal or newer version of NumPy at runtime
-than the version it built with. The modern approach is to build against
-`numpy>=2.0`; NumPy 2.0 wheels are backward-compatible at the C ABI level, so a
-module built against NumPy 2.0 keeps working with older NumPy at runtime. Add a
-runtime floor (in `[project]` `dependencies`) only if your code needs newer NumPy
-features. Also it's hard to compile Fortran on Windows as it's not supported by
-MSVC and macOS as it's not supported by Clang.
+Fortran is hard to compile on Windows and macOS, as it is supported by neither
+MSVC nor Clang; you'll need a separate toolchain like gfortran.
 ```
 
 ````
@@ -339,22 +225,30 @@ a package, but this is enough to start for now. The
 page covers what keys are available. Another example is available at
 [the Scientific Python Library Development Guide](https://learn.scientific-python.org/development/guides).
 
+```{note}
+If your extension builds against NumPy, build against `numpy>=2.0`: NumPy 2.0
+wheels are backward-compatible at the C ABI level, so a module built against
+2.0 keeps working with older NumPy at runtime. Add a runtime floor in
+`[project]` `dependencies` only if your code needs newer NumPy features.
+```
+
+(cmake-file)=
+
 ### CMake file
 
-Now, you'll need a file called `CMakeLists.txt`. This one will do:
+Now, you'll need a file called `CMakeLists.txt`. A few things are common to
+every version below: scikit-build-core requires CMake 3.15, so there's no need
+to set `cmake_minimum_required` lower than that. The `project()` line can
+optionally use the `SKBUILD_PROJECT_NAME` and `SKBUILD_PROJECT_VERSION`
+variables to avoid repeating information from your `pyproject.toml`, and should
+specify exactly what language you use to keep CMake from searching for both `C`
+and `CXX` compilers (the default).
 
 ````{tab} pybind11
 
 ```{literalinclude} ../examples/generated/pybind11/CMakeLists.txt
 :language: cmake
 ```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
 
 If you place find Python first, pybind11 will respect it instead of the older
 FindPythonInterp/FindPythonLibs mechanisms, which work, but are not as modern.
@@ -373,14 +267,6 @@ to `pybind11::module`, your choice.
 :language: cmake
 ```
 
-Scikit-build and nanobind require CMake 3.15, so there's no need to set it
-lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
 Nanobind places its config file such that CMake can find it from site-packages.
 ````
 
@@ -389,13 +275,6 @@ Nanobind places its config file such that CMake can find it from site-packages.
 ```{literalinclude} ../examples/generated/swig/CMakeLists.txt
 :language: cmake
 ```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
 
 You'll need to handle the generation of files by SWIG directly.
 
@@ -406,13 +285,6 @@ You'll need to handle the generation of files by SWIG directly.
 ```{literalinclude} ../examples/generated/cython/CMakeLists.txt
 :language: cmake
 ```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
 
 [cython-cmake][] provides the `cython_transpile` helper (via `include(UseCython)`)
 that turns your `.pyx` file into a C source you can pass to `python_add_library`.
@@ -425,13 +297,6 @@ Add it to your build requirements as shown in the pyproject.toml above.
 ```{literalinclude} ../examples/generated/c/CMakeLists.txt
 :language: cmake
 ```
-
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
 
 `find_package(Python ...)` should always include the `Development.Module`
 component instead of `Development`; the latter breaks if the embedding
@@ -450,13 +315,6 @@ without it).
 :language: cmake
 ```
 
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
 `find_package(Python ...)` needs `Development.SABIModule` for ABI3 extensions.
 
 You'll want `WITH_SOABI` when you make the module. You'll also need to set the `USE_SABI`
@@ -464,8 +322,8 @@ argument to the minimum version to build with. This will also add a proper
 PRIVATE define of `Py_LIMITED_API` for you.
 
 ```{note}
-This will not support pypy, so you'll want to provide an alternative if you
-support PyPy).
+This will not support PyPy, so you'll want to provide an alternative if you
+support PyPy.
 ```
 
 ````
@@ -504,13 +362,6 @@ classic single-phase `PyInit_` entry point cannot be used.
 :language: cmake
 ```
 
-Scikit-build requires CMake 3.15, so there's no need to set it lower than 3.15.
-
-The project line can optionally use `SKBUILD_PROJECT_NAME` and
-`SKBUILD_PROJECT_VERSION` variables to avoid repeating this information from
-your `pyproject.toml`. You should specify exactly what language you use to keep
-CMake from searching for both `C` and `CXX` compilers (the default).
-
 [f2py-cmake][] provides the `f2py_add_module` helper (via `include(UseF2Py)`)
 that generates the f2py wrappers, builds the `fortranobject` support code, and
 links it all into an importable module in a single call. Add it to your build
@@ -532,16 +383,14 @@ That's it! You can try building it:
 $ pipx run build
 ```
 
-[pipx](https://pipx.pypa.io) allows you to install and run Python applications
-in isolated environments.
-
 Or installing it (in a virtualenv, ideally):
 
 ```console
 $ pip install .
 ```
 
-That's it for a basic package!
+The [build guide](build.md) covers all the frontends and options for building,
+installing, and distributing your package.
 
 <!-- prettier-ignore-start -->
 [INTERSECT Training: Packaging]:     https://intersect-training.org/packaging

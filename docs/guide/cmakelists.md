@@ -75,11 +75,14 @@ this variable is used when creating targets.
 
 :::
 
+:::{note}
+
 If you want to use the old, deprecated FindPythonInterp and FindPythonLibs
-instead, you can. Though it should be noted that FindPythonLibs requires a trick
-to make it work properly if a Python library is not preset (like in manylinux):
-you have to set `PYTHON_LIBRARY` to something (doesn't matter what) to make it
+instead, you can. FindPythonLibs requires a trick to work when no Python library
+is present (like in manylinux): set `PYTHON_LIBRARY` to anything to make it
 succeed.
+
+:::
 
 ## Finding other packages
 

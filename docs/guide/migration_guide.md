@@ -5,12 +5,11 @@
 - The `build-system.build-backend` key in pyproject.toml must be changed to
   `scikit_build_core.build`.
 - Replace `scikit-build` with `scikit-build-core` in `build-system.requires`.
-- You should remove `cmake` and `ninja` from `build-system.requires`.
-  `scikit-build-core` will add these if necessary, but will respect existing
-  installations of the tools by default, which allows compatibility with systems
-  where binaries are not available on PyPI but can be installed from elsewhere.
-  Instead, set the minimum required versions in the `[tool.scikit-build]` table:
-  `cmake.minimum-version` and `ninja.minimum-version`.
+- You should remove `cmake` and `ninja` from `build-system.requires`;
+  scikit-build-core adds them only when necessary (see
+  [getting started](getting_started.md#python-package-configuration)). Instead,
+  set minimum required versions with `cmake.version` and `ninja.version` in the
+  `[tool.scikit-build]` table.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](getting_started.md) for more information.
 - If your project is primarily configured using setup.py or setup.cfg, you will
@@ -18,15 +17,19 @@
   [project metadata spec](https://packaging.python.org/en/latest/specifications/pyproject-toml)
   shows the information that can be placed directly in the project table. For
   additional metadata, see [our configuration guide](../configuration/index.md).
-  A useful trick for performing this migration is to change the `build-backend`
-  from `skbuild` to `setuptools`, install `hatch`, and run `hatch new --init`.
-  This should automatically migrate the configuration to pyproject.toml, after
-  which you can change the `build-backend` to `scikit-build-core`.
-- If you specify files to include in sdists via MANIFEST.in, with
-  `scikit-build-core` you should now instead use the `sdist.include` and
-  `sdist.exclude` fields in the `tool.scikit-build` table. Note that
-  scikit-build-core uses all non `.gitignore`'d files by default, so this is
+- If you specify files to include in sdists via MANIFEST.in, use the
+  `sdist.include` and `sdist.exclude` settings instead (see
+  [source file inclusion](../configuration/index.md#configuring-source-file-inclusion)).
+  Scikit-build-core uses all non `.gitignore`'d files by default, so this is
   often minimal or not needed.
+
+```{tip}
+A useful trick for migrating setup.py/setup.cfg configuration is to change the
+`build-backend` from `skbuild` to `setuptools`, install `hatch`, and run
+`hatch new --init`. This automatically migrates the configuration to
+pyproject.toml, after which you can change the `build-backend` to
+`scikit_build_core.build`.
+```
 
 ## CMake changes
 
@@ -52,8 +55,8 @@ python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 ```
 
 - The UseCython CMake module distributed with scikit-build (classic) is replaced
-  by the standalone [cython-cmake][] package (`include(UseCython)`). See
-  [our getting started guide](getting_started.md) for an example.
+  by the standalone [cython-cmake][] package; see the Cython tab in
+  [getting started](getting_started.md#cmake-file) for an example.
 
 [cython-cmake]: https://github.com/scikit-build/cython-cmake
 

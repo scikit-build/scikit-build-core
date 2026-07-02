@@ -1,18 +1,16 @@
 # Scikit-build-core
 
-[Scikit-build-core][] is a complete ground-up rewrite of scikit-build on top of
-modern packaging APIs. It provides a bridge between CMake and the Python build
-system, allowing you to make Python modules with CMake.
+[Scikit-build-core][] is the build backend for making Python modules with CMake.
 
-:::{admonition} Scikit-build community meeting
+```{admonition} Scikit-build community meeting
+:class: note
 
 We have a public Scikit-build community meeting every month!
 [Join us on Google Meet](https://meet.google.com/tgz-umhu-onf) on the third
 Friday of every month at [12:00 PM ET][] (<span id="meeting-time"></span> your
 time). Some of our past meeting minutes are
 [available here](https://github.com/orgs/scikit-build/discussions/categories/community-meeting-notes).
-
-:::
+```
 
 ## Features
 
