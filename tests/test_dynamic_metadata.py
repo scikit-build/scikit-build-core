@@ -520,6 +520,116 @@ def test_legacy_does_not_mutate_input(
     assert project == {"name": "p", "dynamic": ["version"]}
 
 
+def _write_dynamic_wheel_plugin(module: str, body: str) -> str:
+    # The module and directory names must be unique across tests: modules are
+    # cached in sys.modules, and relative directory names in sys.path_importer_cache.
+    path = f"plugins_{module}"
+    Path(path).mkdir()
+    Path(f"{path}/{module}.py").write_text(textwrap.dedent(body), encoding="utf-8")
+    return path
+
+
+def test_dynamic_wheel_marks_sdist_fields_dynamic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A provider's dynamic_wheel fields are marked Dynamic in the SDist PKG-INFO."""
+    monkeypatch.chdir(tmp_path)
+    _write_dynamic_wheel_plugin(
+        "wheel_plugin_sdist",
+        """\
+        def dynamic_metadata(settings, project):
+            return {
+                "classifiers": ["Private :: Do Not Upload"],
+                "urls": {"Homepage": "https://example.com"},
+            }
+
+        def dynamic_wheel(settings):
+            return {"classifiers": True, "urls": False}
+        """,
+    )
+    Path("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "test-dynamic-wheel"
+            version = "0.1.0"
+            dynamic = ["classifiers", "urls"]
+
+            [[tool.dynamic-metadata]]
+            provider = {path = "plugins_wheel_plugin_sdist", module = "wheel_plugin_sdist"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings = SettingsReader(pyproject, {}, state="sdist").settings
+
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
+    assert metadata.dynamic_metadata == ["Classifier"]
+    pkg_info = bytes(metadata.as_rfc822())
+    assert b"Dynamic: Classifier" in pkg_info
+    assert b"Metadata-Version: 2.2" in pkg_info
+
+    # Dynamic is only valid in SDist metadata, not in a wheel's METADATA
+    metadata = get_standard_metadata(pyproject, settings, build_state="wheel")
+    assert not metadata.dynamic_metadata
+    assert b"Dynamic:" not in bytes(metadata.as_rfc822())
+
+
+@pytest.mark.parametrize(
+    ("returns", "match"),
+    [
+        pytest.param('{"version": True}', "version", id="version"),
+        pytest.param('{"not-a-field": True}', "not-a-field", id="unknown-field"),
+    ],
+)
+def test_dynamic_wheel_invalid_fields(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, returns: str, match: str
+) -> None:
+    """'version' may never be dynamic between SDist and wheel; fields must be valid."""
+    from scikit_build_core.builder._load_provider import dynamic_wheel_fields
+
+    monkeypatch.chdir(tmp_path)
+    module = f"wheel_plugin_{match.replace('-', '_')}"
+    path = _write_dynamic_wheel_plugin(
+        module,
+        f"""\
+        def dynamic_metadata(settings, project):
+            return {{}}
+
+        def dynamic_wheel(settings):
+            return {returns}
+        """,
+    )
+    entries = [{"provider": {"path": path, "module": module}}]
+    with pytest.raises((KeyError, ValueError), match=match):
+        dynamic_wheel_fields(entries)
+
+
+def test_dynamic_wheel_defaults_to_static(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A provider without the hook, or a field mapped to false, adds no Dynamic fields."""
+    from scikit_build_core.builder._load_provider import dynamic_wheel_fields
+
+    monkeypatch.chdir(tmp_path)
+    path = _write_dynamic_wheel_plugin(
+        "wheel_plugin_no_hook",
+        """\
+        def dynamic_metadata(settings, project):
+            return {"description": "hi"}
+        """,
+    )
+    entries = [{"provider": {"path": path, "module": "wheel_plugin_no_hook"}}]
+    assert dynamic_wheel_fields(entries) == frozenset()
+
+
 def test_array_plugin_requires_field() -> None:
     """A bundled generic plugin in the array form needs a 'field' setting."""
     from scikit_build_core.builder._load_provider import process_dynamic_metadata
