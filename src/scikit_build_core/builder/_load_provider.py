@@ -47,6 +47,7 @@ else:
 __all__ = [
     "BUILD_STATES",
     "BuildState",
+    "dynamic_wheel_fields",
     "load_dynamic_metadata",
     "load_entry_provider",
     "load_provider",
@@ -219,6 +220,31 @@ def load_dynamic_metadata(
         settings = {k: v for k, v in entry.items() if k != "provider"}
         provider = load_entry_provider(entry["provider"])
         yield provider, settings
+
+
+def dynamic_wheel_fields(entries: Sequence[Mapping[str, Any]]) -> frozenset[str]:
+    """Collect fields whose value may change between the SDist and a wheel.
+
+    Each ``[[tool.dynamic-metadata]]`` provider implementing the optional
+    ``dynamic_wheel`` hook reports a field -> bool map; a field a provider does
+    not mention defaults to not dynamic in this sense, and ``version`` may never
+    be. The returned fields are marked ``Dynamic`` in the SDist's PKG-INFO
+    (METADATA 2.2).
+    """
+    fields: dict[str, bool] = {}
+    for provider, settings in load_dynamic_metadata(entries):
+        if isinstance(provider, DynamicMetadataWheelProtocol):
+            fields.update(provider.dynamic_wheel(settings))
+
+    for field, is_dynamic in fields.items():
+        if field not in _ALL_FIELDS:
+            msg = f"{field!r} is not a valid dynamic-metadata field"
+            raise KeyError(msg)
+        if field == "version" and is_dynamic:
+            msg = "'version' may not change between the SDist and wheel"
+            raise ValueError(msg)
+
+    return frozenset(field for field, is_dynamic in fields.items() if is_dynamic)
 
 
 def _merge_dict(

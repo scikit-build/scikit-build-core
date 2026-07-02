@@ -21,7 +21,9 @@ from .._vendor.pyproject_metadata import (
     extras_build_system,
     extras_top_level,
 )
+from .._vendor.pyproject_metadata.constants import PROJECT_TO_METADATA
 from ..builder._load_provider import (
+    dynamic_wheel_fields,
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
@@ -67,6 +69,17 @@ def get_standard_metadata(
 
     new_pyproject_dict["project"] = project
 
+    # METADATA 2.2: fields a provider reports (via the optional dynamic_wheel
+    # hook) as possibly differing between the SDist and a wheel built from it
+    # are marked Dynamic. Only SDist metadata may carry Dynamic fields.
+    dynamic_metadata: list[str] = []
+    if entries and build_state == "sdist":
+        dynamic_metadata = sorted(
+            metadata_field
+            for project_field in dynamic_wheel_fields(entries)
+            for metadata_field in PROJECT_TO_METADATA[project_field]
+        )
+
     if settings.strict_config:
         extra_keys_top = extras_top_level(new_pyproject_dict)
         if extra_keys_top:
@@ -88,7 +101,10 @@ def get_standard_metadata(
         allow_extra_keys = None if settings.strict_config else False
 
     metadata = StandardMetadata.from_pyproject(
-        new_pyproject_dict, all_errors=True, allow_extra_keys=allow_extra_keys
+        new_pyproject_dict,
+        dynamic_metadata=dynamic_metadata,
+        all_errors=True,
+        allow_extra_keys=allow_extra_keys,
     )
 
     # For scikit-build-core < 0.5, we keep the normalized name for back-compat
