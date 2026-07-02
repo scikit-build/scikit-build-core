@@ -45,16 +45,25 @@ def symlink_escapes(path: Path) -> bool:
     """
     True if the symlink at ``path`` (relative to the project root, which must
     be the current directory) has an immediate target pointing outside the
-    project: an absolute target, a Windows drive, or a relative target that
-    lexically escapes the root. Such a link would dangle once the SDist is
-    extracted somewhere else. Only the immediate target is checked, so a chain
-    of internal links to an eventually-external target stays consistent link
-    by link (the last link is the one that gets resolved).
+    subtree the SDist mirrors at that location: an absolute target, a Windows
+    drive, or a relative target that lexically escapes the containment root.
+    Such a link would dangle (or hit the wrong file) once the SDist is
+    extracted somewhere else. The containment root is the project root,
+    unless ``path`` was reached by following an external directory symlink --
+    then it is the nearest symlink ancestor, since only that subtree mirrors
+    the real directory the link resolves against. Only the immediate target
+    is checked, so a chain of internal links to an eventually-external target
+    stays consistent link by link (the last link is the one that gets
+    resolved).
     """
     target = os.readlink(path)
     if os.path.isabs(target) or os.path.splitdrive(target)[0]:  # noqa: PTH117
         return True
     joined = os.path.normpath(os.path.join(os.path.dirname(path), target))  # noqa: PTH118, PTH120
+    for parent in path.parents:
+        if parent != Path() and parent.is_symlink():
+            root = str(parent)
+            return joined != root and not joined.startswith(root + os.sep)
     return joined == os.pardir or joined.startswith(os.pardir + os.sep)
 
 
@@ -182,8 +191,8 @@ def each_unignored_file(
                 if not dpath.is_symlink():
                     continue
                 if resolve_symlinks == "external" and symlink_escapes(dpath):
-                    # Points outside the project; keep walking it so its
-                    # contents get stored instead of a dangling link.
+                    # Points outside the mirrored subtree; keep walking it so
+                    # its contents get stored instead of a dangling link.
                     continue
                 # Store the link itself as a member instead of descending.
                 dirs.remove(dname)

@@ -12,7 +12,12 @@ PREFIX = "cmake_example-0.0.1"
 
 # Expected tar member type per resolve-symlinks mode: "reg", "sym", or None
 # (absent from the archive). A directory symlink loop cannot be resolved, so
-# every mode stores it as a symlink member (on any platform).
+# every mode stores it as a symlink member (on any platform). The
+# ext_dir/*_link entries are symlinks nested inside a followed external
+# directory: in "external" mode, ones whose target stays inside the followed
+# directory are kept as symlinks; ones escaping it must be resolved, even if
+# their target lexically lands inside the project when judged against the
+# archive path.
 EXPECTED = {
     "all": {
         "CMakeLists_link.txt": "reg",
@@ -21,6 +26,12 @@ EXPECTED = {
         "ext_file.txt": "reg",
         "ext_dir": None,
         "ext_dir/data.txt": "reg",
+        "ext_dir/data_link.txt": "reg",
+        "ext_dir/esc_link.txt": "reg",
+        "ext_dir/sub_link": None,
+        "ext_dir/sub_link/sub.txt": "reg",
+        "ext_dir/esc_dir": None,
+        "ext_dir/esc_dir/esc.txt": "reg",
         "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
@@ -31,6 +42,12 @@ EXPECTED = {
         "ext_file.txt": "reg",
         "ext_dir": None,
         "ext_dir/data.txt": "reg",
+        "ext_dir/data_link.txt": "sym",
+        "ext_dir/esc_link.txt": "reg",
+        "ext_dir/sub_link": "sym",
+        "ext_dir/sub_link/sub.txt": None,
+        "ext_dir/esc_dir": None,
+        "ext_dir/esc_dir/esc.txt": "reg",
         "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
@@ -41,6 +58,12 @@ EXPECTED = {
         "ext_file.txt": "sym",
         "ext_dir": "sym",
         "ext_dir/data.txt": None,
+        "ext_dir/data_link.txt": None,
+        "ext_dir/esc_link.txt": None,
+        "ext_dir/sub_link": None,
+        "ext_dir/sub_link/sub.txt": None,
+        "ext_dir/esc_dir": None,
+        "ext_dir/esc_dir/esc.txt": None,
         "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
@@ -51,6 +74,12 @@ EXPECTED = {
         "ext_file.txt": "sym",
         "ext_dir": None,
         "ext_dir/data.txt": "reg",
+        "ext_dir/data_link.txt": "sym",
+        "ext_dir/esc_link.txt": "sym",
+        "ext_dir/sub_link": None,
+        "ext_dir/sub_link/sub.txt": "reg",
+        "ext_dir/esc_dir": None,
+        "ext_dir/esc_dir/esc.txt": "reg",
         "src/loop": "sym",
         "src/loop/main.cpp": None,
     },
@@ -79,8 +108,23 @@ def test_pep517_sdist_symlink(tmp_path: Path, mode: str | None) -> None:
     # Bytes, not text: text mode would write \r\n on Windows and break the
     # dereferenced-content check below.
     outside.joinpath("ext.txt").write_bytes(b"external file\n")
-    outside.joinpath("extdir").mkdir()
-    outside.joinpath("extdir", "data.txt").write_bytes(b"external data\n")
+    outside.joinpath("secret.txt").write_bytes(b"external secret\n")
+    outside.joinpath("escdir").mkdir()
+    outside.joinpath("escdir", "esc.txt").write_bytes(b"escaped dir data\n")
+    extdir = outside / "extdir"
+    extdir.mkdir()
+    extdir.joinpath("data.txt").write_bytes(b"external data\n")
+    extdir.joinpath("subdir").mkdir()
+    extdir.joinpath("subdir", "sub.txt").write_bytes(b"sub data\n")
+    # Symlinks nested inside the external directory: two staying inside it,
+    # two escaping it (with targets that lexically land inside the project
+    # when judged against the archive path ext_dir/...).
+    extdir.joinpath("data_link.txt").symlink_to("data.txt")
+    extdir.joinpath("esc_link.txt").symlink_to(Path("..") / "secret.txt")
+    extdir.joinpath("sub_link").symlink_to("subdir", target_is_directory=True)
+    extdir.joinpath("esc_dir").symlink_to(
+        Path("..") / "escdir", target_is_directory=True
+    )
 
     # Internal file and directory symlinks, external file and directory
     # symlinks, and a directory symlink loop.
@@ -113,6 +157,18 @@ def test_pep517_sdist_symlink(tmp_path: Path, mode: str | None) -> None:
             fobj = tar.extractfile(f"{PREFIX}/ext_file.txt")
             assert fobj is not None
             assert fobj.read() == b"external file\n"
+            # Nested symlinks escaping the followed external directory are
+            # dereferenced too, judged against the followed link rather than
+            # the archive path (which lexically stays inside the project).
+            fobj = tar.extractfile(f"{PREFIX}/ext_dir/esc_link.txt")
+            assert fobj is not None
+            assert fobj.read() == b"external secret\n"
+            fobj = tar.extractfile(f"{PREFIX}/ext_dir/esc_dir/esc.txt")
+            assert fobj is not None
+            assert fobj.read() == b"escaped dir data\n"
+            # Nested symlinks staying inside it keep their targets.
+            assert members[f"{PREFIX}/ext_dir/data_link.txt"].linkname == "data.txt"
+            assert members[f"{PREFIX}/ext_dir/sub_link"].linkname == "subdir"
         if mode in {"none", "external"}:
             # Internal symlink targets are preserved as-is.
             link = members[f"{PREFIX}/CMakeLists_link.txt"]
