@@ -193,6 +193,7 @@ def build_sdist(
                 build_dir=settings.build_dir,
                 mode=settings.sdist.inclusion_mode,
                 resolve_symlinks=resolve_symlinks,
+                yield_loop_symlinks=True,
             )
         )
         for filepath in paths:

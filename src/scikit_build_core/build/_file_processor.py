@@ -79,6 +79,7 @@ def each_unignored_file(
     *,
     mode: Literal["classic", "default", "manual", "explicit"],
     resolve_symlinks: Literal["all", "external", "none", "classic"] = "all",
+    yield_loop_symlinks: bool = False,
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
@@ -89,6 +90,10 @@ def each_unignored_file(
     staying inside the project, still following links that point outside it.
     File symlinks are always yielded as-is here; whether they are stored
     dereferenced is up to the caller.
+
+    A directory symlink loop is never followed; with ``yield_loop_symlinks``
+    the link itself is yielded (the SDist stores it as a symlink member),
+    otherwise it is skipped (wheel copying can't represent it).
     """
     # "manual" and "explicit" do not consult git ignore files at all.
     reads_gitignore = mode in {"classic", "default"}
@@ -148,19 +153,24 @@ def each_unignored_file(
                 dirpath,
             )
             dirs.clear()
-            # A loop symlink can't be followed in any mode; store the link
-            # itself so it isn't silently dropped. (On Windows os.walk may
-            # classify it as a file instead, yielding it below.)
-            if dirpath.is_symlink() and match_path(
-                dirpath.parent,
-                dirpath,
-                include_spec,
-                global_exclude_spec,
-                builtin_exclude_spec,
-                user_exclude_spec,
-                nested_excludes,
-                is_path=False,
-                explicit=explicit,
+            # A loop symlink can't be followed in any mode; the SDist walk
+            # asks for the link itself so it isn't silently dropped. (On
+            # Windows os.walk may classify it as a file instead, yielding it
+            # below.)
+            if (
+                yield_loop_symlinks
+                and dirpath.is_symlink()
+                and match_path(
+                    dirpath.parent,
+                    dirpath,
+                    include_spec,
+                    global_exclude_spec,
+                    builtin_exclude_spec,
+                    user_exclude_spec,
+                    nested_excludes,
+                    is_path=False,
+                    explicit=explicit,
+                )
             ):
                 yield dirpath
             continue

@@ -192,6 +192,12 @@ def test_circular_symlink_terminates(
     assert result.count(pkg / "__init__.py") == 1
     assert not any("sub/pkg/sub/pkg" in p.as_posix() for p in result)
 
+    # By default the loop symlink itself is not yielded: the wheel package
+    # copy can't represent a directory symlink. The sdist walk opts in.
+    assert loop not in result
+    with_loops = set(each_unignored_file(Path(), mode=mode, yield_loop_symlinks=True))
+    assert loop in with_loops
+
 
 def test_dot_git_is_a_file(
     tmp_path: Path,
