@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import subprocess
 import sys
 import tarfile
 import textwrap
@@ -203,6 +204,36 @@ def test_pep517_editable(virtualenv, tmp_path: Path):
     assert version.strip() == "0.0.1"
 
     add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.broken_on_urct
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+def test_build_ext_inplace_without_editable_mode(package):
+    # A direct "setup.py build_ext --inplace" involves no editable wheel, so it
+    # must not require editable.mode = "inplace" (classic scikit-build didn't).
+    pyproject = package.workdir / "pyproject.toml"
+    contents = pyproject.read_text(encoding="utf-8")
+    assert 'editable.mode = "inplace"\n' in contents
+    pyproject.write_text(
+        contents.replace('editable.mode = "inplace"\n', ""), encoding="utf-8"
+    )
+
+    subprocess.run(
+        [sys.executable, "setup.py", "build_ext", "--inplace"],
+        cwd=package.workdir,
+        check=True,
+    )
+
+    add = subprocess.run(
+        [sys.executable, "-c", "import cmake_example; print(cmake_example.add(1, 2))"],
+        cwd=package.workdir / "src",
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
     assert add.strip() == "3"
 
 
@@ -587,6 +618,15 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     # aliasing (RUNNER~1 vs runneradmin) that resolve() misses on cygwin.
     assert install_dir.is_absolute()
     assert install_dir.samefile(tmp_path / "src" / "wrapper_example")
+
+
+def test_validate_settings_editable_mode_only_required_for_pep660():
+    settings = build_cmake._load_settings()
+    assert settings.editable.mode == "redirect"
+    # Plain builds (including build_ext --inplace) don't require the setting.
+    build_cmake._validate_settings(settings)
+    with pytest.raises(SetupError, match=r"editable\.mode = 'inplace'"):
+        build_cmake._validate_settings(settings, pep660_editable=True)
 
 
 def test_wrapper_setup_raises_setup_error():

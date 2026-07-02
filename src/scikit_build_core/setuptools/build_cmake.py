@@ -85,7 +85,7 @@ def _apply_cmake_install_target(
 
 
 def _validate_settings(
-    settings: ScikitBuildSettings, *, editable_mode: bool = False
+    settings: ScikitBuildSettings, *, pep660_editable: bool = False
 ) -> None:
     if settings.wheel.expand_macos_universal_tags:
         msg = "wheel.expand_macos_universal_tags is not supported in setuptools mode"
@@ -99,7 +99,9 @@ def _validate_settings(
     if len(normalize_build_types(settings.cmake.build_type)) > 1:
         msg = "cmake.build-type lists (multi-config) are not supported in setuptools mode, use a single build type"
         raise SetupError(msg)
-    if editable_mode:
+    # A direct "build_ext --inplace" builds in-place regardless of
+    # editable.mode; only PEP 660 editable wheels require the opt-in.
+    if pep660_editable:
         if settings.editable.mode != "inplace":
             msg = "setuptools editable installs require editable.mode = 'inplace'"
             raise SetupError(msg)
@@ -425,11 +427,16 @@ class BuildCMake(setuptools.Command):
             ]
 
     def _get_editable_mode(self) -> bool:
-        # editable_mode is the PEP 660 path; inplace is "build_ext --inplace"
+        # Both PEP 660 editable wheels and "build_ext --inplace" install into
+        # the source tree.
         build_ext = self.distribution.get_command_obj("build_ext")
-        return bool(getattr(build_ext, "editable_mode", False)) or bool(
-            getattr(build_ext, "inplace", False)
-        )
+        return self._is_pep660_editable() or bool(getattr(build_ext, "inplace", False))
+
+    def _is_pep660_editable(self) -> bool:
+        # setuptools sets editable_mode only when building a PEP 660 editable
+        # wheel; a direct "build_ext --inplace" sets just inplace.
+        build_ext = self.distribution.get_command_obj("build_ext")
+        return bool(getattr(build_ext, "editable_mode", False))
 
     def _get_install_subdir(self) -> Path:
         dist_cmake_install_dir = (
@@ -572,7 +579,7 @@ class BuildCMake(setuptools.Command):
         # run() is always a wheel or editable build; pass the matching state so
         # overrides (if.state = "wheel"/"editable") are applied correctly.
         settings = _load_settings(state="editable" if self.editable_mode else "wheel")
-        _validate_settings(settings, editable_mode=self.editable_mode)
+        _validate_settings(settings, pep660_editable=self._is_pep660_editable())
         _apply_cmake_install_target(settings, self.distribution)
 
         build_tmp_folder = Path(self.build_temp)
