@@ -72,7 +72,7 @@ def test_downstream_dir_name(project: str, expected: str) -> None:
 
 
 def test_downstream_dir_name_has_no_colon() -> None:
-    # Regression: an embedded ':' made pyproject_hooks mis-split backend-path.
+    # Regression: an embedded ':' confused pyproject_hooks splitting backend-path.
     url = "https://github.com/scikit-build/ninja-python-distributions"
     result = noxfile.downstream_dir_name(url)
     assert ":" not in result
