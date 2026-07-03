@@ -17,7 +17,7 @@ build.verbose = true
 ````{tab} pip
 
 ```console
-$ pip install . --config-settings=build.verbose=true
+$ pip install . -Cbuild.verbose=true
 ```
 
 ````
