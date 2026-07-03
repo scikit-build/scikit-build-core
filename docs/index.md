@@ -28,10 +28,12 @@ time). Some of our past meeting minutes are
 guide/getting_started
 guide/cmakelists
 guide/dynamic_link
+guide/ctypes
 guide/crosscompile
 guide/migration_guide
 guide/build
 guide/workspaces
+guide/debugging
 guide/faqs
 ```
 
@@ -41,11 +43,13 @@ guide/faqs
 :caption: Configuration
 
 configuration/index
+configuration/editable
 configuration/overrides
 configuration/dynamic
 configuration/formatted
 configuration/search_paths
 configuration/entrypoint_config
+configuration/variants
 ```
 
 ```{toctree}

@@ -808,154 +808,12 @@ search paths are populated automatically through entry-points; see
 
 ## Editable installs
 
-Support for editable installs is provided, with some caveats and configuration.
-Recommendations:
+Editable installs (`pip install -e .`) are supported, including an optional
+(experimental) rebuild-on-import mode and an inplace mode; see the dedicated
+[editable installs](./editable.md) page.
 
-- Use `--no-build-isolation` when doing an editable install is recommended; you
-  should preinstall your dependencies.
-- Automatic rebuilds do not have the original isolated build dir (pip deletes
-  it), so select a `build-dir` when using editable installs, especially if you
-  also enable automatic rebuilds.
-- You need to reinstall to pick up new files.
-
-Resources (via `importlib.resources`) are supported and tested on all supported
-Python versions. On Python 3.8, use the `importlib_resources` backport, since
-`importlib.resources.files` was added to the standard library in Python 3.9.
-
-```console
-# Very experimental rebuild on initial import feature
-$ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
-```
-
-The automatic rebuild-on-import feature (`editable.rebuild`) is still
-experimental and subject to change.
-
-You can disable the verbose rebuild output with `editable.verbose=false` if you
-want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;
-this will override if non-empty, and `"0"` will disable verbose output).
-
-When `editable.rebuild` is enabled together with a persistent `build-dir`, the
-CMake install targets a tree inside the build directory and the redirecting
-finder loads the compiled artifacts from there directly, rather than from copies
-in site-packages. This means `SKBUILD_PLATLIB_DIR` (or `SKBUILD_PURELIB_DIR`)
-and `CMAKE_INSTALL_PREFIX` are baked at their final location when the editable
-wheel is first built, so import-triggered rebuilds re-install in place with no
-extra reconfigure -- including projects that install to an absolute
-`${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
-the install, but a rebuildable editable already depends on it.
-
-As a newer, parallel alternative, `editable.rebuild-dir` selects the install
-tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
-flag is ignored when it is set). It accepts the same template substitutions as
-`build-dir`, and the path must be absolute, or relative to the source directory,
-and stable between build and run time, since it is baked at configure time and
-referenced by absolute path on rebuild. This only moves the install tree;
-`build-dir` is still required and still hosts the CMake build that the rebuild
-re-runs. The classic `editable.rebuild` (which installs into a tree inside
-`build-dir`) is left as-is, so the two approaches can be compared.
-
-:::{versionadded} 1.0
-
-`editable.rebuild-dir`, a persistent install tree for editable rebuilds.
-
-:::
-
-The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
-combine the static CMake install dir with the original source code. Python code
-added via scikit-build-core's package discovery will be found in the original
-location, so changes there are picked up on import, regardless of the
-`editable.rebuild` setting.
-
-:::{versionchanged} 1.0
-
-[PEP 829][] `.start` files are emitted for the redirecting finder on Python
-3.15+. Older interpreters emit only `.pth` files.
-
-:::
-
-[PEP 829]: https://peps.python.org/pep-0829/
 [PEP 817]: https://peps.python.org/pep-0817/
 [PEP 803]: https://peps.python.org/pep-0803/
-
-:::{note}
-
-A second mode, `"inplace"`, is also available. This does an in-place CMake
-build, so all the caveats there apply too -- only one build per source
-directory, you can't change to an out-of-source builds without removing the
-build artifacts, your source directory will be littered with build artifacts,
-etc. Also, to make your binaries importable, you should set
-`LIBRARY_OUTPUT_DIRECTORY` to place them inside your source directory inside the
-Python packages (append the empty generator expression `$<0:>` for multi-config
-generator support; see [the MSVC FAQ](#msvc-multi-config)); this will be run
-from the build directory, rather than installed. The build directory setting
-will be ignored if you use this and perform an editable install (the source
-directory doubles as the build directory). You can detect this mode by checking
-for an in-place build and checking `SKBUILD` being set.
-
-With all the caveats, this is very logically simple (one directory) and a near
-identical replacement for `python setup.py build_ext --inplace`. Some third
-party tooling might work better with this mode. Scikit-build-core will simply
-install a `.pth` file that points at your source package(s) and do an inplace
-CMake build.
-
-On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
-Inplace installs support both automatic (`editable.rebuild`) and manual rebuilds
-(see below); since the source directory doubles as the build directory, no
-separate `build-dir` is needed.
-
-:::
-
-(triggering-a-rebuild-manually)=
-
-### Triggering a rebuild manually
-
-You don't have to enable `editable.rebuild` to rebuild on demand. Both editable
-modes install a loader that exposes a `rebuild()` method, so you can recompile
-whenever you like:
-
-```python
-import some_package
-
-some_package.__loader__.rebuild()
-```
-
-For redirect installs this runs the same `cmake --build`/`--install` cycle used
-by the automatic rebuild, and works for any importable object the install
-provides -- a package, a plain module, or a compiled extension. A redirect
-rebuild needs a persistent build directory, so install with a `build-dir` set:
-
-```console
-$ pip install --no-build-isolation -Cbuild-dir=build -ve .
-```
-
-If a redirect editable was built without a persistent `build-dir`, there is
-nothing to rebuild and the call raises `RuntimeError`.
-
-For inplace installs, `rebuild()` runs `cmake --build` in the source tree (there
-is no install step); the source directory is always the build directory, so no
-`build-dir` is required.
-
-If you don't have a handle on a redirected module, the finder itself is on
-`sys.meta_path` and carries the same method (`ScikitBuildRedirectingFinder` for
-redirect installs, `ScikitBuildInplaceFinder` for inplace):
-
-```python
-import sys
-
-finder = next(
-    f
-    for f in sys.meta_path
-    if type(f).__name__ in {"ScikitBuildRedirectingFinder", "ScikitBuildInplaceFinder"}
-)
-finder.rebuild()
-```
-
-:::{versionadded} 1.0
-
-Manual `__loader__.rebuild()` for redirect installs, and both manual and
-automatic (`editable.rebuild`) rebuilds for inplace installs.
-
-:::
 
 ## Messages
 
@@ -1021,8 +879,7 @@ experimental = true
 The following features currently require this flag:
 
 - **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
-  `variant-label`, and `null-variant`), added in 1.0. See
-  [](../guide/faqs.md#building-wheel-variants-experimental).
+  `variant-label`, and `null-variant`), added in 1.0. See [](./variants.md).
 - **Legacy `tool.scikit-build.metadata` plugins**: dynamic metadata providers
   not shipped with scikit-build-core (anything using `provider-path` or a
   provider outside the `scikit_build_core.*` namespace) used through the
@@ -1035,8 +892,8 @@ The following features currently require this flag:
   `${SKBUILD_<TREE>_DIR}` prefix is the non-experimental replacement. See
   [`wheel.install-dir`](../reference/configs.md).
 
-The [rebuild-on-import feature](#editable-installs) for editable installs is
-also considered experimental and subject to change, but is not gated behind this
+The [rebuild-on-import feature](./editable.md) for editable installs is also
+considered experimental and subject to change, but is not gated behind this
 flag.
 
 You can also fail the build with `fail = true`. This is useful with overrides if
