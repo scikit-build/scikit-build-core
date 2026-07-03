@@ -1,0 +1,5 @@
+/* Let the sidebar scroll past the last entry, so the bottom menu items can sit
+   higher than the viewport edge. */
+.sidebar-tree {
+  padding-bottom: 8rem;
+}
