@@ -913,16 +913,6 @@ dependencies like `"cmake"` will not be requested.
 
 ## See also
 
-```{toctree}
-:maxdepth: 1
-
-editable
-overrides
-dynamic
-formatted
-search_paths
-entrypoint_config
-variants
-```
-
-The [full schema](#schema) documents every setting.
+- [Overrides](./overrides.md): customize settings for a wide variety of
+  situations.
+- [Full schema](#schema) for all settings.
