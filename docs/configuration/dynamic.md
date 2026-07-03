@@ -5,11 +5,8 @@ Scikit-build-core supports dynamic metadata with four built-in plugins.
 :::{note}
 
 Beyond the built-in plugins, your package and third parties can provide their
-own. These are fully supported through the standard `[[tool.dynamic-metadata]]`
-interface described below. The legacy `tool.scikit-build.metadata` table was
-provisional: there, plugins not shipped with scikit-build-core require
-`tool.scikit-build.experimental=true`, since that interface was not stable (now
-replaced by the new one). We are providing backward compatibility for now.
+own; they are fully supported through the standard `[[tool.dynamic-metadata]]`
+interface described below.
 
 :::
 
@@ -17,7 +14,7 @@ replaced by the new one). We are providing backward compatibility for now.
 
 ```{versionadded} 1.0
 Support for the standard
-[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 specification.
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.4 specification.
 ```
 
 The standard, cross-backend way to configure plugins is the top-level
@@ -55,16 +52,19 @@ it; the single-value fields (`version`, `description`, `requires-python`,
 :::{warning}
 
 The older `[tool.scikit-build.metadata.<field>]` table (a field-keyed mapping
-rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]`. It
-still works and is shown in the examples below, but the two forms **cannot be
-combined** in one project; use one or the other.
+rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]`, and
+since 1.0 it emits a deprecation warning unless `minimum-version` is set below
+`1.0`. It still works, but the two forms **cannot be combined** in one project,
+and plugins not shipped with scikit-build-core additionally require
+`tool.scikit-build.experimental = true` in the legacy form. The plugin examples
+below show both spellings as Modern/Classic tabs; the example above would be
+spelled:
 
-:::
-
-:::{versionchanged} 1.0
-
-The legacy `tool.scikit-build.metadata` table now emits a deprecation warning
-unless `minimum-version` is set below `1.0`.
+```toml
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/mypackage/__init__.py"
+```
 
 :::
 
@@ -72,20 +72,17 @@ unless `minimum-version` is set below `1.0`.
 
 We provide some built-in plugins in `scikit_build_core.metadata`. These work in
 either mode with the same `provider` string (e.g.
-`scikit_build_core.metadata.regex`). In the modern `[[tool.dynamic-metadata]]`
-mode, a `field =` key is normally required, but it can be omitted for
-fixed-target plugins that declare a default: `setuptools_scm` defaults to
-`field = "version"` and `fancy_pypi_readme` defaults to `field = "readme"`.
-
-Third party plugins (like those inside the `dynamic-metadata` package) and
-custom plugins are fully supported in the new mode.
+`scikit_build_core.metadata.regex`). A `field =` key is normally required, but
+it can be omitted for fixed-target plugins that declare a default:
+`setuptools_scm` defaults to `field = "version"` and `fancy_pypi_readme`
+defaults to `field = "readme"`.
 
 ### `version`: Setuptools-scm
 
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
 
-````{tab} `[[tool.dynamic-metadata]]`
+````{tab} Modern
 
 ```toml
 [project]
@@ -103,9 +100,9 @@ field = "version"
 write_to = "src/package/_version.py"
 ```
 
-`````
+````
 
-````{tab} `tool.scikit-build.metadata`
+````{tab} Classic
 
 ```toml
 [project]
@@ -120,13 +117,15 @@ sdist.include = ["src/package/_version.py"]
 write_to = "src/package/_version.py"
 ```
 
-`````
+````
 
 This sets the python project version according to
 [git tags](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
 or a
 [`.git_archival.txt`](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#git-archives)
 file, or equivalents for other VCS systems.
+
+:::{tip}
 
 If you need to set the CMake project version without scikit-build-core (which
 provides `${SKBUILD_PROJECT_VERSION}`), you can use something like
@@ -144,40 +143,13 @@ dynamic_version()
 project(MyPackage VERSION ${PROJECT_VERSION})
 ```
 
+:::
+
 ### Regex
 
 If you want to pull a string-valued expression (usually version) from an
-existing file, you can use the integrated `regex` plugin to pull the
-information.
-
-````{tab} `[[tool.dynamic-metadata]]`
-
-```toml
-[project]
-name = "mypackage"
-dynamic = ["version"]
-
-[[tool.dynamic-metadata]]
-provider = "scikit_build_core.metadata.regex"
-field = "version"
-input = "src/mypackage/__init__.py"
-```
-
-`````
-
-````{tab} `tool.scikit-build.metadata`
-
-```toml
-[project]
-name = "mypackage"
-dynamic = ["version"]
-
-[tool.scikit-build.metadata.version]
-provider = "scikit_build_core.metadata.regex"
-input = "src/mypackage/__init__.py"
-```
-
-`````
+existing file, you can use the integrated `regex` plugin, as shown in the first
+example on this page.
 
 You can set a custom regex with `regex=`. By default when targeting version, you
 get a reasonable regex for python files,
@@ -186,7 +158,7 @@ can set `result` to a format string to process the matches; the default is
 `"{value}"`. You can also specify a regex for `remove=` which will strip any
 matches from the final result. A more complex example:
 
-````{tab} `[[tool.dynamic-metadata]]`
+````{tab} Modern
 
 ```toml
 [[tool.dynamic-metadata]]
@@ -203,9 +175,9 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
-`````
+````
 
-````{tab} `tool.scikit-build.metadata`
+````{tab} Classic
 
 ```toml
 [tool.scikit-build.metadata.version]
@@ -221,7 +193,7 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
-`````
+````
 
 This will remove the "dev" tag when it is equal to 0.
 
@@ -237,7 +209,7 @@ You can use
 [hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
 render your README:
 
-````{tab} `[[tool.dynamic-metadata]]`
+````{tab} Modern
 
 ```toml
 [project]
@@ -251,9 +223,9 @@ field = "readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
-`````
+````
 
-````{tab} `tool.scikit-build.metadata`
+````{tab} Classic
 
 ```toml
 [project]
@@ -266,7 +238,7 @@ metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
 
-`````
+````
 
 In order to use the version number in readme feature, this must be listed after
 the version in the `[[tool.dynamic-metadata]]` mode.
@@ -280,7 +252,7 @@ The version number feature now works.
 
 You can access other metadata fields and produce templated outputs.
 
-````{tab} `[[tool.dynamic-metadata]]`
+````{tab} Modern
 
 ```toml
 [[tool.dynamic-metadata]]
@@ -289,9 +261,9 @@ field = "optional-dependencies"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-`````
+````
 
-````{tab} `tool.scikit-build.metadata`
+````{tab} Classic
 
 ```toml
 [tool.scikit-build.metadata.optional-dependencies]
@@ -299,7 +271,7 @@ provider = "scikit_build_core.metadata.template"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
 
-`````
+````
 
 You can use `project` to access the current metadata values. You can use
 `result` to specify the output. The result must match the type of the metadata
@@ -319,7 +291,7 @@ static in `[project]`).
 
 ```{versionadded} 1.0
 Writing a custom dynamic-metadata plugin through the standard
-[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 interface.
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.4 interface.
 ```
 
 You can write your own plugins. Full details are in the
@@ -360,9 +332,8 @@ If you need to inject and manipulate additional `build-system.requires`, you can
 use the `build.requires`. This is intended to be used in combination with
 [](./overrides.md).
 
-This is not technically a dynamic metadata and thus does not have to have the
-`dynamic` field defined, and it is not defined under the `metadata` table, but
-similar to the other dynamic metadata it injects the additional
+This is not project metadata — nothing is listed in `[project]` `dynamic` — but
+like the plugins above it resolves at build time, injecting the additional
 `build-system.requires`.
 
 ```toml

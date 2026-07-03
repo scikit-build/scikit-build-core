@@ -182,6 +182,7 @@ html_static_path = ["_static"]
 # it (and the box) from furo's theme variables. tippy.css must come last so its
 # overrides win. sphinx-tippy already loads tippy.js itself from this CDN.
 html_css_files = [
+    "custom.css",
     "https://unpkg.com/tippy.js@6/themes/light-border.css",
     "tippy.css",
 ]

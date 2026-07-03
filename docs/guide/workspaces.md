@@ -8,9 +8,9 @@ into the shared environment through the standard PEP 517/660 build hooks.
 
 Scikit-build-core needs no special support for this: a workspace member that
 builds with scikit-build-core is simply an editable install, so everything on
-the [editable installs](../configuration/index.md#editable-installs) page
-applies unchanged. This page collects the few things worth knowing when several
-such members live side by side.
+the [editable installs](../configuration/editable.md) page applies unchanged.
+This page collects the few things worth knowing when several such members live
+side by side.
 
 ## Rebuilding after C++/CMake edits (uv)
 
@@ -40,12 +40,12 @@ list. uv now reruns the build whenever any matched file changes.
 
 ### Option 2: let scikit-build-core rebuild on import
 
-Enable [`editable.rebuild`](../configuration/index.md#editable-installs) with a
-persistent `build-dir`. The member is then rebuilt on import, which makes the
-frontend's caching moot — you never rely on uv noticing a source change. The
-rebuild shim shells out to `cmake` directly and does **not** import
-scikit-build-core, so it works even though uv builds members with isolation; it
-only needs `cmake` on `PATH` at import time.
+Enable [`editable.rebuild`](../configuration/editable.md) with a persistent
+`build-dir`. The member is then rebuilt on import, which makes the frontend's
+caching moot — you never rely on uv noticing a source change. The rebuild shim
+shells out to `cmake` directly and does **not** import scikit-build-core, so it
+works even though uv builds members with isolation; it only needs `cmake` on
+`PATH` at import time.
 
 You can set this per member in `pyproject.toml`:
 
@@ -55,9 +55,9 @@ build-dir = "build/{wheel_tag}"
 editable.rebuild = true
 ```
 
-See [editable installs](../configuration/index.md#editable-installs) for the
-full set of options (verbosity, manual `__loader__.rebuild()`, inplace mode, and
-the newer `editable.rebuild-dir`).
+See [editable installs](../configuration/editable.md) for the full set of
+options (verbosity, manual `__loader__.rebuild()`, inplace mode, and the newer
+`editable.rebuild-dir`).
 
 ## Per-member configuration
 

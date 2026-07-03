@@ -6,7 +6,9 @@ libraries/python bindings work after the wheel is created and the python project
 is installed on the system. The most common issues are the missing hints
 pointing to where the runtime libraries are located, specifically `RPATH` on
 Linux and MacOS systems, and `PATH`/`os.add_dll_directory` on Windows systems.
-Here are some recommendations on how to address them.
+Here are some recommendations on how to address them. If you got here because a
+vendored dependency's library landed in `site-packages/bin` or `lib`, see
+[that FAQ entry](#dependency-in-site-packages) for the specific fix.
 
 ## Link to the static libraries
 
@@ -22,16 +24,11 @@ For example for [Boost][FindBoost] this is controlled via the variable
 
 ## Wheel repair tools
 
-There are wheel repair tools for each operating system that bundle any dynamic
-libraries used and patch the libraries/python bindings to point to prioritize
-those libraries. The most common tools for these are [auditwheel] for Linux,
-[delocate] for MacOS and [delvewheel] for Windows. [cibuildwheel] incorporates
-these tools in its [repair wheel] feature.
-
-These tools also rename the library with a unique hash to avoid any potential
-name collision if the same library is being bundled by a different package, and
-check if the packages conform to standards like [PEP600] (`manylinux_X_Y`).
-These tools do not allow cross-wheel library dependencies.
+The per-platform wheel repair tools ([auditwheel], [delocate], [delvewheel]; see
+[repairing wheels](#repairing-wheels)) bundle any dynamic libraries used and
+patch the libraries/python bindings to prioritize them. They rename each bundled
+library with a unique hash to avoid collisions if another package bundles the
+same library, and they do not allow cross-wheel library dependencies.
 
 ## Manual patching
 
@@ -68,8 +65,5 @@ os.add_dll_directory(str(dependency_dll_path))
 [auditwheel]: https://pypi.org/project/auditwheel/
 [delocate]: https://pypi.org/project/delocate/
 [delvewheel]: https://pypi.org/project/delvewheel/
-[cibuildwheel]: https://cibuildwheel.pypa.io/en/stable/
-[repair wheel]: https://cibuildwheel.pypa.io/en/stable/options/#repair-wheel-command
-[PEP600]: https://peps.python.org/pep-0600
 
 <!-- prettier-ignore-end -->

@@ -75,11 +75,14 @@ this variable is used when creating targets.
 
 :::
 
+:::{note}
+
 If you want to use the old, deprecated FindPythonInterp and FindPythonLibs
-instead, you can. Though it should be noted that FindPythonLibs requires a trick
-to make it work properly if a Python library is not preset (like in manylinux):
-you have to set `PYTHON_LIBRARY` to something (doesn't matter what) to make it
+instead, you can. FindPythonLibs requires a trick to work when no Python library
+is present (like in manylinux): set `PYTHON_LIBRARY` to anything to make it
 succeed.
+
+:::
 
 ## Finding other packages
 
@@ -120,6 +123,8 @@ configuration, with the variables:
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
+(limited-api)=
+
 ## Limited API / Stable ABI
 
 You can activate the Stable ABI by setting `tool.scikit-build.wheel.py-api`
@@ -131,6 +136,10 @@ in your `pyproject.toml`:
 [tool.scikit-build]
 wheel.py-api = "cp38"
 ```
+
+The possible values and the resulting wheel tags are covered in
+[customizing the output wheel](../configuration/index.md#customizing-the-output-wheel);
+this section covers the CMake side.
 
 When you do that, `${SKBUILD_SABI_COMPONENT}` will be set to
 `Development.SABIModule` if you can target this (new enough CPython), and will

@@ -4,29 +4,20 @@ Generally scikit-build-core will try to account for environment variables that
 specify to CMake directly how to cross-compile. Alternatively, you can define
 manually how to cross-compile as detailed in [manual cross compilation] section.
 
-## macOS
+```{tab} macOS
 
 Unlike the other platforms, macOS has the ability to target older operating
 systems with the `MACOSX_DEPLOYMENT_TARGET` variable. If that is not set, you
 will get a wheel optimized for the current operating system. Popular
 redistributable builders like cibuildwheel will set this for you.
 
-:::{warning}
+**Intel to Apple Silicon:** AppleClang has excellent support for making Apple
+Silicon and Universal2 binaries (both architectures in one binary).
+Scikit-build-core respects `ARCHFLAGS` if `CMAKE_SYSTEM_PROCESSOR` is not in
+the cmake args. These values are set by most redistributable builders like
+cibuildwheel when cross-compiling.
 
-While CMake also allows you to specify this a few other ways, scikit-build-core
-will not know you've set this and won't get the correct wheel name.
-
-:::
-
-### Intel to AppleSilicon
-
-On macOS, AppleClang has excellent support for making Apple Silicon and
-Universal2 binaries (both architectures in one binary). Scikit-build-core
-respects `ARCHFLAGS` if `CMAKE_SYSTEM_PROCESSOR` is not in the cmake args. These
-values are set by most redistributable builders like cibuildwheel when
-cross-compiling.
-
-:::{warning}
+:::{note}
 
 If you link to any binaries, they need to be Universal2, so that you get the
 Apple Silicon component. This means you cannot use homebrew binaries (which are
@@ -38,29 +29,33 @@ Universal2.
 
 :::{warning}
 
-If you manually set the arch flags in other ways besides `ARCHFLAGS`, or the one
-special case above, scikit-build-core will not get the right wheel name.
+Scikit-build-core only knows about `MACOSX_DEPLOYMENT_TARGET` and `ARCHFLAGS`;
+if you set the target OS version or architectures any other way (CMake allows
+several), it won't know and the wheel will not get the correct name.
 
 :::
 
-## Windows
+```
 
-### Intel to ARM
+```{tab} Windows
 
-Scikit-build-core respects setuptools-style `DIST_EXTRA_CONFIG`. If is set to a
-file, then scikit-build-core reads the `build_ext.library_dirs` paths to find
-the library to link to. You will also need to set `SETUPTOOLS_EXT_SUFFIX` to the
-correct suffix. These values are set by cibuildwheel when cross-compiling.
+**Intel to ARM:** Scikit-build-core respects setuptools-style
+`DIST_EXTRA_CONFIG`. If it is set to a file, then scikit-build-core reads the
+`build_ext.library_dirs` paths to find the library to link to. You will also
+need to set `SETUPTOOLS_EXT_SUFFIX` to the correct suffix. These values are set
+by cibuildwheel when cross-compiling. In your CMakeLists, use
+`${SKBUILD_SOABI}` for the extension suffix; see [the SOABI note](#soabi).
 
-## Linux
+```
+
+```{tab} Linux
 
 See [manual cross compilation] section for the general approach.
 
-### Intel to Emscripten (Pyodide)
-
-When using pyodide-build, Python is set up to report the cross-compiling values
-by setting `_PYTHON_SYSCONFIGDATA_NAME`. This causes values like `SOABI` and
-`EXT_SUFFIX` to be reported by `sysconfig` as the cross-compiling values.
+**Intel to Emscripten (Pyodide):** When using pyodide-build, Python is set up
+to report the cross-compiling values by setting `_PYTHON_SYSCONFIGDATA_NAME`.
+This causes values like `SOABI` and `EXT_SUFFIX` to be reported by `sysconfig`
+as the cross-compiling values.
 
 This is unfortunately incorrectly stripped from the cmake wrapper pyodide uses,
 so FindPython will report the wrong values, but pyodide-build will rename the
@@ -69,7 +64,9 @@ so FindPython will report the wrong values, but pyodide-build will rename the
 pyodide-build will also set `_PYTHON_HOST_PLATFORM` to the target Pyodide
 platform, so scikit-build-core can use that to compute the correct wheel name.
 
-## Android
+```
+
+```{tab} Android
 
 To build for Android, you'll need the following items, all of which will be
 provided automatically if you use cibuildwheel:
@@ -89,6 +86,8 @@ provided automatically if you use cibuildwheel:
     active.
 - Compiler paths and flags, either in the toolchain file or in environment
   variables.
+
+```
 
 ## Manual cross compilation
 

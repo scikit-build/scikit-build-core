@@ -343,10 +343,9 @@ matching `SKBUILD_*_DIR` CMake variable name:
 wheel.install-dir = "${SKBUILD_DATA_DIR}/mypackage"
 ```
 
-The available trees are `${SKBUILD_PLATLIB_DIR}` (the default),
-`${SKBUILD_PURELIB_DIR}`, `${SKBUILD_DATA_DIR}`, `${SKBUILD_HEADERS_DIR}`,
-`${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_METADATA_DIR}`, and `${SKBUILD_NULL_DIR}`.
-This matches the cache variables available from within CMake.
+The available trees match the `SKBUILD_*_DIR` cache variables available from
+within CMake, described in
+[install directories](../guide/cmakelists.md#install-directories).
 
 :::{versionadded} 1.0
 
@@ -400,7 +399,90 @@ assume `wheel.platlib = false` (purelib targeted instead).
 
 :::
 
-### Force-including files
+## Customizing the output wheel
+
+The python API tags for your wheel will be correct assuming you are building a
+normal CPython extension. For anything else, set `wheel.py-api` to the tag you
+support:
+
+```toml
+[tool.scikit-build]
+wheel.py-api = "cp38"
+```
+
+| `wheel.py-api`   | Use for                                           | Resulting tags     |
+| ---------------- | ------------------------------------------------- | ------------------ |
+| `"cp38"`         | Limited API / Stable ABI extension (CPython 3.8+) | `cp38-abi3`        |
+| `"py3"`          | Extension not using the Python API                | `py3-none`         |
+| `"py2.py3"`      | Same, but installable on Python 2 as well         | `py2.py3-none`     |
+| `"cp315t"`       | Free-threaded stable ABI ([PEP 803][])            | `cp315-abi3t`      |
+| `"cp315.cp315t"` | Both stable ABIs from one free-threaded build     | `cp315-abi3.abi3t` |
+
+Scikit-build-core will only target ABI3 if the version of Python is equal to or
+newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
+4.4+). For `py3`/`py2.py3`, you still need a version of Python scikit-build-core
+supports to build the initial wheel. The CMake side — the
+`${SKBUILD_SABI_COMPONENT}` variable and the `USE_SABI` idiom — is covered in
+[Limited API / Stable ABI](#limited-api).
+
+With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
+tag: `abi3t` is a subset of `abi3` (PEP 803), so the single free-threaded binary
+also loads under a GIL-enabled CPython 3.15+, and the one wheel is installable
+on every CPython 3.15+. On a GIL build only `abi3` can be produced, so it falls
+back to `cp315-abi3`.
+
+:::{versionadded} 1.0
+
+The free-threaded stable ABI (`cp315t`, [PEP 803][]) and the combined
+`cp315.cp315t` tag.
+
+:::
+
+Some older versions of pip are unable to load standard universal tags;
+scikit-build-core can expand the macOS universal tags for you for maximum
+historic compatibility if you'd like:
+
+```toml
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+```
+
+You can also specify a build tag:
+
+```{conftabs} wheel.build-tag 1
+
+```
+
+You can select only specific components to install:
+
+```toml
+[tool.scikit-build]
+install.components = ["python"]
+```
+
+And you can turn off binary stripping:
+
+```{conftabs} install.strip False
+
+```
+
+You can opt in to reproducible wheels (unlike SDists, this is off by default).
+When enabled, archive timestamps and file permissions are normalized, and
+`SOURCE_DATE_EPOCH` is exported to the CMake build (if not already set) so
+compilers that honor it can produce deterministic output. This cannot make the
+compiled binaries themselves reproducible on its own — that also depends on a
+recent compiler and flags like `-ffile-prefix-map`.
+
+```toml
+[tool.scikit-build]
+wheel.reproducible = true
+```
+
+:::{versionadded} 1.0
+
+:::
+
+## Force-including files
 
 :::{versionadded} 1.0
 
@@ -427,13 +509,10 @@ file or a directory, and directories are copied recursively (skipping VCS and
 
 `sdist.force-include` destinations are relative to the SDist root.
 `wheel.force-include` destinations are relative to the platlib (the package
-area), and also accept a `${SKBUILD_<TREE>_DIR}` prefix (e.g.
-`${SKBUILD_DATA_DIR}`, `${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_HEADERS_DIR}`,
-`${SKBUILD_METADATA_DIR}`) to target that wheel tree instead, matching the
-`SKBUILD_*_DIR` CMake cache variables. The older leading-slash spelling
-(`/data`, `/scripts`, ...) does the same but requires `experimental = true`.
-Force-included wheel files are placed last, so they override discovered package
-files and CMake output at the same destination.
+area), and also accept a `${SKBUILD_<TREE>_DIR}` prefix to target a different
+wheel tree, exactly as with [`wheel.install-dir`](#customizing-the-built-wheel)
+above. Force-included wheel files are placed last, so they override discovered
+package files and CMake output at the same destination.
 
 A force-included _file_ also overrides the matching exclude list
 (`wheel.exclude` for wheels, `sdist.exclude` for SDists): naming an exact source
@@ -452,7 +531,7 @@ top-level data files, and data files nested below a package subdirectory (kept
 as real files so package-root resource lookups keep the wheel layout) — is still
 copied at install time, so those snapshots only refresh on reinstall.
 
-#### Building a wheel from an SDist
+### Building a wheel from an SDist
 
 A common pattern vendors an external (`../`) source into the SDist and then
 ships that output in the wheel. Reference the SDist destination as the wheel
@@ -475,7 +554,7 @@ on-disk file always wins, so the vendored copy is preferred when present.
 
 For cases the automatic resolution cannot express — e.g. the wheel source is the
 _original_ external path rather than the SDist output — use
-[overrides](#overrides) keyed on `from-sdist`, with a separate
+[overrides](./overrides.md) keyed on `from-sdist`, with a separate
 `wheel.force-include` entry gated on each build mode (source tree vs.
 wheel-from-SDist):
 
@@ -491,95 +570,6 @@ wheel.force-include."../outside.txt" = "mypackage/blob.txt"
 if.from-sdist = true                      # wheel-from-SDist: read the vendored copy
 wheel.force-include."vendored/blob.txt" = "mypackage/blob.txt"
 ```
-
-## Customizing the output wheel
-
-The python API tags for your wheel will be correct assuming you are building a
-CPython extension. If you are building a Limited ABI extension, you should set
-the wheel tags for the version you support:
-
-```toml
-[tool.scikit-build]
-wheel.py-api = "cp38"
-```
-
-Scikit-build-core will only target ABI3 if the version of Python is equal to or
-newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
-`Development.SABIModule` when targeting ABI3 or ABI3T, and is an empty string
-otherwise. For free-threaded Python (PEP 703), you can use `cp315t` to target
-the free-threaded stable ABI, which sets `Py_TARGET_ABI3T` (if using CMake
-4.4+). The emitted wheel tag is `cp315-abi3t-*` following [PEP 803][].
-
-You can request both stable ABIs with `cp315.cp315t`. On a free-threaded build
-this emits a combined `cp315-abi3.abi3t-*` tag: `abi3t` is a subset of `abi3`
-(PEP 803), so the single free-threaded binary also loads under a GIL-enabled
-CPython 3.15+, and the one wheel is installable on every CPython 3.15+. On a GIL
-build only `abi3` can be produced, so it falls back to `cp315-abi3-*`.
-
-:::{versionadded} 1.0
-
-The free-threaded stable ABI (`cp315t`, [PEP 803][]) and the combined
-`cp315.cp315t` tag.
-
-:::
-
-If you are not using CPython at all, you can specify any version of Python is
-fine:
-
-```toml
-[tool.scikit-build]
-wheel.py-api = "py3"
-```
-
-Or even Python 2 + 3 (you still will need a version of Python scikit-build-core
-supports to build the initial wheel):
-
-```toml
-[tool.scikit-build]
-wheel.py-api = "py2.py3"
-```
-
-Some older versions of pip are unable to load standard universal tags;
-scikit-build-core can expand the macOS universal tags for you for maximum
-historic compatibility if you'd like:
-
-```toml
-[tool.scikit-build]
-wheel.expand-macos-universal-tags = true
-```
-
-You can also specify a build tag:
-
-```{conftabs} wheel.build-tag 1
-
-```
-
-You can select only specific components to install:
-
-```{conftabs} install.components ["python"]
-
-```
-
-And you can turn off binary stripping:
-
-```{conftabs} install.strip False
-
-```
-
-You can opt in to reproducible wheels (unlike SDists, this is off by default).
-When enabled, archive timestamps and file permissions are normalized, and
-`SOURCE_DATE_EPOCH` is exported to the CMake build (if not already set) so
-compilers that honor it can produce deterministic output. This cannot make the
-compiled binaries themselves reproducible on its own — that also depends on a
-recent compiler and flags like `-ffile-prefix-map`.
-
-```{conftabs} wheel.reproducible True
-
-```
-
-:::{versionadded} 1.0
-
-:::
 
 ## Configuring CMake arguments and defines
 
@@ -623,7 +613,9 @@ Passing a list of build types.
 
 :::
 
-You can specify CMake defines as strings or bools:
+You can specify CMake defines as strings, bools, or lists of strings (list
+elements are joined with `;`, with semicolons inside an element escaped with a
+backslash):
 
 ````{tab} pyproject.toml
 
@@ -631,35 +623,10 @@ You can specify CMake defines as strings or bools:
 [tool.scikit-build.cmake.define]
 SOME_DEFINE = "Foo"
 SOME_OPTION = true
+FOOD_GROUPS = ["Apple", "Lemon;Lime", "Banana"]
 ```
 
 ````
-
-You can even specify a CMake define as a list of strings:
-
-````{tab} pyproject.toml
-
-```toml
-[tool.scikit-build.cmake.define]
-FOOD_GROUPS = [
-    "Apple",
-    "Lemon;Lime",
-    "Banana",
-    "Pineapple;Mango",
-]
-```
-
-````
-
-Semicolons inside the list elements will be escaped with a backslash (`\`) and
-the resulting list elements will be joined together with semicolons (`;`) before
-being converted to command-line arguments.
-
-:::{versionchanged} 0.11
-
-Support for list of strings.
-
-:::
 
 `````{tab} config-settings
 
@@ -698,6 +665,12 @@ SKBUILD_CMAKE_DEFINE: SOME_DEFINE=ON
 ```
 
 ````
+
+:::{versionchanged} 0.11
+
+Support for list of strings.
+
+:::
 
 You can also (`pyproject.toml` only) specify a dict, with `env=` to load a
 define from an environment variable, with optional `default=`.
@@ -836,157 +809,18 @@ locating dependencies, set `CMAKE_PREFIX_PATH`:
 CMAKE_PREFIX_PATH = "/opt/mydeps;/usr/local"
 ```
 
+For dependencies installed as Python packages in the same environment, the
+search paths are populated automatically through entry-points; see
+[search paths](./search_paths.md).
+
 ## Editable installs
 
-Support for editable installs is provided, with some caveats and configuration.
-Recommendations:
+Editable installs (`pip install -e .`) are supported, including an optional
+(experimental) rebuild-on-import mode and an inplace mode; see the dedicated
+[editable installs](./editable.md) page.
 
-- Use `--no-build-isolation` when doing an editable install is recommended; you
-  should preinstall your dependencies.
-- Automatic rebuilds do not have the original isolated build dir (pip deletes
-  it), so select a `build-dir` when using editable installs, especially if you
-  also enable automatic rebuilds.
-- You need to reinstall to pick up new files.
-
-Resources (via `importlib.resources`) are supported and tested on all supported
-Python versions. On Python 3.8, use the `importlib_resources` backport, since
-`importlib.resources.files` was added to the standard library in Python 3.9.
-
-```console
-# Very experimental rebuild on initial import feature
-$ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
-```
-
-The automatic rebuild-on-import feature (`editable.rebuild`) is still
-experimental and subject to change.
-
-You can disable the verbose rebuild output with `editable.verbose=false` if you
-want. (Also available as the `SKBUILD_EDITABLE_VERBOSE` envvar when importing;
-this will override if non-empty, and `"0"` will disable verbose output).
-
-When `editable.rebuild` is enabled together with a persistent `build-dir`, the
-CMake install targets a tree inside the build directory and the redirecting
-finder loads the compiled artifacts from there directly, rather than from copies
-in site-packages. This means `SKBUILD_PLATLIB_DIR` (or `SKBUILD_PURELIB_DIR`)
-and `CMAKE_INSTALL_PREFIX` are baked at their final location when the editable
-wheel is first built, so import-triggered rebuilds re-install in place with no
-extra reconfigure -- including projects that install to an absolute
-`${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
-the install, but a rebuildable editable already depends on it.
-
-As a newer, parallel alternative, `editable.rebuild-dir` selects the install
-tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
-flag is ignored when it is set). It accepts the same template substitutions as
-`build-dir`, and the path must be absolute, or relative to the source directory,
-and stable between build and run time, since it is baked at configure time and
-referenced by absolute path on rebuild. This only moves the install tree;
-`build-dir` is still required and still hosts the CMake build that the rebuild
-re-runs. The classic `editable.rebuild` (which installs into a tree inside
-`build-dir`) is left as-is, so the two approaches can be compared.
-
-:::{versionadded} 1.0
-
-`editable.rebuild-dir`, a persistent install tree for editable rebuilds.
-
-:::
-
-The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
-combine the static CMake install dir with the original source code. Python code
-added via scikit-build-core's package discovery will be found in the original
-location, so changes there are picked up on import, regardless of the
-`editable.rebuild` setting.
-
-:::{versionchanged} 1.0
-
-[PEP 829][] `.start` files are emitted for the redirecting finder on Python
-3.15+. Older interpreters emit only `.pth` files.
-
-:::
-
-[PEP 829]: https://peps.python.org/pep-0829/
 [PEP 817]: https://peps.python.org/pep-0817/
 [PEP 803]: https://peps.python.org/pep-0803/
-
-:::{note}
-
-A second mode, `"inplace"`, is also available. This does an in-place CMake
-build, so all the caveats there apply too -- only one build per source
-directory, you can't change to an out-of-source builds without removing the
-build artifacts, your source directory will be littered with build artifacts,
-etc. Also, to make your binaries importable, you should set
-`LIBRARY_OUTPUT_DIRECTORY` (include a generator expression, like the empty one
-`$<0:>` for multi-config generator support, like MSVC, so you don't have to set
-all possible `*_<CONFIG>` variations) to make sure they are placed inside your
-source directory inside the Python packages; this will be run from the build
-directory, rather than installed. The build directory setting will be ignored if
-you use this and perform an editable install (the source directory doubles as
-the build directory). You can detect this mode by checking for an in-place build
-and checking `SKBUILD` being set.
-
-With all the caveats, this is very logically simple (one directory) and a near
-identical replacement for `python setup.py build_ext --inplace`. Some third
-party tooling might work better with this mode. Scikit-build-core will simply
-install a `.pth` file that points at your source package(s) and do an inplace
-CMake build.
-
-On the command line, you can pass `-Ceditable.mode=inplace` to enable this mode.
-Inplace installs support both automatic (`editable.rebuild`) and manual rebuilds
-(see below); since the source directory doubles as the build directory, no
-separate `build-dir` is needed.
-
-:::
-
-(triggering-a-rebuild-manually)=
-
-### Triggering a rebuild manually
-
-You don't have to enable `editable.rebuild` to rebuild on demand. Both editable
-modes install a loader that exposes a `rebuild()` method, so you can recompile
-whenever you like:
-
-```python
-import some_package
-
-some_package.__loader__.rebuild()
-```
-
-For redirect installs this runs the same `cmake --build`/`--install` cycle used
-by the automatic rebuild, and works for any importable object the install
-provides -- a package, a plain module, or a compiled extension. A redirect
-rebuild needs a persistent build directory, so install with a `build-dir` set:
-
-```console
-$ pip install --no-build-isolation -Cbuild-dir=build -ve .
-```
-
-If a redirect editable was built without a persistent `build-dir`, there is
-nothing to rebuild and the call raises `RuntimeError`.
-
-For inplace installs, `rebuild()` runs `cmake --build` in the source tree (there
-is no install step); the source directory is always the build directory, so no
-`build-dir` is required.
-
-If you don't have a handle on a redirected module, the finder itself is on
-`sys.meta_path` and carries the same method (`ScikitBuildRedirectingFinder` for
-redirect installs, `ScikitBuildInplaceFinder` for inplace):
-
-```python
-import sys
-
-finder = next(
-    f
-    for f in sys.meta_path
-    if type(f).__name__ in {"ScikitBuildRedirectingFinder", "ScikitBuildInplaceFinder"}
-)
-finder.rebuild()
-```
-
-:::{versionadded} 1.0
-
-Manual `__loader__.rebuild()` for redirect installs, and both manual and
-automatic (`editable.rebuild`) rebuilds for inplace installs.
-
-:::
 
 ## Messages
 
@@ -1006,14 +840,11 @@ need them. Currently, there are several formatter-style keywords available:
 `sys`, `platform` (parenthesis will be added for items like `platform.platform`
 for you), `__version__` for scikit-build-core's version, and style keywords.
 
-For styles, the colors are `default`, `red`, `green`, `yellow`, `blue`,
-`magenta`, `cyan`, and `white`. These can be accessed as `fg.*` or `bg.*`,
-without a qualifier the foreground is assumed. Styles like `normal`, `bold`,
-`italic`, `underline`, `reverse` are also provided. A full clearing of all
-styles is possible with `reset`. These all can be chained, as well, so
-`bold.red.bg.blue` is valid, and will produce an optimized escape code. Remember
-that you need to set the environment variable `FORCE_COLOR` to see colors with
-pip.
+The style keywords are the standard ANSI colors (`red`, `green`, `blue`, ...)
+and styles (`normal`, `bold`, `italic`, `underline`, `reverse`), chainable with
+dots: `bold.red.bg.blue` is valid (`fg.`/`bg.` select foreground/background,
+foreground being the default, and `reset` clears all styles). Remember that you
+need to set the environment variable `FORCE_COLOR` to see colors with pip.
 
 ```{versionadded} 0.10
 
@@ -1055,8 +886,7 @@ experimental = true
 The following features currently require this flag:
 
 - **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
-  `variant-label`, and `null-variant`), added in 1.0. See
-  [](../guide/faqs.md#building-wheel-variants-experimental).
+  `variant-label`, and `null-variant`), added in 1.0. See [](./variants.md).
 - **Legacy `tool.scikit-build.metadata` plugins**: dynamic metadata providers
   not shipped with scikit-build-core (anything using `provider-path` or a
   provider outside the `scikit_build_core.*` namespace) used through the
@@ -1069,8 +899,8 @@ The following features currently require this flag:
   `${SKBUILD_<TREE>_DIR}` prefix is the non-experimental replacement. See
   [`wheel.install-dir`](../reference/configs.md).
 
-The [rebuild-on-import feature](#editable-installs) for editable installs is
-also considered experimental and subject to change, but is not gated behind this
+The [rebuild-on-import feature](./editable.md) for editable installs is also
+considered experimental and subject to change, but is not gated behind this
 flag.
 
 You can also fail the build with `fail = true`. This is useful with overrides if
@@ -1081,11 +911,8 @@ dependencies like `"cmake"` will not be requested.
 
 ```
 
-## Overrides
+## See also
 
-The overrides system allows you to customize for a wide variety of situations.
-It is described at [](#overrides).
-
-## Full Schema
-
-You can see the full schema at [](#schema).
+- [Overrides](./overrides.md): customize settings for a wide variety of
+  situations.
+- [Full schema](#schema) for all settings.

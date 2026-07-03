@@ -83,9 +83,7 @@ possible.
 
 All other configuration is available as normal `tool.scikit-build` in
 `pyproject.toml` or environment variables as applicable. Config-settings is
-_not_ supported, as setuptools has very poor support for config-settings. The
-build hook might pre-process options in the future, but it's tricky to pass them
-through, so it will likely require use cases to be presented.
+_not_ supported, as setuptools has very poor support for config-settings.
 
 For classic scikit-build compatibility, two environment variables are honored,
 but only when using the `scikit_build_core.setuptools.wrapper.setup` shim (they
@@ -124,8 +122,9 @@ editable.mode = "inplace"
 The setuptools plugin follows setuptools' editable-wheel mechanism, so editable
 builds place CMake-installed extension modules into the source layout that
 setuptools exposes via its `.pth` file. This is effectively the setuptools
-equivalent of scikit-build-core's `inplace` editable mode, so redirect mode is
-not supported here.
+equivalent of scikit-build-core's
+[`inplace` editable mode](../configuration/editable.md#inplace-mode), so
+redirect mode is not supported here.
 
 Because of that, `editable.rebuild` is not supported in setuptools mode.
 

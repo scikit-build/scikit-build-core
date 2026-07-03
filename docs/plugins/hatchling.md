@@ -16,9 +16,10 @@ separate package in the future.
 
 :::{versionchanged} 1.0
 
-The plugin is no longer experimental (the `experimental = true` toggle is no
-longer required), editable installs are supported, and the `[hatchling]` extra
-is the recommended way to depend on it (warning shown if missing).
+The plugin is no longer experimental (the `experimental = true` toggle is not
+required), [editable installs](../configuration/editable.md) are supported, and
+the `[hatchling]` extra is the recommended way to depend on it (warning shown if
+missing).
 
 :::
 
@@ -30,7 +31,7 @@ get `cmake` and `ninja` auto-added if needed, and 1.24 if you want to write out
 custom scripts, metadata, or shared data.
 
 You need a `tool.hatch.build.targets.wheel.hooks.scikit-build` section to
-activate the plugin. It was added in 0.9.
+activate the plugin.
 
 ```toml
 [build-system]
