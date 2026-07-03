@@ -7,8 +7,8 @@
 - Replace `scikit-build` with `scikit-build-core` in `build-system.requires`.
 - You should remove `cmake` and `ninja` from `build-system.requires`;
   scikit-build-core adds them only when necessary (see
-  [getting started](getting_started.md#python-package-configuration)). Instead,
-  set minimum required versions with `cmake.version` and `ninja.version` in the
+  [getting started](#python-package-configuration)). Instead, set minimum
+  required versions with `cmake.version` and `ninja.version` in the
   `[tool.scikit-build]` table.
 - You must fill out the `tool.scikit-build` table in pyproject.toml, see
   [getting started](getting_started.md) for more information.
@@ -56,12 +56,14 @@ python_add_library(${LIBRARY} MODULE WITH_SOABI ${FILENAME})
 
 - The UseCython CMake module distributed with scikit-build (classic) is replaced
   by the standalone [cython-cmake][] package; see the Cython tab in
-  [getting started](getting_started.md#cmake-file) for an example.
+  [getting started](#cmake-file) for an example.
 
 [cython-cmake]: https://github.com/scikit-build/cython-cmake
 
 - The `SKBUILD_CONFIGURE_OPTIONS` environment variable is now named
-  `SKBUILD_CMAKE_ARGS` for consistency.
+  `SKBUILD_CMAKE_ARGS` for consistency (the
+  [setuptools wrapper shim](../plugins/setuptools.md) is the one exception that
+  still honors the old name).
 - The `SKBUILD_BUILD_OPTIONS` environment variable is not supported. Some
   specific features are accessible using alternative variables. In particular,
   use `CMAKE_BUILD_PARALLEL_LEVEL` or `SKBUILD_BUILD_VERBOSE` to control build

@@ -3,22 +3,10 @@
 ## Starting a new project
 
 The quickest way is the built-in `init` command:
-`scikit-build init --backend pybind11 myproject` scaffolds a ready-to-build
-project (run without `--backend` to pick a binding interactively). See the
-[getting started guide](getting_started.md) for a walkthrough of what it
-generates.
-
-```{versionadded} 1.0
-The `scikit-build init` command.
-```
-
-For a fully-featured project layout, use the [Scientific Python cookie][], which
-makes a new project following the [Scientific Python Development Guidelines][].
-Scikit-build-core is one of the backends you can select. The project will have a
-lot of tooling prepared for you as well, including pre-commit checks and a
-noxfile; be sure to read the guidelines to see what is there and how it works.
-
-Another option is the [pybind11 example][].
+`scikit-build init --backend pybind11 myproject`. See the
+[quick start](getting_started.md#quick-start) for it and the other scaffolding
+options (Scientific Python cookie, uv, buildgen), and the rest of that guide for
+a walkthrough of what it generates.
 
 ## Multithreaded builds
 
@@ -39,21 +27,8 @@ to run in parallel with the number of cores on your machine.
 
 If your project has historically used a different environment variable (such as
 `MAX_JOBS`) to control this, you can forward it to `CMAKE_BUILD_PARALLEL_LEVEL`
-with the `[tool.scikit-build.env]` table:
-
-```toml
-[tool.scikit-build.env]
-CMAKE_BUILD_PARALLEL_LEVEL = { env = "MAX_JOBS" }
-```
-
-A directly-set `CMAKE_BUILD_PARALLEL_LEVEL` still wins, since `env` entries use
-`setdefault` semantics unless `force = true` is given. See
-[](../configuration/index.md#environment-variables-for-the-build) for the full
-`env` table reference, including selecting a compiler and setting search paths.
-
-```{versionadded} 1.0
-The `[tool.scikit-build.env]` table.
-```
+with the `[tool.scikit-build.env]` table; see
+[](../configuration/index.md#environment-variables-for-the-build).
 
 ## Dynamic setup.py options
 
@@ -66,14 +41,10 @@ you need, please open an issue and let us know.
 
 ## Finding Python
 
-When using `find_package(Python ...)`, you should only request the
-`Development.Module` component. If you request `Development`, you will also
-require the `Development.Embed` component, which will require the Python
-libraries to be found for linking. When building a module on Unix, you do not
-link to Python - the Python symbols are already loaded in the interpreter.
-What's more, the manylinux image (which is used to make redistributable Linux
-wheels) does not have the Python libraries, both to avoid this mistake, and to
-reduce size.
+When using `find_package(Python ...)`, only request the `Development.Module`
+component, not `Development`; see [Finding Python](cmakelists.md#finding-python)
+for the details (in short: `Development` also requires the embedding libraries,
+which manylinux images intentionally do not ship).
 
 ## Cross compiling
 
@@ -207,6 +178,8 @@ extension, set
 See [editable installs](../configuration/index.md#editable-installs) for the
 related `--no-build-isolation` recommendations.
 
+(dependency-in-site-packages)=
+
 ## A dependency's library ends up in `site-packages/bin` or `lib`
 
 If you build a shared dependency as part of your project (for example via
@@ -224,6 +197,8 @@ into your package directory and add the runtime hints yourself, or run a
 wheel-repair tool. See [](#dynamic-linking) for all of the options.
 
 [GNUInstallDirs]: inv:cmake:cmake:module#module:GNUInstallDirs
+
+(msvc-multi-config)=
 
 ## Target output paths differ on MSVC (multi-config generators)
 
@@ -463,9 +438,6 @@ produce.
 
 <!-- prettier-ignore-start -->
 
-[scientific python cookie]: https://github.com/scientific-python/cookie
-[scientific python development guidelines]: https://learn.scientific-python.org/development
-[pybind11 example]: https://github.com/pybind/scikit_build_example
 [dozens of recipes]: https://github.com/search?type=code&q=org%3Aconda-forge+path%3Arecipe%2Fmeta.yaml+scikit-build-core
 [pep 817]: https://peps.python.org/pep-0817
 [`variantlib`]: https://github.com/wheelnext/variantlib

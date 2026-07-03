@@ -71,6 +71,9 @@ isolation's `site-packages` folder. This default can be disabled by setting
 search.site-packages = false
 ```
 
+You can also extend `CMAKE_PREFIX_PATH` with arbitrary paths through the
+[env table](index.md#environment-variables-for-the-build).
+
 Additionally, scikit-build-core reads the entry-point `cmake.prefix` of the
 dependent projects, which is similarly exported as
 

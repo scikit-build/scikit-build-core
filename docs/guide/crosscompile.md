@@ -43,7 +43,8 @@ several), it won't know and the wheel will not get the correct name.
 `DIST_EXTRA_CONFIG`. If it is set to a file, then scikit-build-core reads the
 `build_ext.library_dirs` paths to find the library to link to. You will also
 need to set `SETUPTOOLS_EXT_SUFFIX` to the correct suffix. These values are set
-by cibuildwheel when cross-compiling.
+by cibuildwheel when cross-compiling. In your CMakeLists, use
+`${SKBUILD_SOABI}` for the extension suffix; see [the SOABI note](#soabi).
 
 ```
 

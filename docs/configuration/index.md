@@ -340,10 +340,9 @@ matching `SKBUILD_*_DIR` CMake variable name:
 wheel.install-dir = "${SKBUILD_DATA_DIR}/mypackage"
 ```
 
-The available trees are `${SKBUILD_PLATLIB_DIR}` (the default),
-`${SKBUILD_PURELIB_DIR}`, `${SKBUILD_DATA_DIR}`, `${SKBUILD_HEADERS_DIR}`,
-`${SKBUILD_SCRIPTS_DIR}`, `${SKBUILD_METADATA_DIR}`, and `${SKBUILD_NULL_DIR}`.
-This matches the cache variables available from within CMake.
+The available trees match the `SKBUILD_*_DIR` cache variables available from
+within CMake, described in
+[install directories](../guide/cmakelists.md#install-directories).
 
 :::{versionadded} 1.0
 
@@ -416,11 +415,11 @@ support:
 | `"cp315.cp315t"` | Both stable ABIs from one free-threaded build     | `cp315-abi3.abi3t` |
 
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
-newer than the one you set. `${SKBUILD_SABI_COMPONENT}` is set to
-`Development.SABIModule` when targeting ABI3 or ABI3T, and is an empty string
-otherwise. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake 4.4+). For
-`py3`/`py2.py3`, you still need a version of Python scikit-build-core supports
-to build the initial wheel.
+newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
+4.4+). For `py3`/`py2.py3`, you still need a version of Python scikit-build-core
+supports to build the initial wheel. The CMake side — the
+`${SKBUILD_SABI_COMPONENT}` variable and the `USE_SABI` idiom — is covered in
+[Limited API / Stable ABI](#limited-api).
 
 With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
 tag: `abi3t` is a subset of `abi3` (PEP 803), so the single free-threaded binary
@@ -803,6 +802,10 @@ locating dependencies, set `CMAKE_PREFIX_PATH`:
 CMAKE_PREFIX_PATH = "/opt/mydeps;/usr/local"
 ```
 
+For dependencies installed as Python packages in the same environment, the
+search paths are populated automatically through entry-points; see
+[search paths](./search_paths.md).
+
 ## Editable installs
 
 Support for editable installs is provided, with some caveats and configuration.
@@ -881,14 +884,13 @@ build, so all the caveats there apply too -- only one build per source
 directory, you can't change to an out-of-source builds without removing the
 build artifacts, your source directory will be littered with build artifacts,
 etc. Also, to make your binaries importable, you should set
-`LIBRARY_OUTPUT_DIRECTORY` (include a generator expression, like the empty one
-`$<0:>` for multi-config generator support, like MSVC, so you don't have to set
-all possible `*_<CONFIG>` variations) to make sure they are placed inside your
-source directory inside the Python packages; this will be run from the build
-directory, rather than installed. The build directory setting will be ignored if
-you use this and perform an editable install (the source directory doubles as
-the build directory). You can detect this mode by checking for an in-place build
-and checking `SKBUILD` being set.
+`LIBRARY_OUTPUT_DIRECTORY` to place them inside your source directory inside the
+Python packages (append the empty generator expression `$<0:>` for multi-config
+generator support; see [the MSVC FAQ](#msvc-multi-config)); this will be run
+from the build directory, rather than installed. The build directory setting
+will be ignored if you use this and perform an editable install (the source
+directory doubles as the build directory). You can detect this mode by checking
+for an in-place build and checking `SKBUILD` being set.
 
 With all the caveats, this is very logically simple (one directory) and a near
 identical replacement for `python setup.py build_ext --inplace`. Some third

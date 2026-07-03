@@ -122,8 +122,9 @@ editable.mode = "inplace"
 The setuptools plugin follows setuptools' editable-wheel mechanism, so editable
 builds place CMake-installed extension modules into the source layout that
 setuptools exposes via its `.pth` file. This is effectively the setuptools
-equivalent of scikit-build-core's `inplace` editable mode, so redirect mode is
-not supported here.
+equivalent of scikit-build-core's
+[`inplace` editable mode](../configuration/index.md#editable-installs), so
+redirect mode is not supported here.
 
 Because of that, `editable.rebuild` is not supported in setuptools mode.
 

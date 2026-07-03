@@ -299,9 +299,8 @@ Add it to your build requirements as shown in the pyproject.toml above.
 ```
 
 `find_package(Python ...)` should always include the `Development.Module`
-component instead of `Development`; the latter breaks if the embedding
-components are missing, such as when you are building redistributable wheels on
-Linux.
+component instead of `Development`; see
+[Finding Python](cmakelists.md#finding-python).
 
 You'll want `WITH_SOABI` when you make the module to ensure the full extension
 is included on Unix systems (PyPy won't even be able to open the extension
@@ -377,20 +376,15 @@ would instead drop a single top-level extension into `site-packages`.
 
 ### Building and installing
 
-That's it! You can try building it:
-
-```console
-$ pipx run build
-```
-
-Or installing it (in a virtualenv, ideally):
+That's it! You can install your package with any standard frontend; for example,
+in a virtualenv:
 
 ```console
 $ pip install .
 ```
 
-The [build guide](build.md) covers all the frontends and options for building,
-installing, and distributing your package.
+The [build guide](build.md) covers all the frontends (pip, uv, `pipx run build`)
+and the options for building, installing, and distributing your package.
 
 <!-- prettier-ignore-start -->
 [INTERSECT Training: Packaging]:     https://intersect-training.org/packaging

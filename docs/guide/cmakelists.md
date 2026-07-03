@@ -123,6 +123,8 @@ configuration, with the variables:
 - `${SKBUILD_NULL_DIR}`: Anything installed here will not be placed in the
   wheel.
 
+(limited-api)=
+
 ## Limited API / Stable ABI
 
 You can activate the Stable ABI by setting `tool.scikit-build.wheel.py-api`
@@ -134,6 +136,10 @@ in your `pyproject.toml`:
 [tool.scikit-build]
 wheel.py-api = "cp38"
 ```
+
+The possible values and the resulting wheel tags are covered in
+[customizing the output wheel](../configuration/index.md#customizing-the-output-wheel);
+this section covers the CMake side.
 
 When you do that, `${SKBUILD_SABI_COMPONENT}` will be set to
 `Development.SABIModule` if you can target this (new enough CPython), and will
