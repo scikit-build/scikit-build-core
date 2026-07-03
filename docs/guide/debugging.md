@@ -112,7 +112,8 @@ A `cmake.build-type=Debug` extension links against the debug CPython
 (`python_d.exe`) — importing it under a normal `python.exe` crashes with
 `0x80000003`. This is CPython behavior, not scikit-build-core's: run the build
 itself under `python_d.exe` so the `_d` suffix and import library line up (and
-the `t` ABI flag is added for free-threaded debug builds, e.g. `pythonXYt_d.dll`).
+the `t` ABI flag is added for free-threaded debug builds, e.g.
+`pythonXYt_d.dll`).
 
 To keep debug info while still loading under a normal Python, don't do a debug
 build — instead undefine `_DEBUG` around the CPython headers so they don't
