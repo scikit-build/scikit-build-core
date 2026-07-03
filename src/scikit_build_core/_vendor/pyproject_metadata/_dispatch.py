@@ -41,7 +41,7 @@ T = typing.TypeVar("T")
 class KeyDispatcher(Generic[P, R]):
     def __init__(self, func: Callable[Concatenate[str, P], R]) -> None:
         self.default: Callable[Concatenate[str, P], R] = func
-        self.registry: dict[str, Callable[Concatenate[str, P], R]] = {}
+        self.registry: dict[re.Pattern[str], Callable[Concatenate[str, P], R]] = {}
         functools.update_wrapper(self, func)
 
     def register(
@@ -52,16 +52,17 @@ class KeyDispatcher(Generic[P, R]):
         def decorator(
             func: Callable[Concatenate[str, P], R],
         ) -> Callable[Concatenate[str, P], R]:
-            self.registry[value] = func
+            self.registry[re.compile(value, re.ASCII)] = func
             return func
 
         return decorator
 
     def dispatch(self, value: str) -> Callable[Concatenate[str, P], R]:
         """Return the registered implementation or the default."""
-        results = [key for key in self.registry if re.fullmatch(key, value, re.ASCII)]
-        result = results[0] if results else ""
-        return self.registry.get(result, self.default)
+        for pattern, func in self.registry.items():
+            if pattern.fullmatch(value):
+                return func
+        return self.default
 
     def __call__(self, value: str, *args: P.args, **kwargs: P.kwargs) -> R:
         impl = self.dispatch(value)

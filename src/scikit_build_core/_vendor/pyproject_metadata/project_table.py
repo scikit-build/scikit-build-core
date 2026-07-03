@@ -10,6 +10,7 @@ Documentation notice: the fields with hyphens are not shown due to a sphinx-auto
 
 from __future__ import annotations
 
+import functools
 import re
 import sys
 import typing
@@ -292,6 +293,12 @@ def _(prefix: str, data: object, error_collector: SimpleErrorCollector) -> None:
         error_collector.error(ConfigurationError(msg, key=prefix))
 
 
+@functools.lru_cache(maxsize=None)
+def _get_type_hints(cls: type[object]) -> dict[str, Any]:
+    """Cache ``typing.get_type_hints`` results per class."""
+    return typing.get_type_hints(cls)
+
+
 def _cast_typed_dict(
     cls: type[Any], data: object, prefix: str, error_collector: SimpleErrorCollector
 ) -> None:
@@ -302,7 +309,7 @@ def _cast_typed_dict(
         msg = f'Field "{prefix}" has an invalid type, expecting {get_name(cls)} (got {get_name(type(data))})'
         raise ConfigurationTypeError(msg, key=prefix)
 
-    hints = typing.get_type_hints(cls)
+    hints = _get_type_hints(cls)  # type: ignore[arg-type]
     for key, typ in hints.items():
         if key in data:
             with error_collector.collect(ConfigurationError):

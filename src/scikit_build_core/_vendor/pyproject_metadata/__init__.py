@@ -18,12 +18,12 @@ Example usage:
    with open("METADATA", "wb") as f:
        f.write(pkg_info.as_bytes())
 
-   ep = self.metadata.entrypoints.copy()
-   ep["console_scripts"] = self.metadata.scripts
-   ep["gui_scripts"] = self.metadata.gui_scripts
-   for group, entries in ep.items():
-       if entries:
-           with open("entry_points.txt", "w", encoding="utf-8") as f:
+   ep = metadata.entrypoints.copy()
+   ep["console_scripts"] = metadata.scripts
+   ep["gui_scripts"] = metadata.gui_scripts
+   with open("entry_points.txt", "w", encoding="utf-8") as f:
+       for group, entries in ep.items():
+           if entries:
                print(f"[{group}]", file=f)
                for name, target in entries.items():
                    print(f"{name} = {target}", file=f)
@@ -33,16 +33,17 @@ Example usage:
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import dataclasses
 import email.message
 import email.policy
-import email.utils
 import itertools
 import keyword
 import os
 import os.path
 import pathlib
+import re
 import sys
 import typing
 import warnings
@@ -64,9 +65,7 @@ if typing.TYPE_CHECKING:
     else:
         from typing import Self
 
-    from .project_table import Dynamic
-
-import contextlib
+    from .project_table import Dynamic, ProjectTable
 
 import packaging.markers
 import packaging.specifiers
@@ -74,13 +73,11 @@ import packaging.utils
 import packaging.version
 
 if sys.version_info < (3, 12, 4):
-    import re
-
     RE_EOL_STR = re.compile(r"[\r\n]+")
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
 
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
 
 __all__ = [
     "ConfigurationError",
@@ -212,7 +209,7 @@ class RFC822Policy(email.policy.EmailPolicy):
         ) -> str:  # pragma: no cover
             if hasattr(value, "name"):
                 return value.fold(policy=self)  # type: ignore[no-any-return]
-            maxlen = self.max_line_length if self.max_line_length else sys.maxsize
+            maxlen = self.max_line_length or sys.maxsize
 
             # this is from the library version, and it improperly breaks on chars like 0x0c, treating
             # them as 'form feed' etc.
@@ -249,8 +246,8 @@ def _validate_import_names(
     for fullname in names:
         if not isinstance(fullname, str):
             continue
-        name, simicolon, private = fullname.partition(";")
-        if simicolon and private.lstrip() != "private":
+        name, semicolon, private = fullname.partition(";")
+        if semicolon and private.strip() != "private":
             msg = "{key} contains an ending tag other than '; private', got {value!r}"
             errors.config_error(msg, key=key, value=fullname)
         name = name.rstrip()
@@ -278,7 +275,6 @@ def _validate_dotted_names(names: set[str], *, errors: ErrorCollector) -> None:
             if parent not in names:
                 msg = "{key} is missing {value!r}, but submodules are present elsewhere"
                 errors.config_error(msg, key="project.import-namespaces", value=parent)
-                continue
 
 
 class RFC822Message(email.message.EmailMessage):
@@ -336,9 +332,16 @@ class StandardMetadata:
     import_namespaces: list[str] | None = None
     dynamic: list[Dynamic] = dataclasses.field(default_factory=list)
     """
-    This field is used to track dynamic fields. You can't set a field not in this list.
+    This field contains the list of fields declared dynamic in ``project.dynamic``.
+    A field that is both declared dynamic and explicitly set causes a parsing error.
     """
 
+    dual_dynamic: set[str] = dataclasses.field(default_factory=set, repr=False)
+    """
+    Fields that are both declared in ``project.dynamic`` and given a static value
+    in ``[project]`` (PEP 808). Emitting these as dynamic metadata requires
+    metadata_version 2.6+.
+    """
     dynamic_metadata: list[str] = dataclasses.field(default_factory=list)
     """
     This is a list of METADATA fields that can change in between SDist and wheel. Requires metadata_version 2.2+.
@@ -359,6 +362,22 @@ class StandardMetadata:
         self.validate()
 
     @property
+    def _dual_dynamic_metadata(self) -> set[str]:
+        """
+        Dual-dynamic fields (PEP 808) whose METADATA field is also marked in
+        ``dynamic_metadata``. Only these require metadata_version 2.6; fields
+        with no METADATA representation (scripts, gui-scripts, entry-points)
+        never do, nor do dual fields unrelated to the marked Dynamic headers.
+        """
+        dynamic_metadata = {field.lower() for field in self.dynamic_metadata}
+        return {
+            field
+            for field in self.dual_dynamic
+            if {header.lower() for header in constants.PROJECT_TO_METADATA[field]}
+            & dynamic_metadata
+        }
+
+    @property
     def auto_metadata_version(self) -> str:
         """
         This computes the metadata version based on the fields set in the object
@@ -367,6 +386,8 @@ class StandardMetadata:
         if self.metadata_version is not None:
             return self.metadata_version
 
+        if self._dual_dynamic_metadata:
+            return "2.6"
         if self.import_names is not None or self.import_namespaces is not None:
             return "2.5"
         if isinstance(self.license, str) or self.license_files is not None:
@@ -411,8 +432,16 @@ class StandardMetadata:
         with error_collector.collect():
             to_project_table(dict(data), collect_errors=all_errors)
 
-        assert "project" in data
         project = data["project"]
+        if not isinstance(project, dict):
+            # In non-collecting mode, to_project_table already raised; this path
+            # is only reachable with all_errors=True, where the type error was
+            # collected and finalize is guaranteed to raise.
+            error_collector.finalize("Failed to parse pyproject.toml")
+            msg = "Unreachable code"  # pragma: no cover
+            raise AssertionError(msg)  # noqa: TRY004  # pragma: no cover
+        project = typing.cast("ProjectTable", project)
+
         project_dir = pathlib.Path(project_dir)
 
         if not allow_extra_keys:
@@ -429,10 +458,18 @@ class StandardMetadata:
 
         dynamic = project.get("dynamic", [])
 
+        dual_dynamic: set[str] = set()
         for field in dynamic:
-            if field in data["project"] and field != "name":
-                msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
-                error_collector.config_error(msg, key=f"project.{field}")
+            # ``dynamic`` is validated separately with error collection, so the
+            # raw list may still contain values outside the Dynamic literal
+            # (e.g. the invalid "name"); treat it as a plain string here.
+            field_str: str = field
+            if field_str in data["project"]:
+                if field_str in constants.PROJECT_DYNAMIC_STATIC:
+                    dual_dynamic.add(field_str)
+                elif field_str != "name":
+                    msg = 'Field {key} declared as dynamic in "project.dynamic" but is defined'
+                    error_collector.config_error(msg, key=f"project.{field_str}")
 
         name = pyproject.ensure_str(project.get("name")) or "UNKNOWN"
 
@@ -447,7 +484,14 @@ class StandardMetadata:
                         if version_string
                         else None
                     )
-        elif "version" not in dynamic:
+        elif "version" in dynamic:
+            # A dynamic version that has not been assigned yet is None; the
+            # build backend is expected to set ``metadata.version`` before
+            # writing the metadata. The 0.0.0 placeholder is only kept for the
+            # error-collection paths (version present but invalid) so parsing
+            # can continue under ``all_errors=True``.
+            version = None
+        else:
             msg = (
                 "Field {key} missing and 'version' not specified in \"project.dynamic\""
             )
@@ -507,6 +551,7 @@ class StandardMetadata:
                 import_names=project.get("import-names", None),
                 import_namespaces=project.get("import-namespaces", None),
                 dynamic=dynamic,
+                dual_dynamic=dual_dynamic,
                 dynamic_metadata=dynamic_metadata or [],
                 metadata_version=metadata_version,
                 all_errors=all_errors,
@@ -547,6 +592,7 @@ class StandardMetadata:
         - ``license_files`` can't be used with classic ``license``
         - License classifiers can't be used with SPDX license
         - ``description`` is a single line (warning)
+        - Extra names in "project.optional-dependencies" should be valid (warning)
         - ``license`` is not an SPDX license expression if metadata_version >= 2.4 (warning)
         - License classifiers deprecated for metadata_version >= 2.4 (warning)
         - ``license`` is an SPDX license expression if metadata_version >= 2.4
@@ -555,6 +601,7 @@ class StandardMetadata:
         - ``import-name(paces)s`` is only supported on metadata_version >= 2.5
         - ``import-name(space)s`` must be valid names, optionally with ``; private``
         - ``import-names`` and ``import-namespaces`` cannot overlap.
+        - A field that is both static and dynamic metadata requires metadata_version >= 2.6
         """
         errors = ErrorCollector(collect_errors=self.all_errors)
 
@@ -598,6 +645,17 @@ class StandardMetadata:
                 elif any(c.startswith("License ::") for c in self.classifiers):
                     warnings.warn(
                         "'License ::' classifiers are deprecated for metadata >= 2.4, use a SPDX license expression for \"project.license\" instead",
+                        ConfigurationWarning,
+                        stacklevel=2,
+                    )
+            for extra in self.optional_dependencies:
+                try:
+                    packaging.utils.canonicalize_name(extra, validate=True)
+                except packaging.utils.InvalidName:  # noqa: PERF203
+                    warnings.warn(
+                        f'Invalid extra name {extra!r} in "project.optional-dependencies". '
+                        "A valid name consists only of ASCII letters and numbers, period, "
+                        "underscore and hyphen. It must start and end with a letter or number",
                         ConfigurationWarning,
                         stacklevel=2,
                     )
@@ -652,6 +710,15 @@ class StandardMetadata:
 
         _validate_dotted_names(import_names | import_namespaces, errors=errors)
 
+        dual_dynamic_metadata = self._dual_dynamic_metadata
+        if (
+            dual_dynamic_metadata
+            and self.auto_metadata_version in constants.PRE_2_6_METADATA_VERSIONS
+        ):
+            fields = ", ".join(sorted(dual_dynamic_metadata))
+            msg = "Fields {fields} are declared as both static and dynamic, which requires metadata_version >= 2.6"
+            errors.config_error(msg, key="project.dynamic", fields=fields)
+
         errors.finalize("Metadata validation failed")
 
     def _write_metadata(  # noqa: C901
@@ -689,13 +756,13 @@ class StandardMetadata:
 
         if self.license_files is not None:
             for license_file in sorted(set(self.license_files)):
-                smart_message["License-File"] = os.fspath(license_file.as_posix())
+                smart_message["License-File"] = license_file.as_posix()
         elif (
             self.auto_metadata_version not in constants.PRE_SPDX_METADATA_VERSIONS
             and isinstance(self.license, License)
             and self.license.file
         ):
-            smart_message["License-File"] = os.fspath(self.license.file.as_posix())
+            smart_message["License-File"] = self.license.file.as_posix()
 
         for classifier in self.classifiers:
             smart_message["Classifier"] = classifier
@@ -730,11 +797,11 @@ class StandardMetadata:
         if self.auto_metadata_version != "2.1":
             for field in self.dynamic_metadata:
                 if field.lower() in {"name", "version", "dynamic"}:
-                    msg = f"Metadata field {field!r} cannot be declared dynamic"
-                    errors.config_error(msg)
+                    msg = "Metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg, field=field)
                 if field.lower() not in constants.KNOWN_METADATA_FIELDS:
-                    msg = f"Unknown metadata field {field!r} cannot be declared dynamic"
-                    errors.config_error(msg)
+                    msg = "Unknown metadata field {field!r} cannot be declared dynamic"
+                    errors.config_error(msg, field=field)
                 smart_message["Dynamic"] = field
 
         errors.finalize("Failed to write metadata")
@@ -747,14 +814,23 @@ def _name_list(people: list[tuple[str, str | None]]) -> str | None:
     return ", ".join(name for name, email_ in people if not email_) or None
 
 
+_DISPLAY_NAME_NEEDS_QUOTING = re.compile(r'[][\\()<>@,:;".]')
+_QUOTED_STRING_ESCAPE = re.compile(r'([\\"])')
+
+
+def _format_address(name: str, addr: str) -> str:
+    if _DISPLAY_NAME_NEEDS_QUOTING.search(name):
+        quoted = _QUOTED_STRING_ESCAPE.sub(r"\\\1", name)
+        return f'"{quoted}" <{addr}>'
+    return f"{name} <{addr}>"
+
+
 def _email_list(people: list[tuple[str, str | None]]) -> str | None:
     """
     Build a comma-separated list of emails.
     """
     return (
-        ", ".join(
-            email.utils.formataddr((name, _email)) for name, _email in people if _email
-        )
+        ", ".join(_format_address(name, _email) for name, _email in people if _email)
         or None
     )
 
