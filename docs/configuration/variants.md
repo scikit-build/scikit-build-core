@@ -16,7 +16,7 @@ wheels for the same version that differ by hardware or library features (CPU
 ABI, CUDA version, BLAS implementation, etc.).
 
 Because each variant of a build needs different settings, the variant options
-are **only allowed in config-settings or `[[tool.scikit-build.overrides]]`** —
+are **only allowed in config-settings or `[[tool.scikit-build.overrides]]`**;
 they cannot be hard-coded at the top level of `pyproject.toml`. The relevant
 settings are:
 

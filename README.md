@@ -133,7 +133,7 @@ extension above lands at `scikit_build_simplest/_module.*` when the package is
 older versions of Python, and will handle PyPy for you if you are building from
 PyPy. You will need to install everything you want into the full final path
 inside site-packages (so you will usually prefix everything by the package name)
-— including any `__init__.py`, which CMake can place alongside the extension
+-- including any `__init__.py`, which CMake can place alongside the extension
 with `install(FILES src/__init__.py DESTINATION scikit_build_simplest)`.
 
 The [Getting started guide][getting-started] walks through a complete package

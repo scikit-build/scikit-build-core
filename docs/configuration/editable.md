@@ -32,7 +32,7 @@ finder loads the compiled artifacts from there directly, rather than from copies
 in site-packages. This means `SKBUILD_PLATLIB_DIR` (or `SKBUILD_PURELIB_DIR`)
 and `CMAKE_INSTALL_PREFIX` are baked at their final location when the editable
 wheel is first built, so import-triggered rebuilds re-install in place with no
-extra reconfigure -- including projects that install to an absolute
+extra reconfigure, including projects that install to an absolute
 `${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
 the install, but a rebuildable editable already depends on it.
 
@@ -80,7 +80,7 @@ Inplace installs support both automatic (`editable.rebuild`) and manual rebuilds
 (see below); since the source directory doubles as the build directory, no
 separate `build-dir` is needed (the `build-dir` setting is ignored).
 
-All the usual in-place build caveats apply -- only one build per source
+All the usual in-place build caveats apply: only one build per source
 directory, you can't change to an out-of-source build without removing the build
 artifacts, and your source directory will be littered with build artifacts.
 Also, to make your binaries importable, you should set
