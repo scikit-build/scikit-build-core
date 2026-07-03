@@ -311,7 +311,8 @@ And several optional ones (`build_state`, `dynamic_wheel`, and
 `get_requires_for_dynamic_metadata`). You can optionally use a class, as well.
 Fields a plugin reports via `dynamic_wheel` as possibly changing between the
 SDist and a wheel built from it are marked `Dynamic` in the SDist's `PKG-INFO`
-(METADATA 2.2); `version` may never change in this sense.
+(METADATA 2.2, or 2.6 when the field also has a static value in `[project]`, per
+[PEP 808][]); `version` may never change in this sense.
 
 A plugin distributed as a package is referenced by the name it registers in the
 `dynamic_metadata.provider` entry-point group. A plugin that lives inside your
