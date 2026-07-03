@@ -104,3 +104,27 @@ VSCode C/C++ extension, set
 `"C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"`.
 See [editable installs](../configuration/editable.md) for the related
 `--no-build-isolation` recommendations.
+
+## Debug builds on Windows
+
+A `cmake.build-type=Debug` extension links against the debug CPython
+(`pythonXY_d.dll`, `_d.pyd` suffix), so it only loads under a debug interpreter
+(`python_d.exe`) — importing it under a normal `python.exe` crashes with
+`0x80000003`. This is CPython behavior, not scikit-build-core's: run the build
+itself under `python_d.exe` so the `_d` suffix and import library line up (and
+the `t` ABI flag is added for free-threaded debug builds, e.g. `pythonXYt_d.dll`).
+
+To keep debug info while still loading under a normal Python, don't do a debug
+build — instead undefine `_DEBUG` around the CPython headers so they don't
+auto-link `pythonXY_d.lib`, and add debug flags yourself:
+
+```c
+#ifdef _DEBUG
+#  define SKB_RESTORE_DEBUG
+#  undef _DEBUG
+#endif
+#include <Python.h>
+#ifdef SKB_RESTORE_DEBUG
+#  define _DEBUG
+#endif
+```
