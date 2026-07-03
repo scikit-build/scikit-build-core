@@ -192,18 +192,5 @@ than being built into scikit-build-core: [cython-cmake][] (`include(UseCython)`)
 and [f2py-cmake][] (`include(UseF2Py)`). Add them to your `build.requires` and
 see the [getting started guide](getting_started.md) for full examples.
 
-## Related guides
-
-```{toctree}
-:maxdepth: 1
-
-dynamic_link
-ctypes
-crosscompile
-migration_guide
-workspaces
-debugging
-```
-
 [cython-cmake]: https://github.com/scikit-build/cython-cmake
 [f2py-cmake]: https://github.com/scikit-build/f2py-cmake

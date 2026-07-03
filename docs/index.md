@@ -27,7 +27,7 @@ time). Some of our past meeting minutes are
 
 guide/getting_started
 guide/cmakelists
-guide/build
+guide/going_further
 guide/faqs
 ```
 
