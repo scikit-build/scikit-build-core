@@ -119,6 +119,8 @@ def nox_downstream(
     subdir: str | None,
     config_settings: list[str],
     code: str | None,
+    requires: list[str],
+    prepare: str | None,
     extra: list[str],
     logpath: Path,
 ) -> int:
@@ -132,6 +134,10 @@ def nox_downstream(
             posargs += ["-c", code]
     for c in config_settings:
         posargs += ["-C", c]
+    for r in requires:
+        posargs += ["--requires", r]
+    if prepare:
+        posargs += ["--prepare", prepare]
     posargs += extra
     cmd = ["nox", "-s", "downstream", "--", *posargs]
 
@@ -188,6 +194,18 @@ def main() -> int:
     p.add_argument("-C", dest="config_settings", action="append", default=[])
     p.add_argument("-c", dest="code", help="import check code (editable mode only)")
     p.add_argument(
+        "--requires",
+        action="append",
+        default=[],
+        help="extra package(s) to install into the build env (repeatable), "
+        "e.g. a dynamic-metadata provider like hatch-fancy-pypi-readme",
+    )
+    p.add_argument(
+        "--prepare",
+        help="repo-local prep command run in the clone root before the build "
+        "(e.g. 'nox -s prepare'); see SKILL.md for the container safety rule",
+    )
+    p.add_argument(
         "--repo", type=Path, help="scikit-build-core repo (default: git root of cwd)"
     )
     p.add_argument(
@@ -234,6 +252,8 @@ def main() -> int:
                     subdir=args.subdir,
                     config_settings=args.config_settings,
                     code=args.code,
+                    requires=args.requires,
+                    prepare=args.prepare,
                     extra=args.extra,
                     logpath=out / f"{label}-{mode}.log",
                 )

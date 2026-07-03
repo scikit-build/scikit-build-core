@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import shlex
 import shutil
 import sys
 import urllib.request
@@ -263,6 +265,23 @@ def test_doc_examples(session: nox.Session, example: str) -> None:
     session.run("pytest")
 
 
+def downstream_dir_name(project: str) -> str:
+    """
+    Deterministic, filesystem-safe clone-dir name for a project spec.
+
+    Handles URLs (``https://github.com/org/repo``), scp-style git remotes
+    (``git@github.com:org/repo.git``), and local paths. Runs of characters
+    outside ``[A-Za-z0-9._-]`` collapse to a single ``_`` and a trailing
+    ``.git`` is dropped, so re-runs of the same project map to the same dir
+    (the session does ``git pull`` when it already exists). Crucially the
+    result contains no ``:`` -- an embedded colon confuses ``pyproject_hooks``
+    when it splits a project's ``backend-path``.
+    """
+    name = re.sub(r"\.git$", "", project)
+    name = re.sub(r"[^A-Za-z0-9._-]+", "_", name)
+    return name.strip("_")
+
+
 @nox.session(default=False)
 def downstream(session: nox.Session) -> None:
     """
@@ -281,10 +300,20 @@ def downstream(session: nox.Session) -> None:
     )
     parser.add_argument("-c", dest="code", help="Run some Python code")
     parser.add_argument("-C", help="config-settings", action="append", default=[])
+    parser.add_argument(
+        "--requires",
+        action="append",
+        default=[],
+        help="Extra package(s) to install into the no-isolation env (repeatable)",
+    )
+    parser.add_argument(
+        "--prepare",
+        help="Shell command to run in the repo root before the build (e.g. 'nox -s prepare')",
+    )
     args, remaining = parser.parse_known_args(session.posargs)
 
     tmp_dir = Path(session.create_tmp())
-    proj_dir = tmp_dir / "_".join(args.project.split("/"))
+    proj_dir = tmp_dir / downstream_dir_name(args.project)
 
     session.install("build", "hatch-vcs", "hatchling")
     session.install(".", "--no-build-isolation")
@@ -304,7 +333,16 @@ def downstream(session: nox.Session) -> None:
         )
         session.chdir(proj_dir)
 
-    # Read and strip requirements
+    # Repo-local prep (e.g. generating headers) runs at the clone root, before
+    # any --subdir chdir, since it often lives in the parent repo.
+    if args.prepare:
+        session.run(*shlex.split(args.prepare), external=True)
+
+    # Read and strip requirements from the build pyproject.toml. For subdir
+    # projects that lives in the subdir, so chdir there first.
+    if args.subdir:
+        session.chdir(args.subdir)
+
     pyproject = nox.project.load_toml("pyproject.toml")
     requires = [
         x
@@ -317,9 +355,8 @@ def downstream(session: nox.Session) -> None:
         requires.append("cmake")
     if requires:
         session.install(*requires)
-
-    if args.subdir:
-        session.chdir(args.subdir)
+    if args.requires:
+        session.install(*args.requires)
 
     if args.editable:
         session.install("-e.", "--no-build-isolation")

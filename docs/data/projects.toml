@@ -18,6 +18,8 @@ github = "Freed-Wu/astyle-wheel"
 pypi = "awkward-cpp"
 github = "scikit-hep/awkward"
 path = "awkward-cpp/pyproject.toml"
+# Built from a subdir; the parent repo generates kernel headers first.
+prepare = "nox -s prepare"
 
 [[project]]
 pypi = "boost-histogram"
@@ -148,6 +150,8 @@ github = "mctools/ncrystal"
 [[project]]
 pypi = "ninja"
 github = "scikit-build/ninja-python-distributions"
+# Uses a scikit-build-core dynamic-metadata provider not in build-system.requires.
+requires = ["hatch-fancy-pypi-readme"]
 
 [[project]]
 pypi = "nodejs-wheel"
