@@ -1,5 +1,258 @@
 # Changelog
 
+## Version 1.0.0
+
+We've worked through over 100 issues and ran extensive review sweeps, fixing
+over 90 bugs and adding 40+ features! We've added support for PEP 803
+(free-threaded stable ABI), PEP 808 (partially dynamic metadata), PEP 829
+(`.start` files), and experimental PEP 817 (variants). Editable installs are
+much better, with lots of edge cases fixed, like namespace packages and resource
+discovery. For rebuilds, which are still experimental, loaders expose a manual
+`rebuild()`, inplace mode now supports rebuilds, and rebuilds can optionally
+target a persistent install tree (which removes several caveats). The setuptools
+and hatchling plugins are no longer experimental and Hatchling supports editable
+installs. There's a new unified `scikit-build` CLI, including an `init` command
+to scaffold new projects. Wheels can be reproducible. Dynamic metadata follows a
+spec with entry-point discovery and uses `[[tool.dynamic-metadata]]`, and you
+can write your own plugins. There are new settings: an `env` table for setting
+environment variables, `install.targets`, `force-include` for SDists and wheels,
+`sdist.resolve-symlinks`, and a `${SKBUILD_<TREE>_DIR}` prefix for targeting
+wheel trees; existing settings gained `sdist.inclusion-mode = "explicit"` and
+list-valued `cmake.build-type`. Imports are lazy on Python 3.15+ (PEP 810),
+making CLI and backend startup faster. Lots of documentation has been added and
+updated, along with new examples and samples. We've also polished f2py-cmake and
+cython-cmake.
+
+As (almost) always, if you set a minimum-version, your build should be
+unaffected. Behavior changes to be aware of: SDists now resolve symlinks by
+default, with an `sdist.resolve-symlinks` setting providing `"all"`,
+`"external"`, `"none"`, and `"classic"` modes. The old names of renamed
+configuration fields (`cmake.minimum-version`, `ninja.minimum-version`,
+`cmake.verbose`, and `cmake.targets`) now error unless `minimum-version` is set,
+and the deprecated `tool.scikit-build.metadata` table warns if minimum-version
+is not set. The empty `pyproject` extra was removed; installers like pip, build,
+and uv merely warn if you still request it.
+
+Features:
+
+- CLI:
+  - unified `scikit-build` command with submodules as subcommands in #1355
+  - add `init` command to scaffold starter projects in #1357
+- Configuration providers:
+  - entry-point configuration providers in #1406
+- New settings:
+  - `env`: settable environment variables in #1377 (replaces #1370, unreleased)
+  - `install.targets` for custom install targets in #1371
+  - `sdist.force-include`, `wheel.force-include` to map files to include in
+    #1364; entries are served live in redirect editable installs in #1441
+  - `wheel.reproducible` allows building a reproducible wheel (with some setup)
+    in #1389
+  - `editable.rebuild-dir` at a persistent install tree (opt-in) in #1375
+- Updated settings:
+  - `cmake.build-type` now can be a list for multiple builds in #1386
+  - `wheel.packages` can now include single module files in #1395
+  - `cmake.build-type` honors `CMAKE_BUILD_TYPE` from the environment in #1372
+  - add `"explicit"` SDist inclusion-mode (opt-in include) in #1249
+  - resolve symlinks by default by @Doekin in #1265, with `"external"`,
+    `"classic"`, and `"none"` (store directory symlinks) modes in #1434
+  - support PEP 803, the free-threaded stable ABI, including the combined
+    `abi3.abi3t` wheel tag, in #1269 and #1382
+- Other settings:
+  - add `${SKBUILD_<TREE>_DIR}` prefix for wheel-tree targeting in #1379
+  - add `{name}` placeholder for template-formatted settings in #1445
+  - warn on the deprecated `tool.scikit-build.metadata` table, and error on
+    renamed config fields, unless an old minimum-version is set, in #1397 and
+    #1399
+- Dynamic metadata:
+  - support `[[tool.dynamic-metadata]]` in #1390 and #1416
+  - honor the `dynamic_wheel` hook when building SDists in #1433
+  - emit METADATA 2.6 for PEP 808 partially-dynamic fields, via vendored
+    pyproject-metadata 0.12, in #1454
+- Experimental:
+  - add experimental PEP 817 variant support in #1284
+- Editable:
+  - PEP 829 (`.start` files) support in #1297
+  - expose `rebuild()` on redirect and inplace module loaders in #1403 and #1411
+- Plugins:
+  - de-experimentalize the setuptools and hatchling plugins in #1358
+  - include plugin extras for setuptools/hatchling, and warn if the extra is
+    missing from `build-system.requires`, in #1290 and #1344
+- Hatchling plugin:
+  - editable install support in #1282
+  - reject `wheel.exclude` as unsupported in #1431
+- Setuptools plugin:
+  - inplace editable support in #1278
+  - add `cmake_install_dir` and `cmake_install_target` in #1286 and #1374
+  - add `cmake_process_manifest_hook` in #1285
+  - allow `cmake_with_sdist=False` in #1287
+  - honor `SKBUILD_CONFIGURE_OPTIONS` and `SKBUILD_BUILD_OPTIONS` in the wrapper
+    in #1394
+
+Fixes:
+
+- Settings:
+  - accept override-only settings via config-settings in #1307
+  - flag scalar config-settings assignment to dict fields in #1435
+  - entry-point providers: treat their config as dynamic for validation gates,
+    with robust signature dispatch and duplicate-name handling, in #1424 and
+    #1425
+  - allow `=` inside dict-style env var values like `SKBUILD_CMAKE_DEFINE` in
+    #1311
+  - accept plain strings for list/table fields in config-settings (e.g.
+    `-Cwheel.packages=src/pkg`) in #1323
+  - don't crash on overrides mixing `inherit` with top-level fields in #1323
+  - apply `if.state` overrides when computing `get_requires_for_build_*` in
+    #1322
+  - render `{root}` correctly in templated settings such as `build-dir` in #1318
+  - JSON schema no longer rejects valid `cmake.define` lists in #1306
+- Dynamic metadata:
+  - load provider-path providers via a meta-path finder in #1366
+  - correct the `DynamicMetadataProtocol.dynamic_metadata` signature in #1365
+  - combine same-field `dynamic_wheel` reports with OR in #1437
+  - error on unknown keys in `regex`/`template` plugin settings instead of
+    silently ignoring them in #1319
+  - handle typed `vcs_versioning.overrides` in mypy in #1388
+- Wheel:
+  - auto-discover namespace packages in wheel builds in #1385
+  - don't error when a `wheel.packages` source is CMake-generated in #1440
+  - use `Path.as_posix()` for including generated files in SDist/wheel by
+    @shiftinv in #1381
+  - clamp `SOURCE_DATE_EPOCH` to the ZIP timestamp range in #1423
+  - emit installer-compatible `abi3t` wheel tag in #1380
+  - honor `CMAKE_OSX_DEPLOYMENT_TARGET` in the wheel platform tag in #1338
+  - honor an explicit empty `license-files` to disable license collection in
+    #1311 and #1322
+  - write `location = "source"` generated files as UTF-8, don't crash on
+    subdirectories inside the scripts install dir, and fully prune consecutive
+    excluded directories in #1322
+- SDist:
+  - don't crash on dangling symlinks with `resolve-symlinks = "all"`, and detect
+    symlink loops when walking the source tree, in #1341 and #1421
+  - don't prune directories matched only by glob includes in default inclusion
+    mode in #1339
+- Editable:
+  - make namespace package installs importable, including remapped namespace
+    packages, in #1346 and #1427
+  - fix import subpackage propagation in #1304
+  - don't treat versioned sonames as importable modules in #1337
+  - add symlinked module's real dir to `__path__` in #1335
+  - `importlib.resources.files()` in redirect mode in #1279
+  - recognize Cython `__init__.pxd`/`.pyx` as package indicators by @vyasr in
+    #1292
+  - debounce rebuild to once per process in #1368
+  - `rebuild()` no longer hides the build output on failed rebuilds in #1318
+  - refuse to wipe a populated rebuild-dir, and use safe install/build paths for
+    manual `rebuild()`, in #1400 and #1429
+  - only block absolute `wheel.install-dir` for rebuilds in #1334
+- CMake:
+  - cap `SKBUILD_PROJECT_VERSION` to four components in #1369
+  - strip flags from sysconfig CC/CXX to just the executable, keeping compiler
+    wrappers, in #1331 and #1418
+  - generator handling: detect two-token `-G Ninja` and `-G` in `CMAKE_ARGS`,
+    detect multi-config generators set via `cmake.define.CMAKE_GENERATOR` so the
+    right `--config` is used, and apply full Ninja handling to
+    `Ninja Multi-Config` in #1320 and #1352
+  - free-threaded Windows import library and two-token `-D` parsing in #1422
+  - don't skip the ninja requirement when the generator is forced to Ninja in
+    #1442
+  - more reliably find the Python library on Windows in #1310
+  - warn when CMake will build a mismatched `x86_64` extension on macOS in #1404
+  - `-DCMAKE_SYSTEM_PROCESSOR` in the CMake args suppresses `ARCHFLAGS` handling
+    on macOS, as documented, in #1320
+  - comments inside `cmake_minimum_required(...)` no longer break
+    `cmake.version = "CMakeLists.txt"`, and unparsable files fall back
+    gracefully in #1319
+  - File API: properly handle `Union` by @LecrisUT in #1272; read the toolchains
+    reply, tolerate optional link fields, and restore missing
+    `Target.sources`/`InstallRule.type` fields in #1311 and #1319
+- CLI:
+  - argument parsing and clear errors for common mistakes in #1426
+- Hatchling plugin:
+  - ignore hatchling's reserved enable-by-default hook option in #1419
+  - don't double the `wheel.install-dir` prefix, which made wheels unimportable,
+    in #1321
+- Setuptools plugin:
+  - wrapper path and classic scikit-build compatibility fixes in #1295 and #1316
+  - protect `SetupError` in #1293
+  - accept `wheel-free-setuptools` extra in the plugin warning in #1413
+  - don't require `editable.mode` for `build_ext --inplace` in #1432
+  - build-type list rejection, `package_dir` editable root, and free-threaded
+    limited-API gate in #1428
+  - resolve overrides with the correct `wheel`/`editable` state in #1321
+- Sweeps:
+  - many further small fixes across settings, wheel, editable, File API,
+    generator detection, and the plugins from extensive review sweeps in #1305,
+    #1306, #1311, #1318, #1319, #1320, #1321, #1322, and #1323
+
+Documentation:
+
+- New guides and FAQs:
+  - add a workspaces and monorepos guide in #1444
+  - add a Windows debug builds note in #1450
+  - FAQ for IDE IntelliSense / `compile_commands.json` in #1447
+  - explain target output paths on MSVC / multi-config generators in #1446
+  - FAQ on coverage and debugging (gcov/gcovr/GDB) in #1409
+  - tips for shipping a ctypes-loaded shared library in #1408
+  - FAQ for dependency library in `site-packages/bin` or `lib` in #1393
+  - document `cmake.module` entry point and metadata states in #1360
+- 1.0 refresh:
+  - dedupe, simplify, and restructure the documentation in #1448
+  - review and refresh documentation for the 1.0 release in #1402
+  - add missing versionadded/versionchanged directives for 1.0 in #1405
+  - refresh stale guidance and version pins in #1361
+  - fix incorrect config keys and stale claims in #1359
+  - remove documented unimplemented search settings in #1354
+  - show config-settings and env var forms in the config reference in #1347
+  - use `-C` instead of `--config-settings` in examples in #1451
+  - minor cleanup and style check in #1453
+  - fix typos and grammar in #1362
+- Clarifications and fixes:
+  - clarify `wheel.packages` semantics (top-level, not a find/where) in #1407
+  - address post-merge review notes on entry-point config in #1438
+  - fix `sdist.inclusion-mode` name and dynamic-metadata field requirement in
+    #1420
+  - clarify README example and unify `cmake_minimum_required` ranges in #1392
+  - improve docs on source in #1276
+  - avoid a common timeout in #1308
+- Examples:
+  - use cython-cmake and f2py-cmake in getting started examples in #1353
+  - link `Python::Module` in the Fortran example for CMake 4.x in #1373
+- Site:
+  - fix RTD version and render GitHub-style admonitions in #1410
+  - make sphinx-tippy tooltips follow the active theme in #1349
+  - add GitHub icon to header icon row in #1387
+  - add more projects using scikit-build-core, including pyarrow by @raulcd, in
+    #1266 and #1309
+
+CI and testing:
+
+- Cover uv as an install frontend via a workspace in #1443
+- Add Python 3.15 and 3.15t to CI in #1383
+- Skip heavy test matrix on docs-only changes in #1356
+- Adapt to setuptools-scm 10 / vcs-versioning 2 warnings in #1350
+- Exclude pytest 9.1.0 (params-fixture override regression) in #1329
+- Pin old-CMake Windows rows to windows-2022, add a VS 2026 row in #1326
+- Reduce test-suite wall-clock time in #1325
+- Fix Windows `PermissionError` from concurrent wheelhouse lock races, and clean
+  up incomplete or old editable wheels in the wheelhouse, in #1283 and #1288
+- Secure GitHub Actions workflows in #1302
+- Use native uv integration in RTD in #1274
+- Stub macOS lipo arch probe for fake-subprocess tests in #1313 and #1314
+- Migrate beakerlib test to python script by @LecrisUT in #1376
+
+Internal:
+
+- Faster startup via lazy imports (PEP 810) in #1415
+- Unify wheel build orchestration across backend and hatch plugin in #1345
+- Rename editable files to `_editable_skbc_<name>` in #1332
+- Drop the empty `pyproject` extra in #1398
+- Remove `orjson` from dependencies in #1333
+- Support `uvx scikit-build-core` too in #1396
+- Add a utils package by @LecrisUT in #1268
+- Simplification cleanups from a repo sweep in #1312
+- Use local `TYPE_CHECKING = False` instead of importing from typing in #1412
+- Adapt to better pathspec types in #1277
+
 ## Version 0.12.2
 
 We've fixed another issue in the new file inclusion mode on Windows. We now
