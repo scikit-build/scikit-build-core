@@ -16,9 +16,9 @@ side by side.
 
 The one real pitfall is uv's build cache. uv only rebuilds a local or workspace
 member when its `pyproject.toml`, `setup.py`, or `setup.cfg` changes (see the
-[cache versioning docs][uv cache]). Edits to your C++ or CMake sources do **not**
-invalidate the cache, so `uv sync`/`uv run` can happily reuse a stale extension
-module. There are two good remedies.
+[cache versioning docs][uv cache]). Edits to your C++ or CMake sources do
+**not** invalidate the cache, so `uv sync`/`uv run` can happily reuse a stale
+extension module. There are two good remedies.
 
 ### Option 1: tell uv about your sources with `cache-keys`
 

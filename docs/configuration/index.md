@@ -422,8 +422,8 @@ Scikit-build-core will only target ABI3 if the version of Python is equal to or
 newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
 4.4+). For `py3`/`py2.py3`, you still need a version of Python scikit-build-core
 supports to build the initial wheel. The `${SKBUILD_SABI_COMPONENT}` variable
-and the `USE_SABI` idiom on the CMake side is covered in [Limited API / Stable
-ABI](#limited-api).
+and the `USE_SABI` idiom on the CMake side is covered in
+[Limited API / Stable ABI](#limited-api).
 
 With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
 tag: `abi3t` is a subset of `abi3` (PEP 803), so the single free-threaded binary
@@ -528,8 +528,8 @@ covers importable modules (even renamed ones) and data files that keep their
 filename and sit directly inside a top-level package. Anything the redirect
 cannot express, like other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
 top-level data files, and data files nested below a package subdirectory (kept
-as real files so package-root resource lookups keep the wheel layout), are
-still copied at install time, so those snapshots only refresh on reinstall.
+as real files so package-root resource lookups keep the wheel layout), are still
+copied at install time, so those snapshots only refresh on reinstall.
 
 ### Building a wheel from an SDist
 
@@ -552,8 +552,8 @@ on disk is then resolved through `sdist.force-include` (by exact destination, or
 under a force-included directory) and read from that original source instead. An
 on-disk file always wins, so the vendored copy is preferred when present.
 
-For cases the automatic resolution cannot express (such as if the wheel source is
-the _original_ external path rather than the SDist output) use
+For cases the automatic resolution cannot express (such as if the wheel source
+is the _original_ external path rather than the SDist output) use
 [overrides](./overrides.md) keyed on `from-sdist`, with a separate
 `wheel.force-include` entry gated on each build mode (source tree vs.
 wheel-from-SDist):
@@ -733,9 +733,9 @@ You can pass raw arguments directly to the build tool, as well:
 
 The `[tool.scikit-build.env]` table sets environment variables for the CMake
 configure, build, and install subprocesses. Use it for things CMake or the
-generator read _from the environment_:`CC`/`CXX`, `CFLAGS`,
-`CMAKE_PREFIX_PATH`, compiler launchers, parallel-build level, and so on. For
-CMake `-D` cache entries, use `cmake.define` instead.
+generator read _from the environment_:`CC`/`CXX`, `CFLAGS`, `CMAKE_PREFIX_PATH`,
+compiler launchers, parallel-build level, and so on. For CMake `-D` cache
+entries, use `cmake.define` instead.
 
 Each value is a literal string, or a table that reads from another environment
 variable (`{ env = "OTHER", default = "..." }`). By default a variable is only

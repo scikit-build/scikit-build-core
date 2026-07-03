@@ -6,8 +6,8 @@ scikit-build-core defaults make those paths disappear:
 
 - **The build directory is temporary.** Without {confval}`build-dir` set,
   scikit-build-core builds in a temporary directory that is deleted after the
-  build, taking coverage data, debug artifacts, and `compile_commands.json`
-  with it.
+  build, taking coverage data, debug artifacts, and `compile_commands.json` with
+  it.
 - **Build isolation hides everything else.** `pip install .`, `python -m build`,
   `uv build`, and `uv sync` copy your project and install the build dependencies
   into throwaway environments, so recorded source paths and include paths no
