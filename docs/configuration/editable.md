@@ -16,7 +16,7 @@ Python versions. On Python 3.8, use the `importlib_resources` backport, since
 
 ```console
 # Very experimental rebuild on initial import feature
-$ pip install --no-build-isolation --config-settings=editable.rebuild=true -Cbuild-dir=build -ve.
+$ pip install --no-build-isolation -Ceditable.rebuild=true -Cbuild-dir=build -ve.
 ```
 
 The automatic rebuild-on-import feature (`editable.rebuild`) is still

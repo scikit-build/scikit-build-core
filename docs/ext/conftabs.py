@@ -41,7 +41,7 @@ class ConfTabs(SphinxDirective):
         ````{{tab}} pip
 
         ```console
-        $ pip install . --config-settings={name}={joined_result}
+        $ pip install . -C{name}={joined_result}
         ```
 
         ````

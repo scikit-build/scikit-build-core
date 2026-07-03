@@ -36,7 +36,7 @@ logging.level = "INFO"
 ````{tab} pip
 
 ```console
-$ pip install . -v --config-settings=build.verbose=true --config-settings=logging.level=INFO
+$ pip install . -v -Cbuild.verbose=true -Clogging.level=INFO
 ```
 
 ````
@@ -634,7 +634,7 @@ FOOD_GROUPS = ["Apple", "Lemon;Lime", "Banana"]
 ````{tab} pip
 
 ```console
-$ pip install . --config-settings=cmake.define.SOME_DEFINE=ON
+$ pip install . -Ccmake.define.SOME_DEFINE=ON
 ```
 
 ````
