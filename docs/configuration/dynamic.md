@@ -14,7 +14,7 @@ interface described below.
 
 ```{versionadded} 1.0
 Support for the standard
-[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 specification.
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.4 specification.
 ```
 
 The standard, cross-backend way to configure plugins is the top-level
@@ -56,8 +56,9 @@ rather than an ordered array) is superseded by `[[tool.dynamic-metadata]]`, and
 since 1.0 it emits a deprecation warning unless `minimum-version` is set below
 `1.0`. It still works, but the two forms **cannot be combined** in one project,
 and plugins not shipped with scikit-build-core additionally require
-`tool.scikit-build.experimental = true` in the legacy form. Every example below
-translates the same way; the example above would be spelled:
+`tool.scikit-build.experimental = true` in the legacy form. The plugin examples
+below show both spellings as Modern/Classic tabs; the example above would be
+spelled:
 
 ```toml
 [tool.scikit-build.metadata.version]
@@ -81,6 +82,8 @@ defaults to `field = "readme"`.
 You can use [setuptools-scm](https://github.com/pypa/setuptools-scm) to pull the
 version from VCS:
 
+````{tab} Modern
+
 ```toml
 [project]
 name = "mypackage"
@@ -96,6 +99,25 @@ field = "version"
 [tool.setuptools_scm]  # Section required
 write_to = "src/package/_version.py"
 ```
+
+````
+
+````{tab} Classic
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["version"]
+
+[tool.scikit-build]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/package/_version.py"]
+
+[tool.setuptools_scm]  # Section required
+write_to = "src/package/_version.py"
+```
+
+````
 
 This sets the python project version according to
 [git tags](https://github.com/pypa/setuptools-scm/blob/fb261332d9b46aa5a258042d85baa5aa7b9f4fa2/README.rst#default-versioning-scheme)
@@ -136,6 +158,8 @@ can set `result` to a format string to process the matches; the default is
 `"{value}"`. You can also specify a regex for `remove=` which will strip any
 matches from the final result. A more complex example:
 
+````{tab} Modern
+
 ```toml
 [[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.regex"
@@ -151,6 +175,26 @@ result = "{major}.{minor}.{patch}dev{dev}"
 remove = "dev0"
 ```
 
+````
+
+````{tab} Classic
+
+```toml
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "src/mypackage/version.hpp"
+regex = '''(?sx)
+\#define \s+ VERSION_MAJOR \s+ (?P<major>\d+) .*?
+\#define \s+ VERSION_MINOR \s+ (?P<minor>\d+) .*?
+\#define \s+ VERSION_PATCH \s+ (?P<patch>\d+) .*?
+\#define \s+ VERSION_DEV   \s+ (?P<dev>\d+)   .*?
+'''
+result = "{major}.{minor}.{patch}dev{dev}"
+remove = "dev0"
+```
+
+````
+
 This will remove the "dev" tag when it is equal to 0.
 
 ```{versionchanged} 0.10
@@ -165,6 +209,8 @@ You can use
 [hatch-fancy-pypi-readme](https://github.com/hynek/hatch-fancy-pypi-readme) to
 render your README:
 
+````{tab} Modern
+
 ```toml
 [project]
 name = "mypackage"
@@ -176,6 +222,23 @@ field = "readme"
 
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```
+
+````
+
+````{tab} Classic
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["readme"]
+
+[tool.scikit-build]
+metadata.readme.provider = "scikit_build_core.metadata.fancy_pypi_readme"
+
+# tool.hatch.metadata.hooks.fancy-pypi-readme options here
+```
+
+````
 
 In order to use the version number in readme feature, this must be listed after
 the version in the `[[tool.dynamic-metadata]]` mode.
@@ -189,12 +252,26 @@ The version number feature now works.
 
 You can access other metadata fields and produce templated outputs.
 
+````{tab} Modern
+
 ```toml
 [[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.template"
 field = "optional-dependencies"
 result = {"dev" = ["{project[name]}=={project[version]}"]}
 ```
+
+````
+
+````{tab} Classic
+
+```toml
+[tool.scikit-build.metadata.optional-dependencies]
+provider = "scikit_build_core.metadata.template"
+result = {"dev" = ["{project[name]}=={project[version]}"]}
+```
+
+````
 
 You can use `project` to access the current metadata values. You can use
 `result` to specify the output. The result must match the type of the metadata
@@ -214,7 +291,7 @@ static in `[project]`).
 
 ```{versionadded} 1.0
 Writing a custom dynamic-metadata plugin through the standard
-[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.3 interface.
+[dynamic-metadata](https://dynamic-metadata.readthedocs.io) 0.4 interface.
 ```
 
 You can write your own plugins. Full details are in the

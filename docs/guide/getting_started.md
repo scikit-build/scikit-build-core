@@ -40,6 +40,8 @@ The `scikit-build init` command.
 
 We will be writing these files:
 
+````{tab} pybind11
+
 ```
 example
 ├── pyproject.toml
@@ -47,11 +49,109 @@ example
 └── src
     └── example
         ├── __init__.py
-        └── _core.*
+        └── _core.cpp
 ```
 
-The `_core.*` source suffix depends on the language you pick below (`.cpp`,
-`.c`, `.pyx`, or `.f`); SWIG additionally has a `_core.i` interface file.
+````
+
+````{tab} nanobind
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.cpp
+```
+
+````
+
+````{tab} SWIG
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        ├── _core.c
+        └── _core.i
+```
+
+````
+
+````{tab} Cython
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.pyx
+```
+
+````
+
+````{tab} C
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
+```
+
+````
+
+````{tab} ABI3
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
+```
+
+````
+
+````{tab} ABI3t
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.c
+```
+
+````
+
+````{tab} Fortran
+
+```
+example
+├── pyproject.toml
+├── CMakeLists.txt
+└── src
+    └── example
+        ├── __init__.py
+        └── _core.f
+```
+
+````
 
 ### Source code
 
@@ -224,13 +324,6 @@ a package, but this is enough to start for now. The
 [project metadata specification](https://packaging.python.org/en/latest/specifications/pyproject-toml)
 page covers what keys are available. Another example is available at
 [the Scientific Python Library Development Guide](https://learn.scientific-python.org/development/guides).
-
-```{note}
-If your extension builds against NumPy, build against `numpy>=2.0`: NumPy 2.0
-wheels are backward-compatible at the C ABI level, so a module built against
-2.0 keeps working with older NumPy at runtime. Add a runtime floor in
-`[project]` `dependencies` only if your code needs newer NumPy features.
-```
 
 (cmake-file)=
 

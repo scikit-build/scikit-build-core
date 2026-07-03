@@ -38,18 +38,11 @@ guide/faqs
 ```
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 :titlesonly:
 :caption: Configuration
 
 configuration/index
-configuration/editable
-configuration/overrides
-configuration/dynamic
-configuration/formatted
-configuration/search_paths
-configuration/entrypoint_config
-configuration/variants
 ```
 
 ```{toctree}

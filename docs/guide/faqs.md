@@ -69,20 +69,6 @@ This is now a subcommand of the unified `scikit-build` CLI (previously
 `python -m scikit_build_core.builder`).
 ```
 
-## Coverage and debugging (gcov / gcovr / GDB)
-
-Coverage and debug tools fail when the temporary build directory and isolated
-source copy disappear after the build; the fix is a persistent `build-dir` with
-`--no-build-isolation`. See [debugging and IDE integration](debugging.md) for
-the workflow.
-
-## IDE IntelliSense can't find headers (`compile_commands.json`)
-
-Build isolation hides the binding libraries' include paths and the temporary
-build dir discards `compile_commands.json`; export a compile database from a
-persistent, non-isolated build and point your editor at it. See
-[debugging and IDE integration](#compile-commands) for the commands.
-
 (dependency-in-site-packages)=
 
 ## A dependency's library ends up in `site-packages/bin` or `lib`
@@ -146,12 +132,6 @@ not set up the MSVC toolchain itself, so build from a Visual Studio Developer
 Command Prompt (or after running `vcvarsall.bat`). scikit-build-core already
 selects Ninja by default on non-MSVC Windows.
 
-## Shipping a library to load with `ctypes`
-
-For a thin `ctypes`/`cffi` wrapper around a CMake-built shared library, install
-the library next to your Python code and load it via `importlib.resources`; the
-full walkthrough is in [shipping a library for ctypes](ctypes.md).
-
 ## Repairing wheels
 
 Like most other backends[^1], scikit-build-core produces `linux` wheels, which
@@ -203,12 +183,6 @@ Windows currently requires a little extra care. You should set the C define
 `Py_GIL_DISABLED` on Windows; due to the way the two builds share the same
 config files, Python cannot set it for you on the free-threaded variant.
 
-## Building wheel variants (experimental)
-
-Scikit-build-core has an early preview of [PEP 817][] wheel variant support —
-several wheels for the same version differing by hardware or library features.
-See [building wheel variants](../configuration/variants.md).
-
 [^1]:
     Due to a [bug in packaging](https://github.com/pypa/packaging/issues/160),
     some backends may mistakenly produce the wrong tags (including
@@ -222,6 +196,5 @@ See [building wheel variants](../configuration/variants.md).
 <!-- prettier-ignore-start -->
 
 [dozens of recipes]: https://github.com/search?type=code&q=org%3Aconda-forge+path%3Arecipe%2Fmeta.yaml+scikit-build-core
-[pep 817]: https://peps.python.org/pep-0817
 
 <!-- prettier-ignore-end -->

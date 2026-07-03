@@ -170,8 +170,9 @@ will fall back on ">=3.15" if it can't read it.
 
 You can also enforce ninja to be required even if make is present on Unix:
 
-```{conftabs} ninja.make-fallback False
-
+```toml
+[tool.scikit-build]
+ninja.make-fallback = false
 ```
 
 You can also control the FindPython backport; by default, a backport of CMake
@@ -224,8 +225,9 @@ sdist.reproducible = false
 
 You can also request CMake to run during this step:
 
-```{conftabs} sdist.cmake True
-
+```toml
+[tool.scikit-build]
+sdist.cmake = true
 ```
 
 :::{note}
@@ -328,8 +330,9 @@ The install directory is normally site-packages; however, you can manually set
 that to a different directory if you'd like to avoid changing your CMake files.
 For example, to mimic scikit-build classic:
 
-```{conftabs} wheel.install-dir "mypackage"
-
+```toml
+[tool.scikit-build]
+wheel.install-dir = "mypackage"
 ```
 
 You can target a different wheel tree by prefixing the install dir with the
@@ -402,8 +405,9 @@ The python API tags for your wheel will be correct assuming you are building a
 normal CPython extension. For anything else, set `wheel.py-api` to the tag you
 support:
 
-```{conftabs} wheel.py-api "cp38"
-
+```toml
+[tool.scikit-build]
+wheel.py-api = "cp38"
 ```
 
 | `wheel.py-api`   | Use for                                           | Resulting tags     |
@@ -438,8 +442,9 @@ Some older versions of pip are unable to load standard universal tags;
 scikit-build-core can expand the macOS universal tags for you for maximum
 historic compatibility if you'd like:
 
-```{conftabs} wheel.expand-macos-universal-tags True
-
+```toml
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
 ```
 
 You can also specify a build tag:
@@ -450,8 +455,9 @@ You can also specify a build tag:
 
 You can select only specific components to install:
 
-```{conftabs} install.components ["python"]
-
+```toml
+[tool.scikit-build]
+install.components = ["python"]
 ```
 
 And you can turn off binary stripping:
@@ -467,8 +473,9 @@ compilers that honor it can produce deterministic output. This cannot make the
 compiled binaries themselves reproducible on its own — that also depends on a
 recent compiler and flags like `-ffile-prefix-map`.
 
-```{conftabs} wheel.reproducible True
-
+```toml
+[tool.scikit-build]
+wheel.reproducible = true
 ```
 
 :::{versionadded} 1.0
@@ -906,6 +913,16 @@ dependencies like `"cmake"` will not be requested.
 
 ## See also
 
-- [Overrides](./overrides.md): customize settings for a wide variety of
-  situations.
-- [Full schema](#schema) for all settings.
+```{toctree}
+:maxdepth: 1
+
+editable
+overrides
+dynamic
+formatted
+search_paths
+entrypoint_config
+variants
+```
+
+The [full schema](#schema) documents every setting.
