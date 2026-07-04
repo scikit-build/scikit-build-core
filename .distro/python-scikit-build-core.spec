@@ -1,4 +1,4 @@
-%global debug_package %{nil}
+i%global debug_package %{nil}
 
 # Tests require virtualenv and pytest-* extensions not included in RHEL
 %bcond tests %[0%{?fedora} || 0%{?epel}]
@@ -38,7 +38,7 @@ Requires:       cmake
 Requires:       ninja-build
 BuildArch:      noarch
 
-Provides:       bundled(python3dist(pyproject-metadata)) = 0.11.0
+Provides:       bundled(python3dist(pyproject-metadata)) = 0.12.0
 
 Obsoletes:      python3-scikit-build-core+pyproject < 0.10.7-3
 
