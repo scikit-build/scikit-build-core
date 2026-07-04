@@ -68,7 +68,9 @@ def get_standard_metadata(
     dual_dynamic = {
         field
         for field in project.get("dynamic", [])
-        if field in project and field in PROJECT_DYNAMIC_STATIC
+        if isinstance(field, str)
+        and field in project
+        and field in PROJECT_DYNAMIC_STATIC
     }
 
     # Handle the legacy tool.scikit-build.metadata table, then the standard
