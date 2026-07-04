@@ -77,7 +77,7 @@ if sys.version_info < (3, 12, 4):
     RE_EOL_BYTES = re.compile(rb"[\r\n]+")
 
 
-__version__ = "0.12.0"
+__version__ = "0.12.1"
 
 __all__ = [
     "ConfigurationError",
@@ -462,7 +462,10 @@ class StandardMetadata:
         for field in dynamic:
             # ``dynamic`` is validated separately with error collection, so the
             # raw list may still contain values outside the Dynamic literal
-            # (e.g. the invalid "name"); treat it as a plain string here.
+            # (e.g. the invalid "name" or a non-string entry); skip anything
+            # that is not a string and let that validation report it.
+            if not isinstance(field, str):
+                continue
             field_str: str = field
             if field_str in data["project"]:
                 if field_str in constants.PROJECT_DYNAMIC_STATIC:
