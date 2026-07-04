@@ -23,7 +23,7 @@ the destination is relative to that instead, and a bare `DESTINATION .` works.
 
 ## Find it at runtime with `importlib.resources`
 
-Do **not** compute the path relative to `__file__` — that assumes the package
+Do **not** compute the path relative to `__file__`---that assumes the package
 lives on a real filesystem, which is not guaranteed (it could be in a zip, and
 in an editable install the Python source and the compiled library live in
 different directories). Use `importlib.resources` instead, which
@@ -44,7 +44,7 @@ lib = ctypes.CDLL(str(_lib))
 For the general (zip-safe) case, wrap the traversable in
 `importlib.resources.as_file`, which extracts the resource to a real path if
 necessary. Because `ctypes` needs the file to remain on disk for the lifetime of
-the process, keep the context manager open — for example with an
+the process, keep the context manager open -- for example with an
 `contextlib.ExitStack` closed at interpreter exit:
 
 ```python
@@ -62,8 +62,8 @@ lib = ctypes.CDLL(str(_lib))
 
 In redirect-mode editable installs (the default), `importlib.resources` finds
 the compiled library through the redirecting finder, so the code above works
-unchanged. Note that accessing a resource does **not** trigger a rebuild — plain
-libraries are not importable modules, so the automatic `editable.rebuild`
+unchanged. Note that accessing a resource does **not** trigger a rebuild --
+plain libraries are not importable modules, so the automatic `editable.rebuild`
 on-import hook does not fire for them. To pick up C/C++ changes, either request
 a rebuild explicitly (this works whenever a persistent `build-dir` is set, with
 or without `editable.rebuild`)…

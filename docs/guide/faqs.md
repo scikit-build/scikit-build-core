@@ -77,8 +77,8 @@ If you build a shared dependency as part of your project (for example via
 `add_subdirectory(...)` on a vendored library), you may find its library
 installed to `site-packages/bin` (Windows) or `site-packages/lib` (Linux/macOS)
 instead of next to your extension module. The `install(TARGETS ...)` command
-sends its artifacts to the [GNUInstallDirs][] defaults — `bin` for Windows DLLs
-(a `RUNTIME` artifact) and `lib` for `.so`/`.dylib` (a `LIBRARY` artifact) — and
+sends its artifacts to the [GNUInstallDirs][] defaults: `bin` for Windows DLLs
+(a `RUNTIME` artifact) and `lib` for `.so`/`.dylib` (a `LIBRARY` artifact).
 scikit-build-core copies the whole install tree into the wheel. A library placed
 there generally will not be found at import time, either.
 
@@ -93,8 +93,8 @@ wheel-repair tool. See [](#dynamic-linking) for all of the options.
 
 ## Target output paths differ on MSVC (multi-config generators)
 
-Multi-config generators — Visual Studio (the default on Windows), Xcode, and
-Ninja Multi-Config — put each target's build artifact in a per-configuration
+Multi-config generators -- Visual Studio (the default on Windows), Xcode, and
+Ninja Multi-Config -- put each target's build artifact in a per-configuration
 subdirectory. A `main` executable lands at `build/Release/main.exe`, not
 `build/main.exe` the way it would with a single-config generator (Ninja,
 Makefiles). This bites when you reference a built file by an assumed path.
@@ -103,10 +103,10 @@ Two rules keep this portable:
 
 - **Get artifacts into the wheel with `install(...)`, not by path.** The install
   step strips the per-config subdirectory for you, and scikit-build-core only
-  copies the install tree into the wheel — files left in the build directory are
-  never packaged. When you do need the real path of a built target (in a custom
-  command, or `install(FILES ...)`), use the `$<TARGET_FILE:main>` generator
-  expression instead of writing out `Release/main.exe`.
+  copies the install tree into the wheel -- files left in the build directory
+  are never packaged. When you do need the real path of a built target (in a
+  custom command, or `install(FILES ...)`), use the `$<TARGET_FILE:main>`
+  generator expression instead of writing out `Release/main.exe`.
 
   ```cmake
   add_executable(main main.cpp)

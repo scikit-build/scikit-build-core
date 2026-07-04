@@ -421,8 +421,8 @@ wheel.py-api = "cp38"
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
 newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
 4.4+). For `py3`/`py2.py3`, you still need a version of Python scikit-build-core
-supports to build the initial wheel. The CMake side — the
-`${SKBUILD_SABI_COMPONENT}` variable and the `USE_SABI` idiom — is covered in
+supports to build the initial wheel. The `${SKBUILD_SABI_COMPONENT}` variable
+and the `USE_SABI` idiom on the CMake side is covered in
 [Limited API / Stable ABI](#limited-api).
 
 With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
@@ -470,7 +470,7 @@ You can opt in to reproducible wheels (unlike SDists, this is off by default).
 When enabled, archive timestamps and file permissions are normalized, and
 `SOURCE_DATE_EPOCH` is exported to the CMake build (if not already set) so
 compilers that honor it can produce deterministic output. This cannot make the
-compiled binaries themselves reproducible on its own — that also depends on a
+compiled binaries themselves reproducible on its own; that also depends on a
 recent compiler and flags like `-ffile-prefix-map`.
 
 ```toml
@@ -526,9 +526,9 @@ served live from their sources through the import redirect instead of being
 copied, so edits to a force-included file take effect without reinstalling. This
 covers importable modules (even renamed ones) and data files that keep their
 filename and sit directly inside a top-level package. Anything the redirect
-cannot express — other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
+cannot express, like other wheel trees like `${SKBUILD_SCRIPTS_DIR}`, renamed or
 top-level data files, and data files nested below a package subdirectory (kept
-as real files so package-root resource lookups keep the wheel layout) — is still
+as real files so package-root resource lookups keep the wheel layout), are still
 copied at install time, so those snapshots only refresh on reinstall.
 
 ### Building a wheel from an SDist
@@ -552,8 +552,8 @@ on disk is then resolved through `sdist.force-include` (by exact destination, or
 under a force-included directory) and read from that original source instead. An
 on-disk file always wins, so the vendored copy is preferred when present.
 
-For cases the automatic resolution cannot express — e.g. the wheel source is the
-_original_ external path rather than the SDist output — use
+For cases the automatic resolution cannot express (such as if the wheel source
+is the _original_ external path rather than the SDist output) use
 [overrides](./overrides.md) keyed on `from-sdist`, with a separate
 `wheel.force-include` entry gated on each build mode (source tree vs.
 wheel-from-SDist):
@@ -733,9 +733,9 @@ You can pass raw arguments directly to the build tool, as well:
 
 The `[tool.scikit-build.env]` table sets environment variables for the CMake
 configure, build, and install subprocesses. Use it for things CMake or the
-generator read _from the environment_ — `CC`/`CXX`, `CFLAGS`,
-`CMAKE_PREFIX_PATH`, compiler launchers, parallel-build level, and so on. For
-CMake `-D` cache entries, use `cmake.define` instead.
+generator read _from the environment_:`CC`/`CXX`, `CFLAGS`, `CMAKE_PREFIX_PATH`,
+compiler launchers, parallel-build level, and so on. For CMake `-D` cache
+entries, use `cmake.define` instead.
 
 Each value is a literal string, or a table that reads from another environment
 variable (`{ env = "OTHER", default = "..." }`). By default a variable is only
@@ -772,8 +772,8 @@ only; via config-settings or `SKBUILD_ENV_*` you can only set a literal value.
 
 ### Selecting a compiler
 
-To pick a specific compiler — for example, to use GCC instead of MSVC on a
-Windows runner — set `CC`/`CXX`, optionally scoped to a platform with an
+To pick a specific compiler -- for example, to use GCC instead of MSVC on a
+Windows runner -- set `CC`/`CXX`, optionally scoped to a platform with an
 override:
 
 ```toml
@@ -790,7 +790,7 @@ By default, scikit-build-core sets `CC`/`CXX` from Python's `sysconfig` compiler
 when they are not already set. If a project's compiler probes break on that
 compiler (a conda narrow sysroot, a stale venv gcc, a cross or oneAPI
 toolchain), list the variable in the `env` table to suppress that default and
-let CMake detect the compiler from `PATH` — an entry that reads from the same
+let CMake detect the compiler from `PATH`; an entry that reads from the same
 name does this without pinning a value:
 
 ```toml

@@ -315,7 +315,7 @@ SDist and a wheel built from it are marked `Dynamic` in the SDist's `PKG-INFO`
 
 A plugin distributed as a package is referenced by the name it registers in the
 `dynamic_metadata.provider` entry-point group. A plugin that lives inside your
-own project instead uses an inline `{ path, module }` table — no packaging or
+own project instead uses an inline `{ path, module }` table, no packaging or
 entry point required:
 
 ```toml
@@ -332,7 +332,7 @@ If you need to inject and manipulate additional `build-system.requires`, you can
 use the `build.requires`. This is intended to be used in combination with
 [](./overrides.md).
 
-This is not project metadata — nothing is listed in `[project]` `dynamic` — but
+This is not project metadata (nothing is listed in `[project]` `dynamic`), but
 like the plugins above it resolves at build time, injecting the additional
 `build-system.requires`.
 

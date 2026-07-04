@@ -6,8 +6,8 @@ scikit-build-core defaults make those paths disappear:
 
 - **The build directory is temporary.** Without {confval}`build-dir` set,
   scikit-build-core builds in a temporary directory that is deleted after the
-  build — taking coverage data, debug artifacts, and `compile_commands.json`
-  with it.
+  build, taking coverage data, debug artifacts, and `compile_commands.json` with
+  it.
 - **Build isolation hides everything else.** `pip install .`, `python -m build`,
   `uv build`, and `uv sync` copy your project and install the build dependencies
   into throwaway environments, so recorded source paths and include paths no
@@ -50,9 +50,9 @@ gcovr -r . build
 ```
 
 If you would rather not depend on the paths staying put, make the recorded paths
-relocatable with compiler flags — `-fprofile-abs-path` for gcov and
+relocatable with compiler flags -- `-fprofile-abs-path` for gcov and
 `-ffile-prefix-map=<build>=<src>` (or `-fdebug-prefix-map=...` for debug info
-only) — for example via {confval}`cmake.define` or `CFLAGS`.
+only) -- for example via {confval}`cmake.define` or `CFLAGS`.
 
 (compile-commands)=
 
@@ -60,7 +60,7 @@ only) — for example via {confval}`cmake.define` or `CFLAGS`.
 
 Editor tooling resolves headers like `pybind11/pybind11.h` from your include
 paths. With build isolation, binding libraries such as pybind11 and nanobind
-live in a throwaway overlay — CMake reports a path such as
+live in a throwaway overlay -- CMake reports a path such as
 `.../Temp/pip-build-env-xxxx/overlay/Lib/site-packages/pybind11/include`, which
 no longer exists when your editor looks for it.
 
@@ -109,14 +109,14 @@ See [editable installs](../configuration/editable.md) for the related
 
 A `cmake.build-type=Debug` extension links against the debug CPython
 (`pythonXY_d.dll`, `_d.pyd` suffix), so it only loads under a debug interpreter
-(`python_d.exe`) — importing it under a normal `python.exe` crashes with
+(`python_d.exe`) -- importing it under a normal `python.exe` crashes with
 `0x80000003`. This is CPython behavior, not scikit-build-core's: run the build
 itself under `python_d.exe` so the `_d` suffix and import library line up (and
 the `t` ABI flag is added for free-threaded debug builds, e.g.
 `pythonXYt_d.dll`).
 
 To keep debug info while still loading under a normal Python, don't do a debug
-build — instead undefine `_DEBUG` around the CPython headers so they don't
+build -- instead undefine `_DEBUG` around the CPython headers so they don't
 auto-link `pythonXY_d.lib`, and add debug flags yourself:
 
 ```c

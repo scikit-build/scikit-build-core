@@ -31,7 +31,7 @@ def config(*, state, env):
 Each argument is passed only when the callable accepts it: `state` (the build
 state, e.g. `"wheel"`) and `env` (the environment mapping) are matched by
 parameter name, and a `**kwargs` provider receives both. A provider may accept
-any subset -- both, either one, or none. The callable is invoked exactly once.
+any subset: both, either one, or none. The callable is invoked exactly once.
 
 The callable is registered under either the `scikit-build-core.config.default`
 or the `scikit-build-core.config.override` entry-point group; the group selects
@@ -53,10 +53,10 @@ project being built does not need to opt in.
 The group controls where the contributed table lands in the configuration
 precedence order:
 
-- **`scikit-build-core.config.default`** — applied _below_ `pyproject.toml`,
-  just above the built-in defaults. The provider suggests defaults; the
-  project's own configuration always wins. This is the recommended level.
-- **`scikit-build-core.config.override`** — applied _above_ `pyproject.toml`, so
+- **`scikit-build-core.config.default`**: applied _below_ `pyproject.toml`, just
+  above the built-in defaults. The provider suggests defaults; the project's own
+  configuration always wins. This is the recommended level.
+- **`scikit-build-core.config.override`**: applied _above_ `pyproject.toml`, so
   the project cannot accidentally undo it. It is still below the user's
   per-build environment variables and config-settings.
 

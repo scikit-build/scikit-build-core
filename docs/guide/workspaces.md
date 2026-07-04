@@ -15,10 +15,10 @@ side by side.
 ## Rebuilding after C++/CMake edits (uv)
 
 The one real pitfall is uv's build cache. uv only rebuilds a local or workspace
-member when its `pyproject.toml`, `setup.py`, or `setup.cfg` changes — see the
-[cache versioning docs][uv cache]. Edits to your C++ or CMake sources do **not**
-invalidate the cache, so `uv sync`/`uv run` can happily reuse a stale extension
-module. There are two good remedies.
+member when its `pyproject.toml`, `setup.py`, or `setup.cfg` changes (see the
+[cache versioning docs][uv cache]). Edits to your C++ or CMake sources do
+**not** invalidate the cache, so `uv sync`/`uv run` can happily reuse a stale
+extension module. There are two good remedies.
 
 ### Option 1: tell uv about your sources with `cache-keys`
 
@@ -42,7 +42,7 @@ list. uv now reruns the build whenever any matched file changes.
 
 Enable [`editable.rebuild`](../configuration/editable.md) with a persistent
 `build-dir`. The member is then rebuilt on import, which makes the frontend's
-caching moot — you never rely on uv noticing a source change. The rebuild shim
+caching moot -- you never rely on uv noticing a source change. The rebuild shim
 shells out to `cmake` directly and does **not** import scikit-build-core, so it
 works even though uv builds members with isolation; it only needs `cmake` on
 `PATH` at import time.
@@ -62,7 +62,7 @@ options (verbosity, manual `__loader__.rebuild()`, inplace mode, and the newer
 ## Per-member configuration
 
 A plain `--config-settings` (or `[tool.uv] config-settings`) applies to
-**every** package uv builds, including all workspace members — rarely what you
+**every** package uv builds, including all workspace members -- rarely what you
 want when members have different needs. uv provides
 [`--config-settings-package`][uv settings] (and
 `tool.uv.config-settings-package`) to target a single member:

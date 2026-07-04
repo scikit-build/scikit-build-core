@@ -124,6 +124,11 @@ repos:
         language: pygrep
         entry: PyBind|Numpy|Cmake|CCache|Github|PyTest
         exclude: .pre-commit-config.yaml
+      - id: disallow-emdash
+        name: Use multiple dashes instead of emdash
+        language: pygrep
+        entry: —
+        files: ^(docs|src|tests|README.md)
       - id: disallow-expressions
         name: Disallow expressions
         language: pygrep
