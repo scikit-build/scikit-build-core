@@ -1,4 +1,4 @@
-i%global debug_package %{nil}
+%global debug_package %{nil}
 
 # Tests require virtualenv and pytest-* extensions not included in RHEL
 %bcond tests %[0%{?fedora} || 0%{?epel}]
