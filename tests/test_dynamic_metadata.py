@@ -582,6 +582,111 @@ def test_dynamic_wheel_marks_sdist_fields_dynamic(
     assert b"Dynamic:" not in bytes(metadata.as_rfc822())
 
 
+def test_dynamic_wheel_static_field_is_metadata_2_6(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A field static in [project] *and* dynamic_wheel-marked is PEP 808 (2.6)."""
+    monkeypatch.chdir(tmp_path)
+    _write_dynamic_wheel_plugin(
+        "wheel_plugin_dual",
+        """\
+        def dynamic_metadata(settings, project):
+            return {"dependencies": ["scipy>=1"]}
+
+        def dynamic_wheel(settings):
+            return {"dependencies": True}
+        """,
+    )
+    Path("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "test-dual-dynamic"
+            version = "0.1.0"
+            dependencies = ["numpy"]
+            dynamic = ["dependencies"]
+
+            [[tool.dynamic-metadata]]
+            provider = {path = "plugins_wheel_plugin_dual", module = "wheel_plugin_dual"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings = SettingsReader(pyproject, {}, state="sdist").settings
+
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
+    assert metadata.dynamic_metadata == ["Requires-Dist"]
+    # The static [project] value coexists with Dynamic: Requires-Dist -> 2.6
+    assert metadata.auto_metadata_version == "2.6"
+    pkg_info = bytes(metadata.as_rfc822())
+    assert b"Metadata-Version: 2.6" in pkg_info
+    assert b"Requires-Dist: numpy" in pkg_info
+    assert b"Requires-Dist: scipy>=1" in pkg_info
+    assert b"Dynamic: Requires-Dist" in pkg_info
+
+    # The wheel resolves the field fully; no Dynamic, so no 2.6 bump.
+    metadata = get_standard_metadata(pyproject, settings, build_state="wheel")
+    assert not metadata.dynamic_metadata
+    assert metadata.auto_metadata_version != "2.6"
+    assert b"Dynamic:" not in bytes(metadata.as_rfc822())
+
+
+def test_static_field_extended_without_dynamic_wheel_is_not_2_6(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A dual field a provider extends but does not report via dynamic_wheel is
+    fully resolved into the SDist (not Dynamic, not 2.6)."""
+    monkeypatch.chdir(tmp_path)
+    _write_dynamic_wheel_plugin(
+        "wheel_plugin_no_wheel",
+        """\
+        def dynamic_metadata(settings, project):
+            return {"dependencies": ["scipy>=1"]}
+
+        def dynamic_wheel(settings):
+            return {"dependencies": False}
+        """,
+    )
+    Path("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "test-dual-static"
+            version = "0.1.0"
+            dependencies = ["numpy"]
+            dynamic = ["dependencies"]
+
+            [[tool.dynamic-metadata]]
+            provider = {path = "plugins_wheel_plugin_no_wheel", module = "wheel_plugin_no_wheel"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
+    settings = SettingsReader(pyproject, {}, state="sdist").settings
+
+    metadata = get_standard_metadata(pyproject, settings, build_state="sdist")
+    assert not metadata.dynamic_metadata
+    assert metadata.auto_metadata_version != "2.6"
+    pkg_info = bytes(metadata.as_rfc822())
+    assert b"Requires-Dist: numpy" in pkg_info
+    assert b"Requires-Dist: scipy>=1" in pkg_info
+    assert b"Dynamic:" not in pkg_info
+
+
 @pytest.mark.parametrize(
     ("returns", "match"),
     [

@@ -12,13 +12,13 @@ record errors.
 from __future__ import annotations
 
 import dataclasses
+import pathlib
 import typing
 from typing import Any
 
 import packaging.requirements
 
 if typing.TYPE_CHECKING:
-    import pathlib
     from collections.abc import Generator, Iterable
 
     from packaging.requirements import Requirement
@@ -133,8 +133,10 @@ def get_license(
     if filename:
         file = project_dir.joinpath(filename)
         if not file.is_file():
-            msg = f"License file not found ({filename!r})"
-            error_collector.config_error(msg, key="project.license.file")
+            msg = "License file not found ({filename!r})"
+            error_collector.config_error(
+                msg, key="project.license.file", filename=filename
+            )
             return None
         text = file.read_text(encoding="utf-8")
 
@@ -143,7 +145,7 @@ def get_license(
 
 
 def get_license_files(
-    project: dict[str, Any], project_dir: pathlib.Path, error_collector: ErrorCollector
+    project: ProjectTable, project_dir: pathlib.Path, error_collector: ErrorCollector
 ) -> list[pathlib.Path] | None:
     """Get the license-files list of files from the project table.
 
@@ -160,7 +162,7 @@ def get_license_files(
 
 
 def get_readme(  # noqa: C901
-    project: dict[str, Any], project_dir: pathlib.Path, error_collector: ErrorCollector
+    project: ProjectTable, project_dir: pathlib.Path, error_collector: ErrorCollector
 ) -> Readme | None:
     """Get the text of the readme from the project table.
 
@@ -231,7 +233,7 @@ def get_readme(  # noqa: C901
     return Readme(text, file, content_type)
 
 
-def get_dependencies(project: dict[str, Any]) -> list[Requirement]:
+def get_dependencies(project: ProjectTable) -> list[Requirement]:
     """Get the dependencies from the project table."""
     requirement_strings: list[str] | None = None
     requirement_strings_raw = project.get("dependencies")
@@ -251,7 +253,7 @@ def get_dependencies(project: dict[str, Any]) -> list[Requirement]:
 
 
 def get_optional_dependencies(
-    project: dict[str, Any],
+    project: ProjectTable,
 ) -> dict[str, list[Requirement]]:
     """Get the optional dependencies from the project table."""
     val = project.get("optional-dependencies")
@@ -261,7 +263,7 @@ def get_optional_dependencies(
     requirements_dict: dict[str, list[Requirement]] = {}
     if not isinstance(val, dict):
         return {}
-    for extra, requirements in val.copy().items():
+    for extra, requirements in val.items():
         assert isinstance(extra, str)
         if not isinstance(requirements, list):
             return {}
@@ -273,10 +275,10 @@ def get_optional_dependencies(
                 requirements_dict[extra].append(packaging.requirements.Requirement(req))
             except packaging.requirements.InvalidRequirement:
                 return {}
-    return dict(requirements_dict)
+    return requirements_dict
 
 
-def get_entrypoints(project: dict[str, Any]) -> dict[str, dict[str, str]]:
+def get_entrypoints(project: ProjectTable) -> dict[str, dict[str, str]]:
     """Get the entrypoints from the project table."""
     val = project.get("entry-points")
     if val is None:
@@ -305,14 +307,22 @@ def _get_files_from_globs(
 ) -> Generator[pathlib.Path, None, None]:
     """Given a list of globs, get files that match."""
     for glob in globs:
-        if glob.startswith(("..", "/")):
+        # Reject any glob that escapes the project directory: absolute paths
+        # (POSIX or Windows) or any pattern containing a ".." path segment.
+        pure_path = pathlib.PurePosixPath(glob)
+        if (
+            pure_path.is_absolute()
+            or pathlib.PureWindowsPath(glob).is_absolute()
+            or ".." in pure_path.parts
+            or ".." in pathlib.PureWindowsPath(glob).parts
+        ):
             msg = "{glob!r} is an invalid {key} glob: the pattern must match files within the project directory"
             error_collector.config_error(msg, key="project.license-files", glob=glob)
-            break
+            continue
         files = [f for f in project_dir.glob(glob) if f.is_file()]
         if not files:
             msg = "Every pattern in {key} must match at least one file: {glob!r} did not match any"
             error_collector.config_error(msg, key="project.license-files", glob=glob)
-            break
+            continue
         for f in files:
             yield f.relative_to(project_dir)

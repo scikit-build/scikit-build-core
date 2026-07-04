@@ -130,7 +130,7 @@ class SimpleErrorCollector:
             raise error
 
 
-@dataclasses.dataclass()
+@dataclasses.dataclass
 class ErrorCollector(SimpleErrorCollector):
     """
     Collect errors and raise them as a group at the end (if collect_errors is True),

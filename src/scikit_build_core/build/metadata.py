@@ -22,7 +22,10 @@ from .._vendor.pyproject_metadata import (
     extras_build_system,
     extras_top_level,
 )
-from .._vendor.pyproject_metadata.constants import PROJECT_TO_METADATA
+from .._vendor.pyproject_metadata.constants import (
+    PROJECT_DYNAMIC_STATIC,
+    PROJECT_TO_METADATA,
+)
 from ..builder._load_provider import (
     dynamic_wheel_fields,
     process_dynamic_metadata,
@@ -57,6 +60,18 @@ def get_standard_metadata(
 ) -> StandardMetadata:
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
+
+    # PEP 808: fields the author gives a static value in [project] *and* lists in
+    # dynamic. Captured before providers resolve them, as process_*dynamic_metadata
+    # drops resolved fields from dynamic. Only those also marked Dynamic in the
+    # SDist (via dynamic_wheel, below) need metadata_version 2.6.
+    dual_dynamic = {
+        field
+        for field in project.get("dynamic", [])
+        if isinstance(field, str)
+        and field in project
+        and field in PROJECT_DYNAMIC_STATIC
+    }
 
     # Handle the legacy tool.scikit-build.metadata table, then the standard
     # top-level [[tool.dynamic-metadata]] entries (dynamic-metadata 0.3). Both
@@ -107,6 +122,11 @@ def get_standard_metadata(
         all_errors=True,
         allow_extra_keys=allow_extra_keys,
     )
+
+    # Restore the PEP 808 dual-dynamic set that from_pyproject can no longer see
+    # (the fields were dropped from dynamic during resolution). Combined with the
+    # Dynamic metadata headers above, this bumps auto_metadata_version to 2.6.
+    metadata.dual_dynamic = dual_dynamic
 
     # For scikit-build-core < 0.5, we keep the normalized name for back-compat
     if settings.minimum_version is not None and settings.minimum_version < Version(
