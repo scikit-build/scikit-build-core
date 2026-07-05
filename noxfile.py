@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 import urllib.request
@@ -373,6 +374,23 @@ def vendor_pyproject_metadata(session: nox.Session) -> None:
         ) as response:
             txt = response.read()
         local_path.write_bytes(txt)
+
+    # Sync the vendored version into the distro spec's `Provides:` line.
+    init_txt = Path(
+        "src/scikit_build_core/_vendor/pyproject_metadata/__init__.py"
+    ).read_text(encoding="utf-8")
+    match = re.search(r'^__version__ = "(.*)"', init_txt, re.MULTILINE)
+    if match is None:
+        session.error("Could not find __version__ in vendored pyproject_metadata")
+    version = match.group(1)
+    spec_path = Path(".distro/python-scikit-build-core.spec")
+    spec_txt = spec_path.read_text(encoding="utf-8")
+    spec_txt = re.sub(
+        r"(Provides:\s+bundled\(python3dist\(pyproject-metadata\)\) = ).*",
+        rf"\g<1>{version}",
+        spec_txt,
+    )
+    spec_path.write_text(spec_txt, encoding="utf-8")
 
 
 if __name__ == "__main__":

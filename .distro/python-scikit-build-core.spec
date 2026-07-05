@@ -38,9 +38,7 @@ Requires:       cmake
 Requires:       ninja-build
 BuildArch:      noarch
 
-Provides:       bundled(python3dist(pyproject-metadata)) = 0.11.0
-
-Obsoletes:      python3-scikit-build-core+pyproject < 0.10.7-3
+Provides:       bundled(python3dist(pyproject-metadata)) = 0.12.1
 
 %description -n python3-scikit-build-core %_description
 
