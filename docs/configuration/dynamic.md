@@ -68,14 +68,16 @@ input = "src/mypackage/__init__.py"
 
 :::
 
+The
+[dynamic-metadata package provides several plugins](https://dynamic-metadata.readthedocs.io/en/latest/plugins.html)
+you can use. Remember to include dynamic-metadata in your build requirements if
+you want to use them.
+
 ## Built-in plugins
 
 We provide some built-in plugins in `scikit_build_core.metadata`. These work in
 either mode with the same `provider` string (e.g.
-`scikit_build_core.metadata.regex`). A `field =` key is normally required, but
-it can be omitted for fixed-target plugins that declare a default:
-`setuptools_scm` defaults to `field = "version"` and `fancy_pypi_readme`
-defaults to `field = "readme"`.
+`scikit_build_core.metadata.regex`).
 
 ### `version`: Setuptools-scm
 
@@ -94,7 +96,6 @@ sdist.include = ["src/package/_version.py"]
 
 [[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.setuptools_scm"
-field = "version"
 
 [tool.setuptools_scm]  # Section required
 write_to = "src/package/_version.py"
@@ -218,7 +219,6 @@ dynamic = ["readme"]
 
 [[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.fancy_pypi_readme"
-field = "readme"
 
 # tool.hatch.metadata.hooks.fancy-pypi-readme options here
 ```

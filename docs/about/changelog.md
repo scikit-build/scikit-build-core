@@ -33,6 +33,9 @@ and the deprecated `tool.scikit-build.metadata` table warns if minimum-version
 is not set. The empty `pyproject` extra was removed; installers like pip, build,
 and uv merely warn if you still request it.
 
+Also see
+[the announcement post](https://iscinumpy.dev/post/scikit-build-core-1-0).
+
 Features:
 
 - CLI:
@@ -67,7 +70,7 @@ Features:
   - support `[[tool.dynamic-metadata]]` in #1390 and #1416
   - honor the `dynamic_wheel` hook when building SDists in #1433
   - emit METADATA 2.6 for PEP 808 partially-dynamic fields, via vendored
-    pyproject-metadata 0.12, in #1454
+    pyproject-metadata 0.12.1, in #1454 and #1455
 - Experimental:
   - add experimental PEP 817 variant support in #1284
 - Editable:
