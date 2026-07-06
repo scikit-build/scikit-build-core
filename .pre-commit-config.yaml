@@ -25,7 +25,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56  # frozen: v0.15.20
+    rev: c59bba8fb259db0fec2bbb77ad8ba51ea7341b56 # frozen: v0.15.20
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -58,7 +58,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "39e2973981e6d2f9b6c543b0086a2d2393abdc89"  # frozen: v3.9.4
+    rev: "39e2973981e6d2f9b6c543b0086a2d2393abdc89" # frozen: v3.9.4
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -97,7 +97,7 @@ repos:
           - types-setuptools>=80.9
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "377c4f639d3c5fd025ee882a22ae243e12bef469"  # frozen: v1.5.0
+    rev: "377c4f639d3c5fd025ee882a22ae243e12bef469" # frozen: v1.5.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -106,7 +106,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: 96d9af6217dc2855210655af7e1ff19d23d4e593  # frozen: v1
+    rev: 96d9af6217dc2855210655af7e1ff19d23d4e593 # frozen: v1
     hooks:
       - id: typos
         args: []
@@ -144,12 +144,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: a8ee8203d36b01b59af504dac4ae7f96174b60a4  # frozen: 2026.07.06
+    rev: a8ee8203d36b01b59af504dac4ae7f96174b60a4 # frozen: 2026.07.06
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658  # frozen: 0.37.4
+    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658 # frozen: 0.37.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -163,13 +163,13 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: e3eebf65325ccc992422292cb7a4baee967cf815  # frozen: v1.26.1
+    rev: e3eebf65325ccc992422292cb7a4baee967cf815 # frozen: v1.26.1
     hooks:
       - id: zizmor
         files: "^\\.github"
         args: [--persona=pedantic]
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 8f0581cc50b14023b14a9c77e9b358738ba637e7  # frozen: 2026.06.18
+    rev: 8f0581cc50b14023b14a9c77e9b358738ba637e7 # frozen: 2026.06.18
     hooks:
       - id: sp-repo-review

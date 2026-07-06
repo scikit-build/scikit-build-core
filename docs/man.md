@@ -11,7 +11,7 @@ system, allowing you to make Python modules with CMake.
 
 ## Synopsis
 
-**scikit-build** [*COMMAND*] ...
+**scikit-build** [_COMMAND_] ...
 
 Scikit-build-core is normally used as a PEP 517 build backend and invoked by a
 build frontend such as `pip` or `build`. It also ships a `scikit-build` command
