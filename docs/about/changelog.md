@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 1.0.1
+
+This patch release fixes two bugs: shared namespace packages were being
+truncated in redirect editable installs, and the wheel timestamp clamp could
+overflow on 32-bit `time_t` platforms.
+
+Fixes:
+
+- Don't truncate shared namespaces in redirect mode by @henryiii in #1483
+- Wheel timestamp clamp overflows on 32-bit `time_t` platforms by @henryiii in
+  #1484
+
+Internal:
+
+- Update pre-commit hooks in #1480
+
 ## Version 1.0.0
 
 We've worked through over 100 issues and ran extensive review sweeps, fixing
