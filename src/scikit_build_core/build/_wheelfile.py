@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = {
     "base64",
     "csv",
+    "datetime",
     "email",
     "email.message",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
@@ -17,6 +18,7 @@ __lazy_modules__ = {
 import base64
 import csv
 import dataclasses
+import datetime
 import hashlib
 import io
 import os
@@ -143,7 +145,11 @@ class WheelWriter:
         # The ZIP file format only supports timestamps from 1980-01-01 to
         # 2107-12-31 23:59:59 (inclusive); clamp rather than let zipfile crash.
         timestamp = min(max(timestamp, MIN_TIMESTAMP), MAX_TIMESTAMP)
-        return time.gmtime(timestamp)[0:6]
+        # Not time.gmtime: it overflows past 2038 where time_t is 32 bits.
+        dt = datetime.datetime(
+            1970, 1, 1, tzinfo=datetime.timezone.utc
+        ) + datetime.timedelta(seconds=timestamp)
+        return (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
 
     def dist_info_contents(self) -> dict[str, bytes]:
         entry_points = io.StringIO()
