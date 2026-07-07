@@ -239,6 +239,34 @@ jobs:
           verbose: true
           token: 6d9cc0e0-158a-41ee-b8f4-0318d3595ac2
 
+  checks-32bit:
+    name: 🐍 3.13 • 32-bit Linux (i686)
+    needs: changes
+    if: fromJSON(needs.changes.outputs.run-tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      # actions/setup-python has no 32-bit Linux builds, and `container:` can't
+      # run i386 images (the runner injects a 64-bit node), so use docker
+      # directly. i386 runs natively on the amd64 host. No numpy: no i686
+      # wheels; numpy-dependent tests skip. linux32 makes uname report i686.
+      - name: Test package
+        run: |
+          docker run -i --rm --platform linux/386 -v "$PWD:/io" -w /io \
+            i386/python:3.13-slim linux32 bash -euxs <<'EOF'
+          apt-get update
+          apt-get install -y --no-install-recommends cmake make ninja-build g++ git
+          git config --global --add safe.directory /io
+          pip install -U pip
+          pip install -e ".[wheel-free-setuptools]" --group test-parallel \
+            --group test-meta --group test-pybind11 --group test-schema
+          pytest -ra --showlocals -n auto --durations=20
+          EOF
+
   min:
     name: Min 🐍 ${{ matrix.python-version }} on ${{ matrix.runs-on }}
     needs: changes

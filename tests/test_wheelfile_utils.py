@@ -50,17 +50,19 @@ def test_wheel_timestamp_clamps_epoch_beyond_zip_range(
 ):
     # A SOURCE_DATE_EPOCH beyond 2107-12-31 23:59:59 UTC (e.g. a milliseconds-epoch
     # mistake) cannot be represented in the ZIP date format and must be clamped
-    # rather than crash deep inside zipfile with a struct.error.
+    # rather than crash deep inside zipfile with a struct.error. The expected
+    # value is hardcoded because time.gmtime(MAX_TIMESTAMP) overflows on 32-bit
+    # time_t platforms (which is also why timestamp() must not use time.gmtime).
     monkeypatch.setenv("SOURCE_DATE_EPOCH", str(MAX_TIMESTAMP + 1))
     wheel = _make_writer(tmp_path, reproducible=reproducible)
-    assert wheel.timestamp() == time.gmtime(MAX_TIMESTAMP)[0:6]
+    assert wheel.timestamp() == (2107, 12, 31, 23, 59, 59)
 
     # The resulting date must actually be writable to a real ZIP archive (the DOS
     # date format only stores even seconds, so the last field may round down).
     with wheel:
         wheel.writestr("data.txt", b"hello")
     with zipfile.ZipFile(wheel.wheelpath) as zf:
-        assert zf.getinfo("data.txt").date_time[:5] == time.gmtime(MAX_TIMESTAMP)[0:5]
+        assert zf.getinfo("data.txt").date_time[:5] == (2107, 12, 31, 23, 59)
 
 
 def test_reproducible_epoch_non_integer_errors(monkeypatch, capsys):
