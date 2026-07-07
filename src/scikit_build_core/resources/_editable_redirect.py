@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"importlib.util", "subprocess"}
+__lazy_modules__ = {"importlib.machinery", "importlib.util", "subprocess"}
 
 import importlib.abc
+import importlib.machinery
 import importlib.util
 import os
 import subprocess
 import sys
 
-# Importing as little as possible is important, since every usage of Python
-# imports this file. That's why we use this trick for TYPE_CHECKING
-TYPE_CHECKING = False
-if TYPE_CHECKING:
-    from importlib.machinery import ModuleSpec
-
+# Import as little as possible, since every usage of Python imports this file.
 
 DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
@@ -478,7 +474,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         fullname: str,
         path: object = None,
         target: object = None,
-    ) -> ModuleSpec | None:
+    ) -> importlib.machinery.ModuleSpec | None:
         # If no known submodule_search_locations is found, it means it is a root
         # module.
         if fullname in self.submodule_search_locations:
@@ -504,6 +500,13 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         # A tracked package directory without an importable __init__ is a
         # namespace package.
         if submodule_search_locations is not None:
+            # A PEP 420 namespace can be shared with other distributions, so
+            # merge in the portions native resolution would find on sys.path
+            native = importlib.machinery.PathFinder.find_spec(fullname, path)  # type: ignore[arg-type]
+            if native is not None and native.loader is None:
+                for location in native.submodule_search_locations or []:
+                    if location not in submodule_search_locations:
+                        submodule_search_locations.append(location)
             loader = _ScikitBuildNamespaceLoader(submodule_search_locations, self)
             spec = importlib.util.spec_from_loader(
                 fullname,
@@ -520,7 +523,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         fullname: str,
         origin: str,
         submodule_search_locations: list[str] | None,
-    ) -> ModuleSpec | None:
+    ) -> importlib.machinery.ModuleSpec | None:
         is_pkg = origin.endswith(("__init__.py", "__init__.pyc"))
         spec = importlib.util.spec_from_file_location(
             fullname,
@@ -602,7 +605,7 @@ class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
         fullname: str,
         path: object = None,
         target: object = None,
-    ) -> ModuleSpec | None:
+    ) -> importlib.machinery.ModuleSpec | None:
         if fullname.partition(".")[0] not in self.known_packages:
             return None
 
@@ -612,12 +615,10 @@ class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
             self.rebuilt = True
             self.rebuild()
 
-        from importlib.machinery import PathFinder
-
         # ``path`` is the parent package's __path__ for submodules, None for a
         # top-level import; fall back to our recorded search locations.
         search = self.search_paths if path is None else path
-        spec = PathFinder.find_spec(fullname, search)  # type: ignore[arg-type]
+        spec = importlib.machinery.PathFinder.find_spec(fullname, search)  # type: ignore[arg-type]
         # Namespace packages have no concrete loader to wrap; leaving them to
         # native resolution also avoids truncating a namespace whose parts span
         # locations beyond our search paths.

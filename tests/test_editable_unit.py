@@ -381,6 +381,55 @@ def test_navigate_editable_namespace_package(
     assert out == "False"
 
 
+def test_navigate_editable_namespace_sibling_distribution(
+    tmp_path: Path, virtualenv: VEnv, monkeypatch: pytest.MonkeyPatch
+):
+    # Regression test for #1482: the shared (PEP 420) namespace myns is split
+    # across this editable install (myns.mypkg) and a sibling distribution
+    # installed normally into site-packages (myns.otherpkg). The redirect
+    # finder synthesizes myns, and must not truncate its __path__ to the
+    # editable's own directories -- the sibling must stay importable.
+    site_packages = virtualenv.purelib
+
+    source_dir = tmp_path / "source"
+    leaf = source_dir / "src" / "myns" / "mypkg"
+    leaf.mkdir(parents=True)
+    monkeypatch.chdir(source_dir)
+    leaf.joinpath("__init__.py").write_text("value = 'ns'\n")
+
+    packages = {"myns/mypkg": str(Path("src") / "myns" / "mypkg")}
+    mapping = packages_to_file_mapping(
+        packages=packages,
+        platlib_dir=site_packages,
+        include=[],
+        src_exclude=[],
+        target_exclude=[],
+        build_dir="",
+        mode="classic",
+    )
+    files = editable_redirect_files(
+        libdir=site_packages,
+        mapping=mapping,
+        name="myns_mypkg",
+        packages=package_search_dirs(packages),
+        reload_dir=None,
+        settings=ScikitBuildSettings(),
+        use_start=False,
+    )
+    for fname, content in files.items():
+        site_packages.joinpath(fname).write_bytes(content)
+
+    # The sibling distribution, installed normally (after the editable, so its
+    # files are not mistaken for the editable's install tree).
+    sibling = site_packages / "myns" / "otherpkg"
+    sibling.mkdir(parents=True)
+    sibling.joinpath("__init__.py").write_text("value = 'sibling'\n")
+
+    assert virtualenv.execute("import myns.mypkg; print(myns.mypkg.value)") == "ns"
+    out = virtualenv.execute("import myns.otherpkg; print(myns.otherpkg.value)")
+    assert out == "sibling"
+
+
 def test_packages_to_file_mapping_module(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
@@ -1158,6 +1207,32 @@ def test_collect_search_locations_namespace_ancestor(tmp_path: Path):
     # The namespace ancestor is registered, pointing at the parent directory.
     assert "myns" in directories
     assert str(src / "myns") in directories["myns"]
+
+
+def test_collect_search_locations_install_tree_leaf_namespace_ancestor(
+    tmp_path: Path,
+):
+    # The install (CMake) tree holds only a leaf module under the namespace
+    # (myns/mypkg/_ext.py) -- no install-tree __init__ anywhere. The namespace
+    # ancestor (myns) must still get the install-tree parent directory, not
+    # just the source tree; otherwise the redirect finder truncates the shared
+    # namespace and hides a sibling distribution in site-packages (#1482).
+    libdir = tmp_path / "site"
+    mod_dir = libdir / "myns" / "mypkg"
+    mod_dir.mkdir(parents=True)
+    (mod_dir / "_ext.py").touch()
+    src = tmp_path / "src"
+    mapping = {
+        str(src / "myns" / "mypkg" / "__init__.py"): str(
+            libdir / "myns" / "mypkg" / "__init__.py"
+        )
+    }
+
+    directories, packages = collect_search_locations(mapping, libdir)
+
+    assert packages == ["myns.mypkg"]
+    assert str(src / "myns") in directories["myns"]
+    assert str(Path("myns")) in directories["myns"]
 
 
 def test_collect_search_locations_install_dir_prefix_not_namespace(tmp_path: Path):

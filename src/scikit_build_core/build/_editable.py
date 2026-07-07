@@ -433,6 +433,26 @@ def collect_search_locations(
                     ancestor_dir = str(Path(ancestor_dir).parent)
                     directories.setdefault(ancestor, set()).add(ancestor_dir)
 
+    # Second pass: extend already-registered ancestors with each loose file's
+    # matching parent directories. An install tree holding only leaf files
+    # under a namespace (e.g. ``myns/mypkg/_ext.so``, no install-tree
+    # ``__init__``) otherwise leaves the namespace ancestor (``myns``) without
+    # the install-tree path, and the finder truncates the shared namespace to
+    # the source tree, hiding sibling distributions in site-packages (#1482).
+    # Only ancestors registered above are extended, so an untracked containing
+    # directory (a ``wheel.install-dir`` prefix) is still not synthesized.
+    registered = frozenset(directories)
+    for module, directory, is_init in entries:
+        if is_init:
+            continue
+        ancestor = module.rpartition(".")[0]
+        ancestor_dir = directory
+        while "." in ancestor:
+            ancestor = ancestor.rpartition(".")[0]
+            ancestor_dir = str(Path(ancestor_dir).parent)
+            if ancestor in registered:
+                directories[ancestor].add(ancestor_dir)
+
     return (
         {pkg: sorted(dirs) for pkg, dirs in directories.items()},
         sorted(packages),
