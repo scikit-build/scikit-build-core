@@ -68,6 +68,41 @@ def test_editable_redirect():
     assert finder.pkgs == frozenset(["pkg", "pkg.subpkg"])
 
 
+def test_synthesized_namespace_merges_native_portions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # A synthesized namespace spec must also carry the portions native
+    # resolution would find on sys.path (e.g. a sibling distribution sharing
+    # the namespace), not just the tracked directories (#1482).
+    src_ns = tmp_path / "src" / "myns"
+    src_ns.mkdir(parents=True)
+    other_site = tmp_path / "othersite"
+    sibling = other_site / "myns" / "otherpkg"
+    sibling.mkdir(parents=True)
+    sibling.joinpath("__init__.py").touch()
+    monkeypatch.syspath_prepend(str(other_site))
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={},
+        known_wheel_files={},
+        known_directories={"myns": [str(src_ns)]},
+        known_packages=[],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path / "sitepackages"),
+        install_dir="",
+    )
+
+    spec = finder.find_spec("myns")
+    assert spec is not None
+    locations = list(spec.submodule_search_locations or [])
+    assert str(src_ns) in locations
+    assert str(other_site / "myns") in locations
+
+
 @pytest.fixture
 def _restore_meta_path():
     saved = sys.meta_path[:]

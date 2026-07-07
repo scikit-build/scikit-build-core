@@ -504,6 +504,18 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         # A tracked package directory without an importable __init__ is a
         # namespace package.
         if submodule_search_locations is not None:
+            # A PEP 420 namespace can be shared with other distributions, so
+            # merge in the portions native resolution would find on sys.path
+            # (e.g. a sibling distribution installed normally into
+            # site-packages); synthesizing from the tracked directories alone
+            # would truncate the namespace (#1482).
+            from importlib.machinery import PathFinder
+
+            native = PathFinder.find_spec(fullname, path)  # type: ignore[arg-type]
+            if native is not None and native.loader is None:
+                for location in native.submodule_search_locations or []:
+                    if location not in submodule_search_locations:
+                        submodule_search_locations.append(location)
             loader = _ScikitBuildNamespaceLoader(submodule_search_locations, self)
             spec = importlib.util.spec_from_loader(
                 fullname,
