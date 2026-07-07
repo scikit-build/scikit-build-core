@@ -53,12 +53,12 @@ features over classic Scikit-build:
 - Powerful config system, including config options support
 - Automatic inclusion of site-packages in `CMAKE_PREFIX_PATH`
 - FindPython is backported if running on CMake < 3.26.1 (configurable), supports
-  PyPY SOABI & Limited API / Stable ABI
+  PyPy SOABI & Limited API / Stable ABI
 - Limited API / Stable ABI and pythonless tags supported via config option
 - No slow generator search, ninja/make or MSVC used by default, respects
   `CMAKE_GENERATOR`
 - SDists are reproducible by default (UNIX, Python 3.9+, uncompressed comparison
-  recommended)
+  recommended), and wheels can be made reproducible too (opt-in)
 - Support for caching between builds (opt-in by setting `build-dir`)
 - Support for writing out to extra wheel folders (scripts, headers, data)
 - Support for selecting install components and build targets
@@ -68,26 +68,20 @@ features over classic Scikit-build:
 - Editable mode support, with optional experimental auto rebuilds on import and
   optional in-place mode
 - Supports WebAssembly (Emscripten/[Pyodide](https://pyodide.org)).
-- Supports [free-threaded Python 3.13+](https://py-free-threading.github.io).
+- Supports [free-threaded Python 3.13+](https://py-free-threading.github.io),
+  including the free-threaded stable ABI (PEP 803).
+- A `scikit-build` CLI, including `scikit-build init` to scaffold a new project.
 
-The following limitations are present compared to classic scikit-build:
+Current requirements:
 
 - The minimum supported CMake is 3.15
 - The minimum supported Python is 3.8 (3.7+ for 0.10.x and older)
 
-A few limitations remain (covered in detail in the docs):
-
-- Wheel reproducibility is opt-in (`wheel.reproducible`)
-- Editable install rebuild mode has some caveats.
-
-Other backends are also available:
+The recommended interface is the native pyproject builder. Other backends are
+also available:
 
 - Setuptools integration (use the `[setuptools]` extra)
 - Hatchling plugin (use the `[hatchling]` extra)
-
-The recommended interface is the native pyproject builder. There is also a
-setuptools-based interface that provides a transition path for classic
-scikit-build, and a Hatchling plugin.
 
 > [!WARNING]
 >
@@ -96,6 +90,10 @@ scikit-build, and a Hatchling plugin.
 > `scikit-build-core[hatchling]` extras to stay protected if they do.
 
 ## Example
+
+The fastest way to start a new project is `scikit-build init` (available via
+`uvx scikit-build-core init` as well), which generates a minimal CMake +
+scikit-build-core starter project. The pieces are described below.
 
 To use scikit-build-core, add it to your `build-system.requires`, and specify
 the `scikit_build_core.build` builder as your `build-system.build-backend`. You
