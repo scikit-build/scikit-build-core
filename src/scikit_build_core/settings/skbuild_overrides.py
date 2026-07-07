@@ -112,6 +112,7 @@ def override_match(
     ],
     has_dist_info: bool,
     retry: bool,
+    current_config_settings: Mapping[str, str | bool | None] | None = None,
     python_version: str | None = None,
     implementation_name: str | None = None,
     implementation_version: str | None = None,
@@ -119,6 +120,7 @@ def override_match(
     platform_machine: str | None = None,
     platform_node: str | None = None,
     env: dict[str, str] | None = None,
+    config_setting: dict[str, str | bool] | None = None,
     state: str | None = None,
     from_sdist: bool | None = None,
     failed: bool | None = None,
@@ -278,6 +280,43 @@ def override_match(
                 else:
                     failed_set.add(f"env.{key}")
 
+    if config_setting:
+        for cs_key, cs_match in config_setting.items():
+            if current_config_settings is None or cs_key not in current_config_settings:
+                msg = (
+                    f"if.config-setting {cs_key!r} is not declared in"
+                    " tool.scikit-build.config-setting"
+                )
+                raise TypeError(msg)
+            cs_value = current_config_settings[cs_key]
+            if isinstance(cs_match, bool):
+                cs_bool = (
+                    cs_value
+                    if isinstance(cs_value, bool)
+                    else strtobool(cs_value or "")
+                )
+                if cs_bool == cs_match:
+                    passed_dict[f"config-setting.{cs_key}"] = (
+                        f"config-setting {cs_key} is {cs_match}"
+                    )
+                else:
+                    failed_set.add(f"config-setting.{cs_key}")
+            elif cs_value is None:
+                failed_set.add(f"config-setting.{cs_key}")
+            else:
+                cs_str = (
+                    ("true" if cs_value else "false")
+                    if isinstance(cs_value, bool)
+                    else cs_value
+                )
+                match_msg = regex_match(cs_str, cs_match)
+                if match_msg:
+                    passed_dict[f"config-setting.{cs_key}"] = (
+                        f"config-setting {cs_key}: {match_msg}"
+                    )
+                else:
+                    failed_set.add(f"config-setting.{cs_key}")
+
     if len(passed_dict) + len(failed_set) + len(unknown) < 1:
         msg = "At least one override must be provided"
         raise ValueError(msg)
@@ -357,6 +396,7 @@ def process_overrides(
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
     retry: bool,
     env: Mapping[str, str] | None = None,
+    config_settings: Mapping[str, str | bool | None] | None = None,
 ) -> tuple[set[str], dict[str, OverrideRecord]]:
     """
     Process overrides into the main dictionary if they match. Modifies the input
@@ -390,6 +430,7 @@ def process_overrides(
                 current_state=state,
                 has_dist_info=has_dist_info,
                 retry=retry,
+                current_config_settings=config_settings,
                 **select,
             )
             unknown |= set(unknown_any)
@@ -406,6 +447,7 @@ def process_overrides(
                 current_state=state,
                 has_dist_info=has_dist_info,
                 retry=retry,
+                current_config_settings=config_settings,
                 **select,
             )
             unknown |= set(unknown_all)

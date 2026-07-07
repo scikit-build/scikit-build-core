@@ -13,6 +13,7 @@ __lazy_modules__ = {
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
     f"{__spec__.parent}.auto_requires",
+    f"{__spec__.parent}.config_settings",
     f"{__spec__.parent}.skbuild_model",
     f"{__spec__.parent}.sources",
     "packaging",
@@ -42,6 +43,12 @@ from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
+from .config_settings import (
+    apply_cmake_aliases,
+    load_declarations,
+    resolve_config_settings,
+    resolve_define_references,
+)
 from .skbuild_model import (
     CMakeSettings,
     NinjaSettings,
@@ -264,7 +271,7 @@ class SettingsReader:
     def __init__(
         self,
         pyproject: dict[str, Any],
-        config_settings: Mapping[str, str | list[str]],
+        config_settings: Mapping[str, str | list[str] | bool],
         *,
         state: Literal[
             "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
@@ -277,13 +284,34 @@ class SettingsReader:
         self.state = state
         environ = os.environ if env is None else env
 
-        # Handle overrides
         pyproject = copy.deepcopy(pyproject)
+        tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
+
+        # Project-declared config-settings: pop the declaration table (like
+        # ``overrides``, it is not a settings field) and resolve values before
+        # overrides so ``if.config-setting`` can match them.
+        self.config_setting_decls = load_declarations(
+            tool_skb.pop("config-setting", {})
+        )
+        self.custom_config_settings = resolve_config_settings(
+            self.config_setting_decls, config_settings, environ
+        )
+
+        # Handle overrides
         self.overrides, self.overridden_items = process_overrides(
-            pyproject.get("tool", {}).get("scikit-build", {}),
+            tool_skb,
             state=state,
             env=env,
             retry=retry,
+            config_settings=self.custom_config_settings,
+        )
+        # The static table was popped above, so any survivor came from an
+        # override body.
+        if "config-setting" in tool_skb:
+            rich_error("config-setting declarations may not be set by overrides")
+        resolve_define_references(tool_skb, self.custom_config_settings)
+        apply_cmake_aliases(
+            tool_skb, self.config_setting_decls, self.custom_config_settings
         )
 
         # Support for minimum-version='build-system.requires'
@@ -311,20 +339,29 @@ class SettingsReader:
 
         # Support for cmake.version='CMakeLists.txt'
         # We will save the value for now since we need the CMakeLists location
+        # A malformed non-table cmake value is left for conversion to report.
+        cmake_table = tool_skb.get("cmake", {})
         force_auto_cmake = (
-            pyproject.get("tool", {})
-            .get("scikit-build", {})
-            .get("cmake", {})
-            .get("version", None)
-        ) == "CMakeLists.txt"
+            isinstance(cmake_table, dict)
+            and cmake_table.get("version", None) == "CMakeLists.txt"
+        )
         if force_auto_cmake:
-            del pyproject["tool"]["scikit-build"]["cmake"]["version"]
+            del cmake_table["version"]
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
             extra_matched, extra_overridden = process_overrides(
-                extra_skb, state=state, env=env, retry=retry
+                extra_skb,
+                state=state,
+                env=env,
+                retry=retry,
+                config_settings=self.custom_config_settings,
             )
+            if "config-setting" in extra_skb:
+                rich_error(
+                    "config-setting declarations are only allowed in pyproject.toml"
+                )
+            resolve_define_references(extra_skb, self.custom_config_settings)
             self.overrides |= extra_matched
             self.overridden_items.update(extra_overridden)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
@@ -358,8 +395,17 @@ class SettingsReader:
                 # highest-precedence source. A future refactor could process
                 # overrides on the merged view instead.
                 ep_matched, ep_overridden = process_overrides(
-                    ep_skb, state=state, env=env, retry=retry
+                    ep_skb,
+                    state=state,
+                    env=env,
+                    retry=retry,
+                    config_settings=self.custom_config_settings,
                 )
+                if "config-setting" in ep_skb:
+                    rich_error(
+                        "config-setting declarations are only allowed in pyproject.toml"
+                    )
+                resolve_define_references(ep_skb, self.custom_config_settings)
                 self.overrides |= ep_matched
                 ep_source = TOMLSource(settings=ep_skb)
                 ep_srcs.append(ep_source)
@@ -386,7 +432,11 @@ class SettingsReader:
         dynamic_srcs: list[Source] = [
             EnvSource("SKBUILD", env=env),
             ConfSource("skbuild", settings=prefixed, verify=verify_conf),
-            ConfSource(settings=remaining, verify=verify_conf),
+            ConfSource(
+                settings=remaining,
+                verify=verify_conf,
+                extra_keys=frozenset(self.config_setting_decls),
+            ),
         ]
         # env vars + config-settings; these lead ``self.sources`` (see below),
         # so ``print_suggestions`` relies on their count.
@@ -539,6 +589,15 @@ class SettingsReader:
             and static_settings.build.targets == self.settings.build.targets,
         )
 
+        if (
+            self.config_setting_decls
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("1.1")
+        ):
+            rich_error(
+                "minimum-version must be at least 1.1 to use tool.scikit-build.config-setting"
+            )
+
         if self.settings.sdist.inclusion_mode is not None:
             if (
                 self.settings.minimum_version is not None
@@ -669,7 +728,7 @@ class SettingsReader:
     def from_file(
         cls,
         pyproject_path: os.PathLike[str] | str,
-        config_settings: Mapping[str, str | list[str]] | None = None,
+        config_settings: Mapping[str, str | list[str] | bool] | None = None,
         *,
         state: Literal[
             "sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"
