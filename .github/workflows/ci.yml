@@ -487,19 +487,19 @@ jobs:
         with:
           allowed-skips: >-
             ${{
-              fromJSON(needs.changes.outputs.run-tests)
-              && ''
-              || '
+              !fromJSON(needs.changes.outputs.run-tests)
+              && '
               checks,
               min,
               cygwin,
               dist,
               '
+              || ''
             }} ${{
-              fromJSON(needs.changes.outputs.run-docs)
-              && ''
-              || '
+              !fromJSON(needs.changes.outputs.run-docs)
+              && '
               docs,
               '
+              || ''
             }}
           jobs: ${{ toJSON(needs) }}
