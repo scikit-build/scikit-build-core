@@ -169,6 +169,15 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 "minProperties": 1,
                 "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0.",
             },
+            "config-setting": {
+                "type": "object",
+                "patternProperties": {
+                    ".*": {"oneOf": [{"type": "string"}, {"type": "boolean"}]}
+                },
+                "additionalProperties": False,
+                "minProperties": 1,
+                "description": "A table of declared config-settings (tool.scikit-build.config-setting) mapped to either string regexs, or booleans. Matches the resolved value (env var, `-C`, or default).",
+            },
         },
     }
     schema["$defs"]["inherit"] = {
@@ -195,6 +204,68 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         k: {"type": "object", "additionalProperties": False, "properties": v}
         for k, v in inherit_props.items()
         if v
+    }
+
+    # The define-table {config-setting = "..."} reference form.
+    define_values = schema["properties"]["cmake"]["properties"]["define"][
+        "patternProperties"
+    ][".+"]
+    define_values["oneOf"].append(
+        {
+            "type": "object",
+            "required": ["config-setting"],
+            "additionalProperties": False,
+            "properties": {
+                "config-setting": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The declared config-setting name whose resolved value this define takes; the define is dropped when unset.",
+                }
+            },
+        }
+    )
+
+    # Added after ``props`` is collected so overrides cannot target it.
+    schema["properties"]["config-setting"] = {
+        "type": "object",
+        "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
+        "additionalProperties": False,
+        "patternProperties": {
+            r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "help": {
+                        "type": "string",
+                        "description": "A description of the setting.",
+                    },
+                    "type": {
+                        "enum": ["str", "bool"],
+                        "default": "str",
+                        "description": "The type of the setting.",
+                    },
+                    "default": {
+                        "oneOf": [{"type": "string"}, {"type": "boolean"}],
+                        "description": "The value used when the setting is not passed; must match the type.",
+                    },
+                    "env": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "An environment variable also read for this setting; it takes precedence over `-C`.",
+                    },
+                    "choices": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "The allowed values (str type only).",
+                    },
+                    "cmake": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A CMake cache variable set to the resolved value; explicit defines win over it.",
+                    },
+                },
+            }
+        },
     }
 
     schema["properties"]["overrides"] = {
