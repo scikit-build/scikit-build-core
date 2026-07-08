@@ -387,7 +387,15 @@ def test_malformed_cmake_table(tmp_path: Path, malformed: str, with_decl: bool):
 # ---------------------------------------------------------------------------
 
 
-def test_minimum_version_gate_too_old(tmp_path: Path):
+def test_minimum_version_gate_too_old(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    # CI shallow clones report 0.1.devN, tripping the backend-too-old check first
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.1.0"
+    )
     pyproject_toml = write_pyproject(
         tmp_path,
         'tool.scikit-build.minimum-version = "1.0"\n' + DECLARATION,
@@ -395,6 +403,8 @@ def test_minimum_version_gate_too_old(tmp_path: Path):
     with pytest.raises(SystemExit) as exc:
         SettingsReader.from_file(pyproject_toml)
     assert exc.value.code == 7
+    _, err = capsys.readouterr()
+    assert "minimum-version must be at least 1.1" in err
 
 
 def test_minimum_version_gate_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
