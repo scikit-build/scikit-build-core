@@ -13,6 +13,10 @@ from scikit_build_core.resources._editable_redirect import (
     install_inplace,
 )
 
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    import types
+
 
 def process_dict_set(d: dict[str, set[str]]) -> dict[str, set[str]]:
     return {k: {str(Path(x)) for x in v} for k, v in d.items()}
@@ -161,6 +165,111 @@ def test_install_multiple_packages():
     install(*pkg_a, None)
     install(*pkg_b, None)
     assert count_finders() == 2
+
+
+def test_redirect_resolves_through_path_hooks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Regression (#1492): redirected modules resolve loaders via sys.path_hooks.
+
+    PEP 302 instrumenting import hooks (e.g. beartype.claw) register a path hook
+    whose loader rewrites modules at load time. Building specs with
+    spec_from_file_location hard-wires the stock SourceFileLoader, silently
+    bypassing such hooks, so the finder must resolve through PathFinder instead.
+    """
+    import importlib.machinery
+    import importlib.util
+
+    class InstrumentingLoader(importlib.machinery.SourceFileLoader):
+        def source_to_code(self, data: bytes, path: str) -> types.CodeType:  # type: ignore[override]
+            return super().source_to_code(b"instrumented = True\n" + data, path)
+
+    hook = importlib.machinery.FileFinder.path_hook(
+        (InstrumentingLoader, importlib.machinery.SOURCE_SUFFIXES)
+    )
+    monkeypatch.setattr(sys, "path_hooks", [hook, *sys.path_hooks])
+    monkeypatch.setattr(sys, "path_importer_cache", {})
+
+    src_pkg = tmp_path / "src" / "pkg"
+    src_pkg.mkdir(parents=True)
+    init = src_pkg / "__init__.py"
+    init.write_text("")
+    mod = src_pkg / "mod.py"
+    mod.write_text("value = 42\n")
+    wheel_pkg = tmp_path / "site-packages" / "pkg"
+    wheel_pkg.mkdir(parents=True)
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg": str(init), "pkg.mod": str(mod)},
+        known_wheel_files={},
+        known_directories={"pkg": [str(src_pkg), str(wheel_pkg)]},
+        known_packages=["pkg"],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path / "site-packages"),
+        install_dir="",
+    )
+
+    spec = finder.find_spec("pkg.mod")
+    assert spec is not None
+    assert spec.origin == str(mod)
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert getattr(module, "instrumented", False), "path-hook loader was bypassed"
+    assert module.value == 42
+    # The rebuild hook is still exposed on the wrapped loader.
+    assert hasattr(spec.loader, "rebuild")
+
+    # A package keeps its merged (source + install tree) __path__ and the
+    # multi-location resource reader.
+    pkg_spec = finder.find_spec("pkg")
+    assert pkg_spec is not None
+    assert pkg_spec.origin == str(init)
+    assert set(pkg_spec.submodule_search_locations or []) == {
+        str(src_pkg),
+        str(wheel_pkg),
+    }
+    assert pkg_spec.loader is not None
+    assert hasattr(pkg_spec.loader, "get_resource_reader")
+
+
+def test_redirect_falls_back_when_path_hooks_miss(tmp_path: Path):
+    """A mapping PathFinder cannot reproduce still resolves to the mapped file.
+
+    If the mapped file's name does not match the module name (so the standard
+    sys.path_hooks machinery cannot find it), the finder falls back to building
+    the spec directly, exactly as before #1492.
+    """
+    import importlib.util
+
+    actual = tmp_path / "actual_name.py"
+    actual.write_text("value = 7\n")
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg.aliased": str(actual)},
+        known_wheel_files={},
+        known_directories={},
+        known_packages=[],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(tmp_path / "site-packages"),
+        install_dir="",
+    )
+
+    spec = finder.find_spec("pkg.aliased")
+    assert spec is not None
+    assert spec.origin == str(actual)
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.value == 7
 
 
 def _make_finder(tmp_path: Path, *, verbose: bool) -> ScikitBuildRedirectingFinder:
