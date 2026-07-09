@@ -191,6 +191,7 @@ html_css_files = [
 # -- Extension configuration -------------------------------------------------
 myst_enable_extensions = [
     "alert",  # GitHub-style > [!NOTE] blockquote admonitions
+    "attrs_inline",  # {.class} on links/code, used by the projects grid
     "colon_fence",
     "substitution",
     "deflist",

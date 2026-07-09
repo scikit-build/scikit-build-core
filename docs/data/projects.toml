@@ -1,177 +1,259 @@
 [[project]]
 pypi = "adios2"
 github = "ornladios/ADIOS2"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "afdko"
 github = "adobe-type-tools/afdko"
+language = "C, C++"
+binding = "Cython"
 
 [[project]]
 pypi = "ale-py"
 github = "Farama-Foundation/Arcade-Learning-Environment"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "antspyx"
 github = "ANTsX/ANTsPy"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "astyle"
 github = "Freed-Wu/astyle-wheel"
+language = "C++"
 
 [[project]]
 pypi = "awkward-cpp"
 github = "scikit-hep/awkward"
 path = "awkward-cpp/pyproject.toml"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "bitsandbytes"
 github = "bitsandbytes-foundation/bitsandbytes"
+language = "C++, CUDA"
+binding = "ctypes"
 
 [[project]]
 pypi = "boost-histogram"
 github = "scikit-hep/boost-histogram"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "celerite2"
 github = "exoplanet-dev/celerite2"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "clang-format"
 github = "ssciwr/clang-format-wheel"
+language = "C++"
 
 [[project]]
 pypi = "cmake"
 github = "scikit-build/cmake-python-distributions"
+language = "C++"
 
 [[project]]
 pypi = "CoolProp"
 github = "CoolProp/CoolProp"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "coreforecast"
 github = "Nixtla/coreforecast"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "deflate"
 github = "dcwatson/deflate"
+language = "C"
+binding = "C API"
 
 [[project]]
 pypi = "ducc0"
 github = "mreineck/ducc"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "faiss-cpu"
 github = "facebookresearch/faiss"
+language = "C++"
+binding = "SWIG"
 
 [[project]]
 pypi = "fandango-fuzzer"
 github = "fandango-fuzzer/fandango"
+language = "C++"
+binding = "C API"
 
 [[project]]
 pypi = "freud-analysis"
 github = "glotzerlab/freud"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "gdstk"
 github = "heitzmann/gdstk"
+language = "C++"
+binding = "C API"
 
 [[project]]
 pypi = "gemmi"
 github = "project-gemmi/gemmi"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "h3"
 github = "uber/h3-py"
+language = "C"
+binding = "Cython"
 
 [[project]]
 pypi = "halide"
 github = "halide/Halide"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "highspy"
 github = "ERGO-Code/HiGHS"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "imgui-bundle"
 github = "pthom/imgui_bundle"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "iminuit"
 github = "scikit-hep/iminuit"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "implicit"
 github = "benfred/implicit"
+language = "C++, CUDA"
+binding = "Cython"
 
 [[project]]
 pypi = "islpy"
 github = "inducer/islpy"
+language = "C"
+binding = "nanobind"
 
 [[project]]
 pypi = "JPype1"
 github = "jpype-project/jpype"
+language = "C++"
+binding = "C API"
 
 [[project]]
 pypi = "kiss-icp"
 github = "PRBonn/kiss-icp"
 path = "python/pyproject.toml"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "lammps"
 github = "njzjz/lammps-wheel"
+language = "C++"
+binding = "ctypes"
 
 [[project]]
 pypi = "laszip"
 github = "tmontaigu/laszip-python"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "Levenshtein"
 github = "maxbachmann/Levenshtein"
+language = "C++"
+binding = "Cython"
 
 [[project]]
 pypi = "libigl"
 github = "libigl/libigl-python-bindings"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "librapid"
 github = "LibRapid/librapid"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "lightgbm"
 github = "lightgbm-org/LightGBM"
 path = "python-package/pyproject.toml"
+language = "C++"
+binding = "ctypes"
 
 [[project]]
 pypi = "llama-cpp-python"
 github = "abetlen/llama-cpp-python"
+language = "C++"
+binding = "ctypes"
 
 [[project]]
 pypi = "llamacpp"
 github = "thomasantony/llamacpp-python"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "manifold3d"
 github = "elalish/manifold"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "MaterialX"
 github = "AcademySoftwareFoundation/MaterialX"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "mitsuba"
 github = "mitsuba-renderer/mitsuba3"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "mqt-core"
 github = "munich-quantum-toolkit/core"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "nanobind"
 github = "wjakob/nanobind"
+language = "C++"
 
 [[project]]
 pypi = "ncrystal"
 github = "mctools/ncrystal"
+language = "C++, C"
+binding = "ctypes"
 
 #[[project]]
 #pypi = "networkx-graph"
@@ -180,100 +262,144 @@ github = "mctools/ncrystal"
 [[project]]
 pypi = "ninja"
 github = "scikit-build/ninja-python-distributions"
+language = "C++"
 
 [[project]]
 pypi = "nodejs-wheel"
 github = "njzjz/nodejs-wheel"
+language = "C++"
 
 [[project]]
 pypi = "ompl"
 github = "ompl/ompl"
 path = "py-bindings/pyproject.toml"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "onnx"
 github = "onnx/onnx"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "OpenEXR"
 github = "AcademySoftwareFoundation/OpenEXR"
+language = "C++, C"
+binding = "pybind11"
 
 [[project]]
 pypi = "OpenImageIO"
 github = "AcademySoftwareFoundation/OpenImageIO"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "osmium"
 github = "osmcode/pyosmium"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "osqp"
 github = "osqp/osqp-python"
+language = "C"
+binding = "pybind11"
 
 [[project]]
 pypi = "pedalboard"
 github = "spotify/pedalboard"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "phik"
 github = "kaveio/phik"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "phono3py"
 github = "phonopy/phono3py"
+language = "C"
+binding = "nanobind"
 
 [[project]]
 pypi = "phonopy"
 github = "phonopy/phonopy"
+language = "C"
+binding = "nanobind"
 
 [[project]]
 pypi = "pikepdf"
 github = "pikepdf/pikepdf"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "polyscope"
 github = "nmwsharp/polyscope-py"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "pyarrow"
 github = "apache/arrow"
 path = "python/pyproject.toml"
+language = "C++"
+binding = "Cython"
 
 [[project]]
 pypi = "pybind11"
 github = "pybind/pybind11"
+language = "C++"
 
 [[project]]
 pypi = "pycolmap"
 github = "colmap/colmap"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "pygram11"
 github = "douglasdavis/pygram11"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "pyhmmer"
 github = "althonos/pyhmmer"
+language = "C"
+binding = "Cython"
 
 [[project]]
 pypi = "pylibmagic"
 github = "kratsg/pylibmagic"
+language = "C"
 
 [[project]]
 pypi = "pyopencl"
 github = "inducer/pyopencl"
+language = "C++, C"
+binding = "nanobind"
 
 [[project]]
 pypi = "pyradiomics"
 github = "AIM-Harvard/pyradiomics"
+language = "C"
+binding = "C API"
 
 [[project]]
 pypi = "pyresidfp"
 github = "pyresidfp/pyresidfp"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "pyslang"
 github = "MikePopoloski/slang"
+language = "C++"
+binding = "pybind11"
 
 #[[project]]
 #pypi = "pytango"
@@ -282,84 +408,125 @@ github = "MikePopoloski/slang"
 [[project]]
 pypi = "pyzmq"
 github = "zeromq/pyzmq"
+language = "C"
+binding = "Cython"
 
 [[project]]
 pypi = "rapidfuzz"
 github = "rapidfuzz/RapidFuzz"
+language = "C++"
+binding = "Cython"
 
 [[project]]
 pypi = "roboticstoolbox-python"
 github = "petercorke/robotics-toolbox-python"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "root"
 github = "root-project/root"
+language = "C++"
+binding = "cppyy"
 
 [[project]]
 pypi = "s5cmd"
 github = "ImagingDataCommons/s5cmd-python-distributions"
+language = "Go"
 
 [[project]]
 pypi = "shap"
 github = "shap/shap"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "SimpleITK"
 github = "SimpleITK/SimpleITK"
+language = "C++"
+binding = "SWIG"
 
 [[project]]
 pypi = "simsopt"
 github = "hiddenSymmetries/simsopt"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "sparse-dot-topn"
 github = "ing-bank/sparse_dot_topn"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "spglib"
 github = "spglib/spglib"
+language = "C"
+binding = "pybind11"
 
 [[project]]
 pypi = "spherely"
 github = "benbovy/spherely"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "stormpy"
 github = "stormchecker/stormpy"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "symusic"
 github = "Yikai-Liao/symusic"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "tetgen"
 github = "pyvista/tetgen"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "tiledb"
 github = "TileDB-Inc/TileDB-Py"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "tomotopy"
 github = "bab2min/tomotopy"
+language = "C++"
+binding = "C API"
 
 [[project]]
 pypi = "viennals"
 github = "ViennaTools/ViennaLS"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "viennaps"
 github = "ViennaTools/ViennaPS"
+language = "C++"
+binding = "pybind11"
 
 [[project]]
 pypi = "voyager"
 github = "spotify/voyager"
 path = "python/pyproject.toml"
+language = "C++"
+binding = "nanobind"
 
 [[project]]
 pypi = "xgrammar"
 github = "mlc-ai/xgrammar"
+language = "C++"
+binding = "C API"
 
 [[project]]
 pypi = "xtgeo"
 github = "equinor/xtgeo"
+language = "C, C++"
+binding = "pybind11, SWIG"
