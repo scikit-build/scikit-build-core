@@ -323,7 +323,11 @@ def downstream(session: nox.Session) -> None:
         session.chdir(args.subdir)
 
     if args.editable:
-        session.install("-e.", "--no-build-isolation")
+        session.install(
+            "-e.",
+            "--no-build-isolation",
+            *(f"-C{x}" for x in args.C),
+        )
     else:
         session.run(
             "python",
