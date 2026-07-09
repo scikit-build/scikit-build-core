@@ -309,6 +309,13 @@ def test_editable_with_beartype_claw(isolated, isolate, editable):
     Path("src/simplest/typed.py").write_text("def f(x: int) -> int:\n    return x\n")
 
     isolated.install("beartype")
+    # beartype may not support the newest Python yet (e.g. 0.22.9 fails to
+    # import on 3.15); skip rather than fail, and un-skip automatically once
+    # a supporting release is out.
+    try:
+        isolated.execute("import beartype")
+    except SystemExit:
+        pytest.skip("beartype cannot be imported on this Python")
     isolated.install(
         "-v",
         *isolate.flags,

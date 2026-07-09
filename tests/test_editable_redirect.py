@@ -13,10 +13,6 @@ from scikit_build_core.resources._editable_redirect import (
     install_inplace,
 )
 
-TYPE_CHECKING = False
-if TYPE_CHECKING:
-    import types
-
 
 def process_dict_set(d: dict[str, set[str]]) -> dict[str, set[str]]:
     return {k: {str(Path(x)) for x in v} for k, v in d.items()}
@@ -181,8 +177,11 @@ def test_redirect_resolves_through_path_hooks(
     import importlib.util
 
     class InstrumentingLoader(importlib.machinery.SourceFileLoader):
-        def source_to_code(self, data: bytes, path: str) -> types.CodeType:  # type: ignore[override]
-            return super().source_to_code(b"instrumented = True\n" + data, path)
+        # Untyped signature: Python 3.15 adds an extra positional argument.
+        def source_to_code(self, data, path, *args, **kwargs):  # type: ignore[override]
+            return super().source_to_code(
+                b"instrumented = True\n" + data, path, *args, **kwargs
+            )
 
     hook = importlib.machinery.FileFinder.path_hook(
         (InstrumentingLoader, importlib.machinery.SOURCE_SUFFIXES)
