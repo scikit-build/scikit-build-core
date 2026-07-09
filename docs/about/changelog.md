@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 1.0.2
+
+This patch release fixes redirect editable installs so that PEP 302 import
+hooks (such as `beartype.claw`) that register a `sys.path_hooks` entry are
+honored for redirected modules.
+
+Fixes:
+
+- Resolve redirected modules through `sys.path_hooks` by @henryiii in #1493
+
+Internal:
+
+- Stop using deprecated `build.util.project_wheel_metadata` in #1494
+
 ## Version 1.0.1
 
 This patch release fixes two bugs: shared namespace packages were being
