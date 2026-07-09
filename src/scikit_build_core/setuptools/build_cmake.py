@@ -385,6 +385,7 @@ class BuildCMake(setuptools.Command):
     build_temp: str | None
     debug: bool | None
     editable_mode: bool
+    editable_strict: bool
     parallel: int | None
     plat_name: str | None
 
@@ -403,6 +404,7 @@ class BuildCMake(setuptools.Command):
         self.build_temp = None
         self.debug = None
         self.editable_mode = False
+        self.editable_strict = False
         self.parallel = None
         self.plat_name = None
         self.source_dir = get_source_dir_from_pyproject_toml()
@@ -420,6 +422,7 @@ class BuildCMake(setuptools.Command):
             ("plat_name", "plat_name"),
         )
         self.editable_mode = self._get_editable_mode()
+        self.editable_strict = self._get_editable_strict()
 
         if isinstance(self.cmake_args, str):
             self.cmake_args = [
@@ -438,6 +441,20 @@ class BuildCMake(setuptools.Command):
         build_ext = self.distribution.get_command_obj("build_ext")
         return bool(getattr(build_ext, "editable_mode", False))
 
+    def _get_editable_strict(self) -> bool:
+        # Strict PEP 660 editables use setuptools' _LinkTree strategy, which
+        # copies build_lib outputs (that carry no source mapping) into a
+        # persistent auxiliary directory. Installing there instead of the
+        # source tree keeps it clean, the closest analog of the backend's
+        # redirect editable mode. editable_wheel is internal, so probe it
+        # defensively and fall back to the in-tree install if anything is
+        # missing. Never treat "build_ext --inplace" as strict.
+        if not self._is_pep660_editable():
+            return False
+        command_obj = getattr(self.distribution, "command_obj", None) or {}
+        editable_wheel = command_obj.get("editable_wheel")
+        return getattr(editable_wheel, "mode", None) == "strict"
+
     def _get_install_subdir(self) -> Path:
         dist_cmake_install_dir = (
             getattr(self.distribution, "cmake_install_dir", "") or ""
@@ -452,7 +469,12 @@ class BuildCMake(setuptools.Command):
         assert self.build_lib is not None
         install_subdir = self._get_install_subdir()
 
-        if not self.editable_mode:
+        # Non-editable builds and strict editables both stage into build_lib.
+        # For strict editables, setuptools' _LinkTree then copies the outputs
+        # into the persistent aux dir, leaving the source tree clean. Lenient
+        # editables must install in-tree: build_lib is a temporary directory
+        # discarded by the _StaticPth/_TopLevelFinder strategies.
+        if not self.editable_mode or self.editable_strict:
             return Path(self.build_lib).resolve() / install_subdir
 
         # The wrapper translates cmake_install_dir relative to the package base
@@ -576,6 +598,7 @@ class BuildCMake(setuptools.Command):
         warn_missing_extra("setuptools", "wheel-free-setuptools")
 
         self.editable_mode = self._get_editable_mode()
+        self.editable_strict = self._get_editable_strict()
         # run() is always a wheel or editable build; pass the matching state so
         # overrides (if.state = "wheel"/"editable") are applied correctly.
         settings = _load_settings(state="editable" if self.editable_mode else "wheel")
@@ -701,7 +724,12 @@ class BuildCMake(setuptools.Command):
             )
 
     def get_outputs(self) -> list[str]:
-        if self.editable_mode:
+        # Lenient editables install in-tree, so outputs come from the mapping
+        # (build_lib path -> source path). Non-editable builds and strict
+        # editables stage into build_lib, so report the real installed paths;
+        # for strict editables these carry no mapping, so _LinkTree copies them
+        # into the persistent aux dir.
+        if self.editable_mode and not self.editable_strict:
             return sorted(self.get_output_mapping())
         return sorted(os.fspath(path) for path in self._installed_files)
 
@@ -709,8 +737,11 @@ class BuildCMake(setuptools.Command):
     #    return ["CMakeLists.txt"]
 
     def get_output_mapping(self) -> dict[str, str]:
+        # Strict editable outputs are generated, not source files, so they have
+        # no mapping entry (reported via get_outputs and copied by _LinkTree).
         if (
             not self.editable_mode
+            or self.editable_strict
             or self._editable_install_dir is None
             or self.build_lib is None
         ):

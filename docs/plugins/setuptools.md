@@ -128,6 +128,20 @@ redirect mode is not supported here.
 
 Because of that, `editable.rebuild` is not supported in setuptools mode.
 
+### Strict mode
+
+setuptools' strict editable mode
+(`pip install -e . --config-settings editable_mode=strict`) keeps the source
+tree free of built artifacts. In this mode the plugin installs the CMake output
+into setuptools' `build_lib`, and setuptools' link-tree strategy copies it into
+a persistent auxiliary directory (`build/__editable__.<name>-<tag>/`) that the
+`.pth` file points at. This is closer to the backend's redirect editable mode.
+
+The trade-off is inherent to strict mode's contract: because the copied
+artifacts are a snapshot, a CMake rebuild (e.g. after changing C/C++ sources)
+requires reinstalling the editable to pick up the new build. Lenient mode (the
+default) keeps installing into the source tree in place.
+
 A direct `setup.py build_ext --inplace` builds into the source tree without
 producing an editable wheel, so it works without any `editable.mode` setting,
 just like scikit-build (classic).
