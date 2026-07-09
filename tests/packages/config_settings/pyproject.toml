@@ -7,7 +7,6 @@ env = "ZMQ_PREFIX"
 
 [tool.scikit-build.config-setting."zmq.libzmq"]
 help = "Where libzmq comes from"
-choices = ["bundled", "system"]
 default = "system"
 
 [tool.scikit-build.cmake.define]
