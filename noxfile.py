@@ -326,7 +326,7 @@ def downstream(session: nox.Session) -> None:
         session.install(
             "-e.",
             "--no-build-isolation",
-            *(f"--config-settings={x}" for x in args.C),
+            *(f"-C{x}" for x in args.C),
         )
     else:
         session.run(
