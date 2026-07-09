@@ -16,7 +16,6 @@ DECLARATION = dedent(
 
     [tool.scikit-build.config-setting."zmq.libzmq"]
     help = "Where libzmq comes from"
-    choices = ["bundled", "system"]
     default = "system"
     """
 )
@@ -40,7 +39,6 @@ def test_declaration_minimal(tmp_path: Path):
     decls = settings_reader.config_setting_decls
     assert set(decls) == {"zmq.prefix", "zmq.libzmq"}
     assert decls["zmq.prefix"].help == "Prefix to search for libzmq"
-    assert decls["zmq.libzmq"].choices == ["bundled", "system"]
     assert decls["zmq.libzmq"].default == "system"
 
 
@@ -54,7 +52,7 @@ def test_declaration_minimal(tmp_path: Path):
         pytest.param('"cmake.prefix" = {help = "reserved"}', id="reserved-segment"),
         pytest.param('"skbuild.x" = {help = "reserved"}', id="skbuild-segment"),
         pytest.param(
-            '"zmq.bundled" = {type = "bool", choices = ["a"]}', id="choices-on-bool"
+            '"zmq.libzmq" = {choices = ["bundled"]}', id="removed-choices-key"
         ),
         pytest.param(
             '"zmq.bundled" = {type = "bool", default = "yes"}', id="bad-default-bool"
@@ -188,16 +186,6 @@ def test_bool_type_gpep517_bool(tmp_path: Path):
     pyproject_toml = write_pyproject(tmp_path, BOOL_DECLARATION)
     settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.bundled": True})
     assert settings_reader.custom_config_settings["zmq.bundled"] is True
-
-
-def test_choices_violation(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
-    pyproject_toml = write_pyproject(tmp_path, DECLARATION)
-    with pytest.raises(SystemExit) as exc:
-        SettingsReader.from_file(pyproject_toml, {"zmq.libzmq": "vendored"})
-    assert exc.value.code == 7
-    _, err = capsys.readouterr()
-    assert "bundled" in err
-    assert "system" in err
 
 
 # ---------------------------------------------------------------------------
