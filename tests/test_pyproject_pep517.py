@@ -9,7 +9,6 @@ import zipfile
 from importlib.metadata import PathDistribution
 from pathlib import Path
 
-import build.util
 import pytest
 
 from scikit_build_core.build import (
@@ -337,8 +336,11 @@ def test_pep517_wheel_time_hash(monkeypatch, tmp_path: Path):
 
 
 @pytest.mark.usefixtures("package_simple_pyproject_ext")
-def test_prepare_metadata_for_build_wheel():
-    metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
+def test_prepare_metadata_for_build_wheel(tmp_path):
+    mddir = tmp_path / "dist"
+    mddir.mkdir()
+    out = prepare_metadata_for_build_wheel(str(mddir), {})
+    metadata = PathDistribution(mddir / out).metadata
     answer = {
         "Metadata-Version": "2.2",
         "Name": "CMake.Example",
@@ -349,7 +351,7 @@ def test_prepare_metadata_for_build_wheel():
     }
 
     for k, b in answer.items():
-        assert metadata.get(k, None) == b
+        assert metadata[k] == b
 
     assert len(metadata) == len(answer)
 
@@ -378,8 +380,11 @@ def test_prepare_metadata_for_build_wheel_by_hand(tmp_path):
 
 @pytest.mark.parametrize("package", ["pep639_pure"], indirect=True)
 @pytest.mark.usefixtures("package")
-def test_pep639_license_files_metadata():
-    metadata = build.util.project_wheel_metadata(str(Path.cwd()), isolated=False)
+def test_pep639_license_files_metadata(tmp_path):
+    mddir = tmp_path / "dist"
+    mddir.mkdir()
+    out = prepare_metadata_for_build_wheel(str(mddir), {})
+    metadata = PathDistribution(mddir / out).metadata
     answer = {
         "Metadata-Version": ["2.4"],
         "Name": ["pep639_pure"],
