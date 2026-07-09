@@ -123,7 +123,7 @@ for project in projects["project"]:
 * [voyager](https://pypi.org/project/voyager) ([source](https://github.com/spotify/voyager/blob/HEAD/python/pyproject.toml))
 * [xgrammar](https://pypi.org/project/xgrammar) ([source](https://github.com/mlc-ai/xgrammar/blob/HEAD/pyproject.toml))
 * [xtgeo](https://pypi.org/project/xtgeo) ([source](https://github.com/equinor/xtgeo/blob/HEAD/pyproject.toml))
-<!--[[[end]]]-->
+<!--[[[end]]] (sum: aPoX60a7Kd)-->
 
 <!-- prettier-ignore-end -->
 
