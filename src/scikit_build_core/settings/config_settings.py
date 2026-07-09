@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ConfigSettingDeclaration",
-    "apply_cmake_aliases",
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
@@ -36,7 +35,7 @@ def __dir__() -> list[str]:
 # normalization), like env-table keys.
 _NAME_REGEX = re.compile(r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$")
 
-_DECLARATION_KEYS = frozenset({"help", "type", "default", "env", "choices", "cmake"})
+_DECLARATION_KEYS = frozenset({"help", "type", "default", "env", "choices"})
 
 
 @dataclasses.dataclass(frozen=True)
@@ -54,7 +53,6 @@ class ConfigSettingDeclaration:
     default: str | bool | None = None
     env: str | None = None
     choices: list[str] | None = None
-    cmake: str | None = None
 
 
 def _error_context(name: str) -> str:
@@ -104,9 +102,6 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
         env = entry.get("env")
         if env is not None and (not isinstance(env, str) or not env):
             rich_error(f"{_error_context(name)} 'env' must be a non-empty string")
-        cmake = entry.get("cmake")
-        if cmake is not None and (not isinstance(cmake, str) or not cmake):
-            rich_error(f"{_error_context(name)} 'cmake' must be a non-empty string")
         choices = entry.get("choices")
         if choices is not None:
             if type_ == "bool":
@@ -144,7 +139,6 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
             default=default,
             env=env,
             choices=choices,
-            cmake=cmake,
         )
     return decls
 
@@ -224,29 +218,3 @@ def resolve_define_references(
             del define[key]
         else:
             define[key] = value
-
-
-def apply_cmake_aliases(
-    tool_skb: dict[str, Any],
-    decls: Mapping[str, ConfigSettingDeclaration],
-    values: Mapping[str, str | bool | None],
-) -> None:
-    """
-    Insert resolved values for declarations with a ``cmake`` alias into the raw
-    ``cmake.define`` table. Explicit defines (TOML, overrides, config-settings,
-    env vars) win over the alias. Malformed non-table values are left for the
-    normal settings conversion to report.
-    """
-    for name, decl in decls.items():
-        if decl.cmake is None:
-            continue
-        value = values[name]
-        if value is None:
-            continue
-        cmake_table = tool_skb.setdefault("cmake", {})
-        if not isinstance(cmake_table, dict):
-            return
-        define = cmake_table.setdefault("define", {})
-        if not isinstance(define, dict):
-            return
-        define.setdefault(decl.cmake, value)

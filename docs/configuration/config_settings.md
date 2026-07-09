@@ -21,7 +21,6 @@ config-settings:
 [tool.scikit-build.config-setting."zmq.prefix"]
 help = "Prefix to search for libzmq"
 env = "ZMQ_PREFIX"
-cmake = "ZMQ_PREFIX"
 
 [tool.scikit-build.config-setting."zmq.libzmq"]
 help = "Where libzmq comes from"
@@ -40,7 +39,6 @@ The supported keys are:
 - `env`: An environment variable that is also read for this setting.
 - `choices`: A list of allowed string values (`str` type only); other values
   produce an error.
-- `cmake`: A CMake cache variable that is set to the resolved value (see below).
 
 Users can then configure the build with either interface:
 
@@ -58,27 +56,17 @@ Declaring config-settings requires `minimum-version = "1.1"` (or unset).
 
 ## Passing values to CMake
 
-There are two equivalent ways to forward a setting to CMake. The `cmake` key in
-the declaration is the most compact:
-
-```toml
-[tool.scikit-build.config-setting."zmq.prefix"]
-env = "ZMQ_PREFIX"
-cmake = "ZMQ_PREFIX"
-```
-
-Alternatively, a `cmake.define` entry can reference the setting, similar to the
-`{env = ...}` form:
+A `cmake.define` entry can reference a setting, similar to the `{env = ...}`
+form:
 
 ```toml
 [tool.scikit-build.cmake.define]
 ZMQ_PREFIX = { config-setting = "zmq.prefix" }
 ```
 
-In both forms, the define is left unset when the setting resolves to no value,
-so `if(DEFINED ZMQ_PREFIX)` works in CMake, and an explicit define (in the
-static table, an override, `-C cmake.define.NAME=...`, or
-`SKBUILD_CMAKE_DEFINE`) wins over the declaration's `cmake` alias.
+The define is left unset when the setting resolves to no value, so
+`if(DEFINED ZMQ_PREFIX)` works in CMake, and `-C cmake.define.NAME=...` or
+`SKBUILD_CMAKE_DEFINE` still win over the referenced value.
 
 ## Use in overrides
 
