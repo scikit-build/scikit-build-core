@@ -24,7 +24,6 @@ env = "ZMQ_PREFIX"
 
 [tool.scikit-build.config-setting."zmq.libzmq"]
 help = "Where libzmq comes from"
-choices = ["bundled", "system"]
 default = "system"
 ```
 
@@ -37,8 +36,6 @@ The supported keys are:
 - `default`: The value used when the setting is not passed; must match the type.
   If not set, the setting is "unset" when not passed.
 - `env`: An environment variable that is also read for this setting.
-- `choices`: A list of allowed string values (`str` type only); other values
-  produce an error.
 
 Users can then configure the build with either interface:
 

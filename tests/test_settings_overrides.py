@@ -1191,7 +1191,6 @@ CONFIG_SETTING_PYPROJECT = dedent(
     [tool.scikit-build.config-setting."zmq.libzmq"]
     help = "Where libzmq comes from"
     env = "ZMQ_LIBZMQ"
-    choices = ["bundled", "system"]
     default = "system"
 
     [[tool.scikit-build.overrides]]

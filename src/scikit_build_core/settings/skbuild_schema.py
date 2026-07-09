@@ -253,11 +253,6 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                         "minLength": 1,
                         "description": "An environment variable also read for this setting; it takes precedence over `-C`.",
                     },
-                    "choices": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "The allowed values (str type only).",
-                    },
                 },
             }
         },
