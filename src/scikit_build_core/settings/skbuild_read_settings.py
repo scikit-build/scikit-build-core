@@ -44,7 +44,6 @@ from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .config_settings import (
-    apply_cmake_aliases,
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
@@ -310,9 +309,6 @@ class SettingsReader:
         if "config-setting" in tool_skb:
             rich_error("config-setting declarations may not be set by overrides")
         resolve_define_references(tool_skb, self.custom_config_settings)
-        apply_cmake_aliases(
-            tool_skb, self.config_setting_decls, self.custom_config_settings
-        )
 
         # Support for minimum-version='build-system.requires'
         tmp_min_v = (

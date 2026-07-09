@@ -258,11 +258,6 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                         "items": {"type": "string"},
                         "description": "The allowed values (str type only).",
                     },
-                    "cmake": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "A CMake cache variable set to the resolved value; explicit defines win over it.",
-                    },
                 },
             }
         },

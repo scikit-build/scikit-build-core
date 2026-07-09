@@ -4,7 +4,6 @@ cmake.version = ">=3.15"
 [tool.scikit-build.config-setting."zmq.prefix"]
 help = "Prefix to search for libzmq"
 env = "ZMQ_PREFIX"
-cmake = "ZMQ_PREFIX"
 
 [tool.scikit-build.config-setting."zmq.libzmq"]
 help = "Where libzmq comes from"
@@ -12,4 +11,5 @@ choices = ["bundled", "system"]
 default = "system"
 
 [tool.scikit-build.cmake.define]
+ZMQ_PREFIX = {config-setting = "zmq.prefix"}
 ZMQ_LIBZMQ = {config-setting = "zmq.libzmq"}
