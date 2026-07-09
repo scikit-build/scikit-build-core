@@ -26,6 +26,7 @@ if importlib.util.find_spec("ninja") is not None:
 PYBIND11 = ["pybind11"] if importlib.util.find_spec("pybind11") is not None else []
 
 WHEELS = [
+    "beartype",
     "build",
     "cython",
     "hatchling",

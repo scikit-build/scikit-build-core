@@ -525,11 +525,35 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         submodule_search_locations: list[str] | None,
     ) -> importlib.machinery.ModuleSpec | None:
         is_pkg = origin.endswith(("__init__.py", "__init__.pyc"))
-        spec = importlib.util.spec_from_file_location(
-            fullname,
-            origin,
-            submodule_search_locations=submodule_search_locations if is_pkg else None,
-        )
+        # Resolve the loader through the standard sys.path_hooks machinery (PEP
+        # 302) so instrumenting path hooks (e.g. beartype.claw) see redirected
+        # modules (#1492). Searching only the directory holding our chosen file
+        # keeps the redirect mapping authoritative; the spec is accepted only if
+        # it resolves to that same file.
+        search = os.path.dirname(origin)
+        if is_pkg:
+            search = os.path.dirname(search)
+        spec = importlib.machinery.PathFinder.find_spec(fullname, [search])
+        if (
+            spec is not None
+            and spec.loader is not None
+            and spec.origin is not None
+            and os.path.normcase(spec.origin) == os.path.normcase(origin)
+        ):
+            spec.submodule_search_locations = (
+                submodule_search_locations if is_pkg else None
+            )
+        else:
+            # The mapping cannot be reproduced by the path machinery (e.g. the
+            # file's name does not match the module name), so build the spec
+            # directly with the stock loader.
+            spec = importlib.util.spec_from_file_location(
+                fullname,
+                origin,
+                submodule_search_locations=submodule_search_locations
+                if is_pkg
+                else None,
+            )
         # Wrap the loader so it exposes a rebuild() hook (reachable as
         # module.__loader__.rebuild()). Packages with more than one search
         # location (e.g. a source tree and a CMake install tree) additionally get

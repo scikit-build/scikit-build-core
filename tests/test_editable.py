@@ -289,3 +289,54 @@ def test_importlib_resources(editable, isolated):
             """
         )
     )
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.integration
+@pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
+@pytest.mark.parametrize("isolate", {False}, indirect=True)
+@pytest.mark.parametrize("editable", ["redirect", "inplace"], indirect=True)
+@pytest.mark.usefixtures("package")
+def test_editable_with_beartype_claw(isolated, isolate, editable):
+    """beartype.claw instruments editable modules (#1492).
+
+    beartype.claw registers a PEP 302 sys.path_hooks loader that rewrites
+    modules of registered packages at load time. The editable finders must
+    resolve loaders through that machinery, or instrumentation is silently
+    skipped.
+    """
+    Path("src/simplest/typed.py").write_text("def f(x: int) -> int:\n    return x\n")
+
+    isolated.install("beartype")
+    # beartype may not support the newest Python yet (e.g. 0.22.9 fails to
+    # import on 3.15); skip rather than fail, and un-skip automatically once
+    # a supporting release is out.
+    try:
+        isolated.execute("import beartype")
+    except SystemExit:
+        pytest.skip("beartype cannot be imported on this Python")
+    isolated.install(
+        "-v",
+        *isolate.flags,
+        *editable.flags,
+        ".",
+        installer="pip",
+    )
+
+    result = isolated.execute(
+        textwrap.dedent(
+            """
+            from beartype.claw import beartype_package
+            beartype_package("simplest")
+            import simplest.typed
+            try:
+                simplest.typed.f("not an int")
+            except Exception as exc:
+                print(type(exc).__name__)
+            else:
+                print("no error raised")
+            """
+        )
+    )
+    assert result.splitlines()[-1] == "BeartypeCallHintParamViolation"
