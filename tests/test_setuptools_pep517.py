@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import setuptools
+import setuptools.command.sdist
 from conftest import VEnv
 from packaging.version import Version
 
@@ -27,6 +28,12 @@ except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing depende
 pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
 build_editable = getattr(setuptools_build_meta, "build_editable", None)
+
+# sdist consults build sub-commands' get_source_files() only since
+# setuptools 62.4; older versions won't pick up CMakeLists.txt.
+SDIST_USES_SUBCOMMAND_SOURCES = hasattr(
+    setuptools.command.sdist.sdist, "_add_defaults_build_sub_commands"
+)
 
 
 @dataclass(frozen=True)
@@ -105,28 +112,30 @@ def test_pep517_sdist(tmp_path: Path):
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
 
+    expected = [
+        "PKG-INFO",
+        "src",
+        "src/cmake_example.egg-info",
+        "src/cmake_example.egg-info/PKG-INFO",
+        "src/cmake_example.egg-info/SOURCES.txt",
+        "src/cmake_example.egg-info/dependency_links.txt",
+        "src/cmake_example.egg-info/not-zip-safe",
+        "src/cmake_example.egg-info/requires.txt",
+        "src/cmake_example.egg-info/top_level.txt",
+        "pyproject.toml",
+        "setup.cfg",
+        "setup.py",
+        "LICENSE",
+        # TODO: "src/main.c",
+    ]
+    if SDIST_USES_SUBCOMMAND_SOURCES:
+        expected.append("CMakeLists.txt")
+
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
-        assert file_names == {
-            f"{cmake_example}-0.0.1/{x}"
-            for x in (
-                "CMakeLists.txt",
-                "PKG-INFO",
-                "src",
-                "src/cmake_example.egg-info",
-                "src/cmake_example.egg-info/PKG-INFO",
-                "src/cmake_example.egg-info/SOURCES.txt",
-                "src/cmake_example.egg-info/dependency_links.txt",
-                "src/cmake_example.egg-info/not-zip-safe",
-                "src/cmake_example.egg-info/requires.txt",
-                "src/cmake_example.egg-info/top_level.txt",
-                "pyproject.toml",
-                "setup.cfg",
-                "setup.py",
-                "LICENSE",
-                # TODO: "src/main.c",
-            )
-        } | {f"{cmake_example}-0.0.1"}
+        assert file_names == {f"{cmake_example}-0.0.1/{x}" for x in expected} | {
+            f"{cmake_example}-0.0.1"
+        }
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = set(pkg_info.read().decode().strip().splitlines())
@@ -321,25 +330,27 @@ def test_toml_sdist(tmp_path: Path):
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
 
+    expected = [
+        "PKG-INFO",
+        "src",
+        "src/cmake_example.egg-info",
+        "src/cmake_example.egg-info/PKG-INFO",
+        "src/cmake_example.egg-info/SOURCES.txt",
+        "src/cmake_example.egg-info/dependency_links.txt",
+        "src/cmake_example.egg-info/top_level.txt",
+        "pyproject.toml",
+        "setup.cfg",
+        "LICENSE",
+        # TODO: "src/main.c",
+    ]
+    if SDIST_USES_SUBCOMMAND_SOURCES:
+        expected.append("CMakeLists.txt")
+
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
-        assert file_names == {
-            f"{cmake_example}-0.0.1/{x}"
-            for x in (
-                "CMakeLists.txt",
-                "PKG-INFO",
-                "src",
-                "src/cmake_example.egg-info",
-                "src/cmake_example.egg-info/PKG-INFO",
-                "src/cmake_example.egg-info/SOURCES.txt",
-                "src/cmake_example.egg-info/dependency_links.txt",
-                "src/cmake_example.egg-info/top_level.txt",
-                "pyproject.toml",
-                "setup.cfg",
-                "LICENSE",
-                # TODO: "src/main.c",
-            )
-        } | {f"{cmake_example}-0.0.1"}
+        assert file_names == {f"{cmake_example}-0.0.1/{x}" for x in expected} | {
+            f"{cmake_example}-0.0.1"
+        }
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = set(pkg_info.read().decode().strip().splitlines())
