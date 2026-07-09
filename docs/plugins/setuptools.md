@@ -91,8 +91,13 @@ possible. If you don't use that, you get more reasonable modern defaults.
 ## Configuration
 
 All other configuration is available as normal `tool.scikit-build` in
-`pyproject.toml` or environment variables as applicable. Config-settings is
-_not_ supported, as setuptools has very poor support for config-settings.
+`pyproject.toml` or environment variables as applicable. Config-settings (`-C`)
+is supported when building through the PEP 517 backend
+(`scikit_build_core.setuptools.build_meta`), e.g.
+`pip install . -C cmake.build-type=Debug`. It is _not_ available when driving
+`setup.py` directly or via the `wrapper.setup` shim, since setuptools' command
+machinery never receives the PEP 517 `config_settings`; use `SKBUILD_*`
+environment variables there instead.
 
 For classic scikit-build compatibility, two environment variables are honored,
 but only when using the `scikit_build_core.setuptools.wrapper.setup` shim (they
