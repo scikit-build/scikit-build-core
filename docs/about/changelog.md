@@ -2,9 +2,9 @@
 
 ## Version 1.0.2
 
-This patch release fixes redirect editable installs so that PEP 302 import
-hooks (such as `beartype.claw`) that register a `sys.path_hooks` entry are
-honored for redirected modules.
+This patch release fixes redirect editable installs so that PEP 302 import hooks
+(such as `beartype.claw`) that register a `sys.path_hooks` entry are honored for
+redirected modules.
 
 Fixes:
 
