@@ -74,6 +74,7 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {"config-setting": {"zmq.prefix": {"type": "int"}}},
         {"config-setting": {"zmq.prefix": {"env": ""}}},
         {"config-setting": {"zmq.prefix": {"choices": "bundled"}}},
+        {"config-setting": {"zmq.prefix": {"cmake": "ZMQ_PREFIX"}}},
         {"cmake": {"define": {"FOO": {"config-setting": ""}}}},
         {
             "cmake": {
@@ -135,7 +136,7 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
             "config-setting": {
                 "zmq.prefix": {"help": "Location", "env": "ZMQ_PREFIX"},
                 "zmq.libzmq": {"choices": ["bundled", "system"], "default": "system"},
-                "zmq.bundled": {"type": "bool", "default": False, "cmake": "BUNDLED"},
+                "zmq.bundled": {"type": "bool", "default": False},
             }
         },
         {"cmake": {"define": {"FOO": {"config-setting": "zmq.prefix"}}}},
