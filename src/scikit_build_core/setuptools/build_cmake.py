@@ -425,8 +425,11 @@ class BuildCMake(setuptools.Command):
     cmake_args: list[str] | str | None = None
     _editable_install_dir: Path | None
     _installed_files: list[Path]
-    # Underscored so setuptools' editable_wheel doesn't clobber it with a bool
-    # True (it matches the attribute name "editable_mode" exactly).
+    # The SubCommand protocol flag: editable_wheel sets it to True directly on
+    # build sub-commands. Folded into _editable_mode by _get_editable_mode().
+    editable_mode: bool
+    # Underscored so setuptools' editable_wheel doesn't clobber the enum with
+    # a bool True (it sets the attribute named "editable_mode" exactly).
     _editable_mode: _EditableMode
 
     build_lib: str | None
@@ -449,6 +452,7 @@ class BuildCMake(setuptools.Command):
         self.build_lib = None
         self.build_temp = None
         self.debug = None
+        self.editable_mode = False
         self._editable_mode = _EditableMode.DISABLED
         self.parallel = None
         self.plat_name = None
@@ -474,10 +478,11 @@ class BuildCMake(setuptools.Command):
             ]
 
     def _get_editable_mode(self) -> _EditableMode:
+        # setuptools marks a PEP 660 editable build by setting editable_mode
+        # directly on build sub-commands (the SubCommand protocol) and on
+        # build_ext; a direct "build_ext --inplace" sets just inplace.
         build_ext = self.distribution.get_command_obj("build_ext")
-        # setuptools sets editable_mode on build_ext only when building a PEP
-        # 660 editable wheel; a direct "build_ext --inplace" sets just inplace.
-        if getattr(build_ext, "editable_mode", False):
+        if self.editable_mode or getattr(build_ext, "editable_mode", False):
             # Strict editables copy build_lib outputs into a persistent aux dir
             # (_LinkTree), keeping the source tree clean. editable_wheel is
             # internal, so probe defensively and fall back to in-tree (LENIENT).
@@ -489,6 +494,12 @@ class BuildCMake(setuptools.Command):
         if getattr(build_ext, "inplace", False):
             return _EditableMode.INPLACE
         return _EditableMode.DISABLED
+
+    def _get_source_dir(self) -> str | None:
+        # dist.cmake_source_dir (setup.py kwarg) takes priority over the
+        # source-dir configured via pyproject.toml/self.source_dir.
+        dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
+        return self.source_dir if dist_source_dir is None else dist_source_dir
 
     def _get_install_subdir(self) -> Path:
         dist_cmake_install_dir = (
@@ -645,8 +656,7 @@ class BuildCMake(setuptools.Command):
         self._set_generated_data_files()
 
         dist = self.distribution
-        dist_source_dir = getattr(self.distribution, "cmake_source_dir", None)
-        source_dir = self.source_dir if dist_source_dir is None else dist_source_dir
+        source_dir = self._get_source_dir()
         assert source_dir is not None, "This should not be reachable"
 
         assert self.cmake_args is None or isinstance(self.cmake_args, list)
@@ -764,8 +774,15 @@ class BuildCMake(setuptools.Command):
             return sorted(self.get_output_mapping())
         return sorted(os.fspath(path) for path in self._installed_files)
 
-    # def "get_source_file"(self) -> list[str]:
-    #    return ["CMakeLists.txt"]
+    def get_source_files(self) -> list[str]:
+        # Conservative: just the CMake entry point, so sdist/egg_info know
+        # about it. The full CMake source tree can't be enumerated here (the
+        # file API reply isn't available before configuring).
+        source_dir = self._get_source_dir()
+        if source_dir is None:
+            return []
+        cmake_lists = Path(source_dir) / "CMakeLists.txt"
+        return [cmake_lists.as_posix()] if cmake_lists.is_file() else []
 
     def get_output_mapping(self) -> dict[str, str]:
         # Strict editable outputs are generated, not source files, so they have

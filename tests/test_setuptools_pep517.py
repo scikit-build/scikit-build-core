@@ -110,7 +110,7 @@ def test_pep517_sdist(tmp_path: Path):
         assert file_names == {
             f"{cmake_example}-0.0.1/{x}"
             for x in (
-                # TODO: "CMakeLists.txt",
+                "CMakeLists.txt",
                 "PKG-INFO",
                 "src",
                 "src/cmake_example.egg-info",
@@ -326,7 +326,7 @@ def test_toml_sdist(tmp_path: Path):
         assert file_names == {
             f"{cmake_example}-0.0.1/{x}"
             for x in (
-                # TODO: "CMakeLists.txt",
+                "CMakeLists.txt",
                 "PKG-INFO",
                 "src",
                 "src/cmake_example.egg-info",
@@ -676,6 +676,46 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     # aliasing (RUNNER~1 vs runneradmin) that resolve() misses on cygwin.
     assert install_dir.is_absolute()
     assert install_dir.samefile(tmp_path / "src" / "wrapper_example")
+
+
+def test_finalize_options_honors_directly_set_editable_mode():
+    # editable_wheel's SubCommand protocol sets cmd.editable_mode = True
+    # directly on build sub-commands before finalize_options runs; build_ext's
+    # own flags (editable_mode/inplace both False here) must not clobber it.
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.editable_mode = True
+
+    cmd.finalize_options()
+
+    assert cmd.editable_mode is True
+    # No editable_wheel command object with mode="strict", so LENIENT.
+    assert cmd._editable_mode is build_cmake._EditableMode.LENIENT
+
+
+def test_get_source_files_finds_configured_cmakelists(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "CMakeLists.txt").touch()
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "sub"
+
+    assert cmd.get_source_files() == ["sub/CMakeLists.txt"]
+
+
+def test_get_source_files_empty_when_missing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "sub"  # never created
+
+    assert cmd.get_source_files() == []
 
 
 def test_validate_settings_editable_mode_only_required_for_pep660():
