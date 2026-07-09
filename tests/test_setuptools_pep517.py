@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import logging
 import subprocess
 import sys
 import tarfile
@@ -215,6 +216,73 @@ def test_pep517_editable(virtualenv, tmp_path: Path):
 
     add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
     assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.broken_on_urct
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.parametrize("package", ["wrapper_setuptools_install_dir"], indirect=True)
+def test_pep517_editable_wrapper_without_editable_mode(
+    package, virtualenv, tmp_path: Path
+):
+    # The classic scikit-build wrapper always built editables in-place, so it
+    # must not require the editable.mode = "inplace" opt-in.
+    assert build_editable is not None
+    pyproject = package.workdir / "pyproject.toml"
+    contents = pyproject.read_text(encoding="utf-8")
+    assert 'editable.mode = "inplace"\n' in contents
+    pyproject.write_text(
+        contents.replace('editable.mode = "inplace"\n', ""), encoding="utf-8"
+    )
+
+    dist = tmp_path / "dist"
+    out = build_editable(str(dist))
+    (wheel,) = dist.glob("wrapper_example-0.0.1-0.editable-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
+    assert wheel == dist / out
+
+    virtualenv.install(wheel)
+
+    module_dir = virtualenv.execute(
+        "import pathlib, wrapper_example; print(pathlib.Path(wrapper_example.__file__).resolve().parent)"
+    )
+    assert Path(module_dir) == (package.workdir / "src/wrapper_example").resolve()
+
+    _assert_extension_import(virtualenv, "wrapper_example")
+
+
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+def test_pep517_editable_plugin_requires_editable_mode(package, capfd, tmp_path: Path):
+    # The plain plugin requires the editable.mode = "inplace" opt-in, since
+    # editable installs write into the source tree. The check can't run in the
+    # early build_meta validation (wrapper-ness is only known once setup.py
+    # runs), so this exercises the deferred command-time check end-to-end.
+    assert build_editable is not None
+    pyproject = package.workdir / "pyproject.toml"
+    contents = pyproject.read_text(encoding="utf-8")
+    assert 'editable.mode = "inplace"\n' in contents
+    pyproject.write_text(
+        contents.replace('editable.mode = "inplace"\n', ""), encoding="utf-8"
+    )
+
+    dist = tmp_path / "dist"
+    # How the SetupError surfaces varies by setuptools version: SystemExit from
+    # distutils, or (with -W error) editable_wheel's _DebuggingTips warning.
+    with pytest.raises((SystemExit, SetupError, Warning)) as excinfo:
+        build_editable(str(dist))
+
+    expected = "set editable.mode = 'inplace' to opt in"
+    captured = capfd.readouterr()
+    # Older setuptools replaces the message, leaving it only in the printed
+    # traceback.
+    assert expected in str(excinfo.value) or expected in captured.err
+    assert not list(dist.glob("*.whl"))
 
 
 @pytest.mark.compile
@@ -781,13 +849,32 @@ def test_get_source_files_requires_explicit_inclusion_mode(tmp_path, monkeypatch
         cmd.get_source_files()
 
 
-def test_validate_settings_editable_mode_only_required_for_pep660():
+def test_validate_settings_editable_mode_inplace_default_wrapper_only(caplog):
     settings = build_cmake._load_settings()
     assert settings.editable.mode == "redirect"
-    # Plain builds (including build_ext --inplace) don't require the setting.
-    build_cmake._validate_settings(settings)
+    # Plain builds (including build_ext --inplace) never check editable.mode.
+    build_cmake._validate_settings(settings, wrapper_compat=False)
+
+    # wrapper_compat=None (the early PEP 517 validation) defers the check.
+    build_cmake._validate_settings(settings, pep660_editable=True)
+
+    # The plain plugin requires the explicit opt-in.
     with pytest.raises(SetupError, match=r"editable\.mode = 'inplace'"):
-        build_cmake._validate_settings(settings, pep660_editable=True)
+        build_cmake._validate_settings(
+            settings, pep660_editable=True, wrapper_compat=False
+        )
+
+    # The classic wrapper defaults to in-place, with only an info message.
+    caplog.set_level(logging.INFO, logger="scikit_build_core")
+    build_cmake._validate_settings(settings, pep660_editable=True, wrapper_compat=True)
+    assert "in-place editable" in caplog.text
+
+    # An explicit editable.mode = "inplace" is always silent.
+    caplog.clear()
+    settings.editable.mode = "inplace"
+    build_cmake._validate_settings(settings, pep660_editable=True, wrapper_compat=True)
+    build_cmake._validate_settings(settings, pep660_editable=True, wrapper_compat=False)
+    assert caplog.text == ""
 
 
 def test_wrapper_setup_raises_setup_error():

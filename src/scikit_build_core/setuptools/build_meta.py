@@ -59,6 +59,8 @@ if hasattr(setuptools.build_meta, "build_editable"):
             config_settings,
             state=state,
         ).settings
+        # wrapper_compat is unknown until setup.py runs, so the editable.mode
+        # check is deferred to the build_cmake command.
         _validate_settings(settings, pep660_editable=True)
 
     def build_editable(

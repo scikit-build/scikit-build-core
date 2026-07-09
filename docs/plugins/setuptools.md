@@ -147,21 +147,26 @@ requires setting it. Other `sdist` options are not used in setuptools mode.
 PEP 660 editable installs (`pip install -e .`) are supported when the active
 setuptools version provides `build_editable` (setuptools 63+).
 
-Setuptools editable installs require:
+The setuptools plugin follows setuptools' native editable-wheel mechanism,
+placing CMake-installed extension modules into the source layout that setuptools
+exposes via its `.pth` file. This is effectively the setuptools equivalent of
+scikit-build-core's
+[`inplace` editable mode](../configuration/editable.md#inplace-mode), so the
+backend's own `redirect` mode is not supported here.
+
+Because this writes build artifacts into your source tree, the plugin requires
+opting in:
 
 ```toml
 [tool.scikit-build]
 editable.mode = "inplace"
 ```
 
-The setuptools plugin follows setuptools' editable-wheel mechanism, so editable
-builds place CMake-installed extension modules into the source layout that
-setuptools exposes via its `.pth` file. This is effectively the setuptools
-equivalent of scikit-build-core's
-[`inplace` editable mode](../configuration/editable.md#inplace-mode), so
-redirect mode is not supported here.
+The `scikit_build_core.setuptools.wrapper.setup` shim skips this requirement,
+since in-place editable installs are how scikit-build (classic) always behaved.
 
-Because of that, `editable.rebuild` is not supported in setuptools mode.
+Because setuptools owns the editable mechanism, `editable.rebuild` is not
+supported in setuptools mode.
 
 ### Strict mode
 

@@ -39,7 +39,7 @@ from packaging.version import Version
 from .._check_extra import warn_missing_extra
 from .._compat import tomllib
 from .._compat.setuptools.errors import SetupError
-from .._logging import LEVEL_VALUE, raw_logger
+from .._logging import LEVEL_VALUE, logger, raw_logger
 from ..build._file_processor import each_unignored_file
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
@@ -130,7 +130,10 @@ def _apply_cmake_install_target(
 
 
 def _validate_settings(
-    settings: ScikitBuildSettings, *, pep660_editable: bool = False
+    settings: ScikitBuildSettings,
+    *,
+    pep660_editable: bool = False,
+    wrapper_compat: bool | None = None,
 ) -> None:
     if settings.wheel.expand_macos_universal_tags:
         msg = "wheel.expand_macos_universal_tags is not supported in setuptools mode"
@@ -144,12 +147,22 @@ def _validate_settings(
     if len(normalize_build_types(settings.cmake.build_type)) > 1:
         msg = "cmake.build-type lists (multi-config) are not supported in setuptools mode, use a single build type"
         raise SetupError(msg)
-    # A direct "build_ext --inplace" builds in-place regardless of
-    # editable.mode; only PEP 660 editable wheels require the opt-in.
+    # A direct "build_ext --inplace" always builds in-place; PEP 660 editable
+    # wheels use the same mechanism, but since that writes into the source
+    # tree, the plain plugin requires the editable.mode = "inplace" opt-in.
+    # The classic scikit-build wrapper always behaved this way, so it proceeds
+    # by default. wrapper_compat=None means "unknown" (the early PEP 517
+    # validation runs before setup.py can enable the wrapper), deferring this
+    # check to the command-time validation.
     if pep660_editable:
-        if settings.editable.mode != "inplace":
-            msg = "setuptools editable installs require editable.mode = 'inplace'"
-            raise SetupError(msg)
+        if settings.editable.mode == "redirect" and wrapper_compat is not None:
+            if not wrapper_compat:
+                msg = "setuptools editable installs build into the source tree, set editable.mode = 'inplace' to opt in"
+                raise SetupError(msg)
+            logger.info(
+                "Using setuptools' native in-place editable mechanism (classic "
+                "scikit-build behavior)"
+            )
         if settings.editable.rebuild_enabled:
             msg = "editable.rebuild is not supported in setuptools mode"
             raise SetupError(msg)
@@ -648,7 +661,11 @@ class BuildCMake(setuptools.Command):
         settings = _load_settings(
             state="editable" if self._editable_mode.is_editable else "wheel"
         )
-        _validate_settings(settings, pep660_editable=self._editable_mode.is_pep660)
+        _validate_settings(
+            settings,
+            pep660_editable=self._editable_mode.is_pep660,
+            wrapper_compat=self._wrapper_compat_enabled(),
+        )
         _apply_cmake_install_target(settings, self.distribution)
 
         build_tmp_folder = Path(self.build_temp)
