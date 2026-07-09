@@ -52,6 +52,10 @@ pypi = "faiss-cpu"
 github = "facebookresearch/faiss"
 
 [[project]]
+pypi = "fandango-fuzzer"
+github = "fandango-fuzzer/fandango"
+
+[[project]]
 pypi = "freud-analysis"
 github = "glotzerlab/freud"
 
