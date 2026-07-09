@@ -48,6 +48,7 @@ def test_declaration_minimal(tmp_path: Path):
     "entry",
     [
         pytest.param('"zmq.prefix" = {unknown = "x"}', id="unknown-key"),
+        pytest.param('"zmq.prefix" = {cmake = "ZMQ_PREFIX"}', id="no-cmake-alias"),
         pytest.param('"zmq.prefix" = {type = "int"}', id="bad-type"),
         pytest.param('prefix = {help = "no dot"}', id="dotless-name"),
         pytest.param('"cmake.prefix" = {help = "reserved"}', id="reserved-segment"),
@@ -300,66 +301,13 @@ def test_define_conf_beats_toml_reference(tmp_path: Path):
     assert settings_reader.settings.cmake.define["ZMQ_PREFIX"] == "/explicit"
 
 
-ALIAS_DECLARATION = dedent(
+PREFIX_DECLARATION = dedent(
     """\
     [tool.scikit-build.config-setting."zmq.prefix"]
     help = "Prefix to search for libzmq"
     env = "ZMQ_PREFIX"
-    cmake = "ZMQ_PREFIX"
     """
 )
-
-
-def test_cmake_alias(tmp_path: Path):
-    pyproject_toml = write_pyproject(tmp_path, ALIAS_DECLARATION)
-    settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.prefix": "/foo"})
-    assert settings_reader.settings.cmake.define["ZMQ_PREFIX"] == "/foo"
-
-
-def test_cmake_alias_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("ZMQ_PREFIX", "/from-env")
-    pyproject_toml = write_pyproject(tmp_path, ALIAS_DECLARATION)
-    settings_reader = SettingsReader.from_file(pyproject_toml)
-    assert settings_reader.settings.cmake.define["ZMQ_PREFIX"] == "/from-env"
-
-
-def test_cmake_alias_unset_absent(tmp_path: Path):
-    pyproject_toml = write_pyproject(tmp_path, ALIAS_DECLARATION)
-    settings_reader = SettingsReader.from_file(pyproject_toml)
-    assert "ZMQ_PREFIX" not in settings_reader.settings.cmake.define
-
-
-def test_cmake_alias_explicit_define_wins(tmp_path: Path):
-    pyproject_toml = write_pyproject(
-        tmp_path,
-        ALIAS_DECLARATION
-        + dedent(
-            """\
-            [tool.scikit-build.cmake.define]
-            ZMQ_PREFIX = "/explicit"
-            """
-        ),
-    )
-    settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.prefix": "/foo"})
-    assert settings_reader.settings.cmake.define["ZMQ_PREFIX"] == "/explicit"
-
-
-def test_cmake_alias_override_define_wins(tmp_path: Path):
-    pyproject_toml = write_pyproject(
-        tmp_path,
-        ALIAS_DECLARATION
-        + dedent(
-            """\
-            [[tool.scikit-build.overrides]]
-            if.state = "wheel"
-            cmake.define.ZMQ_PREFIX = "/override"
-            """
-        ),
-    )
-    settings_reader = SettingsReader.from_file(
-        pyproject_toml, {"zmq.prefix": "/foo"}, state="wheel"
-    )
-    assert settings_reader.settings.cmake.define["ZMQ_PREFIX"] == "/override"
 
 
 @pytest.mark.parametrize("with_decl", [True, False])
@@ -375,7 +323,7 @@ def test_malformed_cmake_table(tmp_path: Path, malformed: str, with_decl: bool):
     internal AttributeError in the config-setting resolution helpers."""
     content = f"[tool.scikit-build]\n{malformed}\n"
     if with_decl:
-        content += ALIAS_DECLARATION
+        content += PREFIX_DECLARATION
     pyproject_toml = write_pyproject(tmp_path, content)
     with pytest.raises(Exception, match="Failed converting") as exc:
         SettingsReader.from_file(pyproject_toml, {"zmq.prefix": "/foo"})
