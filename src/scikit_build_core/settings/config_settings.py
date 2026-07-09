@@ -35,7 +35,12 @@ def __dir__() -> list[str]:
 # normalization), like env-table keys.
 _NAME_REGEX = re.compile(r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$")
 
-_DECLARATION_KEYS = frozenset({"help", "type", "default", "env", "choices"})
+# A "choices" key (allowed values, str type only) was cut from the initial
+# release to keep the surface minimal. To re-add: a `choices: list[str] | None`
+# field here, load-time validation (list of strings, not with type = 'bool',
+# default must be a member), a resolved-value check in resolve_config_settings,
+# and the entry-schema property in skbuild_schema.py.
+_DECLARATION_KEYS = frozenset({"help", "type", "default", "env"})
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,7 +57,6 @@ class ConfigSettingDeclaration:
     type: Literal["str", "bool"] = "str"
     default: str | bool | None = None
     env: str | None = None
-    choices: list[str] | None = None
 
 
 def _error_context(name: str) -> str:
@@ -102,19 +106,6 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
         env = entry.get("env")
         if env is not None and (not isinstance(env, str) or not env):
             rich_error(f"{_error_context(name)} 'env' must be a non-empty string")
-        choices = entry.get("choices")
-        if choices is not None:
-            if type_ == "bool":
-                rich_error(
-                    f"{_error_context(name)} 'choices' is not allowed with"
-                    " type = 'bool'"
-                )
-            if not isinstance(choices, list) or not all(
-                isinstance(c, str) for c in choices
-            ):
-                rich_error(
-                    f"{_error_context(name)} 'choices' must be a list of strings"
-                )
         default = entry.get("default")
         if default is not None:
             # bool is checked first since bool is an int subclass.
@@ -128,17 +119,12 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
                     f"{_error_context(name)} 'default' must be a string for"
                     " type = 'str'"
                 )
-            if choices is not None and default not in choices:
-                rich_error(
-                    f"{_error_context(name)} 'default' must be one of the choices"
-                )
 
         decls[name] = ConfigSettingDeclaration(
             help=help_text,
             type=type_,
             default=default,
             env=env,
-            choices=choices,
         )
     return decls
 
@@ -174,11 +160,6 @@ def resolve_config_settings(
             continue
         if isinstance(raw, bool):
             rich_error(f"config-setting {name!r} expected a string, got a boolean")
-        if decl.choices is not None and raw not in decl.choices:
-            rich_error(
-                f"config-setting {name!r} got {raw!r}; valid choices:"
-                f" {', '.join(decl.choices)}"
-            )
         values[name] = raw
     return values
 
