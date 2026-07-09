@@ -48,6 +48,7 @@ for project in projects["project"]:
 * [deflate](https://pypi.org/project/deflate) ([source](https://github.com/dcwatson/deflate/blob/HEAD/pyproject.toml))
 * [ducc0](https://pypi.org/project/ducc0) ([source](https://github.com/mreineck/ducc/blob/HEAD/pyproject.toml))
 * [faiss-cpu](https://pypi.org/project/faiss-cpu) ([source](https://github.com/facebookresearch/faiss/blob/HEAD/pyproject.toml))
+* [fandango-fuzzer](https://pypi.org/project/fandango-fuzzer) ([source](https://github.com/fandango-fuzzer/fandango/blob/HEAD/pyproject.toml))
 * [freud-analysis](https://pypi.org/project/freud-analysis) ([source](https://github.com/glotzerlab/freud/blob/HEAD/pyproject.toml))
 * [gdstk](https://pypi.org/project/gdstk) ([source](https://github.com/heitzmann/gdstk/blob/HEAD/pyproject.toml))
 * [gemmi](https://pypi.org/project/gemmi) ([source](https://github.com/project-gemmi/gemmi/blob/HEAD/pyproject.toml))
@@ -105,7 +106,7 @@ for project in projects["project"]:
 * [viennaps](https://pypi.org/project/viennaps) ([source](https://github.com/ViennaTools/ViennaPS/blob/HEAD/pyproject.toml))
 * [xgrammar](https://pypi.org/project/xgrammar) ([source](https://github.com/mlc-ai/xgrammar/blob/HEAD/pyproject.toml))
 * [xtgeo](https://pypi.org/project/xtgeo) ([source](https://github.com/equinor/xtgeo/blob/HEAD/pyproject.toml))
-<!--[[[end]]] (sum: Dz4otQAPQ9)-->
+<!--[[[end]]] (sum: rugOlZQc/x)-->
 
 <!-- prettier-ignore-end -->
 
