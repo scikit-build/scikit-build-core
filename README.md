@@ -134,6 +134,21 @@ inside site-packages (so you will usually prefix everything by the package name)
 -- including any `__init__.py`, which CMake can place alongside the extension
 with `install(FILES src/__init__.py DESTINATION scikit_build_simplest)`.
 
+The most important optional configuration is this:
+
+```toml
+[build-system]
+requires = ["scikit-build-core>=1.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+```
+
+This will enable scikit-build-core to read your minimum requirement on itself
+and stay in compatibility mode for that version; if we make changes to defaults
+in the future, your package will continue to build exactly the same.
+
 The [Getting started guide][getting-started] walks through a complete package
 step by step. More examples are in the
 [tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
@@ -149,175 +164,134 @@ documentation][conf-ref]
 
 A quick summary and some defaults are listed below:
 
+<!-- prettier-ignore-start -->
 <!-- [[[cog
 from scikit_build_core.settings.skbuild_docs_readme import mk_skbuild_docs
 
-print("\n```toml\n[tool.scikit-build]")
+print()
 print(mk_skbuild_docs())
-print("```\n")
+print()
 ]]] -->
 
-```toml
-[tool.scikit-build]
-# The versions of CMake to allow as a python-compatible specifier.
-cmake.version = ""
+### Top-level
 
-# A list of args to pass to CMake when configuring the project.
-cmake.args = []
+| Option | Default | Description |
+| - | - | - |
+| `metadata` | `{}` | List dynamic metadata fields and hook locations in this table. |
+| `env` | `{}` | A table of environment variables to set for the CMake subprocesses. |
+| `strict-config` | `true` | Strictly check all config options. |
+| `experimental` | `false` | Enable early previews of features not finalized yet. |
+| `minimum-version` | `"1.0"` (current version) | If set, this will provide a method for backward compatibility. |
+| `build-dir` | `""` | The CMake build directory. Defaults to a unique temporary directory. |
 
-# A table of defines to pass to CMake when configuring the project. Additive.
-cmake.define = {}
+### `cmake`
 
-# The build type to use when building the project.
-cmake.build-type = "Release"
+| Option | Default | Description |
+| - | - | - |
+| `cmake.version` | `""` | The versions of CMake to allow as a python-compatible specifier. |
+| `cmake.args` | `[]` | A list of args to pass to CMake when configuring the project. |
+| `cmake.define` | `{}` | A table of defines to pass to CMake when configuring the project. Additive. |
+| `cmake.build-type` | `"Release"` | The build type to use when building the project. |
+| `cmake.source-dir` | `"."` | The source directory to use when building the project. |
+| `cmake.python-hints` | `true` | Do not pass the current environment's python hints such as ``Python_EXECUTABLE``. |
 
-# The source directory to use when building the project.
-cmake.source-dir = "."
+### `ninja`
 
-# Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
-cmake.python-hints = true
+| Option | Default | Description |
+| - | - | - |
+| `ninja.version` | `">=1.5"` | The versions of Ninja to allow. |
+| `ninja.make-fallback` | `true` | Use Make as a fallback if a suitable Ninja executable is not found. |
 
-# The versions of Ninja to allow.
-ninja.version = ">=1.5"
+### `logging`
 
-# Use Make as a fallback if a suitable Ninja executable is not found.
-ninja.make-fallback = true
+| Option | Default | Description |
+| - | - | - |
+| `logging.level` | `"WARNING"` | The logging level to display. |
 
-# The logging level to display.
-logging.level = "WARNING"
+### `sdist`
 
-# Files to include in the SDist even if they are skipped by default. Supports gitignore syntax.
-sdist.include = []
+| Option | Default | Description |
+| - | - | - |
+| `sdist.include` | `[]` | Files to include in the SDist even if they are skipped by default. Supports gitignore syntax. |
+| `sdist.exclude` | `[]` | Files to exclude from the SDist even if they are included by default. Supports gitignore syntax. |
+| `sdist.inclusion-mode` | `"default"` ("classic") | Method to use to compute the files to include and exclude. |
+| `sdist.reproducible` | `true` | Try to build a reproducible distribution. |
+| `sdist.cmake` | `false` | If set to True, CMake will be run before building the SDist. |
+| `sdist.force-include` | `{}` | Force-include files into the SDist. |
+| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. |
 
-# Files to exclude from the SDist even if they are included by default. Supports gitignore syntax.
-sdist.exclude = []
+### `wheel`
 
-# Method to use to compute the files to include and exclude.
-sdist.inclusion-mode = "default"  # "classic"
+| Option | Default | Description |
+| - | - | - |
+| `wheel.packages` | `["src/<package>", "python/<package>", "<package>"]` | A list of packages to auto-copy into the wheel. |
+| `wheel.py-api` | `""` | The Python version tag used in the wheel file. |
+| `wheel.expand-macos-universal-tags` | `false` | Fill out extra tags that are not required. |
+| `wheel.install-dir` | `""` | The CMake install prefix relative to the platlib wheel path. |
+| `wheel.license-files` | `""` | A list of license files to include in the wheel. Supports glob patterns. |
+| `wheel.cmake` | `true` | Run CMake as part of building the wheel. |
+| `wheel.platlib` | `""` | Target the platlib or the purelib. |
+| `wheel.exclude` | `[]` | A set of patterns to exclude from the wheel. |
+| `wheel.build-tag` | `""` | The build tag to use for the wheel. If empty, no build tag is used. |
+| `wheel.force-include` | `{}` | Force-include files into the wheel. |
+| `wheel.reproducible` | `false` | Try to build a reproducible wheel. |
 
-# Try to build a reproducible distribution.
-sdist.reproducible = true
+### `backport`
 
-# If set to True, CMake will be run before building the SDist.
-sdist.cmake = false
+| Option | Default | Description |
+| - | - | - |
+| `backport.find-python` | `"3.26.1"` | If CMake is less than this value, backport a copy of FindPython. |
 
-# Force-include files into the SDist.
-sdist.force-include = {}
+### `editable`
 
-# Which symlinks to resolve in the SDist, storing the target's contents instead.
-sdist.resolve-symlinks = "all"
+| Option | Default | Description |
+| - | - | - |
+| `editable.mode` | `"redirect"` | Select the editable mode to use. Can be "redirect" (default) or "inplace". |
+| `editable.verbose` | `true` | Turn on verbose output for the editable mode rebuilds. |
+| `editable.rebuild` | `false` | Rebuild the project when the package is imported. |
+| `editable.rebuild-dir` | `""` | Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``). |
 
-# A list of packages to auto-copy into the wheel.
-wheel.packages = ["src/<package>", "python/<package>", "<package>"]
+### `build`
 
-# The Python version tag used in the wheel file.
-wheel.py-api = ""
+| Option | Default | Description |
+| - | - | - |
+| `build.tool-args` | `[]` | Extra args to pass directly to the builder in the build step. |
+| `build.targets` | `[]` | The build targets to use when building the project. |
+| `build.verbose` | `false` | Verbose printout when building. |
+| `build.requires` | `[]` | Additional ``build-system.requires``. |
 
-# Fill out extra tags that are not required.
-wheel.expand-macos-universal-tags = false
+### `install`
 
-# The CMake install prefix relative to the platlib wheel path.
-wheel.install-dir = ""
+| Option | Default | Description |
+| - | - | - |
+| `install.components` | `[]` | The components to install. |
+| `install.targets` | `[]` | Build targets to run during the install step via ``cmake --build --target``. |
+| `install.strip` | `true` | Whether to strip the binaries. |
 
-# A list of license files to include in the wheel. Supports glob patterns.
-wheel.license-files = ""
+### `generate[]`
 
-# Run CMake as part of building the wheel.
-wheel.cmake = true
+| Option | Default | Description |
+| - | - | - |
+| `generate[].path` | `""` | The path (relative to platlib) for the file to generate. |
+| `generate[].template` | `""` | The template string to use for the file. |
+| `generate[].template-path` | `""` | The path to the template file. If empty, a template must be set. |
+| `generate[].location` | `"install"` | The place to put the generated file. |
 
-# Target the platlib or the purelib.
-wheel.platlib = ""
+### `messages`
 
-# A set of patterns to exclude from the wheel.
-wheel.exclude = []
+| Option | Default | Description |
+| - | - | - |
+| `messages.after-failure` | `""` | A message to print after a build failure. |
+| `messages.after-success` | `""` | A message to print after a successful build. |
 
-# The build tag to use for the wheel. If empty, no build tag is used.
-wheel.build-tag = ""
+### `search`
 
-# Force-include files into the wheel.
-wheel.force-include = {}
-
-# Try to build a reproducible wheel.
-wheel.reproducible = false
-
-# If CMake is less than this value, backport a copy of FindPython.
-backport.find-python = "3.26.1"
-
-# Select the editable mode to use. Can be "redirect" (default) or "inplace".
-editable.mode = "redirect"
-
-# Turn on verbose output for the editable mode rebuilds.
-editable.verbose = true
-
-# Rebuild the project when the package is imported.
-editable.rebuild = false
-
-# Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``).
-editable.rebuild-dir = ""
-
-# Extra args to pass directly to the builder in the build step.
-build.tool-args = []
-
-# The build targets to use when building the project.
-build.targets = []
-
-# Verbose printout when building.
-build.verbose = false
-
-# Additional ``build-system.requires``.
-build.requires = []
-
-# The components to install.
-install.components = []
-
-# Build targets to run during the install step via ``cmake --build --target``.
-install.targets = []
-
-# Whether to strip the binaries.
-install.strip = true
-
-# The path (relative to platlib) for the file to generate.
-generate[].path = ""
-
-# The template string to use for the file.
-generate[].template = ""
-
-# The path to the template file. If empty, a template must be set.
-generate[].template-path = ""
-
-# The place to put the generated file.
-generate[].location = "install"
-
-# A message to print after a build failure.
-messages.after-failure = ""
-
-# A message to print after a successful build.
-messages.after-success = ""
-
-# Add the python build environment site_packages folder to the CMake prefix paths.
-search.site-packages = true
-
-# List dynamic metadata fields and hook locations in this table.
-metadata = {}
-
-# A table of environment variables to set for the CMake subprocesses.
-env = {}
-
-# Strictly check all config options.
-strict-config = true
-
-# Enable early previews of features not finalized yet.
-experimental = false
-
-# If set, this will provide a method for backward compatibility.
-minimum-version = "1.0"  # current version
-
-# The CMake build directory. Defaults to a unique temporary directory.
-build-dir = ""
-
-```
+| Option | Default | Description |
+| - | - | - |
+| `search.site-packages` | `true` | Add the python build environment site_packages folder to the CMake prefix paths. |
 
 <!-- [[[end]]] -->
+<!-- prettier-ignore-end -->
 
 Most CMake environment variables should be supported, and `CMAKE_ARGS` can be
 used to set extra CMake args. `ARCHFLAGS` is used to specify macOS universal2 or

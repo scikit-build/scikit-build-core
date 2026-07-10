@@ -28,7 +28,7 @@ needed, so it is recommended.
 
 ```toml
 [build-system]
-requires = ["scikit-build-core", "setuptools"]
+requires = ["scikit-build-core[setuptools]"]
 build-backend = "scikit_build_core.setuptools.build_meta"
 ```
 
@@ -42,14 +42,24 @@ from setuptools import setup
 setup(cmake_source_dir=".")
 ```
 
-The presence of the `cmake_source_dir` option will tell the scikit-build
-setuptools plugin that it can activate for this package.
+or this in your `pyproject.toml`:
+
+```toml
+[tool.scikit-build]
+cmake.source-dir = "."
+```
+
+The presence of the `cmake_source_dir` option or a `cmake.source-dir` setting
+will tell the scikit-build setuptools plugin that it can activate for this
+package.
 
 ## Options
 
-These are the currently supported `setup.py` options:
+Most options should be set via `[tool.scikit-build]`. These classic `setup.py`
+options are also supported, though:
 
-- `cmake_source_dir`: The location of your `CMakeLists.txt`. Required.
+- `cmake_source_dir`: The location of your `CMakeLists.txt`. Required, unless
+  set via `cmake.source-dir` in `[tool.scikit-build]`.
 - `cmake_args`: Arguments to include when configuring.
 - `cmake_install_dir`: Supported. In direct setuptools-plugin usage, this is
   interpreted relative to setuptools' `build_lib` staging directory. When using
@@ -57,7 +67,7 @@ These are the currently supported `setup.py` options:
   scikit-build compatibility semantics instead, so source-root-prefixed values
   like `src` continue to work there.
 - `cmake_process_manifest_hook`: A callable that receives the list of files
-  installed by CMake, relative to the setuptools build root, and returns the
+  installed by CMake, relative to the CMake install prefix, and returns the
   subset that should be kept. For editable installs the omitted files are
   removed from the source tree.
 - `cmake_install_target`: The build target that performs the install. The
@@ -70,14 +80,13 @@ Support for the `cmake_install_dir`, `cmake_process_manifest_hook`, and
 `cmake_install_target` options.
 ```
 
-These options from scikit-build (classic) are not currently supported:
-`cmake_with_sdist`. `cmake_languages` has no effect. And
-`cmake_minimum_required_version` is now specified via `pyproject.toml` config,
-so has no effect here.
+`cmake_with_sdist`, from scikit-build (classic), is not supported (didn't work
+correctly). `cmake_languages` has no effect. `cmake_minimum_required_version` is
+now specified via `pyproject.toml` config, so has no effect here.
 
 A compatibility shim, `scikit_build_core.setuptools.wrapper.setup` is provided;
 it aims to behave as close to scikit-build (classic)'s `skbuild.setup` as
-possible.
+possible. If you don't use that, you get more reasonable modern defaults.
 
 ## Configuration
 
