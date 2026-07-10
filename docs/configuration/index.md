@@ -33,6 +33,14 @@ logging.level = "INFO"
 `````{tab} config-settings
 
 
+````{tab} uv
+
+```console
+$ uv pip install . -v -Cbuild.verbose=true -Clogging.level=INFO
+```
+
+````
+
 ````{tab} pip
 
 ```console
@@ -630,6 +638,14 @@ FOOD_GROUPS = ["Apple", "Lemon;Lime", "Banana"]
 
 `````{tab} config-settings
 
+
+````{tab} uv
+
+```console
+$ uv pip install . -Ccmake.define.SOME_DEFINE=ON
+```
+
+````
 
 ````{tab} pip
 

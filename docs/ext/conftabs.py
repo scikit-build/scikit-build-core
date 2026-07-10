@@ -38,6 +38,14 @@ class ConfTabs(SphinxDirective):
         `````{{tab}} config-settings
 
 
+        ````{{tab}} uv
+
+        ```console
+        $ uv pip install . -C{name}={joined_result}
+        ```
+
+        ````
+
         ````{{tab}} pip
 
         ```console
