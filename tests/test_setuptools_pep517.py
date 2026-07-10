@@ -669,7 +669,7 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     cmd = build_cmake.BuildCMake(dist)
     cmd.initialize_options()
     cmd.build_lib = str(tmp_path / "build")
-    cmd.editable_mode = True
+    cmd._editable_mode = build_cmake._EditableMode.LENIENT
 
     install_dir = cmd._get_install_dir()
     # samefile compares stat identity, immune to Windows 8.3 short-name
