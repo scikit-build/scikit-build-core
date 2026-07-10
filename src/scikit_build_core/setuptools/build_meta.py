@@ -12,15 +12,40 @@ __lazy_modules__ = {
 from typing import Literal
 
 import setuptools.build_meta
-from setuptools.build_meta import (
-    build_sdist,
-    build_wheel,
-    prepare_metadata_for_build_wheel,
-)
 
 from ..builder.get_requires import GetRequires
 from ..settings.skbuild_read_settings import SettingsReader
-from .build_cmake import _validate_settings
+from .build_cmake import _validate_settings, set_config_settings
+
+
+def build_wheel(
+    wheel_directory: str,
+    config_settings: dict[str, str | list[str]] | None = None,
+    metadata_directory: str | None = None,
+) -> str:
+    with set_config_settings(config_settings):
+        return setuptools.build_meta.build_wheel(
+            wheel_directory, config_settings, metadata_directory
+        )
+
+
+def build_sdist(
+    sdist_directory: str,
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> str:
+    with set_config_settings(config_settings):
+        return setuptools.build_meta.build_sdist(sdist_directory, config_settings)
+
+
+def prepare_metadata_for_build_wheel(
+    metadata_directory: str,
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> str:
+    with set_config_settings(config_settings):
+        return setuptools.build_meta.prepare_metadata_for_build_wheel(
+            metadata_directory, config_settings
+        )
+
 
 if hasattr(setuptools.build_meta, "build_editable"):
 
@@ -41,10 +66,11 @@ if hasattr(setuptools.build_meta, "build_editable"):
         config_settings: dict[str, str | list[str]] | None = None,
         metadata_directory: str | None = None,
     ) -> str:
-        _validate_editable_settings(config_settings, state="editable")
-        return setuptools.build_meta.build_editable(
-            wheel_directory, config_settings, metadata_directory
-        )
+        with set_config_settings(config_settings):
+            _validate_editable_settings(config_settings, state="editable")
+            return setuptools.build_meta.build_editable(
+                wheel_directory, config_settings, metadata_directory
+            )
 
 
 if hasattr(setuptools.build_meta, "prepare_metadata_for_build_editable"):
@@ -53,10 +79,11 @@ if hasattr(setuptools.build_meta, "prepare_metadata_for_build_editable"):
         metadata_directory: str,
         config_settings: dict[str, str | list[str]] | None = None,
     ) -> str:
-        _validate_editable_settings(config_settings, state="metadata_editable")
-        return setuptools.build_meta.prepare_metadata_for_build_editable(
-            metadata_directory, config_settings
-        )
+        with set_config_settings(config_settings):
+            _validate_editable_settings(config_settings, state="metadata_editable")
+            return setuptools.build_meta.prepare_metadata_for_build_editable(
+                metadata_directory, config_settings
+            )
 
 
 __all__ = [

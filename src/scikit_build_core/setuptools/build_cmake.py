@@ -19,6 +19,8 @@ __lazy_modules__ = {
     "typing",
 }
 
+import contextlib
+import contextvars
 import enum
 import os
 import shlex
@@ -45,7 +47,7 @@ from ..settings.skbuild_read_settings import SettingsReader
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
 
     from setuptools.dist import Distribution
 
@@ -66,6 +68,13 @@ __all__ = [
 # install-dir translation, classic layout staging, and SKBUILD_*_OPTIONS env vars.
 WRAPPER_COMPAT = "_scikit_build_wrapper_compat"
 ORIGINAL_DATA_FILES = "_scikit_build_original_data_files"
+
+# PEP 517 config_settings for the in-flight build. The build_cmake command runs
+# inside setuptools' setup(), which never receives the PEP 517 config_settings
+# dict, so the build_meta hooks stash it here for _load_settings to read.
+_CONFIG_SETTINGS: contextvars.ContextVar[dict[str, str | list[str]] | None] = (
+    contextvars.ContextVar("skbuild_setuptools_config_settings", default=None)
+)
 
 
 def __dir__() -> list[str]:
@@ -93,6 +102,18 @@ class _EditableMode(enum.Enum):
         """True when CMake installs into the source tree; otherwise the build
         stages into build_lib."""
         return self in {_EditableMode.INPLACE, _EditableMode.LENIENT}
+
+
+@contextlib.contextmanager
+def set_config_settings(
+    config_settings: dict[str, str | list[str]] | None,
+) -> Iterator[None]:
+    """Scope PEP 517 config_settings for nested build_cmake invocations."""
+    token = _CONFIG_SETTINGS.set(config_settings)
+    try:
+        yield
+    finally:
+        _CONFIG_SETTINGS.reset(token)
 
 
 def _apply_cmake_install_target(
@@ -138,8 +159,10 @@ def _load_settings(
     # setup.py-only projects (common with the classic scikit-build wrapper)
     # don't have a pyproject.toml.
     if not Path("pyproject.toml").is_file():
-        return SettingsReader({}, {}, state=state).settings
-    return SettingsReader.from_file("pyproject.toml", state=state).settings
+        return SettingsReader({}, _CONFIG_SETTINGS.get() or {}, state=state).settings
+    return SettingsReader.from_file(
+        "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
+    ).settings
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:

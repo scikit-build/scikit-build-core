@@ -742,6 +742,42 @@ def test_load_settings_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     assert build_cmake._load_settings(state="editable").wheel.cmake is True
 
 
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+def test_build_editable_threads_config_settings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    # A config-setting like `pip install -e . -C editable.mode=inplace` must be
+    # visible to build_cmake, not only to the metadata/validation hook. Without
+    # threading, the build half loads default settings and rejects the install.
+    import setuptools.build_meta
+
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("[tool.scikit-build]\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    captured: dict[str, str] = {}
+
+    def fake_build_editable(
+        _wheel_directory: str,
+        _config_settings: dict[str, str | list[str]] | None = None,
+        _metadata_directory: str | None = None,
+    ) -> str:
+        settings = build_cmake._load_settings(state="editable")
+        captured["mode"] = settings.editable.mode
+        # Must not raise "requires editable.mode = 'inplace'".
+        build_cmake._validate_settings(settings, pep660_editable=True)
+        return "wheel"
+
+    monkeypatch.setattr(setuptools.build_meta, "build_editable", fake_build_editable)
+
+    assert build_editable is not None
+    result = build_editable(str(tmp_path), {"editable.mode": "inplace"})
+    assert result == "wheel"
+    assert captured["mode"] == "inplace"
+
+
 def test_wrapper_forwards_manifest_hook(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
