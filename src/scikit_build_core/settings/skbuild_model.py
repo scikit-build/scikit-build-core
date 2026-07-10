@@ -636,7 +636,7 @@ class BackportSettings:
 class EditableSettings:
     mode: Literal["redirect", "inplace"] = "redirect"
     """
-    Select the editable mode to use. Can be "redirect" (default) or "inplace".
+    Select the editable mode to use.
     """
 
     verbose: bool = True
