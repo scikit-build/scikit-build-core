@@ -210,6 +210,64 @@ def test_pep517_editable(virtualenv, tmp_path: Path):
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.broken_on_urct
+@pytest.mark.skipif(
+    build_editable is None, reason="Requires setuptools editable support"
+)
+# _LinkTree emits an InformationOnly note about the aux dir on exit.
+@pytest.mark.filterwarnings("ignore:Editable installation")
+@pytest.mark.parametrize(
+    "config_settings",
+    [{"editable-mode": "strict"}, {"editable_mode": "strict"}],
+    ids=["dash", "underscore"],
+)
+@pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
+def test_pep517_editable_strict(virtualenv, package, config_settings, tmp_path: Path):
+    # Strict mode (pip install -e . --config-settings editable_mode=strict) uses
+    # setuptools' _LinkTree: unmapped build_lib outputs are copied into the
+    # persistent aux dir, so the CMake artifact must NOT touch the source tree.
+    assert build_editable is not None
+    dist = tmp_path / "dist"
+    out = build_editable(str(dist), config_settings=config_settings)
+    (wheel,) = dist.glob("cmake_example-0.0.1-0.editable-*.whl")
+    wheel = wheel.resolve()  # Windows mingw64 and UCRT now requires this
+    assert wheel == dist / out
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = {Path(n).parts[0] for n in zf.namelist()}
+
+    assert file_names == {
+        "__editable__.cmake_example-0.0.1.pth",
+        "cmake_example-0.0.1.dist-info",
+    }
+
+    # The strict link tree lives in build/__editable__.<name>-<tag>/ and must
+    # hold the compiled extension.
+    (aux_dir,) = package.workdir.glob("build/__editable__.cmake_example-*")
+    assert any(p.suffix in {".so", ".pyd", ".dylib"} for p in aux_dir.rglob("*"))
+
+    # The key win over setuptools' build_ext: the source tree stays clean.
+    src_dir = package.workdir / "src"
+    assert not any(p.suffix in {".so", ".pyd", ".dylib"} for p in src_dir.rglob("*"))
+
+    virtualenv.install(wheel)
+
+    module_dir = virtualenv.execute(
+        "import pathlib, cmake_example; print(pathlib.Path(cmake_example.__file__).resolve().parent)"
+    )
+    assert Path(module_dir).resolve() == aux_dir.resolve()
+
+    version = virtualenv.execute(
+        "import cmake_example; print(cmake_example.__version__)"
+    )
+    assert version.strip() == "0.0.1"
+
+    add = virtualenv.execute("import cmake_example; print(cmake_example.add(1, 2))")
+    assert add.strip() == "3"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.broken_on_urct
 @pytest.mark.parametrize("package", ["simple_setuptools_ext"], indirect=True)
 def test_build_ext_inplace_without_editable_mode(package):
     # A direct "setup.py build_ext --inplace" involves no editable wheel, so it
@@ -611,7 +669,7 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     cmd = build_cmake.BuildCMake(dist)
     cmd.initialize_options()
     cmd.build_lib = str(tmp_path / "build")
-    cmd.editable_mode = True
+    cmd._editable_mode = build_cmake._EditableMode.LENIENT
 
     install_dir = cmd._get_install_dir()
     # samefile compares stat identity, immune to Windows 8.3 short-name
