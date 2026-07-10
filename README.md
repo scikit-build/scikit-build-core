@@ -134,6 +134,21 @@ inside site-packages (so you will usually prefix everything by the package name)
 -- including any `__init__.py`, which CMake can place alongside the extension
 with `install(FILES src/__init__.py DESTINATION scikit_build_simplest)`.
 
+The most important optional configuration is this:
+
+```toml
+[build-system]
+requires = ["scikit-build-core>=1.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+```
+
+This will enable scikit-build-core to read your minimum requirement on itself
+and stay in compatibility mode for that version; if we make changes to defaults
+in the future, your package will continue to build exactly the same.
+
 The [Getting started guide][getting-started] walks through a complete package
 step by step. More examples are in the
 [tests/packages](https://github.com/scikit-build/scikit-build-core/tree/main/tests/packages).
