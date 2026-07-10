@@ -81,8 +81,8 @@ Support for the `cmake_install_dir`, `cmake_process_manifest_hook`, and
 ```
 
 `cmake_with_sdist`, from scikit-build (classic), is not supported (didn't work
-correctly).  `cmake_languages` has no effect.  `cmake_minimum_required_version`
-is now specified via `pyproject.toml` config, so has no effect here.
+correctly). `cmake_languages` has no effect. `cmake_minimum_required_version` is
+now specified via `pyproject.toml` config, so has no effect here.
 
 A compatibility shim, `scikit_build_core.setuptools.wrapper.setup` is provided;
 it aims to behave as close to scikit-build (classic)'s `skbuild.setup` as
