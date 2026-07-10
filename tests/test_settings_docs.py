@@ -14,13 +14,15 @@ from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 def test_skbuild_docs_readme() -> None:
     docs = mk_skbuild_docs_readme()
+    assert docs.startswith("### Top-level")
+    assert "### `cmake`" in docs
     assert (
-        "A table of defines to pass to CMake when configuring the project. Additive."
+        "| `cmake.define` | `{}` | A table of defines to pass to CMake when configuring the project. Additive. |"
         in docs
     )
-    assert "fail = " not in docs
+    assert "`fail`" not in docs
     # Deprecated items are not included here
-    assert "ninja.minimum-version" not in docs
+    assert "DEPRECATED" not in docs
 
 
 def test_skbuild_docs_sphinx() -> None:
