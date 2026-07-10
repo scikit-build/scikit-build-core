@@ -423,7 +423,7 @@ print(mk_skbuild_docs())
   :Config-settings: ``editable.mode`` or ``skbuild.editable.mode``
   :Environment variable: ``SKBUILD_EDITABLE_MODE``
 
-  Select the editable mode to use. Can be "redirect" (default) or "inplace".
+  Select the editable mode to use.
 ```
 
 ```{eval-rst}

@@ -73,6 +73,7 @@ class DCDoc:
     field: dataclasses.Field[typing.Any]
     deprecated: bool = False
     override_only: bool = False
+    choices: tuple[str, ...] = ()
 
 
 def sanitize_default_field(text: str) -> str:
@@ -112,6 +113,24 @@ def get_display_type(field_type: type | str) -> str:
         return "Any"
     # Otherwise just get the formatted form of the `type` object
     return field_type.__name__
+
+
+def get_choices(field_type: type | str) -> tuple[str, ...]:
+    """
+    Return the string choices for a ``Literal`` field, unwrapping ``Annotated``
+    and ``Optional``. Empty if the field is not a string ``Literal``.
+    """
+    if isinstance(field_type, str):
+        return ()
+    if get_origin(field_type) is Annotated:
+        return get_choices(get_args(field_type)[0])
+    if is_optional(field_type):
+        return get_choices(get_args(field_type)[0])
+    if get_origin(field_type) is typing.Literal:
+        args = get_args(field_type)
+        if all(isinstance(a, str) for a in args):
+            return args
+    return ()
 
 
 def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
@@ -157,4 +176,5 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             field=field,
             deprecated=field.metadata.get("deprecated", False),
             override_only=field.metadata.get("override_only", False),
+            choices=get_choices(field.type),
         )

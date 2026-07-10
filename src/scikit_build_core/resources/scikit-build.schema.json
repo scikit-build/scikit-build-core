@@ -328,7 +328,7 @@
             "inplace"
           ],
           "default": "redirect",
-          "description": "Select the editable mode to use. Can be \"redirect\" (default) or \"inplace\"."
+          "description": "Select the editable mode to use."
         },
         "verbose": {
           "type": "boolean",

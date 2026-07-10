@@ -206,7 +206,7 @@ print()
 
 | Option | Default | Description |
 | - | - | - |
-| `logging.level` | `"WARNING"` | The logging level to display. |
+| `logging.level` | `"WARNING"` | The logging level to display. (choices: `NOTSET`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`) |
 
 ### `sdist`
 
@@ -214,11 +214,11 @@ print()
 | - | - | - |
 | `sdist.include` | `[]` | Files to include in the SDist even if they are skipped by default. Supports gitignore syntax. |
 | `sdist.exclude` | `[]` | Files to exclude from the SDist even if they are included by default. Supports gitignore syntax. |
-| `sdist.inclusion-mode` | `"default"` ("classic") | Method to use to compute the files to include and exclude. |
+| `sdist.inclusion-mode` | `"default"` ("classic") | Method to use to compute the files to include and exclude. (choices: `classic`, `default`, `manual`, `explicit`) |
 | `sdist.reproducible` | `true` | Try to build a reproducible distribution. |
 | `sdist.cmake` | `false` | If set to True, CMake will be run before building the SDist. |
 | `sdist.force-include` | `{}` | Force-include files into the SDist. |
-| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. |
+| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. (choices: `all`, `external`, `none`, `classic`) |
 
 ### `wheel`
 
@@ -246,7 +246,7 @@ print()
 
 | Option | Default | Description |
 | - | - | - |
-| `editable.mode` | `"redirect"` | Select the editable mode to use. Can be "redirect" (default) or "inplace". |
+| `editable.mode` | `"redirect"` | Select the editable mode to use. (choices: `redirect`, `inplace`) |
 | `editable.verbose` | `true` | Turn on verbose output for the editable mode rebuilds. |
 | `editable.rebuild` | `false` | Rebuild the project when the package is imported. |
 | `editable.rebuild-dir` | `""` | Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``). |
@@ -275,7 +275,7 @@ print()
 | `generate[].path` | `""` | The path (relative to platlib) for the file to generate. |
 | `generate[].template` | `""` | The template string to use for the file. |
 | `generate[].template-path` | `""` | The path to the template file. If empty, a template must be set. |
-| `generate[].location` | `"install"` | The place to put the generated file. |
+| `generate[].location` | `"install"` | The place to put the generated file. (choices: `install`, `build`, `source`) |
 
 ### `messages`
 

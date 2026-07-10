@@ -47,6 +47,9 @@ class Item:
 
     def format(self) -> str:
         summary = self.item.docs.split("\n", maxsplit=1)[0].replace("|", "\\|")
+        if self.item.choices:
+            choices = ", ".join(f"`{c}`" for c in self.item.choices)
+            summary = f"{summary} (choices: {choices})"
         value, _, comment = self.item.default.partition("  # ")
         default = f"`{value}`" + (f" ({comment})" if comment else "")
         return f"| `{self.item.name}` | {default} | {summary} |"
