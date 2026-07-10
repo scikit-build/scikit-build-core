@@ -14,6 +14,14 @@ build.verbose = true
 
 `````{tab} config-settings
 
+````{tab} uv
+
+```console
+$ uv pip install . -Cbuild.verbose=true
+```
+
+````
+
 ````{tab} pip
 
 ```console

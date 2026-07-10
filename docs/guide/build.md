@@ -5,18 +5,18 @@
 For any backend, you can make a SDist and then build a wheel from it with one
 command (choose your favorite way to run apps):
 
-````{tab} pipx
-
-```bash
-pipx run build
-```
-
-````
-
 ````{tab} uv
 
 ```bash
 uv build
+```
+
+````
+
+````{tab} pipx
+
+```bash
+pipx run build
 ```
 
 ````

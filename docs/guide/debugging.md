@@ -66,17 +66,6 @@ no longer exists when your editor looks for it.
 
 Extend the shared fix by having CMake export a compile database:
 
-````{tab} pip
-
-```bash
-pip install scikit-build-core pybind11
-pip install --no-build-isolation --check-build-dependencies -ve . \
-  -Cbuild-dir=build \
-  -Ccmake.define.CMAKE_EXPORT_COMPILE_COMMANDS=1
-```
-
-````
-
 ````{tab} uv
 
 ```bash
@@ -93,6 +82,17 @@ overlay:
 ```toml
 [tool.uv]
 no-build-isolation-package = ["mypackage"]
+```
+
+````
+
+````{tab} pip
+
+```bash
+pip install scikit-build-core pybind11
+pip install --no-build-isolation --check-build-dependencies -ve . \
+  -Cbuild-dir=build \
+  -Ccmake.define.CMAKE_EXPORT_COMPILE_COMMANDS=1
 ```
 
 ````
