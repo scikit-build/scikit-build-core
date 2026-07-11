@@ -130,15 +130,12 @@ sdist.inclusion-mode = "explicit"
 sdist.include = ["src/*.c", "cmake/"]
 ```
 
-Because setuptools owns the default file list, this selection is purely additive
-and opt-in: only the `"explicit"` {confval}`sdist.inclusion-mode` is supported,
-and using {confval}`sdist.include` requires setting it, so the configuration
-means the same thing here as it does in the main build backend. The options that
-control how the backend assembles its own SDists ({confval}`sdist.reproducible`,
-{confval}`sdist.cmake`, {confval}`sdist.force-include`) are not used in
-setuptools mode.
+Because setuptools owns the default file list, only the
+`"explicit"` {confval}`sdist.inclusion-mode` is supported, and using
+{confval}`sdist.include` requires setting it. Other `sdist` options are not used
+in setuptools mode.
 
-```{versionadded} 1.0
+```{versionadded} 1.0.3
 
 ```
 
