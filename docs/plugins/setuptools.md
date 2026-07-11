@@ -115,6 +115,29 @@ The `SKBUILD_CONFIGURE_OPTIONS` and `SKBUILD_BUILD_OPTIONS` environment
 variables (honored by the `wrapper.setup` shim).
 ```
 
+## SDists
+
+Setuptools builds the SDist, so its normal mechanisms (package discovery,
+`MANIFEST.in`) control the file list. The plugin contributes the CMake side on
+setuptools 62.4+: the entry-point `CMakeLists.txt`, plus any files matching
+{confval}`sdist.include`, trimmed by {confval}`sdist.exclude` (both gitignore
+syntax). Since the full CMake source tree can't be known before configuring,
+list your CMake sources explicitly:
+
+```toml
+[tool.scikit-build]
+sdist.inclusion-mode = "explicit"
+sdist.include = ["src/*.c", "cmake/"]
+```
+
+Because setuptools owns the default file list, only the `"explicit"`
+{confval}`sdist.inclusion-mode` is supported, and using {confval}`sdist.include`
+requires setting it. Other `sdist` options are not used in setuptools mode.
+
+```{versionadded} 1.0.3
+
+```
+
 ## Editable installs
 
 ```{versionadded} 1.0

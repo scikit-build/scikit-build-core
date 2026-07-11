@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import setuptools
+import setuptools.command.sdist
 from conftest import VEnv
 from packaging.version import Version
 
@@ -27,6 +28,12 @@ except ImportError:  # pragma: no cover - setuptools-scm < 10 or missing depende
 pytestmark = pytest.mark.setuptools
 setuptools_version = Version(importlib.metadata.version("setuptools"))
 build_editable = getattr(setuptools_build_meta, "build_editable", None)
+
+# sdist consults build sub-commands' get_source_files() only since
+# setuptools 62.4; older versions won't pick up CMakeLists.txt.
+SDIST_USES_SUBCOMMAND_SOURCES = hasattr(
+    setuptools.command.sdist.sdist, "_add_defaults_build_sub_commands"
+)
 
 
 @dataclass(frozen=True)
@@ -105,28 +112,31 @@ def test_pep517_sdist(tmp_path: Path):
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
 
+    expected = [
+        "PKG-INFO",
+        "src",
+        "src/cmake_example.egg-info",
+        "src/cmake_example.egg-info/PKG-INFO",
+        "src/cmake_example.egg-info/SOURCES.txt",
+        "src/cmake_example.egg-info/dependency_links.txt",
+        "src/cmake_example.egg-info/not-zip-safe",
+        "src/cmake_example.egg-info/requires.txt",
+        "src/cmake_example.egg-info/top_level.txt",
+        "pyproject.toml",
+        "setup.cfg",
+        "setup.py",
+        "LICENSE",
+    ]
+    if SDIST_USES_SUBCOMMAND_SOURCES:
+        expected.append("CMakeLists.txt")
+        # Opted in via sdist.include in the package's pyproject.toml.
+        expected.append("src/main.c")
+
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
-        assert file_names == {
-            f"{cmake_example}-0.0.1/{x}"
-            for x in (
-                # TODO: "CMakeLists.txt",
-                "PKG-INFO",
-                "src",
-                "src/cmake_example.egg-info",
-                "src/cmake_example.egg-info/PKG-INFO",
-                "src/cmake_example.egg-info/SOURCES.txt",
-                "src/cmake_example.egg-info/dependency_links.txt",
-                "src/cmake_example.egg-info/not-zip-safe",
-                "src/cmake_example.egg-info/requires.txt",
-                "src/cmake_example.egg-info/top_level.txt",
-                "pyproject.toml",
-                "setup.cfg",
-                "setup.py",
-                "LICENSE",
-                # TODO: "src/main.c",
-            )
-        } | {f"{cmake_example}-0.0.1"}
+        assert file_names == {f"{cmake_example}-0.0.1/{x}" for x in expected} | {
+            f"{cmake_example}-0.0.1"
+        }
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = set(pkg_info.read().decode().strip().splitlines())
@@ -321,25 +331,27 @@ def test_toml_sdist(tmp_path: Path):
     assert sdist == dist / out
     cmake_example = sdist.name[:13]
 
+    expected = [
+        "PKG-INFO",
+        "src",
+        "src/cmake_example.egg-info",
+        "src/cmake_example.egg-info/PKG-INFO",
+        "src/cmake_example.egg-info/SOURCES.txt",
+        "src/cmake_example.egg-info/dependency_links.txt",
+        "src/cmake_example.egg-info/top_level.txt",
+        "pyproject.toml",
+        "setup.cfg",
+        "LICENSE",
+        # TODO: "src/main.c",
+    ]
+    if SDIST_USES_SUBCOMMAND_SOURCES:
+        expected.append("CMakeLists.txt")
+
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
-        assert file_names == {
-            f"{cmake_example}-0.0.1/{x}"
-            for x in (
-                # TODO: "CMakeLists.txt",
-                "PKG-INFO",
-                "src",
-                "src/cmake_example.egg-info",
-                "src/cmake_example.egg-info/PKG-INFO",
-                "src/cmake_example.egg-info/SOURCES.txt",
-                "src/cmake_example.egg-info/dependency_links.txt",
-                "src/cmake_example.egg-info/top_level.txt",
-                "pyproject.toml",
-                "setup.cfg",
-                "LICENSE",
-                # TODO: "src/main.c",
-            )
-        } | {f"{cmake_example}-0.0.1"}
+        assert file_names == {f"{cmake_example}-0.0.1/{x}" for x in expected} | {
+            f"{cmake_example}-0.0.1"
+        }
         pkg_info = f.extractfile(f"{cmake_example}-0.0.1/PKG-INFO")
         assert pkg_info
         pkg_info_contents = set(pkg_info.read().decode().strip().splitlines())
@@ -676,6 +688,97 @@ def test_editable_install_dir_honors_per_package_dir(tmp_path, monkeypatch):
     # aliasing (RUNNER~1 vs runneradmin) that resolve() misses on cygwin.
     assert install_dir.is_absolute()
     assert install_dir.samefile(tmp_path / "src" / "wrapper_example")
+
+
+def test_finalize_options_honors_directly_set_editable_mode():
+    # editable_wheel's SubCommand protocol sets cmd.editable_mode = True
+    # directly on build sub-commands before finalize_options runs; build_ext's
+    # own flags (editable_mode/inplace both False here) must not clobber it.
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.editable_mode = True
+
+    cmd.finalize_options()
+
+    assert cmd.editable_mode is True
+    # No editable_wheel command object with mode="strict", so LENIENT.
+    assert cmd._editable_mode is build_cmake._EditableMode.LENIENT
+
+
+def test_get_source_files_finds_configured_cmakelists(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "sub" / "deps").mkdir(parents=True)
+    (tmp_path / "sub" / "CMakeLists.txt").touch()
+    # The entry-point pattern is anchored, so nested ones don't match.
+    (tmp_path / "sub" / "deps" / "CMakeLists.txt").touch()
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "sub"
+
+    assert cmd.get_source_files() == ["sub/CMakeLists.txt"]
+
+
+def test_get_source_files_empty_when_missing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "sub"  # never created
+
+    assert cmd.get_source_files() == []
+
+
+def test_get_source_files_honors_sdist_include_exclude(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "CMakeLists.txt").touch()
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "main.c").touch()
+    (src / "vendored.c").touch()
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            sdist.inclusion-mode = "explicit"
+            sdist.include = ["src/*.c"]
+            sdist.exclude = ["src/vendored.c"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "."
+
+    assert cmd.get_source_files() == ["CMakeLists.txt", "src/main.c"]
+
+
+def test_get_source_files_requires_explicit_inclusion_mode(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "CMakeLists.txt").touch()
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            sdist.include = ["src/*.c"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "."
+
+    with pytest.raises(SetupError, match=r"inclusion-mode = .explicit."):
+        cmd.get_source_files()
 
 
 def test_validate_settings_editable_mode_only_required_for_pep660():
