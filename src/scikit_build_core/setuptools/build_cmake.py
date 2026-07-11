@@ -781,10 +781,17 @@ class BuildCMake(setuptools.Command):
         # CMakeLists.txt plus anything sdist.include opts in, trimmed by
         # sdist.exclude. The full CMake source tree can't be enumerated here
         # (the file API reply isn't available before configuring), and
-        # setuptools owns the rest of the sdist file list, so the
-        # gitignore-reading inclusion modes don't apply.
+        # setuptools owns the rest of the sdist file list, so only the
+        # explicit opt-in selection is supported.
         settings = _load_settings()
         include = list(settings.sdist.include)
+        if include and settings.sdist.inclusion_mode != "explicit":
+            msg = (
+                'sdist.include requires sdist.inclusion-mode = "explicit" in '
+                "setuptools mode; setuptools owns the default sdist file list, "
+                "so the gitignore-reading inclusion modes are not supported"
+            )
+            raise SetupError(msg)
         source_dir = self._get_source_dir()
         if source_dir is not None:
             cmake_lists = Path(source_dir) / "CMakeLists.txt"

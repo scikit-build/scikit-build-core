@@ -743,6 +743,7 @@ def test_get_source_files_honors_sdist_include_exclude(tmp_path, monkeypatch):
         textwrap.dedent(
             """\
             [tool.scikit-build]
+            sdist.inclusion-mode = "explicit"
             sdist.include = ["src/*.c"]
             sdist.exclude = ["src/vendored.c"]
             """
@@ -756,6 +757,28 @@ def test_get_source_files_honors_sdist_include_exclude(tmp_path, monkeypatch):
     cmd.source_dir = "."
 
     assert cmd.get_source_files() == ["CMakeLists.txt", "src/main.c"]
+
+
+def test_get_source_files_requires_explicit_inclusion_mode(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "CMakeLists.txt").touch()
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            sdist.include = ["src/*.c"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "."
+
+    with pytest.raises(SetupError, match=r"inclusion-mode = .explicit."):
+        cmd.get_source_files()
 
 
 def test_validate_settings_editable_mode_only_required_for_pep660():

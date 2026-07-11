@@ -126,13 +126,17 @@ list your CMake sources explicitly:
 
 ```toml
 [tool.scikit-build]
+sdist.inclusion-mode = "explicit"
 sdist.include = ["src/*.c", "cmake/"]
 ```
 
-This selection is purely additive and opt-in, so the backend's gitignore-based
-{confval}`sdist.inclusion-mode` does not apply, and neither do the options that
+Because setuptools owns the default file list, this selection is purely additive
+and opt-in: only the `"explicit"` {confval}`sdist.inclusion-mode` is supported,
+and using {confval}`sdist.include` requires setting it, so the configuration
+means the same thing here as it does in the main build backend. The options that
 control how the backend assembles its own SDists ({confval}`sdist.reproducible`,
-{confval}`sdist.cmake`, {confval}`sdist.force-include`).
+{confval}`sdist.cmake`, {confval}`sdist.force-include`) are not used in
+setuptools mode.
 
 ```{versionadded} 1.0
 
