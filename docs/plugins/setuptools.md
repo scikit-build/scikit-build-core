@@ -130,10 +130,9 @@ sdist.inclusion-mode = "explicit"
 sdist.include = ["src/*.c", "cmake/"]
 ```
 
-Because setuptools owns the default file list, only the
-`"explicit"` {confval}`sdist.inclusion-mode` is supported, and using
-{confval}`sdist.include` requires setting it. Other `sdist` options are not used
-in setuptools mode.
+Because setuptools owns the default file list, only the `"explicit"`
+{confval}`sdist.inclusion-mode` is supported, and using {confval}`sdist.include`
+requires setting it. Other `sdist` options are not used in setuptools mode.
 
 ```{versionadded} 1.0.3
 
