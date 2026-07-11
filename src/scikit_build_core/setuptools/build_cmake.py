@@ -6,6 +6,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.build._file_processor",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.macos",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
@@ -39,6 +40,7 @@ from .._check_extra import warn_missing_extra
 from .._compat import tomllib
 from .._compat.setuptools.errors import SetupError
 from .._logging import LEVEL_VALUE, raw_logger
+from ..build._file_processor import each_unignored_file
 from ..builder.builder import Builder, get_archs
 from ..builder.macos import normalize_macos_version
 from ..cmake import CMake, CMaker
@@ -775,14 +777,31 @@ class BuildCMake(setuptools.Command):
         return sorted(os.fspath(path) for path in self._installed_files)
 
     def get_source_files(self) -> list[str]:
-        # Conservative: just the CMake entry point, so sdist/egg_info know
-        # about it. The full CMake source tree can't be enumerated here (the
-        # file API reply isn't available before configuring).
+        # Contribute the CMake sources to egg_info/sdist: the entry-point
+        # CMakeLists.txt plus anything sdist.include opts in, trimmed by
+        # sdist.exclude. The full CMake source tree can't be enumerated here
+        # (the file API reply isn't available before configuring), and
+        # setuptools owns the rest of the sdist file list, so the
+        # gitignore-reading inclusion modes don't apply.
+        settings = _load_settings()
+        include = list(settings.sdist.include)
         source_dir = self._get_source_dir()
-        if source_dir is None:
+        if source_dir is not None:
+            cmake_lists = Path(source_dir) / "CMakeLists.txt"
+            if cmake_lists.is_file():
+                # Anchored: a bare "CMakeLists.txt" would match at any depth.
+                include.append(f"/{cmake_lists.as_posix()}")
+        if not include:
             return []
-        cmake_lists = Path(source_dir) / "CMakeLists.txt"
-        return [cmake_lists.as_posix()] if cmake_lists.is_file() else []
+        return sorted(
+            path.as_posix()
+            for path in each_unignored_file(
+                Path(),
+                include=include,
+                exclude=settings.sdist.exclude,
+                mode="explicit",
+            )
+        )
 
     def get_output_mapping(self) -> dict[str, str]:
         # Strict editable outputs are generated, not source files, so they have

@@ -126,10 +126,11 @@ def test_pep517_sdist(tmp_path: Path):
         "setup.cfg",
         "setup.py",
         "LICENSE",
-        # TODO: "src/main.c",
     ]
     if SDIST_USES_SUBCOMMAND_SOURCES:
         expected.append("CMakeLists.txt")
+        # Opted in via sdist.include in the package's pyproject.toml.
+        expected.append("src/main.c")
 
     with tarfile.open(sdist) as f:
         file_names = set(f.getnames())
@@ -707,8 +708,10 @@ def test_finalize_options_honors_directly_set_editable_mode():
 
 def test_get_source_files_finds_configured_cmakelists(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "deps").mkdir(parents=True)
     (tmp_path / "sub" / "CMakeLists.txt").touch()
+    # The entry-point pattern is anchored, so nested ones don't match.
+    (tmp_path / "sub" / "deps" / "CMakeLists.txt").touch()
 
     dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
     cmd = build_cmake.BuildCMake(dist)
@@ -727,6 +730,32 @@ def test_get_source_files_empty_when_missing(tmp_path, monkeypatch):
     cmd.source_dir = "sub"  # never created
 
     assert cmd.get_source_files() == []
+
+
+def test_get_source_files_honors_sdist_include_exclude(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "CMakeLists.txt").touch()
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "main.c").touch()
+    (src / "vendored.c").touch()
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            sdist.include = ["src/*.c"]
+            sdist.exclude = ["src/vendored.c"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.source_dir = "."
+
+    assert cmd.get_source_files() == ["CMakeLists.txt", "src/main.c"]
 
 
 def test_validate_settings_editable_mode_only_required_for_pep660():
