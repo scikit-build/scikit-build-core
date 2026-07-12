@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...4.3)
+cmake_minimum_required(VERSION 3.15...4.4)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
