@@ -3,9 +3,9 @@
 ## Version 1.0.3
 
 This patch release polishes the setuptools compatibility plugin:
-`config_settings` are now threaded through to the build command, the source
-tree stays clean in strict editable mode, and the `SubCommand` protocol is
-fully implemented.
+`config_settings` are now threaded through to the build command, the source tree
+stays clean in strict editable mode, and the `SubCommand` protocol is fully
+implemented.
 
 Fixes:
 
