@@ -1,5 +1,34 @@
 # Changelog
 
+## Version 1.0.3
+
+This patch release polishes the setuptools compatibility plugin:
+`config_settings` are now threaded through to the build command, the source tree
+stays clean in strict editable mode, and the `SubCommand` protocol is fully
+implemented.
+
+Fixes:
+
+- Complete the setuptools `SubCommand` protocol by @henryiii in #1502
+- Thread `config_settings` to the build command by @henryiii in #1499
+- Keep source tree clean in strict editable mode by @henryiii in #1501
+
+Documentation:
+
+- Put uv first in installer tabs and add it to config-settings by @henryiii in
+  #1507
+- List choices for Literal options in the README table by @henryiii in #1506
+- Touch up README options tables, setuptools docs by @henryiii in #1504
+- Show the projects list as a card grid with language/binding badges by
+  @henryiii in #1503
+- Add high-star projects to the known projects list by @henryiii in #1497
+
+CI and testing:
+
+- Make linkcheck retry timeouts from slow hosts by @henryiii in #1505
+- Forward `-C` config-settings in downstream editable install by @henryiii in
+  #1498
+
 ## Version 1.0.2
 
 This patch release fixes redirect editable installs so that PEP 302 import hooks
