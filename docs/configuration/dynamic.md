@@ -70,8 +70,21 @@ input = "src/mypackage/__init__.py"
 
 The
 [dynamic-metadata package provides several plugins](https://dynamic-metadata.readthedocs.io/en/latest/plugins.html)
-you can use. Remember to include dynamic-metadata in your build requirements if
-you want to use them.
+you can use, each referenced by a `dynamic_metadata.<name>` provider string:
+
+- `dynamic_metadata.ast` -- read a variable from a Python file via AST parsing.
+- `dynamic_metadata.from_file` -- read a file's contents into a field.
+- `dynamic_metadata.static` -- set fields to static values.
+- `dynamic_metadata.readme_fragment` -- assemble a readme from fragments.
+- `dynamic_metadata.pin_installed` -- pin dependencies to the versions in
+  `build-system.requires`.
+- `dynamic_metadata.substitute` -- apply a regex substitution to a field
+  produced by an earlier entry.
+
+It also ships `dynamic_metadata.regex` and `dynamic_metadata.template`, which
+mirror scikit-build-core's built-in `regex` and `template` plugins below.
+Remember to include `dynamic-metadata` in your build requirements if you want to
+use any of these.
 
 ## Built-in plugins
 
