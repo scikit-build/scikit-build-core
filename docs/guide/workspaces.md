@@ -56,7 +56,7 @@ editable.rebuild = true
 ```
 
 See [editable installs](../configuration/editable.md) for the full set of
-options (verbosity, manual `__loader__.rebuild()`, inplace mode, and the newer
+options (verbosity, manual `rebuild()`, inplace mode, and the newer
 `editable.rebuild-dir`).
 
 ## Per-member configuration

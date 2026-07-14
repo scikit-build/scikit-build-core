@@ -69,10 +69,16 @@ a rebuild explicitly (this works whenever a persistent `build-dir` is set, with
 or without `editable.rebuild`)…
 
 ```python
-import mypackage
+import importlib.util
 
-mypackage.__loader__.rebuild()
+importlib.util.find_spec("mypackage").loader.rebuild()
+
+import mypackage
 ```
+
+Rebuild before importing `mypackage`: the module-level `ctypes.CDLL` call maps
+the library into the process, and the old binary stays loaded even after a
+rebuild.
 
 …or import a real extension module from the same project first, which does fire
 the on-import hook when `editable.rebuild` is enabled. See
