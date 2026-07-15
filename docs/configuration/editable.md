@@ -108,10 +108,8 @@ importlib.util.find_spec("some_package").loader.rebuild()
 import some_package
 ```
 
-(For a submodule like `"pkg.sub"`, `find_spec` still imports the parent package,
-so prefer a top-level name.) If the module is already imported and you plan to
-restart anyway to pick up the new binaries, the loader is also reachable on the
-module itself:
+If you don't import or lazily import the compiled code you are trying to load,
+you can reach the loader in Python on the outer module:
 
 ```python
 some_package.__loader__.rebuild()
