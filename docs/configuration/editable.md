@@ -95,19 +95,30 @@ build and checking `SKBUILD` being set.
 ## Triggering a rebuild manually
 
 You don't have to enable `editable.rebuild` to rebuild on demand. Both editable
-modes install a loader that exposes a `rebuild()` method, so you can recompile
-whenever you like:
+modes install a loader that exposes a `rebuild()` method. Rebuild _before_ the
+first import: once Python loads a compiled extension it cannot unload it, so a
+rebuild after import only takes effect in a new process.
+`importlib.util.find_spec()` reaches the loader without importing the module:
 
 ```python
-import some_package
+import importlib.util
 
+importlib.util.find_spec("some_package").loader.rebuild()
+
+import some_package
+```
+
+If you don't import or lazily import the compiled code you are trying to load,
+you can reach the loader in Python on the outer module:
+
+```python
 some_package.__loader__.rebuild()
 ```
 
 For redirect installs this runs the same `cmake --build`/`--install` cycle used
-by the automatic rebuild, and works for any importable object the install
-provides -- a package, a plain module, or a compiled extension. A redirect
-rebuild needs a persistent build directory, so install with a `build-dir` set:
+by the automatic rebuild, and works for any importable name the install provides
+-- a package, a plain module, or a compiled extension. A redirect rebuild needs
+a persistent build directory, so install with a `build-dir` set:
 
 ```console
 $ pip install --no-build-isolation -Cbuild-dir=build -ve .
@@ -120,9 +131,9 @@ For inplace installs, `rebuild()` runs `cmake --build` in the source tree (there
 is no install step); the source directory is always the build directory, so no
 `build-dir` is required.
 
-If you don't have a handle on a redirected module, the finder itself is on
-`sys.meta_path` and carries the same method (`ScikitBuildRedirectingFinder` for
-redirect installs, `ScikitBuildInplaceFinder` for inplace):
+The finder itself is also on `sys.meta_path` and carries the same method
+(`ScikitBuildRedirectingFinder` for redirect installs,
+`ScikitBuildInplaceFinder` for inplace):
 
 ```python
 import sys

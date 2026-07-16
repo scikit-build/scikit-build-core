@@ -204,6 +204,16 @@ def test_inplace_loader_rebuild(isolated, isolate):
     assert "Running cmake --build" in out
     assert out.splitlines()[-1] == "rebuilt"
 
+    # The docs-recommended pattern: rebuild via find_spec before the first
+    # import, so the fresh extension is the one that gets loaded.
+    out = isolated.execute(
+        "import importlib.util;"
+        " importlib.util.find_spec('simplest').loader.rebuild();"
+        " import simplest; print('rebuilt')"
+    )
+    assert "Running cmake --build" in out
+    assert out.splitlines()[-1] == "rebuilt"
+
 
 @pytest.mark.compile
 @pytest.mark.configure
