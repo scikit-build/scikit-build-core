@@ -46,7 +46,7 @@ def test_uv_workspace_editable_member(tmp_path: Path, pep518_wheelhouse: Path):
             [project]
             name = "consumer"
             version = "0.1.0"
-            requires-python = ">=3.8"
+            requires-python = ">=3.9"
             dependencies = ["simplest"]
 
             [tool.scikit-build]

@@ -240,9 +240,8 @@ def test_navigate_editable_pkg(editable_package: EditablePackage, virtualenv: VE
     print(virtualenv.execute("import pkg.source"))
 
     # Load resource files
-    if sys.version_info >= (3, 9):
-        virtualenv.execute("import pkg.src_files")
-        virtualenv.execute("import pkg.installed_files")
+    virtualenv.execute("import pkg.src_files")
+    virtualenv.execute("import pkg.installed_files")
 
 
 def test_navigate_editable_remapped_namespace(
@@ -301,16 +300,10 @@ def test_navigate_editable_remapped_namespace(
     assert out == "remapped"
 
     # importlib.resources must reach data in the remapped namespace directory.
-    if sys.version_info >= (3, 9):
-        read_data = (
-            "from importlib.resources import files;"
-            " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
-        )
-    else:
-        read_data = (
-            "from importlib.resources import read_text;"
-            " print(read_text('pkg.namespace', 'data.txt'))"
-        )
+    read_data = (
+        "from importlib.resources import files;"
+        " print(files('pkg.namespace').joinpath('data.txt').read_text(encoding='utf-8'))"
+    )
     assert virtualenv.execute(read_data) == "payload"
 
 

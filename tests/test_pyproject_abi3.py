@@ -37,9 +37,9 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv, capsys):
     )
 
     if abi3:
-        assert "-cp38-abi3-" in out
+        assert "-cp39-abi3-" in out
     else:
-        assert "-cp38-abi3-" not in out
+        assert "-cp39-abi3-" not in out
 
     with zipfile.ZipFile(wheel) as zf:
         file_names = {Path(n).parts[0] for n in zf.namelist()}

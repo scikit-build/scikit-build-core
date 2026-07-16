@@ -132,9 +132,10 @@ class CMaker:
         stale = False
 
         info: dict[str, str] = {}
-        with contextlib.suppress(FileNotFoundError), skbuild_info.open(
-            "r", encoding="utf-8"
-        ) as f:
+        with (
+            contextlib.suppress(FileNotFoundError),
+            skbuild_info.open("r", encoding="utf-8") as f,
+        ):
             info = json.load(f)
 
         if info:

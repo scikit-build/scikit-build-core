@@ -11,8 +11,7 @@ Recommendations:
 - You need to reinstall to pick up new files.
 
 Resources (via `importlib.resources`) are supported and tested on all supported
-Python versions. On Python 3.8, use the `importlib_resources` backport, since
-`importlib.resources.files` was added to the standard library in Python 3.9.
+Python versions.
 
 ```console
 # Very experimental rebuild on initial import feature

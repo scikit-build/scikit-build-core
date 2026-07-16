@@ -4,13 +4,9 @@ __lazy_modules__ = {"typing"}
 
 import sys
 import typing
+from typing import Annotated, get_args, get_origin
 
 TYPE_CHECKING = False
-
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated, get_args, get_origin
-else:
-    from typing import Annotated, get_args, get_origin
 
 if sys.version_info < (3, 11):
     if TYPE_CHECKING:

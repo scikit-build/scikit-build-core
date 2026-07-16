@@ -6,7 +6,10 @@ import importlib.util
 import inspect
 import pkgutil
 from pathlib import Path
-from typing import Generator
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def on_all_modules(

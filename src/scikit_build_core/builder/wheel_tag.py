@@ -268,7 +268,7 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
     parser.add_argument(
         "--abi",
         default="",
-        help="Specify py-api, like 'cp38', 'cp315t', or 'py3'",
+        help="Specify py-api, like 'cp39', 'cp315t', or 'py3'",
     )
     parser.add_argument(
         "--purelib",

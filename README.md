@@ -75,7 +75,7 @@ features over classic Scikit-build:
 Current requirements:
 
 - The minimum supported CMake is 3.15
-- The minimum supported Python is 3.8 (3.7+ for 0.10.x and older)
+- The minimum supported Python is 3.9 (3.8+ for 1.0.x and older)
 
 The recommended interface is the native pyproject builder. Other backends are
 also available:

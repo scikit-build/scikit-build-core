@@ -7,7 +7,7 @@ __lazy_modules__ = {
 
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from .common import APIVersion, Paths
 from .directory import BacktraceGraph, InstallRule
@@ -46,7 +46,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -62,13 +62,13 @@ class Directory:
     projectIndex: int
     jsonFile: Optional[Path] = None
     parentIndex: Optional[int] = None
-    childIndexes: List[int] = dataclasses.field(default_factory=list)
-    targetIndexes: List[int] = dataclasses.field(default_factory=list)
-    abstractTargetIndexes: List[int] = dataclasses.field(default_factory=list)
+    childIndexes: list[int] = dataclasses.field(default_factory=list)
+    targetIndexes: list[int] = dataclasses.field(default_factory=list)
+    abstractTargetIndexes: list[int] = dataclasses.field(default_factory=list)
     minimumCMakeVersion: Optional[StringCMakeVersion] = None
     hasInstallRule: bool = False
     # From the "directory" object loaded via jsonFile:
-    installers: List[InstallRule] = dataclasses.field(default_factory=list)
+    installers: list[InstallRule] = dataclasses.field(default_factory=list)
     backtraceGraph: Optional[BacktraceGraph] = None
     codemodelVersion: Optional[APIVersion] = None
 
@@ -76,11 +76,11 @@ class Directory:
 @dataclasses.dataclass(frozen=True)
 class Project:
     name: str
-    directoryIndexes: List[int]
+    directoryIndexes: list[int]
     parentIndex: Optional[int] = None
-    childIndexes: List[int] = dataclasses.field(default_factory=list)
-    targetIndexes: List[int] = dataclasses.field(default_factory=list)
-    abstractTargetIndexes: List[int] = dataclasses.field(default_factory=list)
+    childIndexes: list[int] = dataclasses.field(default_factory=list)
+    targetIndexes: list[int] = dataclasses.field(default_factory=list)
+    abstractTargetIndexes: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -102,7 +102,7 @@ class Destination:
 @dataclasses.dataclass(frozen=True)
 class Install:
     prefix: Prefix
-    destinations: List[Destination]
+    destinations: list[Destination]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -119,7 +119,7 @@ class Sysroot:
 @dataclasses.dataclass(frozen=True)
 class Link:
     language: str
-    commandFragments: Optional[List[CommandFragment]] = dataclasses.field(
+    commandFragments: Optional[list[CommandFragment]] = dataclasses.field(
         default_factory=list
     )
     lto: Optional[bool] = None
@@ -128,7 +128,7 @@ class Link:
 
 @dataclasses.dataclass(frozen=True)
 class Archive:
-    commandFragments: Optional[List[CommandFragment]] = dataclasses.field(
+    commandFragments: Optional[list[CommandFragment]] = dataclasses.field(
         default_factory=list
     )
     lto: Optional[bool] = None
@@ -170,7 +170,7 @@ class Folder:
 class Launcher:
     command: Path
     type: str
-    arguments: List[str] = dataclasses.field(default_factory=list)
+    arguments: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -183,20 +183,20 @@ class FileSet:
     name: str
     type: str
     visibility: str
-    baseDirectories: List[Path] = dataclasses.field(default_factory=list)
+    baseDirectories: list[Path] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
 class SourceGroup:
     name: str
-    sourceIndexes: List[int] = dataclasses.field(default_factory=list)
-    interfaceSourceIndexes: List[int] = dataclasses.field(default_factory=list)
+    sourceIndexes: list[int] = dataclasses.field(default_factory=list)
+    interfaceSourceIndexes: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
 class LanguageStandard:
     standard: str
-    backtraces: List[int] = dataclasses.field(default_factory=list)
+    backtraces: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -226,16 +226,16 @@ class Define:
 
 @dataclasses.dataclass(frozen=True)
 class CompileGroup:
-    sourceIndexes: List[int]
+    sourceIndexes: list[int]
     language: str
     languageStandard: Optional[LanguageStandard] = None
-    compileCommandFragments: List[CompileCommandFragment] = dataclasses.field(
+    compileCommandFragments: list[CompileCommandFragment] = dataclasses.field(
         default_factory=list
     )
-    includes: List[Include] = dataclasses.field(default_factory=list)
-    frameworks: List[Include] = dataclasses.field(default_factory=list)
-    precompileHeaders: List[PrecompileHeader] = dataclasses.field(default_factory=list)
-    defines: List[Define] = dataclasses.field(default_factory=list)
+    includes: list[Include] = dataclasses.field(default_factory=list)
+    frameworks: list[Include] = dataclasses.field(default_factory=list)
+    precompileHeaders: list[PrecompileHeader] = dataclasses.field(default_factory=list)
+    defines: list[Define] = dataclasses.field(default_factory=list)
     sysroot: Optional[Sysroot] = None
 
 
@@ -246,9 +246,9 @@ class Source:
     sourceGroupIndex: Optional[int] = None
     isGenerated: Optional[bool] = None
     fileSetIndex: Optional[int] = None
-    fileSetIndexes: List[int] = dataclasses.field(default_factory=list)
+    fileSetIndexes: list[int] = dataclasses.field(default_factory=list)
     backtrace: Optional[int] = None
-    backtraces: List[int] = dataclasses.field(default_factory=list)
+    backtraces: list[int] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -257,36 +257,36 @@ class Target:
     id: str
     type: str
     paths: Paths
-    sources: List[Source] = dataclasses.field(default_factory=list)
+    sources: list[Source] = dataclasses.field(default_factory=list)
     nameOnDisk: Optional[Path] = None
-    artifacts: List[Artifact] = dataclasses.field(default_factory=list)
+    artifacts: list[Artifact] = dataclasses.field(default_factory=list)
     isGeneratorProvided: Optional[bool] = None
     install: Optional[Install] = None
     link: Optional[Link] = None
     archive: Optional[Archive] = None
-    dependencies: List[Dependency] = dataclasses.field(default_factory=list)
+    dependencies: list[Dependency] = dataclasses.field(default_factory=list)
     backtrace: Optional[int] = None
     folder: Optional[Folder] = None
-    launchers: List[Launcher] = dataclasses.field(default_factory=list)
+    launchers: list[Launcher] = dataclasses.field(default_factory=list)
     debugger: Optional[Debugger] = None
     imported: Optional[bool] = None
     local: Optional[bool] = None
     abstract: Optional[bool] = None
     symbolic: Optional[bool] = None
-    linkLibraries: List[LinkLibrary] = dataclasses.field(default_factory=list)
-    interfaceLinkLibraries: List[LinkLibrary] = dataclasses.field(default_factory=list)
-    compileDependencies: List[CompileDependency] = dataclasses.field(
+    linkLibraries: list[LinkLibrary] = dataclasses.field(default_factory=list)
+    interfaceLinkLibraries: list[LinkLibrary] = dataclasses.field(default_factory=list)
+    compileDependencies: list[CompileDependency] = dataclasses.field(
         default_factory=list
     )
-    interfaceCompileDependencies: List[CompileDependency] = dataclasses.field(
+    interfaceCompileDependencies: list[CompileDependency] = dataclasses.field(
         default_factory=list
     )
-    objectDependencies: List[Dependency] = dataclasses.field(default_factory=list)
-    orderDependencies: List[Dependency] = dataclasses.field(default_factory=list)
-    fileSets: List[FileSet] = dataclasses.field(default_factory=list)
-    interfaceSources: List[Source] = dataclasses.field(default_factory=list)
-    sourceGroups: List[SourceGroup] = dataclasses.field(default_factory=list)
-    compileGroups: List[CompileGroup] = dataclasses.field(default_factory=list)
+    objectDependencies: list[Dependency] = dataclasses.field(default_factory=list)
+    orderDependencies: list[Dependency] = dataclasses.field(default_factory=list)
+    fileSets: list[FileSet] = dataclasses.field(default_factory=list)
+    interfaceSources: list[Source] = dataclasses.field(default_factory=list)
+    sourceGroups: list[SourceGroup] = dataclasses.field(default_factory=list)
+    compileGroups: list[CompileGroup] = dataclasses.field(default_factory=list)
     backtraceGraph: Optional[BacktraceGraph] = None
     codemodelVersion: Optional[APIVersion] = None
     # From the codemodel reference to this target:
@@ -297,10 +297,10 @@ class Target:
 @dataclasses.dataclass(frozen=True)
 class Configuration:
     name: str
-    projects: List[Project]
-    targets: List[Target]
-    directories: List[Directory]
-    abstractTargets: List[Target] = dataclasses.field(default_factory=list)
+    projects: list[Project]
+    targets: list[Target]
+    directories: list[Directory]
+    abstractTargets: list[Target] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -308,4 +308,4 @@ class CodeModel:
     kind: str
     version: APIVersion
     paths: Paths
-    configurations: List[Configuration]
+    configurations: list[Configuration]
