@@ -116,7 +116,7 @@ the minimum to get started.
 An example `CMakeLists.txt`:
 
 ```cmake
-cmake_minimum_required(VERSION 3.15...4.3)
+cmake_minimum_required(VERSION 3.15...4.4)
 project(scikit_build_simplest LANGUAGES C)
 
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)

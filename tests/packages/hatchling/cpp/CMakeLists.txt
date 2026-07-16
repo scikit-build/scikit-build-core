@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...4.3)
+cmake_minimum_required(VERSION 3.15...4.4)
 project(extensionlib_example_cmake LANGUAGES C)
 
 find_package(

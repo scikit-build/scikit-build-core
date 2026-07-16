@@ -437,9 +437,11 @@ every CPython 3.15+, free-threaded or not; a GIL build falls back to
 `cp315-abi3`.
 
 `USE_SABI` is set from `${SKBUILD_SABI_VERSION}` (3.15 for `abi3t`) rather than
-hardcoded. CMake before 4.4 has no `abi3t` awareness, so the SOABI suffix is
-taken from `${SKBUILD_SOABI}` and `Py_TARGET_ABI3T` is defined manually; both
-become unnecessary on CMake 4.4+.
+hardcoded. CMake 4.4 is the first release with native `abi3t` awareness; on 4.4+
+it emits the `abi3t` SOABI suffix and defines `Py_TARGET_ABI3T` on its own. The
+example keeps the manual fallback (SOABI from `${SKBUILD_SOABI}`,
+`Py_TARGET_ABI3T` defined by hand) so it still builds on CMake < 4.4. The
+fallback is a harmless no-op once you require 4.4+.
 
 ```{note}
 `abi3t` requires CPython 3.15+ and the PEP 793 module export mechanism, so the

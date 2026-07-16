@@ -335,10 +335,10 @@ def package_simple_pyproject_ext(
     package = PackageInfo(
         "simple_pyproject_ext",
         tmp_path_factory.mktemp("pkg"),
-        "02ddfa3e5907ef6a991d54ba4bf23d0aaafb46841d74b4327da91eaf66c95b53",
-        "8330d31d6c798455b0d8c0615dbb8b72219d0e11fb6aa34c50d7313f90facbc4",
-        "b7835a2da5732feab1bc29fde44da4e996405566922e718d8c9ad0f6f1a58903",
-        "b2d90702df52ce7b3bd1093fc5933be836b610b4d1f000857822420af4abba4a",
+        "2e38820898f524a579192aeba818663916312ec3d8bfb84a26b1701e1768540c",
+        "6d20fa5e8a8f0ecb2084abe13f3b646ea604a9a50614e18ce8cdcbefd8e365a1",
+        "9863d4c1101153174b79d1aee5d5399e7d57721389cf0cff7c195082080fea95",
+        "f71fae6a004761c7897cd55cf247af1fec69907e3d2263b4f3013469038f7261",
     )
     process_package(package, monkeypatch)
     return package
