@@ -8,12 +8,12 @@ __lazy_modules__ = {
 
 import dataclasses
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Annotated, Any, Literal, Optional, TypedDict, Union
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.typing import Annotated, Self
+from .._compat.typing import Self
 
 __all__ = [
     "BackportSettings",

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "ast",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     "inspect",
     "packaging",
     "packaging.specifiers",
@@ -18,12 +17,12 @@ import inspect
 import textwrap
 import typing
 from pathlib import Path
+from typing import Annotated, get_args, get_origin
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .. import __version__
-from .._compat.typing import Annotated, get_args, get_origin
 
 TYPE_CHECKING = False
 

@@ -363,8 +363,6 @@ docstring-code-format = true
 "tomllib".msg = "Use scikit_build_core._compat.tomllib instead."
 "importlib_metadata".msg = "Use importlib.metadata directly instead."
 "importlib.metadata.entry_points".msg = "Use scikit_build_core._compat.importlib.metadata.entry_points instead."
-"importlib.resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
-"importlib_resources".msg = "Use scikit_build_core._compat.importlib.resources instead."
 "pyproject_metadata".msg = "Use scikit_build_core._vendor.pyproject_metadata instead."
 "setuptools.errors".msg = "Use scikit_build_core._compat.setuptools.errors instead."
 

@@ -2,7 +2,6 @@ __lazy_modules__ = {
     "argparse",
     "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.model.cache",
     f"{__spec__.parent}.model.cmakefiles",
@@ -20,10 +19,9 @@ import json
 import sys
 import typing
 from pathlib import Path
-from typing import Any, Callable, TypeVar, Union  # noqa: TID251
+from typing import Any, Callable, TypeVar, Union, get_args, get_origin  # noqa: TID251
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import get_args, get_origin
 from ..utils.typing import (
     get_target_raw_type,
     is_union_type,
@@ -75,7 +73,7 @@ class Converter:
             # and projectIndex on codemodel target entries
             data = {**file_data, **data}
 
-        input_dict: dict[str, type[Any]] = {}
+        input_dict: dict[str, Any] = {}
         exceptions: list[Exception] = []
 
         # We don't have DataclassInstance exposed in typing yet

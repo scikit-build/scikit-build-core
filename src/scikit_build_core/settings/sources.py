@@ -88,16 +88,14 @@ from __future__ import annotations
 __lazy_modules__ = {
     "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
 }
 
 import dataclasses
 import os
-from typing import Any, Literal, Protocol, TypeVar
+from typing import Any, Literal, Protocol, TypeVar, get_args
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import get_args
 from ..utils.typing import (
     get_inner_type,
     get_target_raw_type,

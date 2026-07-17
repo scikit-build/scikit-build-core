@@ -4,7 +4,6 @@ __lazy_modules__ = {"typing"}
 
 import sys
 import typing
-from typing import Annotated, get_args, get_origin
 
 TYPE_CHECKING = False
 
@@ -36,12 +35,9 @@ else:
 
 
 __all__ = [
-    "Annotated",
     "Self",
     "TypeVar",
     "assert_never",
-    "get_args",
-    "get_origin",
 ]
 
 
