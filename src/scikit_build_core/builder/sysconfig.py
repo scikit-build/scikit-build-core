@@ -207,32 +207,25 @@ def get_python_include_dir() -> Path:
     return Path(sysconfig.get_path("include"))
 
 
-def get_host_platform() -> str:
-    """
-    Return a string that identifies the current platform. This mimics
-    setuptools get_host_platform (without 3.8 aix compat).
-    """
-    return sysconfig.get_platform()
-
-
 def get_platform(env: Mapping[str, str] | None = None) -> str:
     """
     Return the Python platform name for a platform, respecting VSCMD_ARG_TGT_ARCH.
     """
     if env is None:
         env = os.environ
-    if sysconfig.get_platform().startswith("win"):
+    plat = sysconfig.get_platform()
+    if plat.startswith("win"):
         if "VSCMD_ARG_TGT_ARCH" in env:
             logger.debug(
                 "Selecting {} or {} due to VSCMD_ARG_TARGET_ARCH",
                 TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]),
-                get_host_platform(),
+                plat,
             )
-            return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
+            return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or plat
         if "arm64" in env.get("SETUPTOOLS_EXT_SUFFIX", "").lower():
             logger.debug("Windows ARM targeted via SETUPTOOLS_EXT_SUFFIX")
             return "win-arm64"
-    return get_host_platform()
+    return plat
 
 
 def get_cmake_platform(env: Mapping[str, str] | None) -> str:
