@@ -497,6 +497,48 @@ def test_wrapper_classic_layout_wheel(tmp_path: Path):
 
 @pytest.mark.compile
 @pytest.mark.configure
+@pytest.mark.xfail(
+    sys.platform.startswith("cygwin"),
+    reason="Cygwin fails here with ld errors",
+    strict=False,
+)
+@pytest.mark.parametrize(
+    "package", ["wrapper_setuptools_staged_install"], indirect=True
+)
+@pytest.mark.usefixtures("package")
+def test_wrapper_staged_install_layout(tmp_path: Path):
+    """The wrapper stages the CMake install at
+    <build_ext build_temp>/_skbuild/cmake-install, populated before plain
+    Extensions compile and left in place afterwards. Classic scikit-build's
+    skbuild.constants.CMAKE_INSTALL_DIR() compat shim advertises this path to
+    downstream setup.py files (the DracoPy pattern); coordinate with
+    scikit-build before changing the layout."""
+    dist = tmp_path / "dist"
+    out = build_wheel(str(dist))
+    wheel = (dist / out).resolve()
+
+    build_ext_cmd = setuptools.Distribution().get_command_obj("build_ext")
+    assert build_ext_cmd is not None
+    build_ext_cmd.ensure_finalized()
+    build_temp = build_ext_cmd.build_temp
+    assert build_temp is not None
+    staged = Path(build_temp) / "_skbuild" / "cmake-install"
+    assert (staged / "include" / "staged_install_example.h").is_file()
+
+    with zipfile.ZipFile(wheel) as zf:
+        file_names = set(zf.namelist())
+    assert any(name.startswith("staged_install_example.") for name in file_names)
+
+    venv = VEnv(tmp_path / "staged-install-venv")
+    venv.install(str(wheel))
+    answer = venv.execute(
+        "import staged_install_example; print(staged_install_example.STAGED_ANSWER)"
+    )
+    assert answer.strip() == "42"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
 @pytest.mark.skipif(
     build_editable is None, reason="Requires setuptools editable support"
 )

@@ -719,6 +719,9 @@ class BuildCMake(setuptools.Command):
         use_wrapper_classic_layout_compat = (
             self._wrapper_classic_layout_compat_enabled()
         )
+        # Classic scikit-build's skbuild.constants.CMAKE_INSTALL_DIR() shim
+        # advertises this wrapper staging path to downstream setup.py files;
+        # coordinate with scikit-build before moving it.
         cmake_install_prefix = (
             build_temp / "cmake-install" / install_subdir
             if use_wrapper_classic_layout_compat
