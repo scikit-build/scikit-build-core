@@ -533,6 +533,19 @@ class BuildCMake(setuptools.Command):
             source_root = Path(package_dir.get("", "."))
         return source_root.resolve() / install_subdir
 
+    def _get_staged_install_prefix(self, build_temp: Path) -> Path:
+        """CMake's install prefix: where files land before staging into the wheel.
+
+        Under wrapper classic-layout compat this is
+        <build_ext build_temp>/_skbuild/cmake-install[/install_subdir]. Classic
+        scikit-build's skbuild.constants.CMAKE_INSTALL_DIR() shim advertises that
+        path to downstream setup.py files (the DracoPy pattern); coordinate with
+        scikit-build before moving it.
+        """
+        if self._wrapper_classic_layout_compat_enabled():
+            return build_temp / "cmake-install" / self._get_install_subdir()
+        return self._get_install_dir()
+
     def _set_generated_data_files(
         self, data_files: list[tuple[str, list[str]]] | None = None
     ) -> None:
@@ -715,15 +728,10 @@ class BuildCMake(setuptools.Command):
         # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
         # Otherwise `cmake --install --prefix` would work by itself
         install_subdir = self._get_install_subdir()
-        install_dir = self._get_install_dir()
         use_wrapper_classic_layout_compat = (
             self._wrapper_classic_layout_compat_enabled()
         )
-        cmake_install_prefix = (
-            build_temp / "cmake-install" / install_subdir
-            if use_wrapper_classic_layout_compat
-            else install_dir
-        )
+        cmake_install_prefix = self._get_staged_install_prefix(build_temp)
         installed_before = _collect_recursive_files(cmake_install_prefix)
         defines = {"CMAKE_INSTALL_PREFIX": cmake_install_prefix}
 

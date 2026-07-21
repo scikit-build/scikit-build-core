@@ -495,6 +495,22 @@ def test_wrapper_classic_layout_wheel(tmp_path: Path):
     _assert_extension_import(venv, "classic_layout_example")
 
 
+def test_wrapper_staged_install_layout(tmp_path: Path):
+    """The wrapper stages the CMake install at
+    <build_ext build_temp>/_skbuild/cmake-install. Classic scikit-build's
+    skbuild.constants.CMAKE_INSTALL_DIR() compat shim advertises this path to
+    downstream setup.py files (the DracoPy pattern); coordinate with
+    scikit-build before changing the layout."""
+    dist = setuptools.Distribution()
+    setattr(dist, build_cmake.WRAPPER_COMPAT, True)
+    cmd = build_cmake.BuildCMake(dist)
+    # Non-editable build: classic-layout compat is active.
+    cmd._editable_mode = build_cmake._EditableMode.DISABLED
+
+    build_temp = tmp_path / "_skbuild"
+    assert cmd._get_staged_install_prefix(build_temp) == build_temp / "cmake-install"
+
+
 @pytest.mark.compile
 @pytest.mark.configure
 @pytest.mark.skipif(
