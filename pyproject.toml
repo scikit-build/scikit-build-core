@@ -48,7 +48,11 @@ dependencies = [
 
 [project.optional-dependencies]
 wheels = [
-    "cmake",
+    # 4.4.0's FindPython can't find Development.SABIModule on Windows
+    # (https://gitlab.kitware.com/cmake/cmake/-/issues/27950); remove when
+    # 4.4.1 is out
+    "cmake; sys_platform!='win32'",
+    "cmake!=4.4.0; sys_platform=='win32'",
     "ninja; sys_platform!='win32'",
 ]
 wheel-free-setuptools = [
