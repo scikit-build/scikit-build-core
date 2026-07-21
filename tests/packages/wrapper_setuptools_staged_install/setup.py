@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from setuptools import Distribution, Extension
 
@@ -11,7 +11,7 @@ def cmake_install_dir():
     # against files CMake installed here.
     build_ext = Distribution().get_command_obj("build_ext")
     build_ext.ensure_finalized()
-    return os.path.join(build_ext.build_temp, "_skbuild", "cmake-install")
+    return Path(build_ext.build_temp) / "_skbuild" / "cmake-install"
 
 
 setup(
@@ -21,8 +21,8 @@ setup(
     ext_modules=[
         Extension(
             "staged_install_example",
-            sources=[os.path.join("src", "module.c")],
-            include_dirs=[os.path.join(cmake_install_dir(), "include")],
+            sources=[str(Path("src") / "module.c")],
+            include_dirs=[str(cmake_install_dir() / "include")],
         )
     ],
     zip_safe=False,
