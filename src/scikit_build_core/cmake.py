@@ -107,6 +107,7 @@ class CMaker:
     module_dirs: list[Path] = dataclasses.field(default_factory=list)
     prefix_dirs: list[Path] = dataclasses.field(default_factory=list)
     prefix_roots: dict[str, list[Path]] = dataclasses.field(default_factory=dict)
+    fresh: bool = False
     init_cache_file: Path = dataclasses.field(init=False, default=Path())
     env: dict[str, str] = dataclasses.field(init=False, default_factory=os.environ.copy)
     single_config: bool = not sysconfig.get_platform().startswith("win")
@@ -129,35 +130,37 @@ class CMaker:
         # TODO: This could be stateful instead
         self._file_api_query = stateless_query(self.build_dir)
         skbuild_info = self.build_dir / ".skbuild-info.json"
-        stale = False
+        stale = self.fresh
+        if self.fresh:
+            logger.info("Fresh build requested, clearing cache")
+        else:
+            info: dict[str, str] = {}
+            # Parenthesized context managers require the new parser (default in 3.9,
+            # guaranteed 3.10+). Keep nested until 3.9 is dropped.
+            with contextlib.suppress(FileNotFoundError):  # noqa: SIM117
+                with skbuild_info.open("r", encoding="utf-8") as f:
+                    info = json.load(f)
 
-        info: dict[str, str] = {}
-        # Parenthesized context managers require the new parser (default in 3.9,
-        # guaranteed 3.10+). Keep nested until 3.9 is dropped.
-        with contextlib.suppress(FileNotFoundError):  # noqa: SIM117
-            with skbuild_info.open("r", encoding="utf-8") as f:
-                info = json.load(f)
+            if info:
+                # If building via SDist, this could be pre-filled
+                cached_source_dir = Path(info["source_dir"])
+                if cached_source_dir != source_dir:
+                    logger.warning(
+                        "Original src {} != {}, clearing cache",
+                        cached_source_dir,
+                        source_dir,
+                    )
+                    stale = True
 
-        if info:
-            # If building via SDist, this could be pre-filled
-            cached_source_dir = Path(info["source_dir"])
-            if cached_source_dir != source_dir:
-                logger.warning(
-                    "Original src {} != {}, clearing cache",
-                    cached_source_dir,
-                    source_dir,
-                )
-                stale = True
-
-            # Isolated environments can cause this
-            cached_skbuild_dir = Path(info["skbuild_path"])
-            if cached_skbuild_dir != DIR:
-                logger.info(
-                    "New isolated environment {} -> {}, clearing cache",
-                    cached_skbuild_dir,
-                    DIR,
-                )
-                stale = True
+                # Isolated environments can cause this
+                cached_skbuild_dir = Path(info["skbuild_path"])
+                if cached_skbuild_dir != DIR:
+                    logger.info(
+                        "New isolated environment {} -> {}, clearing cache",
+                        cached_skbuild_dir,
+                        DIR,
+                    )
+                    stale = True
 
         # Not using --fresh here, not just due to CMake 3.24+, but also just in
         # case it triggers an extra FetchContent pull in CMake 3.30+

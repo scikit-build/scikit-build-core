@@ -37,6 +37,7 @@ def test_skbuild_settings_default(tmp_path: Path):
     assert not settings.build.verbose
     assert settings.cmake.build_type == "Release"
     assert settings.cmake.source_dir == Path()
+    assert not settings.cmake.fresh
     assert settings.build.targets == []
     assert settings.logging.level == "WARNING"
     assert settings.sdist.include == []
@@ -278,6 +279,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("SKBUILD_CMAKE_DEFINE", "a=1;b=2")
     monkeypatch.setenv("SKBUILD_CMAKE_BUILD_TYPE", "Debug")
     monkeypatch.setenv("SKBUILD_CMAKE_SOURCE_DIR", "a/b/c")
+    monkeypatch.setenv("SKBUILD_CMAKE_FRESH", "1")
     monkeypatch.setenv("SKBUILD_LOGGING_LEVEL", "DEBUG")
     monkeypatch.setenv("SKBUILD_SDIST_INCLUDE", "a;b; c")
     monkeypatch.setenv("SKBUILD_SDIST_EXCLUDE", "d;e;f")
@@ -329,6 +331,7 @@ def test_skbuild_settings_envvar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
+    assert settings.cmake.fresh
     assert not settings.ninja.make_fallback
     assert settings.logging.level == "DEBUG"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -388,6 +391,7 @@ def test_skbuild_settings_config_settings(
         "cmake.define.b": "2",
         "cmake.build-type": "Debug",
         "cmake.source-dir": "a/b/c",
+        "cmake.fresh": "true",
         "env.SOME_VAR": "some-value",
         "logging.level": "INFO",
         "sdist.include": ["a", "b", "c"],
@@ -437,6 +441,7 @@ def test_skbuild_settings_config_settings(
     assert settings.build.verbose
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
+    assert settings.cmake.fresh
     assert settings.env == {"SOME_VAR": EnvValue("some-value")}
     assert settings.logging.level == "INFO"
     assert settings.sdist.include == ["a", "b", "c"]
@@ -492,6 +497,7 @@ def test_skbuild_settings_pyproject_toml(
             cmake.define = {a = "1", b = "2"}
             cmake.build-type = "Debug"
             cmake.source-dir = "a/b/c"
+            cmake.fresh = true
             logging.level = "ERROR"
             sdist.include = ["a", "b", "c"]
             sdist.exclude = ["d", "e", "f"]
@@ -546,6 +552,7 @@ def test_skbuild_settings_pyproject_toml(
     assert settings.cmake.define == {"a": "1", "b": "2"}
     assert settings.cmake.build_type == "Debug"
     assert settings.cmake.source_dir == Path("a/b/c")
+    assert settings.cmake.fresh
     assert settings.logging.level == "ERROR"
     assert settings.sdist.include == ["a", "b", "c"]
     assert settings.sdist.exclude == ["d", "e", "f"]

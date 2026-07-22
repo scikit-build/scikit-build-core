@@ -258,6 +258,16 @@ class CMakeSettings:
     This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
     """
 
+    fresh: bool = False
+    """
+    Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``.
+
+    Only affects a persistent :confval:`build-dir`. Most useful as a
+    config-setting, an environment variable, or in an override.
+
+    .. versionadded:: 1.1
+    """
+
     python_hints: bool = True
     """
     Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.

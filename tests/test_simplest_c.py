@@ -179,3 +179,25 @@ def test_pep517_wheel_incexl(tmp_path, monkeypatch, virtualenv):
         "from simplest import square; print(square(2))",
     )
     assert version == "4.0"
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+def test_pep517_wheel_fresh(tmp_path, monkeypatch):
+    dist = tmp_path / "dist"
+    build_dir = tmp_path / "build"
+    monkeypatch.chdir(SIMPLEST)
+
+    build_wheel(str(dist), config_settings={"build-dir": str(build_dir)})
+    marker = build_dir / "CMakeFiles" / "marker.txt"
+    marker.write_text("")
+
+    build_wheel(str(dist), config_settings={"build-dir": str(build_dir)})
+    assert marker.exists()
+
+    build_wheel(
+        str(dist),
+        config_settings={"build-dir": str(build_dir), "cmake.fresh": "true"},
+    )
+    assert not marker.exists()
+    assert (build_dir / "CMakeCache.txt").exists()

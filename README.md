@@ -193,6 +193,7 @@ print()
 | `cmake.define` | `{}` | A table of defines to pass to CMake when configuring the project. Additive. |
 | `cmake.build-type` | `"Release"` | The build type to use when building the project. |
 | `cmake.source-dir` | `"."` | The source directory to use when building the project. |
+| `cmake.fresh` | `false` | Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``. |
 | `cmake.python-hints` | `true` | Do not pass the current environment's python hints such as ``Python_EXECUTABLE``. |
 
 ### `ninja`
