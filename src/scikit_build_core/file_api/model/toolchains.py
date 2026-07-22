@@ -25,6 +25,7 @@ class Implicit:
 class Compiler:
     implicit: Implicit
     path: Optional[Path] = None
+    commandFragment: Optional[str] = None
     id: Optional[str] = None
     version: Optional[str] = None
     target: Optional[str] = None

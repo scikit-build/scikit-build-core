@@ -31,7 +31,7 @@ from ..utils.typing import (
 )
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
-from .model.codemodel import CodeModel, Target
+from .model.codemodel import CodeModel, Directory, Target
 from .model.index import Index
 from .model.toolchains import Toolchains
 
@@ -61,22 +61,19 @@ class Converter:
 
         return self.make_class(data, Index)
 
-    def _load_from_json(self, name: Path, target: Type[T]) -> T:
-        with self.base_dir.joinpath(name).open(encoding="utf-8") as f:
-            data = json.load(f)
-
-        return self.make_class(data, target)
-
     def make_class(self, data: InputDict, target: Type[T]) -> T:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
         if (
-            target in {CodeModel, Target, Cache, CMakeFiles, Toolchains}
-            and "jsonFile" in data
-            and data["jsonFile"] is not None
+            target in {CodeModel, Target, Cache, CMakeFiles, Toolchains, Directory}
+            and data.get("jsonFile") is not None
         ):
-            return self._load_from_json(Path(data["jsonFile"]), target)
+            with self.base_dir.joinpath(data["jsonFile"]).open(encoding="utf-8") as f:
+                file_data: InputDict = json.load(f)
+            # Keep members only present on the reference, like directoryIndex
+            # and projectIndex on codemodel target entries
+            data = {**file_data, **data}
 
         input_dict: Dict[str, Type[Any]] = {}
         exceptions: List[Exception] = []

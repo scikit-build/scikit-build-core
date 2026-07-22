@@ -23,7 +23,7 @@ import cattr.preconf.json
 
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
-from .model.codemodel import CodeModel, Target
+from .model.codemodel import CodeModel, Directory, Target
 from .model.directory import InstallPath
 from .model.index import Index, Reply
 from .model.toolchains import Toolchains
@@ -72,6 +72,9 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
             return converter.structure_attrs_fromdict(with_path, t)
         path = base_dir / Path(with_path["jsonFile"])
         raw = json.loads(path.read_text(encoding="utf-8"))
+        # Keep members only present on the reference, like directoryIndex and
+        # projectIndex on codemodel target entries
+        raw.update(with_path)
         return converter.structure_attrs_fromdict(raw, t)
 
     converter.register_structure_hook(CodeModel, from_json_file)
@@ -79,6 +82,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
     converter.register_structure_hook(Cache, from_json_file)
     converter.register_structure_hook(CMakeFiles, from_json_file)
     converter.register_structure_hook(Toolchains, from_json_file)
+    converter.register_structure_hook(Directory, from_json_file)
     return converter
 
 
