@@ -7,6 +7,7 @@ __lazy_modules__ = {
     f"{__spec__.parent}.model.cache",
     f"{__spec__.parent}.model.cmakefiles",
     f"{__spec__.parent}.model.codemodel",
+    f"{__spec__.parent}.model.directory",
     f"{__spec__.parent}.model.index",
     f"{__spec__.parent}.model.toolchains",
     "json",
@@ -15,7 +16,7 @@ __lazy_modules__ = {
 import builtins
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Type, TypeVar  # noqa: TID251
+from typing import Any, Callable, Dict, Type, TypeVar, Union  # noqa: TID251
 
 import cattr
 import cattr.preconf.json
@@ -23,6 +24,7 @@ import cattr.preconf.json
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
 from .model.codemodel import CodeModel, Target
+from .model.directory import InstallPath
 from .model.index import Index, Reply
 from .model.toolchains import Toolchains
 
@@ -48,6 +50,19 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
         toolchains_v1=cattr.gen.override(rename="toolchains-v1"),
     )
     converter.register_structure_hook(Reply, st_hook)
+
+    ip_hook = cattr.gen.make_dict_structure_fn(
+        InstallPath,
+        converter,
+        from_=cattr.gen.override(rename="from"),
+    )
+    converter.register_structure_hook(InstallPath, ip_hook)
+    converter.register_structure_hook(
+        Union[Path, InstallPath],
+        lambda v, _: (
+            Path(v) if isinstance(v, str) else converter.structure(v, InstallPath)
+        ),
+    )
 
     def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
         # An error reply (e.g. an object kind unsupported by the running CMake)

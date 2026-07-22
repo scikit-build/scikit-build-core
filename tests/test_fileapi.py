@@ -4,7 +4,6 @@ import os
 import shutil
 import sysconfig
 from pathlib import Path
-from typing import List, Union
 
 import pytest
 from packaging.specifiers import SpecifierSet
@@ -13,8 +12,11 @@ from scikit_build_core.cmake import CMake, CMaker
 from scikit_build_core.file_api._cattrs_converter import (
     load_reply_dir as load_reply_dir_cattrs,
 )
+from scikit_build_core.file_api._cattrs_converter import (
+    make_converter,
+)
 from scikit_build_core.file_api.model.codemodel import Link
-from scikit_build_core.file_api.model.common import Paths
+from scikit_build_core.file_api.model.directory import InstallPath, InstallRule
 from scikit_build_core.file_api.query import stateless_query
 from scikit_build_core.file_api.reply import Converter, load_reply_dir
 
@@ -57,19 +59,34 @@ def test_cattrs_comparison(tmp_path):
     assert index == cattrs_index
 
 
-def test_convert_union_matches_shape():
-    # ``InstallRule.paths`` is a ``List[Union[str, Paths]]``. A bare string must
-    # stay a string, while a mapping must be converted to the dataclass member
-    # (``str(<dict>)`` would otherwise succeed and shadow ``Paths``).
-    converter = Converter(Path())
-    result = converter._convert_any(
-        ["a/string", {"source": "src/dir", "build": "build/dir"}],
-        List[Union[str, Paths]],
+def test_convert_install_rule():
+    # ``InstallRule.paths`` entries are strings or ``{"from", "to"}`` objects
+    # (e.g. ``install(FILES ... RENAME)``). A bare string must become a Path,
+    # while a mapping must be converted to the dataclass member
+    # (``Path(<dict>)`` would otherwise be tried and shadow ``InstallPath``).
+    data = {
+        "component": "Unspecified",
+        "type": "file",
+        "destination": "include",
+        "paths": ["a/string", {"from": "src/file.h", "to": "renamed.h"}],
+        "targetInstallNamelink": "skip",
+    }
+    expected = InstallRule(
+        component="Unspecified",
+        type="file",
+        destination=Path("include"),
+        paths=[
+            Path("a/string"),
+            InstallPath(from_=Path("src/file.h"), to=Path("renamed.h")),
+        ],
+        targetInstallNamelink="skip",
     )
-    assert result == [
-        "a/string",
-        Paths(source=Path("src/dir"), build=Path("build/dir")),
-    ]
+
+    converter = Converter(Path())
+    assert converter._convert_any(data, InstallRule) == expected
+
+    cattrs_converter = make_converter(Path())
+    assert cattrs_converter.structure(data, InstallRule) == expected
 
 
 def test_link_without_command_fragments():

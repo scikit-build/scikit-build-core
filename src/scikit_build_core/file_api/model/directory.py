@@ -6,7 +6,14 @@ from typing import List, Optional, Union
 
 from .common import Paths
 
-__all__ = ["BacktraceGraph", "Directory", "InstallRule", "Node", "Target"]
+__all__ = [
+    "BacktraceGraph",
+    "Directory",
+    "InstallPath",
+    "InstallRule",
+    "Node",
+    "Target",
+]
 
 
 def __dir__() -> List[str]:
@@ -20,18 +27,24 @@ class Target:
 
 
 @dataclasses.dataclass(frozen=True)
+class InstallPath:
+    from_: Path
+    to: Path
+
+
+@dataclasses.dataclass(frozen=True)
 class InstallRule:
     component: str
     type: str
     destination: Optional[Path] = None
-    paths: List[Union[str, Paths]] = dataclasses.field(default_factory=list)
+    paths: List[Union[Path, InstallPath]] = dataclasses.field(default_factory=list)
     isExcludeFromAll: bool = False
     isForAllComponents: bool = False
     isOptional: bool = False
     targetId: Optional[str] = None
     targetIndex: Optional[int] = None
     targetIsImportLibrary: bool = False
-    targetInstallNameLink: Optional[str] = None
+    targetInstallNamelink: Optional[str] = None
     exportName: Optional[str] = None
     exportTargets: List[Target] = dataclasses.field(default_factory=list)
     runtimeDependencySetName: Optional[str] = None
