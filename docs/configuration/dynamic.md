@@ -340,6 +340,8 @@ provider = {path = "helpers/plugins", module = "my_plugin"}
 `module` may also be `"my_plugin:MyClass"` to load a class (instantiated with no
 arguments, so its hooks share state through `self`).
 
+(build-requires)=
+
 ## `build-system.requires`: Scikit-build-core's `build.requires`
 
 If you need to inject and manipulate additional `build-system.requires`, you can
