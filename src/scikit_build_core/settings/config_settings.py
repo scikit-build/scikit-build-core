@@ -1,4 +1,5 @@
-from __future__ import annotations
+# No `from __future__ import annotations` here: `to_json_schema` reads real
+# runtime types from the dataclass fields, like `skbuild_model.py`.
 
 __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
@@ -9,7 +10,7 @@ __lazy_modules__ = {
 
 import dataclasses
 import re
-from typing import Any, Literal
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from .._logging import rich_error
 from .skbuild_model import ScikitBuildSettings
@@ -27,7 +28,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> list[str]:
+def __dir__() -> List[str]:
     return __all__
 
 
@@ -36,10 +37,7 @@ def __dir__() -> list[str]:
 _NAME_REGEX = re.compile(r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$")
 
 # A "choices" key (allowed values, str type only) was cut from the initial
-# release to keep the surface minimal. To re-add: a `choices: list[str] | None`
-# field here, load-time validation (list of strings, not with type = 'bool',
-# default must be a member), a resolved-value check in resolve_config_settings,
-# and the entry-schema property in skbuild_schema.py.
+# release to keep the surface minimal; see git history to re-add.
 _DECLARATION_KEYS = frozenset({"help", "type", "default", "env"})
 
 
@@ -54,28 +52,45 @@ class ConfigSettingDeclaration:
     """
 
     help: str = ""
+    """
+    A description of the setting.
+    """
+
     type: Literal["str", "bool"] = "str"
-    default: str | bool | None = None
-    env: str | None = None
+    """
+    The type of the setting.
+    """
+
+    default: Optional[Union[str, bool]] = None
+    """
+    The value used when the setting is not passed; must match the type.
+    """
+
+    env: Optional[str] = None
+    """
+    An environment variable also read for this setting; it takes precedence over `-C`.
+    """
 
 
 def _error_context(name: str) -> str:
     return f"tool.scikit-build.config-setting.{name!r}"
 
 
-def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
+def load_declarations(raw: Any) -> Dict[str, ConfigSettingDeclaration]:
     """
     Validate and load the raw ``tool.scikit-build.config-setting`` table.
     """
     if not isinstance(raw, dict):
         rich_error("tool.scikit-build.config-setting must be a table")
+    if not raw:
+        return {}
 
     reserved = {
         field.name.replace("_", "-")
         for field in dataclasses.fields(ScikitBuildSettings)
     } | {"overrides", "config-setting", "skbuild"}
 
-    decls: dict[str, ConfigSettingDeclaration] = {}
+    decls: Dict[str, ConfigSettingDeclaration] = {}
     for name, entry in raw.items():
         if not _NAME_REGEX.match(name):
             rich_error(
@@ -130,17 +145,17 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
 
 
 def resolve_config_settings(
-    decls: Mapping[str, ConfigSettingDeclaration],
-    config_settings: Mapping[str, str | list[str] | bool],
-    env: Mapping[str, str],
-) -> dict[str, str | bool | None]:
+    decls: "Mapping[str, ConfigSettingDeclaration]",
+    config_settings: "Mapping[str, Union[str, List[str], bool]]",
+    env: "Mapping[str, str]",
+) -> Dict[str, Optional[Union[str, bool]]]:
     """
     Resolve declared config-settings; precedence env var > config-setting >
     default, with ``None`` meaning "unset".
     """
-    values: dict[str, str | bool | None] = {}
+    values: Dict[str, Optional[Union[str, bool]]] = {}
     for name, decl in decls.items():
-        raw: str | bool | None
+        raw: Optional[Union[str, bool]]
         if decl.env is not None and decl.env in env:
             raw = env[decl.env]
         elif name in config_settings:
@@ -165,7 +180,7 @@ def resolve_config_settings(
 
 
 def resolve_define_references(
-    tool_skb: dict[str, Any], values: Mapping[str, str | bool | None]
+    tool_skb: Dict[str, Any], values: "Mapping[str, Optional[Union[str, bool]]]"
 ) -> None:
     """
     Replace ``{config-setting = "..."}`` values in the raw ``cmake.define``

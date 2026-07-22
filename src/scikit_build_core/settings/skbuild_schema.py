@@ -42,6 +42,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     "Generate the complete schema for scikit-build settings."
     assert tool_name == "scikit-build", "Only scikit-build is supported."
 
+    from .config_settings import _NAME_REGEX, ConfigSettingDeclaration
     from .json_schema import to_json_schema
     from .skbuild_model import ScikitBuildSettings
 
@@ -226,36 +227,13 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     )
 
     # Added after ``props`` is collected so overrides cannot target it.
+    declaration_entry = to_json_schema(ConfigSettingDeclaration, normalize_keys=True)
+    declaration_entry["properties"]["env"]["minLength"] = 1
     schema["properties"]["config-setting"] = {
         "type": "object",
         "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
         "additionalProperties": False,
-        "patternProperties": {
-            r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$": {
-                "type": "object",
-                "additionalProperties": False,
-                "properties": {
-                    "help": {
-                        "type": "string",
-                        "description": "A description of the setting.",
-                    },
-                    "type": {
-                        "enum": ["str", "bool"],
-                        "default": "str",
-                        "description": "The type of the setting.",
-                    },
-                    "default": {
-                        "oneOf": [{"type": "string"}, {"type": "boolean"}],
-                        "description": "The value used when the setting is not passed; must match the type.",
-                    },
-                    "env": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "An environment variable also read for this setting; it takes precedence over `-C`.",
-                    },
-                },
-            }
-        },
+        "patternProperties": {_NAME_REGEX.pattern: declaration_entry},
     }
 
     schema["properties"]["overrides"] = {
