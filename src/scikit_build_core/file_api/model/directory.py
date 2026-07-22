@@ -4,7 +4,7 @@ import dataclasses
 from pathlib import Path
 from typing import List, Optional, Union
 
-from .common import Paths
+from .common import APIVersion, Paths
 
 __all__ = [
     "BacktraceGraph",
@@ -53,6 +53,7 @@ class InstallRule:
     fileSetType: Optional[str] = None
     fileSetDirectories: List[Path] = dataclasses.field(default_factory=list)
     fileSetTarget: Optional[Target] = None
+    cxxModuleBmiTarget: Optional[Target] = None
     scriptFile: Optional[Path] = None
     backtrace: Optional[int] = None
 
@@ -77,3 +78,4 @@ class Directory:
     paths: Paths
     installers: List[InstallRule]
     backtraceGraph: BacktraceGraph
+    codemodelVersion: Optional[APIVersion] = None
