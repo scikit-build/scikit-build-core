@@ -116,7 +116,7 @@ def _get_cmake_path(*, module: bool = True) -> Generator[Path, None, None]:
 
             yield Path(CMAKE_BIN_DIR) / "cmake"
 
-    candidates = ("cmake3", "cmake")
+    candidates = ("cmake", "cmake3")
     for candidate in candidates:
         cmake_path = shutil.which(candidate)
         if cmake_path is not None:
