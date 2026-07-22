@@ -161,9 +161,7 @@ class CMaker:
         # Not using --fresh here, not just due to CMake 3.24+, but also just in
         # case it triggers an extra FetchContent pull in CMake 3.30+
         if stale:
-            # Python 3.8+ can use missing_ok=True
-            with contextlib.suppress(FileNotFoundError):
-                self.build_dir.joinpath("CMakeCache.txt").unlink()
+            self.build_dir.joinpath("CMakeCache.txt").unlink(missing_ok=True)
             shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)
 
         with skbuild_info.open("w", encoding="utf-8") as f:
