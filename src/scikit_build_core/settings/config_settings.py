@@ -10,7 +10,7 @@ __lazy_modules__ = {
 
 import dataclasses
 import re
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from .._logging import rich_error
 from .skbuild_model import ScikitBuildSettings
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -76,7 +76,7 @@ def _error_context(name: str) -> str:
     return f"tool.scikit-build.config-setting.{name!r}"
 
 
-def load_declarations(raw: Any) -> Dict[str, ConfigSettingDeclaration]:
+def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
     """
     Validate and load the raw ``tool.scikit-build.config-setting`` table.
     """
@@ -90,7 +90,7 @@ def load_declarations(raw: Any) -> Dict[str, ConfigSettingDeclaration]:
         for field in dataclasses.fields(ScikitBuildSettings)
     } | {"overrides", "config-setting", "skbuild"}
 
-    decls: Dict[str, ConfigSettingDeclaration] = {}
+    decls: dict[str, ConfigSettingDeclaration] = {}
     for name, entry in raw.items():
         if not _NAME_REGEX.match(name):
             rich_error(
@@ -146,14 +146,14 @@ def load_declarations(raw: Any) -> Dict[str, ConfigSettingDeclaration]:
 
 def resolve_config_settings(
     decls: "Mapping[str, ConfigSettingDeclaration]",
-    config_settings: "Mapping[str, Union[str, List[str], bool]]",
+    config_settings: "Mapping[str, Union[str, list[str], bool]]",
     env: "Mapping[str, str]",
-) -> Dict[str, Optional[Union[str, bool]]]:
+) -> dict[str, Optional[Union[str, bool]]]:
     """
     Resolve declared config-settings; precedence env var > config-setting >
     default, with ``None`` meaning "unset".
     """
-    values: Dict[str, Optional[Union[str, bool]]] = {}
+    values: dict[str, Optional[Union[str, bool]]] = {}
     for name, decl in decls.items():
         raw: Optional[Union[str, bool]]
         if decl.env is not None and decl.env in env:
@@ -180,7 +180,7 @@ def resolve_config_settings(
 
 
 def resolve_define_references(
-    tool_skb: Dict[str, Any], values: "Mapping[str, Optional[Union[str, bool]]]"
+    tool_skb: dict[str, Any], values: "Mapping[str, Optional[Union[str, bool]]]"
 ) -> None:
     """
     Replace ``{config-setting = "..."}`` values in the raw ``cmake.define``
