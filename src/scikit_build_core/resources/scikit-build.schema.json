@@ -626,6 +626,7 @@
           "properties": {
             "help": {
               "type": "string",
+              "default": "",
               "description": "A description of the setting."
             },
             "type": {
@@ -649,8 +650,8 @@
             },
             "env": {
               "type": "string",
-              "minLength": 1,
-              "description": "An environment variable also read for this setting; it takes precedence over `-C`."
+              "description": "An environment variable also read for this setting; it takes precedence over `-C`.",
+              "minLength": 1
             }
           }
         }
