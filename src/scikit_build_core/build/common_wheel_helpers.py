@@ -265,6 +265,7 @@ def configure_wheel(
     ``build_type`` to reconfigure a single-config generator into a fresh builder
     for that build type (see :func:`build_install_extra_build_types`).
     """
+    primary = build_type is None
     if build_type is None:
         build_type = normalize_build_types(settings.cmake.build_type)[0]
         rich_print("{green}***", "{bold}Configuring CMake...")
@@ -279,6 +280,9 @@ def configure_wheel(
         source_dir=settings.cmake.source_dir,
         build_dir=build_dir,
         build_type=build_type,
+        # Only clear on the primary configure; extra build types reuse the
+        # just-written cache.
+        fresh=settings.cmake.fresh and primary,
     )
     builder = Builder(settings=settings, config=config)
 

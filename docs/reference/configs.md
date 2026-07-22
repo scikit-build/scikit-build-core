@@ -329,6 +329,22 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: cmake.fresh
+
+  :Type: ``bool``
+  :Default: false
+  :Config-settings: ``cmake.fresh`` or ``skbuild.cmake.fresh``
+  :Environment variable: ``SKBUILD_CMAKE_FRESH``
+
+  Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``.
+
+  Only affects a persistent :confval:`build-dir`. Most useful as a
+  config-setting, an environment variable, or in an override.
+
+  .. versionadded:: 1.1
+```
+
+```{eval-rst}
 .. confval:: cmake.minimum-version
 
   :Type: ``Version``

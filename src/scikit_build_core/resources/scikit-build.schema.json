@@ -114,6 +114,11 @@
           "description": "The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.",
           "scikit-build:override-only": true
         },
+        "fresh": {
+          "type": "boolean",
+          "default": false,
+          "description": "Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``."
+        },
         "python-hints": {
           "type": "boolean",
           "default": true,

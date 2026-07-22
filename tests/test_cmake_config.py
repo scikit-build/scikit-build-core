@@ -339,3 +339,30 @@ def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
     result = CMake.default_search(env=os.environ)
     assert result.cmake_path == cmake_path
     assert result.version == Version("3.20.0")
+
+
+def test_cmake_fresh_clears_cache(tmp_path: Path) -> None:
+    cmake = CMake(Version("3.30"), Path("cmake"))
+    source_dir = DIR / "packages" / "simple_pure"
+    build_dir = tmp_path / "build"
+
+    CMaker(cmake, source_dir=source_dir, build_dir=build_dir, build_type="Release")
+    cache = build_dir / "CMakeCache.txt"
+    cmakefiles = build_dir / "CMakeFiles"
+    cache.write_text("cached")
+    cmakefiles.mkdir()
+    cmakefiles.joinpath("obj.txt").write_text("obj")
+
+    CMaker(cmake, source_dir=source_dir, build_dir=build_dir, build_type="Release")
+    assert cache.exists()
+    assert cmakefiles.joinpath("obj.txt").exists()
+
+    CMaker(
+        cmake,
+        source_dir=source_dir,
+        build_dir=build_dir,
+        build_type="Release",
+        fresh=True,
+    )
+    assert not cache.exists()
+    assert not cmakefiles.exists()
