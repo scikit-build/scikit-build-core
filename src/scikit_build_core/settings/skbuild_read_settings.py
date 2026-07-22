@@ -296,26 +296,33 @@ class SettingsReader:
             self.config_setting_decls, config_settings, environ
         )
 
+        def process_table(
+            skb: dict[str, Any], declaration_error: str
+        ) -> tuple[set[str], dict[str, OverrideRecord]]:
+            """
+            Apply overrides to one settings table, reject stray config-setting
+            declarations (the static table was popped from pyproject.toml above,
+            so any survivor is misplaced), and resolve define references.
+            """
+            matched, overridden = process_overrides(
+                skb,
+                state=state,
+                env=env,
+                retry=retry,
+                config_settings=self.custom_config_settings,
+            )
+            if "config-setting" in skb:
+                rich_error(declaration_error)
+            resolve_define_references(skb, self.custom_config_settings)
+            return matched, overridden
+
         # Handle overrides
-        self.overrides, self.overridden_items = process_overrides(
-            tool_skb,
-            state=state,
-            env=env,
-            retry=retry,
-            config_settings=self.custom_config_settings,
+        self.overrides, self.overridden_items = process_table(
+            tool_skb, "config-setting declarations may not be set by overrides"
         )
-        # The static table was popped above, so any survivor came from an
-        # override body.
-        if "config-setting" in tool_skb:
-            rich_error("config-setting declarations may not be set by overrides")
-        resolve_define_references(tool_skb, self.custom_config_settings)
 
         # Support for minimum-version='build-system.requires'
-        tmp_min_v = (
-            pyproject.get("tool", {})
-            .get("scikit-build", {})
-            .get("minimum-version", None)
-        )
+        tmp_min_v = tool_skb.get("minimum-version")
         if tmp_min_v == "build-system.requires":
             reqlist = pyproject["build-system"]["requires"]
             min_v = get_min_requires("scikit-build-core", reqlist)
@@ -324,7 +331,7 @@ class SettingsReader:
                     "scikit-build-core needs a min version in "
                     "build-system.requires to use minimum-version='build-system.requires'"
                 )
-            pyproject["tool"]["scikit-build"]["minimum-version"] = str(min_v)
+            tool_skb["minimum-version"] = str(min_v)
         toml_srcs = [TOMLSource("tool", "scikit-build", settings=pyproject)]
         # Human-readable names parallel to ``toml_srcs`` (used by suggestions).
         toml_src_names = ["pyproject.toml"]
@@ -346,18 +353,10 @@ class SettingsReader:
 
         if extra_settings is not None:
             extra_skb = copy.deepcopy(dict(extra_settings))
-            extra_matched, extra_overridden = process_overrides(
+            extra_matched, extra_overridden = process_table(
                 extra_skb,
-                state=state,
-                env=env,
-                retry=retry,
-                config_settings=self.custom_config_settings,
+                "config-setting declarations are only allowed in pyproject.toml",
             )
-            if "config-setting" in extra_skb:
-                rich_error(
-                    "config-setting declarations are only allowed in pyproject.toml"
-                )
-            resolve_define_references(extra_skb, self.custom_config_settings)
             self.overrides |= extra_matched
             self.overridden_items.update(extra_overridden)
             toml_srcs.insert(0, TOMLSource(settings=extra_skb))
@@ -390,18 +389,10 @@ class SettingsReader:
                 # which merges dicts but takes lists wholesale from the
                 # highest-precedence source. A future refactor could process
                 # overrides on the merged view instead.
-                ep_matched, ep_overridden = process_overrides(
+                ep_matched, ep_overridden = process_table(
                     ep_skb,
-                    state=state,
-                    env=env,
-                    retry=retry,
-                    config_settings=self.custom_config_settings,
+                    "config-setting declarations are only allowed in pyproject.toml",
                 )
-                if "config-setting" in ep_skb:
-                    rich_error(
-                        "config-setting declarations are only allowed in pyproject.toml"
-                    )
-                resolve_define_references(ep_skb, self.custom_config_settings)
                 self.overrides |= ep_matched
                 ep_source = TOMLSource(settings=ep_skb)
                 ep_srcs.append(ep_source)
