@@ -755,7 +755,7 @@ def test_wheel_tag_with_abi_darwin(monkeypatch):
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
     tags = WheelTag.compute_best(["x86_64"], py_api="cp39")
-    if sys.version_info < (3, 9) or sys.implementation.name != "cpython":
+    if sys.implementation.name != "cpython":
         assert "macosx_10_10_x86_64" in str(tags)
         assert "abi3" not in str(tags)
         assert "cp39" not in str(tags)

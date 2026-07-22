@@ -170,8 +170,7 @@ def get_python_library(
             return None
         if libdir_is_dir:
             if multiarch and masd:
-                if masd.startswith(os.sep):
-                    masd = masd[len(os.sep) :]
+                masd = masd.removeprefix(os.sep)
                 libdir_masd = libdir / masd
                 if libdir_masd.is_dir():
                     libdir = libdir_masd
@@ -208,32 +207,25 @@ def get_python_include_dir() -> Path:
     return Path(sysconfig.get_path("include"))
 
 
-def get_host_platform() -> str:
-    """
-    Return a string that identifies the current platform. This mimics
-    setuptools get_host_platform (without 3.8 aix compat).
-    """
-    return sysconfig.get_platform()
-
-
 def get_platform(env: Mapping[str, str] | None = None) -> str:
     """
     Return the Python platform name for a platform, respecting VSCMD_ARG_TGT_ARCH.
     """
     if env is None:
         env = os.environ
-    if sysconfig.get_platform().startswith("win"):
+    plat = sysconfig.get_platform()
+    if plat.startswith("win"):
         if "VSCMD_ARG_TGT_ARCH" in env:
             logger.debug(
                 "Selecting {} or {} due to VSCMD_ARG_TARGET_ARCH",
                 TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]),
-                get_host_platform(),
+                plat,
             )
-            return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or get_host_platform()
+            return TARGET_TO_PLAT.get(env["VSCMD_ARG_TGT_ARCH"]) or plat
         if "arm64" in env.get("SETUPTOOLS_EXT_SUFFIX", "").lower():
             logger.debug("Windows ARM targeted via SETUPTOOLS_EXT_SUFFIX")
             return "win-arm64"
-    return get_host_platform()
+    return plat
 
 
 def get_cmake_platform(env: Mapping[str, str] | None) -> str:
@@ -257,13 +249,7 @@ def get_soabi(
     if setuptools_ext_suffix:
         return setuptools_ext_suffix.rsplit(".", 1)[0].lstrip(".")
 
-    if sys.version_info < (3, 8, 7):
-        # See https://github.com/python/cpython/issues/84006
-        import distutils.sysconfig  # pylint: disable=deprecated-module
-
-        ext_suffix = distutils.sysconfig.get_config_var("EXT_SUFFIX")
-    else:
-        ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
+    ext_suffix = sysconfig.get_config_var("EXT_SUFFIX")
 
     assert isinstance(ext_suffix, str)
     return ext_suffix.rsplit(".", 1)[0].lstrip(".")

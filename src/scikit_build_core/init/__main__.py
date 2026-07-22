@@ -49,7 +49,7 @@ _BACKENDS = {
     "cython": _Backend(requires=("cython", "cython-cmake")),
     "swig": _Backend(requires=("swig",)),
     "fortran": _Backend(requires=("numpy", "f2py-cmake"), dependencies=("numpy",)),
-    "abi3": _Backend(tool='\n[tool.scikit-build]\nwheel.py-api = "cp38"\n'),
+    "abi3": _Backend(tool='\n[tool.scikit-build]\nwheel.py-api = "cp39"\n'),
     "abi3t": _Backend(
         tool=(
             "\n[tool.scikit-build]\n"
@@ -113,8 +113,7 @@ def _generate(
                     stack.append((entry, rel / name))
                     continue
                 # A ".in" suffix marks a template rendered to its bare name.
-                if name.endswith(".in"):
-                    name = name[:-3]
+                name = name.removesuffix(".in")
                 text = string.Template(
                     entry.read_text(encoding="utf-8")
                 ).safe_substitute(substitutions)

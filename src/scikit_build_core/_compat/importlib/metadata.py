@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"typing"}
-
 import importlib.metadata
 import sys
-import typing
 
 TYPE_CHECKING = False
 
@@ -12,7 +9,7 @@ if TYPE_CHECKING:
     if sys.version_info < (3, 10):
         from importlib.metadata import EntryPoint
 
-        EntryPoints = typing.List[EntryPoint]
+        EntryPoints = list[EntryPoint]
     else:
         from importlib.metadata import EntryPoints
 

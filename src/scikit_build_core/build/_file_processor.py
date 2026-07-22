@@ -56,7 +56,7 @@ def symlink_escapes(path: Path) -> bool:
     stays consistent link by link (the last link is the one that gets
     resolved).
     """
-    target = os.readlink(path)
+    target = os.readlink(path)  # noqa: PTH115
     if os.path.isabs(target) or os.path.splitdrive(target)[0]:  # noqa: PTH117
         return True
     joined = os.path.normpath(os.path.join(os.path.dirname(path), target))  # noqa: PTH118, PTH120

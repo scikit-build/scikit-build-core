@@ -415,12 +415,12 @@ support:
 
 ```toml
 [tool.scikit-build]
-wheel.py-api = "cp38"
+wheel.py-api = "cp39"
 ```
 
 | `wheel.py-api`   | Use for                                           | Resulting tags     |
 | ---------------- | ------------------------------------------------- | ------------------ |
-| `"cp38"`         | Limited API / Stable ABI extension (CPython 3.8+) | `cp38-abi3`        |
+| `"cp39"`         | Limited API / Stable ABI extension (CPython 3.9+) | `cp39-abi3`        |
 | `"py3"`          | Extension not using the Python API                | `py3-none`         |
 | `"py2.py3"`      | Same, but installable on Python 2 as well         | `py2.py3-none`     |
 | `"cp315t"`       | Free-threaded stable ABI ([PEP 803][])            | `cp315-abi3t`      |

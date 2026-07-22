@@ -3,7 +3,6 @@ from __future__ import annotations
 __lazy_modules__ = {
     "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{__spec__.parent}.documentation",
     "packaging",
     "packaging.specifiers",
@@ -16,13 +15,12 @@ __lazy_modules__ = {
 import dataclasses
 import sys
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import pull_docs
 
 if sys.version_info >= (3, 10):

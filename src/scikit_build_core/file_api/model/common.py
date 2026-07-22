@@ -1,13 +1,12 @@
-__lazy_modules__ = {"pathlib", "typing"}
+__lazy_modules__ = {"pathlib"}
 
 import dataclasses
 from pathlib import Path
-from typing import List
 
 __all__ = ["APIVersion", "Paths"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 

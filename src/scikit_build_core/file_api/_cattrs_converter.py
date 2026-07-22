@@ -16,7 +16,7 @@ __lazy_modules__ = {
 import builtins
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Type, TypeVar, Union  # noqa: TID251
+from typing import Any, Callable, TypeVar, Union  # noqa: TID251
 
 import cattr
 import cattr.preconf.json
@@ -33,7 +33,7 @@ T = TypeVar("T")
 __all__ = ["load_reply_dir", "make_converter"]
 
 
-def to_path(path: str, _: Type[Path]) -> Path:
+def to_path(path: str, _: type[Path]) -> Path:
     return Path(path)
 
 
@@ -64,7 +64,7 @@ def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
         ),
     )
 
-    def from_json_file(with_path: Dict[str, Any], t: Type[T]) -> T:
+    def from_json_file(with_path: dict[str, Any], t: type[T]) -> T:
         # An error reply (e.g. an object kind unsupported by the running CMake)
         # has no "jsonFile" to follow; structure the inline dict instead, as the
         # built-in converter does.

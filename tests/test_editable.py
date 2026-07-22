@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import platform
-import sys
 import textwrap
 from pathlib import Path
 
@@ -251,9 +250,6 @@ def test_direct_import(editable, isolated):
 @pytest.mark.parametrize("package", ["importlib_editable"], indirect=True)
 @pytest.mark.usefixtures("package")
 def test_importlib_resources(editable, isolated):
-    if sys.version_info < (3, 9):
-        pytest.skip("importlib.resources.files is introduced in Python 3.9")
-
     # TODO: Investigate these failures
     if platform.system() == "Windows" and editable.mode == "inplace":
         pytest.xfail("Windows fails to import the top-level extension module")

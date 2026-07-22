@@ -2,7 +2,6 @@ __lazy_modules__ = {
     "argparse",
     "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.model.cache",
     f"{__spec__.parent}.model.cmakefiles",
@@ -20,10 +19,9 @@ import json
 import sys
 import typing
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Type, TypeVar, Union  # noqa: TID251
+from typing import Any, Callable, TypeVar, Union, get_args, get_origin  # noqa: TID251
 
 from .._compat.builtins import ExceptionGroup
-from .._compat.typing import get_args, get_origin
 from ..utils.typing import (
     get_target_raw_type,
     is_union_type,
@@ -38,13 +36,13 @@ from .model.toolchains import Toolchains
 __all__ = ["load_reply_dir"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
 T = TypeVar("T")
 
-InputDict = Dict[str, Any]
+InputDict = dict[str, Any]
 
 
 class Converter:
@@ -61,7 +59,7 @@ class Converter:
 
         return self.make_class(data, Index)
 
-    def make_class(self, data: InputDict, target: Type[T]) -> T:
+    def make_class(self, data: InputDict, target: type[T]) -> T:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
         """
@@ -75,8 +73,8 @@ class Converter:
             # and projectIndex on codemodel target entries
             data = {**file_data, **data}
 
-        input_dict: Dict[str, Type[Any]] = {}
-        exceptions: List[Exception] = []
+        input_dict: dict[str, Any] = {}
+        exceptions: list[Exception] = []
 
         # We don't have DataclassInstance exposed in typing yet
         for field in dataclasses.fields(target):  # type: ignore[arg-type]
@@ -109,11 +107,11 @@ class Converter:
         return target(**input_dict)
 
     @typing.overload
-    def _convert_any(self, item: Any, target: Type[T]) -> T: ...
+    def _convert_any(self, item: Any, target: type[T]) -> T: ...
     @typing.overload
     def _convert_any(self, item: Any, target: Any) -> Any: ...
 
-    def _convert_any(self, item: Any, target: Union[Type[T], Any]) -> Any:
+    def _convert_any(self, item: Any, target: Union[type[T], Any]) -> Any:
         target = process_union(target)
         if dataclasses.is_dataclass(target) and isinstance(target, type):
             # We don't have DataclassInstance exposed in typing yet

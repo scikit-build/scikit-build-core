@@ -153,7 +153,7 @@ def get_standard_metadata(
             )
         except ImportError:
             logger.warning(
-                "Packaging 24.2+ required for license normalization. Please update (Python 3.8+ required)"
+                "Packaging 24.2+ required for license normalization. Please update"
             )
 
     # For scikit-build-core >= 0.11, we set METADATA 2.2 as minimum

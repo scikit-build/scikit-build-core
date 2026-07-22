@@ -257,22 +257,8 @@ def virtualenv(tmp_path: Path) -> VEnv:
 class PackageInfo:
     name: str
     workdir: Path
-    sdist_hash38: str | None = None
-    sdist_hash39: str | None = None
-    sdist_dated_hash39: str | None = None
-    sdist_dated_hash38: str | None = None
-
-    @property
-    def sdist_hash(self) -> str | None:
-        return self.sdist_hash38 if sys.version_info < (3, 9) else self.sdist_hash39
-
-    @property
-    def sdist_dated_hash(self) -> str | None:
-        return (
-            self.sdist_dated_hash38
-            if sys.version_info < (3, 9)
-            else self.sdist_dated_hash39
-        )
+    sdist_hash: str | None = None
+    sdist_dated_hash: str | None = None
 
     @property
     def source_date_epoch(self) -> str:
@@ -335,10 +321,8 @@ def package_simple_pyproject_ext(
     package = PackageInfo(
         "simple_pyproject_ext",
         tmp_path_factory.mktemp("pkg"),
-        "2e38820898f524a579192aeba818663916312ec3d8bfb84a26b1701e1768540c",
-        "6d20fa5e8a8f0ecb2084abe13f3b646ea604a9a50614e18ce8cdcbefd8e365a1",
-        "9863d4c1101153174b79d1aee5d5399e7d57721389cf0cff7c195082080fea95",
-        "f71fae6a004761c7897cd55cf247af1fec69907e3d2263b4f3013469038f7261",
+        "35c72a9d74d51311115745580d7a32b28f89d56a0b056f58c6df2ad80163ebff",
+        "e2bb8e75736e949a0a280c383a36ef06d2e78c55ee546dc405645bb50918b336",
     )
     process_package(package, monkeypatch)
     return package

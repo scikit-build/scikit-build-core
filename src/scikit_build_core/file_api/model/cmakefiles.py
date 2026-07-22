@@ -2,14 +2,14 @@ __lazy_modules__ = {f"{__spec__.parent}.common", "pathlib", "typing"}
 
 import dataclasses
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from .common import APIVersion, Paths
 
 __all__ = ["CMakeFiles", "GlobDependent", "Input"]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -28,7 +28,7 @@ class GlobDependent:
     listDirectories: bool = False
     followSymlinks: bool = False
     relative: Optional[str] = None
-    paths: List[Path] = dataclasses.field(default_factory=list)
+    paths: list[Path] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -36,5 +36,5 @@ class CMakeFiles:
     kind: str
     version: APIVersion
     paths: Paths
-    inputs: List[Input]
-    globsDependent: List[GlobDependent] = dataclasses.field(default_factory=list)
+    inputs: list[Input]
+    globsDependent: list[GlobDependent] = dataclasses.field(default_factory=list)

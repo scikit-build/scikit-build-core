@@ -1,15 +1,9 @@
 from __future__ import annotations
 
-__lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
-    "types",
-    "typing",
-}
+__lazy_modules__ = {"types", "typing"}
 
 import sys
-from typing import Any, Union
-
-from .._compat.typing import Annotated, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
 __all__ = [
     "get_inner_type",

@@ -132,10 +132,11 @@ class CMaker:
         stale = False
 
         info: dict[str, str] = {}
-        with contextlib.suppress(FileNotFoundError), skbuild_info.open(
-            "r", encoding="utf-8"
-        ) as f:
-            info = json.load(f)
+        # Parenthesized context managers require the new parser (default in 3.9,
+        # guaranteed 3.10+). Keep nested until 3.9 is dropped.
+        with contextlib.suppress(FileNotFoundError):  # noqa: SIM117
+            with skbuild_info.open("r", encoding="utf-8") as f:
+                info = json.load(f)
 
         if info:
             # If building via SDist, this could be pre-filled

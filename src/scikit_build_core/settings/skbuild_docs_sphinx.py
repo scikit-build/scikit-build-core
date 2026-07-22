@@ -6,7 +6,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{__spec__.parent}.skbuild_model",
     "textwrap",
     "typing",
@@ -16,8 +15,8 @@ import dataclasses
 import textwrap
 import typing
 from collections import OrderedDict
+from typing import Annotated, get_args, get_origin
 
-from .._compat.typing import Annotated, get_args, get_origin
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
 

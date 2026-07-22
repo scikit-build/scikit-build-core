@@ -8,6 +8,8 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
     f"{__spec__.parent}.generator",
     f"{__spec__.parent}.sysconfig",
+    "importlib",
+    "importlib.resources",
     "platform",
     "re",
     "shlex",
@@ -23,11 +25,12 @@ import re
 import shlex
 import sys
 import sysconfig
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
 from .. import __version__
-from .._compat.importlib import metadata, resources
+from .._compat.importlib import metadata
 from .._logging import logger
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
@@ -248,7 +251,7 @@ class Builder:
                 "Loading search paths {} from entry-points: {}", entry_point, len(eps)
             )
             for ep in eps:
-                ep_value = _sanitize_path(resources.files(ep.load()))
+                ep_value = _sanitize_path(files(ep.load()))
                 logger.debug("{}: {} -> {}", ep.name, ep.value, ep_value)
                 if ep_value:
                     search_paths[ep.name] = ep_value
