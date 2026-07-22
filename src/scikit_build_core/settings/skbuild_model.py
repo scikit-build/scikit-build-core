@@ -523,6 +523,13 @@ class WheelSettings:
        Must not be set if ``project.license-files`` is set.
     """
 
+    sbom_files: Optional[List[str]] = None
+    """
+    A list of Software Bill of Materials files to include in the wheel.
+
+    Files are copied into the ``*.dist-info/sboms`` directory.
+    """
+
     cmake: bool = True
     """
     Run CMake as part of building the wheel.
