@@ -81,15 +81,6 @@ messages.after-success = "{green}Using bundled libzmq"
 String conditions are regexes; boolean conditions match the truthiness of the
 value (unset matches `false`).
 
-:::{note}
-
-Since scikit-build-core versions before 1.1 reject unknown `if` conditions, a
-package that must remain buildable with older versions can guard the override
-with `if.scikit-build-version = ">=1.1"` (though declaring the settings table
-itself already requires 1.1 via `build-system.requires`).
-
-:::
-
 :::{warning}
 
 Some build frontends (like pip) pass the same `-C` settings to every package
