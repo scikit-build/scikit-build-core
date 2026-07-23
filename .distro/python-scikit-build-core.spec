@@ -42,6 +42,9 @@ Provides:       bundled(python3dist(pyproject-metadata)) = 0.12.1
 
 %description -n python3-scikit-build-core %_description
 
+%pyproject_extras_subpkg -n python3-scikit-build-core setuptools
+%pyproject_extras_subpkg -n python3-scikit-build-core hatchling
+
 
 %prep
 %autosetup -n scikit_build_core-%{version}
