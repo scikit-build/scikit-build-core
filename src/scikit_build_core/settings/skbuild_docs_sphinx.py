@@ -15,7 +15,6 @@ import dataclasses
 import textwrap
 import typing
 from collections import OrderedDict
-from typing import Annotated, get_args, get_origin
 
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
@@ -27,35 +26,9 @@ if TYPE_CHECKING:
 
 __all__ = ["mk_skbuild_docs"]
 
-_NONE_TYPE = type(None)
-
 
 def __dir__() -> list[str]:
     return __all__
-
-
-def _flat_expressible(field_type: typing.Any) -> bool:
-    """
-    Whether a field can be set through a flat source (``config-settings`` or a
-    ``SKBUILD_*`` environment variable).
-
-    Both sources reject arrays of tables (handled separately via the ``[]`` name
-    marker) and can't round-trip nested mappings (e.g. a dict of dicts), so no
-    flat key is advertised for those. Dicts of scalars (including
-    ``cmake.define``) and lists of scalars are fine.
-    """
-    origin = get_origin(field_type)
-    if origin is Annotated:
-        return _flat_expressible(get_args(field_type)[0])
-    if origin is typing.Union:
-        return all(
-            _flat_expressible(arg)
-            for arg in get_args(field_type)
-            if arg is not _NONE_TYPE
-        )
-    if origin is dict:
-        return get_origin(get_args(field_type)[1]) not in (dict, list)
-    return True
 
 
 @dataclasses.dataclass
@@ -105,15 +78,6 @@ class Item:
         """
         return self.item.default in ('""', "[]", "{}")
 
-    def flat_expressible(self) -> bool:
-        """
-        Whether the option can be set via ``config-settings`` or an env var.
-
-        Arrays of tables (``generate[]``) and nested mappings can only be set in
-        ``pyproject.toml``, so the flat forms are skipped for them.
-        """
-        return "[]" not in self.item.name and _flat_expressible(self.item.field.type)
-
     def fields(self) -> str:
         """
         The rST field list rendered inside the confval body.
@@ -125,7 +89,7 @@ class Item:
         lines = [f":Type: ``{self.item.type}``"]
         if not self.ignore_default():
             lines.append(f":Default: {self.item.default}")
-        if self.flat_expressible():
+        if self.item.flat_expressible():
             name = self.item.name
             var = name.replace(".", "_").replace("-", "_").upper()
             lines.append(f":Config-settings: ``{name}`` or ``skbuild.{name}``")
