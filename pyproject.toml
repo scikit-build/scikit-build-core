@@ -176,6 +176,7 @@ docs = [
     "sphinx-copybutton",
     "sphinx-inline-tabs",
     "sphinx-jsonschema",
+    "sphinx-llm",
     "sphinx-tippy",
     "sphinxcontrib-programoutput >=0.19",
 ]
