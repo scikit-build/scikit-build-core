@@ -139,7 +139,8 @@ test-pybind11 = [
 ]
 test-schema = [
     { include-group = "test-core" },
-    "fastjsonschema>=2.16.2",
+    "fastjsonschema>=2.16.2; python_version>='3.10'",
+    "fastjsonschema>=2.16.2,!=2.22.0; python_version<'3.10'",
     "validate-pyproject>=0.21",
 ]
 test = [
