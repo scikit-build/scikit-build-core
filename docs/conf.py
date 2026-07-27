@@ -94,6 +94,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
+    "sphinx_llm.txt",
     "sphinx_tippy",
     "sphinxcontrib.programoutput",
 ]
