@@ -53,7 +53,8 @@ class Converter:
         """
         Load the newest index.json file and return the Index object.
         """
-        index_file = sorted(self.base_dir.glob("index-*"))[-1]
+        # max() would raise ValueError, not IndexError, when there is no index
+        index_file = sorted(self.base_dir.glob("index-*"))[-1]  # noqa: FURB192
         with index_file.open(encoding="utf-8") as f:
             data = json.load(f)
 
