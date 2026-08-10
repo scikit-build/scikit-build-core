@@ -1,3 +1,4 @@
+import re
 import shutil
 import sys
 import sysconfig
@@ -11,6 +12,9 @@ from scikit_build_core.build import build_wheel
 DIR = Path(__file__).parent.resolve()
 ABI_PKG = DIR / "packages/abi3_pyproject_ext"
 SYSCONFIGPLAT = sysconfig.get_platform()
+# CPython 3.15rc1+ appends the platform triplet to the abi3 suffix
+# (e.g. "abi3-x86_64-linux-gnu.so" instead of "abi3.so").
+ABI3_SO_RE = re.compile(r"abi3_example\.abi3(-[\w.-]+)?\.so")
 
 
 @pytest.mark.compile
@@ -60,9 +64,9 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv, capsys):
         else:
             assert so_file != "abi3_example.abi3.dll"
     elif abi3:
-        assert so_file == "abi3_example.abi3.so"
+        assert ABI3_SO_RE.fullmatch(so_file)
     else:
-        assert so_file != "abi3_example.abi3.so"
+        assert not ABI3_SO_RE.fullmatch(so_file)
 
     virtualenv.install(wheel)
 
