@@ -322,6 +322,7 @@ ignore = [
     "ANN401",  # Disallow Any
     "C90",     # Complexity
     "COM",     # Trailing commas teach the formatter
+    "CPY",     # Copyright notice at top of file
     "D",       # Too many doc requests
     "E501",    # Line too long
     "ERA",     # Commented out code

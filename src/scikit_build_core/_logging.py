@@ -101,7 +101,9 @@ class ScikitBuildLogger:
         self.logger.critical(FStringMessage(msg, *args, **kwargs), stacklevel=2)
 
     def exception(self, msg: str, *args: object, **kwargs: object) -> None:
-        self.logger.exception(FStringMessage(msg, *args, **kwargs), stacklevel=2)
+        self.logger.exception(  # noqa: LOG004
+            FStringMessage(msg, *args, **kwargs), stacklevel=2
+        )
 
     def log(self, level: int, msg: str, *args: object, **kwargs: object) -> None:
         self.logger.log(level, FStringMessage(msg, *args, **kwargs), stacklevel=2)

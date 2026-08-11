@@ -24,7 +24,7 @@ def __dir__() -> list[str]:
 class Run:
     env: dict[str, str] | None = None
     cwd: os.PathLike[str] | None = None
-    timeout: None | float = None
+    timeout: float | None = None
 
     # Stores last printout, for cleaner debug logging
     _prev_env: ClassVar[dict[str, str]] = {}

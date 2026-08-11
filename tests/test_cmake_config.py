@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 DIR = Path(__file__).parent.resolve()
 
 
-def single_config(param: None | str) -> bool:
+def single_config(param: str | None) -> bool:
     if param is None:
         return not sysconfig.get_platform().startswith("win")
 
