@@ -501,6 +501,36 @@ def configure_builder_with_limited_api(
     return config.init_cache_file.read_text(encoding="utf-8")
 
 
+@pytest.mark.parametrize("limited_api", [False, True], ids=["classic", "abi3"])
+def test_builder_windows_library_hint_sabi(tmp_path, monkeypatch, limited_api):
+    # CMake 4.4's FindPython ingests a Python_LIBRARY hint even when
+    # Development.Module is not requested, which breaks SABI-only
+    # find_package(Python COMPONENTS Interpreter Development.SABIModule)
+    # on Windows. The hint must be dropped in SABI mode.
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sysconfig, "get_platform", lambda *_: "win-amd64")
+
+    import scikit_build_core.builder.builder as builder_mod
+
+    def fake_library(_env, *, abi3=False, abi3t=False):
+        return Path("libs/python3.lib" if abi3 or abi3t else "libs/python313.lib")
+
+    monkeypatch.setattr(builder_mod, "get_python_library", fake_library)
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=limited_api
+    )
+
+    assert ("set(Python_LIBRARY " in cache) == (not limited_api)
+    assert ("set(Python_SABI_LIBRARY " in cache) == limited_api
+
+
 def patch_cpython_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     implementation = vars(sys.implementation).copy()
     implementation["name"] = "cpython"

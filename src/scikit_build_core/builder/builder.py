@@ -428,8 +428,16 @@ class Builder:
                 # On Windows the library is constructed and existence-checked,
                 # so this is reliable. On POSIX a library hint can break
                 # FindPython (which resolves it fine on its own), so this
-                # stays Windows-only.
-                if python_library and sysconfig.get_platform().startswith("win"):
+                # stays Windows-only. In SABI mode the hint is skipped: CMake
+                # 4.4's FindPython ingests it even when Development.Module is
+                # not requested, disabling the SABI-only version fallback and
+                # rejecting python3.lib (Interpreter + Development.SABIModule
+                # then both report not found).
+                if (
+                    python_library
+                    and sabi == _SabiMode.NONE
+                    and sysconfig.get_platform().startswith("win")
+                ):
                     cache_config[f"{prefix}_LIBRARY"] = python_library
                 if python_sabi_library and sysconfig.get_platform().startswith("win"):
                     cache_config[f"{prefix}_SABI_LIBRARY"] = python_sabi_library
