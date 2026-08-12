@@ -10,6 +10,8 @@ __lazy_modules__ = {
     f"{__spec__.parent}.sysconfig",
     "importlib",
     "importlib.resources",
+    "packaging",
+    "packaging.version",
     "platform",
     "re",
     "shlex",
@@ -29,6 +31,8 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
+from packaging.version import Version
+
 from .. import __version__
 from .._compat.importlib import metadata
 from .._logging import logger
@@ -47,8 +51,6 @@ from .sysconfig import (
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable, Mapping, Sequence
-
-    from packaging.version import Version
 
     from ..cmake import CMaker
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -425,6 +427,10 @@ class Builder:
                 cache_config[f"{prefix}_ROOT_DIR"] = Path(sys.base_exec_prefix)
                 cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
                 cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
+                # Interpreter-less FindPython rejects the free-threaded "t" ABI
+                # unless the 4-tuple (3.30+) FIND_ABI requests it.
+                if gil_disabled and self.config.cmake.version >= Version("3.30"):
+                    cache_config[f"{prefix}_FIND_ABI"] = "ANY;ANY;ANY;ON"
                 # On Windows the library is constructed and existence-checked,
                 # so this is reliable. On POSIX a library hint can break
                 # FindPython (which resolves it fine on its own), so this
