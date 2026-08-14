@@ -50,7 +50,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-BASE_TIMEOUT = 10
+BASE_TIMEOUT = 5
 
 
 @functools.lru_cache(None)
@@ -84,6 +84,7 @@ def compute_timeout(executable: Path) -> int:
     * Is on CI: quadruples it
     * Is windows: doubles it
     * Runs with Rosetta: triples it
+    * Native Apple Silicon: doubles it
 
     These do not stack.
     """
@@ -95,7 +96,7 @@ def compute_timeout(executable: Path) -> int:
         return BASE_TIMEOUT * 2
 
     if sys.platform == "darwin" and platform.machine() == "arm64":
-        return BASE_TIMEOUT * 3 if _macos_binary_is_x86(executable) else BASE_TIMEOUT
+        return BASE_TIMEOUT * 3 if _macos_binary_is_x86(executable) else BASE_TIMEOUT * 2
 
     return BASE_TIMEOUT
 
