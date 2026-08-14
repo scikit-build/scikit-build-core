@@ -146,7 +146,9 @@ def test_get_cmake_program_fallback_exception(monkeypatch, fp, caplog, exc):
     assert program.version is None
 
 
-def test_compute_timeout_base_unchanged_on_linux(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compute_timeout_base_unchanged_on_linux(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from scikit_build_core.program_search import BASE_TIMEOUT, compute_timeout
 
     monkeypatch.delenv("CI", raising=False)

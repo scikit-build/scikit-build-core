@@ -96,7 +96,9 @@ def compute_timeout(executable: Path) -> int:
         return BASE_TIMEOUT * 2
 
     if sys.platform == "darwin" and platform.machine() == "arm64":
-        return BASE_TIMEOUT * 3 if _macos_binary_is_x86(executable) else BASE_TIMEOUT * 2
+        return (
+            BASE_TIMEOUT * 3 if _macos_binary_is_x86(executable) else BASE_TIMEOUT * 2
+        )
 
     return BASE_TIMEOUT
 
