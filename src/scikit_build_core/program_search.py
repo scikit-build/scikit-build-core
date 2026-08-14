@@ -50,7 +50,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-BASE_TIMEOUT = 5
+BASE_TIMEOUT = 10
 
 
 @functools.lru_cache(None)
