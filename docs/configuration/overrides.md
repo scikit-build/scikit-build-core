@@ -130,6 +130,27 @@ This is often combined with `if.any`.
 
 :::
 
+### `config-setting.*` (string or bool)
+
+A table of [package-declared config-settings](./config_settings.md) mapped to
+either string regexes, or booleans. The condition matches the _resolved_ value
+(from the bound environment variable, the `-C` config-setting, or the default),
+so both user interfaces behave identically. An unset setting never matches a
+string condition and matches a `false` boolean condition. The setting must be
+declared in `tool.scikit-build.config-setting`.
+
+Example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.config-setting."zmq.libzmq" = "bundled"
+cmake.define.ZMQ_LIBZMQ = "ON"
+```
+
+:::{versionadded} 1.1
+
+:::
+
 ### `state` (string)
 
 The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`,

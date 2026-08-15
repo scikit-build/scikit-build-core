@@ -1184,3 +1184,190 @@ def test_skbuild_overrides_force_include_from_sdist(
         assert settings.wheel.force_include == {"vendored/blob.txt": "pkg/blob.txt"}
     else:
         assert settings.wheel.force_include == {"../outside.txt": "pkg/blob.txt"}
+
+
+CONFIG_SETTING_PYPROJECT = dedent(
+    """\
+    [tool.scikit-build.config-setting."zmq.libzmq"]
+    help = "Where libzmq comes from"
+    env = "ZMQ_LIBZMQ"
+    default = "system"
+
+    [[tool.scikit-build.overrides]]
+    if.config-setting."zmq.libzmq" = "bundled"
+    cmake.define.ZMQ_LIBZMQ = "ON"
+    """
+)
+
+
+@pytest.mark.parametrize("source", ["conf", "env"])
+def test_override_config_setting(
+    source: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """-C and the bound env var must behave identically in if.config-setting."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(CONFIG_SETTING_PYPROJECT, encoding="utf-8")
+
+    config_settings = {}
+    if source == "conf":
+        config_settings["zmq.libzmq"] = "bundled"
+    else:
+        monkeypatch.setenv("ZMQ_LIBZMQ", "bundled")
+
+    settings = SettingsReader.from_file(pyproject_toml, config_settings).settings
+    assert settings.cmake.define["ZMQ_LIBZMQ"] == "ON"
+
+
+def test_override_config_setting_default_no_match(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(CONFIG_SETTING_PYPROJECT, encoding="utf-8")
+
+    settings = SettingsReader.from_file(pyproject_toml).settings
+    assert "ZMQ_LIBZMQ" not in settings.cmake.define
+
+
+def test_override_config_setting_regex(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build.config-setting."zmq.prefix"]
+            help = "Prefix"
+
+            [[tool.scikit-build.overrides]]
+            if.config-setting."zmq.prefix" = "^/opt/"
+            cmake.define.FROM_OPT = "ON"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings = SettingsReader.from_file(
+        pyproject_toml, {"zmq.prefix": "/opt/zmq"}
+    ).settings
+    assert settings.cmake.define["FROM_OPT"] == "ON"
+
+    settings = SettingsReader.from_file(pyproject_toml, {"zmq.prefix": "/usr"}).settings
+    assert "FROM_OPT" not in settings.cmake.define
+
+    # Unset never matches a string condition
+    settings = SettingsReader.from_file(pyproject_toml).settings
+    assert "FROM_OPT" not in settings.cmake.define
+
+
+@pytest.mark.parametrize(
+    ("value", "condition", "matched"),
+    [
+        ("on", "true", True),
+        ("off", "true", False),
+        ("on", "false", False),
+        ("off", "false", True),
+        (None, "false", True),
+        (None, "true", False),
+    ],
+)
+def test_override_config_setting_bool(
+    value: str | None, condition: str, matched: bool, tmp_path: Path
+):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            f"""\
+            [tool.scikit-build.config-setting."zmq.bundled"]
+            type = "bool"
+
+            [[tool.scikit-build.overrides]]
+            if.config-setting."zmq.bundled" = {condition}
+            cmake.define.ZMQ_BUNDLED = "ON"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config_settings = {} if value is None else {"zmq.bundled": value}
+    settings = SettingsReader.from_file(pyproject_toml, config_settings).settings
+    assert ("ZMQ_BUNDLED" in settings.cmake.define) == matched
+
+
+def test_override_config_setting_any(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build.config-setting."zmq.libzmq"]
+            default = "system"
+
+            [[tool.scikit-build.overrides]]
+            if.any.config-setting."zmq.libzmq" = "bundled"
+            if.any.env.ZMQ_FORCE_BUNDLED = true
+            cmake.define.ZMQ_LIBZMQ = "ON"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings = SettingsReader.from_file(
+        pyproject_toml, {"zmq.libzmq": "bundled"}
+    ).settings
+    assert settings.cmake.define["ZMQ_LIBZMQ"] == "ON"
+
+    settings = SettingsReader.from_file(pyproject_toml).settings
+    assert "ZMQ_LIBZMQ" not in settings.cmake.define
+
+
+def test_override_config_setting_undeclared(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.config-setting."zmq.libzmq" = "bundled"
+            cmake.define.ZMQ_LIBZMQ = "ON"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match=r"zmq\.libzmq"):
+        SettingsReader.from_file(pyproject_toml)
+
+
+def test_override_contributed_define_reference(tmp_path: Path):
+    """An override can contribute a {config-setting = ...} define reference."""
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build.config-setting."zmq.prefix"]
+            help = "Prefix"
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            cmake.define.ZMQ_PREFIX = {config-setting = "zmq.prefix"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings = SettingsReader.from_file(
+        pyproject_toml, {"zmq.prefix": "/foo"}, state="wheel"
+    ).settings
+    assert settings.cmake.define["ZMQ_PREFIX"] == "/foo"
+
+
+def test_override_may_not_set_config_setting(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            config-setting."zmq.prefix" = {help = "sneaky"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml, state="wheel")
+    assert exc.value.code == 7

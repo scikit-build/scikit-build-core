@@ -70,6 +70,20 @@
                       ]
                     }
                   }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "config-setting"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "config-setting": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The declared config-setting name whose resolved value this define takes; the define is dropped when unset."
+                    }
+                  }
                 }
               ]
             }
@@ -601,6 +615,48 @@
       "default": "",
       "description": "The CMake build directory. Defaults to a unique temporary directory."
     },
+    "config-setting": {
+      "type": "object",
+      "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)+$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "help": {
+              "type": "string",
+              "default": "",
+              "description": "A description of the setting."
+            },
+            "type": {
+              "enum": [
+                "str",
+                "bool"
+              ],
+              "default": "str",
+              "description": "The type of the setting."
+            },
+            "default": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "description": "The value used when the setting is not passed; must match the type."
+            },
+            "env": {
+              "type": "string",
+              "description": "An environment variable also read for this setting; it takes precedence over `-C`.",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
     "overrides": {
       "type": "array",
       "description": "A list of overrides to apply to the settings, based on the `if` selector.",
@@ -889,6 +945,24 @@
           "additionalProperties": false,
           "minProperties": 1,
           "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0."
+        },
+        "config-setting": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1,
+          "description": "A table of declared config-settings (tool.scikit-build.config-setting) mapped to either string regexs, or booleans. Matches the resolved value (env var, `-C`, or default)."
         }
       }
     },
