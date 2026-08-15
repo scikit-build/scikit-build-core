@@ -23,6 +23,9 @@ def main_info(_args: argparse.Namespace | None = None, /) -> None:
     rich_print(
         "  scikit-build build project-table   {green}Get the project table (with dynamic metadata)"
     )
+    rich_print(
+        "  scikit-build build config-settings {green}List the supported config-settings"
+    )
     rich_print("  scikit-build builder               {green}Info about the system")
     rich_print(
         "  scikit-build builder wheel-tag     {green}Info about the computed wheel tag"
