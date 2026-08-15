@@ -476,12 +476,13 @@ def configure_builder_with_limited_api(
     *,
     limited_api: bool | None,
     py_api: str = "",
+    cmake_version: str = "3.30",
 ) -> str:
     source_dir = tmp_path / "src"
     source_dir.mkdir()
 
     config = CMaker(
-        CMake(Version("3.30"), Path("cmake")),
+        CMake(Version(cmake_version), Path("cmake")),
         source_dir=source_dir,
         build_dir=tmp_path / "build",
         build_type="Release",
@@ -640,6 +641,36 @@ def test_builder_combined_abi3_abi3t(tmp_path, monkeypatch, gil, soabi, is_ft):
     assert f"set(SKBUILD_SOABI [===[{expected_soabi}]===] CACHE STRING" in cache
     assert "set(SKBUILD_SABI_VERSION [===[3.15]===] CACHE STRING" in cache
     assert ("Py_TARGET_ABI3T" in cache) == is_ft
+
+
+@pytest.mark.parametrize(
+    ("gil", "cmake_version", "expected"),
+    [
+        pytest.param("t", "3.30", True, id="ft_cmake330"),
+        pytest.param("t", "3.29", False, id="ft_cmake329"),
+        pytest.param(None, "3.30", False, id="gil_cmake330"),
+    ],
+)
+def test_builder_free_threaded_find_abi(
+    tmp_path, monkeypatch, gil, cmake_version, expected
+):
+    # Interpreter-less find_package(Python COMPONENTS Development.Module) only
+    # matches the free-threaded ABI if Python_FIND_ABI requests it (#1531).
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: gil if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, cmake_version=cmake_version
+    )
+
+    for prefix in ("Python", "Python3"):
+        line = f"set({prefix}_FIND_ABI [===[ANY;ANY;ANY;ON]===] CACHE STRING"
+        assert (line in cache) == expected
 
 
 def configure_builder_with_version(
