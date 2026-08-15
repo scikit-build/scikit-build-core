@@ -144,3 +144,49 @@ def test_get_cmake_program_fallback_exception(monkeypatch, fp, caplog, exc):
     program = get_cmake_program(cmake_path)
     assert program.path == cmake_path
     assert program.version is None
+
+
+def test_compute_timeout_base_unchanged_on_linux(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scikit_build_core.program_search import BASE_TIMEOUT, compute_timeout
+
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setattr("scikit_build_core.program_search.sys.platform", "linux")
+    compute_timeout.cache_clear()
+    try:
+        assert BASE_TIMEOUT == 5
+        assert compute_timeout(Path("cmake")) == 5
+    finally:
+        compute_timeout.cache_clear()
+
+
+def test_compute_timeout_native_apple_silicon_doubles(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from scikit_build_core.program_search import compute_timeout
+
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setattr("scikit_build_core.program_search.sys.platform", "darwin")
+    monkeypatch.setattr(
+        "scikit_build_core.program_search.platform.machine", lambda: "arm64"
+    )
+    monkeypatch.setattr(
+        "scikit_build_core.program_search._macos_binary_is_x86", lambda _path: False
+    )
+    compute_timeout.cache_clear()
+    try:
+        assert compute_timeout(Path("cmake")) == 10
+    finally:
+        compute_timeout.cache_clear()
+
+
+def test_compute_timeout_ci_quadruples_base(monkeypatch: pytest.MonkeyPatch) -> None:
+    from scikit_build_core.program_search import compute_timeout
+
+    monkeypatch.setenv("CI", "true")
+    compute_timeout.cache_clear()
+    try:
+        assert compute_timeout(Path("cmake")) == 20
+    finally:
+        compute_timeout.cache_clear()
