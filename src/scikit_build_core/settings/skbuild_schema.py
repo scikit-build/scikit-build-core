@@ -207,15 +207,14 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
             "additionalProperties": False,
             "properties": {
                 "if": {
-                    "anyOf": [
-                        {"$ref": "#/$defs/if_overrides"},
-                        {
-                            "type": "object",
-                            "properties": {"any": {"$ref": "#/$defs/if_overrides"}},
-                            "required": ["any"],
-                            "additionalProperties": False,
-                        },
-                    ]
+                    "type": "object",
+                    "minProperties": 1,
+                    "additionalProperties": False,
+                    "properties": {
+                        **schema["$defs"]["if_overrides"]["properties"],
+                        "any": {"$ref": "#/$defs/if_overrides"},
+                        "not": {"$ref": "#/$defs/if_overrides"},
+                    },
                 },
                 "inherit": {
                     "type": "object",

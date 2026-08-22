@@ -74,6 +74,9 @@ class OverrideRecord:
     passed_any: dict[str, str] | None
     """All if.any statements that passed."""
 
+    passed_not: dict[str, str] | None
+    """All if.not statements that passed, that is, that did not match."""
+
 
 def strtobool(value: str) -> bool:
     """
@@ -312,6 +315,7 @@ def record_override(
     overridden_items: dict[str, OverrideRecord],
     passed_all: dict[str, str] | None,
     passed_any: dict[str, str] | None,
+    passed_not: dict[str, str] | None,
 ) -> None:
     full_key = ".".join(keys)
     # Get the original_value to construct the record
@@ -350,6 +354,7 @@ def record_override(
         value=value,
         passed_any=passed_any,
         passed_all=passed_all,
+        passed_not=passed_not,
     )
 
 
@@ -374,9 +379,12 @@ def process_overrides(
     for override in tool_skb.pop("overrides", []):
         passed_any: dict[str, str] | None = None
         passed_all: dict[str, str] | None = None
+        passed_not: dict[str, str] | None = None
         unknown: set[str] = set()
         failed_any: set[str] = set()
         failed_all: set[str] = set()
+        matched_not: dict[str, str] = {}
+        failed_not: set[str] = set()
         if_override = override.pop("if", None)
         if not if_override:
             msg = "At least one 'if' override must be provided"
@@ -395,6 +403,20 @@ def process_overrides(
                 **select,
             )
             unknown |= set(unknown_any)
+
+        if "not" in if_override:
+            not_override = if_override.pop("not")
+            select = {k.replace("-", "_"): v for k, v in not_override.items()}
+            matched_not, failed_not, unknown_not = override_match(
+                current_env=env,
+                current_state=state,
+                has_dist_info=has_dist_info,
+                retry=retry,
+                **select,
+            )
+            unknown |= set(unknown_not)
+            # An if.not passes only if none of its conditions match
+            passed_not = {k: f"{k} did not match" for k in sorted(failed_not)}
 
         inherit_override = override.pop("inherit", {})
         if not isinstance(inherit_override, dict):
@@ -416,15 +438,17 @@ def process_overrides(
         passed_or_failed = {
             *(passed_all or {}),
             *(passed_any or {}),
+            *matched_not,
             *failed_all,
             *failed_any,
+            *failed_not,
         }
         if "scikit-build-version" not in passed_or_failed and unknown:
             msg = f"Unknown overrides: {', '.join(unknown)}"
             raise TypeError(msg)
 
         # If no overrides are passed, do nothing
-        if passed_any is None and passed_all is None:
+        if passed_any is None and passed_all is None and passed_not is None:
             continue
 
         # If normal overrides are passed and one or more fails, do nothing
@@ -435,7 +459,13 @@ def process_overrides(
         if passed_any is not None and not passed_any:
             continue
 
-        local_matched = set(passed_any or []) | set(passed_all or [])
+        # If not is passed, none of the conditions are allowed to match.
+        if matched_not:
+            continue
+
+        local_matched = (
+            set(passed_any or []) | set(passed_all or []) | set(passed_not or [])
+        )
         global_matched |= local_matched
         if local_matched:
             if unknown:
@@ -446,6 +476,7 @@ def process_overrides(
                 [
                     *(passed_all or {}).values(),
                     *([" or ".join(passed_any.values())] if passed_any else []),
+                    *(passed_not or {}).values(),
                 ]
             )
             logger.info("Overrides {}", all_str)
@@ -461,6 +492,7 @@ def process_overrides(
                             overridden_items=overridden_items,
                             passed_all=passed_all,
                             passed_any=passed_any,
+                            passed_not=passed_not,
                         )
                         inherit2 = inherit1.get(key2, "none")
                         inner = tool_skb.get(key, {})
@@ -476,6 +508,7 @@ def process_overrides(
                         overridden_items=overridden_items,
                         passed_all=passed_all,
                         passed_any=passed_any,
+                        passed_not=passed_not,
                     )
                     # ``inherit`` is keyed per-table; a non-dict top-level key
                     # has no nested inherit entry, so any inherit for it must be
