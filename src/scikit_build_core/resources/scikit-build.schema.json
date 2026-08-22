@@ -613,23 +613,87 @@
         "additionalProperties": false,
         "properties": {
           "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/if_overrides"
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "scikit-build-version": {
+                "type": "string",
+                "description": "The version of scikit-build-version. Takes a specifier set."
               },
-              {
+              "python-version": {
+                "type": "string",
+                "description": "The two-digit Python version. Takes a specifier set."
+              },
+              "implementation-name": {
+                "type": "string",
+                "description": "The value of `sys.implementation.name`. Takes a regex"
+              },
+              "implementation-version": {
+                "type": "string",
+                "description": "Derived from `sys.implementation.version`, following PEP 508. Takes a specifier set."
+              },
+              "platform-system": {
+                "type": "string",
+                "description": "The value of `sys.platform`. Takes a regex."
+              },
+              "platform-machine": {
+                "type": "string",
+                "description": "The value of `platform.machine()`. Takes a regex."
+              },
+              "platform-node": {
+                "type": "string",
+                "description": "The value of `platform.node()`. Takes a regex."
+              },
+              "state": {
+                "type": "string",
+                "description": "The state of the build, one of `sdist`, `wheel`, `editable`, `metadata_wheel`, and `metadata_editable`. Takes a regex."
+              },
+              "from-sdist": {
+                "type": "boolean",
+                "description": "Whether the build is from an sdist."
+              },
+              "failed": {
+                "type": "boolean",
+                "description": "Matches if the build fails. A build will be retried if there is at least one matching override with this set to true."
+              },
+              "system-cmake": {
+                "type": "string",
+                "description": "The version of CMake found on the system. Takes a specifier set."
+              },
+              "cmake-wheel": {
+                "type": "boolean",
+                "description": "Whether a cmake wheel is known to be provided for this system."
+              },
+              "abi-flags": {
+                "type": "string",
+                "description": "A sorted string of the abi flags. Takes a regex."
+              },
+              "env": {
                 "type": "object",
-                "properties": {
-                  "any": {
-                    "$ref": "#/$defs/if_overrides"
+                "patternProperties": {
+                  ".*": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
                   }
                 },
-                "required": [
-                  "any"
-                ],
-                "additionalProperties": false
+                "additionalProperties": false,
+                "minProperties": 1,
+                "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0."
+              },
+              "any": {
+                "$ref": "#/$defs/if_overrides"
+              },
+              "not": {
+                "$ref": "#/$defs/if_overrides"
               }
-            ]
+            }
           },
           "inherit": {
             "type": "object",
