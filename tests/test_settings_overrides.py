@@ -6,6 +6,7 @@ import typing
 from pathlib import Path
 from textwrap import dedent
 
+import packaging.tags
 import pytest
 
 import scikit_build_core.settings.skbuild_overrides
@@ -926,7 +927,10 @@ def test_wheel_platform(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, sys_tag
 
     monkeypatch.chdir(tmp_path)
 
-    monkeypatch.setattr("packaging.tags.sys_tags", lambda: [sys_tag])
+    monkeypatch.setattr(
+        "packaging.tags.sys_tags",
+        lambda: [packaging.tags.Tag("cp313", "cp313", sys_tag)],
+    )
 
     settings_reader = SettingsReader.from_file(pyproject_toml, retry=False)
     settings = settings_reader.settings

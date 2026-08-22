@@ -246,7 +246,9 @@ def override_match(
         known_cmake_wheels = set(
             known_wheels_toml["tool"]["scikit-build"]["cmake"]["known-wheels"]
         )
-        cmake_plat = known_cmake_wheels.intersection(packaging.tags.sys_tags())
+        cmake_plat = known_cmake_wheels.intersection(
+            tag.platform for tag in packaging.tags.sys_tags()
+        )
         if cmake_plat:
             passed_dict["cmake-wheel"] = f"cmake wheel available on {cmake_plat}"
         else:
