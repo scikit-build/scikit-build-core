@@ -80,6 +80,32 @@ def _dir_key(dirstr: str) -> tuple[int, int] | None:
     return (st.st_dev, st.st_ino)
 
 
+def _nested_ignore_dirs(starting_path: Path) -> Generator[Path, None, None]:
+    """
+    Directories whose ``.gitignore`` can affect a walk of ``starting_path``.
+
+    ``match_path`` only consults a nested ignore whose directory is the walked
+    directory itself or one of its ancestors, so only ``starting_path``'s own
+    subtree, plus the chain of directories above it, can ever match. Walking
+    the whole project to collect the rest is pure cost: for a package that is
+    a subdirectory it means traversing every sibling tree -- build outputs,
+    vendored dependencies, scratch directories -- once per package, and it
+    also inflates the per-path loop over ``nested_excludes`` with entries that
+    can never apply.
+
+    The project root is omitted: its ``.gitignore`` is read separately into
+    the global spec.
+    """
+    root = Path()
+    for parent in starting_path.parents:
+        if parent != root:
+            yield parent
+    for dirstr, _, _ in os.walk(str(starting_path)):
+        dirpath = Path(dirstr)
+        if dirpath != root:
+            yield dirpath
+
+
 def each_unignored_file(
     starting_path: Path,
     include: Sequence[str] = (),
@@ -117,12 +143,11 @@ def each_unignored_file(
 
     nested_excludes = (
         {
-            Path(dirpath): pathspec.GitIgnoreSpec.from_lines(
-                (Path(dirpath) / filename).read_text(encoding="utf-8").splitlines()
+            dirpath: pathspec.GitIgnoreSpec.from_lines(
+                (dirpath / ".gitignore").read_text(encoding="utf-8").splitlines()
             )
-            for dirpath, _, filenames in os.walk(".")
-            for filename in filenames
-            if filename == ".gitignore" and dirpath != "."
+            for dirpath in _nested_ignore_dirs(starting_path)
+            if (dirpath / ".gitignore").is_file()
         }
         if reads_gitignore
         else {}

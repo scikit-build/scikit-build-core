@@ -853,3 +853,58 @@ def test_nonexistent_patterns(
             Path("tests/tmp.py"),
         }
     assert exclude_result == expected
+
+
+def test_nested_gitignore_scan_scoped_to_starting_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    The nested-.gitignore discovery walk must stay inside starting_path (plus
+    its ancestors). match_path only consults a nested ignore whose directory
+    is the walked directory or an ancestor of it, so sibling trees can never
+    contribute a match -- but they used to be traversed and parsed anyway,
+    once per package, which is very expensive for a project that keeps build
+    output or vendored dependencies next to its packages.
+    """
+    monkeypatch.chdir(tmp_path)
+
+    pkg = Path("pkg")
+    (pkg / "sub").mkdir(parents=True)
+    (pkg / "keep.py").write_text("content")
+    (pkg / "sub" / "keep.py").write_text("content")
+    (pkg / "sub" / "dropped.py").write_text("content")
+    (pkg / "sub" / ".gitignore").write_text("dropped.py\n")
+
+    # A sibling tree that is irrelevant to a walk of pkg/, carrying its own
+    # .gitignore so the old code would open and parse it.
+    sibling = Path("build") / "deep" / "deeper"
+    sibling.mkdir(parents=True)
+    (sibling / ".gitignore").write_text("keep.py\n")
+    (sibling / "artifact.o").write_text("content")
+
+    visited: list[str] = []
+    real_walk = os.walk
+
+    def tracking_walk(
+        top: str, *args: object, **kwargs: object
+    ) -> Generator[tuple[str, list[str], list[str]], None, None]:
+        for dirstr, dirs, filenames in real_walk(top, *args, **kwargs):  # type: ignore[arg-type]
+            visited.append(dirstr)
+            yield dirstr, dirs, filenames
+
+    monkeypatch.setattr(os, "walk", tracking_walk)
+
+    result = set(each_unignored_file(pkg, mode="default"))
+
+    # The nested .gitignore inside the package still applies.
+    assert result == {
+        pkg / "keep.py",
+        pkg / "sub" / "keep.py",
+        pkg / "sub" / ".gitignore",
+    }
+
+    # No traversal of the sibling tree, in either walk.
+    visited_paths = {Path(d) for d in visited}
+    assert Path("build") not in visited_paths
+    assert Path("build/deep") not in visited_paths
