@@ -10,8 +10,9 @@ override if the `if` condition is true.
 
 At least one condition must be provided; if multiple conditions are given, all
 must be true (see [`if.any`](#any-matching-condition) to match on any one
-instead). Overrides match top to bottom, overriding previous matches. Each
-condition is one of three types:
+instead, and [`if.not`](#no-matching-condition) to match when none are true).
+Overrides match top to bottom, overriding previous matches. Each condition is
+one of three types:
 
 | Type    | Takes           | Matches when                                                                                            |
 | ------- | --------------- | ------------------------------------------------------------------------------------------------------- |
@@ -248,6 +249,37 @@ Above, either `CIBUILDWHEEL` or `BUILD_MY_LIB` being truthy will trigger a
 binary build.
 
 :::{versionadded} 0.7
+
+:::
+
+## No matching condition
+
+If you use `if.not`, then the override is true only if none of the items in it
+are true. You can combine it with `if` and `if.any`; all the `if` conditions,
+one of the `if.any` conditions, and none of the `if.not` conditions must match.
+
+Example:
+
+```toml
+[[tool.scikit-build.overrides]]
+if.not.system-cmake = ">=3.15"
+if.cmake-wheel = false
+fail = true
+messages.after-failure = "No CMake wheel is available for this platform. Install CMake with your system package manager."
+```
+
+Above, the build stops immediately with a message if there is no usable system
+CMake and no CMake wheel for this platform. Without this, scikit-build-core adds
+`cmake` to the build requirements, and the CMake sdist is built from source,
+which is slow.
+
+Use `if.not` for version and regex conditions, where there is no negated form.
+For a bool condition, set the value you want instead, as the example does;
+`if.cmake-wheel = false` is clearer than, and identical to,
+`if.not.cmake-wheel = true`. A regex condition in an `if.not` table also matches
+when the value is not set at all, such as a missing environment variable.
+
+:::{versionadded} 1.1
 
 :::
 

@@ -343,6 +343,98 @@ def test_skbuild_overrides_any_mixed(
         assert not settings_reader.overridden_items
 
 
+@pytest.mark.parametrize("implementation_name", ["cpython", "pypy"])
+@pytest.mark.parametrize("platform_system", ["darwin", "linux"])
+def test_skbuild_overrides_not(
+    implementation_name: str,
+    platform_system: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        "sys.implementation", type("Mock", (), {"name": implementation_name})
+    )
+    monkeypatch.setattr("sys.platform", platform_system)
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.not.implementation-name = "pypy"
+            if.not.platform-system = "darwin"
+            install.components = ["headers"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings = settings_reader.settings
+
+    if implementation_name == "cpython" and platform_system == "linux":
+        assert settings.install.components == ["headers"]
+        record = settings_reader.overridden_items["install.components"]
+        assert record.passed_all is None
+        assert record.passed_any is None
+        assert record.passed_not is not None
+        assert set(record.passed_not) == {"implementation-name", "platform-system"}
+    else:
+        assert not settings.install.components
+        assert not settings_reader.overridden_items
+
+
+@pytest.mark.parametrize("python_version", ["3.9", "3.10"])
+@pytest.mark.parametrize("platform_system", ["darwin", "linux"])
+def test_skbuild_overrides_not_mixed(
+    platform_system: str,
+    python_version: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr("sys.platform", platform_system)
+    monkeypatch.setattr("sys.version_info", (*map(int, python_version.split(".")), 0))
+
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.python-version = ">=3.10"
+            if.not.platform-system = "darwin"
+            install.components = ["headers"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings = settings_reader.settings
+
+    if python_version == "3.10" and platform_system == "linux":
+        assert settings.install.components == ["headers"]
+    else:
+        assert not settings.install.components
+        assert not settings_reader.overridden_items
+
+
+def test_skbuild_overrides_not_unknown(tmp_path: Path):
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [[tool.scikit-build.overrides]]
+            if.not.not-real = true
+            install.components = ["headers"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match="Unknown overrides: not_real"):
+        SettingsReader.from_file(pyproject_toml)
+
+
 @pytest.mark.parametrize("platform_node", ["thismatch", "matchthat"])
 def test_skbuild_overrides_platnode(
     platform_node: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
