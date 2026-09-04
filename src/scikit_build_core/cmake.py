@@ -337,12 +337,10 @@ class CMaker:
         local_args = list(
             self._compute_build_args(verbose=verbose, build_type=build_type)
         )
-        if not targets:
-            self._build(*local_args, *build_args)
-            return
-
-        for target in targets:
-            self._build(*local_args, "--target", target, *build_args)
+        if targets:
+            # CMake 3.15+ accepts several targets in one invocation.
+            local_args += ["--target", *targets]
+        self._build(*local_args, *build_args)
 
     def _build(self, *args: str) -> None:
         try:

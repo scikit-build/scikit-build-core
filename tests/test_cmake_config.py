@@ -303,6 +303,29 @@ def test_install_targets(tmp_path: Path, fp):
     assert not any("--install" in c for c in fp.calls)
 
 
+def test_build_multiple_targets_one_call(tmp_path: Path, fp):
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    build_dir = tmp_path / "build"
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=build_dir,
+        build_type="Release",
+        single_config=True,
+    )
+
+    fp.register([fp.program("cmake"), fp.any()], occurrences=10)
+
+    config.build(targets=["one", "two"])
+
+    build_calls = [c for c in fp.calls if "--build" in c]
+    assert len(build_calls) == 1
+    call = [os.fspath(arg) for arg in build_calls[0]]
+    assert call[call.index("--target") :] == ["--target", "one", "two"]
+
+
 def test_install_targets_and_components(tmp_path: Path, fp):
     source_dir = tmp_path / "src"
     source_dir.mkdir()
