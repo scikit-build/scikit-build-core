@@ -52,7 +52,7 @@ def _strip_ansi(text: str) -> str:
     return re.sub(r"\x1b\[.*?m", "", text)
 
 
-def test_cli_build_config_settings(
+def test_cli_settings_config_settings(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -70,7 +70,7 @@ def test_cli_build_config_settings(
     )
     (tmp_path / "pyproject.toml").write_text(pyproject)
     monkeypatch.chdir(tmp_path)
-    main(["build", "config-settings"])
+    main(["settings", "config-settings"])
     out = _strip_ansi(capsys.readouterr().out)
 
     names = {line.split()[0] for line in out.splitlines() if line.startswith("  ")}
@@ -91,7 +91,7 @@ def test_cli_build_config_settings(
     assert "metadata" not in names
 
 
-def test_cli_build_config_settings_no_declarations(
+def test_cli_settings_config_settings_no_declarations(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -106,7 +106,7 @@ def test_cli_build_config_settings_no_declarations(
     )
     (tmp_path / "pyproject.toml").write_text(pyproject)
     monkeypatch.chdir(tmp_path)
-    main(["build", "config-settings"])
+    main(["settings", "config-settings"])
     out = _strip_ansi(capsys.readouterr().out)
     assert "Project config-settings" not in out
     assert "Built-in config-settings" in out
