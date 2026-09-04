@@ -398,6 +398,14 @@ def test_builder_macos_arch_extra(monkeypatch):
         (r"-DA='1 1' -DB=\'2\'", ["-DA=1 1", "-DB='2'"]),
         (r'-DA="1 1" -DB=\"2\"', ["-DA=1 1", '-DB="2"']),
         ('"-DA=1 1" -DB=2', ["-DA=1 1", "-DB=2"]),
+        ("-D A=1 -DB=2", ["-D", "A=1", "-DB=2"]),
+        ("-DCMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
+        ("-D CMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
+        ("-DCMAKE_BUILD_TYPE:STRING=Debug -DA=1", ["-DA=1"]),
+        ("-D CMAKE_INSTALL_PREFIX=/usr -DA=1", ["-DA=1"]),
+        ("-DCMAKE_INSTALL_PREFIX:PATH=/opt -DA=1", ["-DA=1"]),
+        ("-DFOO=CMAKE_BUILD_TYPE -DA=1", ["-DFOO=CMAKE_BUILD_TYPE", "-DA=1"]),
+        ("-DCMAKE_BUILD_TYPE_FOO=1 -DA=1", ["-DCMAKE_BUILD_TYPE_FOO=1", "-DA=1"]),
     ],
 )
 def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):

@@ -2,16 +2,16 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{__spec__.parent}.cmake_args",
     "platform",
-    "re",
 }
 
 import os
 import platform
-import re
 from typing import NamedTuple
 
 from .._logging import logger
+from .cmake_args import iter_cmake_defines
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -56,32 +56,16 @@ def get_cmake_osx_deployment_target(
     """
     Find an explicit ``CMAKE_OSX_DEPLOYMENT_TARGET`` known before the build
     directory exists: a ``cmake.define`` entry or a ``-DCMAKE_OSX_DEPLOYMENT_TARGET=``
-    in ``cmake.args``. Handles both the joined ``-DVAR=value`` and the
-    two-token ``-D VAR=value`` forms (mirroring ``parse_generator``'s ``-G``
-    handling). The args value wins over the define, mirroring CMake's own
+    in ``cmake.args``. The args value wins over the define, mirroring CMake's own
     command-line-over-cache precedence. Settings in ``CMakeLists.txt`` or a
     toolchain file cannot be seen here and are not honored.
     """
     target: str | None = None
     if cmake_defines is not None:
         target = cmake_defines.get("CMAKE_OSX_DEPLOYMENT_TARGET", None)
-    expecting_value = False
-    for arg in cmake_args:
-        if expecting_value:
-            match = re.fullmatch(
-                r"CMAKE_OSX_DEPLOYMENT_TARGET(?::[^=]*)?=(.*)", arg.strip()
-            )
-            if match:
-                target = match.group(1)
-            expecting_value = False
-        elif arg == "-D":
-            expecting_value = True
-        else:
-            match = re.fullmatch(
-                r"-D\s*CMAKE_OSX_DEPLOYMENT_TARGET(?::[^=]*)?=(.*)", arg
-            )
-            if match:
-                target = match.group(1)
+    for define in iter_cmake_defines(cmake_args):
+        if define.name == "CMAKE_OSX_DEPLOYMENT_TARGET":
+            target = define.value
     return target
 
 

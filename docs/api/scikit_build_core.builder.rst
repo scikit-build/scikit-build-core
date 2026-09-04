@@ -17,6 +17,14 @@ scikit\_build\_core.builder.builder module
    :show-inheritance:
    :undoc-members:
 
+scikit\_build\_core.builder.cmake\_args module
+----------------------------------------------
+
+.. automodule:: scikit_build_core.builder.cmake_args
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.builder.generator module
 --------------------------------------------
 

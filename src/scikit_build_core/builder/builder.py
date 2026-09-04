@@ -6,6 +6,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
+    f"{__spec__.parent}.cmake_args",
     f"{__spec__.parent}.generator",
     f"{__spec__.parent}.sysconfig",
     "importlib",
@@ -39,6 +40,7 @@ from .._logging import logger
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
+from .cmake_args import iter_cmake_defines
 from .generator import set_environment_for_gen
 from .sysconfig import (
     get_numpy_include_dir,
@@ -50,7 +52,7 @@ from .sysconfig import (
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from ..cmake import CMaker
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -89,26 +91,9 @@ def get_archs(env: Mapping[str, str], cmake_args: Sequence[str] = ()) -> list[st
     """
 
     if sys.platform.startswith("darwin"):
-        # Handles both the joined -DVAR=value and two-token -D VAR=value
-        # forms; a plain substring test would false-positive on any arg
-        # merely containing "CMAKE_SYSTEM_PROCESSOR" (e.g. -DFOO=CMAKE_SYSTEM_PROCESSOR).
-        expecting_value = False
-        for cmake_arg in cmake_args:
-            if expecting_value:
-                match = re.fullmatch(
-                    r"CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg.strip()
-                )
-                if match:
-                    return [match.group(1)]
-                expecting_value = False
-            elif cmake_arg == "-D":
-                expecting_value = True
-            else:
-                match = re.fullmatch(
-                    r"-D\s*CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg
-                )
-                if match:
-                    return [match.group(1)]
+        for define in iter_cmake_defines(cmake_args):
+            if define.name == "CMAKE_SYSTEM_PROCESSOR":
+                return [define.value]
         return re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
     if sys.platform.startswith("win") and get_platform(env) == "win-arm64":
         return ["win_arm64"]
@@ -151,18 +136,20 @@ def _warn_macos_arch_mismatch(cmake_path: Path, *, explicit_arch: bool) -> None:
         )
 
 
-def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, None]:
-    """
-    Filter out CMake arguments that are not supported from CMAKE_ARGS.
-    """
+_UNSUPPORTED_ENV_DEFINES = frozenset({"CMAKE_BUILD_TYPE", "CMAKE_INSTALL_PREFIX"})
 
-    unsupported_args = ("-DCMAKE_BUILD_TYPE", "-DCMAKE_INSTALL_PREFIX")
 
-    for arg in env_cmake_args:
-        if arg.startswith(unsupported_args):
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", arg)
-        else:
-            yield arg
+def _filter_env_cmake_args(env_cmake_args: list[str]) -> list[str]:
+    """
+    Filter out CMake defines that are not supported from CMAKE_ARGS.
+    """
+    drop: set[int] = set()
+    for define in iter_cmake_defines(env_cmake_args):
+        if define.name in _UNSUPPORTED_ENV_DEFINES:
+            ignored = env_cmake_args[define.start : define.stop]
+            logger.warning("Unsupported CMAKE_ARGS ignored: {}", " ".join(ignored))
+            drop.update(range(define.start, define.stop))
+    return [arg for i, arg in enumerate(env_cmake_args) if i not in drop]
 
 
 def get_cmake_args_from_settings(
@@ -485,8 +472,8 @@ class Builder:
                 explicit_arch = (
                     "CMAKE_OSX_ARCHITECTURES" in self.settings.cmake.define
                     or any(
-                        "CMAKE_OSX_ARCHITECTURES" in arg
-                        for arg in self.get_cmake_args()
+                        define.name == "CMAKE_OSX_ARCHITECTURES"
+                        for define in iter_cmake_defines(self.get_cmake_args())
                     )
                 )
                 _warn_macos_arch_mismatch(
