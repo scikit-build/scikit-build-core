@@ -13,7 +13,6 @@ __lazy_modules__ = {
     "packaging",
     "packaging.version",
     "platform",
-    "re",
     "shlex",
     "sysconfig",
     "typing",
