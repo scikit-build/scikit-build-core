@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"importlib.machinery", "importlib.util", "subprocess"}
-
-import importlib.abc
-import importlib.machinery
-import importlib.util
 import os
-import subprocess
 import sys
 
 # Import as little as possible, since every usage of Python imports this file.
+# A .pth file loads this module at every interpreter start, so the module level
+# holds only os and sys. Everything else is imported in the function that needs
+# it.
+
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    import importlib.machinery
 
 DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
@@ -348,6 +349,8 @@ def _run_editable_rebuild(
             )
         raise RuntimeError(msg)
 
+    import subprocess
+
     env = os.environ.copy()
     # Protect against recursion
     if path in env.get(MARKER, "").split(os.pathsep):
@@ -401,7 +404,10 @@ def _run_editable_rebuild(
         lock.release()
 
 
-class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
+# The finders below are not subclasses of importlib.abc.MetaPathFinder: a meta
+# path finder only has to supply find_spec(), and importlib.abc pulls in typing
+# and more at every interpreter start.
+class ScikitBuildRedirectingFinder:
     def __init__(
         self,
         known_source_files: dict[str, str],
@@ -500,6 +506,9 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         # A tracked package directory without an importable __init__ is a
         # namespace package.
         if submodule_search_locations is not None:
+            import importlib.machinery
+            import importlib.util
+
             # A PEP 420 namespace can be shared with other distributions, so
             # merge in the portions native resolution would find on sys.path
             native = importlib.machinery.PathFinder.find_spec(fullname, path)  # type: ignore[arg-type]
@@ -524,6 +533,9 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         origin: str,
         submodule_search_locations: list[str] | None,
     ) -> importlib.machinery.ModuleSpec | None:
+        import importlib.machinery
+        import importlib.util
+
         is_pkg = origin.endswith(("__init__.py", "__init__.pyc"))
         # Resolve the loader through the standard sys.path_hooks machinery (PEP
         # 302) so instrumenting path hooks (e.g. beartype.claw) see redirected
@@ -593,7 +605,7 @@ class ScikitBuildRedirectingFinder(importlib.abc.MetaPathFinder):
         )
 
 
-class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
+class ScikitBuildInplaceFinder:
     """
     Meta path finder for inplace editable installs.
 
@@ -632,6 +644,8 @@ class ScikitBuildInplaceFinder(importlib.abc.MetaPathFinder):
     ) -> importlib.machinery.ModuleSpec | None:
         if fullname.partition(".")[0] not in self.known_packages:
             return None
+
+        import importlib.machinery
 
         # Debounce to once per process, like the redirect finder: importing a
         # package resolves many submodules, but a single build covers them all.
