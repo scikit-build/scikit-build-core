@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import ast
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from scikit_build_core.resources import _editable_redirect
 from scikit_build_core.resources._editable_redirect import (
     ScikitBuildInplaceFinder,
     ScikitBuildRedirectingFinder,
@@ -307,9 +309,7 @@ def test_rebuild_failure_surfaces_stdout_when_not_verbose(
             command, returncode=1, stdout="boom build error", stderr=""
         )
 
-    monkeypatch.setattr(
-        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
-    )
+    monkeypatch.setattr("subprocess.run", fake_run)
 
     finder = _make_finder(tmp_path, verbose=False)
     with pytest.raises(subprocess.CalledProcessError):
@@ -334,9 +334,7 @@ def test_rebuild_success_runs_build_and_install(
         calls.append(list(command))
         return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(
-        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
-    )
+    monkeypatch.setattr("subprocess.run", fake_run)
 
     finder = _make_finder(tmp_path, verbose=False)
     finder.rebuild()
@@ -660,9 +658,7 @@ def test_inplace_finder_rebuild_runs_build_only(
         calls.append(list(command))
         return subprocess.CompletedProcess(command, returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr(
-        "scikit_build_core.resources._editable_redirect.subprocess.run", fake_run
-    )
+    monkeypatch.setattr("subprocess.run", fake_run)
 
     finder = ScikitBuildInplaceFinder(
         known_packages=["pkg"],
@@ -799,3 +795,17 @@ def test_install_inplace_is_idempotent():
     # A different package still registers its own finder.
     install_inplace(["pkg_b"], ["/src"])
     assert count_finders() == 2
+
+
+def test_no_expensive_module_level_imports():
+    """A .pth file loads the shim at every interpreter start, so keep it cheap."""
+    source = Path(_editable_redirect.__file__).read_text(encoding="utf-8")
+
+    imported: set[str] = set()
+    for node in ast.parse(source).body:
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module != "__future__":
+            imported.add(node.module or "")
+
+    assert imported == {"os", "sys"}
