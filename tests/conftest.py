@@ -475,3 +475,16 @@ def pytest_report_header() -> str:
         f"sysconfig platform: {sysconfig.get_platform()}",
     ]
     return "\n".join(lines)
+
+
+@pytest.fixture(autouse=True)
+def _clear_caches() -> Iterable[None]:
+    """Keep process-wide caches from leaking between tests that fake their input."""
+    from scikit_build_core._compat.importlib.metadata import cached_entry_points
+    from scikit_build_core.builder._known_wheels import is_known_platform
+
+    for cached in (cached_entry_points, is_known_platform):
+        cached.cache_clear()
+    yield
+    for cached in (cached_entry_points, is_known_platform):
+        cached.cache_clear()
