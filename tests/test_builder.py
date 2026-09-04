@@ -410,6 +410,31 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
     assert tmpbuilder.get_cmake_args() == answer
 
 
+@pytest.mark.parametrize(
+    ("cmake_args", "answer"),
+    [
+        ("-DCMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
+        ("-D CMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
+        ("-DCMAKE_BUILD_TYPE:STRING=Debug -DA=1", ["-DA=1"]),
+        ("-D CMAKE_INSTALL_PREFIX=/usr -DA=1", ["-DA=1"]),
+        ("-DCMAKE_INSTALL_PREFIX:PATH=/opt -DA=1", ["-DA=1"]),
+        ("-DFOO=CMAKE_BUILD_TYPE -DA=1", ["-DFOO=CMAKE_BUILD_TYPE", "-DA=1"]),
+        ("-DCMAKE_BUILD_TYPE_FOO=1 -DA=1", ["-DCMAKE_BUILD_TYPE_FOO=1", "-DA=1"]),
+    ],
+)
+def test_builder_filter_env_cmake_args(monkeypatch, cmake_args, answer):
+    # Two-token ``-D VAR=value`` must be dropped the same way as joined
+    # ``-DVAR=value``. A prefix match would miss the two-token form and
+    # false-positive on CMAKE_BUILD_TYPE_FOO (same class as get_archs #1417).
+    monkeypatch.setenv("CMAKE_ARGS", cmake_args)
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
+    )
+    assert tmpbuilder.get_cmake_args() == answer
+
+
 def test_builder_exports_source_date_epoch(monkeypatch):
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))

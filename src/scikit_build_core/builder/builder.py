@@ -151,18 +151,44 @@ def _warn_macos_arch_mismatch(cmake_path: Path, *, explicit_arch: bool) -> None:
         )
 
 
+# Joined ``-DVAR=value`` / two-token ``-D VAR=value``, with optional CMake type
+# (``:STRING``). A prefix test on ``-DCMAKE_BUILD_TYPE`` misses the two-token
+# form and false-positives on ``-DCMAKE_BUILD_TYPE_FOO``. See get_archs (#1417).
+_UNSUPPORTED_CMAKE_DEFINE = re.compile(
+    r"CMAKE_(?:BUILD_TYPE|INSTALL_PREFIX)(?::[^=]*)?(?:=.*)?\Z"
+)
+
+
+def _is_unsupported_cmake_define(token: str) -> bool:
+    return _UNSUPPORTED_CMAKE_DEFINE.fullmatch(token.strip()) is not None
+
+
 def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, None]:
     """
     Filter out CMake arguments that are not supported from CMAKE_ARGS.
+
+    Handles both the joined ``-DVAR=value`` and two-token ``-D VAR=value``
+    forms, matching ``get_archs`` / ``parse_generator``.
     """
-
-    unsupported_args = ("-DCMAKE_BUILD_TYPE", "-DCMAKE_INSTALL_PREFIX")
-
+    expecting_value = False
     for arg in env_cmake_args:
-        if arg.startswith(unsupported_args):
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", arg)
-        else:
+        if expecting_value:
+            expecting_value = False
+            if _is_unsupported_cmake_define(arg):
+                logger.warning("Unsupported CMAKE_ARGS ignored: -D {}", arg)
+                continue
+            yield "-D"
             yield arg
+            continue
+        if arg == "-D":
+            expecting_value = True
+            continue
+        if arg.startswith("-D") and _is_unsupported_cmake_define(arg[2:]):
+            logger.warning("Unsupported CMAKE_ARGS ignored: {}", arg)
+            continue
+        yield arg
+    if expecting_value:
+        yield "-D"
 
 
 def get_cmake_args_from_settings(
