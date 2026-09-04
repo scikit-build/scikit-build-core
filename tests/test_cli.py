@@ -70,7 +70,7 @@ def test_cli_settings_config_settings(
     )
     (tmp_path / "pyproject.toml").write_text(pyproject)
     monkeypatch.chdir(tmp_path)
-    main(["settings", "config-settings"])
+    main(["settings", "list"])
     out = _strip_ansi(capsys.readouterr().out)
 
     names = {line.split()[0] for line in out.splitlines() if line.startswith("  ")}
@@ -106,7 +106,7 @@ def test_cli_settings_config_settings_no_declarations(
     )
     (tmp_path / "pyproject.toml").write_text(pyproject)
     monkeypatch.chdir(tmp_path)
-    main(["settings", "config-settings"])
+    main(["settings", "list"])
     out = _strip_ansi(capsys.readouterr().out)
     assert "Project config-settings" not in out
     assert "Built-in config-settings" in out
