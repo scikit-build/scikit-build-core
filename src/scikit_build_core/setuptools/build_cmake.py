@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
+    "copy",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
@@ -22,6 +23,7 @@ __lazy_modules__ = {
 
 import contextlib
 import contextvars
+import copy
 import enum
 import os
 import shlex
@@ -155,16 +157,45 @@ def _validate_settings(
             raise SetupError(msg)
 
 
+_SETTINGS_CACHE_ATTR = "_skbuild_settings_cache"
+
+
 def _load_settings(
+    dist: Distribution | None = None,
     state: Literal["sdist", "wheel", "editable"] = "sdist",
 ) -> ScikitBuildSettings:
+    # A Distribution builds pyproject.toml settings for the same state more
+    # than once (e.g. _cmake_extension and get_source_files both use the
+    # default "sdist" state); cache per-state on the distribution to avoid
+    # re-parsing and re-validating. dist is None for callers with no
+    # distribution to cache on (e.g. tests), which always get a fresh read.
+    cache: dict[str, ScikitBuildSettings] | None = None
+    if dist is not None:
+        cache = getattr(dist, _SETTINGS_CACHE_ATTR, None)
+        if cache is None:
+            cache = {}
+            setattr(dist, _SETTINGS_CACHE_ATTR, cache)
+        cached = cache.get(state)
+        if cached is not None:
+            # Return a copy: callers (e.g. run()) mutate the settings they
+            # get back, and that must not corrupt the cached value.
+            return copy.deepcopy(cached)
+
     # setup.py-only projects (common with the classic scikit-build wrapper)
     # don't have a pyproject.toml.
     if not Path("pyproject.toml").is_file():
-        return SettingsReader({}, _CONFIG_SETTINGS.get() or {}, state=state).settings
-    return SettingsReader.from_file(
-        "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
-    ).settings
+        settings = SettingsReader(
+            {}, _CONFIG_SETTINGS.get() or {}, state=state
+        ).settings
+    else:
+        settings = SettingsReader.from_file(
+            "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
+        ).settings
+
+    if cache is not None:
+        cache[state] = settings
+
+    return settings
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:
@@ -659,7 +690,8 @@ class BuildCMake(setuptools.Command):
         # run() is always a wheel or editable build; pass the matching state so
         # overrides (if.state = "wheel"/"editable") are applied correctly.
         settings = _load_settings(
-            state="editable" if self._editable_mode.is_editable else "wheel"
+            self.distribution,
+            state="editable" if self._editable_mode.is_editable else "wheel",
         )
         _validate_settings(settings, pep660_editable=self._editable_mode.is_pep660)
         _apply_cmake_install_target(settings, self.distribution)
@@ -791,7 +823,7 @@ class BuildCMake(setuptools.Command):
         # (the file API reply isn't available before configuring), and
         # setuptools owns the rest of the sdist file list, so only the
         # explicit opt-in selection is supported.
-        settings = _load_settings()
+        settings = _load_settings(self.distribution)
         include = list(settings.sdist.include)
         if include and settings.sdist.inclusion_mode != "explicit":
             msg = (
@@ -906,7 +938,7 @@ def _cmake_extension(dist: Distribution) -> None:
         dist.ext_modules = getattr(dist, "ext_modules", []) or EvilList()
 
     # Setup logging
-    settings = _load_settings()
+    settings = _load_settings(dist)
     level_value = LEVEL_VALUE[settings.logging.level]
     raw_logger.setLevel(level_value)
 
