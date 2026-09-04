@@ -89,9 +89,7 @@ def _nested_ignore_dirs(starting_path: Path) -> Generator[Path, None, None]:
     subtree, plus the chain of directories above it, can ever match. Walking
     the whole project to collect the rest is pure cost: for a package that is
     a subdirectory it means traversing every sibling tree -- build outputs,
-    vendored dependencies, scratch directories -- once per package, and it
-    also inflates the per-path loop over ``nested_excludes`` with entries that
-    can never apply.
+    vendored dependencies, scratch directories -- once per package.
 
     The project root is omitted: its ``.gitignore`` is read separately into
     the global spec.
@@ -388,11 +386,11 @@ def match_path(
         )
         return False
 
-    # Check relative ignores (Python 3.9's is_relative_to workaround)
-    for np, nex in nested_excludes.items():
-        if (dirpath == np or np in dirpath.parents) and (
-            c := nex.check_file(p.relative_to(np))
-        ).include:
+    # Nested ignores, nearest first: only the walked directory and its
+    # ancestors can hold one that applies, so look those up directly.
+    for np in (dirpath, *dirpath.parents):
+        nex = nested_excludes.get(np)
+        if nex is not None and (c := nex.check_file(p.relative_to(np))).include:
             assert c.index is not None
             logger.debug(
                 "Excluding {} {} because it is explicitly excluded by nested ignore with {!r}.",
