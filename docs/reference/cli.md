@@ -42,16 +42,6 @@ Example:
 
 ```
 
-### Config-settings
-
-Lists the config-settings the current project accepts: the built-in
-scikit-build-core settings plus any the project declares in
-`tool.scikit-build.config-setting`.
-
-```{program-output} scikit-build build config-settings --help
-
-```
-
 ## Building environment info
 
 ```{program-output} scikit-build builder --help
@@ -89,6 +79,22 @@ Example:
 ```
 
 ```{program-output} scikit-build file-api reply --help
+
+```
+
+## Settings tools
+
+```{program-output} scikit-build settings --help
+
+```
+
+### Config-settings
+
+Lists the config-settings the current project accepts: the built-in
+scikit-build-core settings plus any the project declares in
+`tool.scikit-build.config-setting`.
+
+```{program-output} scikit-build settings config-settings --help
 
 ```
 
