@@ -540,6 +540,44 @@ def test_builder_windows_library_hint_sabi(tmp_path, monkeypatch, limited_api):
     assert ("set(Python_SABI_LIBRARY " in cache) == limited_api
 
 
+def test_builder_no_python_hints_skips_lookups(tmp_path, monkeypatch):
+    # The hints are the only consumer; get_numpy_include_dir imports NumPy, so
+    # neither lookup may run when the hints are off.
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    monkeypatch.setattr(config, "configure", unittest.mock.Mock())
+
+    import scikit_build_core.builder.builder as builder_mod
+
+    def boom(*_args: object, **_kwargs: object) -> None:
+        msg = "python hints are disabled"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(builder_mod, "get_numpy_include_dir", boom)
+    monkeypatch.setattr(builder_mod, "get_python_library", boom)
+    monkeypatch.setattr(builder_mod, "get_python_include_dir", boom)
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+
+    builder = Builder(
+        settings=ScikitBuildSettings(
+            cmake=CMakeSettings(python_hints=False),
+            search=SearchSettings(site_packages=False),
+        ),
+        config=config,
+    )
+    builder.configure(defines={})
+
+    cache = config.init_cache_file.read_text(encoding="utf-8")
+    assert "Python_EXECUTABLE" not in cache
+
+
 def patch_cpython_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     implementation = vars(sys.implementation).copy()
     implementation["name"] = "cpython"

@@ -305,9 +305,11 @@ class SettingsReader:
         # Human-readable names parallel to ``toml_srcs`` (used by suggestions).
         toml_src_names = ["pyproject.toml"]
 
-        # Standard top-level [[tool.dynamic-metadata]] entries (0.3); kept for
-        # validation only (cannot be combined with tool.scikit-build.metadata).
-        self._dynamic_metadata = pyproject.get("tool", {}).get("dynamic-metadata", [])
+        # Standard top-level [[tool.dynamic-metadata]] entries (0.3). Kept so
+        # callers do not have to parse pyproject.toml a second time.
+        self.dynamic_metadata: list[dict[str, Any]] = pyproject.get("tool", {}).get(
+            "dynamic-metadata", []
+        )
 
         # Support for cmake.version='CMakeLists.txt'
         # We will save the value for now since we need the CMakeLists location
@@ -631,7 +633,7 @@ class SettingsReader:
             toml_sources=self._static_srcs,
         )
 
-        if self.settings.metadata and self._dynamic_metadata:
+        if self.settings.metadata and self.dynamic_metadata:
             sys.stdout.flush()
             rich_error(
                 "tool.scikit-build.metadata cannot be combined with the standard "

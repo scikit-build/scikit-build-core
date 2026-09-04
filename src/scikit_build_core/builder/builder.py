@@ -381,15 +381,6 @@ class Builder:
                     sabi = _SabiMode.ABI3
                     sabi_minor = target_minor_version
 
-        python_library = get_python_library(self.config.env, abi3=False)
-        python_sabi_library = None
-        if sabi == _SabiMode.ABI3T:
-            python_sabi_library = get_python_library(self.config.env, abi3t=True)
-        elif sabi == _SabiMode.ABI3:
-            python_sabi_library = get_python_library(self.config.env, abi3=True)
-        python_include_dir = get_python_include_dir()
-        numpy_include_dir = get_numpy_include_dir()
-
         # Warning for CPython 3.13.4 Windows bug
         if (
             sys.implementation.name == "cpython"
@@ -402,6 +393,16 @@ class Builder:
             )
 
         if self.settings.cmake.python_hints:
+            # Only computed when the hints are used; get_numpy_include_dir imports NumPy.
+            python_library = get_python_library(self.config.env, abi3=False)
+            python_sabi_library = None
+            if sabi == _SabiMode.ABI3T:
+                python_sabi_library = get_python_library(self.config.env, abi3t=True)
+            elif sabi == _SabiMode.ABI3:
+                python_sabi_library = get_python_library(self.config.env, abi3=True)
+            python_include_dir = get_python_include_dir()
+            numpy_include_dir = get_numpy_include_dir()
+
             # Classic Find Python
             cache_config["PYTHON_EXECUTABLE"] = Path(sys.executable)
             cache_config["PYTHON_INCLUDE_DIR"] = python_include_dir

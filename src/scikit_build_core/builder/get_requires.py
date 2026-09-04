@@ -43,7 +43,7 @@ from .generator import parse_generator
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping
+    from collections.abc import Generator, Mapping, Sequence
 
     from .._compat.typing import Self
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -98,6 +98,9 @@ class GetRequires:
     settings: ScikitBuildSettings = dataclasses.field(
         default_factory=_load_scikit_build_settings
     )
+    dynamic_metadata_entries: Sequence[dict[str, Any]] = dataclasses.field(
+        default_factory=_read_dynamic_metadata
+    )
 
     @classmethod
     def from_config_settings(
@@ -105,7 +108,10 @@ class GetRequires:
         config_settings: Mapping[str, list[str] | str] | None,
         state: Literal["sdist", "wheel", "editable"] = "sdist",
     ) -> Self:
-        return cls(_load_scikit_build_settings(config_settings, state))
+        reader = SettingsReader.from_file(
+            "pyproject.toml", config_settings, state=state
+        )
+        return cls(reader.settings, reader.dynamic_metadata)
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -191,7 +197,7 @@ class GetRequires:
                 )(config)
 
         # Standard top-level [[tool.dynamic-metadata]] entries (0.3).
-        for provider, settings in load_dynamic_metadata(_read_dynamic_metadata()):
+        for provider, settings in load_dynamic_metadata(self.dynamic_metadata_entries):
             get_requires = getattr(provider, "get_requires_for_dynamic_metadata", None)
             if get_requires is not None:
                 yield from get_requires(settings)
