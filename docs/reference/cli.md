@@ -82,6 +82,22 @@ Example:
 
 ```
 
+## Settings tools
+
+```{program-output} scikit-build settings --help
+
+```
+
+### Config-settings
+
+Lists the config-settings the current project accepts: the built-in
+scikit-build-core settings plus any the project declares in
+`tool.scikit-build.config-setting`.
+
+```{program-output} scikit-build settings list --help
+
+```
+
 ## Starter projects
 
 The `init` command generates a minimal CMake + scikit-build-core project for the

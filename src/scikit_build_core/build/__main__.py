@@ -3,21 +3,19 @@ from __future__ import annotations
 __lazy_modules__ = {
     "argparse",
     "json",
-    "pathlib",
-    "scikit_build_core._compat",
     "scikit_build_core._logging",
     "scikit_build_core.builder",
     "scikit_build_core.builder._load_provider",
+    "scikit_build_core.settings",
+    "scikit_build_core.settings.__main__",
     "typing",
 }
 
 import argparse
 import json
-from pathlib import Path
-from typing import Any, Literal, get_args
+from typing import Literal, get_args
 
-from scikit_build_core._compat import tomllib
-from scikit_build_core._logging import rich_error, rich_warning
+from scikit_build_core._logging import rich_warning
 from scikit_build_core.build import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
@@ -28,17 +26,7 @@ from scikit_build_core.builder._load_provider import (
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
-
-
-def _load_pyproject() -> dict[str, Any]:
-    """Read ``pyproject.toml`` from the current directory, erroring out clearly if missing."""
-    path = Path("pyproject.toml")
-    if not path.is_file():
-        rich_error(
-            "No {bold}pyproject.toml{normal} found in the current directory; run this from the root of a project."
-        )
-    with path.open("rb") as f:
-        return tomllib.load(f)
+from scikit_build_core.settings.__main__ import _load_pyproject
 
 
 def main_project_table(args: argparse.Namespace, /) -> None:
