@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"re"}
-
 import dataclasses
 import enum
 import re
@@ -32,6 +30,17 @@ TOKEN_EXPRS = {
     "UNQUOTED": r"(?:\\.|[^\s()#\"\\])+",
 }
 
+TOKEN_REGEX = re.compile(
+    "|".join(f"(?P<{n}>{v})" for n, v in TOKEN_EXPRS.items()), re.MULTILINE
+)
+
+# BRACKET_COMMENT/BRACKET_QUOTE nest a "bc1"/"bq1" group, which can outrank
+# their own group in `match.lastgroup` (Python picks the highest-numbered
+# matched group). Map every group name back to its owning token type.
+_OWNER_GROUP = {name: name for name in TOKEN_EXPRS}
+_OWNER_GROUP["bc1"] = "BRACKET_COMMENT"
+_OWNER_GROUP["bq1"] = "BRACKET_QUOTE"
+
 
 class TokenType(enum.Enum):
     BRACKET_COMMENT = enum.auto()
@@ -59,20 +68,20 @@ class Token:
 
 
 def tokenize(contents: str) -> Generator[Token, None, None]:
-    tok_regex = "|".join(f"(?P<{n}>{v})" for n, v in TOKEN_EXPRS.items())
     last = 0
-    for match in re.finditer(tok_regex, contents, re.MULTILINE):
-        for typ, value in match.groupdict().items():
-            if typ in TOKEN_EXPRS and value is not None:
-                if match.start() != last:
-                    yield Token(
-                        TokenType.WHITESPACE,
-                        last,
-                        match.start(),
-                        contents[last : match.start()],
-                    )
-                last = match.end()
-                yield Token(TokenType[typ], match.start(), match.end(), value)
+    for match in TOKEN_REGEX.finditer(contents):
+        assert match.lastgroup is not None
+        typ = _OWNER_GROUP[match.lastgroup]
+        value = match.group(typ)
+        if match.start() != last:
+            yield Token(
+                TokenType.WHITESPACE,
+                last,
+                match.start(),
+                contents[last : match.start()],
+            )
+        last = match.end()
+        yield Token(TokenType[typ], match.start(), match.end(), value)
 
 
 if __name__ == "__main__":
