@@ -398,21 +398,7 @@ def test_builder_macos_arch_extra(monkeypatch):
         (r"-DA='1 1' -DB=\'2\'", ["-DA=1 1", "-DB='2'"]),
         (r'-DA="1 1" -DB=\"2\"', ["-DA=1 1", '-DB="2"']),
         ('"-DA=1 1" -DB=2', ["-DA=1 1", "-DB=2"]),
-    ],
-)
-def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
-    monkeypatch.setenv("CMAKE_ARGS", cmake_args)
-    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
-    tmpbuilder = Builder(
-        settings=ScikitBuildSettings(wheel=WheelSettings()),
-        config=tmpcfg,
-    )
-    assert tmpbuilder.get_cmake_args() == answer
-
-
-@pytest.mark.parametrize(
-    ("cmake_args", "answer"),
-    [
+        ("-D A=1 -DB=2", ["-D", "A=1", "-DB=2"]),
         ("-DCMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
         ("-D CMAKE_BUILD_TYPE=Release -DA=1", ["-DA=1"]),
         ("-DCMAKE_BUILD_TYPE:STRING=Debug -DA=1", ["-DA=1"]),
@@ -422,10 +408,7 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
         ("-DCMAKE_BUILD_TYPE_FOO=1 -DA=1", ["-DCMAKE_BUILD_TYPE_FOO=1", "-DA=1"]),
     ],
 )
-def test_builder_filter_env_cmake_args(monkeypatch, cmake_args, answer):
-    # Two-token ``-D VAR=value`` must be dropped the same way as joined
-    # ``-DVAR=value``. A prefix match would miss the two-token form and
-    # false-positive on CMAKE_BUILD_TYPE_FOO (same class as get_archs #1417).
+def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
     monkeypatch.setenv("CMAKE_ARGS", cmake_args)
     tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
     tmpbuilder = Builder(

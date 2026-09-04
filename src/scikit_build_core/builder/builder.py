@@ -6,6 +6,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
+    f"{__spec__.parent}.cmake_args",
     f"{__spec__.parent}.generator",
     f"{__spec__.parent}.sysconfig",
     "importlib",
@@ -13,6 +14,7 @@ __lazy_modules__ = {
     "packaging",
     "packaging.version",
     "platform",
+    "re",
     "shlex",
     "sysconfig",
     "typing",
@@ -38,6 +40,7 @@ from .._logging import logger
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
+from .cmake_args import iter_cmake_defines
 from .generator import set_environment_for_gen
 from .sysconfig import (
     get_numpy_include_dir,
@@ -49,7 +52,7 @@ from .sysconfig import (
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from ..cmake import CMaker
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -88,26 +91,9 @@ def get_archs(env: Mapping[str, str], cmake_args: Sequence[str] = ()) -> list[st
     """
 
     if sys.platform.startswith("darwin"):
-        # Handles both the joined -DVAR=value and two-token -D VAR=value
-        # forms; a plain substring test would false-positive on any arg
-        # merely containing "CMAKE_SYSTEM_PROCESSOR" (e.g. -DFOO=CMAKE_SYSTEM_PROCESSOR).
-        expecting_value = False
-        for cmake_arg in cmake_args:
-            if expecting_value:
-                match = re.fullmatch(
-                    r"CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg.strip()
-                )
-                if match:
-                    return [match.group(1)]
-                expecting_value = False
-            elif cmake_arg == "-D":
-                expecting_value = True
-            else:
-                match = re.fullmatch(
-                    r"-D\s*CMAKE_SYSTEM_PROCESSOR(?::[^=]*)?=(.*)", cmake_arg
-                )
-                if match:
-                    return [match.group(1)]
+        for define in iter_cmake_defines(cmake_args):
+            if define.name == "CMAKE_SYSTEM_PROCESSOR":
+                return [define.value]
         return re.findall(r"-arch (\S+)", env.get("ARCHFLAGS", ""))
     if sys.platform.startswith("win") and get_platform(env) == "win-arm64":
         return ["win_arm64"]
@@ -150,44 +136,20 @@ def _warn_macos_arch_mismatch(cmake_path: Path, *, explicit_arch: bool) -> None:
         )
 
 
-# Joined ``-DVAR=value`` / two-token ``-D VAR=value``, with optional CMake type
-# (``:STRING``). A prefix test on ``-DCMAKE_BUILD_TYPE`` misses the two-token
-# form and false-positives on ``-DCMAKE_BUILD_TYPE_FOO``. See get_archs (#1417).
-_UNSUPPORTED_CMAKE_DEFINE = re.compile(
-    r"CMAKE_(?:BUILD_TYPE|INSTALL_PREFIX)(?::[^=]*)?(?:=.*)?\Z"
-)
+_UNSUPPORTED_ENV_DEFINES = frozenset({"CMAKE_BUILD_TYPE", "CMAKE_INSTALL_PREFIX"})
 
 
-def _is_unsupported_cmake_define(token: str) -> bool:
-    return _UNSUPPORTED_CMAKE_DEFINE.fullmatch(token.strip()) is not None
-
-
-def _filter_env_cmake_args(env_cmake_args: list[str]) -> Generator[str, None, None]:
+def _filter_env_cmake_args(env_cmake_args: list[str]) -> list[str]:
     """
-    Filter out CMake arguments that are not supported from CMAKE_ARGS.
-
-    Handles both the joined ``-DVAR=value`` and two-token ``-D VAR=value``
-    forms, matching ``get_archs`` / ``parse_generator``.
+    Filter out CMake defines that are not supported from CMAKE_ARGS.
     """
-    expecting_value = False
-    for arg in env_cmake_args:
-        if expecting_value:
-            expecting_value = False
-            if _is_unsupported_cmake_define(arg):
-                logger.warning("Unsupported CMAKE_ARGS ignored: -D {}", arg)
-                continue
-            yield "-D"
-            yield arg
-            continue
-        if arg == "-D":
-            expecting_value = True
-            continue
-        if arg.startswith("-D") and _is_unsupported_cmake_define(arg[2:]):
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", arg)
-            continue
-        yield arg
-    if expecting_value:
-        yield "-D"
+    drop: set[int] = set()
+    for define in iter_cmake_defines(env_cmake_args):
+        if define.name in _UNSUPPORTED_ENV_DEFINES:
+            ignored = env_cmake_args[define.start : define.stop]
+            logger.warning("Unsupported CMAKE_ARGS ignored: {}", " ".join(ignored))
+            drop.update(range(define.start, define.stop))
+    return [arg for i, arg in enumerate(env_cmake_args) if i not in drop]
 
 
 def get_cmake_args_from_settings(
