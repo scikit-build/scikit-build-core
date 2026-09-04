@@ -472,8 +472,8 @@ class Builder:
                 explicit_arch = (
                     "CMAKE_OSX_ARCHITECTURES" in self.settings.cmake.define
                     or any(
-                        "CMAKE_OSX_ARCHITECTURES" in arg
-                        for arg in self.get_cmake_args()
+                        define.name == "CMAKE_OSX_ARCHITECTURES"
+                        for define in iter_cmake_defines(self.get_cmake_args())
                     )
                 )
                 _warn_macos_arch_mismatch(
