@@ -6,14 +6,12 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
+    f"{__spec__.parent}._known_wheels",
     f"{__spec__.parent}._load_provider",
     f"{__spec__.parent}.generator",
     "importlib",
     "importlib.util",
-    "packaging",
-    "packaging.tags",
     "pathlib",
     "shlex",
     "sysconfig",
@@ -21,15 +19,12 @@ __lazy_modules__ = {
 }
 
 import dataclasses
-import functools
 import importlib.util
 import os
 import shlex
 import sysconfig
 from pathlib import Path
 from typing import Any, Literal
-
-from packaging.tags import sys_tags
 
 from .._compat import tomllib
 from .._logging import logger
@@ -41,8 +36,8 @@ from ..program_search import (
     get_make_programs,
     get_ninja_programs,
 )
-from ..resources import resources
 from ..settings.skbuild_read_settings import SettingsReader
+from ._known_wheels import is_known_platform, known_wheels
 from ._load_provider import load_dynamic_metadata, load_provider
 from .generator import parse_generator
 
@@ -74,17 +69,6 @@ def _uses_ninja_generator(settings: ScikitBuildSettings) -> bool | None:
         return "Ninja" in os.environ["CMAKE_GENERATOR"]
 
     return None
-
-
-@functools.lru_cache(maxsize=2)
-def known_wheels(name: Literal["ninja", "cmake"]) -> frozenset[str]:
-    with resources.joinpath("known_wheels.toml").open("rb") as f:
-        return frozenset(tomllib.load(f)["tool"]["scikit-build"][name]["known-wheels"])
-
-
-@functools.lru_cache(maxsize=2)
-def is_known_platform(platforms: frozenset[str]) -> bool:
-    return any(tag.platform in platforms for tag in sys_tags())
 
 
 def _load_scikit_build_settings(

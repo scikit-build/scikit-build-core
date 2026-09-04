@@ -81,7 +81,7 @@ def _load_group(
 ) -> list[tuple[str, str, dict[str, object]]]:
     providers: list[tuple[str, str, dict[str, object]]] = []
     by_name: dict[str, list[EntryPoint]] = {}
-    for ep in metadata.entry_points(group=group):
+    for ep in metadata.cached_entry_points(group=group):
         by_name.setdefault(ep.name, []).append(ep)
     for name in sorted(by_name):
         eps = by_name[name]

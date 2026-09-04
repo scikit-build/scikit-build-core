@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder._known_wheels",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.sysconfig",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
     "packaging",
     "packaging.specifiers",
-    "packaging.tags",
     "pathlib",
     "platform",
     "re",
@@ -24,16 +22,14 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
-import packaging.tags
 from packaging.specifiers import SpecifierSet
 
 from .. import __version__
-from .._compat import tomllib
 from .._logging import logger
+from ..builder._known_wheels import is_known_platform, known_wheels
 from ..builder.sysconfig import get_abi_flags
 from ..cmake import CMake
 from ..errors import CMakeNotFoundError
-from ..resources import resources
 
 __all__ = ["OverrideRecord", "process_overrides", "regex_match"]
 
@@ -244,16 +240,8 @@ def override_match(
             failed_set.add("system-cmake")
 
     if cmake_wheel is not None:
-        with resources.joinpath("known_wheels.toml").open("rb") as f:
-            known_wheels_toml = tomllib.load(f)
-        known_cmake_wheels = set(
-            known_wheels_toml["tool"]["scikit-build"]["cmake"]["known-wheels"]
-        )
-        cmake_plat = known_cmake_wheels.intersection(
-            tag.platform for tag in packaging.tags.sys_tags()
-        )
-        if cmake_plat:
-            passed_dict["cmake-wheel"] = f"cmake wheel available on {cmake_plat}"
+        if is_known_platform(known_wheels("cmake")):
+            passed_dict["cmake-wheel"] = "cmake wheel available on this platform"
         else:
             failed_set.add("cmake-wheel")
 

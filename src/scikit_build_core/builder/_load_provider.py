@@ -189,9 +189,9 @@ def load_entry_provider(provider: str | Mapping[str, Any]) -> DMProtocols:
             raise TypeError(msg)
         return load_provider(module, path)
 
-    from .._compat.importlib.metadata import entry_points
+    from .._compat.importlib.metadata import cached_entry_points
 
-    eps = entry_points(group="dynamic_metadata.provider")
+    eps = cached_entry_points(group="dynamic_metadata.provider")
     matches = [ep for ep in eps if ep.name == provider]
     if not matches:
         import difflib
