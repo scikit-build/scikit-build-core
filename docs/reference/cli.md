@@ -94,7 +94,7 @@ Lists the config-settings the current project accepts: the built-in
 scikit-build-core settings plus any the project declares in
 `tool.scikit-build.config-setting`.
 
-```{program-output} scikit-build settings config-settings --help
+```{program-output} scikit-build settings list --help
 
 ```
 

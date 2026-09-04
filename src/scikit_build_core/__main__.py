@@ -19,24 +19,20 @@ def __dir__() -> list[str]:
 
 def main_info(_args: argparse.Namespace | None = None, /) -> None:
     rich_print("{blue}The scikit-build-core CLI provides the following commands:")
+    rich_print("  scikit-build build requires      {green}Get the build requirements")
     rich_print(
-        "  scikit-build build requires           {green}Get the build requirements"
+        "  scikit-build build project-table {green}Get the project table (with dynamic metadata)"
     )
+    rich_print("  scikit-build builder             {green}Info about the system")
     rich_print(
-        "  scikit-build build project-table      {green}Get the project table (with dynamic metadata)"
+        "  scikit-build builder wheel-tag   {green}Info about the computed wheel tag"
     )
-    rich_print("  scikit-build builder                  {green}Info about the system")
+    rich_print("  scikit-build builder sysconfig   {green}Info from sysconfig")
+    rich_print("  scikit-build file-api query      {green}Request CMake file API")
+    rich_print("  scikit-build file-api reply      {green}Process CMake file API")
+    rich_print("  scikit-build init                {green}Generate a starter project")
     rich_print(
-        "  scikit-build builder wheel-tag        {green}Info about the computed wheel tag"
-    )
-    rich_print("  scikit-build builder sysconfig        {green}Info from sysconfig")
-    rich_print("  scikit-build file-api query           {green}Request CMake file API")
-    rich_print("  scikit-build file-api reply           {green}Process CMake file API")
-    rich_print(
-        "  scikit-build init                     {green}Generate a starter project"
-    )
-    rich_print(
-        "  scikit-build settings config-settings {green}List the supported config-settings"
+        "  scikit-build settings list       {green}List the supported config-settings"
     )
     rich_print()
 

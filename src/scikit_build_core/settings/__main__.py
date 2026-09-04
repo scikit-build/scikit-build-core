@@ -40,7 +40,7 @@ def _brace_escape(text: str) -> str:
     return text.replace("{", "{{").replace("}", "}}")
 
 
-def main_config_settings(_args: argparse.Namespace, /) -> None:
+def main_list(_args: argparse.Namespace, /) -> None:
     """List the config-settings supported when building the project."""
     pyproject = _load_pyproject()
     backend = pyproject.get("build-system", {}).get("build-backend", "")
@@ -93,12 +93,12 @@ def main_config_settings(_args: argparse.Namespace, /) -> None:
 def populate_parser(parser: argparse.ArgumentParser, /) -> None:
     """Add the ``settings`` subcommands to an existing parser."""
     subparsers = parser.add_subparsers(required=True, help="Commands")
-    config_settings = subparsers.add_parser(
-        "config-settings",
+    list_parser = subparsers.add_parser(
+        "list",
         help="List the config-settings supported when building this project",
         description="Lists the built-in scikit-build-core settings and any config-settings the project declares in tool.scikit-build.config-setting.",
     )
-    config_settings.set_defaults(func=main_config_settings)
+    list_parser.set_defaults(func=main_list)
 
 
 def main() -> None:
