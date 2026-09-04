@@ -123,10 +123,9 @@ def set_config_settings(
 def _apply_cmake_install_target(
     settings: ScikitBuildSettings, dist: Distribution
 ) -> ScikitBuildSettings:
-    # Classic scikit-build's cmake_install_target names the build target that
-    # performs the install; a non-default target maps directly onto
-    # install.targets ("install" is already the cmake --install default).
-    # Returns a new object so the cached settings stay untouched.
+    # Classic scikit-build's cmake_install_target maps onto install.targets
+    # ("install" is the cmake --install default). Returns a new object so the
+    # cached settings stay untouched.
     target = getattr(dist, "cmake_install_target", None) or "install"
     if target == "install":
         return settings
@@ -162,33 +161,25 @@ def _validate_settings(
             raise SetupError(msg)
 
 
-_SETTINGS_CACHE_ATTR = "_skbuild_settings_cache"
-
-
-def _read_settings(
-    state: Literal["sdist", "wheel", "editable"],
-) -> ScikitBuildSettings:
-    # setup.py-only projects (common with the classic scikit-build wrapper)
-    # don't have a pyproject.toml.
-    if not Path("pyproject.toml").is_file():
-        return SettingsReader({}, _CONFIG_SETTINGS.get() or {}, state=state).settings
-    return SettingsReader.from_file(
-        "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
-    ).settings
-
-
 def _load_settings(
     dist: Distribution | None = None,
     state: Literal["sdist", "wheel", "editable"] = "sdist",
 ) -> ScikitBuildSettings:
-    # Settings are read more than once per build (_cmake_extension and
-    # get_source_files both use the "sdist" state), so cache per state on the
-    # distribution. Callers must not mutate the returned object.
+    # Read more than once per build, so cache per state on the distribution.
+    # Callers must not mutate the returned object.
     cache: dict[str, ScikitBuildSettings] = (
-        vars(dist).setdefault(_SETTINGS_CACHE_ATTR, {}) if dist is not None else {}
+        {} if dist is None else vars(dist).setdefault("_skbuild_settings_cache", {})
     )
     if state not in cache:
-        cache[state] = _read_settings(state)
+        config_settings = _CONFIG_SETTINGS.get()
+        # setup.py-only projects (classic scikit-build style) have no pyproject.
+        if Path("pyproject.toml").is_file():
+            reader = SettingsReader.from_file(
+                "pyproject.toml", config_settings, state=state
+            )
+        else:
+            reader = SettingsReader({}, config_settings or {}, state=state)
+        cache[state] = reader.settings
     return cache[state]
 
 
