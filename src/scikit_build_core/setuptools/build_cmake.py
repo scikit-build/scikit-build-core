@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
-    "copy",
+    "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
@@ -23,7 +23,7 @@ __lazy_modules__ = {
 
 import contextlib
 import contextvars
-import copy
+import dataclasses
 import enum
 import os
 import shlex
@@ -122,13 +122,18 @@ def set_config_settings(
 
 def _apply_cmake_install_target(
     settings: ScikitBuildSettings, dist: Distribution
-) -> None:
+) -> ScikitBuildSettings:
     # Classic scikit-build's cmake_install_target names the build target that
     # performs the install; a non-default target maps directly onto
     # install.targets ("install" is already the cmake --install default).
+    # Returns a new object so the cached settings stay untouched.
     target = getattr(dist, "cmake_install_target", None) or "install"
-    if target != "install":
-        settings.install.targets = [*settings.install.targets, target]
+    if target == "install":
+        return settings
+    install = dataclasses.replace(
+        settings.install, targets=[*settings.install.targets, target]
+    )
+    return dataclasses.replace(settings, install=install)
 
 
 def _validate_settings(
@@ -160,42 +165,31 @@ def _validate_settings(
 _SETTINGS_CACHE_ATTR = "_skbuild_settings_cache"
 
 
+def _read_settings(
+    state: Literal["sdist", "wheel", "editable"],
+) -> ScikitBuildSettings:
+    # setup.py-only projects (common with the classic scikit-build wrapper)
+    # don't have a pyproject.toml.
+    if not Path("pyproject.toml").is_file():
+        return SettingsReader({}, _CONFIG_SETTINGS.get() or {}, state=state).settings
+    return SettingsReader.from_file(
+        "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
+    ).settings
+
+
 def _load_settings(
     dist: Distribution | None = None,
     state: Literal["sdist", "wheel", "editable"] = "sdist",
 ) -> ScikitBuildSettings:
-    # A Distribution builds pyproject.toml settings for the same state more
-    # than once (e.g. _cmake_extension and get_source_files both use the
-    # default "sdist" state); cache per-state on the distribution to avoid
-    # re-parsing and re-validating. dist is None for callers with no
-    # distribution to cache on (e.g. tests), which always get a fresh read.
-    cache: dict[str, ScikitBuildSettings] | None = None
-    if dist is not None:
-        cache = getattr(dist, _SETTINGS_CACHE_ATTR, None)
-        if cache is None:
-            cache = {}
-            setattr(dist, _SETTINGS_CACHE_ATTR, cache)
-        cached = cache.get(state)
-        if cached is not None:
-            # Return a copy: callers (e.g. run()) mutate the settings they
-            # get back, and that must not corrupt the cached value.
-            return copy.deepcopy(cached)
-
-    # setup.py-only projects (common with the classic scikit-build wrapper)
-    # don't have a pyproject.toml.
-    if not Path("pyproject.toml").is_file():
-        settings = SettingsReader(
-            {}, _CONFIG_SETTINGS.get() or {}, state=state
-        ).settings
-    else:
-        settings = SettingsReader.from_file(
-            "pyproject.toml", _CONFIG_SETTINGS.get(), state=state
-        ).settings
-
-    if cache is not None:
-        cache[state] = settings
-
-    return settings
+    # Settings are read more than once per build (_cmake_extension and
+    # get_source_files both use the "sdist" state), so cache per state on the
+    # distribution. Callers must not mutate the returned object.
+    cache: dict[str, ScikitBuildSettings] = (
+        vars(dist).setdefault(_SETTINGS_CACHE_ATTR, {}) if dist is not None else {}
+    )
+    if state not in cache:
+        cache[state] = _read_settings(state)
+    return cache[state]
 
 
 def get_source_dir_from_pyproject_toml() -> str | None:
@@ -694,7 +688,7 @@ class BuildCMake(setuptools.Command):
             state="editable" if self._editable_mode.is_editable else "wheel",
         )
         _validate_settings(settings, pep660_editable=self._editable_mode.is_pep660)
-        _apply_cmake_install_target(settings, self.distribution)
+        settings = _apply_cmake_install_target(settings, self.distribution)
 
         build_tmp_folder = Path(self.build_temp)
         build_temp = build_tmp_folder / "_skbuild"

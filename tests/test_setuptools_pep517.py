@@ -825,8 +825,9 @@ def test_cmake_install_target_maps_to_install_targets():
     settings.install.targets = ["existing"]
     dist = setuptools.Distribution()
     dist.cmake_install_target = "install-distribution"  # type: ignore[attr-defined]
-    build_cmake._apply_cmake_install_target(settings, dist)
-    assert settings.install.targets == ["existing", "install-distribution"]
+    new = build_cmake._apply_cmake_install_target(settings, dist)
+    assert new.install.targets == ["existing", "install-distribution"]
+    assert settings.install.targets == ["existing"]
 
 
 @pytest.mark.parametrize("target", [None, "install"])
@@ -835,8 +836,7 @@ def test_cmake_install_target_default_is_noop(target):
     dist = setuptools.Distribution()
     if target is not None:
         dist.cmake_install_target = target  # type: ignore[attr-defined]
-    build_cmake._apply_cmake_install_target(settings, dist)
-    assert settings.install.targets == []
+    assert build_cmake._apply_cmake_install_target(settings, dist) is settings
 
 
 def test_load_settings_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
