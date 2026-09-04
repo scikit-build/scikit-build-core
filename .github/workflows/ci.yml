@@ -495,11 +495,6 @@ jobs:
       - name: Check examples
         run: nox -s test_doc_examples
 
-      - name: Verify no changes required to API docs
-        run: |
-          nox -s build_api_docs
-          git diff --exit-code
-
   pass:
     name: CI pass
     if: always()

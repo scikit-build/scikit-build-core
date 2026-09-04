@@ -60,6 +60,27 @@ def _clean_wheelhouse(wheelhouse: Path) -> None:
         tmpf.unlink()
 
 
+def _newest_source_mtime() -> float:
+    """Newest mtime among files that affect the built wheel.
+
+    An editable install freezes ``importlib.metadata.version()`` at install
+    time, while the real (hatch-vcs) version keeps advancing with every
+    commit, so comparing version strings never matches and forces a rebuild
+    every session. Comparing mtimes instead only rebuilds when the source
+    actually changed.
+    """
+    paths = [BASE / "pyproject.toml", BASE / "src"]
+    return max(
+        p.stat().st_mtime
+        for path in paths
+        for p in ([path] if path.is_file() else path.rglob("*"))
+        # hatch-vcs rewrites _version.py (and its compiled cache) in place on
+        # every build, which would otherwise make the source look changed
+        # right after building.
+        if p.is_file() and p.name != "_version.py" and "__pycache__" not in p.parts
+    )
+
+
 @pytest.fixture(scope="session")
 def pep518_wheelhouse(
     pytestconfig: pytest.Config, tmp_path_factory: pytest.TempPathFactory
@@ -72,14 +93,12 @@ def pep518_wheelhouse(
     # (unlink/replace) on different locks would cause PermissionError (WinError 5).
     wheelhouse_lock = FileLock(wheelhouse / "wheels.lock")
     with wheelhouse_lock:
-        # Only build the scikit-build-core wheel when the current version is not
-        # already present; this avoids a redundant pip-wheel invocation on every
-        # worker while still catching version changes between runs.
-        skbuild_version = metadata.version("scikit-build-core")
-        if not any(
-            whl.name.startswith(f"scikit_build_core-{skbuild_version}-")
-            for whl in wheelhouse.glob("scikit_build_core-*.whl")
-        ):
+        # Only rebuild the scikit-build-core wheel when the source is newer
+        # than the cached one; this avoids a redundant pip-wheel invocation
+        # on every worker while still catching source changes between runs.
+        cached = list(wheelhouse.glob("scikit_build_core-*.whl"))
+        source_mtime = _newest_source_mtime()
+        if not cached or min(whl.stat().st_mtime for whl in cached) < source_mtime:
             subprocess.run(
                 [
                     sys.executable,
@@ -98,7 +117,12 @@ def pep518_wheelhouse(
             for wheel in tmp_path.glob("*.whl"):
                 target = wheelhouse / wheel.name
                 if _is_valid_wheel(target):
-                    continue  # already present and valid; skip to avoid PermissionError on Windows
+                    # Already present and valid; skip the copy (avoids
+                    # PermissionError on Windows) but bump its mtime so a
+                    # same-named rebuild (e.g. an uncommitted source edit)
+                    # isn't retried on every subsequent session.
+                    target.touch()
+                    continue
                 shutil.copy(wheel, target)
 
             # Remove stale scikit-build-core wheels that weren't just copied
