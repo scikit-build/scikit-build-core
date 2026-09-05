@@ -19,6 +19,7 @@ from scikit_build_core.builder.builder import (
     _warn_macos_arch_mismatch,
     archs_to_tags,
     get_archs,
+    get_cmake_args_from_settings,
 )
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
@@ -416,6 +417,30 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
         config=tmpcfg,
     )
     assert tmpbuilder.get_cmake_args() == answer
+
+
+def test_builder_unsupported_cmake_args_warns_once(monkeypatch, caplog):
+    """
+    The args are computed several times per build (wheel tag, configure, build),
+    but the user must see the warning only once. See #1541.
+    """
+    monkeypatch.setenv("CMAKE_ARGS", "-DCMAKE_BUILD_TYPE=Release -DA=1")
+    caplog.set_level("WARNING")
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
+    )
+
+    assert tmpbuilder.get_cmake_args() == ["-DA=1"]
+    assert tmpbuilder.get_cmake_args() == ["-DA=1"]
+    assert get_cmake_args_from_settings(tmpbuilder.settings, os.environ) == ["-DA=1"]
+
+    messages = [str(r.msg) for r in caplog.records]
+    assert (
+        messages.count("Unsupported CMAKE_ARGS ignored: -DCMAKE_BUILD_TYPE=Release")
+        == 1
+    )
 
 
 def test_builder_exports_source_date_epoch(monkeypatch):
