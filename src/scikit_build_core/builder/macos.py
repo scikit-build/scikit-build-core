@@ -74,6 +74,7 @@ def get_macosx_deployment_target(
     arm: bool,
     cmake_defines: Mapping[str, str] | None = None,
     cmake_args: Sequence[str] = (),
+    env: Mapping[str, str] | None = None,
 ) -> MacOSVer:
     """
     Get the deployment target used for the wheel platform tag. An explicit
@@ -82,7 +83,12 @@ def get_macosx_deployment_target(
     is the fallback default CMake itself applies). If neither is set, the current
     macOS version is used. If arm=True, then this will always return at least
     (11, 0). Versions after 11 will be normalized to 0 for minor version.
+
+    ``env`` is the build environment (``os.environ`` plus the ``env`` settings
+    table); it defaults to ``os.environ``.
     """
+    if env is None:
+        env = os.environ
     plat_ver_str, _, _ = platform.mac_ver()
     plat_target = normalize_macos_version(plat_ver_str, arm=arm)
 
@@ -97,7 +103,7 @@ def get_macosx_deployment_target(
             logger.debug("CMAKE_OSX_DEPLOYMENT_TARGET is set to {}", cmake_target)
             return norm_cmake_target
 
-    target = os.environ.get("MACOSX_DEPLOYMENT_TARGET", None)
+    target = env.get("MACOSX_DEPLOYMENT_TARGET", None)
     if target is None:
         logger.debug("MACOSX_DEPLOYMENT_TARGET not set, using {}", plat_target)
         return plat_target
