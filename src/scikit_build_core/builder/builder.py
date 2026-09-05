@@ -43,11 +43,13 @@ from ..resources import find_python
 from .cmake_args import iter_cmake_defines
 from .generator import set_environment_for_gen
 from .sysconfig import (
+    ABI3T_MIN_MINOR,
     get_numpy_include_dir,
     get_platform,
     get_python_include_dir,
     get_python_library,
     get_soabi,
+    is_free_threaded,
 )
 
 TYPE_CHECKING = False
@@ -324,7 +326,7 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
         py_api = self.settings.wheel.py_api
-        gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+        gil_disabled = is_free_threaded()
 
         sabi = _SabiMode.NONE
         sabi_minor: int | None = None
@@ -336,7 +338,7 @@ class Builder:
                 # The free-threaded stable ABI (PEP 803 / abi3t) only exists on
                 # CPython 3.15+; older free-threaded builds have no abi3t, so a
                 # forced abi3t module would be unimportable. Downgrade instead.
-                if sys.version_info >= (3, 15):
+                if sys.version_info >= (3, ABI3T_MIN_MINOR):
                     sabi = _SabiMode.ABI3T
                 else:
                     logger.info(
@@ -361,7 +363,17 @@ class Builder:
                     )
                 else:
                     target_minor_version = int(ft[3:-1])
-                    if target_minor_version <= sys.version_info.minor:
+                    if target_minor_version < ABI3T_MIN_MINOR or sys.version_info < (
+                        3,
+                        ABI3T_MIN_MINOR,
+                    ):
+                        # Same gate as the forced limited_api branch above.
+                        logger.info(
+                            "py-api {} ignored, the free-threaded Stable ABI (abi3t) requires CPython >= 3.{}",
+                            ft,
+                            ABI3T_MIN_MINOR,
+                        )
+                    elif target_minor_version <= sys.version_info.minor:
                         sabi = _SabiMode.ABI3T
                         sabi_minor = target_minor_version
                     else:
@@ -386,7 +398,7 @@ class Builder:
             sys.implementation.name == "cpython"
             and sys.version_info[:3] == (3, 13, 4)
             and sys.platform.startswith("win32")
-            and not sysconfig.get_config_var("Py_GIL_DISABLED")
+            and not gil_disabled
         ):  # pragma: nocover
             logger.warning(
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
