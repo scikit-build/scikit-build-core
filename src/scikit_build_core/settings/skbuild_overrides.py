@@ -291,7 +291,7 @@ def inherit_join(
     if isinstance(previous, list) and isinstance(value, list):
         return [*previous, *value] if mode == "append" else [*value, *previous]
     if isinstance(previous, dict) and isinstance(value, dict):
-        return {**previous, **value} if mode == "append" else {**value, **previous}
+        return previous | value if mode == "append" else value | previous
     msg = "Append/prepend modes can only be used on lists or dicts"
     raise TypeError(msg)
 

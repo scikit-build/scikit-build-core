@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}._logging", "subprocess", "typing"}
+__lazy_modules__ = {f"{__spec__.parent}._logging", "shlex", "subprocess", "typing"}
 
 import dataclasses
 import os
+import shlex
 import subprocess
 from typing import ClassVar
 
@@ -67,7 +68,7 @@ class Run:
                 logger.debug("RUNENV - changes since last run only:\n  {}", msg)
                 type(self)._prev_env = self.env.copy()
 
-        logger.info("RUN: {}", " ".join(options))
+        logger.info("RUN: {}", shlex.join(options))
 
         return subprocess.run(
             options,

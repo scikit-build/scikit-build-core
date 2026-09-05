@@ -67,7 +67,7 @@ Source representations:
 When setting up your dataclasses, these types are handled:
 
 - ``str``: A string type, nothing special.
-- ``bool``: Supports bool in TOML, not handled in envvar/config (so only useful in a Union)
+- ``bool``: Supports bool in TOML; ``"0"``/``"false"``/``"off"``/``"no"``/``""`` are false in envvar/config forms.
 - Any callable (`Path`, `Version`): Passed the string input.
 - ``Optional[T]``: Treated like T. Default should be None, since no input format supports None's.
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
@@ -95,7 +95,7 @@ import dataclasses
 import os
 from typing import Any, Literal, Protocol, TypeVar, get_args
 
-from .._compat.builtins import ExceptionGroup
+from .._compat.builtins import ExceptionGroup, add_note
 from ..utils.typing import (
     get_inner_type,
     get_target_raw_type,
@@ -540,7 +540,7 @@ class ConfSource(Source):
         name = ".".join(names)
         if is_dict:
             d = {
-                k[len(name) + 1 :]: str(v)
+                k.removeprefix(f"{name}."): str(v)
                 for k, v in self.settings.items()
                 if k.startswith(f"{name}.")
             }
@@ -851,7 +851,7 @@ class SourceChain:
                     )
                 except Exception as e:  # noqa: BLE001
                     name = ".".join([*self.prefixes, *prefixes, field.name])
-                    e.__notes__ = [*getattr(e, "__notes__", []), f"Field: {name}"]  # type: ignore[attr-defined]
+                    add_note(e, f"Field: {name}")
                     errors.append(e)
                 continue
 
@@ -864,7 +864,7 @@ class SourceChain:
                         tmp = source.convert(simple, field.type)
                     except Exception as e:  # noqa: BLE001
                         name = ".".join([*self.prefixes, *prefixes, field.name])
-                        e.__notes__ = [*getattr(e, "__notes__", []), f"Field {name}"]  # type: ignore[attr-defined]
+                        add_note(e, f"Field {name}")
                         errors.append(e)
                         prep[field.name] = None
                         break
@@ -873,7 +873,7 @@ class SourceChain:
                         # Dict sources merge by precedence: later matching sources
                         # add missing keys without erasing higher-priority ones.
                         assert isinstance(tmp, dict), f"{field.name} must be a dict"
-                        prep[field.name] = {**tmp, **prep.get(field.name, {})}
+                        prep[field.name] = tmp | prep.get(field.name, {})
                         continue
 
                     prep[field.name] = tmp

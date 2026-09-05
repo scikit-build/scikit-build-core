@@ -43,6 +43,7 @@ from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
 from .auto_requires import get_min_requires
 from .skbuild_model import (
+    BuildSettings,
     CMakeSettings,
     NinjaSettings,
     ScikitBuildSettings,
@@ -231,14 +232,14 @@ def _validate_overrides(
 
     def validate_field_recursive(
         obj: Any,
-        record: OverrideRecord | None = None,
         prefix: str = "",
         path: tuple[str, ...] = (),
     ) -> None:
         """Navigate through all the keys and validate each field."""
+        # Only leaf keys are recorded by the override machinery, so a parent
+        # table never has a record to pass down.
         for field in dataclasses.fields(obj):
             conf_key = field.name.replace("_", "-")
-            closest_record = overrides.get(f"{prefix}{conf_key}", record)
             value = getattr(obj, field.name)
             # Do the validation of the current field
             validate_field(
@@ -246,12 +247,11 @@ def _validate_overrides(
                 value=value,
                 prefix=prefix,
                 path=path,
-                record=closest_record,
+                record=overrides.get(f"{prefix}{conf_key}"),
             )
             if dataclasses.is_dataclass(value):
                 validate_field_recursive(
                     obj=value,
-                    record=closest_record,
                     prefix=f"{prefix}{conf_key}.",
                     path=(*path, field.name),
                 )
@@ -424,12 +424,15 @@ class SettingsReader:
 
         validate_variant_settings(self.settings)
 
-        # Values that come *only* from static project sources (pyproject.toml
-        # and extra_settings), used by the minimum-version move gates below.
-        # Entry-point config is excluded so it behaves like env/config-settings.
-        static_settings = SourceChain(
+        # The cmake/build values that come *only* from static project sources
+        # (pyproject.toml and extra_settings), used by the minimum-version move
+        # gates below. Entry-point config is excluded so it behaves like
+        # env/config-settings.
+        static_chain = SourceChain(
             *self._static_srcs, prefixes=["tool", "scikit-build"]
-        ).convert_target(ScikitBuildSettings)
+        )
+        static_cmake = static_chain.convert_target(CMakeSettings, "cmake")
+        static_build = static_chain.convert_target(BuildSettings, "build")
 
         if self.settings.minimum_version:
             current_version = Version(__version__)
@@ -527,8 +530,8 @@ class SettingsReader:
             self.settings.build.verbose,
             self.settings.minimum_version,
             Version("0.10"),
-            static=static_settings.cmake.verbose == self.settings.cmake.verbose
-            and static_settings.build.verbose == self.settings.build.verbose,
+            static=static_cmake.verbose == self.settings.cmake.verbose
+            and static_build.verbose == self.settings.build.verbose,
         )
         self.settings.build.targets = _handle_move(
             "cmake.targets",
@@ -537,8 +540,8 @@ class SettingsReader:
             self.settings.build.targets,
             self.settings.minimum_version,
             Version("0.10"),
-            static=static_settings.cmake.targets == self.settings.cmake.targets
-            and static_settings.build.targets == self.settings.build.targets,
+            static=static_cmake.targets == self.settings.cmake.targets
+            and static_build.targets == self.settings.build.targets,
         )
 
         if self.settings.sdist.inclusion_mode is not None:

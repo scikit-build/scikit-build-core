@@ -27,7 +27,6 @@ def process_script_dir(script_dir: Path) -> None:
         with contextlib.suppress(UnicodeDecodeError), item.open(encoding="utf-8") as f:
             file_iter = iter(f)
             try:
-                # TODO: handle empty files
                 first_line = next(file_iter)
             except StopIteration:
                 first_line = ""
