@@ -39,7 +39,7 @@ from ..program_search import (
 from ..settings.skbuild_read_settings import SettingsReader
 from ._known_wheels import is_known_platform, known_wheels
 from ._load_provider import load_dynamic_metadata, load_provider
-from .generator import parse_generator
+from .generator import resolve_generator
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -61,14 +61,10 @@ def _uses_ninja_generator(settings: ScikitBuildSettings) -> bool | None:
     otherwise.
     """
     args = [*settings.cmake.args, *shlex.split(os.environ.get("CMAKE_ARGS", ""))]
-    generator = parse_generator(args)
-    if generator:
-        return "Ninja" in generator
-
-    if "CMAKE_GENERATOR" in os.environ:
-        return "Ninja" in os.environ["CMAKE_GENERATOR"]
-
-    return None
+    generator = resolve_generator(args, settings.cmake.define, os.environ)
+    if generator is None:
+        return None
+    return "Ninja" in generator
 
 
 def _load_scikit_build_settings(
