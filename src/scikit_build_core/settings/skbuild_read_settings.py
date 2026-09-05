@@ -236,8 +236,6 @@ def _validate_overrides(
         path: tuple[str, ...] = (),
     ) -> None:
         """Navigate through all the keys and validate each field."""
-        # Only leaf keys are recorded by the override machinery, so a parent
-        # table never has a record to pass down.
         for field in dataclasses.fields(obj):
             conf_key = field.name.replace("_", "-")
             value = getattr(obj, field.name)

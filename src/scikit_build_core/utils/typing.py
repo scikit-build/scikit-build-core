@@ -19,8 +19,10 @@ def __dir__() -> list[str]:
     return __all__
 
 
-# Same object as types.NoneType, which is only available on Python 3.10+
-NoneType = type(None)
+if sys.version_info >= (3, 10):
+    from types import NoneType
+else:
+    NoneType = type(None)
 
 # Runtime check for PEP 604 union syntax (A | B) support
 # types.UnionType only exists in Python 3.10+
