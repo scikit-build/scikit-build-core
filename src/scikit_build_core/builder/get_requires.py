@@ -121,7 +121,7 @@ class GetRequires:
 
         # If the module is already installed (via caching the build
         # environment, for example), we will use that. A namespace package
-        # (a bare "cmake" directory on sys.path) has no origin and is not it.
+        # (a bare "cmake" directory on sys.path) has no origin.
         cmake_spec = importlib.util.find_spec("cmake")
         if cmake_spec is not None and cmake_spec.origin is not None:
             yield f"cmake{cmake_verset}"
@@ -153,7 +153,7 @@ class GetRequires:
 
         # If the module is already installed (via caching the build
         # environment, for example), we will use that. A namespace package
-        # (a bare "ninja" directory on sys.path) has no origin and is not it.
+        # (a bare "ninja" directory on sys.path) has no origin.
         ninja_spec = importlib.util.find_spec("ninja")
         if ninja_spec is not None and ninja_spec.origin is not None:
             yield f"ninja{ninja_verset}"
