@@ -45,7 +45,7 @@ else:
         return importlib.metadata.entry_points()
 
     def entry_points(*, group: str) -> EntryPoints:
-        return all_entry_points().get(group, [])
+        return all_entry_points().get(group, [])  # pylint: disable=no-member
 
 
 def __dir__() -> list[str]:
