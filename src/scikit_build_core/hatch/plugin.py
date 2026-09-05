@@ -37,7 +37,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 from .._check_extra import warn_missing_extra
-from .._logging import logger, rich_print
+from .._logging import rich_print
 from ..build._editable import (
     editable_inplace_files,
     editable_redirect_files,
@@ -145,7 +145,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             msg = "wheel.exclude is not supported for hatch builds, use hatch's exclude instead"
             raise ValueError(msg)
 
-    # Requires Hatchling 1.22.0 to have an effect
     def dependencies(self) -> list[str]:
         settings = self._read_config().settings
         requires = GetRequires(settings)
@@ -337,25 +336,17 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                     path.relative_to(wheel_dirs[targetlib])
                 )
 
-        try:
-            for raw_path in wheel_dirs["data"].iterdir():
-                path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
-                build_data["shared_data"][f"{path.resolve()}"] = str(
-                    path.relative_to(wheel_dirs["data"])
-                )
-        except KeyError:
-            logger.error("SKBUILD_DATA_DIR not supported by Hatchling < 1.24.0")
-            raise
+        for raw_path in wheel_dirs["data"].iterdir():
+            path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
+            build_data["shared_data"][f"{path}"] = str(
+                path.relative_to(wheel_dirs["data"])
+            )
 
-        try:
-            for raw_path in wheel_dirs["scripts"].iterdir():
-                path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
-                build_data["shared_scripts"][f"{path.resolve()}"] = str(
-                    path.relative_to(wheel_dirs["scripts"])
-                )
-        except KeyError:
-            logger.error("SKBUILD_SCRIPTS_DIR not supported by Hatchling < 1.24.0")
-            raise
+        for raw_path in wheel_dirs["scripts"].iterdir():
+            path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
+            build_data["shared_scripts"][f"{path}"] = str(
+                path.relative_to(wheel_dirs["scripts"])
+            )
 
         for raw_path_root in wheel_dirs["metadata"].iterdir():
             path_root = (
@@ -366,12 +357,9 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                 raise ValueError(msg)
             for raw_path in path_root.iterdir():
                 path = raw_path.resolve()  # Windows mingw64 and UCRT now requires this
-                location = path.relative_to(path_root)
-                try:
-                    build_data["extra_metadata"][f"{path.resolve()}"] = str(location)
-                except KeyError:
-                    logger.error("SKBUILD_METADATA_DIR needs a newer Hatchling")
-                    raise
+                build_data["extra_metadata"][f"{path}"] = str(
+                    path.relative_to(path_root)
+                )
 
     def finalize(
         self, version: str, build_data: dict[str, Any], artifact_path: str

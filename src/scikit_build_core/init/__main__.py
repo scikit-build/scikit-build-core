@@ -124,6 +124,11 @@ def _generate(
     return sorted(written)
 
 
+def _derive_module(project_name: str) -> str:
+    """Derive the Python module name from a normalized project name."""
+    return project_name.replace("-", "_").replace(".", "_")
+
+
 def generate_project(
     directory: Path, backend: str, name: str = "example"
 ) -> list[Path]:
@@ -138,8 +143,7 @@ def generate_project(
     files outside ``directory``.
     """
     project_name = canonicalize_name(name, validate=True)
-    module = project_name.replace("-", "_").replace(".", "_")
-    return _generate(directory, backend, project_name, module)
+    return _generate(directory, backend, project_name, _derive_module(project_name))
 
 
 def _display(path: Path) -> str:
@@ -175,7 +179,7 @@ def main_init(args: argparse.Namespace, /) -> None:
             "Could not derive a valid project name from {raw_name!r}; pass {bold}--name{normal}.",
             raw_name=raw_name,
         )
-    module = project_name.replace("-", "_").replace(".", "_")
+    module = _derive_module(project_name)
     if not module.isidentifier():
         rich_error(
             "{module!r} (derived from {raw_name!r}) is not a valid Python identifier; pass a {bold}--name{normal} that starts with a letter or underscore.",

@@ -122,10 +122,11 @@ class CMaker:
             msg = f"source directory {self.source_dir} does not exist"
             raise CMakeConfigError(msg)
 
-        self.build_dir.mkdir(parents=True, exist_ok=True)
-        if not self.build_dir.is_dir():
+        try:
+            self.build_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as err:
             msg = f"build directory {self.build_dir} must be a (creatable) directory"
-            raise CMakeConfigError(msg)
+            raise CMakeConfigError(msg) from err
 
         # TODO: This could be stateful instead
         self._file_api_query = stateless_query(self.build_dir)

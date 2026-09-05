@@ -16,12 +16,11 @@ import argparse
 import builtins
 import dataclasses
 import json
-import sys
 import typing
 from pathlib import Path
 from typing import Any, Callable, TypeVar, Union, get_args, get_origin  # noqa: TID251
 
-from .._compat.builtins import ExceptionGroup
+from .._compat.builtins import ExceptionGroup, add_note
 from ..utils.typing import (
     get_target_raw_type,
     is_union_type,
@@ -92,11 +91,10 @@ class Converter:
                         data[json_field], field_type
                     )
                 except TypeError as err:
-                    msg = f"Failed to convert field {field.name!r} of type {field_type}"
-                    if sys.version_info < (3, 11):
-                        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
-                    else:
-                        err.add_note(msg)  # pylint: disable=no-member
+                    add_note(
+                        err,
+                        f"Failed to convert field {field.name!r} of type {field_type}",
+                    )
                     exceptions.append(err)
                 except ExceptionGroup as err:
                     exceptions.append(err)

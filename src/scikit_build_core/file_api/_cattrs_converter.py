@@ -1,9 +1,9 @@
 # pylint: disable=duplicate-code
 
 __lazy_modules__ = {
-    "cattr",
-    "cattr.preconf",
-    "cattr.preconf.json",
+    "cattrs",
+    "cattrs.preconf",
+    "cattrs.preconf.json",
     f"{__spec__.parent}.model.cache",
     f"{__spec__.parent}.model.cmakefiles",
     f"{__spec__.parent}.model.codemodel",
@@ -18,8 +18,8 @@ import json
 from pathlib import Path
 from typing import Any, Callable, TypeVar, Union  # noqa: TID251
 
-import cattr
-import cattr.preconf.json
+import cattrs
+import cattrs.preconf.json
 
 from .model.cache import Cache
 from .model.cmakefiles import CMakeFiles
@@ -37,24 +37,24 @@ def to_path(path: str, _: type[Path]) -> Path:
     return Path(path)
 
 
-def make_converter(base_dir: Path) -> cattr.preconf.json.JsonConverter:
-    converter = cattr.preconf.json.make_converter()
+def make_converter(base_dir: Path) -> cattrs.preconf.json.JsonConverter:
+    converter = cattrs.preconf.json.make_converter()
     converter.register_structure_hook(Path, to_path)
 
-    st_hook = cattr.gen.make_dict_structure_fn(
+    st_hook = cattrs.gen.make_dict_structure_fn(
         Reply,
         converter,
-        codemodel_v2=cattr.gen.override(rename="codemodel-v2"),
-        cache_v2=cattr.gen.override(rename="cache-v2"),
-        cmakefiles_v1=cattr.gen.override(rename="cmakeFiles-v1"),
-        toolchains_v1=cattr.gen.override(rename="toolchains-v1"),
+        codemodel_v2=cattrs.gen.override(rename="codemodel-v2"),
+        cache_v2=cattrs.gen.override(rename="cache-v2"),
+        cmakefiles_v1=cattrs.gen.override(rename="cmakeFiles-v1"),
+        toolchains_v1=cattrs.gen.override(rename="toolchains-v1"),
     )
     converter.register_structure_hook(Reply, st_hook)
 
-    ip_hook = cattr.gen.make_dict_structure_fn(
+    ip_hook = cattrs.gen.make_dict_structure_fn(
         InstallPath,
         converter,
-        from_=cattr.gen.override(rename="from"),
+        from_=cattrs.gen.override(rename="from"),
     )
     converter.register_structure_hook(InstallPath, ip_hook)
     converter.register_structure_hook(

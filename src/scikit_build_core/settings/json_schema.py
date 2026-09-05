@@ -3,30 +3,25 @@ from __future__ import annotations
 __lazy_modules__ = {
     "dataclasses",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.documentation",
     "packaging",
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
-    "types",
     "typing",
 }
 
 import dataclasses
-import sys
 from pathlib import Path
 from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .._compat.builtins import ExceptionGroup
+from .._compat.builtins import ExceptionGroup, add_note
+from ..utils.typing import NoneType
 from .documentation import pull_docs
-
-if sys.version_info >= (3, 10):
-    from types import NoneType
-else:
-    NoneType = type(None)
 
 __all__ = ["FailedConversionError", "convert_type", "to_json_schema"]
 
@@ -103,12 +98,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         try:
             props[field.name] = convert_type(field.type, normalize_keys=normalize_keys)
         except FailedConversionError as err:
-            if sys.version_info < (3, 11):
-                notes = "__notes__"  # set so linter's won't try to be clever
-                setattr(err, notes, [*getattr(err, notes, []), f"Field: {field.name}"])
-            else:
-                # pylint: disable-next=no-member
-                err.add_note(f"Field: {field.name}")
+            add_note(err, f"Field: {field.name}")
             errs.append(err)
             continue
 

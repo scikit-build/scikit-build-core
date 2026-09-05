@@ -512,9 +512,9 @@ def _build_wheel_impl_impl(
             return WheelImplReturn(wheel_filename=dist_info.name, settings=settings)
 
         for gen in settings.generate:
-            contents = generate_file_contents(gen, metadata)
             if gen.location == "source":
                 continue
+            contents = generate_file_contents(gen, metadata)
             if gen.location == "build":
                 path = build_dir / gen.path
             elif gen.location == "install":

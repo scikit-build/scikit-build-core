@@ -5,7 +5,7 @@ Make documentation for the skbuild model in sphinx format.
 from __future__ import annotations
 
 __lazy_modules__ = {
-    "collections",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.skbuild_model",
     "textwrap",
     "typing",
@@ -14,9 +14,9 @@ __lazy_modules__ = {
 import dataclasses
 import textwrap
 import typing
-from collections import OrderedDict
 from typing import Annotated, get_args, get_origin
 
+from ..utils.typing import NoneType
 from .documentation import mk_docs
 from .skbuild_model import ScikitBuildSettings
 
@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     from .documentation import DCDoc
 
 __all__ = ["mk_skbuild_docs"]
-
-_NONE_TYPE = type(None)
 
 
 def __dir__() -> list[str]:
@@ -51,7 +49,7 @@ def _flat_expressible(field_type: typing.Any) -> bool:
         return all(
             _flat_expressible(arg)
             for arg in get_args(field_type)
-            if arg is not _NONE_TYPE
+            if arg is not NoneType
         )
     if origin is dict:
         return get_origin(get_args(field_type)[1]) not in (dict, list)
@@ -60,9 +58,7 @@ def _flat_expressible(field_type: typing.Any) -> bool:
 
 @dataclasses.dataclass
 class Document:
-    sections: dict[str, Section] = dataclasses.field(
-        default_factory=OrderedDict, init=False
-    )
+    sections: dict[str, Section] = dataclasses.field(default_factory=dict, init=False)
 
     def format(self) -> str:
         return "\n".join(self.sections[it].format() for it in sorted(self.sections))
@@ -76,7 +72,7 @@ class Section:
     {content}""")
     name: str
     level: int = 2
-    items: dict[str, Item] = dataclasses.field(default_factory=OrderedDict, init=False)
+    items: dict[str, Item] = dataclasses.field(default_factory=dict, init=False)
 
     def format(self) -> str:
         return self.TEMPLATE.format(

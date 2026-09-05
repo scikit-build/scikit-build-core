@@ -2,6 +2,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "ast",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     "inspect",
     "packaging",
     "packaging.specifiers",
@@ -23,6 +24,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .. import __version__
+from ..utils.typing import NoneType
 
 TYPE_CHECKING = False
 
@@ -38,8 +40,6 @@ def __dir__() -> list[str]:
 
 
 version_display = ".".join(__version__.split(".")[:2])
-
-NoneType = type(None)
 
 
 def _get_value(value: ast.expr) -> str:
@@ -80,7 +80,7 @@ def sanitize_default_field(text: str) -> str:
 
 
 def is_optional(field: type) -> bool:
-    return get_origin(field) is typing.Union and type(None) in get_args(field)
+    return get_origin(field) is typing.Union and NoneType in get_args(field)
 
 
 def get_display_type(field_type: type | str) -> str:
@@ -169,7 +169,7 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
 
         yield DCDoc(
             name=f"{prefix}{field.name}".replace("_", "-"),
-            type=field.metadata.get("display_type", get_display_type(field.type)),
+            type=get_display_type(field.type),
             default=sanitize_default_field(default),
             docs=docs[field.name],
             field=field,
