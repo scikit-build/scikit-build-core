@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import sysconfig
 from pathlib import Path
 
@@ -17,6 +18,9 @@ if TYPE_CHECKING:
     from pytest_subprocess import FakeProcess
 
 ninja = [] if sysconfig.get_platform().startswith("win") else ["ninja>=1.5"]
+
+# Captured before the protect_get_requires fixture replaces it
+REAL_FIND_SPEC = importlib.util.find_spec
 
 
 @pytest.fixture(autouse=True)
@@ -272,3 +276,18 @@ def test_ninja_make_fallback_respects_forced_generator(
     )
     settings = ScikitBuildSettings(cmake=CMakeSettings(args=args))
     assert set(GetRequires(settings).ninja()) == expected
+
+
+def test_cmake_namespace_dir_is_not_a_module(
+    fp: FakeProcess, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """A bare ``cmake/`` directory on sys.path is not the PyPI cmake package."""
+    fp.register(
+        [Path("cmake/path"), "-E", "capabilities"],
+        stdout='{"version":{"string":"3.18.0"}}',
+    )
+    (tmp_path / "cmake").mkdir()
+    monkeypatch.setattr(importlib.util, "find_spec", REAL_FIND_SPEC)
+    monkeypatch.syspath_prepend(tmp_path)
+
+    assert set(GetRequires().cmake()) == set()

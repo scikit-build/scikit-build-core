@@ -120,8 +120,10 @@ class GetRequires:
         cmake_verset = self.settings.cmake.version
 
         # If the module is already installed (via caching the build
-        # environment, for example), we will use that
-        if importlib.util.find_spec("cmake") is not None:
+        # environment, for example), we will use that. A namespace package
+        # (a bare "cmake" directory on sys.path) has no origin and is not it.
+        cmake_spec = importlib.util.find_spec("cmake")
+        if cmake_spec is not None and cmake_spec.origin is not None:
             yield f"cmake{cmake_verset}"
             return
 
@@ -150,8 +152,10 @@ class GetRequires:
         ninja_verset = self.settings.ninja.version
 
         # If the module is already installed (via caching the build
-        # environment, for example), we will use that
-        if importlib.util.find_spec("ninja") is not None:
+        # environment, for example), we will use that. A namespace package
+        # (a bare "ninja" directory on sys.path) has no origin and is not it.
+        ninja_spec = importlib.util.find_spec("ninja")
+        if ninja_spec is not None and ninja_spec.origin is not None:
             yield f"ninja{ninja_verset}"
             return
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    "contextlib",
     f"{__spec__.parent}._compat.builtins",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}._shutil",
@@ -20,7 +19,6 @@ __lazy_modules__ = {
     "typing",
 }
 
-import contextlib
 import dataclasses
 import json
 import os
@@ -136,16 +134,25 @@ class CMaker:
             logger.info("Fresh build requested, clearing cache")
         else:
             info: dict[str, str] = {}
-            # Parenthesized context managers require the new parser (default in 3.9,
-            # guaranteed 3.10+). Keep nested until 3.9 is dropped.
-            with contextlib.suppress(FileNotFoundError):  # noqa: SIM117
+            try:
                 with skbuild_info.open("r", encoding="utf-8") as f:
                     info = json.load(f)
+            except FileNotFoundError:
+                pass
+            except (OSError, ValueError):
+                # An interrupted build can leave a truncated or empty file
+                logger.warning("Unreadable {}, clearing cache", skbuild_info)
+                stale = True
+            else:
+                if not isinstance(info, dict):
+                    logger.warning("Invalid {}, clearing cache", skbuild_info)
+                    info = {}
+                    stale = True
 
             if info:
                 # If building via SDist, this could be pre-filled
-                cached_source_dir = Path(info["source_dir"])
-                if cached_source_dir != source_dir:
+                cached_source_dir = info.get("source_dir")
+                if cached_source_dir is None or Path(cached_source_dir) != source_dir:
                     logger.warning(
                         "Original src {} != {}, clearing cache",
                         cached_source_dir,
@@ -154,8 +161,8 @@ class CMaker:
                     stale = True
 
                 # Isolated environments can cause this
-                cached_skbuild_dir = Path(info["skbuild_path"])
-                if cached_skbuild_dir != DIR:
+                cached_skbuild_dir = info.get("skbuild_path")
+                if cached_skbuild_dir is None or Path(cached_skbuild_dir) != DIR:
                     logger.info(
                         "New isolated environment {} -> {}, clearing cache",
                         cached_skbuild_dir,
