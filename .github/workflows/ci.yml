@@ -206,26 +206,16 @@ jobs:
         with:
           cmake-version: ${{ matrix.cmake-version }}
 
+      # No `wheels` extra: the PyPI cmake wheel would win discovery over the
+      # matrix CMake version installed above.
       - name: Install package (uv)
         run:
-          uv pip install -e.[wheels,wheel-free-setuptools] --group=dev --system
+          uv pip install -e.[wheel-free-setuptools] ninja --group=dev --system
 
       - name: Test package
-        if: "!contains(matrix.python_version, 'pypy')"
         run: >-
           pytest -ra --showlocals --cov --cov-report=xml --cov-report=term -n
           auto --durations=20
-
-      - name: Test package (two attempts)
-        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
-        if: "contains(matrix.python_version, 'pypy')"
-        with:
-          max_attempts: 2
-          retry_on: error
-          timeout_seconds: 5
-          command: >-
-            pytest -ra --showlocals --cov --cov-report=xml --cov-report=term
-            --durations=20 -n auto
 
       - name: Upload coverage report
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
@@ -498,7 +488,20 @@ jobs:
   pass:
     name: CI pass
     if: always()
-    needs: [changes, lint, checks, min, cygwin, dist, docs]
+    needs:
+      [
+        changes,
+        lint,
+        checks,
+        checks-32bit,
+        min,
+        manylinux,
+        cygwin,
+        msys,
+        mingw64,
+        dist,
+        docs,
+      ]
     runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
@@ -510,8 +513,12 @@ jobs:
               !fromJSON(needs.changes.outputs.run-tests)
               && '
               checks,
+              checks-32bit,
               min,
+              manylinux,
               cygwin,
+              msys,
+              mingw64,
               dist,
               '
               || ''

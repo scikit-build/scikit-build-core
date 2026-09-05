@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -9,6 +11,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from scikit_build_core.program_search import (
+    Program,
     best_program,
     get_cmake_program,
     get_cmake_programs,
@@ -16,13 +19,19 @@ from scikit_build_core.program_search import (
 )
 
 
-def test_get_cmake_programs_cmake_module(monkeypatch):
-    cmake = pytest.importorskip("cmake")
+def test_get_cmake_programs_cmake_module(monkeypatch, fp, tmp_path):
+    # Fake the PyPI cmake module so this runs without the wheel installed
+    bin_dir = tmp_path / "cmake_bin"
+    monkeypatch.setitem(
+        sys.modules, "cmake", types.SimpleNamespace(CMAKE_BIN_DIR=str(bin_dir))
+    )
     monkeypatch.setattr("shutil.which", lambda _: None)
+    fp.register(
+        [bin_dir / "cmake", "-E", "capabilities"],
+        stdout='{"version":{"string":"3.20.0"}}',
+    )
     programs = list(get_cmake_programs())
-    assert len(programs) == 1
-    assert programs[0].path.name == "cmake"
-    assert programs[0].version == Version(".".join(cmake.__version__.split(".")[:3]))
+    assert programs == [Program(bin_dir / "cmake", Version("3.20.0"))]
 
 
 def test_get_ninja_programs_cmake_module(monkeypatch):

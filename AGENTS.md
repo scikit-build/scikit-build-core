@@ -30,7 +30,7 @@ It is built with **hatchling** and stored under `src/scikit_build_core/`.
   auto-marked as `virtualenv` and `isolated` by `conftest.py`.
 - Important pytest markers: `compile`, `configure`, `fortran`, `integration`,
   `isolated`, `network`, `setuptools`, `upstream`, `virtualenv`.
-- `pytest -n auto` is the default parallelism. Some platforms retry on PyPy.
+- `pytest -n auto` is the default parallelism.
 
 ## Code quality
 

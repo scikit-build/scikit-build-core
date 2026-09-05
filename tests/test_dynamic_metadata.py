@@ -297,7 +297,7 @@ def test_regex(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     with Path("__init__.py").open("w") as f:
         f.write("__version__ = '0.1.0'")
 
-    regex.dynamic_metadata("version", {"input": "__init__.py"})
+    assert regex.dynamic_metadata("version", {"input": "__init__.py"}) == "0.1.0"
 
 
 def test_regex_errors() -> None:
