@@ -272,3 +272,86 @@ def test_ninja_make_fallback_respects_forced_generator(
     )
     settings = ScikitBuildSettings(cmake=CMakeSettings(args=args))
     assert set(GetRequires(settings).ninja()) == expected
+
+
+@pytest.mark.parametrize(
+    ("define", "expected"),
+    [
+        pytest.param("Ninja", True, id="define-ninja"),
+        pytest.param("Unix Makefiles", False, id="define-non-ninja"),
+        pytest.param("Visual Studio 17 2022", False, id="define-vs"),
+    ],
+)
+def test_uses_ninja_generator_define(
+    define: str,
+    expected: bool,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """
+    ``cmake.define.CMAKE_GENERATOR`` selects the generator for the build, so it
+    must select it for the requirements too. See #1541.
+    """
+    from scikit_build_core.builder.get_requires import _uses_ninja_generator
+    from scikit_build_core.settings.skbuild_model import (
+        CMakeSettings,
+        CMakeSettingsDefine,
+        ScikitBuildSettings,
+    )
+
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    settings = ScikitBuildSettings(
+        cmake=CMakeSettings(define={"CMAKE_GENERATOR": CMakeSettingsDefine(define)})
+    )
+    assert _uses_ninja_generator(settings) is expected
+
+
+def test_uses_ninja_generator_define_precedence(monkeypatch: pytest.MonkeyPatch):
+    """``-G`` wins over the define, which wins over the environment."""
+    from scikit_build_core.builder.get_requires import _uses_ninja_generator
+    from scikit_build_core.settings.skbuild_model import (
+        CMakeSettings,
+        CMakeSettingsDefine,
+        ScikitBuildSettings,
+    )
+
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    monkeypatch.setenv("CMAKE_GENERATOR", "Unix Makefiles")
+    settings = ScikitBuildSettings(
+        cmake=CMakeSettings(define={"CMAKE_GENERATOR": CMakeSettingsDefine("Ninja")})
+    )
+    assert _uses_ninja_generator(settings) is True
+
+    settings = ScikitBuildSettings(
+        cmake=CMakeSettings(
+            args=["-GUnix Makefiles"],
+            define={"CMAKE_GENERATOR": CMakeSettingsDefine("Ninja")},
+        )
+    )
+    assert _uses_ninja_generator(settings) is False
+
+
+@pytest.mark.parametrize(
+    ("define", "expected"),
+    [
+        pytest.param("Ninja", {"ninja>=1.5"}, id="define-ninja"),
+        pytest.param("Unix Makefiles", set(), id="define-non-ninja"),
+        pytest.param("Visual Studio 17 2022", set(), id="define-vs"),
+    ],
+)
+def test_get_requires_ninja_define_generator(
+    define: str,
+    expected: set[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Ninja set with a define must add the ninja requirement (#1541)."""
+    from scikit_build_core.settings.skbuild_model import (
+        CMakeSettings,
+        CMakeSettingsDefine,
+        ScikitBuildSettings,
+    )
+
+    monkeypatch.delenv("CMAKE_ARGS", raising=False)
+    settings = ScikitBuildSettings(
+        cmake=CMakeSettings(define={"CMAKE_GENERATOR": CMakeSettingsDefine(define)})
+    )
+    assert set(GetRequires(settings).ninja()) == expected
