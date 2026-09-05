@@ -20,7 +20,6 @@ repos:
       - id: name-tests-test
         args: ["--pytest-test-first"]
         exclude: "^tests/packages/|^tests/utils"
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
         exclude: "^tests"
 
@@ -83,8 +82,6 @@ repos:
           - cmake
           - exceptiongroup
           - hatch-fancy-pypi-readme>=23.2
-          - importlib-resources
-          - markdown-it-py
           - ninja
           - nox
           - packaging>=24.2

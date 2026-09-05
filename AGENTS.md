@@ -7,7 +7,8 @@ It is built with **hatchling** and stored under `src/scikit_build_core/`.
 
 ## Running things
 
-- Prefer `uv run` over bare Python invocations. There is a `uv.lock` checked in.
+- Prefer `uv run` over bare Python invocations. `uv.lock` is gitignored, but CI
+  watches it to decide whether to run the test job.
 - Use `uv sync` for a local dev install. `uv run` does this for you.
 - `nox` is the task runner.
   - `nox -s tests` — run tests with xdist (`-n auto`).

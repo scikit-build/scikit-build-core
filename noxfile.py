@@ -37,8 +37,8 @@ def lint(session: nox.Session) -> None:
     """
     Run the linter.
     """
-    session.install("pre-commit")
-    session.run("pre-commit", "run", "--all-files", *session.posargs)
+    session.install("prek")
+    session.run("prek", "run", "--all-files", *session.posargs)
 
 
 @nox.session(reuse_venv=True)
@@ -142,6 +142,7 @@ def minimums(session: nox.Session) -> None:
         session,
         install_args=["--resolution=lowest-direct"],
         run_args=["-Wdefault"],
+        extras=["test-schema"],
     )
 
 

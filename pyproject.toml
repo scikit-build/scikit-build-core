@@ -113,7 +113,6 @@ test-core = [
     'setuptools >=45; python_version=="3.9"',
     'setuptools >=49; python_version>="3.10" and python_version<"3.12"',
     'setuptools >=66.1; python_version>="3.12"',
-    'typing-extensions >=3.10; python_version<"3.10"',
     "virtualenv >=20.20",
     "wheel >=0.40",
 ]
@@ -185,12 +184,11 @@ docs = [
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/scikit_build_core/_version.py"
-build.targets.sdist.exclude = [".git", ".agents/", ".distro/", ".fmf/", ".github/", ".packit.yaml", ".readthedocs.yaml"]
+build.targets.sdist.exclude = [".git", ".agents/", ".distro/", ".fmf/", ".github/", ".packit.yaml", ".readthedocs.yml"]
 
 
 [tool.uv]
 exclude-newer = "7 days"
-workspace.members = ["tmp/hello/hello"]
 
 # These provide CMake helpers used by the init templates (f2py_add_module,
 # cython helpers); allow their freshly released versions so the generated
@@ -207,10 +205,6 @@ xfail_strict = true
 filterwarnings = [
     "error",
     "ignore:Config variable '.*' is unset, Python ABI tag may be incorrect:RuntimeWarning",
-    "default:pkg_resources is deprecated as an API:DeprecationWarning:wheel",  # Caused by wheel<0.41 in tests
-    "default:The 'wheel' package is no longer the canonical location:DeprecationWarning",  # Caused by wheel also
-    "default:The 'wheel' package is no longer the canonical location:FutureWarning",  # Newer wheel/setuptools emit this as a FutureWarning
-    "default:onerror argument is deprecated, use onexc instead:DeprecationWarning:wheel", # Caused by wheel<0.41 & Python 3.12
     "default:The distutils package is deprecated and slated for removal:DeprecationWarning",  # Caused by setuptools sometimes
     "default:The distutils.sysconfig module is deprecated, use sysconfig instead:DeprecationWarning",  # Caused by setuptools sometimes
     "default:check_home argument is deprecated and ignored.:DeprecationWarning",  # Caused by setuptools sometimes
@@ -245,7 +239,6 @@ exclude = [
     '^tests/packages/simplest_c/src/simplest/__init__.py',
     '^tests/packages/dynamic_metadata/src/dynamic/__init__.py',
     '^tests/packages/.*/setup.py',
-    '^tests/packages/extensionlib/*',
 ]
 mypy_path = ["$MYPY_CONFIG_FILE_DIR/src", "$MYPY_CONFIG_FILE_DIR/tests/utils"]
 python_version = "3.10"
@@ -278,7 +271,6 @@ messages_control.disable = [
     "invalid-name",
     "line-too-long",
     "missing-class-docstring",
-    "missing-function-docstring",
     "missing-function-docstring",
     "missing-module-docstring",
     "wrong-import-position",
@@ -325,15 +317,12 @@ ignore = [
     "CPY",     # Copyright notice at top of file
     "D",       # Too many doc requests
     "E501",    # Line too long
-    "ERA",     # Commented out code
     "FIX",     # Hacks and todos
     "PLC0415", # Import should be at top of file
-    "PLE1205", # Format check doesn't work with our custom logger
     "PLR09",   # Too many ...
     "PLR2004", # Magic value used in comparison
     "PT013",   # It's correct to import classes for typing!
     "S101",    # Use of assert detected
-    "S404",    # subprocess module is possibly insecure
     "S603",    # subprocess untrusted input
     "S607",    # subprocess call
     "SLF001",  # Private members are okay to access
@@ -374,15 +363,13 @@ docstring-code-format = true
 "tests/**" = ["T20", "ANN", "FBT001", "INP"]
 "noxfile.py" = ["T20", "TID251"]
 ".agents/skills/**/*.py" = ["T20"]
-"src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT", "TID251"]
+"src/scikit_build_core/resources/*.py" = ["PTH", "ARG002", "FBT"]
 "src/scikit_build_core/_compat/**.py" = ["TID251"]
 "src/scikit_build_core/settings/**.py" = ["FBT001", "FA"]
 "src/scikit_build_core/file_api/**.py" = ["FA"]
 "tests/conftest.py" = ["TID251"]
-"tests/packages/**.py" = ["TID251"]
 "tests/test_settings.py" = ["FA"]
 "docs/**" = ["INP"]
-"docs/conf.py" = ["TID251"]
 "docs/examples/**" = ["ANN"]
 "src/scikit_build_core/file_api/model/*.py" = ["N"]
 "**/__main__.py" = ["T20"]
