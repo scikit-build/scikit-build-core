@@ -61,6 +61,22 @@ def __dir__() -> list[str]:
 DIR = Path(__file__).parent.resolve()
 
 
+def _load_file_api(reply_dir: Path) -> Index | None:
+    """Read a file-api reply, returning None if it cannot be parsed."""
+    try:
+        return load_reply_dir(reply_dir)
+    except (
+        ExceptionGroup,
+        IndexError,
+        OSError,
+        TypeError,
+        json.JSONDecodeError,
+    ) as exc:
+        logger.debug("Could not parse CMake file-api")
+        logger.debug(str(exc))
+    return None
+
+
 @dataclasses.dataclass(frozen=True)
 class CMake:
     version: Version
@@ -314,12 +330,8 @@ class CMaker:
             msg = "CMake configuration failed"
             raise FailedLiveProcessError(msg) from None
 
-        try:
-            if self._file_api_query.exists():
-                self.file_api = load_reply_dir(self._file_api_query)
-        except ExceptionGroup as exc:
-            logger.debug("Could not parse CMake file-api")
-            logger.debug(str(exc))
+        if self._file_api_query.exists():
+            self.file_api = _load_file_api(self._file_api_query)
 
     def _compute_build_args(
         self,
