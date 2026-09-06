@@ -199,3 +199,40 @@ def test_compute_timeout_ci_quadruples_base(monkeypatch: pytest.MonkeyPatch) -> 
         assert compute_timeout(Path("cmake")) == 20
     finally:
         compute_timeout.cache_clear()
+
+
+def test_get_cmake_program_missing_binary(tmp_path: Path) -> None:
+    missing = tmp_path / "not-a-cmake"
+    assert get_cmake_program(missing) == Program(missing, None)
+
+
+def test_get_ninja_programs_missing_binary(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    missing = tmp_path / "not-a-ninja"
+    monkeypatch.setattr(
+        "shutil.which", lambda name: str(missing) if name == "ninja" else None
+    )
+    assert list(get_ninja_programs(module=False)) == [Program(missing, None)]
+
+
+def test_macos_binary_is_x86_hides_stderr(monkeypatch: pytest.MonkeyPatch) -> None:
+    from scikit_build_core.program_search import _macos_binary_is_x86
+
+    kwargs_seen = []
+
+    def fake_check_output(_cmd, **kwargs):
+        kwargs_seen.append(kwargs)
+        raise FileNotFoundError
+
+    monkeypatch.setattr(subprocess, "check_output", fake_check_output)
+    _macos_binary_is_x86.cache_clear()
+    try:
+        assert not _macos_binary_is_x86(Path("cmake"))
+    finally:
+        _macos_binary_is_x86.cache_clear()
+
+    assert len(kwargs_seen) == 2
+    for kwargs in kwargs_seen:
+        assert kwargs["stderr"] is subprocess.DEVNULL
+        assert kwargs["stdin"] is subprocess.DEVNULL

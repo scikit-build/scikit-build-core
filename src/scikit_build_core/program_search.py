@@ -60,12 +60,23 @@ def _macos_binary_is_x86(path: Path) -> bool:
     """
     try:
         # lipo gives clean output like: "Architectures in the fat file: ... are: x86_64 arm64"
-        out = subprocess.check_output(["lipo", "-info", path], text=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
+        # stdin/stderr are silenced so shell shims cannot read input or print noise
+        out = subprocess.check_output(
+            ["lipo", "-info", path],
+            text=True,
+            stdin=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
         # Fallback to 'file' if lipo not available or fails
         try:
-            out = subprocess.check_output(["file", path], text=True)
-        except (FileNotFoundError, subprocess.CalledProcessError):
+            out = subprocess.check_output(
+                ["file", path],
+                text=True,
+                stdin=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.CalledProcessError):
             return False  # unknown, assume not x86
 
     # Ignore native or fat binaries
@@ -189,8 +200,10 @@ def get_cmake_program(cmake_path: Path) -> Program:
             err.stdout,
             err.stderr,
         )
-    except PermissionError:
-        logger.warning("Permissions Error getting CMake's version")
+    except OSError as err:
+        # Covers a missing or non-executable path (FileNotFoundError,
+        # PermissionError, and friends)
+        logger.warning("Could not run CMake at {}: {}", cmake_path, err)
     except subprocess.TimeoutExpired:
         logger.warning("Accessing CMake timed out, ignoring")
 
@@ -220,7 +233,7 @@ def get_ninja_programs(*, module: bool = True) -> Generator[Program, None, None]
             )
         except (
             subprocess.CalledProcessError,
-            PermissionError,
+            OSError,
             subprocess.TimeoutExpired,
         ):
             yield Program(ninja_path, None)
