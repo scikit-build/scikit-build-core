@@ -922,3 +922,50 @@ def test_wrapper_forwards_manifest_hook(
         )
         is dist
     )
+
+
+def test_get_requires_uses_hook_state(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    # Each hook must read the settings with its own state, so that
+    # `if.state = "wheel"` / `"editable"` overrides reach the injected
+    # cmake requirement.
+    (tmp_path / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.15)\n", encoding="utf-8"
+    )
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["setuptools", "scikit-build-core"]
+            build-backend = "scikit_build_core.setuptools.build_meta"
+
+            [project]
+            name = "state-example"
+            version = "0.0.1"
+
+            [tool.scikit-build]
+            sdist.cmake = true
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            cmake.version = ">=99.1"
+
+            [[tool.scikit-build.overrides]]
+            if.state = "editable"
+            cmake.version = ">=99.2"
+            """
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("CMAKE_EXECUTABLE", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    assert "cmake>=99.1" in setuptools_build_meta.get_requires_for_build_wheel()
+
+    sdist_requires = setuptools_build_meta.get_requires_for_build_sdist()
+    assert not [r for r in sdist_requires if r.startswith("cmake>=99")]
+
+    get_requires_for_build_editable = getattr(
+        setuptools_build_meta, "get_requires_for_build_editable", None
+    )
+    if get_requires_for_build_editable is not None:
+        assert "cmake>=99.2" in get_requires_for_build_editable()
