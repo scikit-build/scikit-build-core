@@ -627,7 +627,9 @@ def test_builder_python_hints_use_effective_environment_in_cmake(
     if not host_include.is_dir() or host_library is None or not host_library.is_file():
         pytest.skip("a complete host Python development installation is required")
 
-    staged_include = tmp_path / "staged" / "include"
+    # Keep the host include directory name (e.g. python3.14t) so CMake 3.30+
+    # FindPython can recover the free-threaded ABI when pyconfig.h is a wrapper.
+    staged_include = tmp_path / "staged" / "include" / host_include.name
     shutil.copytree(host_include, staged_include)
     staged_library = tmp_path / "staged" / "lib" / host_library.name
     staged_library.parent.mkdir(parents=True)
@@ -728,6 +730,14 @@ def test_builder_environment_library_hint_posix_modern_cache(
     modern_library: bool,
 ) -> None:
     """Only explicit regular hints reach modern FindPython on POSIX."""
+    # Pin a GIL-enabled CPython so limited_api=True is honored. Free-threaded
+    # 3.14 ignores Limited API (no abi3t yet), which would write Python_LIBRARY.
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
     source_dir = tmp_path / "src"
     source_dir.mkdir()
     config = CMaker(
@@ -901,7 +911,7 @@ def test_builder_free_threaded_find_abi(
     )
 
     for prefix in ("Python", "Python3"):
-        line = f"set({prefix}_FIND_ABI [===[ANY;ANY;ANY;ON]===] CACHE STRING"
+        line = f'set({prefix}_FIND_ABI "ANY" "ANY" "ANY" "ON")'
         assert (line in cache) == expected
 
 
