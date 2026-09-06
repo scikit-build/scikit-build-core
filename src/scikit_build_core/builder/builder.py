@@ -234,7 +234,7 @@ class Builder:
     def _get_entry_point_search_path(self, entry_point: str) -> dict[str, list[Path]]:
         """Get the search path dict from the entry points"""
         search_paths = {}
-        eps = metadata.cached_entry_points(group=entry_point)
+        eps = metadata.entry_points(group=entry_point)
         if eps:
             logger.debug(
                 "Loading search paths {} from entry-points: {}", entry_point, len(eps)

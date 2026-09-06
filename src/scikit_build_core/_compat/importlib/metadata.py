@@ -11,28 +11,41 @@ if TYPE_CHECKING:
         from importlib.metadata import EntryPoint
 
         EntryPoints = list[EntryPoint]
+    elif sys.version_info < (3, 12):
+        from importlib.metadata import EntryPoints, SelectableGroups
     else:
         from importlib.metadata import EntryPoints
 
-__all__ = ["cached_entry_points", "entry_points"]
+        SelectableGroups = EntryPoints
+
+__all__ = ["all_entry_points", "entry_points"]
 
 
-def entry_points(*, group: str) -> EntryPoints:
-    if sys.version_info >= (3, 10):
-        return importlib.metadata.entry_points(group=group)
+if sys.version_info >= (3, 10):
 
-    epg = importlib.metadata.entry_points()
-    return epg.get(group, [])  # pylint: disable=no-member
+    @functools.cache
+    def all_entry_points() -> SelectableGroups:
+        """Scan the installed distributions once; every group shares the result.
 
+        Call ``all_entry_points.cache_clear()`` if the entry points change.
+        """
+        return importlib.metadata.entry_points()
 
-@functools.cache
-def cached_entry_points(*, group: str) -> EntryPoints:
-    """Like ``entry_points``, but scans the installed distributions only once.
+    def entry_points(*, group: str) -> EntryPoints:
+        """Entry points for one group, from the cached scan.
 
-    ``entry_points`` is read from the module global, so a monkeypatch of it is
-    seen. Call ``cached_entry_points.cache_clear()`` if the entry points change.
-    """
-    return entry_points(group=group)
+        Callers read this from the module global, so a monkeypatch of it is seen.
+        """
+        return all_entry_points().select(group=group)
+
+else:
+
+    @functools.cache
+    def all_entry_points() -> dict[str, EntryPoints]:
+        return importlib.metadata.entry_points()
+
+    def entry_points(*, group: str) -> EntryPoints:
+        return all_entry_points().get(group, [])  # pylint: disable=no-member
 
 
 def __dir__() -> list[str]:
