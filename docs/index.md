@@ -39,6 +39,7 @@ guide/faqs
 configuration/index
 configuration/editable
 configuration/overrides
+configuration/config_settings
 configuration/dynamic
 configuration/advanced
 ```
