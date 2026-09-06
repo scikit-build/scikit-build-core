@@ -197,6 +197,13 @@ class CMaker:
                     # Convert to CMake's internal path format
                     str_value = str(value).replace("\\", "/")
                     f.write(f'set({key} [===[{str_value}]===] CACHE PATH "" FORCE)\n')
+                elif key.endswith("_FIND_ABI"):
+                    # FindPython reads *_FIND_ABI as a hint list. A CACHE STRING
+                    # 4-tuple is one string, so CMake 3.30+ treats gil_disabled
+                    # as omitted (OFF) and rejects free-threaded Interpreter
+                    # and Development.Module.
+                    parts = " ".join(f'"{part}"' for part in str(value).split(";"))
+                    f.write(f"set({key} {parts})\n")
                 else:
                     f.write(f'set({key} [===[{value}]===] CACHE STRING "" FORCE)\n')
 
