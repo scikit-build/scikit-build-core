@@ -922,3 +922,17 @@ def test_wrapper_forwards_manifest_hook(
         )
         is dist
     )
+
+
+def test_finalize_options_parses_cmake_args():
+    # Separators must not produce empty arguments, and a quoted value must stay
+    # a single argument.
+    dist = setuptools.Distribution({"name": "cmake-example", "version": "0.0.1"})
+    cmd = build_cmake.BuildCMake(dist)
+    cmd.initialize_options()
+    cmd.cmake_args = '-DA=1;;-DB=2  -DC="x y"  ; '
+
+    cmd.finalize_options()
+
+    result: list[str] | str | None = cmd.cmake_args
+    assert result == ["-DA=1", "-DB=2", "-DC=x y"]
