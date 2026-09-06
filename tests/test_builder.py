@@ -663,6 +663,52 @@ def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
+    ("minor", "py_api"),
+    [
+        pytest.param(13, "cp313t", id="313t"),
+        pytest.param(14, "cp314t", id="314t"),
+        pytest.param(15, "cp313t", id="315t_asks_313t"),
+        pytest.param(15, "cp314t", id="315t_asks_314t"),
+    ],
+)
+def test_builder_py_api_abi3t_requires_315(tmp_path, monkeypatch, minor, py_api):
+    """py-api gets the same 3.15 abi3t gate as a forced limited_api."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, minor))
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api=py_api
+    )
+
+    assert "Development.SABIModule" not in cache
+    assert "Py_TARGET_ABI3T" not in cache
+
+
+def test_builder_py_api_gil_disabled_zero(tmp_path, monkeypatch):
+    """``Py_GIL_DISABLED = 0`` is a GIL build, so classic abi3 stays available."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "0" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api="cp39"
+    )
+
+    assert "Development.SABIModule" in cache
+    assert "Py_TARGET_ABI3T" not in cache
+
+
+@pytest.mark.parametrize(
     ("gil", "soabi", "is_ft"),
     [("t", "abi3t", True), (None, "abi3", False)],
     ids=["free_threaded", "gil"],
@@ -1011,6 +1057,75 @@ def test_wheel_tag_with_abi3t_ignored_on_classic(monkeypatch):
     default_tags = WheelTag.compute_best(["x86_64"])
     tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
     assert tags == default_tags
+
+
+@pytest.mark.parametrize(
+    ("minor", "py_api"),
+    [
+        pytest.param(13, "cp313t", id="313t"),
+        pytest.param(14, "cp314t", id="314t"),
+        pytest.param(15, "cp313t", id="315t_asks_313t"),
+        pytest.param(15, "cp314t", id="315t_asks_314t"),
+    ],
+)
+def test_wheel_tag_abi3t_requires_315(monkeypatch, minor, py_api):
+    """The free-threaded Stable ABI (abi3t) only exists on CPython 3.15+."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, minor))
+
+    default_tags = WheelTag.compute_best(["x86_64"])
+    tags = WheelTag.compute_best(["x86_64"], py_api=py_api)
+    assert tags == default_tags
+
+
+def test_wheel_tag_gil_disabled_zero(monkeypatch):
+    """``Py_GIL_DISABLED = 0`` is a GIL build; ``bool("0")`` would say otherwise."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "0" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp39")
+    assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
+
+
+def test_wheel_tag_env_argument(monkeypatch):
+    """The tag reads the passed env, not ``os.environ``."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
+    monkeypatch.delenv("_PYTHON_HOST_PLATFORM", raising=False)
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"MACOSX_DEPLOYMENT_TARGET": "10.12"}
+    )
+    assert str(tags) == "py3-none-macosx_10_12_x86_64"
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"_PYTHON_HOST_PLATFORM": "macosx-11.0-arm64"}
+    )
+    assert str(tags) == "py3-none-macosx_11_0_arm64"
 
 
 def test_wheel_tag_host_platform_override(monkeypatch):

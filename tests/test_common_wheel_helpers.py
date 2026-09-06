@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+import sys
 from pathlib import Path
 
 import pytest
@@ -11,7 +13,7 @@ from scikit_build_core.build.common_wheel_helpers import (
     get_wheel_tag,
     prepare_wheel_dirs,
 )
-from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
+from scikit_build_core.settings.skbuild_model import EnvValue, ScikitBuildSettings
 
 WHEEL_SUBDIRS = {"data", "headers", "scripts", "null", "metadata"}
 
@@ -41,6 +43,24 @@ def test_targetlib_honors_explicit_platlib() -> None:
 def test_purelib_tag_is_any() -> None:
     tags = get_wheel_tag(ScikitBuildSettings(), targetlib="purelib")
     assert tags.arch == "any"
+
+
+def test_wheel_tag_uses_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The env table is applied to the CMake environment, so the tag must see it
+    # too or the wheel is labelled for a different platform than it was built for.
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.delenv("ARCHFLAGS", raising=False)
+    monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
+
+    settings = ScikitBuildSettings()
+    settings.env = {
+        "ARCHFLAGS": EnvValue("-arch arm64 -arch x86_64"),
+        "MACOSX_DEPLOYMENT_TARGET": EnvValue("10.12"),
+    }
+
+    tags = get_wheel_tag(settings, targetlib="platlib")
+    assert tags.archs == ["macosx_10_12_universal2"]
 
 
 def test_platlib_layout_created(tmp_path: Path) -> None:

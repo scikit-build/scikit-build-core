@@ -3,22 +3,22 @@ from __future__ import annotations
 __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{__spec__.parent}.macos",
+    f"{__spec__.parent}.sysconfig",
     "itertools",
     "packaging",
     "packaging.tags",
-    "sysconfig",
 }
 
 import dataclasses
 import itertools
 import os
 import sys
-import sysconfig
 
 import packaging.tags
 
 from .._logging import logger
 from .macos import get_macosx_deployment_target
+from .sysconfig import ABI3T_MIN_MINOR, is_free_threaded
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -82,7 +82,12 @@ class WheelTag:
         build_tag: str = "",
         cmake_defines: Mapping[str, str] | None = None,
         cmake_args: Sequence[str] = (),
+        env: Mapping[str, str] | None = None,
     ) -> Self:
+        # The build environment, which the ``env`` settings table can change;
+        # the tag must describe what CMake built, not the ambient environment.
+        if env is None:
+            env = os.environ
         if build_tag:
             if not build_tag[0].isdigit():
                 msg = f"Unexpected build-tag, must start with a digit, {build_tag!r} invalid"
@@ -103,7 +108,7 @@ class WheelTag:
         pyvers = [interp]
 
         # Check for _PYTHON_HOST_PLATFORM environment variable to override platform
-        host_platform = os.environ.get("_PYTHON_HOST_PLATFORM")
+        host_platform = env.get("_PYTHON_HOST_PLATFORM")
         if host_platform:
             # Convert sysconfig platform format to wheel platform tag format
             plats = [host_platform.replace("-", "_").replace(".", "_")]
@@ -129,6 +134,7 @@ class WheelTag:
                             arm=arm,
                             cmake_defines=cmake_defines,
                             cmake_args=cmake_args,
+                            env=env,
                         ),
                         arch,
                     )
@@ -147,7 +153,7 @@ class WheelTag:
         if py_api:
             pyvers_new = py_api.split(".")
             pytags = [_PyTag(x) for x in pyvers_new]
-            gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+            gil_disabled = is_free_threaded()
             if all(t.is_classic_abi3 or t.is_ft_abi3 for t in pytags):
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"
@@ -181,6 +187,16 @@ class WheelTag:
                 )
                 return None
             target = ft_tags[0]
+            if target.minor < ABI3T_MIN_MINOR or sys.version_info < (
+                3,
+                ABI3T_MIN_MINOR,
+            ):
+                # Same gate as the builder; abi3t (PEP 803) starts at 3.15.
+                logger.debug(
+                    "Ignoring py-api, the free-threaded Stable ABI (abi3t) requires CPython >= 3.{}",
+                    ABI3T_MIN_MINOR,
+                )
+                return None
             if target.minor > sys.version_info.minor:
                 logger.debug(
                     "Ignoring py-api, version (3.{}) is too high", target.minor
