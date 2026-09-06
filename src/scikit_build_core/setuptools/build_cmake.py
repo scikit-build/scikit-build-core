@@ -491,9 +491,9 @@ class BuildCMake(setuptools.Command):
         self._editable_mode = self._get_editable_mode()
 
         if isinstance(self.cmake_args, str):
-            self.cmake_args = [
-                b.strip() for a in self.cmake_args.split() for b in a.split(";")
-            ]
+            # shlex keeps quoted values whole; ";" is also a separator.
+            split = shlex.split(self.cmake_args)
+            self.cmake_args = [b for a in split for b in a.split(";") if b]
 
     def _get_editable_mode(self) -> _EditableMode:
         # setuptools marks a PEP 660 editable build by setting editable_mode
