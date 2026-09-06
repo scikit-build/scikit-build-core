@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from packaging.specifiers import SpecifierSet
 
-from scikit_build_core.cmake import CMake, CMaker
+from scikit_build_core.cmake import CMake, CMaker, _load_file_api
 from scikit_build_core.file_api._cattrs_converter import (
     load_reply_dir as load_reply_dir_cattrs,
 )
@@ -217,6 +217,23 @@ def test_no_index(tmp_path):
 
     with pytest.raises(IndexError):
         load_reply_dir_cattrs(tmp_path)
+
+
+@pytest.mark.parametrize("kind", ["empty", "bad-json", "unreadable", "bad-types"])
+def test_load_file_api_degrades_on_broken_reply(kind, tmp_path):
+    # A broken file-api reply must not stop the build; the caller only loses
+    # the introspection data.
+    reply_dir = tmp_path / "reply"
+    reply_dir.mkdir()
+    index = reply_dir / "index-0.json"
+    if kind == "bad-json":
+        index.write_text("{not json", encoding="utf-8")
+    elif kind == "unreadable":
+        index.mkdir()
+    elif kind == "bad-types":
+        index.write_text('{"cmake": 5, "objects": 6}', encoding="utf-8")
+
+    assert _load_file_api(reply_dir) is None
 
 
 @pytest.mark.configure
