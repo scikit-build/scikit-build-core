@@ -61,6 +61,18 @@ def test_init_generates_files(backend: str, tmp_path: Path) -> None:
     assert "${SKBUILD_PROJECT_NAME}" in cmake
 
 
+@pytest.mark.parametrize("backend", ["abi3", "abi3t"])
+def test_init_sabi_requires_cmake_326(backend: str, tmp_path: Path) -> None:
+    # Development.SABIModule needs CMake 3.26+, and the declared minimum is
+    # what scikit-build-core reads to select a CMake.
+    project = tmp_path / "proj"
+    generate_project(project, backend, "my-pkg")
+
+    cmake = (project / "CMakeLists.txt").read_text()
+    assert "cmake_minimum_required(VERSION 3.26" in cmake
+    assert "Development.SABIModule" in cmake
+
+
 def test_init_default_name_from_directory(tmp_path: Path) -> None:
     project = tmp_path / "Spam.Eggs"
     main(["init", str(project), "--backend", "c"])
