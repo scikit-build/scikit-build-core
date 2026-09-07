@@ -33,6 +33,7 @@ from ..builder.builder import (
     archs_to_tags,
     get_archs,
     get_cmake_args_from_settings,
+    set_environment_from_settings,
 )
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
@@ -98,15 +99,21 @@ def get_targetlib(settings: ScikitBuildSettings) -> TargetLib:
 
 def get_wheel_tag(settings: ScikitBuildSettings, *, targetlib: TargetLib) -> WheelTag:
     """Compute the best wheel tag for the current environment."""
-    cmake_args = get_cmake_args_from_settings(settings, os.environ)
+    # Builder applies the env table to the CMake environment, so the tag must be
+    # computed against the same environment or it can describe a different
+    # platform than the one that was built (e.g. ARCHFLAGS, #1541).
+    env = os.environ.copy()
+    set_environment_from_settings(env, settings)
+    cmake_args = get_cmake_args_from_settings(settings, env)
     return WheelTag.compute_best(
-        archs_to_tags(get_archs(os.environ, cmake_args)),
+        archs_to_tags(get_archs(env, cmake_args)),
         settings.wheel.py_api,
         expand_macos=settings.wheel.expand_macos_universal_tags,
         root_is_purelib=targetlib == "purelib",
         build_tag=settings.wheel.build_tag,
         cmake_defines=settings.cmake.define,
         cmake_args=cmake_args,
+        env=env,
     )
 
 
