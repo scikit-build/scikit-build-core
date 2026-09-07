@@ -2,14 +2,14 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "dataclasses",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
-    f"{__spec__.parent}.documentation",
     "packaging",
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
+    f"{__spec__.parent}.documentation",
 }
 
 import dataclasses

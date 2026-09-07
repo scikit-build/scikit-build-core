@@ -6,13 +6,13 @@ __lazy_modules__ = {
     "datetime",
     "email",
     "email.message",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     "hashlib",
     "io",
     "pathlib",
     "pathspec",
     "zipfile",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
 }
 
 import base64

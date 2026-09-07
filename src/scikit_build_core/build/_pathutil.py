@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{__spec__.parent}._file_processor",
     "pathlib",
     "pathspec",
     "typing",
+    f"{__spec__.parent}._file_processor",
 }
 
 import importlib.machinery

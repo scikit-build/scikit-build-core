@@ -2,8 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "contextlib",
-    f"{__spec__.parent}._logging",
-    f"{__spec__.parent}._shutil",
     "json",
     "packaging",
     "packaging.version",
@@ -11,6 +9,8 @@ __lazy_modules__ = {
     "platform",
     "shutil",
     "subprocess",
+    f"{__spec__.parent}._logging",
+    f"{__spec__.parent}._shutil",
 }
 
 import contextlib

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "configparser",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     "packaging",
     "packaging.tags",
     "pathlib",
     "sysconfig",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
 }
 
 import configparser

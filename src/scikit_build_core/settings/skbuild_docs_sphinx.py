@@ -5,10 +5,9 @@ Make documentation for the skbuild model in sphinx format.
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.skbuild_model",
-    "textwrap",
-    "typing",
 }
 
 import dataclasses

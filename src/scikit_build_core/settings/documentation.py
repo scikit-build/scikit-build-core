@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "ast",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     "inspect",
     "packaging",
     "packaging.specifiers",
@@ -10,6 +9,7 @@ __lazy_modules__ = {
     "pathlib",
     "textwrap",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
 }
 
 import ast

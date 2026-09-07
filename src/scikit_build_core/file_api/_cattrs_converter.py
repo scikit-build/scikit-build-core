@@ -4,13 +4,13 @@ __lazy_modules__ = {
     "cattrs",
     "cattrs.preconf",
     "cattrs.preconf.json",
+    "json",
     f"{__spec__.parent}.model.cache",
     f"{__spec__.parent}.model.cmakefiles",
     f"{__spec__.parent}.model.codemodel",
     f"{__spec__.parent}.model.directory",
     f"{__spec__.parent}.model.index",
     f"{__spec__.parent}.model.toolchains",
-    "json",
 }
 
 import builtins

@@ -21,9 +21,9 @@ The returned tables are turned into low/high priority ``TOMLSource``\\ s by
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "inspect",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    "inspect",
 }
 
 import inspect
