@@ -24,14 +24,14 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 39d9ac5938dadb73df0564a45f163e25ff9fa6e2 # frozen: v0.16.1
+    rev: 321478e58f4938179c6b86e4ddfa923d1547a49b  # frozen: v0.16.6
     hooks:
       - id: ruff-check
         args: ["--fix"]
       - id: ruff-format
 
   - repo: https://github.com/henryiii/flake8-lazy
-    rev: 5fed9a818f2583f0403aed779bf2b6c9aa8d25f4 # frozen: v0.8.5
+    rev: 3b5e52593dfaec56e6e4a48f237bafcf3d0b83ea  # frozen: v0.9.0
     hooks:
       - id: flake8-lazy
         files: ^src/
@@ -65,7 +65,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md|^docs/_templates/"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 41e691678310dfd3833f7ab4e180ddb014310356 # frozen: v2.3.0
+    rev: 7ff8d35ae36a7d2b968f2f90b4c723e292e594ee  # frozen: v2.3.1
     hooks:
       - id: mypy
         exclude: |
@@ -94,7 +94,7 @@ repos:
           - types-setuptools>=80.9
 
   - repo: https://github.com/henryiii/check-sdist
-    rev: "377c4f639d3c5fd025ee882a22ae243e12bef469" # frozen: v1.5.0
+    rev: "5230295f53448dcfc8cc4a9eb00cc776ca92f964"  # frozen: v1.6.0
     hooks:
       - id: check-sdist
         args: [--inject-junk]
@@ -103,14 +103,14 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: 12ffd4a04b4893ab75db66a59aaad2d996c3e982 # frozen: v1
+    rev: c132f8b9e3ac7f8f0625490b1cb5b906d1d6a63a  # frozen: v1
     hooks:
       - id: typos
         args: []
         exclude: ^(LICENSE$|src/scikit_build_core/resources/find_python|tests/test_skbuild_settings.py$)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: 745eface02aef23e168a8afb6b5737818efbea95 # frozen: v0.11.0.1
+    rev: a6564f5d57444e123433a5c9af733e3975c77229  # frozen: v0.11.0.1-1
     hooks:
       - id: shellcheck
 
@@ -141,12 +141,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 9efb3138f1d55c197b17348a8dd5b732d384603f # frozen: 2026.08.01
+    rev: 0cee1769d7b9f642b7545be04c079f94277d6833  # frozen: 2026.09.04
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 1a4bb160cab6417b3045e1b37b6b72449243e658 # frozen: 0.37.4
+    rev: c4654a7e007c9619a5eb63c39a456572a0fa1851  # frozen: 0.38.0
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -160,13 +160,13 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: 451b56af716f9f0d0c2b816503a3fd0cf8b036fa # frozen: v1.29.0
+    rev: cef8b8350da46d8114c7e6b7272aebdccdf193ce  # frozen: v1.30.0
     hooks:
       - id: zizmor
         files: "^\\.github"
         args: [--persona=pedantic]
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 8f0581cc50b14023b14a9c77e9b358738ba637e7 # frozen: 2026.06.18
+    rev: 1589a99867d6cac494ac7545fe6a83108580a3ee  # frozen: 2026.08.14
     hooks:
       - id: sp-repo-review
