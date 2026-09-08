@@ -1,10 +1,4 @@
-__lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
-    "packaging",
-    "packaging.specifiers",
-    "packaging.version",
-    "pathlib",
-}
+__lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing"}
 
 import dataclasses
 from pathlib import Path

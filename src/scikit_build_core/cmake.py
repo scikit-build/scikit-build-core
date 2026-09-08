@@ -1,6 +1,13 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "json",
+    "packaging",
+    "packaging.version",
+    "shutil",
+    "subprocess",
+    "textwrap",
+    "typing",
     f"{__spec__.parent}._compat.builtins",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}._shutil",
@@ -9,14 +16,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.file_api.query",
     f"{__spec__.parent}.file_api.reply",
     f"{__spec__.parent}.program_search",
-    "json",
-    "packaging",
-    "packaging.version",
-    "shutil",
-    "subprocess",
-    "sysconfig",
-    "textwrap",
-    "typing",
 }
 
 import dataclasses

@@ -4,6 +4,10 @@ __lazy_modules__ = {
     "copy",
     "dataclasses",
     "difflib",
+    "packaging",
+    "packaging.specifiers",
+    "packaging.version",
+    "pathlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
@@ -15,10 +19,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.auto_requires",
     f"{__spec__.parent}.skbuild_model",
     f"{__spec__.parent}.sources",
-    "packaging",
-    "packaging.specifiers",
-    "packaging.version",
-    "pathlib",
 }
 
 import copy

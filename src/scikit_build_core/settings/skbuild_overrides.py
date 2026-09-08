@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder._known_wheels",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.sysconfig",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
     "packaging",
     "packaging.specifiers",
     "pathlib",
     "platform",
     "re",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder._known_wheels",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.sysconfig",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
 }
 
 import dataclasses

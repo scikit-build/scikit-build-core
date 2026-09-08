@@ -4,6 +4,13 @@ from __future__ import annotations
 __lazy_modules__ = {
     "contextlib",
     "copy",
+    "gzip",
+    "io",
+    "packaging",
+    "packaging.utils",
+    "pathlib",
+    "pathspec",
+    "tarfile",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
@@ -14,13 +21,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.generate",
     f"{__spec__.parent}.metadata",
     f"{__spec__.parent}.wheel",
-    "gzip",
-    "io",
-    "packaging",
-    "packaging.utils",
-    "pathlib",
-    "pathspec",
-    "tarfile",
 }
 
 import contextlib

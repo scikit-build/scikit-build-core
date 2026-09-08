@@ -1,6 +1,17 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "functools",
+    "packaging",
+    "packaging.requirements",
+    "packaging.tags",
+    "packaging.utils",
+    "pathlib",
+    "pathspec",
+    "platform",
+    "shutil",
+    "tempfile",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
@@ -16,17 +27,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.common_wheel_helpers",
     f"{__spec__.parent}.generate",
     f"{__spec__.parent}.metadata",
-    "functools",
-    "packaging",
-    "packaging.requirements",
-    "packaging.tags",
-    "packaging.utils",
-    "pathlib",
-    "pathspec",
-    "platform",
-    "shutil",
-    "tempfile",
-    "typing",
 }
 
 import dataclasses

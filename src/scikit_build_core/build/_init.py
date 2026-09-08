@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging", "logging"}
+__lazy_modules__ = {"logging", f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging"}
 
 import functools
 import logging

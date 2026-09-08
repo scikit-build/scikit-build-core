@@ -3,6 +3,13 @@ from __future__ import annotations
 __lazy_modules__ = {
     "collections",
     "dataclasses",
+    "fnmatch",
+    "packaging",
+    "packaging.version",
+    "pathlib",
+    "shlex",
+    "shutil",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
@@ -12,13 +19,6 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.macos",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
-    "fnmatch",
-    "packaging",
-    "packaging.version",
-    "pathlib",
-    "shlex",
-    "shutil",
-    "typing",
 }
 
 import contextlib

@@ -1,14 +1,6 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
-    f"{__spec__.parent}.cmake_args",
-    f"{__spec__.parent}.generator",
-    f"{__spec__.parent}.sysconfig",
     "importlib",
     "importlib.resources",
     "packaging",
@@ -18,6 +10,14 @@ __lazy_modules__ = {
     "shlex",
     "sysconfig",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
+    f"{__spec__.parent}.cmake_args",
+    f"{__spec__.parent}.generator",
+    f"{__spec__.parent}.sysconfig",
 }
 
 import dataclasses

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.plugin", "typing"}
+__lazy_modules__ = {"typing", f"{__spec__.parent}.plugin"}
 
 from typing import Any
 

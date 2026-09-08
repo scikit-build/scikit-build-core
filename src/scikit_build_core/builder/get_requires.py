@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "importlib",
+    "importlib.util",
+    "pathlib",
+    "shlex",
+    "sysconfig",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
@@ -10,12 +16,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}._known_wheels",
     f"{__spec__.parent}._load_provider",
     f"{__spec__.parent}.generator",
-    "importlib",
-    "importlib.util",
-    "pathlib",
-    "shlex",
-    "sysconfig",
-    "typing",
 }
 
 import dataclasses

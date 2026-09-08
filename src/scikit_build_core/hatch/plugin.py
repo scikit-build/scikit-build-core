@@ -2,6 +2,15 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "copy",
+    "importlib",
+    "importlib.metadata",
+    "packaging",
+    "packaging.utils",
+    "packaging.version",
+    "pathlib",
+    "shutil",
+    "tempfile",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.build._editable",
@@ -12,15 +21,6 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_model",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
-    "importlib",
-    "importlib.metadata",
-    "packaging",
-    "packaging.utils",
-    "packaging.version",
-    "pathlib",
-    "shutil",
-    "tempfile",
-    "typing",
 }
 
 import copy

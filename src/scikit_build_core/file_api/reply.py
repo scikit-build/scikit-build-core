@@ -1,6 +1,8 @@
 __lazy_modules__ = {
     "argparse",
     "dataclasses",
+    "json",
+    "pathlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.model.cache",
@@ -8,8 +10,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.model.codemodel",
     f"{__spec__.parent}.model.index",
     f"{__spec__.parent}.model.toolchains",
-    "json",
-    "pathlib",
 }
 
 import argparse
