@@ -54,7 +54,10 @@ The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
 combine the static CMake install dir with the original source code. Python code
 added via scikit-build-core's package discovery will be found in the original
 location, so changes there are picked up on import, regardless of the
-`editable.rebuild` setting.
+`editable.rebuild` setting. A package that has files in both trees gets a
+`__path__` that lists the CMake install tree first, then the source tree, so a
+file present in both (for example through `importlib.resources`) resolves to the
+installed copy.
 
 :::{versionchanged} 1.0
 

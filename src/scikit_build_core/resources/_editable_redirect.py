@@ -444,14 +444,18 @@ class ScikitBuildRedirectingFinder:
         # covering importable modules and data/resource files alike (so
         # importlib.resources can navigate directories that hold only data).
         # Install-tree paths are relative and joined with this file's directory;
-        # source-tree paths are already absolute.
-        submodule_search_locations: dict[str, set[str]] = {}
+        # source-tree paths are already absolute. Each path is ranked (0 =
+        # install tree, 1 = source tree) so __path__ order is deterministic and
+        # install-first, matching find_spec's preference for known_wheel_files
+        # over known_source_files (#1565).
+        ranked_locations: dict[str, dict[str, int]] = {}
         for parent, parent_paths in known_directories.items():
-            locations = submodule_search_locations.setdefault(parent, set())
+            locations = ranked_locations.setdefault(parent, {})
             for parent_path in parent_paths:
-                if not os.path.isabs(parent_path):
-                    parent_path = os.path.join(self.dir, parent_path)  # noqa: PLW2901
-                locations.add(parent_path)
+                if os.path.isabs(parent_path):
+                    locations.setdefault(parent_path, 1)
+                else:
+                    locations.setdefault(os.path.join(self.dir, parent_path), 0)
         pkgs = list(known_packages)
         # Second pass: propagate build-tree paths from parent packages to
         # sub-packages.  This covers the case where a Python package (with
@@ -462,17 +466,17 @@ class ScikitBuildRedirectingFinder:
         for pkg in sorted(pkgs, key=lambda p: p.count(".")):
             parent = ".".join(pkg.split(".")[:-1])
             last = pkg.split(".")[-1]
-            if not parent or parent not in submodule_search_locations:
+            if not parent or parent not in ranked_locations:
                 continue
-            for parent_path in sorted(submodule_search_locations[parent]):
+            for parent_path, rank in ranked_locations[parent].items():
                 sub_path = os.path.join(parent_path, last)
-                if (
-                    os.path.isdir(sub_path)
-                    and sub_path not in submodule_search_locations[pkg]
-                ):
-                    submodule_search_locations[pkg].add(sub_path)
+                if os.path.isdir(sub_path):
+                    ranked_locations.setdefault(pkg, {}).setdefault(sub_path, rank)
 
-        self.submodule_search_locations = submodule_search_locations
+        self.submodule_search_locations: dict[str, list[str]] = {
+            pkg: sorted(locations, key=lambda p: (locations[p], p))
+            for pkg, locations in ranked_locations.items()
+        }
         self.pkgs = frozenset(pkgs)
 
     def find_spec(
