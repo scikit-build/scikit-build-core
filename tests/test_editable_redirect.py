@@ -449,6 +449,125 @@ def test_loader_exposes_rebuild(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert calls == 3
 
 
+def test_loader_exposes_paths(tmp_path: Path):
+    """Every loader the finder hands out exposes .paths (module.__loader__.paths).
+
+    paths lists the package's search locations in __path__ order (the CMake
+    install tree and the source tree), so a package can locate its install tree
+    at runtime without importing scikit-build-core (#1565). A plain module has
+    no search locations, so its paths is empty.
+    """
+    import importlib.machinery
+
+    src_pkg = tmp_path / "src" / "pkg"
+    src_pkg.mkdir(parents=True)
+    init = src_pkg / "__init__.py"
+    init.touch()
+    (src_pkg / "mod.py").touch()
+    site = tmp_path / "site-packages"
+    wheel_pkg = site / "pkg"
+    wheel_pkg.mkdir(parents=True)
+    ext = importlib.machinery.EXTENSION_SUFFIXES[0]
+    (wheel_pkg / f"_ext{ext}").touch()
+
+    single_pkg = tmp_path / "src" / "single"
+    single_pkg.mkdir()
+    (single_pkg / "__init__.py").touch()
+
+    ns_dir = tmp_path / "src" / "ns"
+    ns_dir.mkdir()
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={
+            "pkg": str(init),
+            "pkg.mod": str(src_pkg / "mod.py"),
+            "single": str(single_pkg / "__init__.py"),
+        },
+        known_wheel_files={"pkg._ext": f"pkg/_ext{ext}"},
+        known_directories={
+            "pkg": [str(src_pkg), "pkg"],
+            "single": [str(single_pkg)],
+            "ns": [str(ns_dir)],
+        },
+        known_packages=["pkg", "single"],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(site),
+        install_dir="",
+    )
+
+    # Two search locations: paths mirrors __path__ exactly.
+    pkg_spec = finder.find_spec("pkg")
+    assert pkg_spec is not None
+    assert pkg_spec.submodule_search_locations is not None
+    paths = pkg_spec.loader.paths  # type: ignore[union-attr]
+    assert paths == list(pkg_spec.submodule_search_locations)
+    assert set(paths) == {str(src_pkg), str(wheel_pkg)}
+    # A copy: mutating it must not change the finder's state or __path__.
+    expected = list(pkg_spec.submodule_search_locations)
+    paths.clear()
+    assert list(pkg_spec.submodule_search_locations) == expected
+    assert finder.find_spec("pkg").loader.paths == expected  # type: ignore[union-attr]
+    # Delegation to the wrapped loader still works.
+    assert pkg_spec.loader.get_filename("pkg") == str(init)  # type: ignore[union-attr]
+
+    # Single search location.
+    single_spec = finder.find_spec("single")
+    assert single_spec is not None
+    assert single_spec.loader.paths == [str(single_pkg)]  # type: ignore[union-attr]
+
+    # Plain modules (source and compiled) have no search locations.
+    for name in ("pkg.mod", "pkg._ext"):
+        spec = finder.find_spec(name)
+        assert spec is not None
+        assert spec.loader.paths == []  # type: ignore[union-attr]
+
+    # Namespace package.
+    ns_spec = finder.find_spec("ns")
+    assert ns_spec is not None
+    assert ns_spec.loader.paths == [str(ns_dir)]  # type: ignore[union-attr]
+
+
+def test_inplace_loader_exposes_paths(tmp_path: Path):
+    """The inplace finder's loaders expose .paths too, mirroring rebuild()."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").touch()
+    (pkg / "mod.py").touch()
+
+    finder = ScikitBuildInplaceFinder(
+        known_packages=["pkg"],
+        search_paths=[str(tmp_path)],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+    )
+
+    pkg_spec = finder.find_spec("pkg")
+    assert pkg_spec is not None
+    assert pkg_spec.loader.paths == [str(pkg)]  # type: ignore[union-attr]
+    mod_spec = finder.find_spec("pkg.mod", [str(pkg)])
+    assert mod_spec is not None
+    assert mod_spec.loader.paths == []  # type: ignore[union-attr]
+
+
+def test_multiplexed_path_paths(tmp_path: Path):
+    """_SkbuildMultiplexedPath.paths lists the merged directories in order."""
+    a = tmp_path / "a"
+    b = tmp_path / "b"
+    a.mkdir()
+    b.mkdir()
+
+    mp = _editable_redirect._SkbuildMultiplexedPath(str(a), str(b), str(tmp_path / "x"))
+    assert mp.paths == [a, b]
+    mp.paths.clear()
+    assert mp.paths == [a, b]
+
+
 def test_loader_rebuild_without_build_dir_errors(tmp_path: Path):
     """rebuild() errors when there is no build dir to rebuild.
 
