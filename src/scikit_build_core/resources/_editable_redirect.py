@@ -11,6 +11,7 @@ import sys
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     import importlib.machinery
+    from pathlib import Path
 
 DIR = os.path.abspath(os.path.dirname(__file__))
 MARKER = "SKBUILD_EDITABLE_SKIP"
@@ -95,6 +96,11 @@ class _SkbuildMultiplexedPath:
         from pathlib import Path
 
         self._paths = [Path(p) for p in paths if os.path.isdir(p)]
+
+    @property
+    def paths(self) -> list[Path]:
+        """The merged directories, in search order (python/importlib_resources#310)."""
+        return list(self._paths)
 
     @property
     def name(self) -> str:
@@ -210,15 +216,21 @@ class _ScikitBuildLoaderWrapper:
     ``rebuild()`` method that runs the same CMake build/install the import-time
     auto-rebuild uses. This lets a user trigger a rebuild explicitly via
     ``module.__loader__.rebuild()`` without enabling ``editable.rebuild``.
+
+    ``paths`` lists the package's search locations (its ``__path__`` entries, in
+    ``__path__`` order), so a package can locate the CMake install tree at
+    runtime; it is empty for a plain module.
     """
 
     def __init__(
         self,
         loader: object,
         finder: ScikitBuildRedirectingFinder | ScikitBuildInplaceFinder,
+        search_paths: list[str] | None = None,
     ) -> None:
         self._skbuild_loader = loader
         self._skbuild_finder = finder
+        self.paths: list[str] = list(search_paths or [])
 
     def __getattr__(self, name: str) -> object:
         return getattr(self._skbuild_loader, name)
@@ -242,11 +254,10 @@ class _ScikitBuildResourceLoaderWrapper(_ScikitBuildLoaderWrapper):
         finder: ScikitBuildRedirectingFinder,
         search_paths: list[str],
     ) -> None:
-        super().__init__(loader, finder)
-        self._skbuild_paths = search_paths
+        super().__init__(loader, finder, search_paths)
 
     def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
-        return _ScikitBuildEditableReader(self._skbuild_paths)
+        return _ScikitBuildEditableReader(self.paths)
 
 
 class _ScikitBuildNamespaceLoader:
@@ -265,7 +276,7 @@ class _ScikitBuildNamespaceLoader:
     def __init__(
         self, search_paths: list[str], finder: ScikitBuildRedirectingFinder
     ) -> None:
-        self._skbuild_paths = search_paths
+        self.paths: list[str] = list(search_paths)
         self._skbuild_finder = finder
 
     def create_module(self, spec: object) -> object:
@@ -275,7 +286,7 @@ class _ScikitBuildNamespaceLoader:
         return None
 
     def get_resource_reader(self, module_name: str) -> _ScikitBuildEditableReader:
-        return _ScikitBuildEditableReader(self._skbuild_paths)
+        return _ScikitBuildEditableReader(self.paths)
 
     def rebuild(self) -> None:
         self._skbuild_finder.rebuild()
@@ -567,10 +578,11 @@ class ScikitBuildRedirectingFinder:
                 else None,
             )
         # Wrap the loader so it exposes a rebuild() hook (reachable as
-        # module.__loader__.rebuild()). Packages with more than one search
-        # location (e.g. a source tree and a CMake install tree) additionally get
-        # a resource reader so importlib.resources.files() can see resources from
-        # every location, not just origin's directory.
+        # module.__loader__.rebuild()) and the package's search locations as
+        # .paths. Packages with more than one search location (e.g. a source
+        # tree and a CMake install tree) additionally get a resource reader so
+        # importlib.resources.files() can see resources from every location, not
+        # just origin's directory.
         if spec is not None and spec.loader is not None:
             if (
                 is_pkg
@@ -581,7 +593,9 @@ class ScikitBuildRedirectingFinder:
                     spec.loader, self, submodule_search_locations
                 )
             else:
-                spec.loader = _ScikitBuildLoaderWrapper(spec.loader, self)  # type: ignore[assignment]
+                spec.loader = _ScikitBuildLoaderWrapper(  # type: ignore[assignment]
+                    spec.loader, self, submodule_search_locations if is_pkg else None
+                )
         return spec
 
     def rebuild(self) -> None:
@@ -662,7 +676,9 @@ class ScikitBuildInplaceFinder:
         # locations beyond our search paths.
         if spec is None or spec.loader is None:
             return None
-        spec.loader = _ScikitBuildLoaderWrapper(spec.loader, self)  # type: ignore[assignment]
+        spec.loader = _ScikitBuildLoaderWrapper(  # type: ignore[assignment]
+            spec.loader, self, spec.submodule_search_locations
+        )
         return spec
 
     def rebuild(self) -> None:

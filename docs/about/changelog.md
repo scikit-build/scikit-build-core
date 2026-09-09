@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 1.1.0 (in progress)
+
+Features:
+
+- Expose a package's search locations as `module.__loader__.paths` in editable
+  installs, and add `paths` to the pre-3.12 multiplexed resource path by
+  @henryiii in #1565
+
 ## Version 1.0.3
 
 This patch release polishes the setuptools compatibility plugin:
