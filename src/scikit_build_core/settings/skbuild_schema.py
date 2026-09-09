@@ -42,6 +42,7 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     "Generate the complete schema for scikit-build settings."
     assert tool_name == "scikit-build", "Only scikit-build is supported."
 
+    from .config_settings import _NAME_REGEX, ConfigSettingDeclaration
     from .json_schema import to_json_schema
     from .skbuild_model import ScikitBuildSettings
 
@@ -169,6 +170,15 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
                 "minProperties": 1,
                 "description": "A table of environment variables mapped to either string regexs, or booleans. Valid 'truthy' environment variables are case insensitive `true`, `on`, `yes`, `y`, `t`, or a number more than 0.",
             },
+            "config-setting": {
+                "type": "object",
+                "patternProperties": {
+                    ".*": {"oneOf": [{"type": "string"}, {"type": "boolean"}]}
+                },
+                "additionalProperties": False,
+                "minProperties": 1,
+                "description": "A table of declared config-settings (tool.scikit-build.config-setting) mapped to either string regexs, or booleans. Matches the resolved value (env var, `-C`, or default).",
+            },
         },
     }
     schema["$defs"]["inherit"] = {
@@ -195,6 +205,35 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         k: {"type": "object", "additionalProperties": False, "properties": v}
         for k, v in inherit_props.items()
         if v
+    }
+
+    # The define-table {config-setting = "..."} reference form.
+    define_values = schema["properties"]["cmake"]["properties"]["define"][
+        "patternProperties"
+    ][".+"]
+    define_values["oneOf"].append(
+        {
+            "type": "object",
+            "required": ["config-setting"],
+            "additionalProperties": False,
+            "properties": {
+                "config-setting": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The declared config-setting name whose resolved value this define takes; the define is dropped when unset.",
+                }
+            },
+        }
+    )
+
+    # Added after ``props`` is collected so overrides cannot target it.
+    declaration_entry = to_json_schema(ConfigSettingDeclaration, normalize_keys=True)
+    declaration_entry["properties"]["env"]["minLength"] = 1
+    schema["properties"]["config-setting"] = {
+        "type": "object",
+        "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
+        "additionalProperties": False,
+        "patternProperties": {_NAME_REGEX.pattern: declaration_entry},
     }
 
     schema["properties"]["overrides"] = {

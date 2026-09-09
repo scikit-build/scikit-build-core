@@ -25,6 +25,14 @@ scikit\_build\_core.settings.auto\_requires module
    :show-inheritance:
    :undoc-members:
 
+scikit\_build\_core.settings.config\_settings module
+----------------------------------------------------
+
+.. automodule:: scikit_build_core.settings.config_settings
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 scikit\_build\_core.settings.documentation module
 -------------------------------------------------
 
