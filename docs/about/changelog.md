@@ -1,5 +1,14 @@
 # Changelog
 
+## In development
+
+Fixes:
+
+- Redirect editable installs now give a package a deterministic `__path__`
+  order: the CMake install tree first, then the source tree, so
+  `importlib.resources` no longer depends on `PYTHONHASHSEED` (#1565) by
+  @henryiii in #1566
+
 ## Version 1.0.3
 
 This patch release polishes the setuptools compatibility plugin:
