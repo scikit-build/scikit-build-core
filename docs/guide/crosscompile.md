@@ -119,6 +119,12 @@ also need to use `wheel.tags` to manually specify the wheel tags to use for the
 file and `cmake.python-hints = false` if the target python should be detected
 using the toolchain file instead.
 
+For a staged Python installation, set `PYTHON_INCLUDE_DIR` and the regular-build
+`PYTHON_LIBRARY` in the effective build environment. These non-empty values are
+used as Python development hints; an unset or empty value keeps the normal
+`sysconfig`/`DIST_EXTRA_CONFIG` fallback. The regular library hint is not used
+for stable-ABI (`abi3`/`abi3t`) builds.
+
 :::{note}
 
 Because most of the logic in [`FindPython`] is gated by the

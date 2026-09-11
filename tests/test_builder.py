@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import platform
 import pprint
+import shutil
 import sys
 import sysconfig
 import typing
@@ -185,8 +186,13 @@ def test_macos_version_cmake_osx_deployment_target(
     assert str(result) == answer
 
 
-def test_get_python_include_dir():
+def test_get_python_include_dir(tmp_path):
     assert get_python_include_dir().is_dir()
+    target = tmp_path / "staged" / "include"
+    assert get_python_include_dir({"PYTHON_INCLUDE_DIR": str(target)}) == target
+    assert get_python_include_dir({"PYTHON_INCLUDE_DIR": ""}) == Path(
+        sysconfig.get_path("include")
+    )
 
 
 def test_get_python_library():
@@ -224,6 +230,36 @@ def test_get_python_library():
         # POSIX usually returns None (FindPython resolves it itself); if a real
         # library does resolve, it must be an existing file.
         assert lib is None or lib.is_file()
+
+
+def test_get_python_library_environment_hint_does_not_leak_into_sabi(tmp_path):
+    target_library = tmp_path / "staged" / "libpython-target.so"
+    env = {"PYTHON_LIBRARY": str(target_library)}
+
+    assert get_python_library(env) == target_library
+    assert get_python_library({"PYTHON_LIBRARY": ""}) == get_python_library({})
+    assert get_python_library(env, abi3=True) != target_library
+    assert get_python_library(env, abi3t=True) != target_library
+
+
+def test_get_python_library_environment_hint_preserves_dist_extra_config(tmp_path):
+    config_path = tmp_path / "tmp.cfg"
+    config_path.write_text(
+        """\
+[build_ext]
+library_dirs=staged/libs
+    """,
+        encoding="utf-8",
+    )
+    target_library = tmp_path / "target" / "python-target.lib"
+    env = {
+        "PYTHON_LIBRARY": str(target_library),
+        "DIST_EXTRA_CONFIG": str(config_path),
+    }
+
+    assert get_python_library(env) == target_library
+    assert get_python_library(env, abi3=True) == Path("staged/libs/python3.lib")
+    assert get_python_library(env, abi3t=True) == Path("staged/libs/python3t.lib")
 
 
 @pytest.mark.parametrize("free_threaded", [False, True])
@@ -578,6 +614,166 @@ def test_builder_no_python_hints_skips_lookups(tmp_path, monkeypatch):
     assert "Python_EXECUTABLE" not in cache
 
 
+def test_builder_python_hints_use_effective_environment_in_cmake(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The environment hints must reach a real FindPython configure."""
+    cmake_path = shutil.which("cmake")
+    if cmake_path is None:
+        pytest.skip("CMake is required for the configure-level Python hint test")
+
+    host_include = Path(sysconfig.get_path("include"))
+    host_library = get_python_library({})
+    if not host_include.is_dir() or host_library is None or not host_library.is_file():
+        pytest.skip("a complete host Python development installation is required")
+
+    # Keep the host include directory name (e.g. python3.14t) so CMake 3.30+
+    # FindPython can recover the free-threaded ABI when pyconfig.h is a wrapper.
+    staged_include = tmp_path / "staged" / "include" / host_include.name
+    shutil.copytree(host_include, staged_include)
+    staged_library = tmp_path / "staged" / "lib" / host_library.name
+    staged_library.parent.mkdir(parents=True)
+    shutil.copy2(host_library, staged_library)
+
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    (source_dir / "CMakeLists.txt").write_text(
+        """\
+cmake_minimum_required(VERSION 3.15)
+project(python_hints NONE)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+""",
+        encoding="utf-8",
+    )
+
+    config = CMaker(
+        CMake.default_search(),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    config.env.update(
+        {
+            "PYTHON_INCLUDE_DIR": str(staged_include),
+            "PYTHON_LIBRARY": str(staged_library),
+        }
+    )
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+
+    Builder(
+        settings=ScikitBuildSettings(search=SearchSettings(site_packages=False)),
+        config=config,
+    ).configure(defines={})
+
+    cache = (config.build_dir / "CMakeCache.txt").read_text(encoding="utf-8")
+    include_value = str(staged_include).replace("\\", "/")
+    library_value = str(staged_library).replace("\\", "/")
+    assert f"Python_INCLUDE_DIR:PATH={include_value}" in cache
+    assert f"Python_LIBRARY:PATH={library_value}" in cache
+
+
+def test_builder_explicit_cmake_python_defines_override_environment_hints(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    config.env.update(
+        {
+            "PYTHON_INCLUDE_DIR": "from-environment/include",
+            "PYTHON_LIBRARY": "from-environment/python.lib",
+        }
+    )
+    configure = unittest.mock.Mock()
+    monkeypatch.setattr(config, "configure", configure)
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+
+    explicit = {
+        "Python_INCLUDE_DIR": CMakeSettingsDefine("explicit/include"),
+        "Python_LIBRARY": CMakeSettingsDefine("explicit/python.lib"),
+    }
+    Builder(
+        settings=ScikitBuildSettings(
+            cmake=CMakeSettings(define=explicit),
+            search=SearchSettings(site_packages=False),
+        ),
+        config=config,
+    ).configure(defines={})
+
+    assert configure.call_args.kwargs["defines"]["Python_INCLUDE_DIR"] == str(
+        explicit["Python_INCLUDE_DIR"]
+    )
+    assert configure.call_args.kwargs["defines"]["Python_LIBRARY"] == str(
+        explicit["Python_LIBRARY"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("limited_api", "environment_library", "modern_library"),
+    [
+        (None, "target/python.lib", True),
+        (None, None, False),
+        (True, "target/python.lib", False),
+    ],
+    ids=["regular-explicit", "regular-automatic", "stable-abi-explicit"],
+)
+def test_builder_environment_library_hint_posix_modern_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    limited_api: bool | None,
+    environment_library: str | None,
+    modern_library: bool,
+) -> None:
+    """Only explicit regular hints reach modern FindPython on POSIX."""
+    # Pin a GIL-enabled CPython so limited_api=True is honored. Free-threaded
+    # 3.14 ignores Limited API (no abi3t yet), which would write Python_LIBRARY.
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    source_dir = tmp_path / "src"
+    source_dir.mkdir()
+    config = CMaker(
+        CMake(Version("3.30"), Path("cmake")),
+        source_dir=source_dir,
+        build_dir=tmp_path / "build",
+        build_type="Release",
+    )
+    config.env["PYTHON_INCLUDE_DIR"] = "target/include"
+    if environment_library is not None:
+        config.env["PYTHON_LIBRARY"] = environment_library
+    configure = unittest.mock.Mock()
+    monkeypatch.setattr(config, "configure", configure)
+    monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
+    monkeypatch.setattr(sysconfig, "get_platform", lambda *_: "linux-x86_64")
+    patch_cpython_runtime(monkeypatch)
+
+    Builder(
+        settings=ScikitBuildSettings(search=SearchSettings(site_packages=False)),
+        config=config,
+    ).configure(defines={}, limited_api=limited_api)
+
+    cache = config.init_cache_file.read_text(encoding="utf-8")
+    assert ("set(PYTHON_LIBRARY [===[target/python.lib]===] CACHE PATH" in cache) == (
+        environment_library is not None
+    )
+    assert ("set(Python_LIBRARY " in cache) == modern_library
+    assert ("set(Python3_LIBRARY " in cache) == modern_library
+    assert ("set(Python_LIBRARY [===[target/python.lib]===] CACHE PATH" in cache) == (
+        modern_library
+    )
+    assert (
+        "set(Python3_LIBRARY [===[target/python.lib]===] CACHE PATH" in cache
+    ) == modern_library
+
+
 def patch_cpython_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     implementation = vars(sys.implementation).copy()
     implementation["name"] = "cpython"
@@ -715,7 +911,7 @@ def test_builder_free_threaded_find_abi(
     )
 
     for prefix in ("Python", "Python3"):
-        line = f"set({prefix}_FIND_ABI [===[ANY;ANY;ANY;ON]===] CACHE STRING"
+        line = f'set({prefix}_FIND_ABI "ANY" "ANY" "ANY" "ON")'
         assert (line in cache) == expected
 
 

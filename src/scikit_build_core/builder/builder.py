@@ -395,12 +395,13 @@ class Builder:
         if self.settings.cmake.python_hints:
             # Only computed when the hints are used; get_numpy_include_dir imports NumPy.
             python_library = get_python_library(self.config.env, abi3=False)
+            python_library_from_env = self.config.env.get("PYTHON_LIBRARY")
             python_sabi_library = None
             if sabi == _SabiMode.ABI3T:
                 python_sabi_library = get_python_library(self.config.env, abi3t=True)
             elif sabi == _SabiMode.ABI3:
                 python_sabi_library = get_python_library(self.config.env, abi3=True)
-            python_include_dir = get_python_include_dir()
+            python_include_dir = get_python_include_dir(self.config.env)
             numpy_include_dir = get_numpy_include_dir()
 
             # Classic Find Python
@@ -416,21 +417,26 @@ class Builder:
                 cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
                 cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
                 # Interpreter-less FindPython rejects the free-threaded "t" ABI
-                # unless the 4-tuple (3.30+) FIND_ABI requests it.
+                # unless the 4-tuple (3.30+) FIND_ABI requests it. Written as a
+                # non-cache list so CMake does not drop the gil_disabled flag.
                 if gil_disabled and self.config.cmake.version >= Version("3.30"):
                     cache_config[f"{prefix}_FIND_ABI"] = "ANY;ANY;ANY;ON"
-                # On Windows the library is constructed and existence-checked,
-                # so this is reliable. On POSIX a library hint can break
-                # FindPython (which resolves it fine on its own), so this
-                # stays Windows-only. In SABI mode the hint is skipped: CMake
-                # 4.4's FindPython ingests it even when Development.Module is
-                # not requested, disabling the SABI-only version fallback and
-                # rejecting python3.lib (Interpreter + Development.SABIModule
-                # then both report not found).
+                # An automatically detected Windows library is
+                # existence-checked, while an explicit environment hint is
+                # used on every platform. On POSIX, the automatic library can
+                # break FindPython, which resolves it fine on its own. In SABI
+                # mode the regular hint is skipped: CMake 4.4's FindPython
+                # ingests it even when Development.Module is not requested,
+                # disabling the SABI-only version fallback and rejecting
+                # python3.lib (Interpreter + Development.SABIModule then both
+                # report not found).
                 if (
                     python_library
                     and sabi == _SabiMode.NONE
-                    and sysconfig.get_platform().startswith("win")
+                    and (
+                        bool(python_library_from_env)
+                        or sysconfig.get_platform().startswith("win")
+                    )
                 ):
                     cache_config[f"{prefix}_LIBRARY"] = python_library
                 if python_sabi_library and sysconfig.get_platform().startswith("win"):
