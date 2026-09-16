@@ -474,7 +474,7 @@ class ScikitBuildRedirectingFinder:
                     ranked_locations.setdefault(pkg, {}).setdefault(sub_path, rank)
 
         self.submodule_search_locations: dict[str, list[str]] = {
-            pkg: sorted(locations, key=lambda p: (locations[p], p))
+            pkg: [p for _, p in sorted((rank, p) for p, rank in locations.items())]
             for pkg, locations in ranked_locations.items()
         }
         self.pkgs = frozenset(pkgs)
