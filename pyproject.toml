@@ -214,6 +214,7 @@ filterwarnings = [
     "ignore:version of cmake-example already set:UserWarning",  # Caused by setuptoools-scm 9+ being installed
     "default:tag.strict is not set:FutureWarning",  # setuptools-scm 10+ asks users to set tag.strict explicitly
     "default:Configuration was created without VcsEnvironment:DeprecationWarning",  # Leaked by vcs-versioning 2.x internals, even from its public API
+    "default:The setuptools.file_finders entry point is deprecated:DeprecationWarning",  # setuptools-scm 10.3+ warns from its global entry point on every setuptools egg_info, including packages that do not use it
 ]
 log_level = "INFO"
 pythonpath = ["tests/utils"]
