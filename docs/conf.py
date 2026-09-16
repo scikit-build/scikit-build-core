@@ -122,13 +122,13 @@ exclude_patterns = [
 intersphinx_mapping = {
     "cmake": ("https://cmake.org/cmake/help/latest/", None),
     "python": ("https://docs.python.org/3", None),
-    "packaging": ("https://packaging.readthedocs.io/en/stable", None),
-    "setuptools": ("https://setuptools.readthedocs.io/en/latest", None),
+    "packaging": ("https://packaging.pypa.io/en/stable", None),
+    "setuptools": ("https://setuptools.pypa.io/en/latest", None),
     "hatchling": ("https://hatch.pypa.io/latest", None),
 }
 tippy_rtd_urls = [
-    "https://packaging.readthedocs.io/en/stable",
-    "https://setuptools.readthedocs.io/en/latest",
+    "https://packaging.pypa.io/en/stable",
+    "https://setuptools.pypa.io/en/latest",
 ]
 # Recolored to furo's theme variables in _static/tippy.css.
 tippy_props = {"theme": "light-border"}
