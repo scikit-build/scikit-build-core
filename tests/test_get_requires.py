@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from scikit_build_core._variants import VARIANTLIB_BUILD_REQUIREMENT
 from scikit_build_core.build import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
@@ -141,7 +142,7 @@ def test_get_requires_for_build_with_variant(
         [Path("cmake/path"), "-E", "capabilities"],
         stdout='{"version":{"string":"3.14.0"}}',
     )
-    assert "variantlib" in hook(config)
+    assert VARIANTLIB_BUILD_REQUIREMENT in hook(config)
 
 
 def test_get_requires_for_build_wheel(fp: FakeProcess):
