@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -47,26 +48,17 @@ def test_editable_redirect():
         install_dir="",
     )
 
-    assert finder.submodule_search_locations == process_dict_set(
-        {
-            "pkg": {
-                "/sitepackages/pkg",
-                "/source/pkg",
-            },
-            "pkg.iresources": {
-                "/sitepackages/pkg/iresources",
-            },
-            "pkg.namespace": {
-                "/sitepackages/pkg/namespace",
-                "/source/pkg/namespace",
-            },
-            "pkg.resources": {"/source/pkg/resources"},
-            "pkg.subpkg": {
-                "/sitepackages/pkg/subpkg",
-                "/source/pkg/subpkg",
-            },
-        }
-    )
+    # Install tree first, then source tree (#1565).
+    assert finder.submodule_search_locations == {
+        k: [str(Path(x)) for x in v]
+        for k, v in {
+            "pkg": ["/sitepackages/pkg", "/source/pkg"],
+            "pkg.iresources": ["/sitepackages/pkg/iresources"],
+            "pkg.namespace": ["/sitepackages/pkg/namespace", "/source/pkg/namespace"],
+            "pkg.resources": ["/source/pkg/resources"],
+            "pkg.subpkg": ["/sitepackages/pkg/subpkg", "/source/pkg/subpkg"],
+        }.items()
+    }
     assert finder.pkgs == frozenset(["pkg", "pkg.subpkg"])
 
 
@@ -809,3 +801,71 @@ def test_no_expensive_module_level_imports():
             imported.add(node.module or "")
 
     assert imported == {"os", "sys"}
+
+
+_PATH_ORDER_SCRIPT = """
+import os, sys
+from scikit_build_core.resources._editable_redirect import ScikitBuildRedirectingFinder
+site, src = sys.argv[1], sys.argv[2]
+finder = ScikitBuildRedirectingFinder(
+    known_source_files={"pkg": os.path.join(src, "pkg", "__init__.py")},
+    known_wheel_files={},
+    known_directories={"pkg": sorted([os.path.join(src, "pkg"), "pkg"])},
+    known_packages=["pkg"],
+    path=None, rebuild=False, verbose=False, build_options=[],
+    install_options=[], dir=site, install_dir="",
+)
+spec = finder.find_spec("pkg")
+print(*spec.submodule_search_locations, sep=os.pathsep)
+"""
+
+
+def test_redirect_path_order_install_first(tmp_path: Path):
+    """__path__ lists the install tree before the source tree on every hash
+    seed, and importlib.resources picks the install-tree copy of a file
+    present in both trees (#1565)."""
+    src_pkg = tmp_path / "src" / "pkg"
+    (src_pkg / "data").mkdir(parents=True)
+    (src_pkg / "__init__.py").write_text("")
+    (src_pkg / "data" / "both.txt").write_text("source")
+    site = tmp_path / "site-packages"
+    install_pkg = site / "pkg"
+    (install_pkg / "data").mkdir(parents=True)
+    (install_pkg / "data" / "both.txt").write_text("install")
+
+    finder = ScikitBuildRedirectingFinder(
+        known_source_files={"pkg": str(src_pkg / "__init__.py")},
+        known_wheel_files={},
+        known_directories={"pkg": sorted([str(src_pkg), "pkg"])},
+        known_packages=["pkg"],
+        path=None,
+        rebuild=False,
+        verbose=False,
+        build_options=[],
+        install_options=[],
+        dir=str(site),
+        install_dir="",
+    )
+    spec = finder.find_spec("pkg")
+    assert spec is not None
+    assert spec.submodule_search_locations == [str(install_pkg), str(src_pkg)]
+    # The spec gets a copy, so appending to it cannot change the finder.
+    assert (
+        spec.submodule_search_locations is not finder.submodule_search_locations["pkg"]
+    )
+    assert spec.loader is not None
+    reader = spec.loader.get_resource_reader("pkg")  # type: ignore[attr-defined]
+    assert (reader.files() / "data" / "both.txt").read_text() == "install"
+
+    # Hash randomization is per process: several seeds must agree.
+    orders = set()
+    for seed in range(8):
+        out = subprocess.run(
+            [sys.executable, "-c", _PATH_ORDER_SCRIPT, str(site), str(src_pkg.parent)],
+            env={**os.environ, "PYTHONHASHSEED": str(seed)},
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        orders.add(out.stdout.strip())
+    assert orders == {os.pathsep.join([str(install_pkg), str(src_pkg)])}
