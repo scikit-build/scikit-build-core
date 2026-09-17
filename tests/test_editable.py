@@ -242,6 +242,11 @@ def test_direct_import(editable, isolated):
             "import pkg; print(callable(getattr(pkg.__loader__, 'rebuild', None)))"
         )
         assert out.splitlines()[-1] == "True"
+        # The loader also lists the package's search locations (#1565).
+        out = isolated.execute(
+            "import pkg; print(pkg.__loader__.paths == list(pkg.__path__))"
+        )
+        assert out.splitlines()[-1] == "True"
 
 
 @pytest.mark.compile

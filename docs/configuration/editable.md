@@ -154,3 +154,26 @@ Manual `__loader__.rebuild()` for redirect installs, and both manual and
 automatic (`editable.rebuild`) rebuilds for inplace installs.
 
 :::
+
+## Locating the install tree
+
+The same loader exposes `paths`, the package's search locations in `__path__`
+order: the CMake install tree and the source tree. This gives a package a
+supported way to find the directory that holds its CMake outputs at runtime,
+which `importlib.resources.files()` does not provide when a directory exists in
+both trees:
+
+```python
+from pathlib import Path
+
+source_tree = Path(some_package.__file__).parent
+install_tree = next(p for p in some_package.__loader__.paths if p != source_tree)
+```
+
+A plain module has no search locations, so its `paths` is empty.
+
+:::{versionadded} 1.1
+
+`__loader__.paths`.
+
+:::
