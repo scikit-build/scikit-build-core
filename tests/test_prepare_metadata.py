@@ -120,8 +120,9 @@ def test_prepare_metadata_for_build_wheel_variant(fp, monkeypatch, tmp_path):
             return cls(raw)
 
     class VariantDescription:
-        def __init__(self, properties) -> None:
+        def __init__(self, properties, label="") -> None:
             self.properties = properties
+            self.label = label or "computed"
 
     class VariantPyProjectToml:
         def __init__(self, pyproject) -> None:
@@ -131,10 +132,10 @@ def test_prepare_metadata_for_build_wheel_variant(fp, monkeypatch, tmp_path):
         _ = variant
         return label or "cpu"
 
-    def make_variant_dist_info(variant, *, variant_info, variant_label):
+    def make_variant_dist_info(variant, *, variant_info):
         _ = variant_info
         raw = ",".join(prop.raw for prop in variant.properties)
-        return f"label={variant_label or 'cpu'};properties={raw}"
+        return f"label={variant.label};properties={raw}"
 
     variantlib_api.get_variant_label = get_variant_label
     variantlib_api.make_variant_dist_info = make_variant_dist_info
