@@ -12,7 +12,10 @@ if TYPE_CHECKING:
     from ._vendor.pyproject_metadata import StandardMetadata
     from .settings.skbuild_model import ScikitBuildSettings
 
-VARIANTLIB_BUILD_REQUIREMENT = "variantlib"
+# latest variantlib, switch back once live on pypi.
+VARIANTLIB_BUILD_REQUIREMENT = (
+    "variantlib @ https://github.com/wheelnext/variantlib/archive/main.tar.gz"
+)
 VARIANT_DIST_INFO_FILENAME = "variant.json"
 # A wheel filename uses "-" as the field separator, so the variant label (the
 # final field) must not contain dashes or whitespace.
@@ -47,7 +50,18 @@ def has_variant_config(settings: ScikitBuildSettings) -> bool:
 
 def variant_build_requires(settings: ScikitBuildSettings) -> list[str]:
     if settings.variant or settings.variant_name or settings.null_variant:
-        return [VARIANTLIB_BUILD_REQUIREMENT]
+        from pathlib import Path
+
+        from ._compat import tomllib
+
+        with Path("pyproject.toml").open("rb") as f:
+            pyproject = tomllib.load(f)
+
+        requires = [VARIANTLIB_BUILD_REQUIREMENT]
+        for provider in pyproject.get("variant", {}).get("providers", {}).values():
+            requires.extend(provider.get("requires", []))
+            requires.extend(provider.get("build-requires", []))
+        return requires
     return []
 
 
@@ -100,7 +114,6 @@ def get_wheel_variant(
     except ModuleNotFoundError:
         rich_error("variantlib is required to use PEP 817 variant settings")
 
-    get_variant_label = variantlib_api.get_variant_label
     make_variant_dist_info = variantlib_api.make_variant_dist_info
     validation_error = variantlib_errors.ValidationError
     variant_description: Any = variantlib_models.VariantDescription
@@ -112,13 +125,16 @@ def get_wheel_variant(
             variant_property.from_str(value)
             for value in [*settings.variant_name, *settings.variant]
         ]
-        variant = variant_description(properties)
+        variant = (
+            variant_description(properties, label=settings.variant_label)
+            if settings.variant_label
+            else variant_description(properties)
+        )
+        variant_label = variant.label
         variant_info = variant_pyproject_toml(pyproject)
-        variant_label = get_variant_label(variant, settings.variant_label)
         dist_info_contents = make_variant_dist_info(
             variant,
             variant_info=variant_info,
-            variant_label=variant_label,
         ).encode("utf-8")
     except validation_error as err:
         rich_error(str(err))
