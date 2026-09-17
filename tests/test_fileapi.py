@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 from packaging.specifiers import SpecifierSet
 
+from scikit_build_core._compat.builtins import ExceptionGroup
 from scikit_build_core.cmake import CMake, CMaker, _load_file_api
 from scikit_build_core.file_api._cattrs_converter import (
     load_reply_dir as load_reply_dir_cattrs,
@@ -219,20 +220,68 @@ def test_no_index(tmp_path):
         load_reply_dir_cattrs(tmp_path)
 
 
-@pytest.mark.parametrize("kind", ["empty", "bad-json", "unreadable", "bad-types"])
+VALID_CMAKE = (
+    '"cmake":{"version":{"major":3,"minor":1,"patch":0,"suffix":"",'
+    '"string":"3.1.0","isDirty":false},"paths":{"cmake":"a","ctest":"b",'
+    '"cpack":"c","root":"d"},"generator":{"multiConfig":false,"name":"Ninja"}}'
+)
+BROKEN_REPLIES = {
+    "empty": None,
+    "unreadable": None,
+    "bad-json": b"{not json",
+    "non-utf8": b"\xff\xfe{}",
+    "root-not-dict": b"[]",
+    "missing-fields": b"{}",
+    "bad-types": b'{"cmake": 5, "objects": 6}',
+    "bad-int": (
+        b'{"cmake":{"version":{"major":"abc","minor":1,"patch":0,"suffix":"",'
+        b'"string":"3.1.0","isDirty":false},"paths":{"cmake":"a","ctest":"b",'
+        b'"cpack":"c","root":"d"},"generator":{"multiConfig":false,"name":"Ninja"}},'
+        b'"objects":[],"reply":{}}'
+    ),
+    "nested-not-dict": (
+        b"{" + VALID_CMAKE.encode() + b',"objects":[],"reply":{"codemodel-v2":'
+        b'{"kind":"codemodel","version":{"major":2,"minor":0},"jsonFile":"cm.json"}}}'
+    ),
+    "missing-json-file": (
+        b"{" + VALID_CMAKE.encode() + b',"objects":[],"reply":{"codemodel-v2":'
+        b'{"kind":"codemodel","version":{"major":2,"minor":0},"jsonFile":"none.json"}}}'
+    ),
+}
+
+
+def _write_broken_reply(reply_dir: Path, kind: str) -> None:
+    reply_dir.mkdir()
+    index = reply_dir / "index-0.json"
+    if kind == "unreadable":
+        index.mkdir()
+    elif kind == "nested-not-dict":
+        reply_dir.joinpath("cm.json").write_text(
+            '{"paths":{"source":"s","build":"b"},"configurations":'
+            '[{"name":"","directories":[[]],"projects":[],"targets":[]}]}',
+            encoding="utf-8",
+        )
+    content = BROKEN_REPLIES[kind]
+    if content is not None:
+        index.write_bytes(content)
+
+
+@pytest.mark.parametrize("kind", BROKEN_REPLIES)
+def test_load_reply_dir_raises_group_or_oserror(kind, tmp_path):
+    # Every conversion failure surfaces as ExceptionGroup, so callers only
+    # need to handle that plus I/O and missing-index errors.
+    reply_dir = tmp_path / "reply"
+    _write_broken_reply(reply_dir, kind)
+    with pytest.raises((ExceptionGroup, OSError, IndexError)):
+        load_reply_dir(reply_dir)
+
+
+@pytest.mark.parametrize("kind", BROKEN_REPLIES)
 def test_load_file_api_degrades_on_broken_reply(kind, tmp_path):
     # A broken file-api reply must not stop the build; the caller only loses
     # the introspection data.
     reply_dir = tmp_path / "reply"
-    reply_dir.mkdir()
-    index = reply_dir / "index-0.json"
-    if kind == "bad-json":
-        index.write_text("{not json", encoding="utf-8")
-    elif kind == "unreadable":
-        index.mkdir()
-    elif kind == "bad-types":
-        index.write_text('{"cmake": 5, "objects": 6}', encoding="utf-8")
-
+    _write_broken_reply(reply_dir, kind)
     assert _load_file_api(reply_dir) is None
 
 

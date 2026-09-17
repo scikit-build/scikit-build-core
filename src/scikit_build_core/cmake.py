@@ -64,13 +64,9 @@ def _load_file_api(reply_dir: Path) -> Index | None:
     """Read a file-api reply, returning None if it cannot be parsed."""
     try:
         return load_reply_dir(reply_dir)
-    except (
-        ExceptionGroup,
-        IndexError,
-        OSError,
-        TypeError,
-        json.JSONDecodeError,
-    ) as exc:
+    except (ExceptionGroup, IndexError, OSError) as exc:
+        # ExceptionGroup: any parse/conversion failure, IndexError: no index
+        # file, OSError: unreadable or missing reply files
         logger.debug("Could not parse CMake file-api")
         logger.debug(str(exc))
     return None

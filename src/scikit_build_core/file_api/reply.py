@@ -54,21 +54,39 @@ class Converter:
         """
         # max() would raise ValueError, not IndexError, when there is no index
         index_file = sorted(self.base_dir.glob("index-*"))[-1]  # noqa: FURB192
-        with index_file.open(encoding="utf-8") as f:
-            data = json.load(f)
+        return self.make_class(self._read_json(index_file), Index)
 
-        return self.make_class(data, Index)
+    def _read_json(self, path: Path) -> Any:
+        """
+        Read a JSON file, wrapping decode errors in an ExceptionGroup.
+        """
+        with path.open(encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except ValueError as err:
+                # JSONDecodeError and UnicodeDecodeError are both ValueErrors
+                msg = f"Failed to read {path}"
+                raise ExceptionGroup(msg, [err]) from None
 
     def make_class(self, data: InputDict, target: type[T]) -> T:
         """
         Convert a dict to a dataclass. Automatically load a few nested jsonFile classes.
+
+        Every conversion failure is raised as an ExceptionGroup.
         """
+        msg = f"Failed converting {target}"
+        if not isinstance(data, dict):
+            err = TypeError(f"Expected a dict, got {type(data).__name__}: {data!r}")
+            raise ExceptionGroup(msg, [err])
+
         if (
             target in {CodeModel, Target, Cache, CMakeFiles, Toolchains, Directory}
             and data.get("jsonFile") is not None
         ):
-            with self.base_dir.joinpath(data["jsonFile"]).open(encoding="utf-8") as f:
-                file_data: InputDict = json.load(f)
+            file_data = self._read_json(self.base_dir.joinpath(data["jsonFile"]))
+            if not isinstance(file_data, dict):
+                err = TypeError(f"Expected a dict in {data['jsonFile']}")
+                raise ExceptionGroup(msg, [err])
             # Keep members only present on the reference, like directoryIndex
             # and projectIndex on codemodel target entries
             data = {**file_data, **data}
@@ -90,7 +108,7 @@ class Converter:
                     input_dict[field.name] = self._convert_any(
                         data[json_field], field_type
                     )
-                except TypeError as err:
+                except (TypeError, ValueError) as err:
                     add_note(
                         err,
                         f"Failed to convert field {field.name!r} of type {field_type}",
@@ -100,10 +118,13 @@ class Converter:
                     exceptions.append(err)
 
         if exceptions:
-            msg = f"Failed converting {target}"
             raise ExceptionGroup(msg, exceptions)
 
-        return target(**input_dict)
+        try:
+            return target(**input_dict)
+        except TypeError as err:
+            # Missing required fields
+            raise ExceptionGroup(msg, [err]) from None
 
     @typing.overload
     def _convert_any(self, item: Any, target: type[T]) -> T: ...
@@ -132,7 +153,7 @@ class Converter:
                     continue
                 try:
                     return self._convert_any(item, maybe_target)
-                except (ExceptionGroup, TypeError) as err:
+                except (ExceptionGroup, TypeError, ValueError) as err:
                     last_err = err
                     continue
             raise last_err
