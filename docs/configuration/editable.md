@@ -161,9 +161,9 @@ which `importlib.resources.files()` does not provide when a directory exists in
 both trees:
 
 ```python
-import os
+from pathlib import Path
 
-source_tree = os.path.dirname(some_package.__file__)
+source_tree = Path(some_package.__file__).parent
 install_tree = next(p for p in some_package.__loader__.paths if p != source_tree)
 ```
 
