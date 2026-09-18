@@ -428,10 +428,12 @@ wheel.py-api = "cp39"
 
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
 newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
-4.4+). For `py3`/`py2.py3`, you still need a version of Python scikit-build-core
-supports to build the initial wheel. The `${SKBUILD_SABI_COMPONENT}` variable
-and the `USE_SABI` idiom on the CMake side is covered in
-[Limited API / Stable ABI](#limited-api).
+4.4+). The free-threaded stable ABI starts at CPython 3.15, so a `cp313t` or
+`cp314t` request, or any `cp3XXt` request on a free-threaded Python older than
+3.15, is ignored and a normal (non-`abi3t`) wheel is built. For `py3`/`py2.py3`,
+you still need a version of Python scikit-build-core supports to build the
+initial wheel. The `${SKBUILD_SABI_COMPONENT}` variable and the `USE_SABI` idiom
+on the CMake side is covered in [Limited API / Stable ABI](#limited-api).
 
 With `cp315.cp315t`, a free-threaded build emits the combined `cp315-abi3.abi3t`
 tag: `abi3t` is a subset of `abi3` (PEP 803), so the single free-threaded binary
