@@ -27,11 +27,6 @@ def write_pyproject(tmp_path: Path, text: str) -> Path:
     return pyproject_toml
 
 
-# ---------------------------------------------------------------------------
-# Declaration parsing
-# ---------------------------------------------------------------------------
-
-
 def test_declaration_minimal(tmp_path: Path):
     pyproject_toml = write_pyproject(tmp_path, DECLARATION)
     settings_reader = SettingsReader.from_file(pyproject_toml)
@@ -69,11 +64,6 @@ def test_declaration_invalid(tmp_path: Path, entry: str):
     with pytest.raises(SystemExit) as exc:
         SettingsReader.from_file(pyproject_toml)
     assert exc.value.code == 7
-
-
-# ---------------------------------------------------------------------------
-# Strict-config acceptance of declared keys
-# ---------------------------------------------------------------------------
 
 
 def test_declared_key_accepted(tmp_path: Path):
@@ -116,10 +106,6 @@ def test_skbuild_prefixed_custom_key_rejected(tmp_path: Path):
         settings_reader.validate_may_exit()
     assert exc.value.code == 7
 
-
-# ---------------------------------------------------------------------------
-# Resolution: env > config-settings > default
-# ---------------------------------------------------------------------------
 
 ENV_DECLARATION = dedent(
     """\
@@ -186,11 +172,6 @@ def test_bool_type_gpep517_bool(tmp_path: Path):
     pyproject_toml = write_pyproject(tmp_path, BOOL_DECLARATION)
     settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.bundled": True})
     assert settings_reader.custom_config_settings["zmq.bundled"] is True
-
-
-# ---------------------------------------------------------------------------
-# CMake define binding
-# ---------------------------------------------------------------------------
 
 
 def test_define_reference(tmp_path: Path):
@@ -309,11 +290,6 @@ def test_malformed_cmake_table(tmp_path: Path, malformed: str, with_decl: bool):
     assert not isinstance(exc.value, AttributeError)
 
 
-# ---------------------------------------------------------------------------
-# minimum-version gate
-# ---------------------------------------------------------------------------
-
-
 def test_minimum_version_gate_too_old(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -344,11 +320,6 @@ def test_minimum_version_gate_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     )
     settings_reader = SettingsReader.from_file(pyproject_toml)
     settings_reader.validate_may_exit()
-
-
-# ---------------------------------------------------------------------------
-# Integration: values reach CMake
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.configure

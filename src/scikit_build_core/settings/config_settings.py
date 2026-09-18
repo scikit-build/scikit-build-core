@@ -2,10 +2,10 @@
 # runtime types from the dataclass fields, like `skbuild_model.py`.
 
 __lazy_modules__ = {
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{__spec__.parent}.skbuild_model",
     f"{__spec__.parent}.skbuild_overrides",
-    "typing",
 }
 
 import dataclasses
