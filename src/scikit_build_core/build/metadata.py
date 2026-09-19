@@ -10,6 +10,7 @@ __lazy_modules__ = {
 }
 
 import copy
+import dataclasses
 import sys
 from typing import Any
 
@@ -17,6 +18,7 @@ from packaging.version import Version
 
 from .._logging import logger
 from .._vendor.pyproject_metadata import (
+    RFC822Message,
     StandardMetadata,
     errors,
     extras_build_system,
@@ -39,7 +41,7 @@ if TYPE_CHECKING:
     from ..builder._load_provider import BuildState
     from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["get_standard_metadata"]
+__all__ = ["SkbuildMetadata", "get_standard_metadata"]
 
 
 def __dir__() -> list[str]:
@@ -53,11 +55,34 @@ if sys.version_info < (3, 11):
     errors.ExceptionGroup = ExceptionGroup  # type: ignore[misc, assignment]
 
 
+@dataclasses.dataclass
+class SkbuildMetadata(StandardMetadata):
+    raw_version: str | None = None
+    """
+    ``project.version`` as written, before packaging normalizes it. A calendar
+    version like ``2024.01.05`` keeps its leading zeros here. When set, it is
+    used for the ``Version`` metadata field; ``version`` is always the
+    normalized form and is what filenames use.
+    """
+
+    def as_rfc822(self) -> RFC822Message:
+        message = super().as_rfc822()
+        if self.raw_version is not None:
+            message.replace_header("Version", self.raw_version)
+        return message
+
+    def as_json(self) -> dict[str, str | list[str]]:
+        data = super().as_json()
+        if self.raw_version is not None:
+            data["version"] = self.raw_version
+        return data
+
+
 def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
     build_state: BuildState = "metadata_wheel",
-) -> StandardMetadata:
+) -> SkbuildMetadata:
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
 
@@ -116,12 +141,19 @@ def get_standard_metadata(
     else:
         allow_extra_keys = None if settings.strict_config else False
 
-    metadata = StandardMetadata.from_pyproject(
+    metadata = SkbuildMetadata.from_pyproject(
         new_pyproject_dict,
         dynamic_metadata=dynamic_metadata,
         all_errors=True,
         allow_extra_keys=allow_extra_keys,
     )
+    # Keep the version as written (scikit-build-core >= 1.1). Older minimums
+    # keep the normalized form so existing builds stay bit-for-bit reproducible.
+    raw_version = project.get("version")
+    if (
+        settings.minimum_version is None or settings.minimum_version >= Version("1.1")
+    ) and (isinstance(raw_version, str) and raw_version):
+        metadata.raw_version = raw_version
 
     # Restore the PEP 808 dual-dynamic set that from_pyproject can no longer see
     # (the fields were dropped from dynamic during resolution). Combined with the
