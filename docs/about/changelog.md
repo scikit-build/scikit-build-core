@@ -7,7 +7,7 @@ Features:
 - `project.version` is kept as written in the `Version` metadata field and in
   `SKBUILD_PROJECT_VERSION_FULL`, so a calendar version such as `2024.01.05`
   keeps its leading zeros. Filenames stay normalized. Requires `minimum-version`
-  1.1 or unset, for reproducibility. By @henryiii
+  1.1 or unset, for reproducibility. By @henryiii in #1572
 
 Fixes:
 
