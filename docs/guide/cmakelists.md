@@ -17,8 +17,9 @@ Scikit-build-core provides several useful variables:
 - `${SKBUILD_PROJECT_VERSION}`: The version of the project, the release segment
   capped to four components (`major.minor.patch.tweak`) so it is always valid
   for `project(VERSION ...)`.
-- `${SKBUILD_PROJECT_VERSION_FULL}`: The exact version of the project including
-  dev & local suffix.
+- `${SKBUILD_PROJECT_VERSION_FULL}`: The version of the project as written in
+  `project.version`, including dev & local suffix and any leading zeros
+  (normalized if `minimum-version` is below 1.1).
 - `${SKBUILD_STATE}`: The run state, one of `sdist`, `wheel`, `metadata_wheel`,
   `editable`, or `metadata_editable`.
 

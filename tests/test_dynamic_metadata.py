@@ -116,6 +116,7 @@ def test_dynamic_metadata():
     metadata = get_standard_metadata(pyproject, settings)
 
     assert str(metadata.version) == "0.0.2"
+    assert metadata.raw_version == "0.0.2"
     assert metadata.license == pyproject_metadata.License("MIT License", None)
     assert metadata.readme == pyproject_metadata.Readme("Some text", None, "text/x-rst")
 

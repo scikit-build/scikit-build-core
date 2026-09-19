@@ -538,6 +538,7 @@ def _build_wheel_impl_impl(
                 extra_cache_entries=editable_rebuild_cache,
                 name=metadata.name,
                 version=metadata.version,
+                raw_version=metadata.raw_version,
             )
             if exit_after_config:
                 return WheelImplReturn("", settings=settings)
@@ -552,6 +553,7 @@ def _build_wheel_impl_impl(
                 state=state,
                 name=metadata.name,
                 version=metadata.version,
+                raw_version=metadata.raw_version,
                 editable=editable,
                 extra_cache_entries=editable_rebuild_cache,
             )
