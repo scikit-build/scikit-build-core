@@ -435,8 +435,10 @@ def test_builder_unsupported_cmake_args_warns_once(monkeypatch, capsys):
     assert tmpbuilder.get_cmake_args() == ["-DA=1"]
     assert get_cmake_args_from_settings(tmpbuilder.settings, os.environ) == ["-DA=1"]
 
+    # Counted in fragments; FORCE_COLOR inserts ANSI codes between them.
     err = capsys.readouterr().err
-    assert err.count("Unsupported CMAKE_ARGS ignored: -DCMAKE_BUILD_TYPE=Release") == 1
+    assert err.count("Unsupported CMAKE_ARGS ignored:") == 1
+    assert err.count("-DCMAKE_BUILD_TYPE=Release") == 1
 
 
 def test_builder_exports_source_date_epoch(monkeypatch):
