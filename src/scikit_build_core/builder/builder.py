@@ -36,7 +36,7 @@ from packaging.version import Version
 
 from .. import __version__
 from .._compat.importlib import metadata
-from .._logging import logger
+from .._logging import logger, rich_warning
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
@@ -147,7 +147,7 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> list[str]:
     for define in iter_cmake_defines(env_cmake_args):
         if define.name in _UNSUPPORTED_ENV_DEFINES:
             ignored = env_cmake_args[define.start : define.stop]
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", " ".join(ignored))
+            rich_warning("Unsupported CMAKE_ARGS ignored:", " ".join(ignored))
             drop.update(range(define.start, define.stop))
     return [arg for i, arg in enumerate(env_cmake_args) if i not in drop]
 
@@ -205,6 +205,9 @@ def _sanitize_path(path: Any) -> list[Path]:
 class Builder:
     settings: ScikitBuildSettings
     config: CMaker
+    _cmake_args: list[str] | None = dataclasses.field(
+        default=None, init=False, repr=False
+    )
 
     def __post_init__(self) -> None:
         # Apply the user's env table before configure/build/install so it is
@@ -222,9 +225,13 @@ class Builder:
 
     def get_cmake_args(self) -> list[str]:
         """
-        Get CMake args from the settings and environment.
+        Get CMake args from the settings and environment. Computed once.
         """
-        return get_cmake_args_from_settings(self.settings, self.config.env)
+        if self._cmake_args is None:
+            self._cmake_args = get_cmake_args_from_settings(
+                self.settings, self.config.env
+            )
+        return self._cmake_args
 
     def get_generator(self, *args: str) -> str | None:
         return self.config.get_generator(
@@ -256,6 +263,7 @@ class Builder:
         limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
     ) -> None:
+        cmake_args = self.get_cmake_args()
         cmake_defines = {
             k: ("TRUE" if v else "FALSE") if isinstance(v, bool) else str(v)
             for k, v in defines.items()
@@ -298,7 +306,9 @@ class Builder:
             self.config.module_dirs.append(fp_dir)
             logger.debug("FindPython backport activated at {}", fp_dir)
 
-        current_gen = self.get_generator(*configure_args)
+        current_gen = self.config.get_generator(
+            *cmake_args, *configure_args, defines=self.settings.cmake.define
+        )
         local_def = set_environment_for_gen(
             current_gen,
             self.config.cmake,
@@ -466,7 +476,7 @@ class Builder:
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set,
             # unless CMAKE_SYSTEM_PROCESSOR is in the cmake args (conda, #207)
-            archs = get_archs(self.config.env, self.get_cmake_args())
+            archs = get_archs(self.config.env, cmake_args)
             if archs:
                 cmake_defines["CMAKE_OSX_ARCHITECTURES"] = ";".join(archs)
             else:
@@ -474,7 +484,7 @@ class Builder:
                     "CMAKE_OSX_ARCHITECTURES" in self.settings.cmake.define
                     or any(
                         define.name == "CMAKE_OSX_ARCHITECTURES"
-                        for define in iter_cmake_defines(self.get_cmake_args())
+                        for define in iter_cmake_defines(cmake_args)
                     )
                 )
                 _warn_macos_arch_mismatch(
@@ -486,7 +496,7 @@ class Builder:
 
         self.config.configure(
             defines=cmake_defines,
-            cmake_args=[*self.get_cmake_args(), *configure_args],
+            cmake_args=[*cmake_args, *configure_args],
             toolchain=self.settings.cmake.toolchain_file,
         )
 
