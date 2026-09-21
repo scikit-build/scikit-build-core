@@ -150,6 +150,9 @@ def get_standard_metadata(
     # Keep the version as written (scikit-build-core >= 1.1). Older minimums
     # keep the normalized form so existing builds stay bit-for-bit reproducible.
     raw_version = project.get("version")
+    if isinstance(raw_version, str):
+        # packaging strips surrounding whitespace, and a header cannot hold it
+        raw_version = raw_version.strip()
     if (
         settings.minimum_version is None or settings.minimum_version >= Version("1.1")
     ) and (isinstance(raw_version, str) and raw_version):

@@ -101,6 +101,15 @@ def test_raw_version_keeps_leading_zeros():
     assert "Version: 2024.1.5" in str(metadata.as_rfc822())
 
 
+def test_raw_version_strips_whitespace():
+    metadata = get_standard_metadata(
+        pyproject_dict={"project": {"name": "hello", "version": "  2024.01.05\n"}},
+        settings=ScikitBuildSettings(),
+    )
+    assert metadata.raw_version == "2024.01.05"
+    assert "Version: 2024.01.05" in str(metadata.as_rfc822())
+
+
 def test_license_normalization():
     pytest.importorskip("packaging.licenses")
     metadata = get_standard_metadata(
