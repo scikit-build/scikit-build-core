@@ -505,10 +505,12 @@ def pytest_report_header() -> str:
 def _clear_caches() -> Iterable[None]:
     """Keep process-wide caches from leaking between tests that fake their input."""
     from scikit_build_core._compat.importlib.metadata import all_entry_points
+    from scikit_build_core._logging import rich_warning
     from scikit_build_core.builder._known_wheels import is_known_platform
 
-    for cached in (all_entry_points, is_known_platform):
+    caches = (all_entry_points, is_known_platform, rich_warning)
+    for cached in caches:
         cached.cache_clear()
     yield
-    for cached in (all_entry_points, is_known_platform):
+    for cached in caches:
         cached.cache_clear()

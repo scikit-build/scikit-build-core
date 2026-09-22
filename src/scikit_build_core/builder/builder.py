@@ -36,7 +36,7 @@ from packaging.version import Version
 
 from .. import __version__
 from .._compat.importlib import metadata
-from .._logging import logger
+from .._logging import logger, rich_warning
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
@@ -147,7 +147,7 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> list[str]:
     for define in iter_cmake_defines(env_cmake_args):
         if define.name in _UNSUPPORTED_ENV_DEFINES:
             ignored = env_cmake_args[define.start : define.stop]
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", " ".join(ignored))
+            rich_warning("Unsupported CMAKE_ARGS ignored:", " ".join(ignored))
             drop.update(range(define.start, define.stop))
     return [arg for i, arg in enumerate(env_cmake_args) if i not in drop]
 
