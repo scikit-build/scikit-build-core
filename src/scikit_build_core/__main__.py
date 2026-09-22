@@ -19,18 +19,21 @@ def __dir__() -> list[str]:
 
 def main_info(_args: argparse.Namespace | None = None, /) -> None:
     rich_print("{blue}The scikit-build-core CLI provides the following commands:")
-    rich_print("  scikit-build build requires        {green}Get the build requirements")
+    rich_print("  scikit-build build requires      {green}Get the build requirements")
     rich_print(
-        "  scikit-build build project-table   {green}Get the project table (with dynamic metadata)"
+        "  scikit-build build project-table {green}Get the project table (with dynamic metadata)"
     )
-    rich_print("  scikit-build builder               {green}Info about the system")
+    rich_print("  scikit-build builder             {green}Info about the system")
     rich_print(
-        "  scikit-build builder wheel-tag     {green}Info about the computed wheel tag"
+        "  scikit-build builder wheel-tag   {green}Info about the computed wheel tag"
     )
-    rich_print("  scikit-build builder sysconfig     {green}Info from sysconfig")
-    rich_print("  scikit-build file-api query        {green}Request CMake file API")
-    rich_print("  scikit-build file-api reply        {green}Process CMake file API")
-    rich_print("  scikit-build init                  {green}Generate a starter project")
+    rich_print("  scikit-build builder sysconfig   {green}Info from sysconfig")
+    rich_print("  scikit-build file-api query      {green}Request CMake file API")
+    rich_print("  scikit-build file-api reply      {green}Process CMake file API")
+    rich_print("  scikit-build init                {green}Generate a starter project")
+    rich_print(
+        "  scikit-build settings list       {green}List the supported config-settings"
+    )
     rich_print()
 
 
@@ -39,6 +42,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     from .builder import __main__ as builder_main
     from .file_api import __main__ as file_api_main
     from .init import __main__ as init_main
+    from .settings import __main__ as settings_main
 
     parser = argparse.ArgumentParser(
         prog="scikit-build",
@@ -79,6 +83,14 @@ def main(argv: Sequence[str] | None = None) -> None:
         allow_abbrev=False,
     )
     init_main.populate_parser(init_parser)
+
+    settings_parser = subparsers.add_parser(
+        "settings",
+        help="Settings utilities",
+        description="Settings utilities.",
+        allow_abbrev=False,
+    )
+    settings_main.populate_parser(settings_parser)
 
     args = parser.parse_args(argv)
     args.func(args)
