@@ -685,6 +685,34 @@ def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
     assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
 
 
+@pytest.mark.parametrize(
+    ("minor", "py_api"),
+    [
+        pytest.param(13, "cp313t", id="313t"),
+        pytest.param(14, "cp314t", id="314t"),
+        pytest.param(15, "cp313t", id="315t_asks_313t"),
+        pytest.param(15, "cp314t", id="315t_asks_314t"),
+    ],
+)
+def test_builder_py_api_abi3t_requires_315(tmp_path, monkeypatch, minor, py_api):
+    """py-api gets the same 3.15 abi3t gate as a forced limited_api."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, minor))
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api=py_api
+    )
+
+    assert "Development.SABIModule" not in cache
+    assert "Py_TARGET_ABI3T" not in cache
+
+
 def test_builder_py_api_gil_disabled_zero(tmp_path, monkeypatch):
     """``Py_GIL_DISABLED = 0`` is a GIL build, so classic abi3 stays available."""
     get_config_var = sysconfig.get_config_var
@@ -934,7 +962,7 @@ def test_wheel_tag_with_abi3t_darwin(monkeypatch):
         lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
     )
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    patch_cpython_runtime(monkeypatch)
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
 
@@ -961,7 +989,7 @@ def test_wheel_tag_with_combined_abi3_abi3t_free_threaded(monkeypatch):
         lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
     )
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    patch_cpython_runtime(monkeypatch)
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
     monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
@@ -989,7 +1017,7 @@ def test_wheel_tag_combined_rejects_higher_classic_minor(monkeypatch):
         lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
     )
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    patch_cpython_runtime(monkeypatch)
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
     monkeypatch.setattr(sys, "version_info", VersionInfo(3, 16))
@@ -1011,7 +1039,7 @@ def test_wheel_tag_with_combined_abi3_abi3t_gil(monkeypatch):
         lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
     )
     monkeypatch.setattr(sys, "platform", "darwin")
-    monkeypatch.setattr(sys, "implementation", SimpleNamespace(name="cpython"))
+    patch_cpython_runtime(monkeypatch)
     monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
     monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
     monkeypatch.setattr(sys, "version_info", VersionInfo(3, 15))
@@ -1051,6 +1079,34 @@ def test_wheel_tag_with_abi3t_ignored_on_classic(monkeypatch):
 
     default_tags = WheelTag.compute_best(["x86_64"])
     tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
+    assert tags == default_tags
+
+
+@pytest.mark.parametrize(
+    ("minor", "py_api"),
+    [
+        pytest.param(13, "cp313t", id="313t"),
+        pytest.param(14, "cp314t", id="314t"),
+        pytest.param(15, "cp313t", id="315t_asks_313t"),
+        pytest.param(15, "cp314t", id="315t_asks_314t"),
+    ],
+)
+def test_wheel_tag_abi3t_requires_315(monkeypatch, minor, py_api):
+    """The free-threaded Stable ABI (abi3t) only exists on CPython 3.15+."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "t" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+    monkeypatch.setattr(sys, "version_info", VersionInfo(3, minor))
+
+    default_tags = WheelTag.compute_best(["x86_64"])
+    tags = WheelTag.compute_best(["x86_64"], py_api=py_api)
     assert tags == default_tags
 
 

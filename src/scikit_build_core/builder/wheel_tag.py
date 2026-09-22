@@ -18,7 +18,7 @@ import packaging.tags
 
 from .._logging import logger
 from .macos import get_macosx_deployment_target
-from .sysconfig import is_free_threaded
+from .sysconfig import ABI3T_MIN_MINOR, is_free_threaded
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -181,6 +181,16 @@ class WheelTag:
                 )
                 return None
             target = ft_tags[0]
+            if target.minor < ABI3T_MIN_MINOR or sys.version_info < (
+                3,
+                ABI3T_MIN_MINOR,
+            ):
+                # Same gate as the builder; abi3t (PEP 803) starts at 3.15.
+                logger.debug(
+                    "Ignoring py-api, the free-threaded Stable ABI (abi3t) requires CPython >= 3.{}",
+                    ABI3T_MIN_MINOR,
+                )
+                return None
             if target.minor > sys.version_info.minor:
                 logger.debug(
                     "Ignoring py-api, version (3.{}) is too high", target.minor

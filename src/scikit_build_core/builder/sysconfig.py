@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
+    "ABI3T_MIN_MINOR",
     "get_abi_flags",
     "get_cmake_platform",
     "get_numpy_include_dir",
@@ -36,6 +37,9 @@ __all__ = [
     "info_print",
     "is_free_threaded",
 ]
+
+# The free-threaded Stable ABI (abi3t, PEP 803) first exists in CPython 3.15.
+ABI3T_MIN_MINOR = 15
 
 
 TARGET_TO_PLAT = {
