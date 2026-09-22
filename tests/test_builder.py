@@ -1071,6 +1071,30 @@ def test_wheel_tag_gil_disabled_zero(monkeypatch):
     assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
 
 
+def test_wheel_tag_env_argument(monkeypatch):
+    """The tag reads the passed env, not ``os.environ``."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
+    monkeypatch.delenv("_PYTHON_HOST_PLATFORM", raising=False)
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"MACOSX_DEPLOYMENT_TARGET": "10.12"}
+    )
+    assert str(tags) == "py3-none-macosx_10_12_x86_64"
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"_PYTHON_HOST_PLATFORM": "macosx-11.0-arm64"}
+    )
+    assert str(tags) == "py3-none-macosx_11_0_arm64"
+
+
 def test_wheel_tag_host_platform_override(monkeypatch):
     """Test that _PYTHON_HOST_PLATFORM environment variable overrides platform detection."""
     get_config_var = sysconfig.get_config_var
