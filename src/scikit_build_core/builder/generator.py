@@ -24,12 +24,13 @@ from .sysconfig import get_cmake_platform
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
+    import os
     from collections.abc import Collection, Iterable, Mapping, MutableMapping
 
     from ..cmake import CMake
     from ..settings.skbuild_model import NinjaSettings
 
-__all__ = ["parse_generator", "set_environment_for_gen"]
+__all__ = ["parse_generator", "resolve_generator", "set_environment_for_gen"]
 
 
 def __dir__() -> list[str]:
@@ -53,6 +54,28 @@ def parse_generator(args: Iterable[str]) -> str | None:
         elif arg.startswith("-G"):
             result = arg[2:].strip()
     return result
+
+
+def resolve_generator(
+    args: Iterable[str],
+    defines: Mapping[str, str | os.PathLike[str] | bool] | None = None,
+    env: Mapping[str, str] | None = None,
+) -> str | None:
+    """
+    Get the generator the build will use, or None if it is not set. A ``-G``
+    argument wins over ``cmake.define``, which wins over ``CMAKE_GENERATOR``.
+    """
+    generator = parse_generator(args)
+    if generator:
+        return generator
+    if defines:
+        gen_value = defines.get("CMAKE_GENERATOR")
+        if gen_value is not None:
+            assert isinstance(gen_value, str)
+            return gen_value
+    if env is not None:
+        return env.get("CMAKE_GENERATOR")
+    return None
 
 
 def parse_help_default(txt: str) -> str | None:
