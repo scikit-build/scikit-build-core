@@ -82,7 +82,12 @@ class WheelTag:
         build_tag: str = "",
         cmake_defines: Mapping[str, str] | None = None,
         cmake_args: Sequence[str] = (),
+        env: Mapping[str, str] | None = None,
     ) -> Self:
+        # The build environment, which the ``env`` settings table can change;
+        # the tag must describe what CMake built, not the ambient environment.
+        if env is None:
+            env = os.environ
         if build_tag:
             if not build_tag[0].isdigit():
                 msg = f"Unexpected build-tag, must start with a digit, {build_tag!r} invalid"
@@ -103,7 +108,7 @@ class WheelTag:
         pyvers = [interp]
 
         # Check for _PYTHON_HOST_PLATFORM environment variable to override platform
-        host_platform = os.environ.get("_PYTHON_HOST_PLATFORM")
+        host_platform = env.get("_PYTHON_HOST_PLATFORM")
         if host_platform:
             # Convert sysconfig platform format to wheel platform tag format
             plats = [host_platform.replace("-", "_").replace(".", "_")]
@@ -129,6 +134,7 @@ class WheelTag:
                             arm=arm,
                             cmake_defines=cmake_defines,
                             cmake_args=cmake_args,
+                            env=env,
                         ),
                         arch,
                     )
