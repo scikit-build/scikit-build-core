@@ -4,21 +4,21 @@ __lazy_modules__ = {
     "itertools",
     "packaging",
     "packaging.tags",
-    "sysconfig",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{__spec__.parent}.macos",
+    f"{__spec__.parent}.sysconfig",
 }
 
 import dataclasses
 import itertools
 import os
 import sys
-import sysconfig
 
 import packaging.tags
 
 from .._logging import logger
 from .macos import get_macosx_deployment_target
+from .sysconfig import is_free_threaded
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -147,7 +147,7 @@ class WheelTag:
         if py_api:
             pyvers_new = py_api.split(".")
             pytags = [_PyTag(x) for x in pyvers_new]
-            gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+            gil_disabled = is_free_threaded()
             if all(t.is_classic_abi3 or t.is_ft_abi3 for t in pytags):
                 if root_is_purelib:
                     msg = f"Unexpected py-api, since platlib is set to false, must be Pythonless (e.g. py2.py3), not {py_api}"

@@ -48,6 +48,7 @@ from .sysconfig import (
     get_python_include_dir,
     get_python_library,
     get_soabi,
+    is_free_threaded,
 )
 
 TYPE_CHECKING = False
@@ -324,7 +325,7 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
 
         py_api = self.settings.wheel.py_api
-        gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+        gil_disabled = is_free_threaded()
 
         sabi = _SabiMode.NONE
         sabi_minor: int | None = None
@@ -386,7 +387,7 @@ class Builder:
             sys.implementation.name == "cpython"
             and sys.version_info[:3] == (3, 13, 4)
             and sys.platform.startswith("win32")
-            and not sysconfig.get_config_var("Py_GIL_DISABLED")
+            and not gil_disabled
         ):  # pragma: nocover
             logger.warning(
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
