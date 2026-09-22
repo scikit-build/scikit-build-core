@@ -271,6 +271,12 @@ def _dict_with_envvar(target: Any, /) -> Any:
     """
     if not isinstance(target, dict):
         return target
+    if "config-setting" in target:
+        # These are resolved from the raw pyproject dict by SettingsReader
+        # before source conversion; reaching here means a direct SourceChain
+        # user passed one through.
+        msg = "{config-setting = ...} values are only supported via SettingsReader"
+        raise TypeError(msg)
     env = target["env"]
     default = target.get("default", None)
     value = os.environ.get(env, default)
@@ -510,15 +516,23 @@ class ConfSource(Source):
     unrelated config keys.
     """
 
+    extra_keys: frozenset[str]
+    """
+    Raw keys accepted verbatim even though they are not model fields (the
+    project-declared ``tool.scikit-build.config-setting`` names).
+    """
+
     def __init__(
         self,
         *prefixes: str,
         settings: Mapping[str, str | list[str] | bool],
         verify: bool = True,
+        extra_keys: frozenset[str] = frozenset(),
     ) -> None:
         self.prefixes = prefixes
         self.settings = settings
         self.verify = verify
+        self.extra_keys = extra_keys
 
     def _get_name(self, *fields: str) -> list[str]:
         names = [field.replace("_", "-") for field in fields]
@@ -633,7 +647,10 @@ class ConfSource(Source):
     def unrecognized_options(self, options: object) -> Generator[str, None, None]:
         if not self.verify:
             return
+        extra_namespaces = {k.split(".", 1)[0] for k in self.extra_keys}
         for keystr in self.settings:
+            if keystr in self.extra_keys:
+                continue
             keys = keystr.replace("-", "_").split(".")[len(self.prefixes) :]
             try:
                 outer_option = _dig_fields(options, *keys[:-1])
@@ -643,6 +660,11 @@ class ConfSource(Source):
                 # non-dataclass), so anything nested under it is free-form and
                 # cannot be a dataclass field.
                 if _under_dict_field(options, keys[:-1]):
+                    continue
+                if keystr.split(".", 1)[0] in extra_namespaces:
+                    # Shares a namespace with a declared extra key: report the
+                    # full key so suggestions can offer the declared names.
+                    yield keystr
                     continue
                 yield ".".join(keystr.split(".")[:-1])
                 continue
@@ -668,6 +690,7 @@ class ConfSource(Source):
         for names in _nested_dataclass_to_names(target):
             dash_names = [name.replace("_", "-") for name in names]
             yield ".".join((*self.prefixes, *dash_names))
+        yield from self.extra_keys
 
 
 class TOMLSource(Source):

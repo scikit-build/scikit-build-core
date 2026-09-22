@@ -69,6 +69,23 @@ def test_valid_schemas_files(filepath: Path) -> None:
         {"cmake": {"define": {"FOO": {"default": False}}}},
         {"env": {"FOO": {"unknown": "x"}}},
         {"env": {"FOO": {"force": "not-a-bool"}}},
+        {"config-setting": {"nodot": {"help": "x"}}},
+        {"config-setting": {"zmq.prefix": {"unknown": "x"}}},
+        {"config-setting": {"zmq.prefix": {"type": "int"}}},
+        {"config-setting": {"zmq.prefix": {"env": ""}}},
+        {"config-setting": {"zmq.prefix": {"choices": ["bundled"]}}},
+        {"config-setting": {"zmq.prefix": {"cmake": "ZMQ_PREFIX"}}},
+        {"cmake": {"define": {"FOO": {"config-setting": ""}}}},
+        {
+            "cmake": {
+                "define": {"FOO": {"config-setting": "zmq.prefix", "default": "x"}}
+            }
+        },
+        {
+            "overrides": [
+                {"if": {"config-setting": {}}, "cmake": {"args": ["-DFOO=BAR"]}}
+            ]
+        },
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -115,6 +132,22 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
         {"env": {"CMAKE_BUILD_PARALLEL_LEVEL": {"env": "MAX_JOBS"}}},
         {"env": {"FOO": {"env": "BAR", "default": "baz"}}},
         {"env": {"FOO": {"default": "bar", "force": True}}},
+        {
+            "config-setting": {
+                "zmq.prefix": {"help": "Location", "env": "ZMQ_PREFIX"},
+                "zmq.libzmq": {"help": "Where libzmq comes from", "default": "system"},
+                "zmq.bundled": {"type": "bool", "default": False},
+            }
+        },
+        {"cmake": {"define": {"FOO": {"config-setting": "zmq.prefix"}}}},
+        {
+            "overrides": [
+                {
+                    "if": {"config-setting": {"zmq.libzmq": "bundled"}},
+                    "cmake": {"define": {"ZMQ_LIBZMQ": "ON"}},
+                }
+            ]
+        },
     ],
 )
 def test_valid_schemas(addition: dict[str, Any]) -> None:
