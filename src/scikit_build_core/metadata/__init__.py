@@ -35,6 +35,8 @@ _LIST_STR_FIELDS = frozenset(
         "keywords",
         "dependencies",
         "license-files",
+        "import-names",
+        "import-namespaces",
     ]
 )
 

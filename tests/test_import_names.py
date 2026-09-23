@@ -197,3 +197,23 @@ def test_dynamic_import_names_wheel_exclude_single_file(chdir_tmp: Path) -> None
     metadata = read_metadata(dist)
     assert metadata.get_all("Import-Name") == ["ns.sub", "pkg", "single"]
     assert metadata.get_all("Import-Namespace") == ["ns"]
+
+
+def test_dynamic_import_names_plugin(chdir_tmp: Path) -> None:
+    make_pkg(chdir_tmp, '["import-names", "import-namespaces"]')
+    (chdir_tmp / "plugins").mkdir()
+    (chdir_tmp / "plugins/names.py").write_text(
+        "def dynamic_metadata(settings, project):\n"
+        "    return {'import-names': ['pkg', 'ns.custom']}\n"
+    )
+    with (chdir_tmp / "pyproject.toml").open("a") as f:
+        f.write(
+            '\n[[tool.dynamic-metadata]]\nprovider = {path = "plugins", module = "names"}\n'
+        )
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist))
+
+    # The plugin owns import-names; import-namespaces is still computed
+    metadata = read_metadata(dist)
+    assert metadata.get_all("Import-Name") == ["pkg", "ns.custom"]
+    assert metadata.get_all("Import-Namespace") == ["ns"]
