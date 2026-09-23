@@ -7,26 +7,26 @@ from __future__ import annotations
 __lazy_modules__ = {
     "keyword",
     "pathlib",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._vendor.pyproject_metadata.constants",
+    f"{__spec__.parent}._editable",
+    f"{__spec__.parent}._pathutil",
 }
 
 import keyword
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 
-from .._vendor.pyproject_metadata.constants import PRE_2_5_METADATA_VERSIONS
+from ._editable import get_packages
+from ._pathutil import iter_package_files
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
+    from typing import Any
 
-    from .._vendor.pyproject_metadata import StandardMetadata
+    from ..settings.skbuild_model import ScikitBuildSettings
 
-__all__ = ["find_import_names", "package_files", "set_dynamic_import_names"]
+__all__ = ["add_dynamic_import_names", "find_import_names"]
 
 IMPORT_FIELDS = ("import-names", "import-namespaces")
-
-_SOURCE_SUFFIXES = (".py",)
-_EXTENSION_SUFFIXES = (".so", ".pyd")
 
 
 def __dir__() -> list[str]:
@@ -35,9 +35,9 @@ def __dir__() -> list[str]:
 
 def _module_name(filename: str) -> str | None:
     """Return the import name of a module file, or None if not importable."""
-    if filename.endswith(_SOURCE_SUFFIXES):
-        name = filename[: -len(".py")]
-    elif filename.endswith(_EXTENSION_SUFFIXES):
+    if filename.endswith(".py"):
+        name = filename[:-3]
+    elif filename.endswith((".so", ".pyd")):
         # name.so, name.abi3.so, name.cpython-313-darwin.so, name.cp313-win_amd64.pyd
         name = filename.split(".", 1)[0]
     else:
@@ -87,54 +87,42 @@ def find_import_names(
     return sorted(names), sorted(namespaces)
 
 
-def package_files(packages: Mapping[str, str]) -> set[PurePosixPath]:
+def add_dynamic_import_names(
+    project: Mapping[str, Any], settings: ScikitBuildSettings
+) -> dict[str, Any]:
     """
-    Collect the files of the wheel packages (destination -> source dir),
-    relative to the wheel root.
+    Fill the import fields still listed in ``project.dynamic`` from the wheel
+    packages, and drop them from ``dynamic``. Static values (PEP 808) are kept
+    first; computed names they already give are skipped.
     """
-    return {
-        PurePosixPath(dest) / PurePosixPath(f.relative_to(src).as_posix())
-        for dest, src in packages.items()
-        for f in Path(src).rglob("*")
-        if f.is_file()
-    }
-
-
-def set_dynamic_import_names(
-    metadata: StandardMetadata, packages: Mapping[str, str]
-) -> None:
-    """
-    Fill the import fields that are still listed in ``project.dynamic`` from
-    the wheel packages. Static values (PEP 808) are kept and extended.
-    """
-    fields = [f for f in IMPORT_FIELDS if f in metadata.dynamic]
+    result = dict(project)
+    dynamic = project.get("dynamic", [])
+    fields = [f for f in IMPORT_FIELDS if f in dynamic]
     if not fields:
-        return
+        return result
 
-    names, namespaces = find_import_names(package_files(packages))
-    static_names = set(metadata.import_names or [])
-    static_namespaces = set(metadata.import_namespaces or [])
+    assert settings.sdist.inclusion_mode is not None
+    files = iter_package_files(
+        packages=get_packages(
+            packages=settings.wheel.packages, name=project.get("name", "")
+        ),
+        include=settings.sdist.include,
+        src_exclude=settings.sdist.exclude,
+        target_exclude=settings.wheel.exclude,
+        build_dir=settings.build_dir,
+        mode=settings.sdist.inclusion_mode,
+    )
+    names, namespaces = find_import_names(
+        PurePosixPath(target.as_posix()) for _, target in files
+    )
+    computed = dict(zip(IMPORT_FIELDS, (names, namespaces)))
+
     # Compare without a "; private" suffix, so static entries win
-    static_bare = {n.split(";")[0].strip() for n in static_names | static_namespaces}
-
-    new_names = [n for n in names if n not in static_bare]
-    new_namespaces = [n for n in namespaces if n not in static_bare]
-
-    if "import-names" in fields:
-        metadata.import_names = [*(metadata.import_names or []), *new_names]
-    if "import-namespaces" in fields:
-        metadata.import_namespaces = [
-            *(metadata.import_namespaces or []),
-            *new_namespaces,
-        ]
-    elif new_namespaces:
-        # PEP 794: the parents of a dotted name must be listed too
-        msg = (
-            f"Found namespace(s) {', '.join(new_namespaces)}; add "
-            "'import-namespaces' to project.dynamic or list them in "
-            "project.import-namespaces"
-        )
-        raise ValueError(msg)
-
-    if metadata.metadata_version in PRE_2_5_METADATA_VERSIONS:
-        metadata.metadata_version = "2.5"
+    static = {
+        n.partition(";")[0].strip() for f in IMPORT_FIELDS for n in project.get(f, [])
+    }
+    for field in fields:
+        new = [n for n in computed[field] if n not in static]
+        result[field] = [*project.get(field, []), *new]
+    result["dynamic"] = [f for f in dynamic if f not in fields]
+    return result

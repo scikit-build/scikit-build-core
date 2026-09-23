@@ -7,7 +7,6 @@ __lazy_modules__ = {
     "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._vendor.pyproject_metadata.constants",
-    f"{__spec__.parent}._editable",
     f"{__spec__.parent}._import_names",
 }
 
@@ -35,8 +34,7 @@ from ..builder._load_provider import (
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
-from ._editable import get_packages
-from ._import_names import set_dynamic_import_names
+from ._import_names import add_dynamic_import_names
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -112,6 +110,9 @@ def get_standard_metadata(
     if entries:
         project = process_dynamic_metadata(project, entries, build_state)
 
+    # PEP 794: fill import names still listed in dynamic from the packages
+    project = add_dynamic_import_names(project, settings)
+
     new_pyproject_dict["project"] = project
 
     # METADATA 2.2: fields a provider reports (via the optional dynamic_wheel
@@ -161,11 +162,6 @@ def get_standard_metadata(
         settings.minimum_version is None or settings.minimum_version >= Version("1.1")
     ) and (isinstance(raw_version, str) and raw_version):
         metadata.raw_version = raw_version
-
-    # PEP 794: fill import names still listed in dynamic from the packages
-    set_dynamic_import_names(
-        metadata, get_packages(packages=settings.wheel.packages, name=metadata.name)
-    )
 
     # Restore the PEP 808 dual-dynamic set that from_pyproject can no longer see
     # (the fields were dropped from dynamic during resolution). Combined with the

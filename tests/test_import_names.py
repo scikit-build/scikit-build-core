@@ -7,6 +7,7 @@ from pathlib import Path, PurePosixPath
 
 import pytest
 
+from scikit_build_core._compat.builtins import ExceptionGroup
 from scikit_build_core.build import (
     build_editable,
     build_sdist,
@@ -97,6 +98,13 @@ def read_metadata(dist: Path) -> email.message.Message:
         )
 
 
+def assert_computed(metadata: email.message.Message) -> None:
+    assert metadata["Metadata-Version"] == "2.5"
+    assert metadata.get_all("Import-Name") == ["ns.mod", "ns.sub", "pkg"]
+    assert metadata.get_all("Import-Namespace") == ["ns"]
+    assert metadata.get_all("Dynamic") is None
+
+
 @pytest.fixture
 def chdir_tmp(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     root = tmp_path / "proj"
@@ -112,10 +120,7 @@ def test_dynamic_import_names(chdir_tmp: Path, editable: bool) -> None:
     (build_editable if editable else build_wheel)(str(dist))
 
     metadata = read_metadata(dist)
-    assert metadata["Metadata-Version"] == "2.5"
-    assert metadata.get_all("Import-Name") == ["ns.mod", "ns.sub", "pkg"]
-    assert metadata.get_all("Import-Namespace") == ["ns"]
-    assert metadata.get_all("Dynamic") is None
+    assert_computed(metadata)
 
 
 def test_dynamic_import_names_extends_static(chdir_tmp: Path) -> None:
@@ -139,7 +144,7 @@ def test_dynamic_import_names_extends_static(chdir_tmp: Path) -> None:
 
 def test_dynamic_import_names_needs_namespaces(chdir_tmp: Path) -> None:
     make_pkg(chdir_tmp, '["import-names"]')
-    with pytest.raises(ValueError, match="import-namespaces"):
+    with pytest.raises(ExceptionGroup):
         build_wheel(str(chdir_tmp / "dist"))
 
 
@@ -152,10 +157,7 @@ def test_dynamic_import_names_sdist(chdir_tmp: Path) -> None:
         pkg_info = tf.extractfile("pkg-0.1.0/PKG-INFO")
         assert pkg_info is not None
         metadata = email.parser.BytesParser().parsebytes(pkg_info.read())
-    assert metadata["Metadata-Version"] == "2.5"
-    assert metadata.get_all("Import-Name") == ["ns.mod", "ns.sub", "pkg"]
-    assert metadata.get_all("Import-Namespace") == ["ns"]
-    assert metadata.get_all("Dynamic") is None
+    assert_computed(metadata)
 
 
 def test_dynamic_import_names_prepare_metadata(chdir_tmp: Path) -> None:
@@ -165,8 +167,7 @@ def test_dynamic_import_names_prepare_metadata(chdir_tmp: Path) -> None:
     metadata = email.parser.BytesParser().parsebytes(
         (chdir_tmp / "meta" / out / "METADATA").read_bytes()
     )
-    assert metadata.get_all("Import-Name") == ["ns.mod", "ns.sub", "pkg"]
-    assert metadata.get_all("Import-Namespace") == ["ns"]
+    assert_computed(metadata)
 
 
 def test_dynamic_import_names_default_package(chdir_tmp: Path) -> None:
@@ -179,3 +180,20 @@ def test_dynamic_import_names_default_package(chdir_tmp: Path) -> None:
     build_wheel(str(dist))
 
     assert read_metadata(dist).get_all("Import-Name") == ["pkg"]
+
+
+def test_dynamic_import_names_wheel_exclude_single_file(chdir_tmp: Path) -> None:
+    make_pkg(chdir_tmp, '["import-names", "import-namespaces"]')
+    (chdir_tmp / "src/single.py").touch()
+    pyproject = chdir_tmp / "pyproject.toml"
+    pyproject.write_text(
+        pyproject.read_text().replace(
+            '"src/ns"]', '"src/ns", "src/single.py"]\nwheel.exclude = ["mod.py"]'
+        )
+    )
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist))
+
+    metadata = read_metadata(dist)
+    assert metadata.get_all("Import-Name") == ["ns.sub", "pkg", "single"]
+    assert metadata.get_all("Import-Namespace") == ["ns"]
