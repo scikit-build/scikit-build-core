@@ -35,18 +35,27 @@ extra reconfigure, including projects that install to an absolute
 `${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
 the install, but a rebuildable editable already depends on it.
 
-As a newer, parallel alternative, `editable.rebuild-dir` selects the install
-tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
-flag is ignored when it is set). It accepts the same template substitutions as
-`build-dir`, and the path must be absolute, or relative to the source directory,
-and stable between build and run time, since it is baked at configure time and
-referenced by absolute path on rebuild. This only moves the install tree;
-`build-dir` is still required and still hosts the CMake build that the rebuild
-re-runs.
+`editable.rebuild-dir` selects this install tree directly, and turns on
+rebuild-on-import unless `editable.rebuild` is explicitly `false`. With
+`editable.rebuild = false`, the editable wheel still holds only the redirect,
+and `module.__loader__.rebuild()` refreshes the tree on demand. This is useful
+for a project with a large install tree or an expensive install step. It accepts
+the same template substitutions as `build-dir`, and the path must be absolute,
+or relative to the source directory, and stable between build and run time,
+since it is baked at configure time and referenced by absolute path on rebuild.
+This only moves the install tree; `build-dir` is still required and still hosts
+the CMake build that the rebuild re-runs.
 
 :::{versionadded} 1.0
 
 `editable.rebuild-dir`, a persistent install tree for editable rebuilds.
+
+:::
+
+:::{versionchanged} 1.1
+
+An explicit `editable.rebuild = false` turns off rebuild-on-import when
+`editable.rebuild-dir` is set.
 
 :::
 

@@ -1237,6 +1237,34 @@ def test_editable_rebuild_requires_build_dir(tmp_path: Path, trigger: str):
         SettingsReader.from_file(pyproject_toml)
 
 
+@pytest.mark.parametrize(
+    ("rebuild_line", "rebuild"),
+    [
+        ("", True),
+        ("editable.rebuild = true", True),
+        ("editable.rebuild = false", False),
+    ],
+)
+def test_editable_rebuild_dir_rebuild(tmp_path: Path, rebuild_line: str, rebuild: bool):
+    # rebuild-dir turns on rebuild-on-import unless rebuild is explicitly false.
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            f"""\
+            [tool.scikit-build]
+            build-dir = "build"
+            editable.rebuild-dir = "tree"
+            {rebuild_line}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    reader = SettingsReader.from_file(pyproject_toml)
+    assert reader.settings.editable.rebuild_on_import is rebuild
+    assert reader.settings.editable.persistent_install
+
+
 def test_editable_inplace_rebuild_allowed(tmp_path: Path):
     # Inplace builds in the source tree, so editable.rebuild needs no build-dir.
     pyproject_toml = tmp_path / "pyproject.toml"

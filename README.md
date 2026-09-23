@@ -250,7 +250,7 @@ print()
 | `editable.mode` | `"redirect"` | Select the editable mode to use. (choices: `redirect`, `inplace`) |
 | `editable.verbose` | `true` | Turn on verbose output for the editable mode rebuilds. |
 | `editable.rebuild` | `false` | Rebuild the project when the package is imported. |
-| `editable.rebuild-dir` | `""` | Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``). |
+| `editable.rebuild-dir` | `""` | Install editables into this persistent tree instead of the wheel. |
 
 ### `build`
 

@@ -8,6 +8,9 @@ Features:
   `SKBUILD_PROJECT_VERSION_FULL`, so a calendar version such as `2024.01.05`
   keeps its leading zeros. Filenames stay normalized. Requires `minimum-version`
   1.1 or unset, for reproducibility. By @henryiii in #1572
+- An explicit `editable.rebuild = false` is now honored with
+  `editable.rebuild-dir`, so a persistent install tree can be used without
+  rebuild-on-import (#1576). By @henryiii in #1577
 
 Fixes:
 

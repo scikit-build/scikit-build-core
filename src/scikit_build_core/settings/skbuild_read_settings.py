@@ -486,7 +486,7 @@ class SettingsReader:
                         "wheel.packages table must match in the last component of the paths"
                     )
 
-        if self.settings.editable.rebuild_enabled:
+        if self.settings.editable.persistent_install:
             if self.settings.editable.mode == "inplace":
                 # Inplace builds in the source tree, which serves as the
                 # persistent build dir, so no separate build-dir is required.

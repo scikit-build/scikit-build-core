@@ -144,14 +144,17 @@ def test_install_dir(isolated, isolate):
 @pytest.mark.parametrize("package", ["simplest_c"], indirect=True)
 @pytest.mark.parametrize("isolate", {False}, indirect=True)
 @pytest.mark.usefixtures("package")
-def test_editable_rebuild_dir(isolated, isolate):
+@pytest.mark.parametrize("rebuild", [None, "false"])
+def test_editable_rebuild_dir(isolated, isolate, rebuild):
     # editable.rebuild-dir installs into a user-chosen tree (with the same
-    # template substitutions) and turns on rebuild-on-import by itself -- note
-    # editable.rebuild is left unset here.
+    # template substitutions) and turns on rebuild-on-import unless
+    # editable.rebuild is explicitly false.
     settings_overrides = {
         "build-dir": "build/{wheel_tag}",
         "editable.rebuild-dir": "rebuild_tree/{wheel_tag}",
     }
+    if rebuild is not None:
+        settings_overrides["editable.rebuild"] = rebuild
 
     isolated.install(
         "-v",
@@ -173,7 +176,7 @@ def test_editable_rebuild_dir(isolated, isolate):
     # rebuild-dir copy, which is refreshed in place on rebuild.
     assert not list((isolated.platlib / "simplest").glob("_module*"))
     out = isolated.execute("import simplest")
-    assert "Running cmake" in out
+    assert ("Running cmake" in out) == (rebuild is None)
     resolved = isolated.execute("import simplest._module as m; print(m.__file__)")
     assert resolved.splitlines()[-1] == str(c_module.resolve())
     assert str(isolated.platlib) not in resolved
