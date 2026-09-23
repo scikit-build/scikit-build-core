@@ -372,7 +372,6 @@ give it statically).
 ```
 
 [PEP 794]: https://peps.python.org/pep-0794
-[PEP 808]: https://peps.python.org/pep-0808
 
 (build-requires)=
 
