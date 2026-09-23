@@ -658,12 +658,12 @@ class EditableSettings:
 
     rebuild_dir: str = ""
     """
-    Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``).
+    Install editables into this persistent tree instead of the wheel.
 
-    Setting this turns on rebuild-on-import by itself; the :confval:`editable.rebuild`
-    flag is ignored when it is set. The compiled artifacts are installed here at
-    first build and re-installed in place on every import-triggered rebuild, and
-    the redirect references them by absolute path. Must be an absolute (or
+    The compiled artifacts are installed here at first build and re-installed
+    in place on every rebuild, and the redirect references them by absolute
+    path. Rebuild-on-import is still controlled by :confval:`editable.rebuild`;
+    with it off, use ``module.__loader__.rebuild()`` to refresh the tree. Must be an absolute (or
     source-relative) path that is stable between build and run time, and supports
     the same template substitutions as :confval:`build-dir`. This relocates only
     the install tree; :confval:`build-dir` is still required and still hosts the
@@ -676,15 +676,16 @@ class EditableSettings:
     stay out of backups and version control.
 
     .. versionadded:: 1.0
+
+    .. versionchanged:: 1.1
+       This no longer turns on :confval:`editable.rebuild` unless
+       :confval:`minimum-version` is less than 1.1.
     """
 
     @property
-    def rebuild_enabled(self) -> bool:
+    def persistent_install(self) -> bool:
         """
-        True when rebuild-on-import is active.
-
-        Setting ``rebuild-dir`` turns this on by itself, so the ``rebuild`` flag
-        is ignored when it is set.
+        True when CMake installs into a persistent tree outside the wheel.
         """
         return self.rebuild or bool(self.rebuild_dir)
 

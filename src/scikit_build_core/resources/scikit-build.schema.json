@@ -362,7 +362,7 @@
         "rebuild-dir": {
           "type": "string",
           "default": "",
-          "description": "Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``)."
+          "description": "Install editables into this persistent tree instead of the wheel."
         }
       }
     },

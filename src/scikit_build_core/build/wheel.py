@@ -390,11 +390,11 @@ def _build_wheel_impl_impl(
         #
         # Two triggers: the classic editable.rebuild installs into a tree inside
         # build-dir; setting editable.rebuild-dir installs into a user-chosen tree
-        # (see EditableSettings.rebuild_enabled). Both still require build-dir.
+        # (see EditableSettings.persistent_install). Both still require build-dir.
         editable_rebuild = (
             editable
             and settings.editable.mode == "redirect"
-            and settings.editable.rebuild_enabled
+            and settings.editable.persistent_install
             and bool(settings.build_dir)
         )
         if editable_rebuild:

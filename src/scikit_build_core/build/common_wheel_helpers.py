@@ -396,7 +396,7 @@ def build_install_extra_build_types(
         and builder.config.single_config
         and editable
         and settings.editable.mode == "redirect"
-        and settings.editable.rebuild_enabled
+        and settings.editable.persistent_install
     ):
         configure_wheel(
             cmake=builder.config.cmake,

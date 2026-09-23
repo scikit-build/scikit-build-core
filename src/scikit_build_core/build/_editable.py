@@ -130,7 +130,7 @@ def editable_redirect_files(
     directories, known_packages = _collect_search_locations(
         mapping_entries, installed_entries, absolute=external_install
     )
-    rebuild = settings.editable.rebuild_enabled
+    rebuild = settings.editable.rebuild
     install_dir: str | None
     if install_prefix is not None:
         # The persistent install tree lives outside the wheel, so the shim is
@@ -250,7 +250,7 @@ def editable_inplace_files(
         known_packages=known_packages,
         search_paths=list(package_paths),
         path=os.fspath(source_dir) if source_dir else None,
-        rebuild=settings.editable.rebuild_enabled,
+        rebuild=settings.editable.rebuild,
         verbose=settings.editable.verbose,
         build_options=build_options,
         as_entrypoint=use_start,

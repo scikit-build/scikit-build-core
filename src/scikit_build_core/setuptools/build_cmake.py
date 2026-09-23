@@ -156,7 +156,7 @@ def _validate_settings(
         if settings.editable.mode != "inplace":
             msg = "setuptools editable installs require editable.mode = 'inplace'"
             raise SetupError(msg)
-        if settings.editable.rebuild_enabled:
+        if settings.editable.persistent_install:
             msg = "editable.rebuild is not supported in setuptools mode"
             raise SetupError(msg)
 

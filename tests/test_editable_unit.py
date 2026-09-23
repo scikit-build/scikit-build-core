@@ -894,26 +894,36 @@ def test_editable_redirect_files_platlib_var_install_dir_with_rebuild(
     assert "SKBUILD_PURELIB_DIR" not in shim
 
 
-def test_editable_redirect_files_rebuild_dir_implies_rebuild(tmp_path: Path):
-    # editable.rebuild-dir turns on rebuild-on-import by itself, so the
-    # non-platlib install-dir guard fires even with editable.rebuild left False.
-    from scikit_build_core.settings.skbuild_model import EditableSettings, WheelSettings
+@pytest.mark.parametrize("rebuild", [True, False])
+def test_editable_redirect_files_rebuild_dir_keeps_rebuild(
+    tmp_path: Path, rebuild: bool
+):
+    # editable.rebuild-dir selects the install tree; editable.rebuild alone
+    # selects rebuild-on-import (#1576).
+    import ast
 
-    settings = ScikitBuildSettings(
-        wheel=WheelSettings(install_dir="/data"),
-        editable=EditableSettings(rebuild=False, rebuild_dir=str(tmp_path / "tree")),
+    from scikit_build_core.settings.skbuild_model import EditableSettings
+
+    libdir = tmp_path / "tree"
+    libdir.mkdir()
+    files = editable_redirect_files(
+        libdir=libdir,
+        mapping={},
+        name="pkg",
+        packages=[],
+        reload_dir=tmp_path / "build",
+        settings=ScikitBuildSettings(
+            editable=EditableSettings(rebuild=rebuild, rebuild_dir=str(libdir))
+        ),
+        use_start=False,
+        install_prefix=str(libdir),
     )
 
-    with pytest.raises(AssertionError, match=r"non-platlib wheel\.install-dir"):
-        editable_redirect_files(
-            libdir=tmp_path,
-            mapping={},
-            name="pkg",
-            packages=[],
-            reload_dir=None,
-            settings=settings,
-            use_start=False,
-        )
+    shim = files["_editable_skbc_pkg.py"].decode()
+    call = ast.parse(shim.splitlines()[-1]).body[0]
+    assert isinstance(call, ast.Expr)
+    assert isinstance(call.value, ast.Call)
+    assert ast.literal_eval(call.value.args[5]) is rebuild
 
 
 @pytest.mark.parametrize("install_dir", ["/data", "${SKBUILD_DATA_DIR}/pkg"])
