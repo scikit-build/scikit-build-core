@@ -648,12 +648,18 @@ class EditableSettings:
     Turn on verbose output for the editable mode rebuilds.
     """
 
-    rebuild: bool = False
+    rebuild: Optional[bool] = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(display_default="false")
+    )
     """
     Rebuild the project when the package is imported.
 
     :confval:`build-dir` must be set, except in ``inplace`` mode (where the source
-    directory is the build directory).
+    directory is the build directory). Defaults to true if
+    :confval:`editable.rebuild-dir` is set.
+
+    .. versionchanged:: 1.1
+       An explicit false is honored when :confval:`editable.rebuild-dir` is set.
     """
 
     rebuild_dir: str = ""
@@ -662,10 +668,11 @@ class EditableSettings:
 
     The compiled artifacts are installed here at first build and re-installed
     in place on every rebuild, and the redirect references them by absolute
-    path. Rebuild-on-import is still controlled by :confval:`editable.rebuild`;
-    with it off, use ``module.__loader__.rebuild()`` to refresh the tree. Must be an absolute (or
-    source-relative) path that is stable between build and run time, and supports
-    the same template substitutions as :confval:`build-dir`. This relocates only
+    path. Setting this turns on rebuild-on-import unless :confval:`editable.rebuild`
+    is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
+    tree. Must be an absolute (or source-relative) path that is stable between
+    build and run time, and supports the same template substitutions as
+    :confval:`build-dir`. This relocates only
     the install tree; :confval:`build-dir` is still required and still hosts the
     CMake build that the rebuild re-runs.
 
@@ -676,18 +683,21 @@ class EditableSettings:
     stay out of backups and version control.
 
     .. versionadded:: 1.0
-
-    .. versionchanged:: 1.1
-       This no longer turns on :confval:`editable.rebuild` unless
-       :confval:`minimum-version` is less than 1.1.
     """
+
+    @property
+    def rebuild_on_import(self) -> bool:
+        """
+        True when the finder rebuilds on first import.
+        """
+        return bool(self.rebuild_dir) if self.rebuild is None else self.rebuild
 
     @property
     def persistent_install(self) -> bool:
         """
         True when CMake installs into a persistent tree outside the wheel.
         """
-        return self.rebuild or bool(self.rebuild_dir)
+        return bool(self.rebuild) or bool(self.rebuild_dir)
 
 
 @dataclasses.dataclass

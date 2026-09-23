@@ -461,7 +461,11 @@ print(mk_skbuild_docs())
   Rebuild the project when the package is imported.
 
   :confval:`build-dir` must be set, except in ``inplace`` mode (where the source
-  directory is the build directory).
+  directory is the build directory). Defaults to true if
+  :confval:`editable.rebuild-dir` is set.
+
+  .. versionchanged:: 1.1
+     An explicit false is honored when :confval:`editable.rebuild-dir` is set.
 ```
 
 ```{eval-rst}
@@ -475,10 +479,11 @@ print(mk_skbuild_docs())
 
   The compiled artifacts are installed here at first build and re-installed
   in place on every rebuild, and the redirect references them by absolute
-  path. Rebuild-on-import is still controlled by :confval:`editable.rebuild`;
-  with it off, use ``module.__loader__.rebuild()`` to refresh the tree. Must be an absolute (or
-  source-relative) path that is stable between build and run time, and supports
-  the same template substitutions as :confval:`build-dir`. This relocates only
+  path. Setting this turns on rebuild-on-import unless :confval:`editable.rebuild`
+  is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
+  tree. Must be an absolute (or source-relative) path that is stable between
+  build and run time, and supports the same template substitutions as
+  :confval:`build-dir`. This relocates only
   the install tree; :confval:`build-dir` is still required and still hosts the
   CMake build that the rebuild re-runs.
 
@@ -489,10 +494,6 @@ print(mk_skbuild_docs())
   stay out of backups and version control.
 
   .. versionadded:: 1.0
-
-  .. versionchanged:: 1.1
-     This no longer turns on :confval:`editable.rebuild` unless
-     :confval:`minimum-version` is less than 1.1.
 ```
 
 ```{eval-rst}

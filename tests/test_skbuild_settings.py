@@ -1238,34 +1238,30 @@ def test_editable_rebuild_requires_build_dir(tmp_path: Path, trigger: str):
 
 
 @pytest.mark.parametrize(
-    ("minimum_version", "rebuild"), [(None, False), ("1.1", False), ("1.0", True)]
+    ("rebuild_line", "rebuild"),
+    [
+        ("", True),
+        ("editable.rebuild = true", True),
+        ("editable.rebuild = false", False),
+    ],
 )
-def test_editable_rebuild_dir_keeps_rebuild(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    minimum_version: str | None,
-    rebuild: bool,
-):
-    # Before 1.1, editable.rebuild-dir turned on rebuild-on-import by itself.
-    monkeypatch.setattr(
-        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.1.0"
-    )
-    min_line = f'minimum-version = "{minimum_version}"' if minimum_version else ""
+def test_editable_rebuild_dir_rebuild(tmp_path: Path, rebuild_line: str, rebuild: bool):
+    # rebuild-dir turns on rebuild-on-import unless rebuild is explicitly false.
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
         textwrap.dedent(
             f"""\
             [tool.scikit-build]
-            {min_line}
             build-dir = "build"
             editable.rebuild-dir = "tree"
+            {rebuild_line}
             """
         ),
         encoding="utf-8",
     )
 
     reader = SettingsReader.from_file(pyproject_toml)
-    assert reader.settings.editable.rebuild is rebuild
+    assert reader.settings.editable.rebuild_on_import is rebuild
     assert reader.settings.editable.persistent_install
 
 

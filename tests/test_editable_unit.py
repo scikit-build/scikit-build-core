@@ -894,12 +894,14 @@ def test_editable_redirect_files_platlib_var_install_dir_with_rebuild(
     assert "SKBUILD_PURELIB_DIR" not in shim
 
 
-@pytest.mark.parametrize("rebuild", [True, False])
-def test_editable_redirect_files_rebuild_dir_keeps_rebuild(
-    tmp_path: Path, rebuild: bool
+@pytest.mark.parametrize(
+    ("rebuild", "expected"), [(None, True), (True, True), (False, False)]
+)
+def test_editable_redirect_files_rebuild_dir_rebuild(
+    tmp_path: Path, rebuild: bool | None, expected: bool
 ):
-    # editable.rebuild-dir selects the install tree; editable.rebuild alone
-    # selects rebuild-on-import (#1576).
+    # editable.rebuild-dir turns on rebuild-on-import unless editable.rebuild is
+    # explicitly false (#1576).
     import ast
 
     from scikit_build_core.settings.skbuild_model import EditableSettings
@@ -923,7 +925,7 @@ def test_editable_redirect_files_rebuild_dir_keeps_rebuild(
     call = ast.parse(shim.splitlines()[-1]).body[0]
     assert isinstance(call, ast.Expr)
     assert isinstance(call.value, ast.Call)
-    assert ast.literal_eval(call.value.args[5]) is rebuild
+    assert ast.literal_eval(call.value.args[5]) is expected
 
 
 @pytest.mark.parametrize("install_dir", ["/data", "${SKBUILD_DATA_DIR}/pkg"])

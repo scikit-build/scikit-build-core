@@ -486,14 +486,6 @@ class SettingsReader:
                         "wheel.packages table must match in the last component of the paths"
                     )
 
-        # Before 1.1, rebuild-dir turned on rebuild-on-import by itself.
-        if (
-            self.settings.editable.rebuild_dir
-            and self.settings.minimum_version is not None
-            and self.settings.minimum_version < Version("1.1")
-        ):
-            self.settings.editable.rebuild = True
-
         if self.settings.editable.persistent_install:
             if self.settings.editable.mode == "inplace":
                 # Inplace builds in the source tree, which serves as the
