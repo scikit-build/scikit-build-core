@@ -254,6 +254,7 @@ class Builder:
         cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
+        raw_version: str | None = None,
         limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
     ) -> None:
@@ -322,7 +323,8 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION"] = ".".join(
                 str(v) for v in version.release[:4]
             )
-            cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
+            # The string as written keeps leading zeros (calver like 2024.01.05)
+            cache_config["SKBUILD_PROJECT_VERSION_FULL"] = raw_version or str(version)
 
         py_api = self.settings.wheel.py_api
         gil_disabled = is_free_threaded()

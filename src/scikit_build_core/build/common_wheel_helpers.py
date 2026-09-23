@@ -261,6 +261,7 @@ def configure_wheel(
     state: WheelState,
     name: str,
     version: Version,
+    raw_version: str | None = None,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
     build_type: str | None = None,
 ) -> Builder:
@@ -307,6 +308,7 @@ def configure_wheel(
         cache_entries=cache_entries,
         name=name,
         version=version,
+        raw_version=raw_version,
     )
     return builder
 
@@ -345,6 +347,7 @@ def build_install_extra_build_types(
     state: WheelState,
     name: str,
     version: Version,
+    raw_version: str | None = None,
     editable: bool,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
 ) -> None:
@@ -369,6 +372,7 @@ def build_install_extra_build_types(
                 state=state,
                 name=name,
                 version=version,
+                raw_version=raw_version,
                 extra_cache_entries=extra_cache_entries,
             )
         rich_print(
@@ -404,6 +408,7 @@ def build_install_extra_build_types(
             state=state,
             name=name,
             version=version,
+            raw_version=raw_version,
             extra_cache_entries=extra_cache_entries,
         )
 

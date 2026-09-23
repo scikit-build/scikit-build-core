@@ -133,11 +133,16 @@ tippy_rtd_urls = [
 # Recolored to furo's theme variables in _static/tippy.css.
 tippy_props = {"theme": "light-border"}
 
+# SkbuildMetadata subclasses the vendored StandardMetadata, whose inherited
+# annotations name modules this one does not import.
+suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
+
 nitpick_ignore = [
     ("py:class", "setuptools.dist.Distribution"),
     ("py:class", "T"),
     ("py:class", "scikit_build_core.settings.sources.T"),
     ("py:class", "scikit_build_core._vendor.pyproject_metadata.StandardMetadata"),
+    ("py:class", "scikit_build_core._vendor.pyproject_metadata.RFC822Message"),
     ("py:data", "typing.Union"),
 ]
 

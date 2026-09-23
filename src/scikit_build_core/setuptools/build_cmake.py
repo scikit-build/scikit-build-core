@@ -755,6 +755,7 @@ class BuildCMake(setuptools.Command):
         builder.configure(
             name=dist.get_name(),
             version=Version(dist.get_version()),
+            raw_version=dist.get_version(),
             defines=defines,
             limited_api=bool(limited_api),
             configure_args=configure_args,

@@ -764,6 +764,7 @@ def configure_builder_with_version(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     version: Version,
+    raw_version: str | None = None,
 ) -> str:
     source_dir = tmp_path / "src"
     source_dir.mkdir()
@@ -782,7 +783,9 @@ def configure_builder_with_version(
     )
     monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
 
-    builder.configure(defines={}, name="example", version=version)
+    builder.configure(
+        defines={}, name="example", version=version, raw_version=raw_version
+    )
     return config.init_cache_file.read_text(encoding="utf-8")
 
 
@@ -803,6 +806,14 @@ def test_builder_project_version_cmake(tmp_path, monkeypatch, version, full, cap
     cache = configure_builder_with_version(tmp_path, monkeypatch, Version(version))
     assert f"set(SKBUILD_PROJECT_VERSION [===[{capped}]===] CACHE STRING" in cache
     assert f"set(SKBUILD_PROJECT_VERSION_FULL [===[{full}]===] CACHE STRING" in cache
+
+
+def test_builder_project_version_cmake_raw(tmp_path, monkeypatch):
+    cache = configure_builder_with_version(
+        tmp_path, monkeypatch, Version("2024.01.05"), raw_version="2024.01.05"
+    )
+    assert "set(SKBUILD_PROJECT_VERSION [===[2024.1.5]===] CACHE STRING" in cache
+    assert "set(SKBUILD_PROJECT_VERSION_FULL [===[2024.01.05]===] CACHE STRING" in cache
 
 
 @pytest.mark.parametrize(
