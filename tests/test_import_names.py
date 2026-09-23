@@ -201,14 +201,14 @@ def test_dynamic_import_names_wheel_exclude_single_file(chdir_tmp: Path) -> None
 
 def test_dynamic_import_names_plugin(chdir_tmp: Path) -> None:
     make_pkg(chdir_tmp, '["import-names", "import-namespaces"]')
-    (chdir_tmp / "plugins").mkdir()
-    (chdir_tmp / "plugins/names.py").write_text(
+    (chdir_tmp / "plugins_import_names").mkdir()
+    (chdir_tmp / "plugins_import_names/names.py").write_text(
         "def dynamic_metadata(settings, project):\n"
         "    return {'import-names': ['pkg', 'ns.custom']}\n"
     )
     with (chdir_tmp / "pyproject.toml").open("a") as f:
         f.write(
-            '\n[[tool.dynamic-metadata]]\nprovider = {path = "plugins", module = "names"}\n'
+            '\n[[tool.dynamic-metadata]]\nprovider = {path = "plugins_import_names", module = "names"}\n'
         )
     dist = chdir_tmp / "dist"
     build_wheel(str(dist))
