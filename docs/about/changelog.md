@@ -1,34 +1,130 @@
 # Changelog
 
-## In development
+## Version 1.1.0
+
+Packages can now declare their own config-settings in a
+`tool.scikit-build.config-setting` table. This gives packages the opportunity to
+add a documented interface in place of raw CMake defines. The new
+`scikit-build settings list` command shows all the config-settings that a
+project accepts. New settings include `cmake.fresh`, `if.not` overrides, and
+`sdist.resolve-symlinks = "error"`. `import-names` and `import-namespaces`
+(PEP 794) are filled from Python if set as dynamic. `project.version` is now
+kept exactly as written in the metadata (1.1+). Editable loaders expose their
+search paths, redirect mode gives a deterministic `__path__` order, and you can
+set up a persistent install tree even without rebuild-on-import. Other bugs and
+performance issues are addressed.
 
 Features:
 
-- `project.version` is kept as written in the `Version` metadata field and in
-  `SKBUILD_PROJECT_VERSION_FULL`, so a calendar version such as `2024.01.05`
-  keeps its leading zeros. Filenames stay normalized. Requires `minimum-version`
-  1.1 or unset, for reproducibility. By @henryiii in #1572
-- An explicit `editable.rebuild = false` is now honored with
-  `editable.rebuild-dir`, so a persistent install tree can be used without
-  rebuild-on-import (#1576). By @henryiii in #1577
-- `import-names` and `import-namespaces` (PEP 794) listed in `project.dynamic`
-  are computed from the Python packages (#1536).
-- `scikit-build build requires` accepts `-C`/`--config-setting` to pass
-  config-settings to the backend hook, and `--type {static,dynamic,both}` to
-  select the static `build-system.requires`, the dynamic hook output, or both.
-- `sdist.resolve-symlinks = "error"` fails the SDist build if an included path
-  is a symlink, and lists each link with its target. This includes
-  `sdist.force-include` sources and the files under them. Directory links are
-  not followed. Requires `minimum-version` 1.1 or unset (#1581).
+- New settings:
+  - `tool.scikit-build.config-setting` for package-declared config-settings in
+    #1489
+  - `cmake.fresh` to configure from scratch in #1516
+  - `if.not` overrides in #1539
+- CLI:
+  - `scikit-build settings list` lists supported config-settings in #1522
+  - `scikit-build build requires` accepts `-C`/`--config-setting` to pass
+    config-settings to the backend hook, and `--type {static,dynamic,both}` to
+    select the static `build-system.requires`, the dynamic hook output, or both
+    in #1584
+- SDist:
+  - `sdist.resolve-symlinks = "error"` fails the SDist build if an included path
+    is a symlink, and lists each link with its target. This includes
+    `sdist.force-include` sources and the files under them. Directory links are
+    not followed. Requires `minimum-version` 1.1 or unset (#1581) in #1583
+- Metadata:
+  - `import-names` and `import-namespaces` (PEP 794) listed in `project.dynamic`
+    are computed from the Python packages (#1536) in #1578
+  - `project.version` is kept as written in the `Version` metadata field and in
+    `SKBUILD_PROJECT_VERSION_FULL`, so a calendar version such as `2024.01.05`
+    keeps its leading zeros. Filenames stay normalized. Requires
+    `minimum-version` 1.1 or unset. In #1572
+- Editable:
+  - Loaders expose their search paths as a `paths` attribute in #1567
+  - An explicit `editable.rebuild = false` is honored with
+    `editable.rebuild-dir`, so a persistent install tree can be used without
+    rebuild-on-import (#1576) in #1577
+- File API:
+  - Complete the file-api models and keep reference data in #1521
+- Drop Python 3.8 in #1281
 
 Fixes:
 
-- SDist ignore rules no longer cross repository boundaries: a superproject's
-  `.gitignore` does not apply inside a git submodule, matching git (#1582).
-- Redirect editable installs now give a package a deterministic `__path__`
-  order: the CMake install tree first, then the source tree, so
-  `importlib.resources` no longer depends on `PYTHONHASHSEED` (#1565) by
-  @henryiii in #1566
+- Builder:
+  - Compute the wheel tag from the build environment (`tool.scikit-build.env`)
+    in #1575
+  - Honor a `CMAKE_GENERATOR` define when computing build requirements in #1557
+  - Read `Py_GIL_DISABLED="0"` as not free-threaded in #1574
+  - Set `Python_FIND_ABI` for free-threaded builds on CMake 3.30+ in #1532
+  - Don't pass the `Python_LIBRARY` hint in SABI mode on Windows in #1533
+  - Warn once for unsupported `CMAKE_ARGS` defines in #1573
+  - Drop two-token `-D CMAKE_BUILD_TYPE` from `CMAKE_ARGS` by @r3wretrhy in
+    #1543
+  - Keep building when the CMake file-api reply is broken in #1562
+- CMake discovery:
+  - Prefer `cmake` over `cmake3` when searching (#1514) in #1515
+  - Double the CMake discovery timeout on native Apple Silicon (#1530) by
+    @DSeaStar in #1535
+  - Correct the riscv64 manylinux tag for cmake wheels in #1563
+  - Program search, build-dir info, and module detection robustness in #1554
+- Settings:
+  - `if.cmake-wheel` never matched a platform in #1538
+- Editable:
+  - Redirect installs give a package a deterministic `__path__` order: the CMake
+    install tree first, then the source tree, so `importlib.resources` no longer
+    depends on `PYTHONHASHSEED` (#1565) in #1566
+- SDist:
+  - Ignore rules no longer cross repository boundaries: a superproject's
+    `.gitignore` does not apply inside a git submodule, matching git (#1582) in
+    #1585
+  - Scope the nested `.gitignore` scan to the walked subtree by @zklaus in #1542
+- File API:
+  - Match CMake's install-rule paths and namelink spelling in #1520
+- Setuptools:
+  - Pass the hook state to `GetRequires` in #1555
+  - Parse `--cmake-args` with `shlex` in #1560
+- Init:
+  - The `abi3t` template sets `SOSABI` as well as `SOABI` in #1587
+- Variants:
+  - Cap the `variantlib` build requirement to `<0.1` by @CavRiley in #1571
+- Limit `fastjsonschema` on Python 3.9 in #1524
+
+Performance:
+
+- Scan entry points once for all groups in #1559
+- Cache entry-point scans and known-wheel lookups in #1545
+- Build and builder hot paths in #1547
+- Read settings once per build in the setuptools plugin in #1548
+- Cut editable shim import time in #1546
+- Compile the CMake tokenizer regex once in #1544
+- Look up nested `.gitignore` specs by ancestor in #1550
+
+Documentation:
+
+- Add an advanced topic on wrapping the build backend in #1518
+- Add `llms.txt` and markdown copies of pages in #1523
+- Recommend rebuilding editables via `find_spec` before import in #1510
+- Name the external dynamic-metadata plugins in #1511
+- Update moved intersphinx inventory URLs in #1569
+
+CI and testing:
+
+- Test the matrix CMake version, fix pass job needs, coverage and test fixes in
+  #1553
+- Install dynamic build requires in the downstream session in #1580
+- Stop rebuilding the wheelhouse wheel every session in #1549
+- Allow the setuptools-scm `file_finders` deprecation in #1568
+- Accept the new CPython 3.15rc1 abi3 suffix in #1529
+- Pin the wrapper's CMake install staging layout in #1512
+
+Internal:
+
+- Bump the CMake policy upper bound to 4.4 in #1509
+- Avoid CMake 4.4.0's broken Windows SABI detection in #1513
+- Backport Fedora downstream changes by @LecrisUT in #1491
+- Source cleanups from the review in #1552
+- Clean up leaked and stale config in #1551
+- Use `unlink(missing_ok=True)` for stale `CMakeCache.txt` removal in #1517
 
 ## Version 1.0.3
 
