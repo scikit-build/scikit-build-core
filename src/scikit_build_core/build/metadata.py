@@ -7,6 +7,7 @@ __lazy_modules__ = {
     "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._vendor.pyproject_metadata.constants",
+    f"{__spec__.parent}._import_names",
 }
 
 import copy
@@ -33,6 +34,7 @@ from ..builder._load_provider import (
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
+from ._import_names import add_dynamic_import_names
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -107,6 +109,9 @@ def get_standard_metadata(
     entries = new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
     if entries:
         project = process_dynamic_metadata(project, entries, build_state)
+
+    # PEP 794: fill import names still listed in dynamic from the packages
+    project = add_dynamic_import_names(project, settings)
 
     new_pyproject_dict["project"] = project
 

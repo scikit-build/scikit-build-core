@@ -340,6 +340,39 @@ provider = {path = "helpers/plugins", module = "my_plugin"}
 `module` may also be `"my_plugin:MyClass"` to load a class (instantiated with no
 arguments, so its hooks share state through `self`).
 
+## Import names
+
+If `import-names` or `import-namespaces` ([PEP 794][]) is listed in `dynamic`
+and no plugin sets it, scikit-build-core computes it from the Python packages
+(the discovered package, or `wheel.packages`):
+
+```toml
+[project]
+name = "mypackage"
+dynamic = ["import-names", "import-namespaces"]
+```
+
+A directory with an `__init__` module gives an import name. A directory without
+one is a namespace if an import name is below it. Files that CMake installs are
+not checked. To add them, list them statically as well; static values are kept
+and the computed values are added ([PEP 808][]):
+
+```toml
+[project]
+name = "mypackage"
+import-names = ["_mypackage_core"]
+dynamic = ["import-names"]
+```
+
+If a namespace is found, you must also list `import-namespaces` in `dynamic` (or
+give it statically).
+
+```{versionadded} 1.1
+
+```
+
+[PEP 794]: https://peps.python.org/pep-0794
+
 (build-requires)=
 
 ## `build-system.requires`: Scikit-build-core's `build.requires`
