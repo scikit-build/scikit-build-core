@@ -69,10 +69,12 @@ A quicker way to do this would be to instead override `Python_SOABI` after
 
 ```cmake
 set(Python_SOABI ${SKBUILD_SOABI})
+set(Python_SOSABI ${SKBUILD_SOABI})
 ```
 
-However, this isn't officially supported upstream, and only works due to the way
-this variable is used when creating targets.
+`python_add_library` uses `Python_SOSABI` when `USE_SABI` is set, and
+`Python_SOABI` otherwise. However, this isn't officially supported upstream, and
+only works due to the way this variable is used when creating targets.
 
 :::
 

@@ -10,6 +10,7 @@ find_package(
 # abi3t for a free-threaded build, or abi3 for a GIL build).
 if(SKBUILD_SOABI)
   set(Python_SOABI ${SKBUILD_SOABI})
+  set(Python_SOSABI ${SKBUILD_SOABI})
 endif()
 
 python_add_library(_core MODULE src/${SKBUILD_PROJECT_NAME}/_core.c WITH_SOABI
