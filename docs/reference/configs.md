@@ -130,7 +130,7 @@ print(mk_skbuild_docs())
 .. confval:: minimum-version
 
   :Type: ``Version``
-  :Default: "1.0"  # current version
+  :Default: "1.1"  # current version
   :Config-settings: ``minimum-version`` or ``skbuild.minimum-version``
   :Environment variable: ``SKBUILD_MINIMUM_VERSION``
 

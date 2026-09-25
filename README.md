@@ -181,7 +181,7 @@ print()
 | `env` | `{}` | A table of environment variables to set for the CMake subprocesses. |
 | `strict-config` | `true` | Strictly check all config options. |
 | `experimental` | `false` | Enable early previews of features not finalized yet. |
-| `minimum-version` | `"1.0"` (current version) | If set, this will provide a method for backward compatibility. |
+| `minimum-version` | `"1.1"` (current version) | If set, this will provide a method for backward compatibility. |
 | `build-dir` | `""` | The CMake build directory. Defaults to a unique temporary directory. |
 
 ### `cmake`
