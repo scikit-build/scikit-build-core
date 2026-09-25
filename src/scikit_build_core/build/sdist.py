@@ -186,6 +186,7 @@ def build_sdist(
     # members stay subject to sdist.exclude (mirrors wheel.force-include).
     sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
     forced = []
+    forced_keys: dict[Path, str] = {}
     for source, dest in settings.sdist.force_include.items():
         source_is_file = Path(source).expanduser().is_file()
         for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
@@ -194,23 +195,30 @@ def build_sdist(
             ):
                 continue
             forced.append((src_file, target))
+            forced_keys.setdefault(src_file, source)
     # Sort by archive name so the tar member order (and thus the reproducible
     # .tar.gz bytes) does not depend on filesystem ordering for directories.
     forced.sort(key=lambda pair: pair[1])
 
     if resolve_symlinks == "error":
-        sources = [Path(s).expanduser() for s in settings.sdist.force_include]
-        candidates = [*paths, *sources, *(src for src, _ in forced)]
+        for source in settings.sdist.force_include:
+            forced_keys[Path(source).expanduser()] = source
         links = [
             f"  {p} -> {os.readlink(p)}"  # noqa: PTH115
-            for p in dict.fromkeys(candidates)
+            + (
+                f" (sdist.force-include key {forced_keys[p]})"
+                if p in forced_keys
+                else ""
+            )
+            for p in dict.fromkeys([*paths, *forced_keys])
             if p.is_symlink()
         ]
         if links:
             rich_error(
                 'sdist.resolve-symlinks = "error" and the SDist includes symlinks.'
-                " Exclude them with sdist.exclude, drop them from"
-                " sdist.force-include, or pick another mode:\n"
+                " Exclude each link with sdist.exclude and force-include its"
+                " target if you need the content, point a force-include key"
+                " at the real path, or pick another mode:\n"
                 # rich_error calls str.format
                 + "\n".join(links).replace("{", "{{").replace("}", "}}")
             )

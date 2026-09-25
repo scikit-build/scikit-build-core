@@ -300,6 +300,8 @@ def test_pep517_sdist_symlink_error_force_include(
     shared.mkdir()
     shared.joinpath("data.txt").write_bytes(b"data\n")
     shared.joinpath("data_link.txt").symlink_to("data.txt")
+    shared.joinpath("sub").mkdir()
+    shared.joinpath("sub_link").symlink_to("sub", target_is_directory=True)
     shared_link = tmp_path / "shared_link"
     shared_link.symlink_to(shared, target_is_directory=True)
     file_link = tmp_path / "file_link.txt"
@@ -321,7 +323,17 @@ def test_pep517_sdist_symlink_error_force_include(
 
     assert not (tmp_path / "dist").joinpath(f"{PREFIX}.tar.gz").exists()
     err = capsys.readouterr().err
-    assert f"{shared / 'data_link.txt'} -> data.txt" in err
+    assert (
+        f"{shared / 'data_link.txt'} -> data.txt (sdist.force-include key {shared})"
+        in err
+    )
+    assert f"{shared / 'sub_link'} -> sub (sdist.force-include key {shared})" in err
     # Windows returns absolute targets with a \\?\ prefix
-    assert f"{shared_link} -> {os.readlink(shared_link)}" in err  # noqa: PTH115
-    assert f"{file_link} -> {os.readlink(file_link)}" in err  # noqa: PTH115
+    assert (
+        f"{shared_link} -> {os.readlink(shared_link)} (sdist.force-include key {shared_link})"  # noqa: PTH115
+        in err
+    )
+    assert (
+        f"{file_link} -> {os.readlink(file_link)} (sdist.force-include key {file_link})"  # noqa: PTH115
+        in err
+    )
