@@ -824,7 +824,8 @@ print(mk_skbuild_docs())
   * "classic": Store file symlinks as-is, but follow directory symlinks,
     copying their contents (scikit-build-core 0.x behavior).
   * "error": Fail the build if any included file or directory is a symlink,
-    and list each one with its target. Exclude a link to allow the build.
+    and list each one with its target. This includes force-include sources
+    and the files under them. Exclude a link to allow the build.
 
   A symlink that can't be resolved (dangling, or a directory symlink loop)
   is stored as a symlink in every mode, with a warning if it was supposed to

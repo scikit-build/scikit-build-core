@@ -182,12 +182,35 @@ def build_sdist(
             yield_loop_symlinks=True,
         )
     )
+    # A force-included file is forced in; a force-included directory's
+    # members stay subject to sdist.exclude (mirrors wheel.force-include).
+    sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
+    forced = []
+    for source, dest in settings.sdist.force_include.items():
+        source_is_file = Path(source).expanduser().is_file()
+        for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
+            if not source_is_file and sdist_exclude_spec.match_file(
+                target.relative_to(srcdirname)
+            ):
+                continue
+            forced.append((src_file, target))
+    # Sort by archive name so the tar member order (and thus the reproducible
+    # .tar.gz bytes) does not depend on filesystem ordering for directories.
+    forced.sort(key=lambda pair: pair[1])
+
     if resolve_symlinks == "error":
-        links = [f"  {p} -> {os.readlink(p)}" for p in paths if p.is_symlink()]  # noqa: PTH115
+        sources = [Path(s).expanduser() for s in settings.sdist.force_include]
+        candidates = [*paths, *sources, *(src for src, _ in forced)]
+        links = [
+            f"  {p} -> {os.readlink(p)}"  # noqa: PTH115
+            for p in dict.fromkeys(candidates)
+            if p.is_symlink()
+        ]
         if links:
             rich_error(
                 'sdist.resolve-symlinks = "error" and the SDist includes symlinks.'
-                " Exclude them with sdist.exclude, or pick another mode:\n"
+                " Exclude them with sdist.exclude, drop them from"
+                " sdist.force-include, or pick another mode:\n"
                 # rich_error calls str.format
                 + "\n".join(links).replace("{", "{{").replace("}", "}}")
             )
@@ -231,21 +254,6 @@ def build_sdist(
                 tar_filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        # A force-included file is forced in; a force-included directory's
-        # members stay subject to sdist.exclude (mirrors wheel.force-include).
-        sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
-        forced = []
-        for source, dest in settings.sdist.force_include.items():
-            source_is_file = Path(source).expanduser().is_file()
-            for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
-                if not source_is_file and sdist_exclude_spec.match_file(
-                    target.relative_to(srcdirname)
-                ):
-                    continue
-                forced.append((src_file, target))
-        # Sort by archive name so the tar member order (and thus the reproducible
-        # .tar.gz bytes) does not depend on filesystem ordering for directories.
-        forced.sort(key=lambda pair: pair[1])
         for src_file, target in forced:
             add_path_to_tar(
                 tar,

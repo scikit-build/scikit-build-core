@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sysconfig
 import tarfile
 from pathlib import Path
@@ -283,3 +284,42 @@ def test_pep517_sdist_symlink_error_excluded(tmp_path: Path) -> None:
         names = tar.getnames()
     assert f"{PREFIX}/src/main.cpp" in names
     assert not any(n.startswith(f"{PREFIX}/src_link") for n in names)
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+def test_pep517_sdist_symlink_error_force_include(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    ``resolve-symlinks = "error"`` also checks force-included sources and the
+    files under a force-included directory.
+    """
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    shared.joinpath("data.txt").write_bytes(b"data\n")
+    shared.joinpath("data_link.txt").symlink_to("data.txt")
+    shared_link = tmp_path / "shared_link"
+    shared_link.symlink_to(shared, target_is_directory=True)
+    file_link = tmp_path / "file_link.txt"
+    file_link.symlink_to(shared / "data.txt")
+
+    with Path("pyproject.toml").open("a", encoding="utf-8") as f:
+        f.write(
+            "\n[tool.scikit-build.sdist.force-include]\n"
+            f"{json.dumps(str(shared))} = 'shared'\n"
+            f"{json.dumps(str(shared_link))} = 'linked'\n"
+            f"{json.dumps(str(file_link))} = 'file.txt'\n"
+        )
+
+    with pytest.raises(SystemExit):
+        build_sdist(
+            str(tmp_path / "dist"),
+            config_settings={"sdist.resolve-symlinks": "error"},
+        )
+
+    assert not (tmp_path / "dist").joinpath(f"{PREFIX}.tar.gz").exists()
+    err = capsys.readouterr().err
+    assert f"{shared / 'data_link.txt'} -> data.txt" in err
+    assert f"{shared_link} -> {shared}" in err
+    assert f"{file_link} -> {shared / 'data.txt'}" in err

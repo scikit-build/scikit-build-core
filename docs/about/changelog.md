@@ -17,8 +17,9 @@ Features:
   config-settings to the backend hook, and `--type {static,dynamic,both}` to
   select the static `build-system.requires`, the dynamic hook output, or both.
 - `sdist.resolve-symlinks = "error"` fails the SDist build if an included path
-  is a symlink, and lists each link with its target. Directory links are not
-  followed. Requires `minimum-version` 1.1 or unset (#1581).
+  is a symlink, and lists each link with its target. This includes
+  `sdist.force-include` sources and the files under them. Directory links are
+  not followed. Requires `minimum-version` 1.1 or unset (#1581).
 
 Fixes:
 
