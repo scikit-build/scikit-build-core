@@ -202,8 +202,10 @@ complex version requirements, like `>=3.15,!=3.18.0`.
 ## Configuring source file inclusion
 
 Scikit-build-core defaults to using your `.gitignore` to select what to exclude
-from the source distribution. You can list files to explicitly include and
-exclude if you want:
+from the source distribution. Like git, ignore rules stop at a submodule: a
+directory with a `.git` entry, or a path listed in a `.gitmodules` file, reads
+only its own ignore files. You can list files to explicitly include and exclude
+if you want:
 
 ```toml
 [tool.scikit-build]

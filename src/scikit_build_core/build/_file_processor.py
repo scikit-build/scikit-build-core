@@ -21,7 +21,7 @@ from ..format import pyproject_format
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Collection, Generator, Sequence
 
 __all__ = ["each_unignored_file", "symlink_escapes"]
 
@@ -104,6 +104,25 @@ def _nested_ignore_dirs(starting_path: Path) -> Generator[Path, None, None]:
             yield dirpath
 
 
+def _read_lines(path: Path) -> list[str]:
+    try:
+        return path.read_text(encoding="utf-8").splitlines()
+    except (FileNotFoundError, NotADirectoryError):
+        return []
+
+
+def _submodule_paths(dirpath: Path) -> Generator[Path, None, None]:
+    """
+    Submodule roots listed in ``dirpath/.gitmodules``. An SDist has no
+    ``.git`` entries, so this keeps repository boundaries when an SDist is
+    made from an unpacked SDist.
+    """
+    for line in _read_lines(dirpath / ".gitmodules"):
+        key, sep, value = line.partition("=")
+        if sep and key.strip() == "path" and value.strip():
+            yield Path(os.path.normpath(dirpath / value.strip()))
+
+
 def each_unignored_file(
     starting_path: Path,
     include: Sequence[str] = (),
@@ -139,17 +158,23 @@ def each_unignored_file(
             with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
                 global_exclude_lines += f.readlines()
 
-    nested_excludes = (
-        {
-            dirpath: pathspec.GitIgnoreSpec.from_lines(
-                (dirpath / ".gitignore").read_text(encoding="utf-8").splitlines()
-            )
-            for dirpath in _nested_ignore_dirs(starting_path)
-            if (dirpath / ".gitignore").is_file()
-        }
-        if reads_gitignore
-        else {}
-    )
+    nested_excludes: dict[Path, pathspec.GitIgnoreSpec] = {}
+    boundaries: set[Path] = set()
+    if reads_gitignore:
+        boundaries.update(_submodule_paths(Path()))
+        for dirpath in _nested_ignore_dirs(starting_path):
+            if os.path.lexists(dirpath / ".git"):
+                boundaries.add(dirpath)
+            boundaries.update(_submodule_paths(dirpath))
+            if lines := _read_lines(dirpath / ".gitignore"):
+                nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(lines)
+        # A repository's info/exclude has lower priority than its .gitignore;
+        # the last match wins, so it goes first.
+        for dirpath in boundaries:
+            if lines := _read_lines(dirpath / ".git/info/exclude"):
+                nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(
+                    lines + _read_lines(dirpath / ".gitignore")
+                )
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
 
@@ -200,6 +225,7 @@ def each_unignored_file(
                     builtin_exclude_spec,
                     user_exclude_spec,
                     nested_excludes,
+                    boundaries,
                     is_path=False,
                     explicit=explicit,
                 )
@@ -227,6 +253,7 @@ def each_unignored_file(
                     builtin_exclude_spec,
                     user_exclude_spec,
                     nested_excludes,
+                    boundaries,
                     is_path=False,
                     explicit=explicit,
                 ):
@@ -241,6 +268,7 @@ def each_unignored_file(
                     builtin_exclude_spec,
                     user_exclude_spec,
                     nested_excludes,
+                    boundaries,
                     is_path=True,
                     explicit=explicit,
                 ):
@@ -262,6 +290,7 @@ def each_unignored_file(
                 builtin_exclude_spec,
                 user_exclude_spec,
                 nested_excludes,
+                boundaries,
                 is_path=False,
                 explicit=explicit,
             ):
@@ -307,6 +336,7 @@ def match_path(
     builtin_exclude_spec: pathspec.GitIgnoreSpec,
     user_exclude_spec: pathspec.GitIgnoreSpec,
     nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
+    boundaries: Collection[Path],
     *,
     is_path: bool,
     explicit: bool = False,
@@ -364,8 +394,17 @@ def match_path(
         )
         return False
 
+    # Like git, ignore rules stop at a repository (submodule) boundary. The
+    # entry of a submodule itself still belongs to the outer repository.
+    repo_dirs: list[Path] = []
+    for np in (dirpath, *dirpath.parents):
+        repo_dirs.append(np)
+        if np in boundaries:
+            break
+    in_submodule = repo_dirs[-1] in boundaries
+
     # Ignore from global ignore
-    if (c := global_exclude_spec.check_file(p)).include:
+    if not in_submodule and (c := global_exclude_spec.check_file(p)).include:
         assert c.index is not None
         logger.debug(
             "Excluding {} {} because it is explicitly excluded by the global ignore with {!r}.",
@@ -387,8 +426,8 @@ def match_path(
         return False
 
     # Nested ignores, nearest first: only the walked directory and its
-    # ancestors can hold one that applies, so look those up directly.
-    for np in (dirpath, *dirpath.parents):
+    # ancestors in the same repository can hold one that applies.
+    for np in repo_dirs:
         nex = nested_excludes.get(np)
         if nex is not None and (c := nex.check_file(p.relative_to(np))).include:
             assert c.index is not None

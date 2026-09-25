@@ -16,6 +16,8 @@ Features:
 
 Fixes:
 
+- SDist ignore rules no longer cross repository boundaries: a superproject's
+  `.gitignore` does not apply inside a git submodule, matching git (#1582).
 - Redirect editable installs now give a package a deterministic `__path__`
   order: the CMake install tree first, then the source tree, so
   `importlib.resources` no longer depends on `PYTHONHASHSEED` (#1565) by

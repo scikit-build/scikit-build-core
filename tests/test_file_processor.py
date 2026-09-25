@@ -908,3 +908,72 @@ def test_nested_gitignore_scan_scoped_to_starting_path(
     visited_paths = {Path(d) for d in visited}
     assert Path("build") not in visited_paths
     assert Path("build/deep") not in visited_paths
+
+
+@pytest.mark.parametrize("marker", ["git-dir", "git-file", "gitmodules"])
+def test_gitignore_stops_at_repository_boundary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: Literal["default", "classic", "manual"],
+    marker: str,
+) -> None:
+    """
+    Like git, ignore rules from a superproject do not apply inside a
+    submodule, and a submodule's rules do not apply inside its own nested
+    submodules (#1582). An SDist has no ``.git`` entries, so ``.gitmodules``
+    marks the boundaries too.
+    """
+    monkeypatch.chdir(tmp_path)
+    Path(".gitignore").write_text("gen/\n*.log\n")
+    Path(".git").mkdir()
+    Path(".git/info").mkdir()
+    Path(".git/info/exclude").write_text("*.bin\n")
+    Path("gen").mkdir()
+    Path("gen/out.txt").write_text("content")
+    Path("top.log").write_text("content")
+
+    sub = Path("third_party/sub")
+    nested = sub / "nested"
+    (sub / "src/gen").mkdir(parents=True)
+    (nested / "src").mkdir(parents=True)
+    (sub / ".gitignore").write_text("*.cpp\n")
+    (sub / "src/gen/kernel.c").write_text("content")
+    (sub / "notes.log").write_text("content")
+    (sub / "data.bin").write_text("content")
+    (sub / "own.cpp").write_text("content")
+    (nested / "src/impl.cpp").write_text("content")
+
+    if marker == "gitmodules":
+        Path(".gitmodules").write_text('[submodule "sub"]\n\tpath = third_party/sub\n')
+        (sub / ".gitmodules").write_text('[submodule "nested"]\n\tpath = nested\n')
+    elif marker == "git-dir":
+        (sub / ".git/info").mkdir(parents=True)
+        (sub / ".git/info/exclude").write_text("*.tmp\n")
+        (sub / "scratch.tmp").write_text("content")
+        (nested / ".git").mkdir()
+    else:
+        (sub / ".git").write_text("gitdir: ../../.git/modules/sub\n")
+        (nested / ".git").write_text("gitdir: ../../../.git/modules/nested\n")
+
+    result = set(each_unignored_file(Path(), mode=mode))
+
+    expected = {
+        Path(".gitignore"),
+        sub / ".gitignore",
+        sub / "src/gen/kernel.c",
+        sub / "notes.log",
+        sub / "data.bin",
+        nested / "src/impl.cpp",
+    }
+    if marker == "gitmodules":
+        expected |= {Path(".gitmodules"), sub / ".gitmodules"}
+    if mode == "manual":
+        expected |= {Path("gen/out.txt"), Path("top.log"), sub / "own.cpp"}
+        if marker == "git-dir":
+            expected.add(sub / "scratch.tmp")
+    assert result == expected
+
+    # Walking from inside the submodule gives the same answer.
+    assert set(each_unignored_file(sub, mode=mode)) == {
+        p for p in expected if sub in p.parents
+    }
