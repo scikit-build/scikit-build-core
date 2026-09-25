@@ -123,9 +123,9 @@ For a staged Python installation, set `PYTHON_INCLUDE_DIR` and the regular-build
 `PYTHON_LIBRARY` in the effective build environment and set
 `cmake.python-hints = "external"`. These non-empty values are used as Python
 development hints; an unset or empty value keeps the normal
-`sysconfig`/`DIST_EXTRA_CONFIG` fallback. The default `cmake.python-hints = true`
-ignores these environment variables, and the regular library hint is not used
-for stable-ABI (`abi3`/`abi3t`) builds.
+`sysconfig`/`DIST_EXTRA_CONFIG` fallback. The default
+`cmake.python-hints = true` ignores these environment variables, and the regular
+library hint is not used for stable-ABI (`abi3`/`abi3t`) builds.
 
 :::{note}
 
