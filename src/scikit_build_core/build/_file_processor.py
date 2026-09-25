@@ -119,8 +119,34 @@ def _submodule_paths(dirpath: Path) -> Generator[Path, None, None]:
     """
     for line in _read_lines(dirpath / ".gitmodules"):
         key, sep, value = line.partition("=")
-        if sep and key.strip() == "path" and value.strip():
-            yield Path(os.path.normpath(dirpath / value.strip()))
+        if sep and key.strip().lower() == "path" and (path := _git_config_value(value)):
+            yield Path(os.path.normpath(dirpath / path))
+
+
+def _git_config_value(value: str) -> str:
+    """
+    Decode a single-line git-config value: quotes, backslash escapes, ``#``
+    and ``;`` comments, and trimming of unquoted outer whitespace.
+    """
+    escapes = {"n": "\n", "t": "\t", "b": "\b", '"': '"', "\\": "\\"}
+    out: list[str] = []
+    # Length of out up to the last quoted or non-space character.
+    keep = 0
+    quoted = False
+    chars = iter(value.lstrip())
+    for ch in chars:
+        if ch == "\\":
+            out.append(escapes.get(next(chars, ""), ""))
+            keep = len(out)
+        elif ch == '"':
+            quoted = not quoted
+        elif not quoted and ch in "#;":
+            break
+        else:
+            out.append(ch)
+            if quoted or not ch.isspace():
+                keep = len(out)
+    return "".join(out[:keep])
 
 
 def each_unignored_file(

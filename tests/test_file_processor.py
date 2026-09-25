@@ -8,7 +8,10 @@ from typing import Literal
 
 import pytest
 
-from scikit_build_core.build._file_processor import each_unignored_file
+from scikit_build_core.build._file_processor import (
+    _git_config_value,
+    each_unignored_file,
+)
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -977,3 +980,43 @@ def test_gitignore_stops_at_repository_boundary(
     assert set(each_unignored_file(sub, mode=mode)) == {
         p for p in expected if sub in p.parents
     }
+
+
+@pytest.mark.parametrize(
+    ("line", "name"),
+    [
+        ('path = "vendor/dep" # dependency', "vendor/dep"),
+        ("\tPath=vendor/dep ; dependency", "vendor/dep"),
+        ('path = vendor/"a b"  ', "vendor/a b"),
+    ],
+    ids=["quoted-comment", "key-case", "partial-quote"],
+)
+def test_gitmodules_value_syntax(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line: str, name: str
+) -> None:
+    """
+    ``.gitmodules`` values follow git-config syntax: quotes and ``#``/``;``
+    comments are not part of the path, and keys ignore case.
+    """
+    monkeypatch.chdir(tmp_path)
+    sub = Path(name)
+    sub.mkdir(parents=True)
+    (sub / "run.log").write_text("content")
+    Path(".gitignore").write_text("*.log\n")
+    Path(".gitmodules").write_text(f'[submodule "dep"]\n{line}\n')
+
+    assert sub / "run.log" in set(each_unignored_file(Path(), mode="default"))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ('"a\\"b" ; c', 'a"b'),
+        ("a\\\\b", "a\\b"),
+        ('" a # b "', " a # b "),
+        ("a  b  # c", "a  b"),
+        ("a\\tb", "a\tb"),
+    ],
+)
+def test_git_config_value(value: str, expected: str) -> None:
+    assert _git_config_value(value) == expected
