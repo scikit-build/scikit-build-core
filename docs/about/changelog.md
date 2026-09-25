@@ -84,7 +84,7 @@ Fixes:
   - Pass the hook state to `GetRequires` in #1555
   - Parse `--cmake-args` with `shlex` in #1560
 - Init:
-  - The `abi3t` template sets `SOSABI` as well as `SOABI` in #1587
+  - The `abi3t` template sets `SOSABI` as well as `SOABI` by @ngoldbaum in #1587
 - Variants:
   - Cap the `variantlib` build requirement to `<0.1` by @CavRiley in #1571
 - Limit `fastjsonschema` on Python 3.9 in #1524
