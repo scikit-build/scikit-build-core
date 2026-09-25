@@ -661,7 +661,10 @@ find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
     monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
 
     Builder(
-        settings=ScikitBuildSettings(search=SearchSettings(site_packages=False)),
+        settings=ScikitBuildSettings(
+            cmake=CMakeSettings(python_hints="external"),
+            search=SearchSettings(site_packages=False),
+        ),
         config=config,
     ).configure(defines={})
 
@@ -699,7 +702,7 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
     }
     Builder(
         settings=ScikitBuildSettings(
-            cmake=CMakeSettings(define=explicit),
+            cmake=CMakeSettings(define=explicit, python_hints="external"),
             search=SearchSettings(site_packages=False),
         ),
         config=config,
@@ -714,17 +717,24 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
 
 
 @pytest.mark.parametrize(
-    ("limited_api", "environment_library", "modern_library"),
+    ("python_hints", "limited_api", "environment_library", "modern_library"),
     [
-        (None, "target/python.lib", True),
-        (None, None, False),
-        (True, "target/python.lib", False),
+        ("external", None, "target/python.lib", True),
+        ("external", None, None, False),
+        ("external", True, "target/python.lib", False),
+        (True, None, "target/python.lib", False),
     ],
-    ids=["regular-explicit", "regular-automatic", "stable-abi-explicit"],
+    ids=[
+        "external-regular-explicit",
+        "external-regular-automatic",
+        "external-stable-abi",
+        "default-ignores-external",
+    ],
 )
 def test_builder_environment_library_hint_posix_modern_cache(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    python_hints: bool | str,
     limited_api: bool | None,
     environment_library: str | None,
     modern_library: bool,
@@ -756,13 +766,20 @@ def test_builder_environment_library_hint_posix_modern_cache(
     patch_cpython_runtime(monkeypatch)
 
     Builder(
-        settings=ScikitBuildSettings(search=SearchSettings(site_packages=False)),
+        settings=ScikitBuildSettings(
+            cmake=CMakeSettings(python_hints=python_hints),
+            search=SearchSettings(site_packages=False),
+        ),
         config=config,
     ).configure(defines={}, limited_api=limited_api)
 
     cache = config.init_cache_file.read_text(encoding="utf-8")
+    external_hint = python_hints == "external"
+    assert (
+        "set(PYTHON_INCLUDE_DIR [===[target/include]===] CACHE PATH" in cache
+    ) == external_hint
     assert ("set(PYTHON_LIBRARY [===[target/python.lib]===] CACHE PATH" in cache) == (
-        environment_library is not None
+        external_hint and environment_library is not None
     )
     assert ("set(Python_LIBRARY " in cache) == modern_library
     assert ("set(Python3_LIBRARY " in cache) == modern_library

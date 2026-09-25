@@ -392,16 +392,28 @@ class Builder:
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
             )
 
-        if self.settings.cmake.python_hints:
+        python_hints = self.settings.cmake.python_hints
+        if python_hints:
+            external_python_hints = python_hints == "external"
+            python_hint_env = self.config.env
+            if not external_python_hints:
+                python_hint_env = {
+                    key: value
+                    for key, value in self.config.env.items()
+                    if key not in {"PYTHON_INCLUDE_DIR", "PYTHON_LIBRARY"}
+                }
+
             # Only computed when the hints are used; get_numpy_include_dir imports NumPy.
-            python_library = get_python_library(self.config.env, abi3=False)
-            python_library_from_env = self.config.env.get("PYTHON_LIBRARY")
+            python_library = get_python_library(python_hint_env, abi3=False)
+            python_library_from_env = (
+                self.config.env.get("PYTHON_LIBRARY") if external_python_hints else None
+            )
             python_sabi_library = None
             if sabi == _SabiMode.ABI3T:
-                python_sabi_library = get_python_library(self.config.env, abi3t=True)
+                python_sabi_library = get_python_library(python_hint_env, abi3t=True)
             elif sabi == _SabiMode.ABI3:
-                python_sabi_library = get_python_library(self.config.env, abi3=True)
-            python_include_dir = get_python_include_dir(self.config.env)
+                python_sabi_library = get_python_library(python_hint_env, abi3=True)
+            python_include_dir = get_python_include_dir(python_hint_env)
             numpy_include_dir = get_numpy_include_dir()
 
             # Classic Find Python
