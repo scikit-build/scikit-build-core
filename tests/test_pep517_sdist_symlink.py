@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sysconfig
 import tarfile
 from pathlib import Path
@@ -321,5 +322,6 @@ def test_pep517_sdist_symlink_error_force_include(
     assert not (tmp_path / "dist").joinpath(f"{PREFIX}.tar.gz").exists()
     err = capsys.readouterr().err
     assert f"{shared / 'data_link.txt'} -> data.txt" in err
-    assert f"{shared_link} -> {shared}" in err
-    assert f"{file_link} -> {shared / 'data.txt'}" in err
+    # Windows returns absolute targets with a \\?\ prefix
+    assert f"{shared_link} -> {os.readlink(shared_link)}" in err  # noqa: PTH115
+    assert f"{file_link} -> {os.readlink(file_link)}" in err  # noqa: PTH115
