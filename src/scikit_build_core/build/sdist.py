@@ -27,6 +27,7 @@ import contextlib
 import copy
 import gzip
 import io
+import os
 import tarfile
 from pathlib import Path
 
@@ -35,7 +36,7 @@ from packaging.utils import canonicalize_name
 
 from .. import __version__
 from .._compat import tomllib
-from .._logging import rich_print, rich_warning
+from .._logging import rich_error, rich_print, rich_warning
 from .._reproducible import get_reproducible_epoch, normalize_file_permissions
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file, symlink_escapes
@@ -167,6 +168,61 @@ def build_sdist(
             gen.path.write_text(contents, encoding="utf-8")
             settings.sdist.include.append(gen.path.as_posix())
 
+    resolve_symlinks = settings.sdist.resolve_symlinks
+    assert resolve_symlinks is not None
+    assert settings.sdist.inclusion_mode is not None
+    paths = sorted(
+        each_unignored_file(
+            Path(),
+            include=settings.sdist.include,
+            exclude=settings.sdist.exclude,
+            build_dir=settings.build_dir,
+            mode=settings.sdist.inclusion_mode,
+            resolve_symlinks=resolve_symlinks,
+            yield_loop_symlinks=True,
+        )
+    )
+    # A force-included file is forced in; a force-included directory's
+    # members stay subject to sdist.exclude (mirrors wheel.force-include).
+    sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
+    forced = []
+    forced_keys: dict[Path, str] = {}
+    for source, dest in settings.sdist.force_include.items():
+        source_is_file = Path(source).expanduser().is_file()
+        for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
+            if not source_is_file and sdist_exclude_spec.match_file(
+                target.relative_to(srcdirname)
+            ):
+                continue
+            forced.append((src_file, target))
+            forced_keys.setdefault(src_file, source)
+    # Sort by archive name so the tar member order (and thus the reproducible
+    # .tar.gz bytes) does not depend on filesystem ordering for directories.
+    forced.sort(key=lambda pair: pair[1])
+
+    if resolve_symlinks == "error":
+        for source in settings.sdist.force_include:
+            forced_keys[Path(source).expanduser()] = source
+        links = [
+            f"  {p} -> {os.readlink(p)}"  # noqa: PTH115
+            + (
+                f" (sdist.force-include key {forced_keys[p]})"
+                if p in forced_keys
+                else ""
+            )
+            for p in dict.fromkeys([*paths, *forced_keys])
+            if p.is_symlink()
+        ]
+        if links:
+            rich_error(
+                'sdist.resolve-symlinks = "error" and the SDist includes symlinks.'
+                " Exclude each link with sdist.exclude and force-include its"
+                " target if you need the content, point a force-include key"
+                " at the real path, or pick another mode:\n"
+                # rich_error calls str.format
+                + "\n".join(links).replace("{", "{{").replace("}", "}}")
+            )
+
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
         gzip_container = stack.enter_context(
@@ -174,26 +230,12 @@ def build_sdist(
                 sdist_dir / filename, mode="wb", compresslevel=9, mtime=timestamp
             )
         )
-        resolve_symlinks = settings.sdist.resolve_symlinks
-        assert resolve_symlinks is not None
         tar = stack.enter_context(
             tarfile.TarFile(
                 fileobj=gzip_container,
                 mode="w",
                 format=tarfile.PAX_FORMAT,
                 dereference=resolve_symlinks == "all",
-            )
-        )
-        assert settings.sdist.inclusion_mode is not None
-        paths = sorted(
-            each_unignored_file(
-                Path(),
-                include=settings.sdist.include,
-                exclude=settings.sdist.exclude,
-                build_dir=settings.build_dir,
-                mode=settings.sdist.inclusion_mode,
-                resolve_symlinks=resolve_symlinks,
-                yield_loop_symlinks=True,
             )
         )
         for filepath in paths:
@@ -220,21 +262,6 @@ def build_sdist(
                 tar_filter=normalize_tar_info if reproducible else lambda x: x,
             )
 
-        # A force-included file is forced in; a force-included directory's
-        # members stay subject to sdist.exclude (mirrors wheel.force-include).
-        sdist_exclude_spec = pathspec.GitIgnoreSpec.from_lines(settings.sdist.exclude)
-        forced = []
-        for source, dest in settings.sdist.force_include.items():
-            source_is_file = Path(source).expanduser().is_file()
-            for src_file, target in iter_force_include(source, dest, Path(srcdirname)):
-                if not source_is_file and sdist_exclude_spec.match_file(
-                    target.relative_to(srcdirname)
-                ):
-                    continue
-                forced.append((src_file, target))
-        # Sort by archive name so the tar member order (and thus the reproducible
-        # .tar.gz bytes) does not depend on filesystem ordering for directories.
-        forced.sort(key=lambda pair: pair[1])
         for src_file, target in forced:
             add_path_to_tar(
                 tar,

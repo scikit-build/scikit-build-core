@@ -807,7 +807,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.resolve-symlinks
 
-  :Type: ``"all" | "external" | "none" | "classic"``
+  :Type: ``"all" | "external" | "none" | "classic" | "error"``
   :Default: "all"
   :Config-settings: ``sdist.resolve-symlinks`` or ``skbuild.sdist.resolve-symlinks``
   :Environment variable: ``SKBUILD_SDIST_RESOLVE_SYMLINKS``
@@ -823,6 +823,9 @@ print(mk_skbuild_docs())
   * "none": Store every symlink as-is, including directory symlinks.
   * "classic": Store file symlinks as-is, but follow directory symlinks,
     copying their contents (scikit-build-core 0.x behavior).
+  * "error": Fail the build if any included file or directory is a symlink,
+    and list each one with its target. This includes force-include sources
+    and the files under them. Exclude a link to allow the build.
 
   A symlink that can't be resolved (dangling, or a directory symlink loop)
   is stored as a symlink in every mode, with a warning if it was supposed to
@@ -833,6 +836,8 @@ print(mk_skbuild_docs())
   compatibility.
 
   .. versionadded:: 1.0
+  .. versionchanged:: 1.1
+     Added "error".
 ```
 
 ## search
