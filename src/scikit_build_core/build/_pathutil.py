@@ -74,7 +74,7 @@ def iter_package_files(
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
     build_dir: str,
-    mode: Literal["classic", "default", "manual", "explicit"],
+    mode: Literal["classic", "default", "manual", "explicit", "git"],
 ) -> Iterator[tuple[Path, Path]]:
     """
     Yield ``(source_file, target)`` pairs for the wheel packages, with
@@ -105,6 +105,7 @@ def iter_package_files(
             exclude=src_exclude,
             build_dir=build_dir,
             mode=mode,
+            require_git=False,
         ):
             rel_path = filepath.relative_to(source_dir)
             if not exclude_spec.match_file(rel_path):
@@ -119,7 +120,7 @@ def packages_to_file_mapping(
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
     build_dir: str,
-    mode: Literal["classic", "default", "manual", "explicit"],
+    mode: Literal["classic", "default", "manual", "explicit", "git"],
 ) -> dict[str, str]:
     """
     This will output a mapping of source files to target files.
