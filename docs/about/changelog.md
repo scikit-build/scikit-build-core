@@ -13,6 +13,9 @@ Features:
   rebuild-on-import (#1576). By @henryiii in #1577
 - `import-names` and `import-namespaces` (PEP 794) listed in `project.dynamic`
   are computed from the Python packages (#1536).
+- `scikit-build build requires` accepts `-C`/`--config-setting` to pass
+  config-settings to the backend hook, and `--type {static,dynamic,both}` to
+  select the static `build-system.requires`, the dynamic hook output, or both.
 
 Fixes:
 
