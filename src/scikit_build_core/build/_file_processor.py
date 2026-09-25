@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    "contextlib",
     "pathlib",
     "pathspec",
     "typing",
@@ -9,7 +8,6 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
 }
 
-import contextlib
 import os
 from pathlib import Path
 from typing import Literal
@@ -82,26 +80,63 @@ def _dir_key(dirstr: str) -> tuple[int, int] | None:
 
 def _nested_ignore_dirs(starting_path: Path) -> Generator[Path, None, None]:
     """
-    Directories whose ``.gitignore`` can affect a walk of ``starting_path``.
+    Directories whose ignore files can affect a walk of ``starting_path``.
 
-    ``match_path`` only consults a nested ignore whose directory is the walked
-    directory itself or one of its ancestors, so only ``starting_path``'s own
-    subtree, plus the chain of directories above it, can ever match. Walking
-    the whole project to collect the rest is pure cost: for a package that is
-    a subdirectory it means traversing every sibling tree -- build outputs,
-    vendored dependencies, scratch directories -- once per package.
-
-    The project root is omitted: its ``.gitignore`` is read separately into
-    the global spec.
+    Only a nested ignore in the walked directory itself or one of its
+    ancestors applies, so only ``starting_path``'s own subtree, plus the chain
+    of directories above it, can ever match. Walking the whole project to
+    collect the rest is pure cost: for a package that is a subdirectory it
+    means traversing every sibling tree -- build outputs, vendored
+    dependencies, scratch directories -- once per package.
     """
-    root = Path()
-    for parent in starting_path.parents:
-        if parent != root:
-            yield parent
+    yield from starting_path.parents
     for dirstr, _, _ in os.walk(str(starting_path)):
-        dirpath = Path(dirstr)
-        if dirpath != root:
-            yield dirpath
+        yield Path(dirstr)
+
+
+def _read_lines(path: Path) -> list[str]:
+    try:
+        return path.read_text(encoding="utf-8").splitlines()
+    except (FileNotFoundError, NotADirectoryError):
+        return []
+
+
+def _submodule_paths(dirpath: Path) -> Generator[Path, None, None]:
+    """
+    Submodule roots listed in ``dirpath/.gitmodules``. An SDist has no
+    ``.git`` entries, so this keeps repository boundaries when an SDist is
+    made from an unpacked SDist.
+    """
+    for line in _read_lines(dirpath / ".gitmodules"):
+        key, sep, value = line.partition("=")
+        if sep and key.strip().lower() == "path" and (path := _git_config_value(value)):
+            yield Path(os.path.normpath(dirpath / path))
+
+
+def _git_config_value(value: str) -> str:
+    """
+    Decode a single-line git-config value: quotes, backslash escapes, ``#``
+    and ``;`` comments, and trimming of unquoted outer whitespace.
+    """
+    escapes = {"n": "\n", "t": "\t", "b": "\b", '"': '"', "\\": "\\"}
+    out: list[str] = []
+    # Length of out up to the last quoted or non-space character.
+    keep = 0
+    quoted = False
+    chars = iter(value.lstrip())
+    for ch in chars:
+        if ch == "\\":
+            out.append(escapes.get(next(chars, ""), ""))
+            keep = len(out)
+        elif ch == '"':
+            quoted = not quoted
+        elif not quoted and ch in "#;":
+            break
+        else:
+            out.append(ch)
+            if quoted or not ch.isspace():
+                keep = len(out)
+    return "".join(out[:keep])
 
 
 def each_unignored_file(
@@ -132,24 +167,21 @@ def each_unignored_file(
     reads_gitignore = mode in {"classic", "default"}
     explicit = mode == "explicit"
 
-    global_exclude_lines = []
+    # Each repository (the project root and every submodule) has its own
+    # ignore files; like git, they do not apply across a boundary.
+    nested_excludes: dict[Path, pathspec.GitIgnoreSpec] = {}
+    boundaries = {Path()}
     if reads_gitignore:
-        for gi in [Path(".git/info/exclude"), Path(".gitignore")]:
-            ignore_errs = [FileNotFoundError, NotADirectoryError]
-            with contextlib.suppress(*ignore_errs), gi.open(encoding="utf-8") as f:
-                global_exclude_lines += f.readlines()
-
-    nested_excludes = (
-        {
-            dirpath: pathspec.GitIgnoreSpec.from_lines(
-                (dirpath / ".gitignore").read_text(encoding="utf-8").splitlines()
-            )
-            for dirpath in _nested_ignore_dirs(starting_path)
-            if (dirpath / ".gitignore").is_file()
-        }
-        if reads_gitignore
-        else {}
-    )
+        for dirpath in _nested_ignore_dirs(starting_path):
+            lines: list[str] = []
+            if os.path.lexists(dirpath / ".git"):
+                boundaries.add(dirpath)
+                # Lower priority than .gitignore; the last match wins.
+                lines = _read_lines(dirpath / ".git/info/exclude")
+            boundaries.update(_submodule_paths(dirpath))
+            lines += _read_lines(dirpath / ".gitignore")
+            if lines:
+                nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(lines)
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
 
@@ -158,7 +190,6 @@ def each_unignored_file(
     )
 
     user_exclude_spec = pathspec.GitIgnoreSpec.from_lines(list(exclude))
-    global_exclude_spec = pathspec.GitIgnoreSpec.from_lines(global_exclude_lines)
     builtin_exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
 
     include_spec = pathspec.GitIgnoreSpec.from_lines(include)
@@ -174,6 +205,7 @@ def each_unignored_file(
 
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
+        repo_ignores = _repo_ignores(dirpath, nested_excludes, boundaries)
         key = _dir_key(dirstr)
         # os.path.dirname keeps the exact string form os.walk uses for keys
         # (e.g. "" for the root), unlike Path.parent which maps it to ".".
@@ -193,13 +225,11 @@ def each_unignored_file(
                 yield_loop_symlinks
                 and dirpath.is_symlink()
                 and match_path(
-                    dirpath.parent,
                     dirpath,
                     include_spec,
-                    global_exclude_spec,
                     builtin_exclude_spec,
                     user_exclude_spec,
-                    nested_excludes,
+                    _repo_ignores(dirpath.parent, nested_excludes, boundaries),
                     is_path=False,
                     explicit=explicit,
                 )
@@ -220,13 +250,11 @@ def each_unignored_file(
                 # Store the link itself as a member instead of descending.
                 dirs.remove(dname)
                 if match_path(
-                    dirpath,
                     dpath,
                     include_spec,
-                    global_exclude_spec,
                     builtin_exclude_spec,
                     user_exclude_spec,
-                    nested_excludes,
+                    repo_ignores,
                     is_path=False,
                     explicit=explicit,
                 ):
@@ -234,13 +262,11 @@ def each_unignored_file(
         if mode != "classic":
             for dname in list(dirs):
                 if not match_path(
-                    dirpath,
                     dirpath / dname,
                     include_spec,
-                    global_exclude_spec,
                     builtin_exclude_spec,
                     user_exclude_spec,
-                    nested_excludes,
+                    repo_ignores,
                     is_path=True,
                     explicit=explicit,
                 ):
@@ -255,13 +281,11 @@ def each_unignored_file(
         for fn in filenames:
             path = dirpath / fn
             if match_path(
-                dirpath,
                 path,
                 include_spec,
-                global_exclude_spec,
                 builtin_exclude_spec,
                 user_exclude_spec,
-                nested_excludes,
+                repo_ignores,
                 is_path=False,
                 explicit=explicit,
             ):
@@ -299,14 +323,31 @@ def _include_may_match_below(pattern: str, dirpath: str) -> bool:
     )
 
 
-def match_path(
+def _repo_ignores(
     dirpath: Path,
+    nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
+    boundaries: set[Path],
+) -> list[tuple[Path, pathspec.GitIgnoreSpec]]:
+    """
+    Ignore specs that apply to entries of ``dirpath``, nearest first. Like
+    git, the search stops at the repository (submodule) boundary; the entry of
+    a submodule itself still belongs to the outer repository.
+    """
+    ignores = []
+    for np in (dirpath, *dirpath.parents):
+        if (spec := nested_excludes.get(np)) is not None:
+            ignores.append((np, spec))
+        if np in boundaries:
+            break
+    return ignores
+
+
+def match_path(
     p: Path,
     include_spec: pathspec.GitIgnoreSpec,
-    global_exclude_spec: pathspec.GitIgnoreSpec,
     builtin_exclude_spec: pathspec.GitIgnoreSpec,
     user_exclude_spec: pathspec.GitIgnoreSpec,
-    nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
+    repo_ignores: list[tuple[Path, pathspec.GitIgnoreSpec]],
     *,
     is_path: bool,
     explicit: bool = False,
@@ -364,17 +405,6 @@ def match_path(
         )
         return False
 
-    # Ignore from global ignore
-    if (c := global_exclude_spec.check_file(p)).include:
-        assert c.index is not None
-        logger.debug(
-            "Excluding {} {} because it is explicitly excluded by the global ignore with {!r}.",
-            ptype,
-            p,
-            global_exclude_spec.patterns[c.index].pattern,
-        )
-        return False
-
     # Ignore built-in patterns
     if (c := builtin_exclude_spec.check_file(p)).include:
         assert c.index is not None
@@ -386,16 +416,15 @@ def match_path(
         )
         return False
 
-    # Nested ignores, nearest first: only the walked directory and its
-    # ancestors can hold one that applies, so look those up directly.
-    for np in (dirpath, *dirpath.parents):
-        nex = nested_excludes.get(np)
-        if nex is not None and (c := nex.check_file(p.relative_to(np))).include:
+    # Ignore files of this repository, nearest first
+    for np, nex in repo_ignores:
+        if (c := nex.check_file(p.relative_to(np))).include:
             assert c.index is not None
             logger.debug(
-                "Excluding {} {} because it is explicitly excluded by nested ignore with {!r}.",
+                "Excluding {} {} because it is explicitly excluded by the ignore file in {} with {!r}.",
                 ptype,
                 p,
+                np,
                 nex.patterns[c.index].pattern,
             )
             return False
