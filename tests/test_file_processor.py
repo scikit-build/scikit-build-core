@@ -982,28 +982,20 @@ def test_gitignore_stops_at_repository_boundary(
     }
 
 
-@pytest.mark.parametrize(
-    ("line", "name"),
-    [
-        ('path = "vendor/dep" # dependency', "vendor/dep"),
-        ("\tPath=vendor/dep ; dependency", "vendor/dep"),
-        ('path = vendor/"a b"  ', "vendor/a b"),
-    ],
-    ids=["quoted-comment", "key-case", "partial-quote"],
-)
 def test_gitmodules_value_syntax(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line: str, name: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """
-    ``.gitmodules`` values follow git-config syntax: quotes and ``#``/``;``
-    comments are not part of the path, and keys ignore case.
+    ``.gitmodules`` keys ignore case and values follow git-config syntax.
     """
     monkeypatch.chdir(tmp_path)
-    sub = Path(name)
+    sub = Path("vendor/dep")
     sub.mkdir(parents=True)
     (sub / "run.log").write_text("content")
     Path(".gitignore").write_text("*.log\n")
-    Path(".gitmodules").write_text(f'[submodule "dep"]\n{line}\n')
+    Path(".gitmodules").write_text(
+        '[submodule "dep"]\n\tPath=vendor/dep ; dependency\n'
+    )
 
     assert sub / "run.log" in set(each_unignored_file(Path(), mode="default"))
 
@@ -1016,6 +1008,8 @@ def test_gitmodules_value_syntax(
         ('" a # b "', " a # b "),
         ("a  b  # c", "a  b"),
         ("a\\tb", "a\tb"),
+        (' "vendor/dep" # dependency', "vendor/dep"),
+        ('vendor/"a b"  ', "vendor/a b"),
     ],
 )
 def test_git_config_value(value: str, expected: str) -> None:
