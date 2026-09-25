@@ -285,7 +285,7 @@ def downstream(session: nox.Session) -> None:
     parser.add_argument("-C", help="config-settings", action="append", default=[])
     args, remaining = parser.parse_known_args(session.posargs)
 
-    tmp_dir = Path(session.create_tmp()).resolve()
+    tmp_dir = Path(session.create_tmp())
     proj_dir = tmp_dir / "_".join(args.project.split("/"))
 
     session.install("build", "hatch-vcs", "hatchling")
@@ -325,19 +325,19 @@ def downstream(session: nox.Session) -> None:
     install_requires(requires)
 
     # Dynamic requirements (like build.requires) come from the backend hook
-    config_settings = dict(x.split("=", 1) for x in args.C)
-    requires_file = tmp_dir / "dynamic-requires.json"
-    session.run(
+    dynamic_requires = session.run(
         "python",
-        "-c",
-        "import build, json, sys; "
-        "reqs = build.ProjectBuilder('.').get_requires_for_build(sys.argv[1], json.loads(sys.argv[2])); "
-        "open(sys.argv[3], 'w').write(json.dumps(sorted(reqs)))",
-        "editable" if args.editable else "wheel",
-        json.dumps(config_settings),
-        str(requires_file),
+        "-m",
+        "scikit_build_core.build",
+        "requires",
+        "--mode=editable" if args.editable else "--mode=wheel",
+        "--type=dynamic",
+        *(f"-C{x}" for x in args.C),
+        silent=True,
+        stderr=sys.stderr,
     )
-    install_requires(json.loads(requires_file.read_text()))
+    assert dynamic_requires is not None
+    install_requires(json.loads(dynamic_requires))
 
     if args.editable:
         session.install(
