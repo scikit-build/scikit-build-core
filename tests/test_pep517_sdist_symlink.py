@@ -234,3 +234,52 @@ def test_pep517_sdist_dangling_external_symlink(
 
     err = capsys.readouterr().err
     assert "dangling_ext.txt" in err
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+def test_pep517_sdist_symlink_error(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """
+    ``resolve-symlinks = "error"`` fails before writing the SDist and names
+    each included symlink with its target. A directory link is reported
+    once, not walked.
+    """
+    Path("CMakeLists_link.txt").symlink_to("CMakeLists.txt")
+    Path("src_link").symlink_to("src", target_is_directory=True)
+    Path("dangling_link.txt").symlink_to("does-not-exist.txt")
+    Path("excluded_link.txt").symlink_to("CMakeLists.txt")
+
+    config_settings: dict[str, list[str] | str] = {
+        "sdist.resolve-symlinks": "error",
+        "sdist.exclude": ["excluded_link.txt"],
+    }
+    with pytest.raises(SystemExit):
+        build_sdist(str(tmp_path / "dist"), config_settings=config_settings)
+
+    assert not (tmp_path / "dist").joinpath(f"{PREFIX}.tar.gz").exists()
+    err = capsys.readouterr().err
+    assert "CMakeLists_link.txt -> CMakeLists.txt" in err
+    assert "src_link -> src" in err
+    assert "dangling_link.txt -> does-not-exist.txt" in err
+    assert "src_link/main.cpp" not in err
+    assert "excluded_link.txt" not in err
+
+
+@pytest.mark.usefixtures("package_simple_pyproject_ext", "can_symlink")
+def test_pep517_sdist_symlink_error_excluded(tmp_path: Path) -> None:
+    Path("src_link").symlink_to("src", target_is_directory=True)
+
+    out = build_sdist(
+        str(tmp_path),
+        config_settings={
+            "sdist.resolve-symlinks": "error",
+            "sdist.exclude": ["src_link"],
+        },
+    )
+
+    with tarfile.open(tmp_path / out, "r:gz") as tar:
+        names = tar.getnames()
+    assert f"{PREFIX}/src/main.cpp" in names
+    assert not any(n.startswith(f"{PREFIX}/src_link") for n in names)

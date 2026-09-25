@@ -230,7 +230,8 @@
             "all",
             "external",
             "none",
-            "classic"
+            "classic",
+            "error"
           ],
           "description": "Which symlinks to resolve in the SDist, storing the target's contents instead."
         }

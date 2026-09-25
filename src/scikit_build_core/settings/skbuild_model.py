@@ -403,11 +403,11 @@ class SDistSettings:
     .. versionadded:: 1.0
     """
 
-    resolve_symlinks: Optional[Literal["all", "external", "none", "classic"]] = (
-        dataclasses.field(
-            default=None,
-            metadata=SettingsFieldMetadata(display_default='"all"'),
-        )
+    resolve_symlinks: Optional[
+        Literal["all", "external", "none", "classic", "error"]
+    ] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(display_default='"all"'),
     )
     """
     Which symlinks to resolve in the SDist, storing the target's contents instead.
@@ -421,6 +421,8 @@ class SDistSettings:
     * "none": Store every symlink as-is, including directory symlinks.
     * "classic": Store file symlinks as-is, but follow directory symlinks,
       copying their contents (scikit-build-core 0.x behavior).
+    * "error": Fail the build if any included file or directory is a symlink,
+      and list each one with its target. Exclude a link to allow the build.
 
     A symlink that can't be resolved (dangling, or a directory symlink loop)
     is stored as a symlink in every mode, with a warning if it was supposed to
@@ -431,6 +433,8 @@ class SDistSettings:
     compatibility.
 
     .. versionadded:: 1.0
+    .. versionchanged:: 1.1
+       Added "error".
     """
 
 

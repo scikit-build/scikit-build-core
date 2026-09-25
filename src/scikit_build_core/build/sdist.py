@@ -27,6 +27,7 @@ import contextlib
 import copy
 import gzip
 import io
+import os
 import tarfile
 from pathlib import Path
 
@@ -35,7 +36,7 @@ from packaging.utils import canonicalize_name
 
 from .. import __version__
 from .._compat import tomllib
-from .._logging import rich_print, rich_warning
+from .._logging import rich_error, rich_print, rich_warning
 from .._reproducible import get_reproducible_epoch, normalize_file_permissions
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file, symlink_escapes
@@ -167,6 +168,30 @@ def build_sdist(
             gen.path.write_text(contents, encoding="utf-8")
             settings.sdist.include.append(gen.path.as_posix())
 
+    resolve_symlinks = settings.sdist.resolve_symlinks
+    assert resolve_symlinks is not None
+    assert settings.sdist.inclusion_mode is not None
+    paths = sorted(
+        each_unignored_file(
+            Path(),
+            include=settings.sdist.include,
+            exclude=settings.sdist.exclude,
+            build_dir=settings.build_dir,
+            mode=settings.sdist.inclusion_mode,
+            resolve_symlinks=resolve_symlinks,
+            yield_loop_symlinks=True,
+        )
+    )
+    if resolve_symlinks == "error":
+        links = [f"  {p} -> {os.readlink(p)}" for p in paths if p.is_symlink()]  # noqa: PTH115
+        if links:
+            rich_error(
+                'sdist.resolve-symlinks = "error" and the SDist includes symlinks.'
+                " Exclude them with sdist.exclude, or pick another mode:\n"
+                # rich_error calls str.format
+                + "\n".join(links).replace("{", "{{").replace("}", "}}")
+            )
+
     sdist_dir.mkdir(parents=True, exist_ok=True)
     with contextlib.ExitStack() as stack:
         gzip_container = stack.enter_context(
@@ -174,26 +199,12 @@ def build_sdist(
                 sdist_dir / filename, mode="wb", compresslevel=9, mtime=timestamp
             )
         )
-        resolve_symlinks = settings.sdist.resolve_symlinks
-        assert resolve_symlinks is not None
         tar = stack.enter_context(
             tarfile.TarFile(
                 fileobj=gzip_container,
                 mode="w",
                 format=tarfile.PAX_FORMAT,
                 dereference=resolve_symlinks == "all",
-            )
-        )
-        assert settings.sdist.inclusion_mode is not None
-        paths = sorted(
-            each_unignored_file(
-                Path(),
-                include=settings.sdist.include,
-                exclude=settings.sdist.exclude,
-                build_dir=settings.build_dir,
-                mode=settings.sdist.inclusion_mode,
-                resolve_symlinks=resolve_symlinks,
-                yield_loop_symlinks=True,
             )
         )
         for filepath in paths:

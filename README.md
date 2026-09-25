@@ -219,7 +219,7 @@ print()
 | `sdist.reproducible` | `true` | Try to build a reproducible distribution. |
 | `sdist.cmake` | `false` | If set to True, CMake will be run before building the SDist. |
 | `sdist.force-include` | `{}` | Force-include files into the SDist. |
-| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. (choices: `all`, `external`, `none`, `classic`) |
+| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. (choices: `all`, `external`, `none`, `classic`, `error`) |
 
 ### `wheel`
 

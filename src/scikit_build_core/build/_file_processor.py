@@ -111,15 +111,15 @@ def each_unignored_file(
     build_dir: str = "",
     *,
     mode: Literal["classic", "default", "manual", "explicit"],
-    resolve_symlinks: Literal["all", "external", "none", "classic"] = "all",
+    resolve_symlinks: Literal["all", "external", "none", "classic", "error"] = "all",
     yield_loop_symlinks: bool = False,
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
 
     ``resolve_symlinks`` controls directory symlinks: "all" and "classic"
-    follow them (their contents are walked); "none" yields the link itself as
-    a member instead of descending; "external" does the same only for links
+    follow them (their contents are walked); "none" and "error" yield the link
+    itself as a member instead of descending; "external" does the same only for links
     staying inside the project, still following links that point outside it.
     File symlinks are always yielded as-is here; whether they are stored
     dereferenced is up to the caller.
@@ -208,7 +208,7 @@ def each_unignored_file(
             continue
         if key is not None:
             ancestor_keys[dirstr] = parent_keys | {key}
-        if resolve_symlinks in {"none", "external"}:
+        if resolve_symlinks in {"none", "external", "error"}:
             for dname in list(dirs):
                 dpath = dirpath / dname
                 if not dpath.is_symlink():

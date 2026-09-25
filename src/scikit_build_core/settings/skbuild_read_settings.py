@@ -620,6 +620,14 @@ class SettingsReader:
                 rich_error(
                     "minimum-version can't be less than 1.0 to use sdist.resolve-symlinks"
                 )
+            if (
+                self.settings.sdist.resolve_symlinks == "error"
+                and self.settings.minimum_version is not None
+                and self.settings.minimum_version < Version("1.1")
+            ):
+                rich_error(
+                    'minimum-version must be at least 1.1 to use sdist.resolve-symlinks = "error"'
+                )
         elif (
             self.settings.minimum_version is not None
             and self.settings.minimum_version < Version("1.0")
