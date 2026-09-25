@@ -285,7 +285,7 @@ def downstream(session: nox.Session) -> None:
     parser.add_argument("-C", help="config-settings", action="append", default=[])
     args, remaining = parser.parse_known_args(session.posargs)
 
-    tmp_dir = Path(session.create_tmp())
+    tmp_dir = Path(session.create_tmp()).resolve()
     proj_dir = tmp_dir / "_".join(args.project.split("/"))
 
     session.install("build", "hatch-vcs", "hatchling")
@@ -306,22 +306,38 @@ def downstream(session: nox.Session) -> None:
         )
         session.chdir(proj_dir)
 
-    # Read and strip requirements
+    if args.subdir:
+        session.chdir(args.subdir)
+
+    def install_requires(requires: list[str]) -> None:
+        requires = [
+            x for x in requires if "scikit-build-core" not in x.replace("_", "-")
+        ]
+        if requires:
+            session.install(*requires)
+
     pyproject = nox.project.load_toml("pyproject.toml")
-    requires = [
-        x
-        for x in pyproject["build-system"]["requires"]
-        if "scikit-build-core" not in x.replace("_", "-")
-    ]
+    requires = pyproject["build-system"]["requires"]
     if not shutil.which("ninja"):
         requires.append("ninja")
     if not shutil.which("cmake"):
         requires.append("cmake")
-    if requires:
-        session.install(*requires)
+    install_requires(requires)
 
-    if args.subdir:
-        session.chdir(args.subdir)
+    # Dynamic requirements (like build.requires) come from the backend hook
+    config_settings = dict(x.split("=", 1) for x in args.C)
+    requires_file = tmp_dir / "dynamic-requires.json"
+    session.run(
+        "python",
+        "-c",
+        "import build, json, sys; "
+        "reqs = build.ProjectBuilder('.').get_requires_for_build(sys.argv[1], json.loads(sys.argv[2])); "
+        "open(sys.argv[3], 'w').write(json.dumps(sorted(reqs)))",
+        "editable" if args.editable else "wheel",
+        json.dumps(config_settings),
+        str(requires_file),
+    )
+    install_requires(json.loads(requires_file.read_text()))
 
     if args.editable:
         session.install(
