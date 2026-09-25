@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# dependencies = ["nox>=2024.4.15"]
+# dependencies = ["nox>=2024.4.15", "packaging"]
 # ///
 
 """
@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import nox
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -311,7 +313,9 @@ def downstream(session: nox.Session) -> None:
 
     def install_requires(requires: list[str]) -> None:
         requires = [
-            x for x in requires if "scikit-build-core" not in x.replace("_", "-")
+            x
+            for x in requires
+            if canonicalize_name(Requirement(x).name) != "scikit-build-core"
         ]
         if requires:
             session.install(*requires)
