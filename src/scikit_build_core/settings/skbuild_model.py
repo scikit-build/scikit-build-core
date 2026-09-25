@@ -343,11 +343,11 @@ class SDistSettings:
        :confval:`sdist.include`
     """
 
-    inclusion_mode: Optional[Literal["classic", "default", "manual", "explicit"]] = (
-        dataclasses.field(
-            default=None,
-            metadata=SettingsFieldMetadata(display_default='"default"  # "classic"'),
-        )
+    inclusion_mode: Optional[
+        Literal["classic", "default", "manual", "explicit", "git"]
+    ] = dataclasses.field(
+        default=None,
+        metadata=SettingsFieldMetadata(display_default='"default"  # "classic"'),
     )
     """
     Method to use to compute the files to include and exclude.
@@ -360,6 +360,11 @@ class SDistSettings:
     * "explicit": Opt-in only. Nothing is included unless it matches an ``include``
       pattern, and ``exclude`` is applied after, so it can trim included files back
       out. Like "manual", git ignore files are not read.
+    * "git": The files git tracks, including in submodules, then ``include`` and
+      ``exclude`` as in "manual". Untracked files are not included unless they
+      match ``include``. Building an SDist fails with ``UnsupportedOperation``
+      outside a git checkout. A wheel built outside a git checkout, such as
+      from an SDist, uses "manual".
 
     If you don't set this, it will be "default" unless you set the minimum
     version below 0.12, in which case it will be "classic".
@@ -367,6 +372,8 @@ class SDistSettings:
     .. versionadded:: 0.12
     .. versionchanged:: 1.0
        Added the "explicit" mode.
+    .. versionchanged:: 1.1
+       Added the "git" mode.
     """
 
     reproducible: bool = True
