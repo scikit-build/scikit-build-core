@@ -4,12 +4,16 @@ This is the entry point for the build backend. Items in this module are designed
 
 from __future__ import annotations
 
-__lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat"}
+__lazy_modules__ = {
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+}
 
 import contextlib
 import sys
 
 from .._compat import tomllib
+from ..errors import UnsupportedOperation
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -17,6 +21,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
 __all__ = [
+    "UnsupportedOperation",
     "build_editable",
     "build_sdist",
     "build_wheel",

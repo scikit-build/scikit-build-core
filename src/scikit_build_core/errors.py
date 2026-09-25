@@ -19,6 +19,7 @@ __all__ = [
     "NinjaVersionError",
     "NotFoundError",
     "ScikitBuildError",
+    "UnsupportedOperation",
 ]
 
 
@@ -108,4 +109,11 @@ class NinjaVersionError(ScikitBuildError):
 class CMakeConfigError(ScikitBuildError):
     """
     Something is misconfigured.
+    """
+
+
+class UnsupportedOperation(ScikitBuildError):  # noqa: N818
+    """
+    The PEP 517 ``UnsupportedOperation``: an SDist can't be made here, such as
+    ``sdist.inclusion-mode = "git"`` outside a git checkout.
     """
