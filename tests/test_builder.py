@@ -734,7 +734,7 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
 def test_builder_environment_library_hint_posix_modern_cache(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    python_hints: bool | str,
+    python_hints: bool | typing.Literal["external"],
     limited_api: bool | None,
     environment_library: str | None,
     modern_library: bool,
