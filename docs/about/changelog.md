@@ -16,6 +16,9 @@ Features:
 - `scikit-build build requires` accepts `-C`/`--config-setting` to pass
   config-settings to the backend hook, and `--type {static,dynamic,both}` to
   select the static `build-system.requires`, the dynamic hook output, or both.
+- `sdist.inclusion-mode = "git"` selects the files that git tracks, including in
+  submodules, with `sdist.include` and `sdist.exclude` on top. Outside a git
+  checkout, `build_sdist` raises the PEP 517 `UnsupportedOperation` (#1582).
 
 Fixes:
 

@@ -222,6 +222,24 @@ sdist.inclusion-mode = "manual"
 There's also a `"classic"` mode, which fully traverses all directories to check
 rules (this was the default before scikit-build-core 0.12).
 
+The `"git"` mode uses the files that git tracks, including files in submodules,
+instead of the `.gitignore` files. `sdist.include` adds untracked files, such as
+generated files, and `sdist.exclude` removes tracked files:
+
+```toml
+[tool.scikit-build]
+sdist.inclusion-mode = "git"
+```
+
+This mode needs `git` and a git checkout to make an SDist; otherwise the build
+fails with the PEP 517 `UnsupportedOperation` error, and a frontend can build a
+wheel directly. All submodules must be checked out. A wheel built outside a git
+checkout, such as from an SDist, uses the `"manual"` rules instead.
+
+```{versionadded} 1.1
+The `"git"` mode.
+```
+
 By default, scikit-build-core will respect `SOURCE_DATE_EPOCH`, and will lock
 the modification time to a reproducible value if it's not set. You can disable
 reproducible builds if you prefer, however:

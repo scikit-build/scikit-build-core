@@ -215,7 +215,7 @@ print()
 | - | - | - |
 | `sdist.include` | `[]` | Files to include in the SDist even if they are skipped by default. Supports gitignore syntax. |
 | `sdist.exclude` | `[]` | Files to exclude from the SDist even if they are included by default. Supports gitignore syntax. |
-| `sdist.inclusion-mode` | `"default"` ("classic") | Method to use to compute the files to include and exclude. (choices: `classic`, `default`, `manual`, `explicit`) |
+| `sdist.inclusion-mode` | `"default"` ("classic") | Method to use to compute the files to include and exclude. (choices: `classic`, `default`, `manual`, `explicit`, `git`) |
 | `sdist.reproducible` | `true` | Try to build a reproducible distribution. |
 | `sdist.cmake` | `false` | If set to True, CMake will be run before building the SDist. |
 | `sdist.force-include` | `{}` | Force-include files into the SDist. |

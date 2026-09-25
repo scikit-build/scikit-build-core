@@ -1474,3 +1474,26 @@ def test_sdist_inclusion_mode_explicit_requires_minimum_version(
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml, {})
     assert "1.0" in capsys.readouterr().err
+
+
+def test_sdist_inclusion_mode_git_requires_minimum_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    monkeypatch.setattr(
+        scikit_build_core.settings.skbuild_read_settings, "__version__", "1.1.0"
+    )
+    monkeypatch.setenv("SKBUILD_SDIST_INCLUSION_MODE", "git")
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        textwrap.dedent(
+            """\
+            [tool.scikit-build]
+            minimum-version = "1.0"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        SettingsReader.from_file(pyproject_toml, {})
+    assert "1.1" in capsys.readouterr().err
