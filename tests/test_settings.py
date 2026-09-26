@@ -252,6 +252,16 @@ def test_toml():
     assert settings.literal == "three"
 
 
+def test_bool_literal_union_conversion():
+    target = Union[bool, Literal["external"]]
+    assert EnvSource.convert("external", target) == "external"
+    assert ConfSource.convert("external", target) == "external"
+    assert TOMLSource.convert("external", target) == "external"
+    assert EnvSource.convert("false", target) is False
+    assert ConfSource.convert("off", target) is False
+    assert TOMLSource.convert(item=False, target=target) is False
+
+
 def test_toml_union():
     toml_settings = {
         "zero": "zero",

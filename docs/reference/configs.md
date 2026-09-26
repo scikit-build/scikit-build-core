@@ -357,14 +357,20 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.python-hints
 
-  :Type: ``bool``
+  :Type: ``bool | "external"``
   :Default: true
   :Config-settings: ``cmake.python-hints`` or ``skbuild.cmake.python-hints``
   :Environment variable: ``SKBUILD_CMAKE_PYTHON_HINTS``
 
-  Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
-  Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
-  instead.
+  Pass hints derived from the current Python build environment to FindPython.
+
+  Set this to ``false`` when the toolchain file should handle Python discovery
+  instead. The default ``true`` passes hints derived from the running Python,
+  but ignores ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from the build
+  environment. Set this to ``"external"`` to use non-empty values from those
+  environment variables as development hints, falling back to normal
+  detection when a value is unset or empty. ``PYTHON_LIBRARY`` is not used
+  for stable-ABI builds.
 ```
 
 ```{eval-rst}

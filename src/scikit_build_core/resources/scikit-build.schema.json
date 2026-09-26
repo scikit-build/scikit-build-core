@@ -134,9 +134,18 @@
           "description": "Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``."
         },
         "python-hints": {
-          "type": "boolean",
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "enum": [
+                "external"
+              ]
+            }
+          ],
           "default": true,
-          "description": "Do not pass the current environment's python hints such as ``Python_EXECUTABLE``."
+          "description": "Pass hints derived from the current Python build environment to FindPython."
         }
       }
     },
