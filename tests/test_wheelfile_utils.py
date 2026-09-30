@@ -1,3 +1,5 @@
+import os
+import shutil
 import stat
 import sys
 import time
@@ -26,6 +28,73 @@ def _make_writer(tmp_path: Path, *, reproducible: bool = True) -> WheelWriter:
         None,
         reproducible=reproducible,
     )
+
+
+@pytest.mark.parametrize("reproducible", [True, False])
+@pytest.mark.parametrize("targetlib", ["platlib", "purelib"])
+def test_direct_sources_match_staged_wheel(
+    tmp_path, monkeypatch, reproducible, targetlib
+):
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1234567890")
+    source = tmp_path / "source"
+    source.mkdir()
+    mapping = {}
+    staged = tmp_path / "staged"
+    direct = tmp_path / "direct"
+    # Filtering must use the destination, not the source filename.
+    for index, name in enumerate(
+        [
+            "pkg/__init__.py",
+            "pkg/data",
+            "pkg/skip.pyc",
+            "old.dist-info/METADATA",
+            "pkg/excluded",
+        ]
+    ):
+        src = source / str(index)
+        src.write_bytes(f"payload {index}".encode())
+        os.utime(src, (1234567890, 1234567890))
+        dst = staged / name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        mapping[str(src)] = str(direct / name)
+
+    results = []
+    for root, sources in [(staged, None), (direct, mapping)]:
+        # CMake and force-include staging files override package sources.
+        override = root / "pkg/data"
+        override.parent.mkdir(parents=True, exist_ok=True)
+        override.write_bytes(b"installed override")
+        os.utime(override, (1234567890, 1234567890))
+        scripts = root.parent / "scripts"
+        scripts.mkdir(exist_ok=True)
+        script = scripts / "tool"
+        script.write_bytes(b"#!/usr/bin/env python\n")
+        os.utime(script, (1234567890, 1234567890))
+        wheel = _make_writer(root, reproducible=reproducible)
+        wheel.folder = tmp_path / f"out-{root.name}"
+        with wheel:
+            wheel.build(
+                {targetlib: root, "scripts": scripts},
+                exclude=["pkg/excluded"],
+                source_mapping=sources,
+            )
+        with zipfile.ZipFile(wheel.wheelpath) as archive:
+            results.append(
+                [
+                    (
+                        entry.filename,
+                        entry.date_time,
+                        entry.external_attr,
+                        archive.read(entry),
+                    )
+                    for entry in archive.infolist()
+                ]
+            )
+    assert results[0] == results[1]
+    assert not (direct / "pkg/__init__.py").exists()
+    assert {entry[0] for entry in results[1]} >= {"pkg/__init__.py", "pkg/data"}
+    assert not any(entry[0].endswith(("skip.pyc", "excluded")) for entry in results[1])
 
 
 def test_wheel_timestamp_reproducible_fixed_epoch(tmp_path, monkeypatch):

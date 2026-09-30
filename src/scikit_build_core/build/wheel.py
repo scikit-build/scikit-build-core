@@ -576,13 +576,8 @@ def _build_wheel_impl_impl(
             mode=settings.sdist.inclusion_mode,
         )
 
-        if not editable:
-            for filepath, package_dir in mapping.items():
-                Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
-                shutil.copy2(filepath, package_dir)
-
-        # Force-include into the wheel, after the package copy so entries
-        # override package files and CMake output at the same destination. In a
+        # Force-include into staging so entries override package sources and
+        # CMake output at the same destination. In a
         # redirect-mode editable, platlib entries the redirect can serve live
         # join the mapping instead of being baked in as stale copies.
         redirecting = editable and settings.editable.mode == "redirect"
@@ -605,6 +600,7 @@ def _build_wheel_impl_impl(
                 wheel_dirs,
                 exclude=settings.wheel.exclude,
                 exclude_exempt=force_included,
+                source_mapping=mapping if not editable else None,
             )
 
             str_pkgs = package_search_dirs(packages)

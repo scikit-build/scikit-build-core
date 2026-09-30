@@ -91,6 +91,21 @@ def test_force_include_file_into_wheel(chdir_tmp: Path) -> None:
     assert wheel_read(dist, "pkg/data.txt") == b"hello"
 
 
+def test_package_sources_are_not_copied(chdir_tmp: Path, monkeypatch) -> None:
+    make_pure_pkg(chdir_tmp)
+
+    def unexpected_copy(*_args, **_kwargs):
+        pytest.fail("Ordinary package sources must be written directly to the wheel")
+
+    monkeypatch.setattr("scikit_build_core.build.wheel.shutil.copy2", unexpected_copy)
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist), {})
+    assert (
+        wheel_read(dist, "pkg/__init__.py")
+        == (chdir_tmp / "pkg/__init__.py").read_bytes()
+    )
+
+
 def test_force_include_directory_recurses_and_skips_junk(chdir_tmp: Path) -> None:
     make_pure_pkg(
         chdir_tmp,
