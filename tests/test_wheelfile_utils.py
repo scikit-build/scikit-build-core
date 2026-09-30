@@ -97,6 +97,28 @@ def test_direct_sources_match_staged_wheel(
     assert not any(entry[0].endswith(("skip.pyc", "excluded")) for entry in results[1])
 
 
+def test_staged_symlink_to_package_source(tmp_path):
+    # CMake may install a relative symlink whose target comes from the package
+    # sources, which are no longer copied into staging.
+    source = tmp_path / "source.txt"
+    source.write_bytes(b"data")
+    platlib = tmp_path / "platlib"
+    (platlib / "pkg").mkdir(parents=True)
+    try:
+        (platlib / "pkg/alias.txt").symlink_to("data.txt")
+    except OSError:
+        pytest.skip("symlinks not supported")
+    wheel = _make_writer(tmp_path)
+    with wheel:
+        wheel.build(
+            {"platlib": platlib},
+            source_mapping={str(source): str(platlib / "pkg/data.txt")},
+        )
+    with zipfile.ZipFile(wheel.wheelpath) as archive:
+        assert archive.read("pkg/data.txt") == b"data"
+        assert archive.read("pkg/alias.txt") == b"data"
+
+
 def test_wheel_timestamp_reproducible_fixed_epoch(tmp_path, monkeypatch):
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     wheel = _make_writer(tmp_path)

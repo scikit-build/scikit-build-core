@@ -228,6 +228,11 @@ class WheelWriter:
             plans[key] = wheel_dirs[key]
 
         exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude)
+        # Staged symlinks may point at package sources that are not in staging.
+        resolved_sources = {
+            Path(os.path.realpath(dst)): Path(src)
+            for src, dst in (source_mapping or {}).items()
+        }
 
         for key, path in plans.items():
             sources = (
@@ -235,7 +240,13 @@ class WheelWriter:
                 if not key
                 else {}
             )
-            sources.update((f, f) for f in path.glob("**/*") if f.is_file())
+            for f in path.glob("**/*"):
+                if f.is_file():
+                    sources[f] = f
+                elif f.is_symlink():
+                    target = resolved_sources.get(Path(os.path.realpath(f)))
+                    if target is not None:
+                        sources[f] = target
             for filename in sorted(sources):
                 if any(x.endswith(".dist-info") for x in filename.parts):
                     continue
