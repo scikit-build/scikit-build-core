@@ -982,6 +982,38 @@ def test_gitignore_stops_at_repository_boundary(
     }
 
 
+@pytest.mark.parametrize("marker", ["git-dir", "gitmodules"])
+@pytest.mark.parametrize("walk_from", ["root", "vendor"])
+def test_ignored_repository_boundary_excludes_subtree(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    marker: str,
+    walk_from: str,
+) -> None:
+    """
+    A repository inside a directory the outer repository ignores is excluded
+    as a whole, even when an include keeps the directory walkable (#1593).
+    """
+    monkeypatch.chdir(tmp_path)
+    Path(".gitignore").write_text("vendor/\n")
+    lib = Path("vendor/lib")
+    (lib / "src").mkdir(parents=True)
+    (lib / "code.c").write_text("content")
+    (lib / "src/impl.c").write_text("content")
+    (lib / "keep.txt").write_text("content")
+    if marker == "gitmodules":
+        Path(".gitmodules").write_text('[submodule "lib"]\n\tpath = vendor/lib\n')
+    else:
+        (lib / ".git").mkdir()
+
+    start = Path() if walk_from == "root" else Path("vendor")
+    result = set(each_unignored_file(start, include=["**/keep.txt"], mode="default"))
+
+    assert lib / "keep.txt" in result
+    assert lib / "code.c" not in result
+    assert lib / "src/impl.c" not in result
+
+
 def test_gitmodules_value_syntax(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -331,13 +331,21 @@ def _repo_ignores(
     """
     Ignore specs that apply to entries of ``dirpath``, nearest first. Like
     git, the search stops at the repository (submodule) boundary; the entry of
-    a submodule itself still belongs to the outer repository.
+    a submodule itself still belongs to the outer repository. If the outer
+    repository ignores that entry, its rules apply to the whole subtree.
     """
     ignores = []
     for np in (dirpath, *dirpath.parents):
         if (spec := nested_excludes.get(np)) is not None:
             ignores.append((np, spec))
         if np in boundaries:
+            if np != Path():
+                outer = _repo_ignores(np.parent, nested_excludes, boundaries)
+                if any(
+                    spec.check_file(f"{np.relative_to(op).as_posix()}/").include
+                    for op, spec in outer
+                ):
+                    ignores.extend(outer)
             break
     return ignores
 
