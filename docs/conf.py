@@ -146,6 +146,10 @@ nitpick_ignore = [
     ("py:data", "typing.Union"),
 ]
 
+# sphinx-llm 1.1+ relays the markdown builder's warnings for nodes it can't
+# render, which fails the -W build.
+llms_txt_suppress_unknown_node_warnings = True
+
 linkcheck_anchors_ignore = [
     # This seems to be broken on GitHub readmes
     "default-versioning-scheme",
