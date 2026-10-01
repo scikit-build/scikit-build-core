@@ -262,11 +262,17 @@ class CMakeSettings:
     .. versionadded:: 1.1
     """
 
-    python_hints: bool = True
+    python_hints: Union[bool, Literal["external"]] = True
     """
-    Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
-    Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
-    instead.
+    Pass hints derived from the current Python build environment to FindPython.
+
+    Set this to ``false`` when the toolchain file should handle Python discovery
+    instead. The default ``true`` passes hints derived from the running Python,
+    but ignores ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from the build
+    environment. Set this to ``"external"`` to use non-empty values from those
+    environment variables as development hints, falling back to normal
+    detection when a value is unset or empty. ``PYTHON_LIBRARY`` is not used
+    for stable-ABI builds.
     """
 
 
