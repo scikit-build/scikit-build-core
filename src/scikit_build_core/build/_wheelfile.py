@@ -202,7 +202,14 @@ class WheelWriter:
         wheel_dirs: Mapping[str, Path],
         exclude: Sequence[str] = (),
         exclude_exempt: AbstractSet[Path] = frozenset(),
+        *,
+        source_mapping: Mapping[str, str] | None = None,
     ) -> None:
+        """Write staged files and optional source-to-staging package mappings.
+
+        Package sources are read directly, without an intermediate copy. Files
+        already in staging take precedence, including force-included files.
+        """
         (targetlib,) = {"platlib", "purelib"} & set(wheel_dirs)
         assert {
             targetlib,
@@ -221,11 +228,26 @@ class WheelWriter:
             plans[key] = wheel_dirs[key]
 
         exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude)
+        # Staged symlinks may point at package sources that are not in staging.
+        resolved_sources = {
+            Path(os.path.realpath(dst)): Path(src)
+            for src, dst in (source_mapping or {}).items()
+        }
 
         for key, path in plans.items():
-            for filename in sorted(path.glob("**/*")):
-                if not filename.is_file():
-                    continue
+            sources = (
+                {Path(dst): Path(src) for src, dst in (source_mapping or {}).items()}
+                if not key
+                else {}
+            )
+            for f in path.glob("**/*"):
+                if f.is_file():
+                    sources[f] = f
+                elif f.is_symlink():
+                    target = resolved_sources.get(Path(os.path.realpath(f)))
+                    if target is not None:
+                        sources[f] = target
+            for filename in sorted(sources):
                 if any(x.endswith(".dist-info") for x in filename.parts):
                     continue
                 if filename.suffix in {".pyc", ".pyo"}:
@@ -238,7 +260,7 @@ class WheelWriter:
                 ):
                     continue
                 target = Path(data_dir) / key / relpath if key else relpath
-                self.write(str(filename), str(target))
+                self.write(str(sources[filename]), str(target))
 
         dist_info_contents = self.dist_info_contents()
         for key, data in dist_info_contents.items():
