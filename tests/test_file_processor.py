@@ -1001,6 +1001,10 @@ def test_ignored_repository_boundary_excludes_subtree(
     (lib / "code.c").write_text("content")
     (lib / "src/impl.c").write_text("content")
     (lib / "keep.txt").write_text("content")
+    # A repository nested in the ignored one is ignored too.
+    (lib / "sub/.git").mkdir(parents=True)
+    (lib / "sub/nested.c").write_text("content")
+    (lib / "sub/keep.txt").write_text("content")
     if marker == "gitmodules":
         Path(".gitmodules").write_text('[submodule "lib"]\n\tpath = vendor/lib\n')
     else:
@@ -1009,9 +1013,8 @@ def test_ignored_repository_boundary_excludes_subtree(
     start = Path() if walk_from == "root" else Path("vendor")
     result = set(each_unignored_file(start, include=["**/keep.txt"], mode="default"))
 
-    assert lib / "keep.txt" in result
-    assert lib / "code.c" not in result
-    assert lib / "src/impl.c" not in result
+    vendored = {p for p in result if Path("vendor") in p.parents}
+    assert vendored == {lib / "keep.txt", lib / "sub/keep.txt"}
 
 
 def test_gitmodules_value_syntax(

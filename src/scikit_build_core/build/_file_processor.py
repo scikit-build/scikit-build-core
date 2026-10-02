@@ -182,6 +182,7 @@ def each_unignored_file(
             lines += _read_lines(dirpath / ".gitignore")
             if lines:
                 nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(lines)
+    ignored_boundaries = _ignored_boundaries(nested_excludes, boundaries)
 
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
 
@@ -206,6 +207,8 @@ def each_unignored_file(
     for dirstr, dirs, filenames in os.walk(str(starting_path), followlinks=True):
         dirpath = Path(dirstr)
         repo_ignores = _repo_ignores(dirpath, nested_excludes, boundaries)
+        # Entries below an ignored boundary need only the include check.
+        ignored = not ignored_boundaries.isdisjoint((dirpath, *dirpath.parents))
         key = _dir_key(dirstr)
         # os.path.dirname keeps the exact string form os.walk uses for keys
         # (e.g. "" for the root), unlike Path.parent which maps it to ".".
@@ -232,6 +235,7 @@ def each_unignored_file(
                     _repo_ignores(dirpath.parent, nested_excludes, boundaries),
                     is_path=False,
                     explicit=explicit,
+                    ignored=not ignored_boundaries.isdisjoint(dirpath.parents),
                 )
             ):
                 yield dirpath
@@ -257,6 +261,7 @@ def each_unignored_file(
                     repo_ignores,
                     is_path=False,
                     explicit=explicit,
+                    ignored=ignored,
                 ):
                     yield dpath
         if mode != "classic":
@@ -269,6 +274,7 @@ def each_unignored_file(
                     repo_ignores,
                     is_path=True,
                     explicit=explicit,
+                    ignored=ignored,
                 ):
                     # Only prune if no include pattern could match a file below
                     # this directory. A literal include deeper than the dir, or
@@ -288,6 +294,7 @@ def each_unignored_file(
                 repo_ignores,
                 is_path=False,
                 explicit=explicit,
+                ignored=ignored,
             ):
                 yield path
 
@@ -331,23 +338,33 @@ def _repo_ignores(
     """
     Ignore specs that apply to entries of ``dirpath``, nearest first. Like
     git, the search stops at the repository (submodule) boundary; the entry of
-    a submodule itself still belongs to the outer repository. If the outer
-    repository ignores that entry, its rules apply to the whole subtree.
+    a submodule itself still belongs to the outer repository.
     """
     ignores = []
     for np in (dirpath, *dirpath.parents):
         if (spec := nested_excludes.get(np)) is not None:
             ignores.append((np, spec))
         if np in boundaries:
-            if np != Path():
-                outer = _repo_ignores(np.parent, nested_excludes, boundaries)
-                if any(
-                    spec.check_file(f"{np.relative_to(op).as_posix()}/").include
-                    for op, spec in outer
-                ):
-                    ignores.extend(outer)
             break
     return ignores
+
+
+def _ignored_boundaries(
+    nested_excludes: dict[Path, pathspec.GitIgnoreSpec],
+    boundaries: set[Path],
+) -> set[Path]:
+    """
+    Repository boundaries that an outer repository ignores. Like git, nothing
+    below such a boundary can be re-included by an ignore rule.
+    """
+    ignored: set[Path] = set()
+    for b in sorted(boundaries - {Path()}, key=lambda b: len(b.parts)):
+        if any(p in ignored for p in b.parents) or any(
+            spec.check_file(f"{b.relative_to(op).as_posix()}/").include
+            for op, spec in _repo_ignores(b.parent, nested_excludes, boundaries)
+        ):
+            ignored.add(b)
+    return ignored
 
 
 def match_path(
@@ -359,6 +376,7 @@ def match_path(
     *,
     is_path: bool,
     explicit: bool = False,
+    ignored: bool = False,
 ) -> bool:
     ptype = "directory" if is_path else "file"
 
@@ -401,6 +419,14 @@ def match_path(
             include_spec.patterns[c.index].pattern,
         )
         return True
+
+    if ignored:
+        logger.debug(
+            "Excluding {} {} because it is below an ignored repository boundary.",
+            ptype,
+            p,
+        )
+        return False
 
     # Always exclude something excluded
     if (c := user_exclude_spec.check_file(p)).include:
