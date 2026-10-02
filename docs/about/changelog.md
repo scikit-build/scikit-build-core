@@ -1,5 +1,12 @@
 # Changelog
 
+## In development
+
+Fixes:
+
+- Only set `Python_FIND_ABI` for free-threaded builds on CMake 4.1.2+, since
+  older versions fail to find `Development.Module` when it is set (#1597).
+
 ## Version 1.1.0
 
 Packages can now declare their own config-settings in a

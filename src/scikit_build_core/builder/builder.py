@@ -419,8 +419,9 @@ class Builder:
                 cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
                 cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
                 # Interpreter-less FindPython rejects the free-threaded "t" ABI
-                # unless the 4-tuple (3.30+) FIND_ABI requests it.
-                if gil_disabled and self.config.cmake.version >= Version("3.30"):
+                # unless the 4-tuple (3.30+) FIND_ABI requests it. Before CMake
+                # 4.1.2, setting it breaks Development.Module (cmake#27192).
+                if gil_disabled and self.config.cmake.version >= Version("4.1.2"):
                     cache_config[f"{prefix}_FIND_ABI"] = "ANY;ANY;ANY;ON"
                 # On Windows the library is constructed and existence-checked,
                 # so this is reliable. On POSIX a library hint can break
