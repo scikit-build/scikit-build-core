@@ -733,9 +733,10 @@ def test_builder_combined_abi3_abi3t(tmp_path, monkeypatch, gil, soabi, is_ft):
 @pytest.mark.parametrize(
     ("gil", "cmake_version", "expected"),
     [
-        pytest.param("t", "3.30", True, id="ft_cmake330"),
-        pytest.param("t", "3.29", False, id="ft_cmake329"),
-        pytest.param(None, "3.30", False, id="gil_cmake330"),
+        pytest.param("t", "4.1.2", True, id="ft_cmake4.1.2"),
+        pytest.param("t", "4.1.1", False, id="ft_cmake4.1.1"),
+        pytest.param("t", "3.30", False, id="ft_cmake330"),
+        pytest.param(None, "4.1.2", False, id="gil_cmake4.1.2"),
     ],
 )
 def test_builder_free_threaded_find_abi(
@@ -743,6 +744,7 @@ def test_builder_free_threaded_find_abi(
 ):
     # Interpreter-less find_package(Python COMPONENTS Development.Module) only
     # matches the free-threaded ABI if Python_FIND_ABI requests it (#1531).
+    # Before CMake 4.1.2, setting it breaks Development.Module (#1597).
     get_config_var = sysconfig.get_config_var
     monkeypatch.setattr(
         sysconfig,
