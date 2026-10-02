@@ -1,11 +1,31 @@
 # Changelog
 
-## In development
+## Version 1.1.1
+
+This patch release improves performance and fixes two minor regressions from
+1.1.0. Free-threaded builds work again on CMake versions between 3.30 and 4.1.2
+(please update CMake to 4.1.2+, though). A checkout inside an ignored directory
+is again left out of the SDist. Wheel builds are also faster, especially on
+Windows, because package sources are no longer copied to a staging directory
+first.
 
 Fixes:
 
 - Only set `Python_FIND_ABI` for free-threaded builds on CMake 4.1.2+, since
-  older versions fail to find `Development.Module` when it is set (#1597).
+  older versions fail to find `Development.Module` when it is set (#1597) in
+  #1598
+- SDist: a repository boundary that the outer repository ignores is excluded
+  with its full subtree (#1593) in #1594. Also improves performance.
+
+Performance:
+
+- Write package sources directly to wheels without staging copies (#1591) by
+  @sepcnt in #1592
+
+CI and testing:
+
+- Suppress sphinx-llm unknown node warnings in #1595
+- Use CMake 4.2 on `windows-11-arm` in #1590
 
 ## Version 1.1.0
 
