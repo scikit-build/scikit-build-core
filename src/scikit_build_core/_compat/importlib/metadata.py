@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"importlib.metadata"}
+
 import functools
 import importlib.metadata
 import sys

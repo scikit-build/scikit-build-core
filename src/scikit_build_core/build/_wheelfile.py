@@ -4,7 +4,6 @@ __lazy_modules__ = {
     "base64",
     "csv",
     "datetime",
-    "email",
     "email.message",
     "hashlib",
     "io",

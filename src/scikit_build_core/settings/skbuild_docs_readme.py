@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"typing", f"{__spec__.parent}.skbuild_model"}
+__lazy_modules__ = {
+    "typing",
+    f"{__spec__.parent}.documentation",
+    f"{__spec__.parent}.skbuild_model",
+}
 
 import dataclasses
 import typing

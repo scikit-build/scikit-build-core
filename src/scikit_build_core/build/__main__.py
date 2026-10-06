@@ -4,9 +4,8 @@ __lazy_modules__ = {
     "argparse",
     "json",
     "scikit_build_core._logging",
-    "scikit_build_core.builder",
+    "scikit_build_core.build",
     "scikit_build_core.builder._load_provider",
-    "scikit_build_core.settings",
     "scikit_build_core.settings.__main__",
     "typing",
 }

@@ -17,7 +17,9 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.wheel_tag",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_model",
     f"{__spec__.parent}._pathutil",
 }
 

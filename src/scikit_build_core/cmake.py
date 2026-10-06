@@ -2,12 +2,12 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "json",
-    "packaging",
     "packaging.version",
     "shutil",
     "subprocess",
     "textwrap",
     "typing",
+    f"{__spec__.parent}",
     f"{__spec__.parent}._compat.builtins",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}._shutil",
