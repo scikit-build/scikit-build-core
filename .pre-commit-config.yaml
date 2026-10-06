@@ -24,7 +24,7 @@ repos:
         exclude: "^tests"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 321478e58f4938179c6b86e4ddfa923d1547a49b # frozen: v0.16.6
+    rev: f12be1ebaa5351c1fc76472de98db2c3446c8253  # frozen: v0.16.10
     hooks:
       - id: ruff-check
         args: ["--fix"]
@@ -57,7 +57,7 @@ repos:
         exclude: ^src/scikit_build_core/resources/find_python
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "0ee178619d696787ca73d210cc191d720868c631" # frozen: v3.9.6
+    rev: "ef4a397f916211b4a39ccf9d3d9cbb6562157251"  # frozen: v3.9.9
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
@@ -65,7 +65,7 @@ repos:
         exclude: "^tests|src/scikit_build_core/resources/scikit-build.schema.json|^docs/projects.md|^docs/_templates/"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 7ff8d35ae36a7d2b968f2f90b4c723e292e594ee # frozen: v2.3.1
+    rev: 2834ec6639549dd6796205c8f011dedcd587288b  # frozen: v2.4.0
     hooks:
       - id: mypy
         exclude: |
@@ -103,7 +103,7 @@ repos:
           - hatch-vcs
 
   - repo: https://github.com/crate-ci/typos
-    rev: c132f8b9e3ac7f8f0625490b1cb5b906d1d6a63a # frozen: v1
+    rev: dd369349b73c245acd4dd4154a4bdf771d052150  # frozen: typos-dict-v0.14.2
     hooks:
       - id: typos
         args: []
@@ -141,12 +141,12 @@ repos:
         additional_dependencies: ["cogapp>=3.5"]
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 0cee1769d7b9f642b7545be04c079f94277d6833 # frozen: 2026.09.04
+    rev: ae9c8c7039f4ec4ae005660c80dbcb954f61da5a  # frozen: 2026.10.02
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: c4654a7e007c9619a5eb63c39a456572a0fa1851 # frozen: 0.38.0
+    rev: 4f85d46a92dc17713078e5de73f8a13190edf6fc  # frozen: 0.38.2
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
@@ -160,7 +160,7 @@ repos:
       - id: validate-cff
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: cef8b8350da46d8114c7e6b7272aebdccdf193ce # frozen: v1.30.0
+    rev: fa412071e4f5d44d44f9e365f4676f9df92456a2  # frozen: v1.30.1
     hooks:
       - id: zizmor
         files: "^\\.github"
