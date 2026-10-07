@@ -281,6 +281,7 @@ messages_control.disable = [
     "redefined-builtin",  # ExceptionGroup is a builtin
     "using-exception-groups-in-unsupported-version",  # We are using a backport
     "duplicate-code", # Trips up on version
+    "too-many-lines",
 ]
 
 
