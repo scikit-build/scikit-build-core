@@ -2,9 +2,9 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
+    "collections.abc",
     "dataclasses",
     "fnmatch",
-    "packaging",
     "packaging.version",
     "pathlib",
     "shlex",
@@ -18,6 +18,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.macos",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_model",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
 }
 

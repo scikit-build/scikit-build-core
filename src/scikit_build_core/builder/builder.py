@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    "importlib",
     "importlib.resources",
-    "packaging",
     "packaging.version",
     "platform",
     "re",
     "shlex",
     "sysconfig",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",

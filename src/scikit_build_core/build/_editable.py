@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "collections.abc",
     "pathlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.resources",
     f"{__spec__.parent}._pathutil",

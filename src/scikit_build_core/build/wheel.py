@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "functools",
-    "packaging",
     "packaging.requirements",
     "packaging.tags",
     "packaging.utils",

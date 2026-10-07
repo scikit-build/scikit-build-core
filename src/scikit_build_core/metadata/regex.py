@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"functools", "pathlib", "re", "typing"}
+__lazy_modules__ = {"functools", "pathlib", "re", "typing", f"{__spec__.parent}"}
 
 import functools
 import re

@@ -3,7 +3,6 @@ from __future__ import annotations
 __lazy_modules__ = {
     "ast",
     "inspect",
-    "packaging",
     "packaging.specifiers",
     "packaging.version",
     "pathlib",

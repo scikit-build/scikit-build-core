@@ -2,9 +2,7 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "copy",
-    "importlib",
     "importlib.metadata",
-    "packaging",
     "packaging.utils",
     "packaging.version",
     "pathlib",

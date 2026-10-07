@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "dataclasses",
-    "packaging",
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
