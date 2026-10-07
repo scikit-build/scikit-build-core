@@ -425,10 +425,16 @@ class EnvSource(Source):
             raise TypeError(msg)
 
         if raw_target is Literal:
-            if item not in get_args(process_union(target)):
-                msg = f"{item!r} not in {get_args(process_union(target))!r}"
-                raise TypeError(msg)
-            return item
+            literal_args = get_args(process_union(target))
+            if item in literal_args:
+                return item
+            if item == "external" and "environment" in literal_args:
+                return "environment"
+            bool_val = _process_bool(item)
+            if "interpreter" in literal_args and "none" in literal_args:
+                return "interpreter" if bool_val else "none"
+            msg = f"{item!r} not in {literal_args!r}"
+            raise TypeError(msg)
 
         if callable(raw_target):
             return raw_target(item)
@@ -633,10 +639,22 @@ class ConfSource(Source):
         if raw_target is bool:
             return item if isinstance(item, bool) else _process_bool(item)
         if raw_target is Literal:
-            if item not in get_args(process_union(target)):
-                msg = f"{item!r} not in {get_args(process_union(target))!r}"
+            literal_args = get_args(process_union(target))
+            if isinstance(item, bool):
+                if "interpreter" in literal_args and "none" in literal_args:
+                    return "interpreter" if item else "none"
+                msg = f"Expected {target}, got bool"
                 raise TypeError(msg)
-            return item
+            if item in literal_args:
+                return item
+            if item == "external" and "environment" in literal_args:
+                return "environment"
+            if isinstance(item, str):
+                bool_val = _process_bool(item)
+                if "interpreter" in literal_args and "none" in literal_args:
+                    return "interpreter" if bool_val else "none"
+            msg = f"{item!r} not in {literal_args!r}"
+            raise TypeError(msg)
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -786,10 +804,18 @@ class TOMLSource(Source):
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is Literal:
-            if item not in get_args(process_union(target)):
-                msg = f"{item!r} not in {get_args(process_union(target))!r}"
+            literal_args = get_args(process_union(target))
+            if isinstance(item, bool):
+                if "interpreter" in literal_args and "none" in literal_args:
+                    return "interpreter" if item else "none"
+                msg = f"Expected {target}, got bool"
                 raise TypeError(msg)
-            return item
+            if item in literal_args:
+                return item
+            if item == "external" and "environment" in literal_args:
+                return "environment"
+            msg = f"{item!r} not in {literal_args!r}"
+            raise TypeError(msg)
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"

@@ -126,12 +126,15 @@
             },
             {
               "enum": [
+                "none",
+                "interpreter",
+                "environment",
                 "external"
               ]
             }
           ],
-          "default": true,
-          "description": "Pass hints derived from the current Python build environment to FindPython."
+          "default": "interpreter",
+          "description": "Control which Python hints are passed to FindPython."
         }
       }
     },

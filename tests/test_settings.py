@@ -252,14 +252,25 @@ def test_toml():
     assert settings.literal == "three"
 
 
-def test_bool_literal_union_conversion():
-    target = Union[bool, Literal["external"]]
-    assert EnvSource.convert("external", target) == "external"
-    assert ConfSource.convert("external", target) == "external"
-    assert TOMLSource.convert("external", target) == "external"
-    assert EnvSource.convert("false", target) is False
-    assert ConfSource.convert("off", target) is False
-    assert TOMLSource.convert(item=False, target=target) is False
+def test_python_hints_conversion():
+    target = Literal["none", "interpreter", "environment"]
+    assert EnvSource.convert("none", target) == "none"
+    assert EnvSource.convert("interpreter", target) == "interpreter"
+    assert EnvSource.convert("environment", target) == "environment"
+    assert EnvSource.convert("external", target) == "environment"
+    assert EnvSource.convert("false", target) == "none"
+    assert EnvSource.convert("true", target) == "interpreter"
+    assert ConfSource.convert("external", target) == "environment"
+    assert ConfSource.convert("off", target) == "none"
+    assert ConfSource.convert("on", target) == "interpreter"
+    assert ConfSource.convert(False, target) == "none"
+    assert ConfSource.convert(True, target) == "interpreter"
+    assert TOMLSource.convert("none", target) == "none"
+    assert TOMLSource.convert("interpreter", target) == "interpreter"
+    assert TOMLSource.convert("environment", target) == "environment"
+    assert TOMLSource.convert("external", target) == "environment"
+    assert TOMLSource.convert(False, target) == "none"
+    assert TOMLSource.convert(True, target) == "interpreter"
 
 
 def test_toml_union():

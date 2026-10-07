@@ -116,16 +116,17 @@ CMake's guide on how to write the [toolchain file].
 You can pass the toolchain file using the environment variable
 `CMAKE_TOOLCHAIN_FILE`, or the `cmake.toolchain-file` pyproject option. You may
 also need to use `wheel.tags` to manually specify the wheel tags to use for the
-file and `cmake.python-hints = false` if the target python should be detected
+file and `cmake.python-hints = "none"` if the target python should be detected
 using the toolchain file instead.
 
 For a staged Python installation, set `PYTHON_INCLUDE_DIR` and the regular-build
 `PYTHON_LIBRARY` in the effective build environment and set
-`cmake.python-hints = "external"`. These non-empty values are used as Python
+`cmake.python-hints = "environment"`. These non-empty values are used as Python
 development hints; an unset or empty value keeps the normal
 `sysconfig`/`DIST_EXTRA_CONFIG` fallback. The default
-`cmake.python-hints = true` ignores these environment variables, and the regular
-library hint is not used for stable-ABI (`abi3`/`abi3t`) builds.
+`cmake.python-hints = "interpreter"` ignores these environment variables, and the regular
+library hint is not used for stable-ABI (`abi3`/`abi3t`) builds. Boolean values
+and ``"external"`` are still accepted for backward compatibility.
 
 :::{note}
 

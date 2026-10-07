@@ -393,10 +393,10 @@ class Builder:
             )
 
         python_hints = self.settings.cmake.python_hints
-        if python_hints:
-            external_python_hints = python_hints == "external"
+        if python_hints != "none":
+            environment_python_hints = python_hints == "environment"
             python_hint_env = self.config.env
-            if not external_python_hints:
+            if not environment_python_hints:
                 python_hint_env = {
                     key: value
                     for key, value in self.config.env.items()
@@ -406,7 +406,7 @@ class Builder:
             # Only computed when the hints are used; get_numpy_include_dir imports NumPy.
             python_library = get_python_library(python_hint_env, abi3=False)
             python_library_from_env = (
-                self.config.env.get("PYTHON_LIBRARY") if external_python_hints else None
+                self.config.env.get("PYTHON_LIBRARY") if environment_python_hints else None
             )
             python_sabi_library = None
             if sabi == _SabiMode.ABI3T:

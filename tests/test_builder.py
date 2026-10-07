@@ -662,7 +662,7 @@ find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
     Builder(
         settings=ScikitBuildSettings(
-            cmake=CMakeSettings(python_hints="external"),
+            cmake=CMakeSettings(python_hints="environment"),
             search=SearchSettings(site_packages=False),
         ),
         config=config,
@@ -702,7 +702,7 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
     }
     Builder(
         settings=ScikitBuildSettings(
-            cmake=CMakeSettings(define=explicit, python_hints="external"),
+            cmake=CMakeSettings(define=explicit, python_hints="environment"),
             search=SearchSettings(site_packages=False),
         ),
         config=config,
@@ -719,22 +719,24 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
 @pytest.mark.parametrize(
     ("python_hints", "limited_api", "environment_library", "modern_library"),
     [
-        ("external", None, "target/python.lib", True),
-        ("external", None, None, False),
-        ("external", True, "target/python.lib", False),
+        ("environment", None, "target/python.lib", True),
+        ("environment", None, None, False),
+        ("environment", True, "target/python.lib", False),
+        ("interpreter", None, "target/python.lib", False),
         (True, None, "target/python.lib", False),
     ],
     ids=[
-        "external-regular-explicit",
-        "external-regular-automatic",
-        "external-stable-abi",
-        "default-ignores-external",
+        "environment-regular-explicit",
+        "environment-regular-automatic",
+        "environment-stable-abi",
+        "interpreter-ignores-environment",
+        "true-maps-to-interpreter",
     ],
 )
 def test_builder_environment_library_hint_posix_modern_cache(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    python_hints: bool | typing.Literal["external"],
+    python_hints: typing.Literal["none", "interpreter", "environment"] | bool,
     limited_api: bool | None,
     environment_library: str | None,
     modern_library: bool,
@@ -774,12 +776,12 @@ def test_builder_environment_library_hint_posix_modern_cache(
     ).configure(defines={}, limited_api=limited_api)
 
     cache = config.init_cache_file.read_text(encoding="utf-8")
-    external_hint = python_hints == "external"
+    environment_hint = python_hints == "environment"
     assert (
         "set(PYTHON_INCLUDE_DIR [===[target/include]===] CACHE PATH" in cache
-    ) == external_hint
+    ) == environment_hint
     assert ("set(PYTHON_LIBRARY [===[target/python.lib]===] CACHE PATH" in cache) == (
-        external_hint and environment_library is not None
+        environment_hint and environment_library is not None
     )
     assert ("set(Python_LIBRARY " in cache) == modern_library
     assert ("set(Python3_LIBRARY " in cache) == modern_library

@@ -357,20 +357,29 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.python-hints
 
-  :Type: ``bool | "external"``
-  :Default: true
+  :Type: ``"none" | "interpreter" | "environment"``
+  :Default: ``"interpreter"``
   :Config-settings: ``cmake.python-hints`` or ``skbuild.cmake.python-hints``
   :Environment variable: ``SKBUILD_CMAKE_PYTHON_HINTS``
 
-  Pass hints derived from the current Python build environment to FindPython.
+  Control which Python hints are passed to FindPython.
 
-  Set this to ``false`` when the toolchain file should handle Python discovery
-  instead. The default ``true`` passes hints derived from the running Python,
-  but ignores ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from the build
-  environment. Set this to ``"external"`` to use non-empty values from those
-  environment variables as development hints, falling back to normal
-  detection when a value is unset or empty. ``PYTHON_LIBRARY`` is not used
-  for stable-ABI builds.
+  - ``"none"``: Pass no hints; let CMake/FindPython discover everything on its
+    own. Use this when the toolchain file handles Python discovery.
+  - ``"interpreter"`` (default): Pass hints derived from the running Python
+    interpreter, but ignore ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from
+    the build environment.
+  - ``"environment"``: Pass hints derived from the running Python interpreter,
+    and also use non-empty values from ``PYTHON_INCLUDE_DIR`` and
+    ``PYTHON_LIBRARY`` environment variables as development hints, falling
+    back to normal detection when a value is unset or empty.
+    ``PYTHON_LIBRARY`` is not used for stable-ABI builds.
+
+  .. versionchanged:: 1.1
+     Changed from a boolean + ``"external"`` to a three-value enum.
+     Boolean ``True`` maps to ``"interpreter"``, boolean ``False`` maps to
+     ``"none"``, and ``"external"`` maps to ``"environment"`` for backward
+     compatibility.
 ```
 
 ```{eval-rst}

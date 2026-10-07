@@ -582,6 +582,14 @@ class SettingsReader:
         else:
             self.settings.sdist.resolve_symlinks = "all"
 
+        python_hints = self.settings.cmake.python_hints
+        if python_hints is True:
+            self.settings.cmake.python_hints = "interpreter"
+        elif python_hints is False:
+            self.settings.cmake.python_hints = "none"
+        elif python_hints == "external":
+            self.settings.cmake.python_hints = "environment"
+
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
 

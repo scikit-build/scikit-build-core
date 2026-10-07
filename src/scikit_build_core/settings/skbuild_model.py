@@ -268,18 +268,35 @@ class CMakeSettings:
     .. versionadded:: 1.1
     """
 
-    python_hints: Union[bool, Literal["external"]] = True
+    python_hints: Literal["none", "interpreter", "environment"] = "interpreter"
     """
-    Pass hints derived from the current Python build environment to FindPython.
+    Control which Python hints are passed to FindPython.
 
-    Set this to ``false`` when the toolchain file should handle Python discovery
-    instead. The default ``true`` passes hints derived from the running Python,
-    but ignores ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from the build
-    environment. Set this to ``"external"`` to use non-empty values from those
-    environment variables as development hints, falling back to normal
-    detection when a value is unset or empty. ``PYTHON_LIBRARY`` is not used
-    for stable-ABI builds.
+    - ``"none"``: Pass no hints; let CMake/FindPython discover everything on its
+      own. Use this when the toolchain file handles Python discovery.
+    - ``"interpreter"`` (default): Pass hints derived from the running Python
+      interpreter, but ignore ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from
+      the build environment.
+    - ``"environment"``: Pass hints derived from the running Python interpreter,
+      and also use non-empty values from ``PYTHON_INCLUDE_DIR`` and
+      ``PYTHON_LIBRARY`` environment variables as development hints, falling
+      back to normal detection when a value is unset or empty.
+      ``PYTHON_LIBRARY`` is not used for stable-ABI builds.
+
+    .. versionchanged:: 1.1
+       Changed from a boolean + ``"external"`` to a three-value enum.
+       Boolean ``True`` maps to ``"interpreter"``, boolean ``False`` maps to
+       ``"none"``, and ``"external"`` maps to ``"environment"`` for backward
+       compatibility.
     """
+
+    def __post_init__(self) -> None:
+        if self.python_hints is True:
+            self.python_hints = "interpreter"
+        elif self.python_hints is False:
+            self.python_hints = "none"
+        elif self.python_hints == "external":
+            self.python_hints = "environment"
 
 
 @dataclasses.dataclass
