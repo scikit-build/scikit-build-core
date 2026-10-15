@@ -111,6 +111,13 @@ def _is_dir(path: Path) -> bool:
 def get_python_library(
     env: Mapping[str, str], *, abi3: bool = False, abi3t: bool = False
 ) -> Path | None:
+    # A regular Python library supplied by the build environment is the most
+    # specific cross-compilation hint. Do not reuse it for the stable ABI:
+    # ``PYTHON_LIBRARY`` may be a versioned target library, while ``abi3`` and
+    # ``abi3t`` require their own import-library names.
+    if (python_library := env.get("PYTHON_LIBRARY")) and not (abi3 or abi3t):
+        return Path(python_library)
+
     # When cross-compiling, check DIST_EXTRA_CONFIG first
     config_file = env.get("DIST_EXTRA_CONFIG", None)
     if config_file and Path(config_file).is_file():
@@ -203,7 +210,11 @@ def get_python_library(
     return None
 
 
-def get_python_include_dir() -> Path:
+def get_python_include_dir(env: Mapping[str, str] | None = None) -> Path:
+    if env is None:
+        env = os.environ
+    if python_include_dir := env.get("PYTHON_INCLUDE_DIR"):
+        return Path(python_include_dir)
     return Path(sysconfig.get_path("include"))
 
 
