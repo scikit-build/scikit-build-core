@@ -124,9 +124,9 @@ For a staged Python installation, set `PYTHON_INCLUDE_DIR` and the regular-build
 `cmake.python-hints = "environment"`. These non-empty values are used as Python
 development hints; an unset or empty value keeps the normal
 `sysconfig`/`DIST_EXTRA_CONFIG` fallback. The default
-`cmake.python-hints = "interpreter"` ignores these environment variables, and the regular
-library hint is not used for stable-ABI (`abi3`/`abi3t`) builds. Boolean values
-and ``"external"`` are still accepted for backward compatibility.
+`cmake.python-hints = "interpreter"` ignores these environment variables, and
+the regular library hint is not used for stable-ABI (`abi3`/`abi3t`) builds.
+Boolean values and `"external"` are still accepted for backward compatibility.
 
 :::{note}
 

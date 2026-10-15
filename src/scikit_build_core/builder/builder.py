@@ -408,7 +408,9 @@ class Builder:
             # Only computed when the hints are used; get_numpy_include_dir imports NumPy.
             python_library = get_python_library(python_hint_env, abi3=False)
             python_library_from_env = (
-                self.config.env.get("PYTHON_LIBRARY") if environment_python_hints else None
+                self.config.env.get("PYTHON_LIBRARY")
+                if environment_python_hints
+                else None
             )
             python_sabi_library = None
             if sabi == _SabiMode.ABI3T:
