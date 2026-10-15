@@ -2,12 +2,11 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "configparser",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    "packaging",
     "packaging.tags",
     "pathlib",
     "sysconfig",
     "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
 }
 
 import configparser
@@ -34,6 +33,7 @@ __all__ = [
     "get_python_library",
     "get_soabi",
     "info_print",
+    "is_free_threaded",
 ]
 
 
@@ -74,7 +74,7 @@ def _is_debug_build() -> bool:
     return _config_var_is_set("Py_DEBUG")
 
 
-def _is_free_threaded() -> bool:
+def is_free_threaded() -> bool:
     """Whether the interpreter is free-threaded (the ``t`` ABI flag)."""
     return _config_var_is_set("Py_GIL_DISABLED")
 
@@ -86,7 +86,7 @@ def _windows_lib_names(*, abi3: bool, abi3t: bool) -> list[str]:
     ``Support.cmake``). Debug builds get a ``_d`` suffix (tried first), and
     free-threaded builds get a ``t`` ABI flag.
     """
-    free_threaded = _is_free_threaded()
+    free_threaded = is_free_threaded()
     if abi3 or abi3t:
         # Stable ABI: python3.lib, or python3t.lib on free-threaded abi3t.
         t = "t" if (abi3t and free_threaded) else ""
@@ -129,7 +129,7 @@ def get_python_library(
             minor = "" if (abi3 or abi3t) else sys.version_info[1]
             # Stable-ABI abi3 has no free-threaded variant of its own; only
             # abi3t (already handled) and non-SABI builds pick up the "t" flag.
-            suffix = "t" if abi3t or (not abi3 and _is_free_threaded()) else ""
+            suffix = "t" if abi3t or (not abi3 and is_free_threaded()) else ""
             return Path(result) / f"python3{minor}{suffix}.lib"
 
     # Windows CPython has no LIBDIR/LDLIBRARY/LIBRARY config vars, so construct
@@ -151,7 +151,7 @@ def get_python_library(
     ldlibrarystr = sysconfig.get_config_var("LDLIBRARY")
     librarystr = sysconfig.get_config_var("LIBRARY")
     if abi3 or abi3t:
-        if abi3t and sysconfig.get_config_var("Py_GIL_DISABLED"):
+        if abi3t and is_free_threaded():
             replacement = f"python3{sys.version_info[1]}t"
             target = "python3t"
         else:

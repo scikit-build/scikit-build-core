@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "importlib.util",
+    "pathlib",
+    "shlex",
+    "sysconfig",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
@@ -10,12 +15,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}._known_wheels",
     f"{__spec__.parent}._load_provider",
     f"{__spec__.parent}.generator",
-    "importlib",
-    "importlib.util",
-    "pathlib",
-    "shlex",
-    "sysconfig",
-    "typing",
 }
 
 import dataclasses
@@ -39,7 +38,7 @@ from ..program_search import (
 from ..settings.skbuild_read_settings import SettingsReader
 from ._known_wheels import is_known_platform, known_wheels
 from ._load_provider import load_dynamic_metadata, load_provider
-from .generator import parse_generator
+from .generator import resolve_generator
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -61,14 +60,10 @@ def _uses_ninja_generator(settings: ScikitBuildSettings) -> bool | None:
     otherwise.
     """
     args = [*settings.cmake.args, *shlex.split(os.environ.get("CMAKE_ARGS", ""))]
-    generator = parse_generator(args)
-    if generator:
-        return "Ninja" in generator
-
-    if "CMAKE_GENERATOR" in os.environ:
-        return "Ninja" in os.environ["CMAKE_GENERATOR"]
-
-    return None
+    generator = resolve_generator(args, settings.cmake.define, os.environ)
+    if generator is None:
+        return None
+    return "Ninja" in generator
 
 
 def _load_scikit_build_settings(
@@ -120,8 +115,10 @@ class GetRequires:
         cmake_verset = self.settings.cmake.version
 
         # If the module is already installed (via caching the build
-        # environment, for example), we will use that
-        if importlib.util.find_spec("cmake") is not None:
+        # environment, for example), we will use that. A namespace package
+        # (a bare "cmake" directory on sys.path) has no origin.
+        cmake_spec = importlib.util.find_spec("cmake")
+        if cmake_spec is not None and cmake_spec.origin is not None:
             yield f"cmake{cmake_verset}"
             return
 
@@ -150,8 +147,10 @@ class GetRequires:
         ninja_verset = self.settings.ninja.version
 
         # If the module is already installed (via caching the build
-        # environment, for example), we will use that
-        if importlib.util.find_spec("ninja") is not None:
+        # environment, for example), we will use that. A namespace package
+        # (a bare "ninja" directory on sys.path) has no origin.
+        ninja_spec = importlib.util.find_spec("ninja")
+        if ninja_spec is not None and ninja_spec.origin is not None:
             yield f"ninja{ninja_verset}"
             return
 

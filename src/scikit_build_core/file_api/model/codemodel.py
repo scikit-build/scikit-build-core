@@ -1,8 +1,8 @@
 __lazy_modules__ = {
-    f"{__spec__.parent}.common",
-    f"{__spec__.parent}.directory",
     "pathlib",
     "typing",
+    f"{__spec__.parent}.common",
+    f"{__spec__.parent}.directory",
 }
 
 import dataclasses

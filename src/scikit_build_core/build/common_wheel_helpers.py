@@ -11,14 +11,16 @@ configure/build/install. The wheel-assembly side (WheelWriter vs hatchling
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.wheel_tag",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
-    f"{__spec__.parent}._pathutil",
     "pathlib",
     "shutil",
     "sysconfig",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.wheel_tag",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_model",
+    f"{__spec__.parent}._pathutil",
 }
 
 import os
@@ -33,6 +35,7 @@ from ..builder.builder import (
     archs_to_tags,
     get_archs,
     get_cmake_args_from_settings,
+    set_environment_from_settings,
 )
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
@@ -98,15 +101,21 @@ def get_targetlib(settings: ScikitBuildSettings) -> TargetLib:
 
 def get_wheel_tag(settings: ScikitBuildSettings, *, targetlib: TargetLib) -> WheelTag:
     """Compute the best wheel tag for the current environment."""
-    cmake_args = get_cmake_args_from_settings(settings, os.environ)
+    # Builder applies the env table to the CMake environment, so the tag must be
+    # computed against the same environment or it can describe a different
+    # platform than the one that was built (e.g. ARCHFLAGS, #1541).
+    env = os.environ.copy()
+    set_environment_from_settings(env, settings)
+    cmake_args = get_cmake_args_from_settings(settings, env)
     return WheelTag.compute_best(
-        archs_to_tags(get_archs(os.environ, cmake_args)),
+        archs_to_tags(get_archs(env, cmake_args)),
         settings.wheel.py_api,
         expand_macos=settings.wheel.expand_macos_universal_tags,
         root_is_purelib=targetlib == "purelib",
         build_tag=settings.wheel.build_tag,
         cmake_defines=settings.cmake.define,
         cmake_args=cmake_args,
+        env=env,
     )
 
 
@@ -254,6 +263,7 @@ def configure_wheel(
     state: WheelState,
     name: str,
     version: Version,
+    raw_version: str | None = None,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
     build_type: str | None = None,
 ) -> Builder:
@@ -300,6 +310,7 @@ def configure_wheel(
         cache_entries=cache_entries,
         name=name,
         version=version,
+        raw_version=raw_version,
     )
     return builder
 
@@ -338,6 +349,7 @@ def build_install_extra_build_types(
     state: WheelState,
     name: str,
     version: Version,
+    raw_version: str | None = None,
     editable: bool,
     extra_cache_entries: Mapping[str, str | Path] | None = None,
 ) -> None:
@@ -362,6 +374,7 @@ def build_install_extra_build_types(
                 state=state,
                 name=name,
                 version=version,
+                raw_version=raw_version,
                 extra_cache_entries=extra_cache_entries,
             )
         rich_print(
@@ -385,7 +398,7 @@ def build_install_extra_build_types(
         and builder.config.single_config
         and editable
         and settings.editable.mode == "redirect"
-        and settings.editable.rebuild_enabled
+        and settings.editable.persistent_install
     ):
         configure_wheel(
             cmake=builder.config.cmake,
@@ -397,6 +410,7 @@ def build_install_extra_build_types(
             state=state,
             name=name,
             version=version,
+            raw_version=raw_version,
             extra_cache_entries=extra_cache_entries,
         )
 

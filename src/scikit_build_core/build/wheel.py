@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "functools",
+    "packaging.requirements",
+    "packaging.tags",
+    "packaging.utils",
+    "pathlib",
+    "pathspec",
+    "platform",
+    "shutil",
+    "tempfile",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
@@ -16,17 +26,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.common_wheel_helpers",
     f"{__spec__.parent}.generate",
     f"{__spec__.parent}.metadata",
-    "functools",
-    "packaging",
-    "packaging.requirements",
-    "packaging.tags",
-    "packaging.utils",
-    "pathlib",
-    "pathspec",
-    "platform",
-    "shutil",
-    "tempfile",
-    "typing",
 }
 
 import dataclasses
@@ -390,11 +389,11 @@ def _build_wheel_impl_impl(
         #
         # Two triggers: the classic editable.rebuild installs into a tree inside
         # build-dir; setting editable.rebuild-dir installs into a user-chosen tree
-        # (see EditableSettings.rebuild_enabled). Both still require build-dir.
+        # (see EditableSettings.persistent_install). Both still require build-dir.
         editable_rebuild = (
             editable
             and settings.editable.mode == "redirect"
-            and settings.editable.rebuild_enabled
+            and settings.editable.persistent_install
             and bool(settings.build_dir)
         )
         if editable_rebuild:
@@ -538,6 +537,7 @@ def _build_wheel_impl_impl(
                 extra_cache_entries=editable_rebuild_cache,
                 name=metadata.name,
                 version=metadata.version,
+                raw_version=metadata.raw_version,
             )
             if exit_after_config:
                 return WheelImplReturn("", settings=settings)
@@ -552,6 +552,7 @@ def _build_wheel_impl_impl(
                 state=state,
                 name=metadata.name,
                 version=metadata.version,
+                raw_version=metadata.raw_version,
                 editable=editable,
                 extra_cache_entries=editable_rebuild_cache,
             )
@@ -574,13 +575,8 @@ def _build_wheel_impl_impl(
             mode=settings.sdist.inclusion_mode,
         )
 
-        if not editable:
-            for filepath, package_dir in mapping.items():
-                Path(package_dir).parent.mkdir(exist_ok=True, parents=True)
-                shutil.copy2(filepath, package_dir)
-
-        # Force-include into the wheel, after the package copy so entries
-        # override package files and CMake output at the same destination. In a
+        # Force-include into staging so entries override package sources and
+        # CMake output at the same destination. In a
         # redirect-mode editable, platlib entries the redirect can serve live
         # join the mapping instead of being baked in as stale copies.
         redirecting = editable and settings.editable.mode == "redirect"
@@ -603,6 +599,7 @@ def _build_wheel_impl_impl(
                 wheel_dirs,
                 exclude=settings.wheel.exclude,
                 exclude_exempt=force_included,
+                source_mapping=mapping if not editable else None,
             )
 
             str_pkgs = package_search_dirs(packages)

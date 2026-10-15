@@ -175,3 +175,53 @@ def test_metadata_command_state(
     out, _ = capsys.readouterr()
     jout = json.loads(out)
     assert jout["version"] == expected
+
+
+PYPROJECT_OVERRIDE = """
+[build-system]
+requires = ["scikit-build-core", "static-dep"]
+build-backend = "scikit_build_core.build"
+[project]
+name = "test"
+version = "0.1.0"
+
+[tool.scikit-build]
+build.requires = ["from-toml"]
+"""
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        ([], {"scikit-build-core", "static-dep", "from-toml"}),
+        (["--type=both"], {"scikit-build-core", "static-dep", "from-toml"}),
+        (["--type=static"], {"scikit-build-core", "static-dep"}),
+        (["--type=dynamic"], {"from-toml"}),
+        (
+            ["-Cbuild.requires=from-cli"],
+            {"scikit-build-core", "static-dep", "from-cli"},
+        ),
+        (
+            ["--type=dynamic", "--config-setting=build.requires=from-cli"],
+            {"from-cli"},
+        ),
+        # A repeated key is passed as a list
+        (["--type=dynamic", "-Cbuild.requires=a", "-Cbuild.requires=b"], {"a", "b"}),
+    ],
+)
+def test_requires_command_type_and_config(
+    args: list[str],
+    expected: set[str],
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        sys, "argv", ["scikit_build_core.build", "requires", "--mode=sdist", *args]
+    )
+    (tmp_path / "pyproject.toml").write_text(PYPROJECT_OVERRIDE)
+    monkeypatch.chdir(tmp_path)
+
+    main()
+    out, _ = capsys.readouterr()
+    assert set(json.loads(out)) == expected

@@ -20,6 +20,7 @@ from scikit_build_core.builder.builder import (
     _warn_macos_arch_mismatch,
     archs_to_tags,
     get_archs,
+    get_cmake_args_from_settings,
 )
 from scikit_build_core.builder.macos import get_macosx_deployment_target
 from scikit_build_core.builder.sysconfig import (
@@ -454,6 +455,28 @@ def test_builder_get_cmake_args(monkeypatch, cmake_args, answer):
     assert tmpbuilder.get_cmake_args() == answer
 
 
+def test_builder_unsupported_cmake_args_warns_once(monkeypatch, capsys):
+    """
+    The args are computed several times per build (wheel tag, configure, build),
+    but the user must see the warning only once. See #1541.
+    """
+    monkeypatch.setenv("CMAKE_ARGS", "-DCMAKE_BUILD_TYPE=Release -DA=1")
+    tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
+    tmpbuilder = Builder(
+        settings=ScikitBuildSettings(wheel=WheelSettings()),
+        config=tmpcfg,
+    )
+
+    assert tmpbuilder.get_cmake_args() == ["-DA=1"]
+    assert tmpbuilder.get_cmake_args() == ["-DA=1"]
+    assert get_cmake_args_from_settings(tmpbuilder.settings, os.environ) == ["-DA=1"]
+
+    # Counted in fragments; FORCE_COLOR inserts ANSI codes between them.
+    err = capsys.readouterr().err
+    assert err.count("Unsupported CMAKE_ARGS ignored:") == 1
+    assert err.count("-DCMAKE_BUILD_TYPE=Release") == 1
+
+
 def test_builder_exports_source_date_epoch(monkeypatch):
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
     tmpcfg = typing.cast("CMaker", SimpleNamespace(env=os.environ.copy()))
@@ -877,6 +900,24 @@ def test_builder_limited_api_auto_free_threaded(tmp_path, monkeypatch):
     assert "set(Py_TARGET_ABI3T [===[1]===] CACHE STRING" in cache
 
 
+def test_builder_py_api_gil_disabled_zero(tmp_path, monkeypatch):
+    """``Py_GIL_DISABLED = 0`` is a GIL build, so classic abi3 stays available."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "0" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    patch_cpython_runtime(monkeypatch)
+
+    cache = configure_builder_with_limited_api(
+        tmp_path, monkeypatch, limited_api=None, py_api="cp39"
+    )
+
+    assert "Development.SABIModule" in cache
+    assert "Py_TARGET_ABI3T" not in cache
+
+
 @pytest.mark.parametrize(
     ("gil", "soabi", "is_ft"),
     [("t", "abi3t", True), (None, "abi3", False)],
@@ -907,9 +948,10 @@ def test_builder_combined_abi3_abi3t(tmp_path, monkeypatch, gil, soabi, is_ft):
 @pytest.mark.parametrize(
     ("gil", "cmake_version", "expected"),
     [
-        pytest.param("t", "3.30", True, id="ft_cmake330"),
-        pytest.param("t", "3.29", False, id="ft_cmake329"),
-        pytest.param(None, "3.30", False, id="gil_cmake330"),
+        pytest.param("t", "4.1.2", True, id="ft_cmake4.1.2"),
+        pytest.param("t", "4.1.1", False, id="ft_cmake4.1.1"),
+        pytest.param("t", "3.30", False, id="ft_cmake330"),
+        pytest.param(None, "4.1.2", False, id="gil_cmake4.1.2"),
     ],
 )
 def test_builder_free_threaded_find_abi(
@@ -917,6 +959,7 @@ def test_builder_free_threaded_find_abi(
 ):
     # Interpreter-less find_package(Python COMPONENTS Development.Module) only
     # matches the free-threaded ABI if Python_FIND_ABI requests it (#1531).
+    # Before CMake 4.1.2, setting it breaks Development.Module (#1597).
     get_config_var = sysconfig.get_config_var
     monkeypatch.setattr(
         sysconfig,
@@ -938,6 +981,7 @@ def configure_builder_with_version(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     version: Version,
+    raw_version: str | None = None,
 ) -> str:
     source_dir = tmp_path / "src"
     source_dir.mkdir()
@@ -956,7 +1000,9 @@ def configure_builder_with_version(
     )
     monkeypatch.setattr(Builder, "_get_entry_point_search_path", lambda *_: {})
 
-    builder.configure(defines={}, name="example", version=version)
+    builder.configure(
+        defines={}, name="example", version=version, raw_version=raw_version
+    )
     return config.init_cache_file.read_text(encoding="utf-8")
 
 
@@ -977,6 +1023,14 @@ def test_builder_project_version_cmake(tmp_path, monkeypatch, version, full, cap
     cache = configure_builder_with_version(tmp_path, monkeypatch, Version(version))
     assert f"set(SKBUILD_PROJECT_VERSION [===[{capped}]===] CACHE STRING" in cache
     assert f"set(SKBUILD_PROJECT_VERSION_FULL [===[{full}]===] CACHE STRING" in cache
+
+
+def test_builder_project_version_cmake_raw(tmp_path, monkeypatch):
+    cache = configure_builder_with_version(
+        tmp_path, monkeypatch, Version("2024.01.05"), raw_version="2024.01.05"
+    )
+    assert "set(SKBUILD_PROJECT_VERSION [===[2024.1.5]===] CACHE STRING" in cache
+    assert "set(SKBUILD_PROJECT_VERSION_FULL [===[2024.01.05]===] CACHE STRING" in cache
 
 
 @pytest.mark.parametrize(
@@ -1226,6 +1280,47 @@ def test_wheel_tag_with_abi3t_ignored_on_classic(monkeypatch):
     default_tags = WheelTag.compute_best(["x86_64"])
     tags = WheelTag.compute_best(["x86_64"], py_api="cp315t")
     assert tags == default_tags
+
+
+def test_wheel_tag_gil_disabled_zero(monkeypatch):
+    """``Py_GIL_DISABLED = 0`` is a GIL build; ``bool("0")`` would say otherwise."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: "0" if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    patch_cpython_runtime(monkeypatch)
+    monkeypatch.setenv("MACOSX_DEPLOYMENT_TARGET", "10.10")
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(["x86_64"], py_api="cp39")
+    assert str(tags) == "cp39-abi3-macosx_10_10_x86_64"
+
+
+def test_wheel_tag_env_argument(monkeypatch):
+    """The tag reads the passed env, not ``os.environ``."""
+    get_config_var = sysconfig.get_config_var
+    monkeypatch.setattr(
+        sysconfig,
+        "get_config_var",
+        lambda x: None if x == "Py_GIL_DISABLED" else get_config_var(x),
+    )
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.delenv("MACOSX_DEPLOYMENT_TARGET", raising=False)
+    monkeypatch.delenv("_PYTHON_HOST_PLATFORM", raising=False)
+    monkeypatch.setattr(platform, "mac_ver", lambda: ("10.9.2", "", ""))
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"MACOSX_DEPLOYMENT_TARGET": "10.12"}
+    )
+    assert str(tags) == "py3-none-macosx_10_12_x86_64"
+
+    tags = WheelTag.compute_best(
+        ["x86_64"], py_api="py3", env={"_PYTHON_HOST_PLATFORM": "macosx-11.0-arm64"}
+    )
+    assert str(tags) == "py3-none-macosx_11_0_arm64"
 
 
 def test_wheel_tag_host_platform_override(monkeypatch):

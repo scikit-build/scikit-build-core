@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"argparse"}
+__lazy_modules__ = {"argparse", "scikit_build_core.file_api"}
 
 import argparse
 
-from . import query, reply
+from scikit_build_core.file_api import query, reply
 
 __all__ = ["main"]
 

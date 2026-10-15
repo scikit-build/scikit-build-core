@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -160,6 +162,26 @@ def test_load_provider_path_loads_local(tmp_path: Path) -> None:
     provider = load_provider("local_prov_ok", str(plugin_dir))
     hook: Any = provider.dynamic_metadata
     assert hook("version", {}, {}) == "1.2.3"
+
+
+def test_load_provider_relative_path_after_chdir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "path_importer_cache", {})
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    for root, name in ((first, "rel_prov_first"), (second, "rel_prov_second")):
+        (root / "plugins").mkdir(parents=True)
+        (root / "plugins" / f"{name}.py").write_text("VALUE = 1\n")
+    # Same directory mtime, so a cache keyed on the relative path looks fresh
+    mtime = (first / "plugins").stat().st_mtime_ns
+    os.utime(second / "plugins", ns=(mtime, mtime))
+
+    monkeypatch.chdir(first)
+    load_provider("rel_prov_first", "plugins")
+    monkeypatch.chdir(second)
+    provider: Any = load_provider("rel_prov_second", "plugins")
+    assert provider.VALUE == 1
 
 
 def test_load_provider_path_not_shadowed(

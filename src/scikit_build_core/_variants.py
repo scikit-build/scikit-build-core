@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ._vendor.pyproject_metadata import StandardMetadata
     from .settings.skbuild_model import ScikitBuildSettings
 
-VARIANTLIB_BUILD_REQUIREMENT = "variantlib"
+VARIANTLIB_BUILD_REQUIREMENT = "variantlib<0.1"
 VARIANT_DIST_INFO_FILENAME = "variant.json"
 # A wheel filename uses "-" as the field separator, so the variant label (the
 # final field) must not contain dashes or whitespace.

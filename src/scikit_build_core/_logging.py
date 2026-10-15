@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"contextlib", "platform", "typing"}
+__lazy_modules__ = {"contextlib", "platform", "typing", f"{__spec__.parent}"}
 
 import contextlib
 import dataclasses

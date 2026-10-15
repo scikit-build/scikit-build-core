@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import sysconfig
@@ -389,3 +390,27 @@ def test_cmake_fresh_clears_cache(tmp_path: Path) -> None:
     )
     assert not cache.exists()
     assert not cmakefiles.exists()
+
+
+def test_get_cmake_via_envvar_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CMAKE_EXECUTABLE", str(DIR / "not-a-cmake"))
+    with pytest.raises(CMakeNotFoundError):
+        CMake.default_search(env=os.environ)
+
+
+@pytest.mark.parametrize("contents", ["", "{", '{"source_dir": "/nope"}', "[]"])
+def test_cmake_corrupt_info_file(tmp_path: Path, contents: str) -> None:
+    cmake = CMake(Version("3.30"), Path("cmake"))
+    source_dir = DIR / "packages" / "simple_pure"
+    build_dir = tmp_path / "build"
+    build_dir.mkdir()
+
+    info = build_dir / ".skbuild-info.json"
+    info.write_text(contents, encoding="utf-8")
+    cache = build_dir / "CMakeCache.txt"
+    cache.write_text("cached", encoding="utf-8")
+
+    CMaker(cmake, source_dir=source_dir, build_dir=build_dir, build_type="Release")
+
+    assert not cache.exists()
+    assert json.loads(info.read_text(encoding="utf-8"))["source_dir"] == str(source_dir)

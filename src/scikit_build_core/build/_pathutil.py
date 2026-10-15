@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{__spec__.parent}._file_processor",
     "pathlib",
     "pathspec",
     "typing",
+    f"{__spec__.parent}._file_processor",
 }
 
 import importlib.machinery
@@ -28,6 +28,7 @@ __all__ = [
     "is_module",
     "is_trackable",
     "iter_force_include",
+    "iter_package_files",
     "module_loader_rank",
     "packages_to_file_mapping",
     "path_to_module",
@@ -66,20 +67,19 @@ def path_to_module(path: Path) -> str:
     return ".".join(path.parts)
 
 
-def packages_to_file_mapping(
+def iter_package_files(
     *,
     packages: Mapping[str, str],
-    platlib_dir: Path,
     include: Sequence[str],
     src_exclude: Sequence[str],
     target_exclude: Sequence[str],
     build_dir: str,
     mode: Literal["classic", "default", "manual", "explicit"],
-) -> dict[str, str]:
+) -> Iterator[tuple[Path, Path]]:
     """
-    This will output a mapping of source files to target files.
+    Yield ``(source_file, target)`` pairs for the wheel packages, with
+    ``target`` relative to the platlib root.
     """
-    mapping = {}
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(target_exclude)
     for package_str, source_str in packages.items():
         package_dir = Path(package_str)
@@ -90,9 +90,7 @@ def packages_to_file_mapping(
         # which already carries the module's name.
         if source_dir.is_file():
             if not exclude_spec.match_file(package_dir):
-                target_path = platlib_dir / package_dir
-                if not target_path.is_file():
-                    mapping[str(source_dir)] = str(target_path)
+                yield source_dir, package_dir
             continue
 
         # A source that is neither a file nor a directory is skipped: the
@@ -109,10 +107,35 @@ def packages_to_file_mapping(
             mode=mode,
         ):
             rel_path = filepath.relative_to(source_dir)
-            target_path = platlib_dir / package_dir / rel_path
-            if not exclude_spec.match_file(rel_path) and not target_path.is_file():
-                mapping[str(filepath)] = str(target_path)
+            if not exclude_spec.match_file(rel_path):
+                yield filepath, package_dir / rel_path
 
+
+def packages_to_file_mapping(
+    *,
+    packages: Mapping[str, str],
+    platlib_dir: Path,
+    include: Sequence[str],
+    src_exclude: Sequence[str],
+    target_exclude: Sequence[str],
+    build_dir: str,
+    mode: Literal["classic", "default", "manual", "explicit"],
+) -> dict[str, str]:
+    """
+    This will output a mapping of source files to target files.
+    """
+    mapping = {}
+    for filepath, target in iter_package_files(
+        packages=packages,
+        include=include,
+        src_exclude=src_exclude,
+        target_exclude=target_exclude,
+        build_dir=build_dir,
+        mode=mode,
+    ):
+        target_path = platlib_dir / target
+        if not target_path.is_file():
+            mapping[str(filepath)] = str(target_path)
     return mapping
 
 

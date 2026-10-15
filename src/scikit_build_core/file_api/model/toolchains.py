@@ -1,4 +1,4 @@
-__lazy_modules__ = {f"{__spec__.parent}.common", "pathlib", "typing"}
+__lazy_modules__ = {"pathlib", "typing"}
 
 import dataclasses
 from pathlib import Path

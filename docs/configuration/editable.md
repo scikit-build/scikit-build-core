@@ -35,14 +35,16 @@ extra reconfigure, including projects that install to an absolute
 `${SKBUILD_PLATLIB_DIR}/...` destination. Deleting the build directory breaks
 the install, but a rebuildable editable already depends on it.
 
-As a newer, parallel alternative, `editable.rebuild-dir` selects the install
-tree directly and turns on rebuild-on-import by itself (the `editable.rebuild`
-flag is ignored when it is set). It accepts the same template substitutions as
-`build-dir`, and the path must be absolute, or relative to the source directory,
-and stable between build and run time, since it is baked at configure time and
-referenced by absolute path on rebuild. This only moves the install tree;
-`build-dir` is still required and still hosts the CMake build that the rebuild
-re-runs.
+`editable.rebuild-dir` selects this install tree directly, and turns on
+rebuild-on-import unless `editable.rebuild` is explicitly `false`. With
+`editable.rebuild = false`, the editable wheel still holds only the redirect,
+and `module.__loader__.rebuild()` refreshes the tree on demand. This is useful
+for a project with a large install tree or an expensive install step. It accepts
+the same template substitutions as `build-dir`, and the path must be absolute,
+or relative to the source directory, and stable between build and run time,
+since it is baked at configure time and referenced by absolute path on rebuild.
+This only moves the install tree; `build-dir` is still required and still hosts
+the CMake build that the rebuild re-runs.
 
 :::{versionadded} 1.0
 
@@ -50,11 +52,21 @@ re-runs.
 
 :::
 
+:::{versionchanged} 1.1
+
+An explicit `editable.rebuild = false` turns off rebuild-on-import when
+`editable.rebuild-dir` is set.
+
+:::
+
 The default `editable.mode`, `"redirect"`, uses a custom redirecting finder to
 combine the static CMake install dir with the original source code. Python code
 added via scikit-build-core's package discovery will be found in the original
 location, so changes there are picked up on import, regardless of the
-`editable.rebuild` setting.
+`editable.rebuild` setting. A package that has files in both trees gets a
+`__path__` that lists the CMake install tree first, then the source tree, so a
+file present in both (for example through `importlib.resources`) resolves to the
+installed copy.
 
 :::{versionchanged} 1.0
 
@@ -149,5 +161,28 @@ finder.rebuild()
 
 Manual `__loader__.rebuild()` for redirect installs, and both manual and
 automatic (`editable.rebuild`) rebuilds for inplace installs.
+
+:::
+
+## Locating the install tree
+
+The same loader exposes `paths`, the package's search locations in `__path__`
+order: the CMake install tree and the source tree. This gives a package a
+supported way to find the directory that holds its CMake outputs at runtime,
+which `importlib.resources.files()` does not provide when a directory exists in
+both trees:
+
+```python
+from pathlib import Path
+
+source_tree = Path(some_package.__file__).parent
+install_tree = next(p for p in some_package.__loader__.paths if p != source_tree)
+```
+
+A plain module has no search locations, so its `paths` is empty.
+
+:::{versionadded} 1.1
+
+`__loader__.paths`.
 
 :::

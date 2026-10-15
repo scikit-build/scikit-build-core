@@ -2,7 +2,6 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "argparse",
-    "packaging",
     "packaging.utils",
     "pathlib",
     "scikit_build_core._logging",

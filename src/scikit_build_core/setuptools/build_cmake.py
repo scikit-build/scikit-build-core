@@ -2,7 +2,14 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "collections",
+    "collections.abc",
     "dataclasses",
+    "fnmatch",
+    "packaging.version",
+    "pathlib",
+    "shlex",
+    "shutil",
+    "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._check_extra",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.setuptools.errors",
@@ -11,14 +18,8 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.builder",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.builder.macos",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.cmake",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_model",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
-    "fnmatch",
-    "packaging",
-    "packaging.version",
-    "pathlib",
-    "shlex",
-    "shutil",
-    "typing",
 }
 
 import contextlib
@@ -156,7 +157,7 @@ def _validate_settings(
         if settings.editable.mode != "inplace":
             msg = "setuptools editable installs require editable.mode = 'inplace'"
             raise SetupError(msg)
-        if settings.editable.rebuild_enabled:
+        if settings.editable.persistent_install:
             msg = "editable.rebuild is not supported in setuptools mode"
             raise SetupError(msg)
 
@@ -491,9 +492,9 @@ class BuildCMake(setuptools.Command):
         self._editable_mode = self._get_editable_mode()
 
         if isinstance(self.cmake_args, str):
-            self.cmake_args = [
-                b.strip() for a in self.cmake_args.split() for b in a.split(";")
-            ]
+            # shlex keeps quoted values whole; ";" is also a separator.
+            split = shlex.split(self.cmake_args)
+            self.cmake_args = [b for a in split for b in a.split(";") if b]
 
     def _get_editable_mode(self) -> _EditableMode:
         # setuptools marks a PEP 660 editable build by setting editable_mode
@@ -755,6 +756,7 @@ class BuildCMake(setuptools.Command):
         builder.configure(
             name=dist.get_name(),
             version=Version(dist.get_version()),
+            raw_version=dist.get_version(),
             defines=defines,
             limited_api=bool(limited_api),
             configure_args=configure_args,

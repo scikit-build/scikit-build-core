@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}._logging", "shlex", "subprocess", "typing"}
+__lazy_modules__ = {"shlex", "subprocess", "typing", f"{__spec__.parent}._logging"}
 
 import dataclasses
 import os

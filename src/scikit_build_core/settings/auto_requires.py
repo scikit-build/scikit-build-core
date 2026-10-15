@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-__lazy_modules__ = {
-    "packaging",
-    "packaging.requirements",
-    "packaging.utils",
-    "packaging.version",
-}
+__lazy_modules__ = {"packaging.requirements", "packaging.utils", "packaging.version"}
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name

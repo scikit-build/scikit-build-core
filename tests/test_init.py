@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+import sys
+import sysconfig
+import zipfile
+
 import pytest
 from packaging.utils import InvalidName
 
 from scikit_build_core.__main__ import main
 from scikit_build_core._compat import tomllib
+from scikit_build_core.build import build_wheel
 from scikit_build_core.init.__main__ import BACKENDS, generate_project
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from conftest import VEnv
 
 # Source filename written into the package for each backend.
 SOURCES = {
@@ -59,6 +66,37 @@ def test_init_generates_files(backend: str, tmp_path: Path) -> None:
     cmake = (project / "CMakeLists.txt").read_text()
     assert "_core" in cmake
     assert "${SKBUILD_PROJECT_NAME}" in cmake
+
+
+@pytest.mark.compile
+@pytest.mark.configure
+@pytest.mark.skipif(
+    sys.implementation.name != "cpython" or sys.version_info < (3, 15),
+    reason="The abi3t template requires CPython 3.15+",
+)
+@pytest.mark.skipif(
+    sysconfig.get_platform().startswith(("win", "msys", "mingw")),
+    reason="Test requires a Stable ABI filename suffix",
+)
+def test_init_abi3t_wheel_suffix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, virtualenv: VEnv
+) -> None:
+    project = tmp_path / "proj"
+    generate_project(project, "abi3t", "my-pkg")
+    monkeypatch.chdir(project)
+    dist = tmp_path / "dist"
+    dist.mkdir()
+
+    wheel = dist / build_wheel(str(dist))
+    abi = "abi3t" if sysconfig.get_config_var("Py_GIL_DISABLED") else "abi3"
+    suffix = "dll" if sys.platform.startswith("cygwin") else "so"
+    # FindPython may choose a platform-qualified SOSABI on Python 3.15+.
+    # The template must apply scikit-build-core's selected suffix instead.
+    with zipfile.ZipFile(wheel) as archive:
+        assert f"my_pkg/_core.{abi}.{suffix}" in archive.namelist()
+
+    virtualenv.install(str(wheel))
+    assert virtualenv.execute("import my_pkg; print(my_pkg.square(2))") == "4.0"
 
 
 def test_init_default_name_from_directory(tmp_path: Path) -> None:

@@ -22,6 +22,12 @@ These are available through the `scikit-build` command (also runnable as
 
 ```
 
+:::{versionadded} 1.1
+
+The `-C`/`--config-setting` and `--type` options.
+
+:::
+
 Example:
 
 ```{command-output} scikit-build build requires
@@ -79,6 +85,26 @@ Example:
 ```
 
 ```{program-output} scikit-build file-api reply --help
+
+```
+
+## Settings tools
+
+```{program-output} scikit-build settings --help
+
+```
+
+### Config-settings
+
+Lists the config-settings the current project accepts: the built-in
+scikit-build-core settings plus any the project declares in
+`tool.scikit-build.config-setting`.
+
+:::{versionadded} 1.1
+
+:::
+
+```{program-output} scikit-build settings list --help
 
 ```
 

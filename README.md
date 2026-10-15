@@ -181,7 +181,7 @@ print()
 | `env` | `{}` | A table of environment variables to set for the CMake subprocesses. |
 | `strict-config` | `true` | Strictly check all config options. |
 | `experimental` | `false` | Enable early previews of features not finalized yet. |
-| `minimum-version` | `"1.0"` (current version) | If set, this will provide a method for backward compatibility. |
+| `minimum-version` | `"1.1"` (current version) | If set, this will provide a method for backward compatibility. |
 | `build-dir` | `""` | The CMake build directory. Defaults to a unique temporary directory. |
 
 ### `cmake`
@@ -219,7 +219,7 @@ print()
 | `sdist.reproducible` | `true` | Try to build a reproducible distribution. |
 | `sdist.cmake` | `false` | If set to True, CMake will be run before building the SDist. |
 | `sdist.force-include` | `{}` | Force-include files into the SDist. |
-| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. (choices: `all`, `external`, `none`, `classic`) |
+| `sdist.resolve-symlinks` | `"all"` | Which symlinks to resolve in the SDist, storing the target's contents instead. (choices: `all`, `external`, `none`, `classic`, `error`) |
 
 ### `wheel`
 
@@ -250,7 +250,7 @@ print()
 | `editable.mode` | `"redirect"` | Select the editable mode to use. (choices: `redirect`, `inplace`) |
 | `editable.verbose` | `true` | Turn on verbose output for the editable mode rebuilds. |
 | `editable.rebuild` | `false` | Rebuild the project when the package is imported. |
-| `editable.rebuild-dir` | `""` | Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``). |
+| `editable.rebuild-dir` | `""` | Install editables into this persistent tree instead of the wheel. |
 
 ### `build`
 

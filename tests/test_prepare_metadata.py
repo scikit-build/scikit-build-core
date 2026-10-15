@@ -82,6 +82,34 @@ def test_multiline_description():
     )
 
 
+def test_raw_version_keeps_leading_zeros():
+    metadata = get_standard_metadata(
+        pyproject_dict={"project": {"name": "hello", "version": "2024.01.05"}},
+        settings=ScikitBuildSettings(),
+    )
+    assert str(metadata.version) == "2024.1.5"
+    assert metadata.raw_version == "2024.01.05"
+    assert "Version: 2024.01.05" in str(metadata.as_rfc822())
+    assert metadata.as_json()["version"] == "2024.01.05"
+
+    # Older minimum versions keep the normalized form for reproducibility
+    metadata = get_standard_metadata(
+        pyproject_dict={"project": {"name": "hello", "version": "2024.01.05"}},
+        settings=ScikitBuildSettings(minimum_version=Version("1.0")),
+    )
+    assert metadata.raw_version is None
+    assert "Version: 2024.1.5" in str(metadata.as_rfc822())
+
+
+def test_raw_version_strips_whitespace():
+    metadata = get_standard_metadata(
+        pyproject_dict={"project": {"name": "hello", "version": "  2024.01.05\n"}},
+        settings=ScikitBuildSettings(),
+    )
+    assert metadata.raw_version == "2024.01.05"
+    assert "Version: 2024.01.05" in str(metadata.as_rfc822())
+
+
 def test_license_normalization():
     pytest.importorskip("packaging.licenses")
     metadata = get_standard_metadata(

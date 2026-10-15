@@ -1,11 +1,11 @@
 __lazy_modules__ = {
+    "pathlib",
+    "typing",
     f"{__spec__.parent}.cache",
     f"{__spec__.parent}.cmakefiles",
     f"{__spec__.parent}.codemodel",
     f"{__spec__.parent}.common",
     f"{__spec__.parent}.toolchains",
-    "pathlib",
-    "typing",
 }
 
 import dataclasses

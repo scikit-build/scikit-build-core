@@ -3,21 +3,18 @@ from __future__ import annotations
 __lazy_modules__ = {
     "argparse",
     "json",
-    "pathlib",
-    "scikit_build_core._compat",
     "scikit_build_core._logging",
-    "scikit_build_core.builder",
+    "scikit_build_core.build",
     "scikit_build_core.builder._load_provider",
+    "scikit_build_core.settings.__main__",
     "typing",
 }
 
 import argparse
 import json
-from pathlib import Path
-from typing import Any, Literal, get_args
+from typing import Literal, get_args
 
-from scikit_build_core._compat import tomllib
-from scikit_build_core._logging import rich_error, rich_warning
+from scikit_build_core._logging import rich_warning
 from scikit_build_core.build import (
     get_requires_for_build_editable,
     get_requires_for_build_sdist,
@@ -28,17 +25,7 @@ from scikit_build_core.builder._load_provider import (
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
 )
-
-
-def _load_pyproject() -> dict[str, Any]:
-    """Read ``pyproject.toml`` from the current directory, erroring out clearly if missing."""
-    path = Path("pyproject.toml")
-    if not path.is_file():
-        rich_error(
-            "No {bold}pyproject.toml{normal} found in the current directory; run this from the root of a project."
-        )
-    with path.open("rb") as f:
-        return tomllib.load(f)
+from scikit_build_core.settings.__main__ import _load_pyproject
 
 
 def main_project_table(args: argparse.Namespace, /) -> None:
@@ -56,24 +43,40 @@ def main_project_table(args: argparse.Namespace, /) -> None:
 
 
 def main_requires(args: argparse.Namespace, /) -> None:
-    get_requires(args.mode)
+    config_settings: dict[str, str | list[str]] = {}
+    for item in args.config_settings:
+        key, _, value = item.partition("=")
+        if key not in config_settings:
+            config_settings[key] = value
+        elif isinstance(old := config_settings[key], list):
+            old.append(value)
+        else:
+            config_settings[key] = [old, value]
+    get_requires(args.mode, args.type, config_settings)
 
 
-def get_requires(mode: Literal["sdist", "wheel", "editable"]) -> None:
+def get_requires(
+    mode: Literal["sdist", "wheel", "editable"],
+    kind: Literal["static", "dynamic", "both"] = "both",
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> None:
     """Get the build requirements."""
 
     pyproject = _load_pyproject()
 
-    requires = pyproject.get("build-system", {}).get("requires", [])
-    backend = pyproject.get("build-system", {}).get("build-backend", "")
-    if backend != "scikit_build_core.build":
-        rich_warning("Might not be a scikit-build-core project.")
-    if mode == "sdist":
-        requires += get_requires_for_build_sdist({})
-    elif mode == "wheel":
-        requires += get_requires_for_build_wheel({})
-    elif mode == "editable":
-        requires += get_requires_for_build_editable({})
+    requires: list[str] = []
+    if kind != "dynamic":
+        requires += pyproject.get("build-system", {}).get("requires", [])
+    if kind != "static":
+        backend = pyproject.get("build-system", {}).get("build-backend", "")
+        if backend != "scikit_build_core.build":
+            rich_warning("Might not be a scikit-build-core project.")
+        if mode == "sdist":
+            requires += get_requires_for_build_sdist(config_settings)
+        elif mode == "wheel":
+            requires += get_requires_for_build_wheel(config_settings)
+        elif mode == "editable":
+            requires += get_requires_for_build_editable(config_settings)
     print(json.dumps(sorted(set(requires)), indent=2))
 
 
@@ -91,6 +94,21 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
         choices=["sdist", "wheel", "editable"],
         default="wheel",
         help="The build mode to get the requirements for",
+    )
+    requires.add_argument(
+        "--type",
+        choices=["static", "dynamic", "both"],
+        default="both",
+        help="Static (build-system.requires), dynamic (from the backend hook), or both",
+    )
+    requires.add_argument(
+        "-C",
+        "--config-setting",
+        dest="config_settings",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="A config-setting passed to the backend hook, can be repeated",
     )
 
     project_table = subparsers.add_parser(

@@ -3,7 +3,9 @@ from __future__ import annotations
 __lazy_modules__ = {
     "argparse",
     "pathlib",
+    "scikit_build_core",
     "scikit_build_core._logging",
+    "scikit_build_core.builder",
     "scikit_build_core.builder.get_requires",
     "scikit_build_core.builder.sysconfig",
     "scikit_build_core.builder.wheel_tag",

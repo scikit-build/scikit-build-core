@@ -1,6 +1,14 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "importlib.resources",
+    "packaging.version",
+    "platform",
+    "re",
+    "shlex",
+    "sysconfig",
+    "typing",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._reproducible",
@@ -9,15 +17,6 @@ __lazy_modules__ = {
     f"{__spec__.parent}.cmake_args",
     f"{__spec__.parent}.generator",
     f"{__spec__.parent}.sysconfig",
-    "importlib",
-    "importlib.resources",
-    "packaging",
-    "packaging.version",
-    "platform",
-    "re",
-    "shlex",
-    "sysconfig",
-    "typing",
 }
 
 import dataclasses
@@ -36,7 +35,7 @@ from packaging.version import Version
 
 from .. import __version__
 from .._compat.importlib import metadata
-from .._logging import logger
+from .._logging import logger, rich_warning
 from .._reproducible import get_reproducible_epoch
 from ..program_search import _macos_binary_is_x86
 from ..resources import find_python
@@ -48,6 +47,7 @@ from .sysconfig import (
     get_python_include_dir,
     get_python_library,
     get_soabi,
+    is_free_threaded,
 )
 
 TYPE_CHECKING = False
@@ -147,7 +147,7 @@ def _filter_env_cmake_args(env_cmake_args: list[str]) -> list[str]:
     for define in iter_cmake_defines(env_cmake_args):
         if define.name in _UNSUPPORTED_ENV_DEFINES:
             ignored = env_cmake_args[define.start : define.stop]
-            logger.warning("Unsupported CMAKE_ARGS ignored: {}", " ".join(ignored))
+            rich_warning("Unsupported CMAKE_ARGS ignored:", " ".join(ignored))
             drop.update(range(define.start, define.stop))
     return [arg for i, arg in enumerate(env_cmake_args) if i not in drop]
 
@@ -234,7 +234,7 @@ class Builder:
     def _get_entry_point_search_path(self, entry_point: str) -> dict[str, list[Path]]:
         """Get the search path dict from the entry points"""
         search_paths = {}
-        eps = metadata.cached_entry_points(group=entry_point)
+        eps = metadata.entry_points(group=entry_point)
         if eps:
             logger.debug(
                 "Loading search paths {} from entry-points: {}", entry_point, len(eps)
@@ -253,6 +253,7 @@ class Builder:
         cache_entries: Mapping[str, str | Path] | None = None,
         name: str | None = None,
         version: Version | None = None,
+        raw_version: str | None = None,
         limited_api: bool | None = None,
         configure_args: Iterable[str] = (),
     ) -> None:
@@ -321,10 +322,11 @@ class Builder:
             cache_config["SKBUILD_PROJECT_VERSION"] = ".".join(
                 str(v) for v in version.release[:4]
             )
-            cache_config["SKBUILD_PROJECT_VERSION_FULL"] = str(version)
+            # The string as written keeps leading zeros (calver like 2024.01.05)
+            cache_config["SKBUILD_PROJECT_VERSION_FULL"] = raw_version or str(version)
 
         py_api = self.settings.wheel.py_api
-        gil_disabled = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+        gil_disabled = is_free_threaded()
 
         sabi = _SabiMode.NONE
         sabi_minor: int | None = None
@@ -386,7 +388,7 @@ class Builder:
             sys.implementation.name == "cpython"
             and sys.version_info[:3] == (3, 13, 4)
             and sys.platform.startswith("win32")
-            and not sysconfig.get_config_var("Py_GIL_DISABLED")
+            and not gil_disabled
         ):  # pragma: nocover
             logger.warning(
                 "Python 3.13.4 on Windows is broken for building, 3.13.5 was rushed out to fix it. Use an older, newer, or free-threaded version instead."
@@ -429,9 +431,10 @@ class Builder:
                 cache_config[f"{prefix}_INCLUDE_DIR"] = python_include_dir
                 cache_config[f"{prefix}_FIND_REGISTRY"] = "NEVER"
                 # Interpreter-less FindPython rejects the free-threaded "t" ABI
-                # unless the 4-tuple (3.30+) FIND_ABI requests it. Written as a
-                # non-cache list so CMake does not drop the gil_disabled flag.
-                if gil_disabled and self.config.cmake.version >= Version("3.30"):
+                # unless the 4-tuple (3.30+) FIND_ABI requests it. Before CMake
+                # 4.1.2, setting it breaks Development.Module (cmake#27192).
+                # Use a non-cache list so CMake does not drop the gil_disabled flag.
+                if gil_disabled and self.config.cmake.version >= Version("4.1.2"):
                     cache_config[f"{prefix}_FIND_ABI"] = "ANY;ANY;ANY;ON"
                 # An automatically detected Windows library is
                 # existence-checked, while an explicit environment hint is

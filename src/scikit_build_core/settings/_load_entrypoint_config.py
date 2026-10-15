@@ -21,9 +21,9 @@ The returned tables are turned into low/high priority ``TOMLSource``\\ s by
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "inspect",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.importlib",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
-    "inspect",
 }
 
 import inspect
@@ -81,7 +81,7 @@ def _load_group(
 ) -> list[tuple[str, str, dict[str, object]]]:
     providers: list[tuple[str, str, dict[str, object]]] = []
     by_name: dict[str, list[EntryPoint]] = {}
-    for ep in metadata.cached_entry_points(group=group):
+    for ep in metadata.entry_points(group=group):
         by_name.setdefault(ep.name, []).append(ep)
     for name in sorted(by_name):
         eps = by_name[name]

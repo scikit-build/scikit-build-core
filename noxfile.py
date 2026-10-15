@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 # /// script
-# dependencies = ["nox>=2024.4.15"]
+# dependencies = ["nox>=2024.4.15", "packaging"]
 # ///
 
 """
@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import nox
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -306,22 +308,40 @@ def downstream(session: nox.Session) -> None:
         )
         session.chdir(proj_dir)
 
-    # Read and strip requirements
+    if args.subdir:
+        session.chdir(args.subdir)
+
+    def install_requires(requires: list[str]) -> None:
+        requires = [
+            x
+            for x in requires
+            if canonicalize_name(Requirement(x).name) != "scikit-build-core"
+        ]
+        if requires:
+            session.install(*requires)
+
     pyproject = nox.project.load_toml("pyproject.toml")
-    requires = [
-        x
-        for x in pyproject["build-system"]["requires"]
-        if "scikit-build-core" not in x.replace("_", "-")
-    ]
+    requires = pyproject["build-system"]["requires"]
     if not shutil.which("ninja"):
         requires.append("ninja")
     if not shutil.which("cmake"):
         requires.append("cmake")
-    if requires:
-        session.install(*requires)
+    install_requires(requires)
 
-    if args.subdir:
-        session.chdir(args.subdir)
+    # Dynamic requirements (like build.requires) come from the backend hook
+    dynamic_requires = session.run(
+        "python",
+        "-m",
+        "scikit_build_core.build",
+        "requires",
+        "--mode=editable" if args.editable else "--mode=wheel",
+        "--type=dynamic",
+        *(f"-C{x}" for x in args.C),
+        silent=True,
+        stderr=sys.stderr,
+    )
+    assert dynamic_requires is not None
+    install_requires(json.loads(dynamic_requires))
 
     if args.editable:
         session.install(

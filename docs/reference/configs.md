@@ -130,7 +130,7 @@ print(mk_skbuild_docs())
 .. confval:: minimum-version
 
   :Type: ``Version``
-  :Default: "1.0"  # current version
+  :Default: "1.1"  # current version
   :Config-settings: ``minimum-version`` or ``skbuild.minimum-version``
   :Environment variable: ``SKBUILD_MINIMUM_VERSION``
 
@@ -476,7 +476,11 @@ print(mk_skbuild_docs())
   Rebuild the project when the package is imported.
 
   :confval:`build-dir` must be set, except in ``inplace`` mode (where the source
-  directory is the build directory).
+  directory is the build directory). Defaults to true if
+  :confval:`editable.rebuild-dir` is set.
+
+  .. versionchanged:: 1.1
+     An explicit false is honored when :confval:`editable.rebuild-dir` is set.
 ```
 
 ```{eval-rst}
@@ -486,14 +490,15 @@ print(mk_skbuild_docs())
   :Config-settings: ``editable.rebuild-dir`` or ``skbuild.editable.rebuild-dir``
   :Environment variable: ``SKBUILD_EDITABLE_REBUILD_DIR``
 
-  Install rebuildable editables into this tree (a newer alternative to ``editable.rebuild``).
+  Install editables into this persistent tree instead of the wheel.
 
-  Setting this turns on rebuild-on-import by itself; the :confval:`editable.rebuild`
-  flag is ignored when it is set. The compiled artifacts are installed here at
-  first build and re-installed in place on every import-triggered rebuild, and
-  the redirect references them by absolute path. Must be an absolute (or
-  source-relative) path that is stable between build and run time, and supports
-  the same template substitutions as :confval:`build-dir`. This relocates only
+  The compiled artifacts are installed here at first build and re-installed
+  in place on every rebuild, and the redirect references them by absolute
+  path. Setting this turns on rebuild-on-import unless :confval:`editable.rebuild`
+  is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
+  tree. Must be an absolute (or source-relative) path that is stable between
+  build and run time, and supports the same template substitutions as
+  :confval:`build-dir`. This relocates only
   the install tree; :confval:`build-dir` is still required and still hosts the
   CMake build that the rebuild re-runs.
 
@@ -817,7 +822,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: sdist.resolve-symlinks
 
-  :Type: ``"all" | "external" | "none" | "classic"``
+  :Type: ``"all" | "external" | "none" | "classic" | "error"``
   :Default: "all"
   :Config-settings: ``sdist.resolve-symlinks`` or ``skbuild.sdist.resolve-symlinks``
   :Environment variable: ``SKBUILD_SDIST_RESOLVE_SYMLINKS``
@@ -833,6 +838,9 @@ print(mk_skbuild_docs())
   * "none": Store every symlink as-is, including directory symlinks.
   * "classic": Store file symlinks as-is, but follow directory symlinks,
     copying their contents (scikit-build-core 0.x behavior).
+  * "error": Fail the build if any included file or directory is a symlink,
+    and list each one with its target. This includes force-include sources
+    and the files under them. Exclude a link to allow the build.
 
   A symlink that can't be resolved (dangling, or a directory symlink loop)
   is stored as a symlink in every mode, with a warning if it was supposed to
@@ -843,6 +851,8 @@ print(mk_skbuild_docs())
   compatibility.
 
   .. versionadded:: 1.0
+  .. versionchanged:: 1.1
+     Added "error".
 ```
 
 ## search

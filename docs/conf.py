@@ -122,24 +122,33 @@ exclude_patterns = [
 intersphinx_mapping = {
     "cmake": ("https://cmake.org/cmake/help/latest/", None),
     "python": ("https://docs.python.org/3", None),
-    "packaging": ("https://packaging.readthedocs.io/en/stable", None),
-    "setuptools": ("https://setuptools.readthedocs.io/en/latest", None),
+    "packaging": ("https://packaging.pypa.io/en/stable", None),
+    "setuptools": ("https://setuptools.pypa.io/en/latest", None),
     "hatchling": ("https://hatch.pypa.io/latest", None),
 }
 tippy_rtd_urls = [
-    "https://packaging.readthedocs.io/en/stable",
-    "https://setuptools.readthedocs.io/en/latest",
+    "https://packaging.pypa.io/en/stable",
+    "https://setuptools.pypa.io/en/latest",
 ]
 # Recolored to furo's theme variables in _static/tippy.css.
 tippy_props = {"theme": "light-border"}
+
+# SkbuildMetadata subclasses the vendored StandardMetadata, whose inherited
+# annotations name modules this one does not import.
+suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
 
 nitpick_ignore = [
     ("py:class", "setuptools.dist.Distribution"),
     ("py:class", "T"),
     ("py:class", "scikit_build_core.settings.sources.T"),
     ("py:class", "scikit_build_core._vendor.pyproject_metadata.StandardMetadata"),
+    ("py:class", "scikit_build_core._vendor.pyproject_metadata.RFC822Message"),
     ("py:data", "typing.Union"),
 ]
+
+# sphinx-llm 1.1+ relays the markdown builder's warnings for nodes it can't
+# render, which fails the -W build.
+llms_txt_suppress_unknown_node_warnings = True
 
 linkcheck_anchors_ignore = [
     # This seems to be broken on GitHub readmes

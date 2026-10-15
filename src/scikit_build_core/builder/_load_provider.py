@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.metadata",
+    "importlib.machinery",
     "inspect",
     "pathlib",
+    "types",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.metadata",
 }
 
 import dataclasses
@@ -158,7 +160,8 @@ def load_provider(
         if not Path(provider_path).is_dir():
             msg = f"provider-path {provider_path!r} must be an existing directory"
             raise FileNotFoundError(msg)
-        finder = _ProviderPathFinder([provider_path], module_name)
+        # Absolute, since sys.path_importer_cache is keyed on the path string
+        finder = _ProviderPathFinder([str(Path(provider_path).absolute())], module_name)
         sys.meta_path.insert(0, finder)
         try:
             module = importlib.import_module(module_name)
@@ -189,9 +192,9 @@ def load_entry_provider(provider: str | Mapping[str, Any]) -> DMProtocols:
             raise TypeError(msg)
         return load_provider(module, path)
 
-    from .._compat.importlib.metadata import cached_entry_points
+    from .._compat.importlib.metadata import entry_points
 
-    eps = cached_entry_points(group="dynamic_metadata.provider")
+    eps = entry_points(group="dynamic_metadata.provider")
     matches = [ep for ep in eps if ep.name == provider]
     if not matches:
         import difflib
