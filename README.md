@@ -194,7 +194,7 @@ print()
 | `cmake.build-type` | `"Release"` | The build type to use when building the project. |
 | `cmake.source-dir` | `"."` | The source directory to use when building the project. |
 | `cmake.fresh` | `false` | Discard any cached CMake configuration and configure from scratch, like ``cmake --fresh``. |
-| `cmake.python-hints` | `true` | Pass hints derived from the current Python build environment to FindPython. |
+| `cmake.python-hints` | `"interpreter"` | Control which Python hints are passed to FindPython. |
 
 ### `ninja`
 

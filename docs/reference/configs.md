@@ -357,8 +357,8 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.python-hints
 
-  :Type: ``"none" | "interpreter" | "environment"``
-  :Default: ``"interpreter"``
+  :Type: ``bool | "none" | "interpreter" | "environment" | "external"``
+  :Default: "interpreter"
   :Config-settings: ``cmake.python-hints`` or ``skbuild.cmake.python-hints``
   :Environment variable: ``SKBUILD_CMAKE_PYTHON_HINTS``
 

@@ -262,7 +262,9 @@ class CMakeSettings:
     .. versionadded:: 1.1
     """
 
-    python_hints: Literal["none", "interpreter", "environment"] = "interpreter"
+    python_hints: Union[
+        bool, Literal["none", "interpreter", "environment", "external"]
+    ] = "interpreter"
     """
     Control which Python hints are passed to FindPython.
 
