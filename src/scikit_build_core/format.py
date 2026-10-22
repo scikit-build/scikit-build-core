@@ -49,6 +49,8 @@ class PyprojectFormatter(TypedDict, total=False):
     """The state of the build."""
     root: RootPathResolver
     """Root path of the current project."""
+    build_dir: str
+    """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
 
 
 class _AnySpecDummy:
@@ -77,6 +79,7 @@ def pyproject_format(
     | None = ...,
     tags: WheelTag | None = ...,
     name: str | None = ...,
+    build_dir: Path | None = ...,
 ) -> PyprojectFormatter: ...
 
 
@@ -93,6 +96,7 @@ def pyproject_format(
     ) = None,
     tags: WheelTag | None = None,
     name: str | None = None,
+    build_dir: Path | None = None,
     dummy: bool = False,
 ) -> PyprojectFormatter | dict[str, str]:
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
@@ -124,6 +128,8 @@ def pyproject_format(
         res["state"] = state
     if name is not None:
         res["name"] = name
+    if build_dir is not None:
+        res["build_dir"] = str(build_dir.resolve())
     # Construct the final dict including the always known keys
     return res
 

@@ -10,6 +10,10 @@ The following configure keys are formatted as Python `str.format` templates:
 `editable.rebuild-dir` is formattable.
 ```
 
+```{versionadded} 1.2
+`{build_dir}` in `editable.rebuild-dir`.
+```
+
 For example, to get a persistent build directory per wheel tag:
 
 ```toml
@@ -21,6 +25,9 @@ The available variables are the members of
 {py:class}`scikit_build_core.format.PyprojectFormatter`:
 
 ```{eval-rst}
+.. autoattribute:: scikit_build_core.format.PyprojectFormatter.build_dir
+   :no-index:
+
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.build_type
    :no-index:
 

@@ -85,3 +85,25 @@ def test_dummy_root_spec(spec: str, expected: str) -> None:
     # validate the custom :uri spec against a plain str.
     dummy = pyproject_format(dummy=True)
     assert spec.format(**dummy) == expected
+
+
+def test_dummy_build_dir_key() -> None:
+    assert "{build_dir}/install".format(**pyproject_format(dummy=True)) == "*/install"
+
+
+def test_rebuild_dir_follows_build_dir(tmp_path: Path) -> None:
+    from scikit_build_core.build.common_wheel_helpers import get_editable_rebuild_dir
+    from scikit_build_core.builder.wheel_tag import WheelTag
+
+    settings = ScikitBuildSettings()
+    settings.editable.rebuild_dir = "{build_dir}/install/{wheel_tag}"
+    tags = WheelTag(pyvers=["py3"], abis=["none"], archs=["any"])
+    result = get_editable_rebuild_dir(
+        settings,
+        build_dir=tmp_path / "build",
+        targetlib="platlib",
+        tags=tags,
+        state="editable",
+        name="pkg",
+    )
+    assert result == (tmp_path / "build" / "install" / "py3-none-any").resolve()
