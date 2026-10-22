@@ -107,6 +107,9 @@ class GetRequires:
     variant_table: Mapping[str, Any] = dataclasses.field(
         default_factory=_read_variant_table
     )
+    config_settings: Mapping[str, str | bool | None] = dataclasses.field(
+        default_factory=dict
+    )
 
     @classmethod
     def from_config_settings(
@@ -117,7 +120,12 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
-        return cls(reader.settings, reader.dynamic_metadata, reader.variant)
+        return cls(
+            reader.settings,
+            reader.dynamic_metadata,
+            reader.variant,
+            config_settings=reader.custom_config_settings,
+        )
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -192,6 +200,7 @@ class GetRequires:
             yield build_require.format(
                 **pyproject_format(
                     settings=self.settings,
+                    config_settings=self.config_settings,
                 )
             )
 

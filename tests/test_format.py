@@ -107,3 +107,39 @@ def test_rebuild_dir_follows_build_dir(tmp_path: Path) -> None:
         name="pkg",
     )
     assert result == (tmp_path / "build" / "install" / "py3-none-any").resolve()
+
+
+def test_config_setting_key() -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(),
+        config_settings={"torch.variant": "cu126", "my-proj.gpu-opt.x": True},
+    )
+    assert "build/{config_setting.torch.variant}".format(**formatted) == "build/cu126"
+    # Kept out of a literal .format() call; mypy rejects dashes in accessors.
+    spec = "{config_setting.my-proj.gpu-opt.x}"
+    assert spec.format(**formatted) == "true"
+
+
+@pytest.mark.parametrize(
+    ("spec", "match"),
+    [
+        ("{config_setting.torch.other}", "not declared"),
+        ("{config_setting.other.variant}", "not declared"),
+        ("{config_setting.torch}", "not declared"),
+        ("{config_setting}", "needs a name"),
+        ("{config_setting.torch.unset}", "unset"),
+    ],
+)
+def test_config_setting_key_errors(spec: str, match: str) -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(),
+        config_settings={"torch.variant": "cpu", "torch.unset": None},
+    )
+    with pytest.raises(ValueError, match=match):
+        spec.format(**formatted)
+
+
+def test_dummy_config_setting() -> None:
+    dummy = pyproject_format(dummy=True)
+    spec = "build/{config_setting.a.b-c}"
+    assert spec.format(**dummy) == "build/*"
