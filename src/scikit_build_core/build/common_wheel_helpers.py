@@ -162,7 +162,7 @@ def get_editable_rebuild_dir(
     """
     Persistent install tree for a rebuildable redirect editable.
 
-    ``editable.rebuild-dir`` (formatted like ``build-dir``) overrides the default
+    ``editable.rebuild-dir`` (formatted like ``build-dir``, plus ``{build_dir}``) overrides the default
     ``install/<targetlib>`` tree inside ``build-dir``. The redirect references the
     compiled artifacts here by absolute path, so it must be stable between build
     and run time (#1135).
@@ -170,7 +170,13 @@ def get_editable_rebuild_dir(
     if settings.editable.rebuild_dir:
         return Path(
             settings.editable.rebuild_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
+                **pyproject_format(
+                    settings=settings,
+                    tags=tags,
+                    state=state,
+                    name=name,
+                    build_dir=build_dir,
+                )
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()

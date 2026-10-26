@@ -677,7 +677,8 @@ class EditableSettings:
     is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
     tree. Must be an absolute (or source-relative) path that is stable between
     build and run time, and supports the same template substitutions as
-    :confval:`build-dir`. This relocates only
+    :confval:`build-dir`, plus ``{build_dir}`` for the resolved build directory.
+    This relocates only
     the install tree; :confval:`build-dir` is still required and still hosts the
     CMake build that the rebuild re-runs.
 
@@ -688,6 +689,9 @@ class EditableSettings:
     stay out of backups and version control.
 
     .. versionadded:: 1.0
+
+    .. versionchanged:: 1.2
+       Added the ``{build_dir}`` template key.
     """
 
     @property
