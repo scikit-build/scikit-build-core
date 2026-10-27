@@ -14,12 +14,14 @@ from .settings.skbuild_model import normalize_build_types
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from typing import Literal
 
     from scikit_build_core.builder.wheel_tag import WheelTag
     from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [
+    "ConfigSettingResolver",
     "PyprojectFormatter",
     "RootPathResolver",
     "pyproject_format",
@@ -51,6 +53,8 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
     build_dir: str
     """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
+    config_setting: ConfigSettingResolver
+    """Declared config-settings (``tool.scikit-build.config-setting``), by name, e.g. ``build-dir = "build/{config_setting.torch.variant}"``. Booleans format as ``true``/``false``. An undeclared or unset setting is an error."""
 
 
 class _AnySpecDummy:
@@ -66,9 +70,15 @@ class _AnySpecDummy:
     def __str__(self) -> str:
         return "*"
 
+    def __getattr__(self, attr: str) -> _AnySpecDummy:
+        if attr.startswith("_"):
+            raise AttributeError(attr)
+        return self
 
-# Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``).
-_SPEC_TAKING_KEYS = ("root",)
+
+# Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``)
+# or attribute access (e.g. ``config_setting``).
+_SPEC_TAKING_KEYS = ("root", "config_setting")
 
 
 @typing.overload
@@ -80,6 +90,7 @@ def pyproject_format(
     tags: WheelTag | None = ...,
     name: str | None = ...,
     build_dir: Path | None = ...,
+    config_settings: Mapping[str, str | bool | None] | None = ...,
 ) -> PyprojectFormatter: ...
 
 
@@ -97,6 +108,7 @@ def pyproject_format(
     tags: WheelTag | None = None,
     name: str | None = None,
     build_dir: Path | None = None,
+    config_settings: Mapping[str, str | bool | None] | None = None,
     dummy: bool = False,
 ) -> PyprojectFormatter | dict[str, str]:
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
@@ -120,6 +132,7 @@ def pyproject_format(
         # as part of PEP517 standard.
         root=RootPathResolver(),
         build_type=normalize_build_types(settings.cmake.build_type)[0],
+        config_setting=ConfigSettingResolver(config_settings or {}),
     )
     # Then compute all optional keys depending on the function input
     if tags is not None:
@@ -132,6 +145,42 @@ def pyproject_format(
         res["build_dir"] = str(build_dir.resolve())
     # Construct the final dict including the always known keys
     return res
+
+
+class ConfigSettingResolver:
+    """Handle ``{config_setting.a.b}`` by matching the dotted attribute chain."""
+
+    def __init__(
+        self, values: Mapping[str, str | bool | None], prefix: str = ""
+    ) -> None:
+        self._values = values
+        self._prefix = prefix
+
+    def __getattr__(self, attr: str) -> str | ConfigSettingResolver:
+        if attr.startswith("_"):
+            raise AttributeError(attr)
+        name = f"{self._prefix}{attr}"
+        if name in self._values:
+            value = self._values[name]
+            if value is None:
+                msg = f"config-setting {name!r} is unset and has no default"
+                raise ValueError(msg)
+            if isinstance(value, bool):
+                return "true" if value else "false"
+            return value
+        if any(k.startswith(f"{name}.") for k in self._values):
+            return ConfigSettingResolver(self._values, f"{name}.")
+        msg = f"config-setting {name!r} is not declared"
+        raise ValueError(msg)
+
+    # Only reached for a partial name, like {config_setting.torch}
+    # pylint: disable-next=invalid-format-returned
+    def __format__(self, fmt: str) -> str:
+        if not self._prefix:
+            msg = "config_setting needs a name, like {config_setting.a.b}"
+        else:
+            msg = f"config-setting {self._prefix.rstrip('.')!r} is not declared"
+        raise ValueError(msg)
 
 
 @dataclasses.dataclass()

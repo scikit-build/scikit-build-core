@@ -11,7 +11,7 @@ The following configure keys are formatted as Python `str.format` templates:
 ```
 
 ```{versionadded} 1.2
-`{build_dir}` in `editable.rebuild-dir`.
+`{build_dir}` in `editable.rebuild-dir`, and the `config_setting` variable.
 ```
 
 For example, to get a persistent build directory per wheel tag:
@@ -32,6 +32,9 @@ The available variables are the members of
    :no-index:
 
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.cache_tag
+   :no-index:
+
+.. autoattribute:: scikit_build_core.format.PyprojectFormatter.config_setting
    :no-index:
 
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.name

@@ -164,3 +164,22 @@ def test_build_dir_inplace_editable_uses_source_dir(tmp_path: Path) -> None:
     )
 
     assert build_dir == tmp_path / "src"
+
+
+def test_build_dir_config_setting_placeholder(tmp_path: Path) -> None:
+    settings = ScikitBuildSettings()
+    settings.build_dir = "build/{config_setting.torch.variant}"
+
+    tags = get_wheel_tag(settings, targetlib="platlib")
+    build_dir = get_build_dir(
+        settings,
+        tags=tags,
+        state="wheel",
+        editable=False,
+        has_cmake=True,
+        fallback=tmp_path / "build",
+        name="pkg",
+        config_settings={"torch.variant": "rocm7.1"},
+    )
+
+    assert build_dir == Path("build/rocm7.1")

@@ -322,6 +322,21 @@ def test_minimum_version_gate_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     settings_reader.validate_may_exit()
 
 
+def test_build_requires_config_setting_placeholder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    write_pyproject(
+        tmp_path,
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting.zmq.libzmq}"]\n'
+        + DECLARATION,
+    )
+    monkeypatch.chdir(tmp_path)
+    requires = GetRequires.from_config_settings({"zmq.libzmq": "bundled"})
+    assert list(requires.dynamic_metadata()) == ["zmq-bundled"]
+
+
 @pytest.mark.configure
 @pytest.mark.parametrize("source", ["conf", "env"])
 def test_config_settings_reach_cmake(

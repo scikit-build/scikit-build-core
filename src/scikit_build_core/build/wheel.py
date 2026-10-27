@@ -86,7 +86,7 @@ from .metadata import get_standard_metadata
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from ..settings.skbuild_model import ScikitBuildSettings
 
@@ -270,6 +270,7 @@ def _build_wheel_impl(
             editable=editable,
             state=state,
             settings=settings_reader.settings,
+            config_settings=settings_reader.custom_config_settings,
             pyproject=pyproject,
         )
     except FailedLiveProcessError as err:
@@ -299,6 +300,7 @@ def _build_wheel_impl(
                 editable=editable,
                 state=state,
                 settings=settings_reader.settings,
+                config_settings=settings_reader.custom_config_settings,
                 pyproject=pyproject,
             )
         except FailedLiveProcessError as err2:
@@ -314,6 +316,7 @@ def _build_wheel_impl_impl(
     editable: bool,
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
     settings: ScikitBuildSettings,
+    config_settings: Mapping[str, str | bool | None],
     pyproject: dict[str, Any],
 ) -> WheelImplReturn:
     """
@@ -374,6 +377,7 @@ def _build_wheel_impl_impl(
             has_cmake=cmake is not None,
             fallback=build_tmp_folder / "build",
             name=placeholder_name,
+            config_settings=config_settings,
         )
         wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
         install_dir = get_install_dir(
@@ -404,6 +408,7 @@ def _build_wheel_impl_impl(
                 tags=tags,
                 state=state,
                 name=placeholder_name,
+                config_settings=config_settings,
             )
             prepare_editable_rebuild_dir(
                 targetlib_dir, guard=bool(settings.editable.rebuild_dir)
