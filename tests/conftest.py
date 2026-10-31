@@ -115,15 +115,14 @@ def pep518_wheelhouse(
                 text=True,
             )
             for wheel in tmp_path.glob("*.whl"):
+                # Always replace: an uncommitted source edit keeps the same
+                # (dirty) version, so a same-named cached wheel can be stale.
+                # Copy to a sibling tmp and swap atomically; the lock keeps
+                # readers out, so the swap is safe on Windows too.
                 target = wheelhouse / wheel.name
-                if _is_valid_wheel(target):
-                    # Already present and valid; skip the copy (avoids
-                    # PermissionError on Windows) but bump its mtime so a
-                    # same-named rebuild (e.g. an uncommitted source edit)
-                    # isn't retried on every subsequent session.
-                    target.touch()
-                    continue
-                shutil.copy(wheel, target)
+                tmp_target = wheelhouse / f"{wheel.name}.tmp"
+                shutil.copy(wheel, tmp_target)
+                tmp_target.replace(target)
 
             # Remove stale scikit-build-core wheels that weren't just copied
             copied = {f.name for f in tmp_path.glob("scikit_build_core-*.whl")}
