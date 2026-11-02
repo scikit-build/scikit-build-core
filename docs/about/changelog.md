@@ -2,11 +2,11 @@
 
 ## Version 1.1.2
 
-This patch release adds a `ctypes` backend to `scikit-build init`. It builds a plain C
-library without Python headers and makes a `py3` wheel. `editable.rebuild-dir`
-now accepts a `{build_dir}` template key, so the install tree can follow the
-build tree. Editable redirect installs no longer redirect imports that run
-inside their own CMake build, such as nanobind stub generation.
+This patch release adds a `ctypes` backend to `scikit-build init`. It builds a
+plain C library without Python headers and makes a `py3` wheel.
+`editable.rebuild-dir` now accepts a `{build_dir}` template key, so the install
+tree can follow the build tree. Editable redirect installs no longer redirect
+imports that run inside their own CMake build, such as nanobind stub generation.
 
 Features:
 
