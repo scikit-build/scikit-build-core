@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "collections",
     "pathlib",
     "pathspec",
+    "shlex",
     "shutil",
     "subprocess",
     "typing",
@@ -11,21 +13,24 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
 }
 
+import functools
 import os
+import shlex
 import shutil
 import subprocess
+from collections import deque
 from pathlib import Path
 from typing import Literal
 
 import pathspec
 
-from .._logging import logger
+from .._logging import logger, rich_warning
 from ..errors import ScikitBuildError, UnsupportedOperation
 from ..format import pyproject_format
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Generator, Iterable, Sequence
 
 __all__ = ["each_unignored_file", "symlink_escapes"]
 
@@ -145,35 +150,42 @@ def _git_config_value(value: str) -> str:
     return "".join(out[:keep])
 
 
-def _git_tracked_files(starting_path: Path) -> list[Path]:
-    """
-    Files git tracks below ``starting_path``, including in submodules. Raises
-    ``UnsupportedOperation`` if the project is not a git checkout.
-    """
+def _git_ls_files(*args: str, cwd: Path) -> list[str]:
     git = shutil.which("git")
     if git is None:
         msg = 'sdist.inclusion-mode = "git" requires git'
         raise UnsupportedOperation(msg)
+    cmd = [git, "ls-files", "-z", *args]
+    logger.info("RUN: {}", shlex.join(cmd))
     result = subprocess.run(
-        [git, "ls-files", "--recurse-submodules", "--stage", "-z"],
-        capture_output=True,
-        check=False,
+        cmd, cwd=cwd, capture_output=True, stdin=subprocess.DEVNULL, check=False
     )
     if result.returncode != 0:
         err = result.stderr.decode(errors="replace").strip()
         msg = f'sdist.inclusion-mode = "git" requires a git checkout: {err}'
         raise UnsupportedOperation(msg)
+    output = result.stdout.decode("utf-8", errors="surrogateescape")
+    return [name for name in output.split("\0") if name]
 
-    tracked: dict[Path, None] = {}
+
+@functools.lru_cache(maxsize=1)
+def _git_tracked_files(cwd: str) -> tuple[list[Path], list[Path]]:
+    """
+    Files git tracks, including in submodules, and submodules that are not
+    checked out. ``cwd`` is the project root and the cache key; the listing
+    does not depend on the directory being walked, so one wheel build with
+    several packages runs git once. Raises ``UnsupportedOperation`` if the
+    project is not a git checkout.
+    """
+    tracked = []
     submodules = []
-    for entry in result.stdout.decode("utf-8", errors="surrogateescape").split("\0"):
-        if not entry:
-            continue
-        info, _, name = entry.partition("\t")
-        if info.startswith("160000 "):
-            submodules.append(Path(name))
+    for name in _git_ls_files("--recurse-submodules", cwd=Path(cwd)):
+        path = Path(name)
+        # A submodule that is not checked out is listed as its empty directory.
+        if path.is_dir() and not path.is_symlink():
+            submodules.append(path)
         else:
-            tracked[Path(name)] = None
+            tracked.append(path)
 
     # Inside an unrelated checkout, such as an SDist unpacked in a repository.
     if Path("pyproject.toml") not in tracked:
@@ -181,22 +193,55 @@ def _git_tracked_files(starting_path: Path) -> list[Path]:
             'sdist.inclusion-mode = "git" requires pyproject.toml to be tracked by git'
         )
         raise UnsupportedOperation(msg)
+    return tracked, submodules
 
-    if starting_path != Path():
-        tracked = {p: None for p in tracked if starting_path in p.parents}
-        submodules = [
-            p for p in submodules if p == starting_path or starting_path in p.parents
-        ]
-    if submodules:
-        names = ", ".join(p.as_posix() for p in submodules)
-        msg = f"Submodules not checked out: {names}"
-        raise ScikitBuildError(msg)
-    return list(tracked)
+
+@functools.lru_cache(maxsize=1)
+def _git_untracked_files(cwd: str) -> list[Path]:
+    """
+    Files git does not track, ignored ones included, in the project and its
+    checked-out submodules. A nested repository that is not a submodule is
+    listed as a directory.
+    """
+
+    def visit(root: Path) -> Generator[Path, None, None]:
+        names = _git_ls_files("--others", cwd=Path(cwd) / root)
+        yield from (root / name for name in names)
+        for sub in _submodule_paths(root):
+            if os.path.lexists(sub / ".git"):
+                yield from visit(sub)
+
+    return list(visit(Path()))
+
+
+def clear_git_cache() -> None:
+    _git_tracked_files.cache_clear()
+    _git_untracked_files.cache_clear()
+
+
+def _real_relative(path: Path) -> Path | None:
+    """
+    ``path`` with symlinks resolved, relative to the project root, or None if
+    it is outside the project.
+    """
+    try:
+        rel = os.path.relpath(os.path.realpath(path))
+    except ValueError:  # Another drive on Windows
+        return None
+    if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+        return None
+    return Path(rel)
+
+
+def _below(paths: Iterable[Path], root: Path, prefix: Path) -> list[Path]:
+    """Entries of ``paths`` below ``root``, re-rooted at ``prefix``."""
+    if root == Path():
+        return [prefix / p for p in paths]
+    return [prefix / p.relative_to(root) for p in paths if root in (p, *p.parents)]
 
 
 def _each_git_file(
     starting_path: Path,
-    tracked: Sequence[Path],
     include: Sequence[str],
     exclude: Sequence[str],
     build_dir: str,
@@ -206,8 +251,28 @@ def _each_git_file(
 ) -> Generator[Path, None, None]:
     """
     The "git" mode: tracked files, with ``include`` and ``exclude`` applied as
-    in "manual" mode.
+    in "manual" mode. A directory symlink that is followed maps to the tracked
+    files of its target; only a target outside the project is walked.
     """
+    cwd = str(Path.cwd())
+    tracked, submodules = _git_tracked_files(cwd)
+    root = _real_relative(starting_path)
+    if root is None:
+        yield from each_unignored_file(
+            starting_path,
+            include,
+            exclude,
+            build_dir,
+            mode="manual",
+            resolve_symlinks=resolve_symlinks,
+            yield_loop_symlinks=yield_loop_symlinks,
+        )
+        return
+    if missing := _below(submodules, root, starting_path):
+        names = ", ".join(p.as_posix() for p in missing)
+        msg = f"Submodules not checked out: {names}"
+        raise ScikitBuildError(msg)
+
     exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
     exclude_lines = (
         [*EXCLUDE_LINES, exclude_build_dir] if exclude_build_dir else EXCLUDE_LINES
@@ -216,10 +281,21 @@ def _each_git_file(
     user_exclude_spec = pathspec.GitIgnoreSpec.from_lines(list(exclude))
     builtin_exclude_spec = pathspec.GitIgnoreSpec.from_lines(exclude_lines)
 
-    seen = set()
-    for path in tracked:
+    def followed(path: Path) -> bool:
+        return (
+            path.is_symlink()
+            and path.is_dir()
+            and (
+                resolve_symlinks in {"all", "classic"}
+                or (resolve_symlinks == "external" and symlink_escapes(path))
+            )
+        )
+
+    todo = deque(_below(tracked, root, starting_path))
+    while todo:
+        path = todo.popleft()
         if not os.path.lexists(path):
-            logger.debug("Skipping {} because it is tracked but missing.", path)
+            rich_warning(f"{path} is tracked by git but missing; not including it.")
             continue
         if not match_path(
             path,
@@ -230,18 +306,10 @@ def _each_git_file(
             is_path=False,
         ):
             continue
-        # git stores a directory symlink as a single entry; follow it like
-        # the walk does, but a link to its own ancestor is a loop.
-        if (
-            path.is_symlink()
-            and path.is_dir()
-            and (
-                resolve_symlinks in {"all", "classic"}
-                or (resolve_symlinks == "external" and symlink_escapes(path))
-            )
-        ):
-            if path.resolve() not in path.absolute().parents:
-                for p in each_unignored_file(
+        if followed(path):
+            target = _real_relative(path)
+            if target is None:
+                yield from each_unignored_file(
                     path,
                     include,
                     exclude,
@@ -249,25 +317,37 @@ def _each_git_file(
                     mode="manual",
                     resolve_symlinks=resolve_symlinks,
                     yield_loop_symlinks=yield_loop_symlinks,
-                ):
-                    seen.add(p)
-                    yield p
+                )
+                continue
+            # A link to its own ancestor is a loop.
+            if target not in path.parents:
+                todo.extend(_below(tracked, target, path))
                 continue
             if not yield_loop_symlinks:
                 continue
-        seen.add(path)
         yield path
 
-    if include:
-        for path in each_unignored_file(
-            starting_path,
-            include,
-            mode="explicit",
-            resolve_symlinks=resolve_symlinks,
-            yield_loop_symlinks=yield_loop_symlinks,
+    if not include:
+        return
+    for path in _below(_git_untracked_files(cwd), root, starting_path):
+        if path.is_dir() and (not path.is_symlink() or followed(path)):
+            yield from each_unignored_file(
+                path,
+                include,
+                mode="explicit",
+                resolve_symlinks=resolve_symlinks,
+                yield_loop_symlinks=yield_loop_symlinks,
+            )
+        elif match_path(
+            path,
+            include_spec,
+            builtin_exclude_spec,
+            pathspec.GitIgnoreSpec([]),
+            [],
+            is_path=False,
+            explicit=True,
         ):
-            if path not in seen:
-                yield path
+            yield path
 
 
 def each_unignored_file(
@@ -301,16 +381,20 @@ def each_unignored_file(
     """
     if mode == "git":
         try:
-            tracked = _git_tracked_files(starting_path)
+            _git_tracked_files(str(Path.cwd()))
         except UnsupportedOperation as err:
             if require_git:
                 raise
-            logger.debug("Walking as in manual mode: {}", err)
+            # Not a git project at all (such as an unpacked SDist) is expected;
+            # anything else means git failed inside a checkout.
+            if "not a git repository" in str(err) or "tracked by git" in str(err):
+                logger.debug("Walking as in manual mode: {}", err)
+            else:
+                rich_warning(f"Walking as in manual mode: {err}")
             mode = "manual"
         else:
             yield from _each_git_file(
                 starting_path,
-                tracked,
                 include,
                 exclude,
                 build_dir,
