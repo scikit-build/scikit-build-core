@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 
 import scikit_build_core.build
-from scikit_build_core.build import build_sdist
+from scikit_build_core._logging import rich_warning
+from scikit_build_core.build import _file_processor, build_sdist
 from scikit_build_core.build._file_processor import each_unignored_file
 from scikit_build_core.errors import ScikitBuildError, UnsupportedOperation
 
@@ -23,6 +24,8 @@ def git_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(f"GIT_{var}_EMAIL", "a@example.com")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
+    _file_processor.clear_git_cache()
+    rich_warning.cache_clear()
 
 
 def git(*args: str, cwd: Path | str = ".") -> None:
@@ -75,7 +78,9 @@ def test_git_mode_tracked_only() -> None:
 
 
 @pytest.mark.usefixtures("repo")
-def test_git_mode_include_exclude() -> None:
+def test_git_mode_include_exclude(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Untracked files come from git, not from a walk of the project.
+    monkeypatch.setattr(os, "walk", None)
     result = set(
         each_unignored_file(
             Path(),
@@ -102,7 +107,7 @@ def test_git_mode_starting_path() -> None:
 
 
 @pytest.mark.usefixtures("repo")
-def test_git_mode_build_dir_and_missing() -> None:
+def test_git_mode_build_dir_and_missing(capsys: pytest.CaptureFixture[str]) -> None:
     Path("tracked.log").unlink()
     Path("build").mkdir()
     Path("build/out.txt").write_text("", encoding="utf-8")
@@ -110,6 +115,40 @@ def test_git_mode_build_dir_and_missing() -> None:
     assert set(each_unignored_file(Path(), build_dir="build", mode="git")) == files(
         ".gitignore", "pyproject.toml", "src/pkg/__init__.py"
     )
+    assert "tracked.log" in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures("repo")
+def test_git_mode_runs_git_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = []
+    run = subprocess.run
+
+    def counting_run(*args: object, **kwargs: object) -> object:
+        calls.append(args)
+        return run(*args, **kwargs)  # type: ignore[call-overload]
+
+    monkeypatch.setattr(subprocess, "run", counting_run)
+    list(each_unignored_file(Path("src"), mode="git"))
+    list(each_unignored_file(Path("src/pkg"), mode="git"))
+    assert len(calls) == 1
+
+
+@pytest.mark.usefixtures("repo")
+def test_git_mode_broken_repo(capsys: pytest.CaptureFixture[str]) -> None:
+    """A git error inside a checkout is not a reason to quietly walk."""
+    Path(".git/index").write_bytes(b"garbage")
+    with pytest.raises(UnsupportedOperation):
+        list(each_unignored_file(Path(), mode="git"))
+    assert set(each_unignored_file(Path(), mode="git", require_git=False)) == files(
+        ".gitignore",
+        "pyproject.toml",
+        "tracked.log",
+        "ignored.log",
+        "untracked.py",
+        "src/pkg/__init__.py",
+        "src/pkg/untracked.py",
+    )
+    assert "WARNING" in capsys.readouterr().err
 
 
 def test_git_mode_submodules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -125,7 +164,20 @@ def test_git_mode_submodules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     git("submodule", "add", "-q", "../sub", "ext/sub")
     git("submodule", "update", "-q", "--init", "--recursive")
     git("commit", "-qm", "top")
+    Path("ext/sub/inner/new.cpp").write_text("", encoding="utf-8")
 
+    assert set(each_unignored_file(Path(), include=["*.cpp"], mode="git")) == files(
+        ".gitignore",
+        ".gitmodules",
+        "pyproject.toml",
+        "ext/sub/.gitignore",
+        "ext/sub/.gitmodules",
+        "ext/sub/gen/g.c",
+        "ext/sub/own.cpp",
+        "ext/sub/inner/.gitignore",
+        "ext/sub/inner/a.cpp",
+        "ext/sub/inner/new.cpp",
+    )
     assert set(each_unignored_file(Path(), mode="git")) == files(
         ".gitignore",
         ".gitmodules",
@@ -139,6 +191,7 @@ def test_git_mode_submodules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     )
 
     git("submodule", "deinit", "-q", "--all")
+    _file_processor.clear_git_cache()
     with pytest.raises(ScikitBuildError, match="ext/sub"):
         list(each_unignored_file(Path(), mode="git"))
     # A package walk only needs the submodules below it.
@@ -158,12 +211,34 @@ def test_git_mode_dir_symlink() -> None:
         files(".gitignore", "pyproject.toml", "tracked.log", "src/pkg/__init__.py")
         | files("link")
     )
-    # Like the walk in "manual" mode, a followed directory link carries its
-    # untracked contents.
+    # A followed link inside the project carries only tracked files.
     assert set(each_unignored_file(Path(), mode="git", resolve_symlinks="all")) == (
         files(".gitignore", "pyproject.toml", "tracked.log", "src/pkg/__init__.py")
-        | files("link/pkg/__init__.py", "link/pkg/untracked.py")
+        | files("link/pkg/__init__.py")
     )
+    assert set(each_unignored_file(Path("link/pkg"), mode="git")) == files(
+        "link/pkg/__init__.py"
+    )
+
+
+def test_git_mode_external_symlink(repo: Path) -> None:
+    (repo.parent / "outside").mkdir()
+    (repo.parent / "outside/data.txt").write_text("", encoding="utf-8")
+    try:
+        Path("ext").symlink_to("../outside")
+    except OSError:
+        pytest.skip("symlinks not supported")
+    git("add", "ext")
+
+    # Git can't describe an external target, so it is walked.
+    assert set(each_unignored_file(Path(), mode="git")) == files(
+        ".gitignore",
+        "pyproject.toml",
+        "tracked.log",
+        "src/pkg/__init__.py",
+        "ext/data.txt",
+    )
+    assert set(each_unignored_file(Path("ext"), mode="git")) == files("ext/data.txt")
 
 
 def test_git_mode_no_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
