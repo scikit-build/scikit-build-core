@@ -1434,3 +1434,28 @@ def test_sanitize_path_multiplexed():
 
     many = FakeMultiplexedPath("/a/ns/pkg", "/b/ns/pkg")
     assert _sanitize_path(many) == [Path("/a/ns/pkg"), Path("/b/ns/pkg")]
+
+
+@pytest.mark.parametrize("order", [(0, 1, 2), (2, 1, 0), (1, 2, 0)])
+def test_entry_point_search_path_order_is_deterministic(monkeypatch, order):
+    # importlib.metadata yields distributions in os.listdir() order, which is
+    # filesystem dependent. The search path order must not follow it.
+    import scikit_build_core.builder.builder as builder_mod
+
+    eps = [
+        SimpleNamespace(
+            name=name,
+            value=name,
+            dist=SimpleNamespace(name=dist),
+            load=lambda name=name: Path("/site") / name,
+        )
+        for dist, name in [("a-dist", "z"), ("b-dist", "a"), ("b-dist", "b")]
+    ]
+    monkeypatch.setattr(builder_mod, "files", lambda p: p)
+    monkeypatch.setattr(
+        builder_mod.metadata, "entry_points", lambda **_: [eps[i] for i in order]
+    )
+
+    result = Builder._get_entry_point_search_path(None, "cmake.prefix")
+
+    assert list(result) == ["z", "a", "b"]
