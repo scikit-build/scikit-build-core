@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import pytest
 from packaging.version import Version
 
+from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.builder.builder import (
     Builder,
     _sanitize_path,
@@ -1453,9 +1454,9 @@ def test_entry_point_search_path_order_is_deterministic(monkeypatch, order):
     ]
     monkeypatch.setattr(builder_mod, "files", lambda p: p)
     monkeypatch.setattr(
-        builder_mod.metadata, "entry_points", lambda **_: [eps[i] for i in order]
+        compat_metadata, "entry_points", lambda **_: [eps[i] for i in order]
     )
 
-    result = Builder._get_entry_point_search_path(None, "cmake.prefix")
+    result = Builder._get_entry_point_search_path(unittest.mock.Mock(), "cmake.prefix")
 
     assert list(result) == ["z", "a", "b"]
