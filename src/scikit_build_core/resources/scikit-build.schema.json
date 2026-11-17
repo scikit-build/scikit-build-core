@@ -202,7 +202,8 @@
             "classic",
             "default",
             "manual",
-            "explicit"
+            "explicit",
+            "git"
           ],
           "description": "Method to use to compute the files to include and exclude."
         },
