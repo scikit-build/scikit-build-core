@@ -7,6 +7,7 @@ import pytest
 from packaging.version import Version
 
 from scikit_build_core._compat.builtins import ExceptionGroup
+from scikit_build_core.settings.skbuild_model import CMakeSettings
 from scikit_build_core.settings.sources import (
     ConfSource,
     EnvSource,
@@ -250,6 +251,50 @@ def test_toml():
     assert settings.ten == {"a": {"b": 3}}
     assert settings.eleven == ["one", "two"]
     assert settings.literal == "three"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (False, "none"),
+        (True, "interpreter"),
+        ("external", "environment"),
+        ("none", "none"),
+        ("interpreter", "interpreter"),
+        ("environment", "environment"),
+    ],
+)
+def test_python_hints_model(value, expected):
+    assert CMakeSettings(python_hints=value).python_hints == expected
+    for source in (
+        EnvSource("SKBUILD", env={"SKBUILD_PYTHON_HINTS": str(value)}),
+        ConfSource(settings={"python-hints": value}),
+        TOMLSource(settings={"python-hints": value}),
+    ):
+        assert (
+            SourceChain(source).convert_target(CMakeSettings).python_hints == expected
+        )
+
+
+def test_python_hints_conversion():
+    target = Literal["none", "interpreter", "environment"]
+    assert EnvSource.convert("none", target) == "none"
+    assert EnvSource.convert("interpreter", target) == "interpreter"
+    assert EnvSource.convert("environment", target) == "environment"
+    assert EnvSource.convert("external", target) == "environment"
+    assert EnvSource.convert("false", target) == "none"
+    assert EnvSource.convert("true", target) == "interpreter"
+    assert ConfSource.convert("external", target) == "environment"
+    assert ConfSource.convert("off", target) == "none"
+    assert ConfSource.convert("on", target) == "interpreter"
+    assert ConfSource.convert(item=False, target=target) == "none"
+    assert ConfSource.convert(item=True, target=target) == "interpreter"
+    assert TOMLSource.convert("none", target) == "none"
+    assert TOMLSource.convert("interpreter", target) == "interpreter"
+    assert TOMLSource.convert("environment", target) == "environment"
+    assert TOMLSource.convert("external", target) == "environment"
+    assert TOMLSource.convert(item=False, target=target) == "none"
+    assert TOMLSource.convert(item=True, target=target) == "interpreter"
 
 
 def test_toml_union():
