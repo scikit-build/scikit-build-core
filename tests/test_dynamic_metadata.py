@@ -4,6 +4,7 @@ import importlib
 import importlib.metadata
 import shutil
 import subprocess
+import tarfile
 import textwrap
 import types
 import zipfile
@@ -905,3 +906,126 @@ def test_build_requires_field(override, monkeypatch) -> None:
             # TODO: Check if special handling should be done for sdist
             "foo",
         }
+
+
+def test_dynamic_metadata_config_settings_end_to_end(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from scikit_build_core.build import (
+        build_sdist,
+        build_wheel,
+        get_requires_for_build_editable,
+        get_requires_for_build_sdist,
+        get_requires_for_build_wheel,
+        prepare_metadata_for_build_wheel,
+    )
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("PYTORCH_VARIANT", raising=False)
+
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "src" / "demo_pkg").mkdir(parents=True)
+    (tmp_path / "src" / "demo_pkg" / "__init__.py").write_text("", encoding="utf-8")
+
+    (tmp_path / "plugins" / "variant_prov.py").write_text(
+        textwrap.dedent(
+            """\
+            def dynamic_metadata(settings, project, config_settings):
+                variant = config_settings["torch.variant"]
+                return {"dependencies": [f"runtime-{variant}"]}
+
+            def get_requires_for_dynamic_metadata(settings, config_settings):
+                variant = config_settings["torch.variant"]
+                return [f"build-helper-{variant}"]
+
+            def dynamic_wheel(settings, config_settings):
+                return {"dependencies": bool(config_settings["torch.dynamic_deps"])}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    (tmp_path / "pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [build-system]
+            requires = ["scikit-build-core"]
+            build-backend = "scikit_build_core.build"
+
+            [project]
+            name = "demo-pkg"
+            version = "0.1.0"
+            dynamic = ["dependencies"]
+
+            [tool.scikit-build]
+            wheel.cmake = false
+
+            [tool.scikit-build.config-setting."torch.variant"]
+            default = "cpu"
+            env = "PYTORCH_VARIANT"
+
+            [tool.scikit-build.config-setting."torch.dynamic_deps"]
+            type = "bool"
+            default = true
+
+            [[tool.dynamic-metadata]]
+            provider = {path = "plugins", module = "variant_prov"}
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    assert "build-helper-cpu" in get_requires_for_build_wheel()
+    assert "build-helper-cu130" in get_requires_for_build_wheel(
+        {"torch.variant": "cu130"}
+    )
+    assert "build-helper-cu130" in get_requires_for_build_sdist(
+        {"torch.variant": "cu130"}
+    )
+    assert "build-helper-cu130" in get_requires_for_build_editable(
+        {"torch.variant": "cu130"}
+    )
+
+    meta_dir = tmp_path / "meta"
+    meta_dir.mkdir()
+    dist_info = prepare_metadata_for_build_wheel(
+        str(meta_dir), {"torch.variant": "cu130"}
+    )
+    meta_text = (meta_dir / dist_info / "METADATA").read_text(encoding="utf-8")
+    assert "Requires-Dist: runtime-cu130" in meta_text
+
+    monkeypatch.setenv("PYTORCH_VARIANT", "rocm62")
+    assert "build-helper-rocm62" in get_requires_for_build_wheel(
+        {"torch.variant": "cu130"}
+    )
+    wheel_dir = tmp_path / "wheel_out"
+    wheel_dir.mkdir()
+    whl_name = build_wheel(str(wheel_dir), {"torch.variant": "cu130"})
+    with zipfile.ZipFile(wheel_dir / whl_name) as zf:
+        whl_meta = zf.read("demo_pkg-0.1.0.dist-info/METADATA").decode("utf-8")
+    assert "Requires-Dist: runtime-rocm62" in whl_meta
+    monkeypatch.delenv("PYTORCH_VARIANT")
+
+    sdist_dyn = tmp_path / "sdist_dyn"
+    sdist_dyn.mkdir()
+    sdist_name = build_sdist(
+        str(sdist_dyn), {"torch.variant": "xpu", "torch.dynamic_deps": "true"}
+    )
+    with tarfile.open(sdist_dyn / sdist_name, "r:gz") as tf:
+        pkg_info_dyn = (
+            tf.extractfile("demo_pkg-0.1.0/PKG-INFO").read().decode("utf-8")  # type: ignore[union-attr]
+        )
+    assert "Requires-Dist: runtime-xpu" in pkg_info_dyn
+    assert "Dynamic: Requires-Dist" in pkg_info_dyn
+
+    sdist_static = tmp_path / "sdist_static"
+    sdist_static.mkdir()
+    sdist_name_static = build_sdist(
+        str(sdist_static), {"torch.variant": "xpu", "torch.dynamic_deps": "false"}
+    )
+    with tarfile.open(sdist_static / sdist_name_static, "r:gz") as tf:
+        pkg_info_static = (
+            tf.extractfile("demo_pkg-0.1.0/PKG-INFO").read().decode("utf-8")  # type: ignore[union-attr]
+        )
+    assert "Requires-Dist: runtime-xpu" in pkg_info_static
+    assert "Dynamic: Requires-Dist" not in pkg_info_static

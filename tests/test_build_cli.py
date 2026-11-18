@@ -225,3 +225,70 @@ def test_requires_command_type_and_config(
     main()
     out, _ = capsys.readouterr()
     assert set(json.loads(out)) == expected
+
+
+PYPROJECT_CONFIG_SETTING_METADATA = """
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+[project]
+name = "test"
+version = "0.1.0"
+dynamic = ["dependencies"]
+
+[tool.scikit-build.config-setting."torch.variant"]
+default = "cpu"
+env = "PYTORCH_VARIANT"
+
+[[tool.dynamic-metadata]]
+provider = {module = "cs_plugin", path = "plugins"}
+"""
+
+CS_PLUGIN = """
+def dynamic_metadata(settings, project, config_settings):
+    return {"dependencies": [f"runtime-{config_settings['torch.variant']}"]}
+
+def get_requires_for_dynamic_metadata(settings, config_settings):
+    return [f"req-{config_settings['torch.variant']}"]
+"""
+
+
+def test_cli_forwards_declared_config_settings(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.delenv("PYTORCH_VARIANT", raising=False)
+    (tmp_path / "pyproject.toml").write_text(PYPROJECT_CONFIG_SETTING_METADATA)
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "plugins" / "cs_plugin.py").write_text(CS_PLUGIN)
+    monkeypatch.chdir(tmp_path)
+
+    monkeypatch.setattr(sys, "argv", ["scikit_build_core.build", "project-table"])
+    main()
+    out, _ = capsys.readouterr()
+    assert json.loads(out)["dependencies"] == ["runtime-cpu"]
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["scikit_build_core.build", "project-table", "-Ctorch.variant=cu130"],
+    )
+    main()
+    out, _ = capsys.readouterr()
+    assert json.loads(out)["dependencies"] == ["runtime-cu130"]
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "scikit_build_core.build",
+            "requires",
+            "--mode=sdist",
+            "--type=dynamic",
+            "-Ctorch.variant=cu130",
+        ],
+    )
+    main()
+    out, _ = capsys.readouterr()
+    assert json.loads(out) == ["req-cu130"]

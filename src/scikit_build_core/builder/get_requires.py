@@ -11,6 +11,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.program_search",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.config_settings",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.settings.skbuild_read_settings",
     f"{__spec__.parent}._known_wheels",
     f"{__spec__.parent}._load_provider",
@@ -35,9 +36,17 @@ from ..program_search import (
     get_make_programs,
     get_ninja_programs,
 )
+from ..settings.config_settings import (
+    load_declarations,
+    resolve_config_settings,
+)
 from ..settings.skbuild_read_settings import SettingsReader
 from ._known_wheels import is_known_platform, known_wheels
-from ._load_provider import load_dynamic_metadata, load_provider
+from ._load_provider import (
+    call_with_config_settings,
+    load_dynamic_metadata,
+    load_provider,
+)
 from .generator import resolve_generator
 
 TYPE_CHECKING = False
@@ -96,6 +105,16 @@ def _read_variant_table() -> dict[str, Any]:
     return table
 
 
+def _read_custom_config_settings() -> dict[str, str | bool | None]:
+    raw = (
+        _read_pyproject()
+        .get("tool", {})
+        .get("scikit-build", {})
+        .get("config-setting", {})
+    )
+    return resolve_config_settings(load_declarations(raw), {}, os.environ)
+
+
 @dataclasses.dataclass(frozen=True)
 class GetRequires:
     settings: ScikitBuildSettings = dataclasses.field(
@@ -107,6 +126,9 @@ class GetRequires:
     variant_table: Mapping[str, Any] = dataclasses.field(
         default_factory=_read_variant_table
     )
+    config_settings: Mapping[str, str | bool | None] = dataclasses.field(
+        default_factory=_read_custom_config_settings
+    )
 
     @classmethod
     def from_config_settings(
@@ -117,7 +139,12 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
-        return cls(reader.settings, reader.dynamic_metadata, reader.variant)
+        return cls(
+            reader.settings,
+            reader.dynamic_metadata,
+            reader.variant,
+            reader.custom_config_settings,
+        )
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -202,15 +229,21 @@ class GetRequires:
                 provider = config.pop("provider")
                 provider_path = config.pop("provider-path", None)
                 module = load_provider(provider, provider_path)
-                yield from getattr(
-                    module, "get_requires_for_dynamic_metadata", lambda _: []
-                )(config)
+                get_requires = getattr(
+                    module, "get_requires_for_dynamic_metadata", None
+                )
+                if get_requires is not None:
+                    yield from call_with_config_settings(
+                        get_requires, (config,), self.config_settings
+                    )
 
         # Standard top-level [[tool.dynamic-metadata]] entries (0.3).
         for provider, settings in load_dynamic_metadata(self.dynamic_metadata_entries):
             get_requires = getattr(provider, "get_requires_for_dynamic_metadata", None)
             if get_requires is not None:
-                yield from get_requires(settings)
+                yield from call_with_config_settings(
+                    get_requires, (settings,), self.config_settings
+                )
 
     def variants(self) -> Generator[str, None, None]:
         if self.settings.fail:
