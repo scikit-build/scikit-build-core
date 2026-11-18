@@ -340,6 +340,13 @@ provider = {path = "helpers/plugins", module = "my_plugin"}
 `module` may also be `"my_plugin:MyClass"` to load a class (instantiated with no
 arguments, so its hooks share state through `self`).
 
+Scikit-build-core also supports an optional `config_settings` parameter on
+`dynamic_metadata`, `get_requires_for_dynamic_metadata`, and `dynamic_wheel`.
+It receives a read-only mapping of the project's
+[declared config-settings](./config_settings.md) after defaults, frontend
+options, and environment bindings are resolved. A plugin that supports other
+build backends can supply a default for this parameter.
+
 ## Import names
 
 If `import-names` or `import-namespaces` ([PEP 794][]) is listed in `dynamic`

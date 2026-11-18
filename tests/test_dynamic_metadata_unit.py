@@ -466,7 +466,7 @@ def test_array_config_settings_hook_variants(tmp_path: Path) -> None:
     path = _write_provider(
         tmp_path,
         "cs_func_prov",
-        "def dynamic_metadata(settings, project, config_settings):\n"
+        "def dynamic_metadata(settings, project, config_settings, /):\n"
         "    try:\n"
         "        config_settings['mutated'] = 'nope'\n"
         "    except TypeError:\n"
@@ -495,8 +495,9 @@ def test_array_config_settings_hook_variants(tmp_path: Path) -> None:
     )
     _write_provider(
         tmp_path,
-        "two_arg_prov",
-        "def dynamic_metadata(settings, project):\n    return {'version': '1.0.0'}\n",
+        "default_version_prov",
+        "def dynamic_metadata(settings, project, version='1.0.0'):\n"
+        "    return {'version': version}\n",
     )
 
     project = process_dynamic_metadata(
@@ -505,7 +506,7 @@ def test_array_config_settings_hook_variants(tmp_path: Path) -> None:
             "dynamic": ["version", "dependencies", "description", "license"],
         },
         [
-            {"provider": {"path": path, "module": "two_arg_prov"}},
+            {"provider": {"path": path, "module": "default_version_prov"}},
             {"provider": {"path": path, "module": "cs_func_prov"}},
             {"provider": {"path": path, "module": "cs_class_prov:Provider"}},
             {"provider": {"path": path, "module": "cs_kw_prov:StaticKwProvider"}},
@@ -530,15 +531,16 @@ def test_dynamic_wheel_config_settings(tmp_path: Path) -> None:
     )
     _write_provider(
         tmp_path,
-        "dw_one_arg_prov",
+        "dw_default_prov",
         "def dynamic_metadata(settings, project):\n"
         "    return {}\n"
-        "def dynamic_wheel(settings):\n"
-        "    return {'optional-dependencies': True}\n",
+        "def dynamic_wheel(settings, include_optional=True):\n"
+        "    assert include_optional is True\n"
+        "    return {'optional-dependencies': include_optional}\n",
     )
     entries = [
         {"provider": {"path": path, "module": "dw_cs_prov"}},
-        {"provider": {"path": path, "module": "dw_one_arg_prov"}},
+        {"provider": {"path": path, "module": "dw_default_prov"}},
     ]
     assert dynamic_wheel_fields(entries, {"torch.dynamic_deps": True}) == frozenset(
         {"dependencies", "optional-dependencies"}
@@ -557,8 +559,9 @@ def test_legacy_dynamic_metadata_config_settings(tmp_path: Path) -> None:
     )
     _write_provider(
         tmp_path,
-        "legacy_two_arg",
-        "def dynamic_metadata(field, settings):\n    return '2.0.0'\n",
+        "legacy_keyword_prov",
+        "def dynamic_metadata(field, settings, *, config_settings):\n"
+        "    return '2.0.0' if config_settings['torch.variant'] else '1.0.0'\n",
     )
     project = process_legacy_dynamic_metadata(
         {"name": "t", "dynamic": ["version", "dependencies"]},
@@ -568,7 +571,7 @@ def test_legacy_dynamic_metadata_config_settings(tmp_path: Path) -> None:
                 "provider-path": path,
             },
             "version": {
-                "provider": "legacy_two_arg",
+                "provider": "legacy_keyword_prov",
                 "provider-path": path,
             },
         },

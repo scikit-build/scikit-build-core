@@ -252,22 +252,27 @@ def call_with_config_settings(
     base_args: tuple[Any, ...],
     config_settings: ConfigSettings | None = None,
 ) -> T:
-    sig = inspect.signature(hook)
-    pos_count = sum(
-        1
-        for param in sig.parameters.values()
-        if param.kind
-        in (
-            inspect.Parameter.POSITIONAL_ONLY,
-            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    """Pass resolved settings to hooks that explicitly declare the parameter."""
+    try:
+        parameters = inspect.signature(hook).parameters
+    except (TypeError, ValueError):
+        return hook(*base_args)
+
+    parameter = parameters.get("config_settings")
+    if parameter is None:
+        return hook(*base_args)
+
+    position = tuple(parameters).index(parameter.name)
+    if parameter.kind is inspect.Parameter.POSITIONAL_ONLY:
+        if position == len(base_args):
+            return hook(*base_args, _readonly_config_settings(config_settings))
+    elif parameter.kind is inspect.Parameter.KEYWORD_ONLY or (
+        parameter.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        and position >= len(base_args)
+    ):
+        return hook(
+            *base_args, config_settings=_readonly_config_settings(config_settings)
         )
-    )
-    resolved = _readonly_config_settings(config_settings)
-    if pos_count > len(base_args):
-        return hook(*base_args, resolved)
-    kw_param = sig.parameters.get("config_settings")
-    if kw_param is not None and kw_param.kind is inspect.Parameter.KEYWORD_ONLY:
-        return hook(*base_args, config_settings=resolved)
     return hook(*base_args)
 
 
@@ -458,19 +463,16 @@ class DynamicPyProject(StrMapping):
         provider = self.providers.pop(key)
         # Legacy hooks have a different shape, so they are called untyped.
         hook: Any = provider.dynamic_metadata
-        sig = inspect.signature(hook)
-        pos_count = sum(
-            1
-            for param in sig.parameters.values()
-            if param.kind
-            in (
-                inspect.Parameter.POSITIONAL_ONLY,
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            )
+        parameters = inspect.signature(hook).parameters
+        config_parameter = parameters.get("config_settings")
+        # A keyword-only opt-in does not change the legacy project argument.
+        parameter_count = len(parameters) - (
+            config_parameter is not None
+            and config_parameter.kind is inspect.Parameter.KEYWORD_ONLY
         )
         base_args: tuple[Any, ...] = (
             (key, self.settings[key])
-            if pos_count < 3
+            if parameter_count < 3
             else (key, self.settings[key], self)
         )
         self.project[key] = call_with_config_settings(
