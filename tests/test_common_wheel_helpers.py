@@ -183,3 +183,25 @@ def test_build_dir_config_setting_placeholder(tmp_path: Path) -> None:
     )
 
     assert build_dir == Path("build/rocm7.1")
+
+
+@pytest.mark.parametrize("value", ["", ".", "..", "../x", "a/../b", "a//b", "/abs"])
+def test_build_dir_config_setting_bad_path(
+    tmp_path: Path, value: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    settings = ScikitBuildSettings()
+    settings.build_dir = "build/{config_setting.torch.variant}"
+
+    tags = get_wheel_tag(settings, targetlib="platlib")
+    with pytest.raises(SystemExit):
+        get_build_dir(
+            settings,
+            tags=tags,
+            state="wheel",
+            editable=False,
+            has_cmake=True,
+            fallback=tmp_path / "build",
+            name="pkg",
+            config_settings={"torch.variant": value},
+        )
+    assert "torch.variant" in capsys.readouterr().err

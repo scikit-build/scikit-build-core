@@ -150,6 +150,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             reader.dynamic_metadata,
             reader.variant,
             config_settings=reader.custom_config_settings,
+            state=reader.state,
         )
 
         if self.target_name == "sdist":

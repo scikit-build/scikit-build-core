@@ -13,6 +13,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
@@ -40,6 +41,7 @@ from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
+from ..format import config_setting_fields
 from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
@@ -723,6 +725,23 @@ class SettingsReader:
             if not gen.template and not gen.template_path:
                 sys.stdout.flush()
                 rich_error("template= or template-path= must be provided in generate")
+
+        templates = {
+            "build-dir": [self.settings.build_dir],
+            "editable.rebuild-dir": [self.settings.editable.rebuild_dir],
+            "build.requires": self.settings.build.requires,
+        }
+        for key, values in templates.items():
+            for name in (n for v in values for n in config_setting_fields(v)):
+                if name not in self.custom_config_settings:
+                    sys.stdout.flush()
+                    rich_error(f"{key}: config-setting {name!r} is not declared")
+                # The SDist does not use the value.
+                if self.state != "sdist" and self.custom_config_settings[name] is None:
+                    sys.stdout.flush()
+                    rich_error(
+                        f"{key}: config-setting {name!r} is unset and has no default"
+                    )
 
     @classmethod
     def from_file(

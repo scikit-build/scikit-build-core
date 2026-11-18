@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = {"itertools", f"{__spec__.parent}.settings.skbuild_model"}
+__lazy_modules__ = {
+    "itertools",
+    "re",
+    "string",
+    f"{__spec__.parent}.settings.skbuild_model",
+}
 
 import dataclasses
+import functools
 import itertools
+import re
+import string
 import sys
 import typing
 from pathlib import Path
@@ -26,6 +34,7 @@ __all__ = [
     "PyprojectFormatter",
     "RootPathResolver",
     "build_dir_exclude_patterns",
+    "config_setting_fields",
     "pyproject_format",
 ]
 
@@ -97,24 +106,48 @@ class _ConfigSettingDummy:
 _CONFIG_SETTING_MARK = "\0"
 
 
-def build_dir_exclude_patterns(build_dir: str) -> list[str]:
+def config_setting_fields(template: str) -> list[str]:
+    """
+    Names of the config-settings that ``template`` refers to. A template that
+    does not parse gives no names; formatting it reports the error.
+    """
+    try:
+        fields = [field for _, field, _, _ in string.Formatter().parse(template)]
+    except ValueError:
+        return []
+    names = []
+    for field in fields:
+        key, _, name = (field or "").partition(".")
+        if key == "config_setting" and name:
+            names.append(name)
+    return names
+
+
+@functools.cache
+def build_dir_exclude_patterns(build_dir: str) -> tuple[str, ...]:
     """
     Gitignore patterns that match every directory ``build_dir`` can format to.
 
     A config-setting value can contain path separators, so each one gets a
-    pattern for a single component and a pattern for several.
+    pattern for a single component and a pattern for several. A pattern with
+    no literal text is dropped, because it would match every file.
     """
     if not build_dir:
-        return []
+        return ()
     dummy = pyproject_format(dummy=True)
     dummy["config_setting"] = typing.cast(
         "str", _ConfigSettingDummy(_CONFIG_SETTING_MARK)
     )
-    parts = build_dir.format(**dummy).split(_CONFIG_SETTING_MARK)
-    return [
+    formatted = build_dir.format(**dummy)
+    # Adjacent wildcards would make a ``**`` glob.
+    formatted = re.sub(r"[*\0]*\0[*\0]*", _CONFIG_SETTING_MARK, formatted)
+    formatted = re.sub(r"\*{2,}", "*", formatted)
+    parts = formatted.split(_CONFIG_SETTING_MARK)
+    patterns = (
         parts[0] + "".join(g + p for g, p in zip(globs, parts[1:], strict=True))
         for globs in itertools.product(("*", "*/**/*"), repeat=len(parts) - 1)
-    ]
+    )
+    return tuple(p for p in patterns if p.strip("*/"))
 
 
 @typing.overload
@@ -196,7 +229,18 @@ class ConfigSettingResolver:
     def __getattribute__(self, attr: str) -> ConfigSettingResolver:
         values = object.__getattribute__(self, "_values")
         name = object.__getattribute__(self, "_name")
+        # Keep protocol lookups (copy, pickle, hasattr) on the root object.
+        if not name and attr.startswith("__") and attr.endswith("__"):
+            return typing.cast(
+                "ConfigSettingResolver", object.__getattribute__(self, attr)
+            )
         return ConfigSettingResolver(values, f"{name}.{attr}" if name else attr)
+
+    # The default copy and pickle paths need attribute access to work.
+    def __reduce__(self) -> tuple[type[ConfigSettingResolver], tuple[object, str]]:
+        values = object.__getattribute__(self, "_values")
+        name = object.__getattribute__(self, "_name")
+        return ConfigSettingResolver, (values, name)
 
     def __str__(self) -> str:
         values: Mapping[str, str | bool | None] = object.__getattribute__(
@@ -218,6 +262,8 @@ class ConfigSettingResolver:
         return value
 
     def __repr__(self) -> str:
+        if not object.__getattribute__(self, "_name"):
+            return "ConfigSettingResolver()"
         return repr(str(self))
 
     def __format__(self, fmt: str) -> str:

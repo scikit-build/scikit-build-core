@@ -29,7 +29,7 @@ import sysconfig
 from pathlib import Path
 from typing import Literal
 
-from .._logging import logger, rich_print
+from .._logging import logger, rich_error, rich_print
 from ..builder.builder import (
     Builder,
     archs_to_tags,
@@ -39,7 +39,7 @@ from ..builder.builder import (
 )
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
-from ..format import pyproject_format
+from ..format import config_setting_fields, pyproject_format
 from ..settings.skbuild_model import normalize_build_types
 from ._pathutil import resolve_wheel_tree
 
@@ -119,6 +119,16 @@ def get_wheel_tag(settings: ScikitBuildSettings, *, targetlib: TargetLib) -> Whe
     )
 
 
+def _is_plain_subpath(value: str) -> bool:
+    """
+    True if ``value`` adds one or more real path components, which is what the
+    build-dir exclude patterns assume.
+    """
+    if os.path.splitdrive(value)[0]:
+        return False
+    return not {"", ".", ".."}.intersection(value.replace("\\", "/").split("/"))
+
+
 def get_build_dir(
     settings: ScikitBuildSettings,
     *,
@@ -140,6 +150,13 @@ def get_build_dir(
     if has_cmake and editable and settings.editable.mode == "inplace":
         build_dir = Path(settings.cmake.source_dir)
     elif settings.build_dir:
+        for cs_name in config_setting_fields(settings.build_dir):
+            value = (config_settings or {}).get(cs_name)
+            if isinstance(value, str) and not _is_plain_subpath(value):
+                rich_error(
+                    f"build-dir: config-setting {cs_name!r} must be a relative"
+                    f" path without empty, '.' or '..' components, got {value!r}"
+                )
         build_dir = Path(
             settings.build_dir.format(
                 **pyproject_format(

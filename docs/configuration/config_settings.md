@@ -75,8 +75,14 @@ The resolved value is available in [formatted fields](./formatted.md) as
 build-dir = "build/{config_setting.torch.variant}"
 ```
 
-A boolean value formats as `true` or `false`. An unset setting with no default
-is an error.
+A boolean value formats as `true` or `false`. A name that is not declared is an
+error. An unset setting with no default is an error, but an SDist build ignores
+it, and skips a `build.requires` entry that uses it.
+
+In `build-dir`, the value must be a relative path, and it cannot contain empty,
+`.` or `..` components. Start `build-dir` with a literal directory, as in the
+example above. If `build-dir` has no literal text, the build directory cannot be
+excluded from the SDist.
 
 ```{versionadded} 1.2
 

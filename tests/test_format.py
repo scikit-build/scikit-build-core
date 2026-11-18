@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import copy
+
 import pytest
 
-from scikit_build_core.format import RootPathResolver, pyproject_format
+from scikit_build_core.format import (
+    RootPathResolver,
+    build_dir_exclude_patterns,
+    config_setting_fields,
+    pyproject_format,
+)
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 TYPE_CHECKING = False
@@ -177,3 +184,39 @@ def test_config_setting_conversion(conversion: str) -> None:
     partial = f"{{config_setting.pkg{conversion}}}"
     with pytest.raises(ValueError, match="not declared"):
         partial.format(**formatted)
+
+
+@pytest.mark.parametrize(
+    ("build_dir", "patterns"),
+    [
+        ("", []),
+        ("build/{wheel_tag}", ["build/*"]),
+        ("build/{config_setting.a.b}", ["build/*", "build/*/**/*"]),
+        # No literal text: the pattern would match every file.
+        ("{config_setting.a.b}", []),
+        ("{wheel_tag}", []),
+        # Adjacent placeholders must not make a ``**`` glob.
+        ("src/{config_setting.a.b}{config_setting.a.c}", ["src/*", "src/*/**/*"]),
+        ("src/{wheel_tag}{config_setting.a.b}", ["src/*", "src/*/**/*"]),
+        ("src/{wheel_tag}{name}", ["src/*"]),
+    ],
+)
+def test_build_dir_exclude_patterns(build_dir: str, patterns: list[str]) -> None:
+    assert list(build_dir_exclude_patterns(build_dir)) == patterns
+
+
+def test_config_setting_fields() -> None:
+    template = "{root}/{config_setting.a.b-c}/{wheel_tag}-{config_setting.d!r:>4}"
+    assert config_setting_fields(template) == ["a.b-c", "d"]
+    assert config_setting_fields("{config_setting}") == []
+    assert config_setting_fields("{unclosed") == []
+
+
+def test_config_setting_introspection() -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
+    )
+    assert "ConfigSettingResolver" in repr(formatted)
+    copied = copy.deepcopy(formatted)
+    assert "{config_setting.pkg.variant}".format(**copied) == "cpu"
+    assert not hasattr(formatted["config_setting"], "__fspath__")
