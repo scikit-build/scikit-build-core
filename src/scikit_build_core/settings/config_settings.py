@@ -25,6 +25,7 @@ __all__ = [
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_metadata_references",
 ]
 
 
@@ -179,6 +180,36 @@ def resolve_config_settings(
     return values
 
 
+def _resolve_references(
+    table: dict[str, Any],
+    values: "Mapping[str, str | bool | None]",
+    context: str,
+    skip: frozenset[str] = frozenset(),
+) -> None:
+    """
+    Replace ``{config-setting = "..."}`` values in a table with the resolved
+    values, in place. Unset settings drop the key.
+    """
+    for key, entry in list(table.items()):
+        if key in skip or not isinstance(entry, dict) or "config-setting" not in entry:
+            continue
+        unknown = set(entry) - {"config-setting"}
+        if unknown:
+            rich_error(
+                f"{context}.{key} config-setting reference has unrecognized"
+                f" keys: {', '.join(sorted(unknown))} (put defaults in the"
+                " declaration instead)"
+            )
+        name = entry["config-setting"]
+        if not isinstance(name, str) or name not in values:
+            rich_error(f"{context}.{key} references undeclared config-setting {name!r}")
+        value = values[name]
+        if value is None:
+            del table[key]
+        else:
+            table[key] = value
+
+
 def resolve_define_references(
     tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
 ) -> None:
@@ -192,25 +223,29 @@ def resolve_define_references(
     if not isinstance(cmake_table, dict):
         return
     define = cmake_table.get("define", {})
-    if not isinstance(define, dict):
-        return
-    for key, entry in list(define.items()):
-        if not isinstance(entry, dict) or "config-setting" not in entry:
-            continue
-        unknown = set(entry) - {"config-setting"}
-        if unknown:
-            rich_error(
-                f"cmake.define.{key} config-setting reference has unrecognized"
-                f" keys: {', '.join(sorted(unknown))} (put defaults in the"
-                " declaration instead)"
-            )
-        name = entry["config-setting"]
-        if not isinstance(name, str) or name not in values:
-            rich_error(
-                f"cmake.define.{key} references undeclared config-setting {name!r}"
-            )
-        value = values[name]
-        if value is None:
-            del define[key]
-        else:
-            define[key] = value
+    if isinstance(define, dict):
+        _resolve_references(define, values, "cmake.define")
+
+
+def resolve_metadata_references(
+    tool_skb: dict[str, Any],
+    entries: Any,
+    values: "Mapping[str, str | bool | None]",
+) -> None:
+    """
+    Replace ``{config-setting = "..."}`` values in dynamic-metadata plugin
+    settings with the resolved values, in place. Covers the raw
+    ``tool.scikit-build.metadata`` table and the ``[[tool.dynamic-metadata]]``
+    entries; only top-level keys of each plugin table are checked. Unset
+    settings drop the key, so the plugin's own default applies.
+    """
+    skip = frozenset({"provider"})
+    legacy = tool_skb.get("metadata", {})
+    if isinstance(legacy, dict):
+        for field, table in legacy.items():
+            if isinstance(table, dict):
+                _resolve_references(table, values, f"metadata.{field}", skip)
+    if isinstance(entries, list):
+        for n, table in enumerate(entries):
+            if isinstance(table, dict):
+                _resolve_references(table, values, f"tool.dynamic-metadata[{n}]", skip)

@@ -38,7 +38,7 @@ from ._import_names import add_dynamic_import_names
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
     from ..builder._load_provider import BuildState
     from ..settings.skbuild_model import ScikitBuildSettings
@@ -84,7 +84,13 @@ def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
     build_state: BuildState = "metadata_wheel",
+    dynamic_metadata_entries: Sequence[Mapping[str, Any]] | None = None,
 ) -> SkbuildMetadata:
+    """
+    Compute the metadata. ``dynamic_metadata_entries`` replaces the
+    ``[[tool.dynamic-metadata]]`` entries of ``pyproject_dict``; pass
+    ``SettingsReader.dynamic_metadata`` to get config-setting references resolved.
+    """
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
 
@@ -106,7 +112,11 @@ def get_standard_metadata(
     if settings.metadata:
         project = process_legacy_dynamic_metadata(project, settings.metadata)
 
-    entries = new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
+    entries = (
+        new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
+        if dynamic_metadata_entries is None
+        else dynamic_metadata_entries
+    )
     if entries:
         project = process_dynamic_metadata(project, entries, build_state)
 

@@ -2,16 +2,20 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "argparse",
+    "copy",
     "json",
     "scikit_build_core._logging",
     "scikit_build_core.build",
     "scikit_build_core.builder._load_provider",
     "scikit_build_core.settings.__main__",
+    "scikit_build_core.settings.config_settings",
     "typing",
 }
 
 import argparse
+import copy
 import json
+import os
 from typing import Literal, get_args
 
 from scikit_build_core._logging import rich_warning
@@ -26,25 +30,38 @@ from scikit_build_core.builder._load_provider import (
     process_legacy_dynamic_metadata,
 )
 from scikit_build_core.settings.__main__ import _load_pyproject
+from scikit_build_core.settings.config_settings import (
+    load_declarations,
+    resolve_config_settings,
+    resolve_metadata_references,
+)
 
 
 def main_project_table(args: argparse.Namespace, /) -> None:
     """Get the full project table, including dynamic metadata."""
-    pyproject = _load_pyproject()
+    pyproject = copy.deepcopy(_load_pyproject())
 
     project = pyproject.get("project", {})
-    legacy = pyproject.get("tool", {}).get("scikit-build", {}).get("metadata", {})
+    tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
+    entries = pyproject.get("tool", {}).get("dynamic-metadata", [])
+    values = resolve_config_settings(
+        load_declarations(tool_skb.get("config-setting", {})),
+        _parse_config_settings(args.config_settings),
+        os.environ,
+    )
+    resolve_metadata_references(tool_skb, entries, values)
+
+    legacy = tool_skb.get("metadata", {})
     if legacy:
         project = process_legacy_dynamic_metadata(project, legacy)
-    entries = pyproject.get("tool", {}).get("dynamic-metadata", [])
     if entries:
         project = process_dynamic_metadata(project, entries, build_state=args.state)
     print(json.dumps(project, indent=2))
 
 
-def main_requires(args: argparse.Namespace, /) -> None:
+def _parse_config_settings(items: list[str]) -> dict[str, str | list[str]]:
     config_settings: dict[str, str | list[str]] = {}
-    for item in args.config_settings:
+    for item in items:
         key, _, value = item.partition("=")
         if key not in config_settings:
             config_settings[key] = value
@@ -52,7 +69,11 @@ def main_requires(args: argparse.Namespace, /) -> None:
             old.append(value)
         else:
             config_settings[key] = [old, value]
-    get_requires(args.mode, args.type, config_settings)
+    return config_settings
+
+
+def main_requires(args: argparse.Namespace, /) -> None:
+    get_requires(args.mode, args.type, _parse_config_settings(args.config_settings))
 
 
 def get_requires(
@@ -122,6 +143,15 @@ def populate_parser(parser: argparse.ArgumentParser, /) -> None:
         choices=get_args(BuildState),
         default="metadata_wheel",
         help="The build state reported to [[tool.dynamic-metadata]] providers",
+    )
+    project_table.add_argument(
+        "-C",
+        "--config-setting",
+        dest="config_settings",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="A package-declared config-setting, for dynamic metadata that references one; can be repeated",
     )
 
 

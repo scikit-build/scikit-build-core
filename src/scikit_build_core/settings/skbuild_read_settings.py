@@ -48,6 +48,7 @@ from .config_settings import (
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
+    resolve_metadata_references,
 )
 from .skbuild_model import (
     BuildSettings,
@@ -313,6 +314,7 @@ class SettingsReader:
             if "config-setting" in skb:
                 rich_error(declaration_error)
             resolve_define_references(skb, self.custom_config_settings)
+            resolve_metadata_references(skb, None, self.custom_config_settings)
             return matched, overridden
 
         # Handle overrides
@@ -339,6 +341,9 @@ class SettingsReader:
         # callers do not have to parse pyproject.toml a second time.
         self.dynamic_metadata: list[dict[str, Any]] = pyproject.get("tool", {}).get(
             "dynamic-metadata", []
+        )
+        resolve_metadata_references(
+            {}, self.dynamic_metadata, self.custom_config_settings
         )
         self.variant: dict[str, Any] = pyproject.get("variant", {})
 

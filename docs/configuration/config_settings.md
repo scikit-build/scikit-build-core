@@ -65,6 +65,34 @@ The define is left unset when the setting resolves to no value, so
 `if(DEFINED ZMQ_PREFIX)` works in CMake, and `-C cmake.define.NAME=...` or
 `SKBUILD_CMAKE_DEFINE` still win over the referenced value.
 
+## Passing values to dynamic metadata plugins
+
+A [dynamic metadata](./dynamic.md) plugin setting can reference a setting with
+the same form. The plugin receives the resolved value as if it was written in
+the table, so the plugin does not need to know about config-settings:
+
+```toml
+[tool.scikit-build.config-setting."torch.variant"]
+env = "PYTORCH_VARIANT"
+
+[[tool.dynamic-metadata]]
+provider = "torch-deps"
+variant = { config-setting = "torch.variant" }
+```
+
+The key is removed when the setting resolves to no value, so the plugin default
+applies. Only top-level keys of the plugin table are checked, and `provider` is
+never replaced. This also works in the deprecated `tool.scikit-build.metadata`
+table. A field that depends on a setting can differ between the SDist and the
+wheel; the plugin must report it with the `dynamic_wheel` hook.
+
+Other build backends do not resolve the reference and pass the table to the
+plugin unchanged.
+
+:::{versionadded} 1.2
+
+:::
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the
