@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.settings.skbuild_model"}
+__lazy_modules__ = {"itertools", f"{__spec__.parent}.settings.skbuild_model"}
 
 import dataclasses
+import itertools
 import sys
 import typing
 from pathlib import Path
@@ -24,6 +25,7 @@ __all__ = [
     "ConfigSettingResolver",
     "PyprojectFormatter",
     "RootPathResolver",
+    "build_dir_exclude_patterns",
     "pyproject_format",
 ]
 
@@ -70,15 +72,49 @@ class _AnySpecDummy:
     def __str__(self) -> str:
         return "*"
 
-    def __getattr__(self, attr: str) -> _AnySpecDummy:
-        if attr.startswith("_"):
-            raise AttributeError(attr)
+
+class _ConfigSettingDummy:
+    """Dummy for ``config_setting``: any attribute chain formats as ``text``."""
+
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    # Setting segments can be any name, including ones like ``_text``.
+    def __getattribute__(self, attr: str) -> _ConfigSettingDummy:
         return self
 
+    def __format__(self, fmt: str) -> str:
+        return str(self)
 
-# Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``)
-# or attribute access (e.g. ``config_setting``).
-_SPEC_TAKING_KEYS = ("root", "config_setting")
+    def __str__(self) -> str:
+        text: str = object.__getattribute__(self, "_text")
+        return text
+
+    __repr__ = __str__
+
+
+# Stands for a config-setting value in a dummy-formatted build-dir.
+_CONFIG_SETTING_MARK = "\0"
+
+
+def build_dir_exclude_patterns(build_dir: str) -> list[str]:
+    """
+    Gitignore patterns that match every directory ``build_dir`` can format to.
+
+    A config-setting value can contain path separators, so each one gets a
+    pattern for a single component and a pattern for several.
+    """
+    if not build_dir:
+        return []
+    dummy = pyproject_format(dummy=True)
+    dummy["config_setting"] = typing.cast(
+        "str", _ConfigSettingDummy(_CONFIG_SETTING_MARK)
+    )
+    parts = build_dir.format(**dummy).split(_CONFIG_SETTING_MARK)
+    return [
+        parts[0] + "".join(g + p for g, p in zip(globs, parts[1:], strict=True))
+        for globs in itertools.product(("*", "*/**/*"), repeat=len(parts) - 1)
+    ]
 
 
 @typing.overload
@@ -117,11 +153,9 @@ def pyproject_format(
         res_dummy: dict[str, object] = dict.fromkeys(
             PyprojectFormatter.__annotations__, "*"
         )
-        # Keys that accept a format spec (e.g. ``{root:uri}``) must use a value
-        # whose ``__format__`` accepts any spec, otherwise dummy formatting of a
-        # build-dir like ``{root:uri}`` raises ValueError.
-        for key in _SPEC_TAKING_KEYS:
-            res_dummy[key] = _AnySpecDummy()
+        # ``{root:uri}`` needs a value whose ``__format__`` accepts any spec.
+        res_dummy["root"] = _AnySpecDummy()
+        res_dummy["config_setting"] = _ConfigSettingDummy("*")
         return typing.cast("dict[str, str]", res_dummy)
 
     assert settings is not None
@@ -148,39 +182,46 @@ def pyproject_format(
 
 
 class ConfigSettingResolver:
-    """Handle ``{config_setting.a.b}`` by matching the dotted attribute chain."""
+    """Handle ``{config_setting.a.b}`` by collecting the dotted attribute chain.
 
-    def __init__(
-        self, values: Mapping[str, str | bool | None], prefix: str = ""
-    ) -> None:
+    The value is read only when the complete name is known, on format or
+    conversion (``!s``, ``!r``, ``!a``).
+    """
+
+    def __init__(self, values: Mapping[str, str | bool | None], name: str = "") -> None:
         self._values = values
-        self._prefix = prefix
+        self._name = name
 
-    def __getattr__(self, attr: str) -> str | ConfigSettingResolver:
-        if attr.startswith("_"):
-            raise AttributeError(attr)
-        name = f"{self._prefix}{attr}"
-        if name in self._values:
-            value = self._values[name]
-            if value is None:
-                msg = f"config-setting {name!r} is unset and has no default"
-                raise ValueError(msg)
-            if isinstance(value, bool):
-                return "true" if value else "false"
-            return value
-        if any(k.startswith(f"{name}.") for k in self._values):
-            return ConfigSettingResolver(self._values, f"{name}.")
-        msg = f"config-setting {name!r} is not declared"
-        raise ValueError(msg)
+    # Not __getattr__: a segment can be any name, including ``_values``.
+    def __getattribute__(self, attr: str) -> ConfigSettingResolver:
+        values = object.__getattribute__(self, "_values")
+        name = object.__getattribute__(self, "_name")
+        return ConfigSettingResolver(values, f"{name}.{attr}" if name else attr)
 
-    # Only reached for a partial name, like {config_setting.torch}
-    # pylint: disable-next=invalid-format-returned
-    def __format__(self, fmt: str) -> str:
-        if not self._prefix:
+    def __str__(self) -> str:
+        values: Mapping[str, str | bool | None] = object.__getattribute__(
+            self, "_values"
+        )
+        name: str = object.__getattribute__(self, "_name")
+        if not name:
             msg = "config_setting needs a name, like {config_setting.a.b}"
-        else:
-            msg = f"config-setting {self._prefix.rstrip('.')!r} is not declared"
-        raise ValueError(msg)
+            raise ValueError(msg)
+        if name not in values:
+            msg = f"config-setting {name!r} is not declared"
+            raise ValueError(msg)
+        value = values[name]
+        if value is None:
+            msg = f"config-setting {name!r} is unset and has no default"
+            raise ValueError(msg)
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        return value
+
+    def __repr__(self) -> str:
+        return repr(str(self))
+
+    def __format__(self, fmt: str) -> str:
+        return format(str(self), fmt)
 
 
 @dataclasses.dataclass()

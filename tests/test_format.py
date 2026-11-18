@@ -143,3 +143,37 @@ def test_dummy_config_setting() -> None:
     dummy = pyproject_format(dummy=True)
     spec = "build/{config_setting.a.b-c}"
     assert spec.format(**dummy) == "build/*"
+
+
+def test_config_setting_name_is_prefix_of_another() -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(),
+        config_settings={"pkg.opt": None, "pkg.opt.mode": "fast"},
+    )
+    assert "{config_setting.pkg.opt.mode}".format(**formatted) == "fast"
+    with pytest.raises(ValueError, match="unset"):
+        "{config_setting.pkg.opt}".format(**formatted)
+
+
+@pytest.mark.parametrize(
+    "name", ["pkg._variant", "pkg._values", "pkg._name", "_pkg.x", "pkg.__class__"]
+)
+def test_config_setting_underscore_segments(name: str) -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(), config_settings={name: "value"}
+    )
+    spec = f"{{config_setting.{name}}}"
+    assert spec.format(**formatted) == "value"
+    assert spec.format(**pyproject_format(dummy=True)) == "*"
+
+
+@pytest.mark.parametrize("conversion", ["!s", "!r", "!a"])
+def test_config_setting_conversion(conversion: str) -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
+    )
+    full = f"{{config_setting.pkg.variant{conversion}}}"
+    assert full.format(**formatted) == ("cpu" if conversion == "!s" else "'cpu'")
+    partial = f"{{config_setting.pkg{conversion}}}"
+    with pytest.raises(ValueError, match="not declared"):
+        partial.format(**formatted)
