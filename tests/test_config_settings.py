@@ -44,8 +44,6 @@ def test_declaration_minimal(tmp_path: Path):
         pytest.param('"zmq.prefix" = {cmake = "ZMQ_PREFIX"}', id="no-cmake-alias"),
         pytest.param('"zmq.prefix" = {type = "int"}', id="bad-type"),
         pytest.param('prefix = {help = "no dot"}', id="dotless-name"),
-        pytest.param('"_zmq.prefix" = {}', id="underscore-first-segment"),
-        pytest.param('"zmq._prefix" = {}', id="underscore-segment"),
         pytest.param('"cmake.prefix" = {help = "reserved"}', id="reserved-segment"),
         pytest.param('"skbuild.x" = {help = "reserved"}', id="skbuild-segment"),
         pytest.param(
@@ -331,7 +329,7 @@ def test_build_requires_config_setting_placeholder(
 
     write_pyproject(
         tmp_path,
-        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting.zmq.libzmq}"]\n'
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.libzmq]}"]\n'
         + DECLARATION,
     )
     monkeypatch.chdir(tmp_path)
@@ -382,9 +380,9 @@ def test_config_settings_reach_cmake(
 @pytest.mark.parametrize(
     "option",
     [
-        'build-dir = "build/{config_setting.zmq.libmzq}"',
-        'build-dir = "build"\neditable.rebuild-dir = "build/{config_setting.zmq.libmzq}"',
-        'build.requires = ["zmq-{config_setting.zmq.libmzq}"]',
+        'build-dir = "build/{config_setting[zmq.libmzq]}"',
+        'build-dir = "build"\neditable.rebuild-dir = "build/{config_setting[zmq.libmzq]}"',
+        'build.requires = ["zmq-{config_setting[zmq.libmzq]}"]',
     ],
 )
 def test_placeholder_not_declared(
@@ -402,7 +400,7 @@ def test_placeholder_not_declared(
 def test_placeholder_unset(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
     pyproject_toml = write_pyproject(
         tmp_path,
-        '[tool.scikit-build]\nbuild-dir = "build/{config_setting.zmq.prefix}"\n'
+        '[tool.scikit-build]\nbuild-dir = "build/{config_setting[zmq.prefix]}"\n'
         + DECLARATION,
     )
     # The SDist does not use the value.
@@ -423,7 +421,7 @@ def test_build_requires_unset_placeholder(
 
     write_pyproject(
         tmp_path,
-        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting.zmq.prefix}"]\n'
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.prefix]}"]\n'
         + DECLARATION,
     )
     monkeypatch.chdir(tmp_path)
@@ -433,7 +431,7 @@ def test_build_requires_unset_placeholder(
     wheel = GetRequires.from_config_settings(None, state="wheel")
     with pytest.raises(SystemExit):
         list(wheel.dynamic_metadata())
-    assert "'zmq.prefix' is unset" in capsys.readouterr().err
+    assert "'zmq.prefix' is not declared, or is unset" in capsys.readouterr().err
 
 
 def test_build_requires_default_get_requires(
@@ -443,7 +441,7 @@ def test_build_requires_default_get_requires(
 
     write_pyproject(
         tmp_path,
-        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting.zmq.libzmq}"]\n'
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.libzmq]}"]\n'
         + DECLARATION,
     )
     monkeypatch.chdir(tmp_path)

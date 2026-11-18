@@ -33,10 +33,8 @@ def __dir__() -> list[str]:
 
 
 # At least two dotted segments; matched verbatim (no dash/underscore
-# normalization), like env-table keys. A segment cannot start with "_", so
-# ``{config_setting.a.b}`` can use plain attribute access.
-_SEGMENT = r"[A-Za-z0-9-][A-Za-z0-9_-]*"
-_NAME_REGEX = re.compile(rf"^{_SEGMENT}(\.{_SEGMENT})+$")
+# normalization), like env-table keys.
+_NAME_REGEX = re.compile(r"^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+$")
 
 # A "choices" key (allowed values, str type only) was cut from the initial
 # release to keep the surface minimal; see git history to re-add.
@@ -97,8 +95,7 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
         if not _NAME_REGEX.match(name):
             rich_error(
                 f"{_error_context(name)} must be two or more dotted segments of"
-                " letters, digits, '-', and '_', and no segment may start"
-                " with '_'"
+                " letters, digits, '-', and '_'"
             )
         first_segment = name.split(".", 1)[0]
         if first_segment in reserved:

@@ -1054,9 +1054,9 @@ def test_git_config_value(value: str, expected: str) -> None:
 @pytest.mark.parametrize(
     "build_dir",
     [
-        "out/{config_setting.pkg.variant}/cmake",
-        "out/x-{config_setting.pkg.variant}/cmake",
-        "out/{config_setting.pkg.variant}-x/cmake",
+        "out/{config_setting[pkg.variant]}/cmake",
+        "out/x-{config_setting[pkg.variant]}/cmake",
+        "out/{config_setting[pkg.variant]}-x/cmake",
     ],
 )
 @pytest.mark.parametrize("value", ["gpu", "gpu/debug", "gpu/debug/a"])
@@ -1064,7 +1064,7 @@ def test_build_dir_config_setting_with_separator(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, build_dir: str, value: str
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    resolved = Path(build_dir.replace("{config_setting.pkg.variant}", value))
+    resolved = Path(build_dir.replace("{config_setting[pkg.variant]}", value))
     resolved.mkdir(parents=True)
     resolved.joinpath("CMakeCache.txt").touch()
     kept = Path("out/keep.txt")

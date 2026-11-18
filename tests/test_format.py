@@ -121,20 +121,20 @@ def test_config_setting_key() -> None:
         settings=ScikitBuildSettings(),
         config_settings={"torch.variant": "cu126", "my-proj.gpu-opt.x": True},
     )
-    assert "build/{config_setting.torch.variant}".format(**formatted) == "build/cu126"
-    # Kept out of a literal .format() call; mypy rejects dashes in accessors.
-    spec = "{config_setting.my-proj.gpu-opt.x}"
+    # Kept out of a literal .format() call; mypy rejects dotted index keys.
+    spec = "build/{config_setting[torch.variant]}"
+    assert spec.format(**formatted) == "build/cu126"
+    spec = "{config_setting[my-proj.gpu-opt.x]}"
     assert spec.format(**formatted) == "true"
 
 
 @pytest.mark.parametrize(
     ("spec", "match"),
     [
-        ("{config_setting.torch.other}", "not declared"),
-        ("{config_setting.other.variant}", "not declared"),
-        ("{config_setting.torch}", "not declared"),
-        ("{config_setting}", "needs a name"),
-        ("{config_setting.torch.unset}", "unset"),
+        ("{config_setting[torch.other]}", "not declared"),
+        ("{config_setting[other.variant]}", "not declared"),
+        ("{config_setting[torch]}", "not declared"),
+        ("{config_setting[torch.unset]}", "unset"),
     ],
 )
 def test_config_setting_key_errors(spec: str, match: str) -> None:
@@ -148,7 +148,7 @@ def test_config_setting_key_errors(spec: str, match: str) -> None:
 
 def test_dummy_config_setting() -> None:
     dummy = pyproject_format(dummy=True)
-    spec = "build/{config_setting.a.b-c}"
+    spec = "build/{config_setting[a.b-c]}"
     assert spec.format(**dummy) == "build/*"
 
 
@@ -157,19 +157,21 @@ def test_config_setting_name_is_prefix_of_another() -> None:
         settings=ScikitBuildSettings(),
         config_settings={"pkg.opt": None, "pkg.opt.mode": "fast"},
     )
-    assert "{config_setting.pkg.opt.mode}".format(**formatted) == "fast"
+    spec = "{config_setting[pkg.opt.mode]}"
+    assert spec.format(**formatted) == "fast"
+    spec = "{config_setting[pkg.opt]}"
     with pytest.raises(ValueError, match="unset"):
-        "{config_setting.pkg.opt}".format(**formatted)
+        spec.format(**formatted)
 
 
-@pytest.mark.parametrize("name", ["pkg._variant", "_pkg.x"])
+@pytest.mark.parametrize("name", ["pkg._variant", "_pkg.x", "pkg.__class__"])
 def test_config_setting_underscore_segments(name: str) -> None:
     formatted = pyproject_format(
-        settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
+        settings=ScikitBuildSettings(), config_settings={name: "value"}
     )
-    spec = f"{{config_setting.{name}}}"
-    with pytest.raises((AttributeError, ValueError)):
-        spec.format(**formatted)
+    spec = f"{{config_setting[{name}]}}"
+    assert spec.format(**formatted) == "value"
+    assert spec.format(**pyproject_format(dummy=True)) == "*"
 
 
 @pytest.mark.parametrize("conversion", ["!s", "!r", "!a"])
@@ -177,9 +179,9 @@ def test_config_setting_conversion(conversion: str) -> None:
     formatted = pyproject_format(
         settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
     )
-    full = f"{{config_setting.pkg.variant{conversion}}}"
+    full = f"{{config_setting[pkg.variant]{conversion}}}"
     assert full.format(**formatted) == ("cpu" if conversion == "!s" else "'cpu'")
-    partial = f"{{config_setting.pkg{conversion}}}"
+    partial = f"{{config_setting[pkg]{conversion}}}"
     with pytest.raises(ValueError, match="not declared"):
         partial.format(**formatted)
 
@@ -189,13 +191,13 @@ def test_config_setting_conversion(conversion: str) -> None:
     [
         ("", []),
         ("build/{wheel_tag}", ["build/*"]),
-        ("build/{config_setting.a.b}", ["build/*", "build/*/**/*"]),
+        ("build/{config_setting[a.b]}", ["build/*", "build/*/**/*"]),
         # No literal text: the pattern would match every file.
-        ("{config_setting.a.b}", []),
+        ("{config_setting[a.b]}", []),
         ("{wheel_tag}", []),
         # Adjacent placeholders must not make a ``**`` glob.
-        ("src/{config_setting.a.b}{config_setting.a.c}", ["src/*", "src/*/**/*"]),
-        ("src/{wheel_tag}{config_setting.a.b}", ["src/*", "src/*/**/*"]),
+        ("src/{config_setting[a.b]}{config_setting[a.c]}", ["src/*", "src/*/**/*"]),
+        ("src/{wheel_tag}{config_setting[a.b]}", ["src/*", "src/*/**/*"]),
         ("src/{wheel_tag}{name}", ["src/*"]),
     ],
 )
@@ -204,7 +206,7 @@ def test_build_dir_exclude_patterns(build_dir: str, patterns: list[str]) -> None
 
 
 def test_config_setting_fields() -> None:
-    template = "{root}/{config_setting.a.b-c}/{wheel_tag}-{config_setting.d!r:>4}"
+    template = "{root}/{config_setting[a.b-c]}/{wheel_tag}-{config_setting[d]!r:>4}"
     assert config_setting_fields(template) == ["a.b-c", "d"]
     assert config_setting_fields("{config_setting}") == []
     assert config_setting_fields("{unclosed") == []
@@ -214,7 +216,7 @@ def test_config_setting_introspection() -> None:
     formatted = pyproject_format(
         settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
     )
-    assert "ConfigSettingResolver" in repr(formatted)
+    assert "pkg.variant" in repr(formatted)
     copied = copy.deepcopy(formatted)
-    assert "{config_setting.pkg.variant}".format(**copied) == "cpu"
-    assert not hasattr(formatted["config_setting"], "__fspath__")
+    spec = "{config_setting[pkg.variant]}"
+    assert spec.format(**copied) == "cpu"

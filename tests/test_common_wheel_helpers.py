@@ -168,7 +168,7 @@ def test_build_dir_inplace_editable_uses_source_dir(tmp_path: Path) -> None:
 
 def test_build_dir_config_setting_placeholder(tmp_path: Path) -> None:
     settings = ScikitBuildSettings()
-    settings.build_dir = "build/{config_setting.torch.variant}"
+    settings.build_dir = "build/{config_setting[torch.variant]}"
 
     tags = get_wheel_tag(settings, targetlib="platlib")
     build_dir = get_build_dir(
@@ -190,7 +190,7 @@ def test_build_dir_config_setting_bad_path(
     tmp_path: Path, value: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     settings = ScikitBuildSettings()
-    settings.build_dir = "build/{config_setting.torch.variant}"
+    settings.build_dir = "build/{config_setting[torch.variant]}"
 
     tags = get_wheel_tag(settings, targetlib="platlib")
     with pytest.raises(SystemExit):

@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 __all__ = [
-    "ConfigSettingResolver",
     "PyprojectFormatter",
     "RootPathResolver",
     "build_dir_exclude_patterns",
@@ -64,8 +63,8 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
     build_dir: str
     """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
-    config_setting: ConfigSettingResolver
-    """Declared config-settings (``tool.scikit-build.config-setting``), by name, e.g. ``build-dir = "build/{config_setting.torch.variant}"``. Booleans format as ``true``/``false``. An undeclared or unset setting is an error."""
+    config_setting: Mapping[str, str]
+    """Declared config-settings (``tool.scikit-build.config-setting``), by name, e.g. ``build-dir = "build/{config_setting[torch.variant]}"``. Booleans format as ``true``/``false``. An undeclared or unset setting is an error."""
 
 
 class _AnySpecDummy:
@@ -83,24 +82,21 @@ class _AnySpecDummy:
 
 
 class _ConfigSettingDummy:
-    """Dummy for ``config_setting``: any attribute chain formats as ``text``."""
+    """Dummy for ``config_setting``: any name formats as ``text``."""
 
     def __init__(self, text: str) -> None:
         self._text = text
 
-    # A setting segment cannot start with ``_``.
-    def __getattr__(self, attr: str) -> _ConfigSettingDummy:
-        if attr.startswith("_"):
-            raise AttributeError(attr)
-        return self
-
-    def __format__(self, fmt: str) -> str:
+    def __getitem__(self, name: str) -> str:
         return self._text
 
-    def __str__(self) -> str:
-        return self._text
 
-    __repr__ = __str__
+class _ConfigSettings(dict[str, str]):
+    """Set config-setting values; a missing name gives a clear error."""
+
+    def __missing__(self, name: str) -> str:
+        msg = f"config-setting {name!r} is not declared, or is unset and has no default"
+        raise ValueError(msg)
 
 
 # Stands for a config-setting value in a dummy-formatted build-dir.
@@ -116,12 +112,8 @@ def config_setting_fields(template: str) -> list[str]:
         fields = [field for _, field, _, _ in string.Formatter().parse(template)]
     except ValueError:
         return []
-    names = []
-    for field in fields:
-        key, _, name = (field or "").partition(".")
-        if key == "config_setting" and name:
-            names.append(name)
-    return names
+    matches = (re.match(r"config_setting\[([^]]+)\]", field or "") for field in fields)
+    return [m[1] for m in matches if m]
 
 
 @functools.cache
@@ -200,7 +192,11 @@ def pyproject_format(
         # as part of PEP517 standard.
         root=RootPathResolver(),
         build_type=normalize_build_types(settings.cmake.build_type)[0],
-        config_setting=ConfigSettingResolver(config_settings or {}),
+        config_setting=_ConfigSettings(
+            (key, str(value).lower() if isinstance(value, bool) else value)
+            for key, value in (config_settings or {}).items()
+            if value is not None
+        ),
     )
     # Then compute all optional keys depending on the function input
     if tags is not None:
@@ -213,49 +209,6 @@ def pyproject_format(
         res["build_dir"] = str(build_dir.resolve())
     # Construct the final dict including the always known keys
     return res
-
-
-class ConfigSettingResolver:
-    """Handle ``{config_setting.a.b}`` by collecting the dotted attribute chain.
-
-    The value is read only when the complete name is known, on format or
-    conversion (``!s``, ``!r``, ``!a``).
-    """
-
-    def __init__(self, values: Mapping[str, str | bool | None], name: str = "") -> None:
-        self._values = values
-        self._name = name
-
-    # A setting segment cannot start with ``_``.
-    def __getattr__(self, attr: str) -> ConfigSettingResolver:
-        if attr.startswith("_"):
-            raise AttributeError(attr)
-        name = f"{self._name}.{attr}" if self._name else attr
-        return ConfigSettingResolver(self._values, name)
-
-    def __str__(self) -> str:
-        name = self._name
-        if not name:
-            msg = "config_setting needs a name, like {config_setting.a.b}"
-            raise ValueError(msg)
-        if name not in self._values:
-            msg = f"config-setting {name!r} is not declared"
-            raise ValueError(msg)
-        value = self._values[name]
-        if value is None:
-            msg = f"config-setting {name!r} is unset and has no default"
-            raise ValueError(msg)
-        if isinstance(value, bool):
-            return "true" if value else "false"
-        return value
-
-    def __repr__(self) -> str:
-        if not self._name:
-            return "ConfigSettingResolver()"
-        return repr(str(self))
-
-    def __format__(self, fmt: str) -> str:
-        return format(str(self), fmt)
 
 
 @dataclasses.dataclass()

@@ -13,9 +13,9 @@ variable, and forwarded to CMake.
 ## Declaring settings
 
 Each setting is declared in the `tool.scikit-build.config-setting` table. Names
-must have at least two dot-separated segments, and a segment cannot start with
-`_`; using your import package name as the first segment is recommended to avoid
-clashes with other tools' config-settings:
+must have at least two dot-separated segments; using your import package name as
+the first segment is recommended to avoid clashes with other tools'
+config-settings:
 
 ```toml
 [tool.scikit-build.config-setting."zmq.prefix"]
@@ -68,11 +68,11 @@ The define is left unset when the setting resolves to no value, so
 ## Use in formatted fields
 
 The resolved value is available in [formatted fields](./formatted.md) as
-`{config_setting.<name>}`, for example to keep one build directory per variant:
+`{config_setting[<name>]}`, for example to keep one build directory per variant:
 
 ```toml
 [tool.scikit-build]
-build-dir = "build/{config_setting.torch.variant}"
+build-dir = "build/{config_setting[torch.variant]}"
 ```
 
 A boolean value formats as `true` or `false`. A name that is not declared is an
