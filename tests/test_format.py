@@ -162,16 +162,14 @@ def test_config_setting_name_is_prefix_of_another() -> None:
         "{config_setting.pkg.opt}".format(**formatted)
 
 
-@pytest.mark.parametrize(
-    "name", ["pkg._variant", "pkg._values", "pkg._name", "_pkg.x", "pkg.__class__"]
-)
+@pytest.mark.parametrize("name", ["pkg._variant", "_pkg.x"])
 def test_config_setting_underscore_segments(name: str) -> None:
     formatted = pyproject_format(
-        settings=ScikitBuildSettings(), config_settings={name: "value"}
+        settings=ScikitBuildSettings(), config_settings={"pkg.variant": "cpu"}
     )
     spec = f"{{config_setting.{name}}}"
-    assert spec.format(**formatted) == "value"
-    assert spec.format(**pyproject_format(dummy=True)) == "*"
+    with pytest.raises((AttributeError, ValueError)):
+        spec.format(**formatted)
 
 
 @pytest.mark.parametrize("conversion", ["!s", "!r", "!a"])

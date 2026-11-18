@@ -620,7 +620,7 @@
       "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
       "additionalProperties": false,
       "patternProperties": {
-        "^[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)+$": {
+        "^[A-Za-z0-9-][A-Za-z0-9_-]*(\\.[A-Za-z0-9-][A-Za-z0-9_-]*)+$": {
           "type": "object",
           "additionalProperties": false,
           "properties": {

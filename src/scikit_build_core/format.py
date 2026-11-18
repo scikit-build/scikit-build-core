@@ -88,16 +88,17 @@ class _ConfigSettingDummy:
     def __init__(self, text: str) -> None:
         self._text = text
 
-    # Setting segments can be any name, including ones like ``_text``.
-    def __getattribute__(self, attr: str) -> _ConfigSettingDummy:
+    # A setting segment cannot start with ``_``.
+    def __getattr__(self, attr: str) -> _ConfigSettingDummy:
+        if attr.startswith("_"):
+            raise AttributeError(attr)
         return self
 
     def __format__(self, fmt: str) -> str:
-        return str(self)
+        return self._text
 
     def __str__(self) -> str:
-        text: str = object.__getattribute__(self, "_text")
-        return text
+        return self._text
 
     __repr__ = __str__
 
@@ -225,35 +226,22 @@ class ConfigSettingResolver:
         self._values = values
         self._name = name
 
-    # Not __getattr__: a segment can be any name, including ``_values``.
-    def __getattribute__(self, attr: str) -> ConfigSettingResolver:
-        values = object.__getattribute__(self, "_values")
-        name = object.__getattribute__(self, "_name")
-        # Keep protocol lookups (copy, pickle, hasattr) on the root object.
-        if not name and attr.startswith("__") and attr.endswith("__"):
-            return typing.cast(
-                "ConfigSettingResolver", object.__getattribute__(self, attr)
-            )
-        return ConfigSettingResolver(values, f"{name}.{attr}" if name else attr)
-
-    # The default copy and pickle paths need attribute access to work.
-    def __reduce__(self) -> tuple[type[ConfigSettingResolver], tuple[object, str]]:
-        values = object.__getattribute__(self, "_values")
-        name = object.__getattribute__(self, "_name")
-        return ConfigSettingResolver, (values, name)
+    # A setting segment cannot start with ``_``.
+    def __getattr__(self, attr: str) -> ConfigSettingResolver:
+        if attr.startswith("_"):
+            raise AttributeError(attr)
+        name = f"{self._name}.{attr}" if self._name else attr
+        return ConfigSettingResolver(self._values, name)
 
     def __str__(self) -> str:
-        values: Mapping[str, str | bool | None] = object.__getattribute__(
-            self, "_values"
-        )
-        name: str = object.__getattribute__(self, "_name")
+        name = self._name
         if not name:
             msg = "config_setting needs a name, like {config_setting.a.b}"
             raise ValueError(msg)
-        if name not in values:
+        if name not in self._values:
             msg = f"config-setting {name!r} is not declared"
             raise ValueError(msg)
-        value = values[name]
+        value = self._values[name]
         if value is None:
             msg = f"config-setting {name!r} is unset and has no default"
             raise ValueError(msg)
@@ -262,7 +250,7 @@ class ConfigSettingResolver:
         return value
 
     def __repr__(self) -> str:
-        if not object.__getattribute__(self, "_name"):
+        if not self._name:
             return "ConfigSettingResolver()"
         return repr(str(self))
 

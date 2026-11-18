@@ -44,6 +44,8 @@ def test_declaration_minimal(tmp_path: Path):
         pytest.param('"zmq.prefix" = {cmake = "ZMQ_PREFIX"}', id="no-cmake-alias"),
         pytest.param('"zmq.prefix" = {type = "int"}', id="bad-type"),
         pytest.param('prefix = {help = "no dot"}', id="dotless-name"),
+        pytest.param('"_zmq.prefix" = {}', id="underscore-first-segment"),
+        pytest.param('"zmq._prefix" = {}', id="underscore-segment"),
         pytest.param('"cmake.prefix" = {help = "reserved"}', id="reserved-segment"),
         pytest.param('"skbuild.x" = {help = "reserved"}', id="skbuild-segment"),
         pytest.param(

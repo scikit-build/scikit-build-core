@@ -13,9 +13,9 @@ variable, and forwarded to CMake.
 ## Declaring settings
 
 Each setting is declared in the `tool.scikit-build.config-setting` table. Names
-must have at least two dot-separated segments; using your import package name as
-the first segment is recommended to avoid clashes with other tools'
-config-settings:
+must have at least two dot-separated segments, and a segment cannot start with
+`_`; using your import package name as the first segment is recommended to avoid
+clashes with other tools' config-settings:
 
 ```toml
 [tool.scikit-build.config-setting."zmq.prefix"]
