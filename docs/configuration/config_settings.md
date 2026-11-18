@@ -67,9 +67,10 @@ The define is left unset when the setting resolves to no value, so
 
 ## Passing values to dynamic metadata plugins
 
-A [dynamic metadata](./dynamic.md) plugin setting can reference a setting with
-the same form. The plugin receives the resolved value as if it was written in
-the table, so the plugin does not need to know about config-settings:
+A `[[tool.dynamic-metadata]]` entry can map plugin settings to declared settings
+with the `config-settings` key. The plugin receives the resolved value as if it
+was written in the entry, so the plugin does not need to know about
+config-settings:
 
 ```toml
 [tool.scikit-build.config-setting."torch.variant"]
@@ -77,17 +78,17 @@ env = "PYTORCH_VARIANT"
 
 [[tool.dynamic-metadata]]
 provider = "torch-deps"
-variant = { config-setting = "torch.variant" }
+variant = "cpu"
+config-settings.variant = "torch.variant"
 ```
 
-The key is removed when the setting resolves to no value, so the plugin default
-applies. Only top-level keys of the plugin table are checked, and `provider` is
-never replaced. This also works in the deprecated `tool.scikit-build.metadata`
-table. A field that depends on a setting can differ between the SDist and the
-wheel; the plugin must report it with the `dynamic_wheel` hook.
+The static value (`"cpu"` above) is used when the setting resolves to no value.
+A `default` in the declaration takes precedence over the static value. The
+`config-settings` key is never passed to the plugin, and it cannot set
+`provider`. A field that depends on a setting can differ between the SDist and
+the wheel; the plugin must report it with the `dynamic_wheel` hook.
 
-Other build backends do not resolve the reference and pass the table to the
-plugin unchanged.
+The deprecated `tool.scikit-build.metadata` table does not support this key.
 
 :::{versionadded} 1.2
 

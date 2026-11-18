@@ -223,14 +223,17 @@ def load_dynamic_metadata(
 ) -> Generator[tuple[DMProtocols, dict[str, Any]], None, None]:
     """Load each ``[[tool.dynamic-metadata]]`` entry's provider in order.
 
-    ``provider`` is consumed here; the remaining keys are returned as that
-    provider's plugin settings.
+    ``provider`` is consumed here, and the backend-reserved ``config-settings``
+    key is dropped; the remaining keys are returned as that provider's plugin
+    settings.
     """
     for entry in entries:
         if "provider" not in entry:
             msg = "Each [[tool.dynamic-metadata]] entry must set a 'provider'"
             raise KeyError(msg)
-        settings = {k: v for k, v in entry.items() if k != "provider"}
+        settings = {
+            k: v for k, v in entry.items() if k not in {"provider", "config-settings"}
+        }
         provider = load_entry_provider(entry["provider"])
         yield provider, settings
 

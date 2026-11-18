@@ -33,7 +33,7 @@ from scikit_build_core.settings.__main__ import _load_pyproject
 from scikit_build_core.settings.config_settings import (
     load_declarations,
     resolve_config_settings,
-    resolve_metadata_references,
+    resolve_metadata_config_settings,
 )
 
 
@@ -49,7 +49,7 @@ def main_project_table(args: argparse.Namespace, /) -> None:
         _parse_config_settings(args.config_settings),
         os.environ,
     )
-    resolve_metadata_references(tool_skb, entries, values)
+    resolve_metadata_config_settings(entries, values)
 
     legacy = tool_skb.get("metadata", {})
     if legacy:

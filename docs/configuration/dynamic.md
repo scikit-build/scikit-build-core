@@ -23,10 +23,12 @@ The standard, cross-backend way to configure plugins is the top-level
 `dynamic_metadata.provider` entry-point group (scikit-build-core's built-ins
 register their module path, e.g. `scikit_build_core.metadata.regex`), or an
 inline `{ path, module }` table for a plugin living inside your own project.
-Every other key is passed to that plugin as its settings. Entries run **in
-order**, so a later entry sees every field an earlier one produced (no
-dependency graph, no cycles), and a plugin can read an already-resolved field
-with `project[...]`.
+Every other key is passed to that plugin as its settings, except
+`config-settings`, which maps plugin settings to
+[package config-settings](./config_settings.md#passing-values-to-dynamic-metadata-plugins).
+Entries run **in order**, so a later entry sees every field an earlier one
+produced (no dependency graph, no cycles), and a plugin can read an
+already-resolved field with `project[...]`.
 
 ```toml
 [project]

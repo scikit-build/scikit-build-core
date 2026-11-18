@@ -274,13 +274,13 @@ def test_define_conf_beats_toml_reference(tmp_path: Path):
 
 METADATA_PLUGIN = """\
 def dynamic_metadata(settings, project):
-    return {"dependencies": [f"runtime-{settings.get('variant', 'cpu')}"]}
+    return {"dependencies": [f"runtime-{settings['variant']}"]}
 
 def get_requires_for_dynamic_metadata(settings):
-    return [f"build-{settings.get('variant', 'cpu')}"]
+    return [f"build-{settings['variant']}"]
 
 def dynamic_wheel(settings):
-    return {"dependencies": "variant" in settings}
+    return {"dependencies": settings["variant"] != "cpu"}
 """
 
 METADATA_PROJECT = dedent(
@@ -292,26 +292,11 @@ METADATA_PROJECT = dedent(
 
     [tool.scikit-build.config-setting."pkg.variant"]
     env = "PKG_VARIANT"
-    """
-)
 
-METADATA_ARRAY = METADATA_PROJECT + dedent(
-    """\
     [[tool.dynamic-metadata]]
     provider = {path = "plugins", module = "variant_plugin"}
-    variant = {config-setting = "pkg.variant"}
-    """
-)
-
-METADATA_LEGACY = METADATA_PROJECT + dedent(
-    """\
-    [tool.scikit-build]
-    experimental = true
-
-    [tool.scikit-build.metadata.dependencies]
-    provider = "variant_legacy_plugin"
-    provider-path = "plugins"
-    variant = {config-setting = "pkg.variant"}
+    variant = "cpu"
+    config-settings.variant = "pkg.variant"
     """
 )
 
@@ -323,103 +308,105 @@ def metadata_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     plugins = tmp_path / "plugins"
     plugins.mkdir()
     plugins.joinpath("variant_plugin.py").write_text(METADATA_PLUGIN, encoding="utf-8")
-    plugins.joinpath("variant_legacy_plugin.py").write_text(
-        "def dynamic_metadata(field, settings):\n"
-        "    return [f\"runtime-{settings.get('variant', 'cpu')}\"]\n",
-        encoding="utf-8",
+    return write_pyproject(tmp_path, METADATA_PROJECT)
+
+
+def _metadata(pyproject_toml: Path, reader: SettingsReader, state: str):
+    from scikit_build_core.build.metadata import get_standard_metadata
+
+    with pyproject_toml.open("rb") as f:
+        pyproject = tomllib.load(f)
+    return get_standard_metadata(
+        pyproject,
+        reader.settings,
+        build_state=state,  # type: ignore[arg-type]
+        dynamic_metadata_entries=reader.dynamic_metadata,
     )
-    return tmp_path
 
 
 @pytest.mark.parametrize("source", ["conf", "env"])
-@pytest.mark.parametrize(
-    "text", [METADATA_ARRAY, METADATA_LEGACY], ids=["array", "legacy"]
-)
-def test_metadata_reference(
-    metadata_project: Path, monkeypatch: pytest.MonkeyPatch, source: str, text: str
+def test_metadata_config_settings(
+    metadata_project: Path, monkeypatch: pytest.MonkeyPatch, source: str
 ):
-    from scikit_build_core.build.metadata import get_standard_metadata
-
-    pyproject_toml = write_pyproject(metadata_project, text)
     config_settings = {}
     if source == "conf":
         config_settings["pkg.variant"] = "cu130"
     else:
         monkeypatch.setenv("PKG_VARIANT", "cu130")
-    reader = SettingsReader.from_file(pyproject_toml, config_settings, state="wheel")
+    reader = SettingsReader.from_file(metadata_project, config_settings, state="wheel")
     reader.validate_may_exit()
 
-    with pyproject_toml.open("rb") as f:
-        pyproject = tomllib.load(f)
-    metadata = get_standard_metadata(
-        pyproject,
-        reader.settings,
-        build_state="wheel",
-        dynamic_metadata_entries=reader.dynamic_metadata,
-    )
+    metadata = _metadata(metadata_project, reader, "wheel")
     assert [str(d) for d in metadata.dependencies] == ["runtime-cu130"]
 
 
-def test_metadata_reference_all_hooks(metadata_project: Path):
-    from scikit_build_core.build.metadata import get_standard_metadata
+def test_metadata_config_settings_all_hooks(metadata_project: Path):
     from scikit_build_core.builder.get_requires import GetRequires
 
-    pyproject_toml = write_pyproject(metadata_project, METADATA_ARRAY)
     config_settings = {"pkg.variant": "cu130"}
 
     requires = GetRequires.from_config_settings(config_settings, state="wheel")
     assert "build-cu130" in set(requires.dynamic_metadata())
 
-    reader = SettingsReader.from_file(pyproject_toml, config_settings, state="sdist")
-    with pyproject_toml.open("rb") as f:
-        pyproject = tomllib.load(f)
-    metadata = get_standard_metadata(
-        pyproject,
-        reader.settings,
-        build_state="sdist",
-        dynamic_metadata_entries=reader.dynamic_metadata,
-    )
+    reader = SettingsReader.from_file(metadata_project, config_settings, state="sdist")
+    metadata = _metadata(metadata_project, reader, "sdist")
     assert metadata.dynamic_metadata == ["Requires-Dist"]
 
 
-def test_metadata_reference_unset_dropped(metadata_project: Path):
-    pyproject_toml = write_pyproject(metadata_project, METADATA_ARRAY)
-    reader = SettingsReader.from_file(pyproject_toml)
+def test_metadata_config_settings_unset_keeps_static(metadata_project: Path):
+    reader = SettingsReader.from_file(metadata_project)
     assert reader.dynamic_metadata == [
-        {"provider": {"path": "plugins", "module": "variant_plugin"}}
+        {"provider": {"path": "plugins", "module": "variant_plugin"}, "variant": "cpu"}
     ]
+
+
+def test_metadata_config_settings_default_beats_static(metadata_project: Path):
+    text = METADATA_PROJECT.replace(
+        'env = "PKG_VARIANT"', 'env = "PKG_VARIANT"\ndefault = "rocm"'
+    )
+    reader = SettingsReader.from_file(write_pyproject(metadata_project.parent, text))
+    assert reader.dynamic_metadata[0]["variant"] == "rocm"
+
+
+def test_metadata_config_settings_key_not_passed_to_plugin(metadata_project: Path):
+    from scikit_build_core.builder._load_provider import load_dynamic_metadata
+
+    with metadata_project.open("rb") as f:
+        entries = tomllib.load(f)["tool"]["dynamic-metadata"]
+    ((_, settings),) = load_dynamic_metadata(entries)
+    assert settings == {"variant": "cpu"}
 
 
 @pytest.mark.parametrize(
     ("value", "match"),
     [
-        ('{config-setting = "pkg.nope"}', "undeclared"),
-        ('{config-setting = "pkg.variant", default = "x"}', "unrecognized"),
+        ('config-settings.variant = "pkg.nope"', "undeclared"),
+        ('config-settings = "pkg.variant"', "must be a table"),
+        ('config-settings.provider = "pkg.variant"', "may not set 'provider'"),
     ],
 )
-def test_metadata_reference_invalid(
+def test_metadata_config_settings_invalid(
     metadata_project: Path,
     capsys: pytest.CaptureFixture[str],
     value: str,
     match: str,
 ):
-    text = METADATA_ARRAY.replace('{config-setting = "pkg.variant"}', value)
-    pyproject_toml = write_pyproject(metadata_project, text)
+    text = METADATA_PROJECT.replace('config-settings.variant = "pkg.variant"', value)
+    pyproject_toml = write_pyproject(metadata_project.parent, text)
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml)
     _, err = capsys.readouterr()
-    assert "tool.dynamic-metadata[0].variant" in err
+    assert "tool.dynamic-metadata[0].config-settings" in err
     assert match in err
 
 
-def test_metadata_reference_project_table(
-    metadata_project: Path,
+def test_metadata_config_settings_project_table(
+    metadata_project: Path,  # noqa: ARG001
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ):
     from scikit_build_core.build.__main__ import main
 
-    write_pyproject(metadata_project, METADATA_ARRAY)
     monkeypatch.setattr(
         "sys.argv", ["prog", "project-table", "-C", "pkg.variant=cu130"]
     )
