@@ -26,9 +26,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 from .._compat import tomllib
-from .._logging import logger
+from .._logging import logger, rich_error
 from .._variants import variant_build_requires
-from ..format import pyproject_format
+from ..format import config_setting_fields, pyproject_format
 from ..program_search import (
     best_program,
     get_cmake_programs,
@@ -75,6 +75,10 @@ def _load_scikit_build_settings(
     ).settings
 
 
+def _load_custom_config_settings() -> Mapping[str, str | bool | None]:
+    return SettingsReader.from_file("pyproject.toml").custom_config_settings
+
+
 def _read_pyproject() -> dict[str, Any]:
     try:
         with Path("pyproject.toml").open("rb") as f:
@@ -107,6 +111,10 @@ class GetRequires:
     variant_table: Mapping[str, Any] = dataclasses.field(
         default_factory=_read_variant_table
     )
+    config_settings: Mapping[str, str | bool | None] = dataclasses.field(
+        default_factory=_load_custom_config_settings
+    )
+    state: str = "sdist"
 
     @classmethod
     def from_config_settings(
@@ -117,7 +125,13 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
-        return cls(reader.settings, reader.dynamic_metadata, reader.variant)
+        return cls(
+            reader.settings,
+            reader.dynamic_metadata,
+            reader.variant,
+            config_settings=reader.custom_config_settings,
+            state=reader.state,
+        )
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -189,11 +203,21 @@ class GetRequires:
             return
 
         for build_require in self.settings.build.requires:
-            yield build_require.format(
-                **pyproject_format(
-                    settings=self.settings,
+            # The SDist does not need a requirement that it cannot format.
+            if self.state == "sdist" and any(
+                self.config_settings.get(name, "") is None
+                for name in config_setting_fields(build_require)
+            ):
+                continue
+            try:
+                yield build_require.format(
+                    **pyproject_format(
+                        settings=self.settings,
+                        config_settings=self.config_settings,
+                    )
                 )
-            )
+            except ValueError as err:
+                rich_error(f"build.requires: {err}")
 
         # Deprecated tool.scikit-build.metadata table.
         for dynamic_metadata in self.settings.metadata.values():

@@ -65,6 +65,29 @@ The define is left unset when the setting resolves to no value, so
 `if(DEFINED ZMQ_PREFIX)` works in CMake, and `-C cmake.define.NAME=...` or
 `SKBUILD_CMAKE_DEFINE` still win over the referenced value.
 
+## Use in formatted fields
+
+The resolved value is available in [formatted fields](./formatted.md) as
+`{config_setting[<name>]}`, for example to keep one build directory per variant:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{config_setting[torch.variant]}"
+```
+
+A boolean value formats as `true` or `false`. A name that is not declared is an
+error. An unset setting with no default is an error, but an SDist build ignores
+it, and skips a `build.requires` entry that uses it.
+
+In `build-dir`, the value must be a relative path, and it cannot contain empty,
+`.` or `..` components. Start `build-dir` with a literal directory, as in the
+example above. If `build-dir` has no literal text, the build directory cannot be
+excluded from the SDist.
+
+```{versionadded} 1.2
+
+```
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the
