@@ -37,10 +37,13 @@ from ..metadata import (
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Callable, Generator, Sequence
     from importlib.machinery import ModuleSpec
     from types import ModuleType
+    from typing import TypeVar
 
+    T = TypeVar("T")
+    ConfigSettings = Mapping[str, str | bool | None]
     StrMapping = Mapping[str, Any]
 else:
     StrMapping = Mapping
@@ -48,6 +51,7 @@ else:
 __all__ = [
     "BUILD_STATES",
     "BuildState",
+    "call_with_config_settings",
     "dynamic_wheel_fields",
     "load_dynamic_metadata",
     "load_entry_provider",
@@ -235,7 +239,42 @@ def load_dynamic_metadata(
         yield provider, settings
 
 
-def dynamic_wheel_fields(entries: Sequence[Mapping[str, Any]]) -> frozenset[str]:
+def _readonly_config_settings(
+    config_settings: ConfigSettings | None,
+) -> ConfigSettings:
+    if isinstance(config_settings, MappingProxyType):
+        return config_settings
+    return MappingProxyType(dict(config_settings) if config_settings else {})
+
+
+def call_with_config_settings(
+    hook: Callable[..., T],
+    base_args: tuple[Any, ...],
+    config_settings: ConfigSettings | None = None,
+) -> T:
+    sig = inspect.signature(hook)
+    pos_count = sum(
+        1
+        for param in sig.parameters.values()
+        if param.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    )
+    resolved = _readonly_config_settings(config_settings)
+    if pos_count > len(base_args):
+        return hook(*base_args, resolved)
+    kw_param = sig.parameters.get("config_settings")
+    if kw_param is not None and kw_param.kind is inspect.Parameter.KEYWORD_ONLY:
+        return hook(*base_args, config_settings=resolved)
+    return hook(*base_args)
+
+
+def dynamic_wheel_fields(
+    entries: Sequence[Mapping[str, Any]],
+    config_settings: ConfigSettings | None = None,
+) -> frozenset[str]:
     """Collect fields whose value may change between the SDist and a wheel.
 
     Each ``[[tool.dynamic-metadata]]`` provider implementing the optional
@@ -244,11 +283,15 @@ def dynamic_wheel_fields(entries: Sequence[Mapping[str, Any]]) -> frozenset[str]
     be. The returned fields are marked ``Dynamic`` in the SDist's PKG-INFO
     (METADATA 2.2).
     """
+    resolved_config = _readonly_config_settings(config_settings)
     fields: set[str] = set()
     for provider, settings in load_dynamic_metadata(entries):
         if not isinstance(provider, DynamicMetadataWheelProtocol):
             continue
-        for field, is_dynamic in provider.dynamic_wheel(settings).items():
+        wheel_hook: Callable[..., dict[str, bool]] = provider.dynamic_wheel
+        for field, is_dynamic in call_with_config_settings(
+            wheel_hook, (settings,), resolved_config
+        ).items():
             if field not in _ALL_FIELDS:
                 msg = f"{field!r} is not a valid dynamic-metadata field"
                 raise KeyError(msg)
@@ -312,6 +355,7 @@ def process_dynamic_metadata(
     project: Mapping[str, Any],
     entries: Sequence[Mapping[str, Any]],
     build_state: BuildState = "metadata_wheel",
+    config_settings: ConfigSettings | None = None,
 ) -> dict[str, Any]:
     """Resolve ``[[tool.dynamic-metadata]]`` entries (the 0.3 spec).
 
@@ -331,6 +375,7 @@ def process_dynamic_metadata(
     result["dynamic"] = list(result.get("dynamic", []))
     declared_dynamic = set(result["dynamic"])
     snapshot = MappingProxyType(result)
+    resolved_config = _readonly_config_settings(config_settings)
 
     # Fields already written by an earlier entry: a further entry merges onto
     # that result (and may *replace* a scalar), as opposed to a static value
@@ -340,7 +385,10 @@ def process_dynamic_metadata(
     for provider, settings in load_dynamic_metadata(entries):
         if isinstance(provider, DynamicMetadataBuildStateProtocol):
             provider.build_state(build_state)
-        fragment: dict[str, Any] = provider.dynamic_metadata(settings, snapshot)
+        meta_hook: Callable[..., dict[str, Any]] = provider.dynamic_metadata
+        fragment = call_with_config_settings(
+            meta_hook, (settings, snapshot), resolved_config
+        )
 
         for field in fragment:
             if field not in _ALL_FIELDS:
@@ -391,6 +439,9 @@ class DynamicPyProject(StrMapping):
     settings: dict[str, dict[str, Any]]
     project: dict[str, Any]
     providers: dict[str, DMProtocols]
+    config_settings: ConfigSettings = dataclasses.field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
     def __getitem__(self, key: str) -> Any:
         # Try to get the settings from either the static file or dynamic metadata provider
@@ -408,11 +459,23 @@ class DynamicPyProject(StrMapping):
         # Legacy hooks have a different shape, so they are called untyped.
         hook: Any = provider.dynamic_metadata
         sig = inspect.signature(hook)
-        if len(sig.parameters) < 3:
-            # Backcompat for dynamic_metadata without metadata dict
-            self.project[key] = hook(key, self.settings[key])
-        else:
-            self.project[key] = hook(key, self.settings[key], self)
+        pos_count = sum(
+            1
+            for param in sig.parameters.values()
+            if param.kind
+            in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
+        )
+        base_args: tuple[Any, ...] = (
+            (key, self.settings[key])
+            if pos_count < 3
+            else (key, self.settings[key], self)
+        )
+        self.project[key] = call_with_config_settings(
+            hook, base_args, self.config_settings
+        )
         self.project["dynamic"].remove(key)
 
         return self.project[key]
@@ -435,6 +498,7 @@ class DynamicPyProject(StrMapping):
 def process_legacy_dynamic_metadata(
     project: Mapping[str, Any],
     metadata: Mapping[str, Mapping[str, Any]],
+    config_settings: ConfigSettings | None = None,
 ) -> dict[str, Any]:
     """Resolve the deprecated ``tool.scikit-build.metadata`` table.
 
@@ -453,6 +517,7 @@ def process_legacy_dynamic_metadata(
         settings={f: c for f, (_, c) in initial.items()},
         project=project_copy,
         providers={k: v for k, (v, _) in initial.items()},
+        config_settings=_readonly_config_settings(config_settings),
     )
 
     return dict(settings)

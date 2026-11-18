@@ -86,7 +86,7 @@ from .metadata import get_standard_metadata
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from ..settings.skbuild_model import ScikitBuildSettings
 
@@ -270,6 +270,7 @@ def _build_wheel_impl(
             editable=editable,
             state=state,
             settings=settings_reader.settings,
+            config_settings=settings_reader.custom_config_settings,
             pyproject=pyproject,
         )
     except FailedLiveProcessError as err:
@@ -299,6 +300,7 @@ def _build_wheel_impl(
                 editable=editable,
                 state=state,
                 settings=settings_reader.settings,
+                config_settings=settings_reader.custom_config_settings,
                 pyproject=pyproject,
             )
         except FailedLiveProcessError as err2:
@@ -315,12 +317,15 @@ def _build_wheel_impl_impl(
     state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"],
     settings: ScikitBuildSettings,
     pyproject: dict[str, Any],
+    config_settings: Mapping[str, str | bool | None] | None = None,
 ) -> WheelImplReturn:
     """
     Build a wheel or just prepare metadata (if wheel dir is None). Can be editable.
     """
 
-    metadata = get_standard_metadata(pyproject, settings, build_state=state)
+    metadata = get_standard_metadata(
+        pyproject, settings, build_state=state, config_settings=config_settings
+    )
 
     if metadata.version is None:
         msg = "project.version is not specified, must be statically present or tool.scikit-build metadata.version.provider configured when dynamic"

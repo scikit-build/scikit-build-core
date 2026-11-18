@@ -7,6 +7,7 @@ import pytest
 
 from scikit_build_core._compat.importlib.metadata import entry_points
 from scikit_build_core.builder._load_provider import (
+    dynamic_wheel_fields,
     load_provider,
     process_dynamic_metadata,
     process_legacy_dynamic_metadata,
@@ -459,3 +460,119 @@ def test_bundled_providers_registered_as_entry_points() -> None:
         "scikit_build_core.metadata.setuptools_scm": "scikit_build_core.metadata.setuptools_scm:Provider",
         "scikit_build_core.metadata.fancy_pypi_readme": "scikit_build_core.metadata.fancy_pypi_readme:Provider",
     }
+
+
+def test_array_config_settings_hook_variants(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "cs_func_prov",
+        "def dynamic_metadata(settings, project, config_settings):\n"
+        "    try:\n"
+        "        config_settings['mutated'] = 'nope'\n"
+        "    except TypeError:\n"
+        "        pass\n"
+        "    else:\n"
+        "        raise AssertionError('config_settings must be read-only')\n"
+        "    return {'dependencies': [f\"dep-{config_settings['torch.variant']}\"]}\n",
+    )
+    _write_provider(
+        tmp_path,
+        "cs_class_prov",
+        "class Provider:\n"
+        "    def build_state(self, state):\n"
+        "        self.state = state\n"
+        "    def dynamic_metadata(self, settings, project, config_settings):\n"
+        "        return {'description': f\"{self.state}:{config_settings['torch.variant']}\"}\n",
+    )
+    _write_provider(
+        tmp_path,
+        "cs_kw_prov",
+        "class StaticKwProvider:\n"
+        "    @staticmethod\n"
+        "    def dynamic_metadata(settings, project, *, config_settings):\n"
+        "        flag = 'on' if config_settings['torch.cuda'] else 'off'\n"
+        "        return {'license': f'Apache-2.0-{flag}'}\n",
+    )
+    _write_provider(
+        tmp_path,
+        "two_arg_prov",
+        "def dynamic_metadata(settings, project):\n    return {'version': '1.0.0'}\n",
+    )
+
+    project = process_dynamic_metadata(
+        {
+            "name": "t",
+            "dynamic": ["version", "dependencies", "description", "license"],
+        },
+        [
+            {"provider": {"path": path, "module": "two_arg_prov"}},
+            {"provider": {"path": path, "module": "cs_func_prov"}},
+            {"provider": {"path": path, "module": "cs_class_prov:Provider"}},
+            {"provider": {"path": path, "module": "cs_kw_prov:StaticKwProvider"}},
+        ],
+        build_state="wheel",
+        config_settings={"torch.variant": "cu130", "torch.cuda": True},
+    )
+    assert project["version"] == "1.0.0"
+    assert project["dependencies"] == ["dep-cu130"]
+    assert project["description"] == "wheel:cu130"
+    assert project["license"] == "Apache-2.0-on"
+
+
+def test_dynamic_wheel_config_settings(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "dw_cs_prov",
+        "def dynamic_metadata(settings, project):\n"
+        "    return {}\n"
+        "def dynamic_wheel(settings, config_settings):\n"
+        "    return {'dependencies': bool(config_settings.get('torch.dynamic_deps'))}\n",
+    )
+    _write_provider(
+        tmp_path,
+        "dw_one_arg_prov",
+        "def dynamic_metadata(settings, project):\n"
+        "    return {}\n"
+        "def dynamic_wheel(settings):\n"
+        "    return {'optional-dependencies': True}\n",
+    )
+    entries = [
+        {"provider": {"path": path, "module": "dw_cs_prov"}},
+        {"provider": {"path": path, "module": "dw_one_arg_prov"}},
+    ]
+    assert dynamic_wheel_fields(entries, {"torch.dynamic_deps": True}) == frozenset(
+        {"dependencies", "optional-dependencies"}
+    )
+    assert dynamic_wheel_fields(entries, {"torch.dynamic_deps": False}) == frozenset(
+        {"optional-dependencies"}
+    )
+
+
+def test_legacy_dynamic_metadata_config_settings(tmp_path: Path) -> None:
+    path = _write_provider(
+        tmp_path,
+        "legacy_cs_prov",
+        "def dynamic_metadata(field, settings, project, config_settings):\n"
+        "    return [f\"{project['version']}-{config_settings['torch.variant']}\"]\n",
+    )
+    _write_provider(
+        tmp_path,
+        "legacy_two_arg",
+        "def dynamic_metadata(field, settings):\n    return '2.0.0'\n",
+    )
+    project = process_legacy_dynamic_metadata(
+        {"name": "t", "dynamic": ["version", "dependencies"]},
+        {
+            "dependencies": {
+                "provider": "legacy_cs_prov",
+                "provider-path": path,
+            },
+            "version": {
+                "provider": "legacy_two_arg",
+                "provider-path": path,
+            },
+        },
+        config_settings={"torch.variant": "rocm62"},
+    )
+    assert project["version"] == "2.0.0"
+    assert project["dependencies"] == ["2.0.0-rocm62"]

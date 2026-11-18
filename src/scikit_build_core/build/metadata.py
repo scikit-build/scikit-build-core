@@ -84,6 +84,7 @@ def get_standard_metadata(
     pyproject_dict: Mapping[str, Any],
     settings: ScikitBuildSettings,
     build_state: BuildState = "metadata_wheel",
+    config_settings: Mapping[str, str | bool | None] | None = None,
 ) -> SkbuildMetadata:
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
@@ -104,11 +105,15 @@ def get_standard_metadata(
     # top-level [[tool.dynamic-metadata]] entries (dynamic-metadata 0.3). Both
     # forms may be present; the legacy table is resolved first.
     if settings.metadata:
-        project = process_legacy_dynamic_metadata(project, settings.metadata)
+        project = process_legacy_dynamic_metadata(
+            project, settings.metadata, config_settings=config_settings
+        )
 
     entries = new_pyproject_dict.get("tool", {}).get("dynamic-metadata", [])
     if entries:
-        project = process_dynamic_metadata(project, entries, build_state)
+        project = process_dynamic_metadata(
+            project, entries, build_state, config_settings=config_settings
+        )
 
     # PEP 794: fill import names still listed in dynamic from the packages
     project = add_dynamic_import_names(project, settings)
@@ -122,7 +127,9 @@ def get_standard_metadata(
     if entries and build_state == "sdist":
         dynamic_metadata = sorted(
             metadata_field
-            for project_field in dynamic_wheel_fields(entries)
+            for project_field in dynamic_wheel_fields(
+                entries, config_settings=config_settings
+            )
             for metadata_field in PROJECT_TO_METADATA[project_field]
         )
 
