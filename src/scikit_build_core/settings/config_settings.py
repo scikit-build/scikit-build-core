@@ -221,24 +221,38 @@ def resolve_metadata_config_settings(
     entries: Any, values: "Mapping[str, str | bool | None]"
 ) -> None:
     """
-    Apply and remove the reserved ``config-settings`` key of each
-    ``[[tool.dynamic-metadata]]`` entry, in place. The key maps a plugin
-    setting to a declared config-setting; a resolved value replaces the static
-    one, and an unset setting keeps it.
+    Apply ``tool.scikit-build.config-settings`` of each
+    ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
+    ``tool`` key. The table maps a plugin setting to a declared config-setting;
+    a resolved value replaces the static one, and an unset setting keeps it.
     """
     if not isinstance(entries, list):
         return
     for n, entry in enumerate(entries):
-        if not isinstance(entry, dict) or "config-settings" not in entry:
+        if not isinstance(entry, dict) or "tool" not in entry:
             continue
-        context = f"tool.dynamic-metadata[{n}].config-settings"
-        mapping = entry.pop("config-settings")
+        context = f"tool.dynamic-metadata[{n}].tool"
+        tool = entry.pop("tool")
+        if not isinstance(tool, dict):
+            rich_error(f"{context} must be a table")
+        # Other backends' tables are ignored.
+        skb = tool.get("scikit-build", {})
+        context += ".scikit-build"
+        if not isinstance(skb, dict):
+            rich_error(f"{context} must be a table")
+        unknown = set(skb) - {"config-settings"}
+        if unknown:
+            rich_error(f"{context} has unrecognized keys: {', '.join(sorted(unknown))}")
+        mapping = skb.get("config-settings", {})
+        context += ".config-settings"
         if not isinstance(mapping, dict):
             rich_error(f"{context} must be a table")
         for key, name in mapping.items():
-            if key == "provider":
-                rich_error(f"{context} may not set 'provider'")
-            if not isinstance(name, str) or name not in values:
+            if key in {"provider", "tool"}:
+                rich_error(f"{context} may not set {key!r}")
+            if not isinstance(name, str):
+                rich_error(f"{context}.{key} must be a string")
+            if name not in values:
                 rich_error(
                     f"{context}.{key} references undeclared config-setting {name!r}"
                 )

@@ -296,7 +296,8 @@ METADATA_PROJECT = dedent(
     [[tool.dynamic-metadata]]
     provider = {path = "plugins", module = "variant_plugin"}
     variant = "cpu"
-    config-settings.variant = "pkg.variant"
+    tool.scikit-build.config-settings.variant = "pkg.variant"
+    tool.other-backend.anything = 1
     """
 )
 
@@ -380,9 +381,16 @@ def test_metadata_config_settings_key_not_passed_to_plugin(metadata_project: Pat
 @pytest.mark.parametrize(
     ("value", "match"),
     [
-        ('config-settings.variant = "pkg.nope"', "undeclared"),
-        ('config-settings = "pkg.variant"', "must be a table"),
-        ('config-settings.provider = "pkg.variant"', "may not set 'provider'"),
+        ('tool.scikit-build.config-settings.variant = "pkg.nope"', "undeclared"),
+        ("tool.scikit-build.config-settings.variant = 1", "must be a string"),
+        ('tool.scikit-build.config-settings = "pkg.variant"', "must be a table"),
+        ('tool.scikit-build = "pkg.variant"', "must be a table"),
+        ('tool = "pkg.variant"', "must be a table"),
+        (
+            'tool.scikit-build.config-settings.provider = "pkg.variant"',
+            "may not set 'provider'",
+        ),
+        ('tool.scikit-build.config-setting.variant = "pkg.variant"', "unrecognized"),
     ],
 )
 def test_metadata_config_settings_invalid(
@@ -391,12 +399,17 @@ def test_metadata_config_settings_invalid(
     value: str,
     match: str,
 ):
-    text = METADATA_PROJECT.replace('config-settings.variant = "pkg.variant"', value)
+    text = METADATA_PROJECT.replace(
+        'tool.scikit-build.config-settings.variant = "pkg.variant"\n'
+        "tool.other-backend.anything = 1",
+        value,
+    )
+    assert text != METADATA_PROJECT
     pyproject_toml = write_pyproject(metadata_project.parent, text)
     with pytest.raises(SystemExit):
         SettingsReader.from_file(pyproject_toml)
     _, err = capsys.readouterr()
-    assert "tool.dynamic-metadata[0].config-settings" in err
+    assert "tool.dynamic-metadata[0].tool" in err
     assert match in err
 
 

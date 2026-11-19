@@ -89,7 +89,7 @@ def get_standard_metadata(
     """
     Compute the metadata. ``dynamic_metadata_entries`` replaces the
     ``[[tool.dynamic-metadata]]`` entries of ``pyproject_dict``; pass
-    ``SettingsReader.dynamic_metadata`` to get its ``config-settings`` keys applied.
+    ``SettingsReader.dynamic_metadata`` to get its ``tool.scikit-build`` tables applied.
     """
     new_pyproject_dict = copy.deepcopy(dict(pyproject_dict))
     project = new_pyproject_dict["project"]
