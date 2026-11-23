@@ -219,15 +219,17 @@ def resolve_define_references(
 
 def resolve_metadata_config_settings(
     entries: Any, values: "Mapping[str, str | bool | None]"
-) -> None:
+) -> bool:
     """
     Apply ``tool.scikit-build.config-settings`` of each
     ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
     ``tool`` key. The table maps a plugin setting to a declared config-setting;
     a resolved value replaces the static one, and an unset setting keeps it.
+    Returns True if an entry has a mapping.
     """
+    used = False
     if not isinstance(entries, list):
-        return
+        return used
     for n, entry in enumerate(entries):
         if not isinstance(entry, dict) or "tool" not in entry:
             continue
@@ -247,6 +249,7 @@ def resolve_metadata_config_settings(
         context += ".config-settings"
         if not isinstance(mapping, dict):
             rich_error(f"{context} must be a table")
+        used = used or bool(mapping)
         for key, name in mapping.items():
             if key in {"provider", "tool"}:
                 rich_error(f"{context} may not set {key!r}")
@@ -259,3 +262,4 @@ def resolve_metadata_config_settings(
             value = values[name]
             if value is not None:
                 entry[key] = value
+    return used

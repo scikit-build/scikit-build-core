@@ -85,10 +85,11 @@ def _read_pyproject() -> dict[str, Any]:
 
 def _read_dynamic_metadata() -> list[dict[str, Any]]:
     """Read the top-level ``[[tool.dynamic-metadata]]`` entries (0.3)."""
-    entries: list[dict[str, Any]] = (
-        _read_pyproject().get("tool", {}).get("dynamic-metadata", [])
-    )
-    return entries
+    try:
+        # The reader applies the config-settings mappings.
+        return SettingsReader.from_file("pyproject.toml").dynamic_metadata
+    except FileNotFoundError:
+        return []
 
 
 def _read_variant_table() -> dict[str, Any]:

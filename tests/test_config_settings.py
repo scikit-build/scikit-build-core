@@ -428,6 +428,58 @@ def test_metadata_config_settings_project_table(
     assert json.loads(out)["dependencies"] == ["runtime-cu130"]
 
 
+def test_metadata_config_settings_project_table_unknown_name(
+    metadata_project: Path,  # noqa: ARG001
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from scikit_build_core.build.__main__ import main
+
+    monkeypatch.setattr(
+        "sys.argv", ["prog", "project-table", "-C", "pkg.variants=cu130"]
+    )
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "pkg.variant" in out
+    assert "runtime-cpu" not in out
+
+
+def test_metadata_config_settings_default_get_requires(
+    metadata_project: Path,  # noqa: ARG001
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    monkeypatch.setenv("PKG_VARIANT", "cu130")
+    assert "build-cu130" in set(GetRequires().dynamic_metadata())
+
+
+@pytest.mark.parametrize("minimum_version", ["1.1", "1.2"])
+def test_metadata_config_settings_minimum_version(
+    metadata_project: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    minimum_version: str,
+):
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.2.0"
+    )
+    pyproject_toml = write_pyproject(
+        metadata_project.parent,
+        f'tool.scikit-build.minimum-version = "{minimum_version}"\n' + METADATA_PROJECT,
+    )
+    if minimum_version == "1.2":
+        SettingsReader.from_file(pyproject_toml).validate_may_exit()
+        return
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml)
+    assert exc.value.code == 7
+    _, err = capsys.readouterr()
+    assert "minimum-version must be at least 1.2" in err
+
+
 @pytest.mark.parametrize("with_decl", [True, False])
 @pytest.mark.parametrize(
     "malformed",

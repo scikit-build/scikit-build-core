@@ -2,20 +2,17 @@ from __future__ import annotations
 
 __lazy_modules__ = {
     "argparse",
-    "copy",
     "json",
     "scikit_build_core._logging",
     "scikit_build_core.build",
     "scikit_build_core.builder._load_provider",
     "scikit_build_core.settings.__main__",
-    "scikit_build_core.settings.config_settings",
+    "scikit_build_core.settings.skbuild_read_settings",
     "typing",
 }
 
 import argparse
-import copy
 import json
-import os
 from typing import Literal, get_args
 
 from scikit_build_core._logging import rich_warning
@@ -30,26 +27,21 @@ from scikit_build_core.builder._load_provider import (
     process_legacy_dynamic_metadata,
 )
 from scikit_build_core.settings.__main__ import _load_pyproject
-from scikit_build_core.settings.config_settings import (
-    load_declarations,
-    resolve_config_settings,
-    resolve_metadata_config_settings,
-)
+from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 
 def main_project_table(args: argparse.Namespace, /) -> None:
     """Get the full project table, including dynamic metadata."""
-    pyproject = copy.deepcopy(_load_pyproject())
+    pyproject = _load_pyproject()
+    # The reader checks the config-settings as the build backend does.
+    reader = SettingsReader.from_file(
+        "pyproject.toml", _parse_config_settings(args.config_settings), state=args.state
+    )
+    reader.validate_may_exit()
 
     project = pyproject.get("project", {})
     tool_skb = pyproject.get("tool", {}).get("scikit-build", {})
-    entries = pyproject.get("tool", {}).get("dynamic-metadata", [])
-    values = resolve_config_settings(
-        load_declarations(tool_skb.get("config-setting", {})),
-        _parse_config_settings(args.config_settings),
-        os.environ,
-    )
-    resolve_metadata_config_settings(entries, values)
+    entries = reader.dynamic_metadata
 
     legacy = tool_skb.get("metadata", {})
     if legacy:
