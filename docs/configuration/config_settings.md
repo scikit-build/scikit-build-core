@@ -85,10 +85,7 @@ tool.scikit-build.config-settings.variant = "torch.variant"
 The static value (`"cpu"` above) is used when the setting resolves to no value.
 A `default` in the declaration takes precedence over the static value. The
 entry's `tool` key is never passed to the plugin, and the mapping cannot set
-`provider` or `tool`. Use dotted keys as shown; a
-`[tool.dynamic-metadata.tool.scikit-build]` header applies only to the last
-entry. A field that depends on a setting can differ between the SDist and the
-wheel; the plugin must report it with the `dynamic_wheel` hook.
+`provider` or `tool`. Use dotted keys as shown.
 
 The deprecated `tool.scikit-build.metadata` table does not support this.
 
