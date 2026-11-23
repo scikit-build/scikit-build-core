@@ -15,7 +15,7 @@ from typing import Literal
 import pathspec
 
 from .._logging import logger
-from ..format import pyproject_format
+from ..format import format_template, pyproject_format
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -184,7 +184,9 @@ def each_unignored_file(
                 nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(lines)
     ignored_boundaries = _ignored_boundaries(nested_excludes, boundaries)
 
-    exclude_build_dir = build_dir.format(**pyproject_format(dummy=True))
+    exclude_build_dir = format_template(
+        build_dir, pyproject_format(dummy=True), key="build-dir"
+    )
 
     # A build-dir made only of placeholders would become "*" or "*/*" and
     # exclude source files, so skip it.

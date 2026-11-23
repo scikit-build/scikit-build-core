@@ -39,7 +39,7 @@ from ..builder.builder import (
 )
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
-from ..format import pyproject_format
+from ..format import format_template, pyproject_format
 from ..settings.skbuild_model import normalize_build_types
 from ._pathutil import resolve_wheel_tree
 
@@ -140,8 +140,10 @@ def get_build_dir(
         build_dir = Path(settings.cmake.source_dir)
     elif settings.build_dir:
         build_dir = Path(
-            settings.build_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
+            format_template(
+                settings.build_dir,
+                pyproject_format(settings=settings, tags=tags, state=state, name=name),
+                key="build-dir",
             )
         )
     else:
@@ -169,14 +171,16 @@ def get_editable_rebuild_dir(
     """
     if settings.editable.rebuild_dir:
         return Path(
-            settings.editable.rebuild_dir.format(
-                **pyproject_format(
+            format_template(
+                settings.editable.rebuild_dir,
+                pyproject_format(
                     settings=settings,
                     tags=tags,
                     state=state,
                     name=name,
                     build_dir=build_dir,
-                )
+                ),
+                key="editable.rebuild-dir",
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()
