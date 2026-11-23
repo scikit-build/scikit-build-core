@@ -296,7 +296,7 @@ METADATA_PROJECT = dedent(
     [[tool.dynamic-metadata]]
     provider = {path = "plugins", module = "variant_plugin"}
     variant = "cpu"
-    tool.scikit-build.config-settings.variant = "pkg.variant"
+    tool.scikit-build.config-setting.variant = "pkg.variant"
     tool.other-backend.anything = 1
     """
 )
@@ -381,16 +381,16 @@ def test_metadata_config_settings_key_not_passed_to_plugin(metadata_project: Pat
 @pytest.mark.parametrize(
     ("value", "match"),
     [
-        ('tool.scikit-build.config-settings.variant = "pkg.nope"', "undeclared"),
-        ("tool.scikit-build.config-settings.variant = 1", "must be a string"),
-        ('tool.scikit-build.config-settings = "pkg.variant"', "must be a table"),
+        ('tool.scikit-build.config-setting.variant = "pkg.nope"', "undeclared"),
+        ("tool.scikit-build.config-setting.variant = 1", "must be a string"),
+        ('tool.scikit-build.config-setting = "pkg.variant"', "must be a table"),
         ('tool.scikit-build = "pkg.variant"', "must be a table"),
         ('tool = "pkg.variant"', "must be a table"),
         (
-            'tool.scikit-build.config-settings.provider = "pkg.variant"',
+            'tool.scikit-build.config-setting.provider = "pkg.variant"',
             "may not set 'provider'",
         ),
-        ('tool.scikit-build.config-setting.variant = "pkg.variant"', "unrecognized"),
+        ('tool.scikit-build.config-settings.variant = "pkg.variant"', "unrecognized"),
     ],
 )
 def test_metadata_config_settings_invalid(
@@ -400,7 +400,7 @@ def test_metadata_config_settings_invalid(
     match: str,
 ):
     text = METADATA_PROJECT.replace(
-        'tool.scikit-build.config-settings.variant = "pkg.variant"\n'
+        'tool.scikit-build.config-setting.variant = "pkg.variant"\n'
         "tool.other-backend.anything = 1",
         value,
     )

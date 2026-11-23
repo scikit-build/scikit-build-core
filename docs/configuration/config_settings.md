@@ -68,7 +68,7 @@ The define is left unset when the setting resolves to no value, so
 ## Passing values to dynamic metadata plugins
 
 A `[[tool.dynamic-metadata]]` entry can map plugin settings to declared settings
-with a `tool.scikit-build.config-settings` table. The plugin receives the
+with a `tool.scikit-build.config-setting` table. The plugin receives the
 resolved value as if it was written in the entry, so the plugin does not need to
 know about config-settings:
 
@@ -79,7 +79,7 @@ env = "PYTORCH_VARIANT"
 [[tool.dynamic-metadata]]
 provider = "torch-deps"
 variant = "cpu"
-tool.scikit-build.config-settings.variant = "torch.variant"
+tool.scikit-build.config-setting.variant = "torch.variant"
 ```
 
 The static value (`"cpu"` above) is used when the setting resolves to no value.

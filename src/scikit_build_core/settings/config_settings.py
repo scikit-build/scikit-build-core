@@ -221,7 +221,7 @@ def resolve_metadata_config_settings(
     entries: Any, values: "Mapping[str, str | bool | None]"
 ) -> bool:
     """
-    Apply ``tool.scikit-build.config-settings`` of each
+    Apply ``tool.scikit-build.config-setting`` of each
     ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
     ``tool`` key. The table maps a plugin setting to a declared config-setting;
     a resolved value replaces the static one, and an unset setting keeps it.
@@ -242,11 +242,11 @@ def resolve_metadata_config_settings(
         context += ".scikit-build"
         if not isinstance(skb, dict):
             rich_error(f"{context} must be a table")
-        unknown = set(skb) - {"config-settings"}
+        unknown = set(skb) - {"config-setting"}
         if unknown:
             rich_error(f"{context} has unrecognized keys: {', '.join(sorted(unknown))}")
-        mapping = skb.get("config-settings", {})
-        context += ".config-settings"
+        mapping = skb.get("config-setting", {})
+        context += ".config-setting"
         if not isinstance(mapping, dict):
             rich_error(f"{context} must be a table")
         used = used or bool(mapping)

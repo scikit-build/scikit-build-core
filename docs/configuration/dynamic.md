@@ -25,7 +25,7 @@ register their module path, e.g. `scikit_build_core.metadata.regex`), or an
 inline `{ path, module }` table for a plugin living inside your own project.
 Every other key is passed to that plugin as its settings, except `tool`, which
 holds backend options such as the
-[`tool.scikit-build.config-settings` mapping](./config_settings.md#passing-values-to-dynamic-metadata-plugins).
+[`tool.scikit-build.config-setting` mapping](./config_settings.md#passing-values-to-dynamic-metadata-plugins).
 Entries run **in order**, so a later entry sees every field an earlier one
 produced (no dependency graph, no cycles), and a plugin can read an
 already-resolved field with `project[...]`.

@@ -600,7 +600,7 @@ class SettingsReader:
             and self.settings.minimum_version < Version("1.2")
         ):
             rich_error(
-                "minimum-version must be at least 1.2 to use tool.scikit-build.config-settings in tool.dynamic-metadata"
+                "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
             )
 
         if self.settings.sdist.inclusion_mode is not None:
