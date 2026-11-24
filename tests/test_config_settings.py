@@ -680,11 +680,58 @@ def test_build_requires_no_default(
         + DECLARATION,
     )
     monkeypatch.chdir(tmp_path)
-    requires = GetRequires.from_config_settings(None)
     with pytest.raises(SystemExit):
-        list(requires.dynamic_metadata())
+        GetRequires.from_config_settings(None)
     err = capsys.readouterr().err
-    assert "build.requires: config-setting 'zmq.prefix' is not declared or" in err
+    assert "build.requires: config-setting 'zmq.prefix' must be declared" in err
+
+
+def test_get_requires_minimum_version_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.2.0"
+    )
+    write_pyproject(
+        tmp_path,
+        '[tool.scikit-build]\nminimum-version = "1.1"\n'
+        'build.requires = ["zmq-{config_setting[zmq.libzmq]}"]\n' + DECLARATION,
+    )
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit):
+        GetRequires.from_config_settings(None)
+    assert "minimum-version must be at least 1.2" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("value", ["", ".", "..", "gpu/debug", "gpu\\debug"])
+def test_build_dir_value_one_path_component(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        '[tool.scikit-build]\nbuild-dir = "out/{config_setting[zmq.libzmq]}/cmake"\n'
+        + DECLARATION,
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.libzmq": value})
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+    assert "must be one path component" in capsys.readouterr().err
+
+
+def test_placeholder_name_with_braces(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        '[tool.scikit-build]\nbuild-dir = "build/{config_setting[zmq.{flavor}]}"\n'
+        + DECLARATION,
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+    assert "must be declared with a default" in capsys.readouterr().err
 
 
 def test_get_requires_without_pyproject(

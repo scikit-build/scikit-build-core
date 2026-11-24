@@ -145,6 +145,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
     def dependencies(self) -> list[str]:
         reader = self._read_config()
+        reader.validate_placeholders()
         requires = GetRequires(
             reader.settings,
             reader.dynamic_metadata,

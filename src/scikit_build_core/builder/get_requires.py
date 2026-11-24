@@ -128,6 +128,7 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
+        reader.validate_placeholders()
         return cls(
             reader.settings,
             reader.dynamic_metadata,

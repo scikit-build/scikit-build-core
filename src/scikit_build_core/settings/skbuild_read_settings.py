@@ -739,6 +739,10 @@ class SettingsReader:
                 sys.stdout.flush()
                 rich_error("template= or template-path= must be provided in generate")
 
+        self.validate_placeholders()
+
+    def validate_placeholders(self) -> None:
+        """Check the ``config_setting`` placeholders; exit on an error."""
         templates = {
             "build-dir": [self.settings.build_dir],
             "editable.rebuild-dir": [self.settings.editable.rebuild_dir],
@@ -766,7 +770,24 @@ class SettingsReader:
                 if decl is None or decl.default is None:
                     sys.stdout.flush()
                     rich_error(
-                        f"{key}: config-setting {name!r} must be declared with a default"
+                        "{key}: config-setting {name!r} must be declared with a default",
+                        key=key,
+                        name=name,
+                    )
+                # The SDist exclude pattern matches one component per placeholder.
+                value = self.custom_config_settings[name]
+                if (
+                    key == "build-dir"
+                    and isinstance(value, str)
+                    and (value in {"", ".", ".."} or {"/", "\\"}.intersection(value))
+                ):
+                    sys.stdout.flush()
+                    rich_error(
+                        "{key}: config-setting {name!r} must be one path component,"
+                        " got {value!r}",
+                        key=key,
+                        name=name,
+                        value=value,
                     )
 
     @classmethod

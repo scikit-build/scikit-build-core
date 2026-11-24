@@ -105,7 +105,8 @@ build-dir = "build/{config_setting[torch.variant]}"
 
 The setting must be declared with a default. A boolean value formats as `true`
 or `false`. The placeholder must have exactly this form; a conversion (`!r`) or
-a format spec is an error.
+a format spec is an error. In `build-dir`, the value must be one path component:
+it cannot contain a path separator, and it cannot be empty, `.` or `..`.
 
 `minimum-version`, if set, must be at least 1.2.
 
