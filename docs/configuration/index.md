@@ -235,8 +235,12 @@ sdist.inclusion-mode = "git"
 
 This mode needs `git` and a git checkout to make an SDist; otherwise the build
 fails with the PEP 517 `UnsupportedOperation` error, and a frontend can build a
-wheel directly. All submodules must be checked out. A wheel built outside a git
-checkout, such as from an SDist, uses the `"manual"` rules instead.
+wheel directly. All submodules must be checked out.
+
+A wheel built in a git checkout uses the same file set for `wheel.packages`, so
+an untracked module is not in the wheel unless it matches `sdist.include`. A
+wheel built outside a git checkout, such as from an SDist, uses the `"manual"`
+rules instead.
 
 ```{versionadded} 1.2
 The `"git"` mode.

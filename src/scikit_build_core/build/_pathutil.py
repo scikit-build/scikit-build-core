@@ -15,7 +15,7 @@ from typing import Literal
 
 import pathspec
 
-from ._file_processor import EXCLUDE_LINES, each_unignored_file
+from ._file_processor import EXCLUDE_LINES, each_unignored_file, fallback_mode
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
@@ -81,6 +81,13 @@ def iter_package_files(
     ``target`` relative to the platlib root.
     """
     exclude_spec = pathspec.GitIgnoreSpec.from_lines(target_exclude)
+    mode = fallback_mode(mode)
+
+    def source_files(source: Path) -> Iterator[Path]:
+        return each_unignored_file(
+            source, include=include, exclude=src_exclude, build_dir=build_dir, mode=mode
+        )
+
     for package_str, source_str in packages.items():
         package_dir = Path(package_str)
         source_dir = Path(source_str)
@@ -89,7 +96,9 @@ def iter_package_files(
         # just a directory (#888). It installs as one file at ``package_dir``,
         # which already carries the module's name.
         if source_dir.is_file():
-            if not exclude_spec.match_file(package_dir):
+            # Only "git" selects a named module; an SDist would omit it too.
+            selected = mode != "git" or source_dir in source_files(source_dir)
+            if selected and not exclude_spec.match_file(package_dir):
                 yield source_dir, package_dir
             continue
 
@@ -99,14 +108,7 @@ def iter_package_files(
         if not source_dir.is_dir():
             continue
 
-        for filepath in each_unignored_file(
-            source_dir,
-            include=include,
-            exclude=src_exclude,
-            build_dir=build_dir,
-            mode=mode,
-            require_git=False,
-        ):
+        for filepath in source_files(source_dir):
             rel_path = filepath.relative_to(source_dir)
             if not exclude_spec.match_file(rel_path):
                 yield filepath, package_dir / rel_path

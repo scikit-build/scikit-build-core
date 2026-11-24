@@ -11,7 +11,11 @@ import pytest
 import scikit_build_core.build
 from scikit_build_core._logging import rich_warning
 from scikit_build_core.build import _file_processor, build_sdist
-from scikit_build_core.build._file_processor import each_unignored_file
+from scikit_build_core.build._file_processor import (
+    each_unignored_file,
+    fallback_mode,
+)
+from scikit_build_core.build._pathutil import iter_package_files
 from scikit_build_core.errors import ScikitBuildError, UnsupportedOperation
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git required")
@@ -119,6 +123,104 @@ def test_git_mode_build_dir_and_missing(capsys: pytest.CaptureFixture[str]) -> N
 
 
 @pytest.mark.usefixtures("repo")
+@pytest.mark.parametrize("build_dir", ["{wheel_tag}", "{cache_tag}/{build_type}"])
+def test_git_mode_build_dir_only_placeholders(build_dir: str) -> None:
+    assert set(each_unignored_file(Path(), build_dir=build_dir, mode="git")) == files(
+        ".gitignore", "pyproject.toml", "tracked.log", "src/pkg/__init__.py"
+    )
+
+
+@pytest.mark.usefixtures("repo")
+def test_git_mode_unmerged_listed_once() -> None:
+    git("checkout", "-qb", "other")
+    Path("tracked.log").write_text("other", encoding="utf-8")
+    git("commit", "-qam", "other")
+    git("checkout", "-q", "-")
+    Path("tracked.log").write_text("main", encoding="utf-8")
+    git("commit", "-qam", "main")
+    with pytest.raises(subprocess.CalledProcessError):
+        git("merge", "-q", "other")
+
+    assert sorted(each_unignored_file(Path(), mode="git")) == sorted(
+        files(".gitignore", "pyproject.toml", "tracked.log", "src/pkg/__init__.py")
+    )
+
+
+def package_targets(**kwargs: object) -> set[Path]:
+    defaults = {
+        "include": [],
+        "src_exclude": [],
+        "target_exclude": [],
+        "build_dir": "",
+        "mode": "git",
+    }
+    return {t for _, t in iter_package_files(**{**defaults, **kwargs})}  # type: ignore[arg-type]
+
+
+@pytest.mark.usefixtures("repo")
+def test_git_mode_single_file_package() -> None:
+    """A single-module package follows the same selection as the SDist."""
+    packages = {"untracked.py": "untracked.py", "mod.py": "src/pkg/__init__.py"}
+    assert package_targets(packages=packages) == files("mod.py")
+    assert package_targets(packages=packages, include=["untracked.py"]) == files(
+        "mod.py", "untracked.py"
+    )
+    assert (
+        package_targets(packages=packages, src_exclude=["src/pkg/__init__.py"])
+        == files()
+    )
+    # The other modes take a named module as given.
+    assert package_targets(packages=packages, mode="manual") == files(
+        "mod.py", "untracked.py"
+    )
+
+
+def test_git_mode_single_file_package_no_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path))
+    monkeypatch.chdir(tmp_path)
+    Path("pyproject.toml").write_text("", encoding="utf-8")
+    Path("mod.py").write_text("", encoding="utf-8")
+    assert package_targets(packages={"mod.py": "mod.py"}) == files("mod.py")
+
+
+def test_git_mode_no_git(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+    with pytest.raises(UnsupportedOperation, match="requires git"):
+        list(each_unignored_file(Path(), mode="git"))
+    # A wheel from an SDist is built without git; that is not worth a warning.
+    assert Path("untracked.py") in set(
+        each_unignored_file(Path(), mode=fallback_mode("git"))
+    )
+    assert "WARNING" not in capsys.readouterr().err
+    assert repo.is_dir()
+
+
+def test_git_mode_no_repo_translated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The fallback does not depend on the text of a git message."""
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path))
+    monkeypatch.chdir(tmp_path)
+    Path("pyproject.toml").write_text("", encoding="utf-8")
+    run = subprocess.run
+
+    def translated_run(*args: object, **kwargs: object) -> object:
+        result = run(*args, **kwargs)  # type: ignore[call-overload]
+        result.stderr = b"fatal: kein Git-Repository"
+        return result
+
+    monkeypatch.setattr(subprocess, "run", translated_run)
+    assert set(each_unignored_file(Path(), mode=fallback_mode("git"))) == files(
+        "pyproject.toml"
+    )
+    assert "WARNING" not in capsys.readouterr().err
+
+
+@pytest.mark.usefixtures("repo")
 def test_git_mode_runs_git_once(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     run = subprocess.run
@@ -129,8 +231,11 @@ def test_git_mode_runs_git_once(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(subprocess, "run", counting_run)
     list(each_unignored_file(Path("src"), mode="git"))
+    assert calls
+    first = len(calls)
+    assert fallback_mode("git") == "git"
     list(each_unignored_file(Path("src/pkg"), mode="git"))
-    assert len(calls) == 1
+    assert len(calls) == first
 
 
 @pytest.mark.usefixtures("repo")
@@ -139,7 +244,7 @@ def test_git_mode_broken_repo(capsys: pytest.CaptureFixture[str]) -> None:
     Path(".git/index").write_bytes(b"garbage")
     with pytest.raises(UnsupportedOperation):
         list(each_unignored_file(Path(), mode="git"))
-    assert set(each_unignored_file(Path(), mode="git", require_git=False)) == files(
+    assert set(each_unignored_file(Path(), mode=fallback_mode("git"))) == files(
         ".gitignore",
         "pyproject.toml",
         "tracked.log",
@@ -250,7 +355,7 @@ def test_git_mode_no_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
 
     with pytest.raises(UnsupportedOperation):
         list(each_unignored_file(Path(), mode="git"))
-    assert set(each_unignored_file(Path(), mode="git", require_git=False)) == files(
+    assert set(each_unignored_file(Path(), mode=fallback_mode("git"))) == files(
         "pyproject.toml", ".gitignore", "a.py"
     )
 
@@ -266,7 +371,7 @@ def test_git_mode_untracked_project(
 
     with pytest.raises(UnsupportedOperation, match=r"pyproject\.toml"):
         list(each_unignored_file(Path(), mode="git"))
-    assert set(each_unignored_file(Path(), mode="git", require_git=False)) == files(
+    assert set(each_unignored_file(Path(), mode=fallback_mode("git"))) == files(
         "pyproject.toml"
     )
 
