@@ -141,6 +141,7 @@ class CMaker:
         self._file_api_query = stateless_query(self.build_dir)
         skbuild_info = self.build_dir / ".skbuild-info.json"
         stale = self.fresh
+        keep_fetchcontent = False
         if self.fresh:
             logger.info("Fresh build requested, clearing cache")
         else:
@@ -179,13 +180,28 @@ class CMaker:
                         cached_skbuild_dir,
                         DIR,
                     )
+                    keep_fetchcontent = not stale and cached_skbuild_dir is not None
                     stale = True
 
-        # Not using --fresh here, not just due to CMake 3.24+, but also just in
-        # case it triggers an extra FetchContent pull in CMake 3.30+
+        # Reset stale CMake state, preserving FetchContent records when only the
+        # isolated build environment has moved.
         if stale:
             self.build_dir.joinpath("CMakeCache.txt").unlink(missing_ok=True)
-            shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)
+            cmake_files = self.build_dir.joinpath("CMakeFiles")
+            if (
+                keep_fetchcontent
+                and (cmake_files / "fc-stamp").is_dir()
+                and cmake_files.resolve() == self.build_dir.resolve() / "CMakeFiles"
+            ):
+                for entry in cmake_files.glob("*"):
+                    if entry.name in {"fc-stamp", "fc-tmp"}:
+                        continue
+                    try:
+                        entry.unlink(missing_ok=True)
+                    except (IsADirectoryError, PermissionError):
+                        shutil.rmtree(entry, ignore_errors=True)
+            else:
+                shutil.rmtree(cmake_files, ignore_errors=True)
 
         with skbuild_info.open("w", encoding="utf-8") as f:
             json.dump(self._info_dict(), f, indent=2)

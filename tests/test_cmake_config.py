@@ -365,31 +365,35 @@ def test_get_cmake_via_envvar(monkeypatch: pytest.MonkeyPatch, fp):
     assert result.version == Version("3.20.0")
 
 
-def test_cmake_fresh_clears_cache(tmp_path: Path) -> None:
+@pytest.mark.parametrize("fresh", [False, True])
+def test_cmake_clears_stale_cache(tmp_path: Path, fresh: bool) -> None:
     cmake = CMake(Version("3.30"), Path("cmake"))
     source_dir = DIR / "packages" / "simple_pure"
     build_dir = tmp_path / "build"
+    build_dir.mkdir()
+    info = {"source_dir": str(source_dir), "skbuild_path": "previous-env"}
+    (build_dir / ".skbuild-info.json").write_text(json.dumps(info), encoding="utf-8")
 
-    CMaker(cmake, source_dir=source_dir, build_dir=build_dir, build_type="Release")
     cache = build_dir / "CMakeCache.txt"
     cmakefiles = build_dir / "CMakeFiles"
     cache.write_text("cached")
-    cmakefiles.mkdir()
-    cmakefiles.joinpath("obj.txt").write_text("obj")
-
-    CMaker(cmake, source_dir=source_dir, build_dir=build_dir, build_type="Release")
-    assert cache.exists()
-    assert cmakefiles.joinpath("obj.txt").exists()
+    for name in ("fc-stamp", "fc-tmp", "target.dir"):
+        (cmakefiles / name).mkdir(parents=True)
+        (cmakefiles / name / "marker").touch()
 
     CMaker(
         cmake,
         source_dir=source_dir,
         build_dir=build_dir,
         build_type="Release",
-        fresh=True,
+        fresh=fresh,
     )
     assert not cache.exists()
-    assert not cmakefiles.exists()
+    if fresh:
+        assert not cmakefiles.exists()
+    else:
+        kept = {p.parent.name for p in cmakefiles.glob("*/marker")}
+        assert kept == {"fc-stamp", "fc-tmp"}
 
 
 def test_get_cmake_via_envvar_missing(monkeypatch: pytest.MonkeyPatch) -> None:
