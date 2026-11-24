@@ -48,6 +48,7 @@ from .config_settings import (
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
+    resolve_metadata_config_settings,
 )
 from .skbuild_model import (
     BuildSettings,
@@ -340,6 +341,9 @@ class SettingsReader:
         self.dynamic_metadata: list[dict[str, Any]] = pyproject.get("tool", {}).get(
             "dynamic-metadata", []
         )
+        metadata_mapping = resolve_metadata_config_settings(
+            self.dynamic_metadata, self.custom_config_settings
+        )
         self.variant: dict[str, Any] = pyproject.get("variant", {})
 
         # Support for cmake.version='CMakeLists.txt'
@@ -588,6 +592,15 @@ class SettingsReader:
         ):
             rich_error(
                 "minimum-version must be at least 1.1 to use tool.scikit-build.config-setting"
+            )
+
+        if (
+            metadata_mapping
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("1.2")
+        ):
+            rich_error(
+                "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
             )
 
         if self.settings.sdist.inclusion_mode is not None:

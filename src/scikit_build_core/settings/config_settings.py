@@ -25,6 +25,7 @@ __all__ = [
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_metadata_config_settings",
 ]
 
 
@@ -214,3 +215,51 @@ def resolve_define_references(
             del define[key]
         else:
             define[key] = value
+
+
+def resolve_metadata_config_settings(
+    entries: Any, values: "Mapping[str, str | bool | None]"
+) -> bool:
+    """
+    Apply ``tool.scikit-build.config-setting`` of each
+    ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
+    ``tool`` key. The table maps a plugin setting to a declared config-setting;
+    a resolved value replaces the static one, and an unset setting keeps it.
+    Returns True if an entry has a mapping.
+    """
+    used = False
+    if not isinstance(entries, list):
+        return used
+    for n, entry in enumerate(entries):
+        if not isinstance(entry, dict) or "tool" not in entry:
+            continue
+        context = f"tool.dynamic-metadata[{n}].tool"
+        tool = entry.pop("tool")
+        if not isinstance(tool, dict):
+            rich_error(f"{context} must be a table")
+        # Other backends' tables are ignored.
+        skb = tool.get("scikit-build", {})
+        context += ".scikit-build"
+        if not isinstance(skb, dict):
+            rich_error(f"{context} must be a table")
+        unknown = set(skb) - {"config-setting"}
+        if unknown:
+            rich_error(f"{context} has unrecognized keys: {', '.join(sorted(unknown))}")
+        mapping = skb.get("config-setting", {})
+        context += ".config-setting"
+        if not isinstance(mapping, dict):
+            rich_error(f"{context} must be a table")
+        used = used or bool(mapping)
+        for key, name in mapping.items():
+            if key in {"provider", "tool"}:
+                rich_error(f"{context} may not set {key!r}")
+            if not isinstance(name, str):
+                rich_error(f"{context}.{key} must be a string")
+            if name not in values:
+                rich_error(
+                    f"{context}.{key} references undeclared config-setting {name!r}"
+                )
+            value = values[name]
+            if value is not None:
+                entry[key] = value
+    return used
