@@ -307,7 +307,7 @@ def test_git_mode_submodules(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.usefixtures("repo")
 def test_git_mode_dir_symlink() -> None:
     try:
-        Path("link").symlink_to("src")
+        Path("link").symlink_to("src", target_is_directory=True)
     except OSError:
         pytest.skip("symlinks not supported")
     git("add", "link")
@@ -330,7 +330,7 @@ def test_git_mode_external_symlink(repo: Path) -> None:
     (repo.parent / "outside").mkdir()
     (repo.parent / "outside/data.txt").write_text("", encoding="utf-8")
     try:
-        Path("ext").symlink_to("../outside")
+        Path("ext").symlink_to("../outside", target_is_directory=True)
     except OSError:
         pytest.skip("symlinks not supported")
     git("add", "ext")
