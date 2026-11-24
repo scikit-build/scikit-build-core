@@ -28,7 +28,7 @@ from typing import Any, Literal
 from .._compat import tomllib
 from .._logging import logger
 from .._variants import variant_build_requires
-from ..format import pyproject_format
+from ..format import format_template, pyproject_format
 from ..program_search import (
     best_program,
     get_cmake_programs,
@@ -189,10 +189,10 @@ class GetRequires:
             return
 
         for build_require in self.settings.build.requires:
-            yield build_require.format(
-                **pyproject_format(
-                    settings=self.settings,
-                )
+            yield format_template(
+                build_require,
+                pyproject_format(settings=self.settings),
+                key="build.requires",
             )
 
         # Deprecated tool.scikit-build.metadata table.

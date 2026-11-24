@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from scikit_build_core.format import RootPathResolver, pyproject_format
+from scikit_build_core.format import (
+    RootPathResolver,
+    format_template,
+    pyproject_format,
+)
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
 TYPE_CHECKING = False
@@ -107,3 +111,26 @@ def test_rebuild_dir_follows_build_dir(tmp_path: Path) -> None:
         name="pkg",
     )
     assert result == (tmp_path / "build" / "install" / "py3-none-any").resolve()
+
+
+def test_format_template() -> None:
+    assert format_template("a-{x}", {"x": "b"}, key="build-dir") == "a-b"
+
+
+@pytest.mark.parametrize(
+    ("template", "match"),
+    [
+        ("{nope}", "unknown placeholder 'nope'"),
+        ("{unclosed", "expected '}'"),
+        ("{x.nope}", "attribute"),
+        ("{}", "index"),
+    ],
+)
+def test_format_template_errors(
+    capsys: pytest.CaptureFixture[str], template: str, match: str
+) -> None:
+    with pytest.raises(SystemExit):
+        format_template(template, {"x": "b"}, key="build-dir")
+    err = capsys.readouterr().err
+    assert "build-dir: " in err
+    assert match in err

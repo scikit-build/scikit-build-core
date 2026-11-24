@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.settings.skbuild_model"}
+__lazy_modules__ = {
+    f"{__spec__.parent}._logging",
+    f"{__spec__.parent}.settings.skbuild_model",
+}
 
 import dataclasses
 import sys
@@ -10,10 +13,12 @@ import typing
 from pathlib import Path
 from typing import TypedDict
 
+from ._logging import rich_error
 from .settings.skbuild_model import normalize_build_types
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from typing import Literal
 
     from scikit_build_core.builder.wheel_tag import WheelTag
@@ -22,6 +27,7 @@ if TYPE_CHECKING:
 __all__ = [
     "PyprojectFormatter",
     "RootPathResolver",
+    "format_template",
     "pyproject_format",
 ]
 
@@ -69,6 +75,16 @@ class _AnySpecDummy:
 
 # Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``).
 _SPEC_TAKING_KEYS = ("root",)
+
+
+def format_template(template: str, values: Mapping[str, object], *, key: str) -> str:
+    """Format the ``key`` setting; exit with a clear error on a bad placeholder."""
+    try:
+        return template.format(**values)
+    except KeyError as err:
+        rich_error("{key}: unknown placeholder {err}", key=key, err=err)
+    except (AttributeError, IndexError, ValueError) as err:
+        rich_error("{key}: {err}", key=key, err=err)
 
 
 @typing.overload

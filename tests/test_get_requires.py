@@ -486,3 +486,15 @@ def test_get_requires_ninja_define_generator(
         cmake=CMakeSettings(define={"CMAKE_GENERATOR": CMakeSettingsDefine(define)})
     )
     assert set(GetRequires(settings).ninja()) == expected
+
+
+def test_build_requires_unknown_placeholder(capsys: pytest.CaptureFixture[str]):
+    from scikit_build_core.settings.skbuild_model import (
+        BuildSettings,
+        ScikitBuildSettings,
+    )
+
+    settings = ScikitBuildSettings(build=BuildSettings(requires=["b-{nope}"]))
+    with pytest.raises(SystemExit):
+        list(GetRequires(settings).dynamic_metadata())
+    assert "build.requires: unknown placeholder 'nope'" in capsys.readouterr().err
