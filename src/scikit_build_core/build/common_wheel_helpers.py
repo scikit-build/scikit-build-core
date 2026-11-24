@@ -128,6 +128,7 @@ def get_build_dir(
     has_cmake: bool,
     fallback: Path,
     name: str,
+    config_settings: Mapping[str, str | bool | None] | None = None,
 ) -> Path:
     """
     Where CMake configures and builds: the source dir for inplace editable
@@ -142,7 +143,13 @@ def get_build_dir(
         build_dir = Path(
             format_template(
                 settings.build_dir,
-                pyproject_format(settings=settings, tags=tags, state=state, name=name),
+                pyproject_format(
+                    settings=settings,
+                    tags=tags,
+                    state=state,
+                    name=name,
+                    config_settings=config_settings,
+                ),
                 key="build-dir",
             )
         )
@@ -160,6 +167,7 @@ def get_editable_rebuild_dir(
     tags: WheelTag,
     state: WheelState,
     name: str,
+    config_settings: Mapping[str, str | bool | None] | None = None,
 ) -> Path:
     """
     Persistent install tree for a rebuildable redirect editable.
@@ -179,6 +187,7 @@ def get_editable_rebuild_dir(
                     state=state,
                     name=name,
                     build_dir=build_dir,
+                    config_settings=config_settings,
                 ),
                 key="editable.rebuild-dir",
             )

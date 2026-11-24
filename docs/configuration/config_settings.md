@@ -93,6 +93,26 @@ The deprecated `tool.scikit-build.metadata` table does not support this.
 
 :::
 
+## Use in formatted fields
+
+The resolved value is available in [formatted fields](./formatted.md) as
+`{config_setting[<name>]}`, for example to keep one build directory per variant:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{config_setting[torch.variant]}"
+```
+
+The setting must be declared with a default. A boolean value formats as `true`
+or `false`. The placeholder must have exactly this form; a conversion (`!r`) or
+a format spec is an error.
+
+`minimum-version`, if set, must be at least 1.2.
+
+:::{versionadded} 1.2
+
+:::
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the

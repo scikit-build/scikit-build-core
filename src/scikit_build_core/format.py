@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "re",
+    "string",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}.settings.skbuild_model",
 }
 
 import dataclasses
+import re
+import string
 import sys
 import typing
 from pathlib import Path
@@ -27,6 +31,7 @@ if TYPE_CHECKING:
 __all__ = [
     "PyprojectFormatter",
     "RootPathResolver",
+    "config_setting_fields",
     "format_template",
     "pyproject_format",
 ]
@@ -57,6 +62,8 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
     build_dir: str
     """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
+    config_setting: Mapping[str, str]
+    """Declared config-settings (``tool.scikit-build.config-setting``), by name, e.g. ``build-dir = "build/{config_setting[torch.variant]}"``. Booleans format as ``true``/``false``. The setting must have a default."""
 
 
 class _AnySpecDummy:
@@ -71,6 +78,45 @@ class _AnySpecDummy:
 
     def __str__(self) -> str:
         return "*"
+
+
+class _ConfigSettingDummy:
+    """Dummy for ``config_setting``: any name formats as ``*``."""
+
+    def __getitem__(self, name: str) -> str:
+        return "*"
+
+
+class _ConfigSettings(dict[str, str]):
+    def __missing__(self, name: str) -> str:
+        msg = f"config-setting {name!r} is not declared or has no default"
+        raise ValueError(msg)
+
+
+def config_setting_fields(template: str) -> list[str]:
+    """
+    Names of the config-settings that ``template`` refers to.
+
+    Raises ValueError unless each use is exactly ``{config_setting[<name>]}``.
+    """
+    try:
+        fields = list(string.Formatter().parse(template))
+    except ValueError:
+        # Formatting reports a template that does not parse.
+        return []
+    names = []
+    for _, field, spec, conversion in fields:
+        if "config_setting" not in f"{field}{spec}":
+            continue
+        match = re.fullmatch(r"config_setting\[([^]]+)\]", field or "")
+        if match is None or spec or conversion:
+            msg = (
+                "config_setting must be used as {config_setting[<name>]},"
+                " with no conversion or format spec"
+            )
+            raise ValueError(msg)
+        names.append(match[1])
+    return names
 
 
 # Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``).
@@ -96,6 +142,7 @@ def pyproject_format(
     tags: WheelTag | None = ...,
     name: str | None = ...,
     build_dir: Path | None = ...,
+    config_settings: Mapping[str, str | bool | None] | None = ...,
 ) -> PyprojectFormatter: ...
 
 
@@ -113,6 +160,7 @@ def pyproject_format(
     tags: WheelTag | None = None,
     name: str | None = None,
     build_dir: Path | None = None,
+    config_settings: Mapping[str, str | bool | None] | None = None,
     dummy: bool = False,
 ) -> PyprojectFormatter | dict[str, str]:
     """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
@@ -126,6 +174,7 @@ def pyproject_format(
         # build-dir like ``{root:uri}`` raises ValueError.
         for key in _SPEC_TAKING_KEYS:
             res_dummy[key] = _AnySpecDummy()
+        res_dummy["config_setting"] = _ConfigSettingDummy()
         return typing.cast("dict[str, str]", res_dummy)
 
     assert settings is not None
@@ -136,6 +185,11 @@ def pyproject_format(
         # as part of PEP517 standard.
         root=RootPathResolver(),
         build_type=normalize_build_types(settings.cmake.build_type)[0],
+        config_setting=_ConfigSettings(
+            (key, str(value).lower() if isinstance(value, bool) else value)
+            for key, value in (config_settings or {}).items()
+            if value is not None
+        ),
     )
     # Then compute all optional keys depending on the function input
     if tags is not None:

@@ -1088,3 +1088,21 @@ def test_build_dir_bad_template(
     with pytest.raises(SystemExit):
         list(each_unignored_file(Path(), build_dir=build_dir, mode="default"))
     assert match in capsys.readouterr().err
+
+
+def test_build_dir_config_setting_excluded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    resolved = Path("out/gpu/cmake")
+    resolved.mkdir(parents=True)
+    resolved.joinpath("CMakeCache.txt").touch()
+    kept = Path("out/keep.txt")
+    kept.touch()
+
+    files = set(
+        each_unignored_file(
+            Path(), build_dir="out/{config_setting[pkg.variant]}/cmake", mode="default"
+        )
+    )
+    assert files == {kept}

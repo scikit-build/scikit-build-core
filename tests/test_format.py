@@ -4,6 +4,7 @@ import pytest
 
 from scikit_build_core.format import (
     RootPathResolver,
+    config_setting_fields,
     format_template,
     pyproject_format,
 )
@@ -134,3 +135,54 @@ def test_format_template_errors(
     err = capsys.readouterr().err
     assert "build-dir: " in err
     assert match in err
+
+
+def test_config_setting_key() -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(),
+        config_settings={"torch.variant": "cu126", "my-proj.gpu-opt.x": True},
+    )
+    # Kept out of a literal .format() call; mypy rejects dotted index keys.
+    spec = "build/{config_setting[torch.variant]}"
+    assert spec.format(**formatted) == "build/cu126"
+    spec = "{config_setting[my-proj.gpu-opt.x]}"
+    assert spec.format(**formatted) == "true"
+
+
+@pytest.mark.parametrize("name", ["torch.other", "torch", "torch.unset"])
+def test_config_setting_key_errors(name: str) -> None:
+    formatted = pyproject_format(
+        settings=ScikitBuildSettings(),
+        config_settings={"torch.variant": "cpu", "torch.unset": None},
+    )
+    spec = f"{{config_setting[{name}]}}"
+    with pytest.raises(ValueError, match="not declared or has no default"):
+        spec.format(**formatted)
+
+
+def test_dummy_config_setting() -> None:
+    dummy = pyproject_format(dummy=True)
+    spec = "build/{config_setting[a.b-c]}"
+    assert spec.format(**dummy) == "build/*"
+
+
+def test_config_setting_fields() -> None:
+    template = "{root}/{config_setting[a.b-c]}/{wheel_tag}-{config_setting[d]}"
+    assert config_setting_fields(template) == ["a.b-c", "d"]
+    assert config_setting_fields("{unclosed") == []
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        "{config_setting}",
+        "{config_setting.variant}",
+        "{config_setting[a.b].__class__}",
+        "{config_setting[a.b]!r}",
+        "{config_setting[a.b]:>6}",
+        "{name:{config_setting[a.b]}}",
+    ],
+)
+def test_config_setting_fields_bad_form(template: str) -> None:
+    with pytest.raises(ValueError, match="config_setting"):
+        config_setting_fields(template)

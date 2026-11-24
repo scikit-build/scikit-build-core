@@ -532,6 +532,21 @@ def test_minimum_version_gate_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     settings_reader.validate_may_exit()
 
 
+def test_build_requires_config_setting_placeholder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    write_pyproject(
+        tmp_path,
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.libzmq]}"]\n'
+        + DECLARATION,
+    )
+    monkeypatch.chdir(tmp_path)
+    requires = GetRequires.from_config_settings({"zmq.libzmq": "bundled"})
+    assert list(requires.dynamic_metadata()) == ["zmq-bundled"]
+
+
 @pytest.mark.configure
 @pytest.mark.parametrize("source", ["conf", "env"])
 def test_config_settings_reach_cmake(
@@ -570,3 +585,113 @@ def test_config_settings_reach_cmake(
         ZMQ_LIBZMQ = bundled
         """
     )
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        'build-dir = "build/{config_setting[zmq.libmzq]}"',
+        'build-dir = "build"\neditable.rebuild-dir = "build/{config_setting[zmq.libmzq]}"',
+        'build.requires = ["zmq-{config_setting[zmq.libmzq]}"]',
+        # Declared, but has no default.
+        'build-dir = "build/{config_setting[zmq.prefix]}"',
+    ],
+)
+def test_placeholder_needs_declared_default(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], option: str
+):
+    pyproject_toml = write_pyproject(
+        tmp_path, f"[tool.scikit-build]\n{option}\n" + DECLARATION
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+    assert "must be declared with a default" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        'build-dir = "build/{config_setting.libzmq}"',
+        'build-dir = "build/{config_setting[zmq.libzmq]!r}"',
+        'build-dir = "build/{name:{config_setting[zmq.libzmq]}}"',
+        'build.requires = ["zmq-{config_setting}"]',
+    ],
+)
+def test_placeholder_bad_form(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], option: str
+):
+    pyproject_toml = write_pyproject(
+        tmp_path, f"[tool.scikit-build]\n{option}\n" + DECLARATION
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+    assert "config_setting must be used as" in capsys.readouterr().err
+
+
+def test_build_dir_literal_config_setting_text(tmp_path: Path):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        '[tool.scikit-build]\nbuild-dir = "my_config_setting_builds/{wheel_tag}"\n',
+    )
+    SettingsReader.from_file(pyproject_toml).validate_may_exit()
+
+
+def test_placeholder_minimum_version_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.2.0"
+    )
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        '[tool.scikit-build]\nminimum-version = "1.1"\n'
+        'build-dir = "build/{config_setting[zmq.libzmq]}"\n' + DECLARATION,
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit):
+        settings_reader.validate_may_exit()
+    assert "minimum-version must be at least 1.2" in capsys.readouterr().err
+
+
+def test_build_requires_default_get_requires(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    write_pyproject(
+        tmp_path,
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.libzmq]}"]\n'
+        + DECLARATION,
+    )
+    monkeypatch.chdir(tmp_path)
+    assert list(GetRequires().dynamic_metadata()) == ["zmq-system"]
+
+
+def test_build_requires_no_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+
+    write_pyproject(
+        tmp_path,
+        '[tool.scikit-build.build]\nrequires = ["zmq-{config_setting[zmq.prefix]}"]\n'
+        + DECLARATION,
+    )
+    monkeypatch.chdir(tmp_path)
+    requires = GetRequires.from_config_settings(None)
+    with pytest.raises(SystemExit):
+        list(requires.dynamic_metadata())
+    err = capsys.readouterr().err
+    assert "build.requires: config-setting 'zmq.prefix' is not declared or" in err
+
+
+def test_get_requires_without_pyproject(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    from scikit_build_core.builder.get_requires import GetRequires
+    from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
+
+    monkeypatch.chdir(tmp_path)
+    assert list(GetRequires(ScikitBuildSettings()).dynamic_metadata()) == []

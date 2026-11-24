@@ -75,6 +75,13 @@ def _load_scikit_build_settings(
     ).settings
 
 
+def _load_custom_config_settings() -> Mapping[str, str | bool | None]:
+    try:
+        return SettingsReader.from_file("pyproject.toml").custom_config_settings
+    except FileNotFoundError:
+        return {}
+
+
 def _read_pyproject() -> dict[str, Any]:
     try:
         with Path("pyproject.toml").open("rb") as f:
@@ -108,6 +115,9 @@ class GetRequires:
     variant_table: Mapping[str, Any] = dataclasses.field(
         default_factory=_read_variant_table
     )
+    config_settings: Mapping[str, str | bool | None] = dataclasses.field(
+        default_factory=_load_custom_config_settings
+    )
 
     @classmethod
     def from_config_settings(
@@ -118,7 +128,12 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
-        return cls(reader.settings, reader.dynamic_metadata, reader.variant)
+        return cls(
+            reader.settings,
+            reader.dynamic_metadata,
+            reader.variant,
+            reader.custom_config_settings,
+        )
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -192,7 +207,9 @@ class GetRequires:
         for build_require in self.settings.build.requires:
             yield format_template(
                 build_require,
-                pyproject_format(settings=self.settings),
+                pyproject_format(
+                    settings=self.settings, config_settings=self.config_settings
+                ),
                 key="build.requires",
             )
 

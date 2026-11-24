@@ -145,7 +145,12 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
 
     def dependencies(self) -> list[str]:
         reader = self._read_config()
-        requires = GetRequires(reader.settings, reader.dynamic_metadata, reader.variant)
+        requires = GetRequires(
+            reader.settings,
+            reader.dynamic_metadata,
+            reader.variant,
+            reader.custom_config_settings,
+        )
 
         if self.target_name == "sdist":
             required = requires.settings.sdist.cmake
@@ -218,6 +223,7 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
             has_cmake=True,
             fallback=self.__tmp_dir / "build",
             name=placeholder_name,
+            config_settings=settings_reader.custom_config_settings,
         )
         wheel_dirs = prepare_wheel_dirs(wheel_dir, targetlib=targetlib)
         install_dir = get_install_dir(
