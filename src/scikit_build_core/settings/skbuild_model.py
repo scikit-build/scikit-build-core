@@ -54,6 +54,9 @@ class FieldScope(enum.Enum):
     OVERRIDE = "override"
     """Not in the static ``pyproject.toml`` table; env vars, config-settings,
     entry-point config, and ``[[overrides]]`` are allowed."""
+    REFERENCE = "reference"
+    """Like ``OVERRIDE``, but the static table can also give a
+    ``{config-setting = "..."}`` reference to a declared config-setting."""
     STATIC = "static"
     """Only in ``pyproject.toml`` (including ``[[overrides]]``) and
     entry-point config."""
@@ -922,16 +925,22 @@ class ScikitBuildSettings:
 
     variant_label: str | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
+        metadata=SettingsFieldMetadata(scope=FieldScope.REFERENCE),
     )
     """
     Experimental wheel variant label to build, from ``[variant.variants]``.
 
     The ``null`` label builds the null variant.
 
-    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+    A literal label cannot be set in the static ``[tool.scikit-build]`` table;
+    use it in an override, config-settings, or an environment variable. The
+    static table can give ``{ config-setting = "name" }``, a reference to a
+    declared config-setting; if the setting has no value, no variant is built.
 
     .. versionadded:: 1.0
+
+    .. versionchanged:: 1.2
+       A ``config-setting`` reference can be given.
     """
 
     minimum_version: Version | None = dataclasses.field(

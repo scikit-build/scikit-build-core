@@ -13,18 +13,19 @@ import re
 from typing import Any, Literal
 
 from .._logging import rich_error
-from .skbuild_model import ScikitBuildSettings
+from .skbuild_model import FieldScope, ScikitBuildSettings
 from .skbuild_overrides import strtobool
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Iterator, Mapping
 
 __all__ = [
     "ConfigSettingDeclaration",
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_field_references",
     "resolve_format_keys",
     "resolve_metadata_config_settings",
 ]
@@ -221,6 +222,51 @@ def resolve_define_references(
             del define[key]
         else:
             define[key] = value
+
+
+def _reference_paths(
+    target: type[Any], path: tuple[str, ...] = ()
+) -> "Iterator[tuple[str, ...]]":
+    for field in dataclasses.fields(target):
+        field_path = (*path, field.name)
+        if field.metadata.get("scope") is FieldScope.REFERENCE:
+            yield field_path
+        elif dataclasses.is_dataclass(field.type) and isinstance(field.type, type):
+            yield from _reference_paths(field.type, field_path)
+
+
+def resolve_field_references(
+    tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
+) -> set[tuple[str, ...]]:
+    """
+    Replace ``{config-setting = "..."}`` values of ``FieldScope.REFERENCE``
+    fields in the raw table with the resolved strings, in place. An unset
+    setting removes the key. Returns the field paths that had a reference.
+    """
+    resolved: set[tuple[str, ...]] = set()
+    for path in _reference_paths(ScikitBuildSettings):
+        *parents, key = (p.replace("_", "-") for p in path)
+        table: Any = tool_skb
+        for parent in parents:
+            table = table.get(parent) if isinstance(table, dict) else None
+        if not isinstance(table, dict) or not isinstance(table.get(key), dict):
+            continue
+        context = ".".join((*parents, key))
+        entry = table[key]
+        if set(entry) != {"config-setting"}:
+            rich_error(f"{context} table must have only a 'config-setting' key")
+        name = entry["config-setting"]
+        value = _referenced_value(context, name, values)
+        if isinstance(value, bool):
+            rich_error(
+                f"{context} must reference a string config-setting, not {name!r}"
+            )
+        if value is None:
+            del table[key]
+        else:
+            table[key] = value
+        resolved.add(path)
+    return resolved
 
 
 def resolve_format_keys(

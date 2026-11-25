@@ -65,7 +65,7 @@ def mk_skbuild_docs() -> str:
     """
     sections: dict[str | None, list[Item]] = {}
     for item in mk_docs(ScikitBuildSettings):
-        if item.deprecated or item.scope is FieldScope.OVERRIDE:
+        if item.deprecated or item.scope in {FieldScope.OVERRIDE, FieldScope.REFERENCE}:
             continue
         prefix, sep, _ = item.name.partition(".")
         sections.setdefault(prefix if sep else None, []).append(Item(item))

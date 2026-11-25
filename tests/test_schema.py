@@ -86,6 +86,9 @@ def test_valid_schemas_files(filepath: Path) -> None:
                 {"if": {"config-setting": {}}, "cmake": {"args": ["-DFOO=BAR"]}}
             ]
         },
+        {"variant-label": "cpu"},
+        {"variant-label": {"config-setting": ""}},
+        {"variant-label": {"config-setting": "torch.variant", "default": "cpu"}},
     ],
 )
 def test_invalid_schemas(addition: dict[str, Any]) -> None:
@@ -145,6 +148,16 @@ def test_invalid_schemas(addition: dict[str, Any]) -> None:
                 {
                     "if": {"config-setting": {"zmq.libzmq": "bundled"}},
                     "cmake": {"define": {"ZMQ_LIBZMQ": "ON"}},
+                }
+            ]
+        },
+        {"variant-label": {"config-setting": "torch.variant"}},
+        {"overrides": [{"if": {"state": "wheel"}, "variant-label": "cpu"}]},
+        {
+            "overrides": [
+                {
+                    "if": {"state": "wheel"},
+                    "variant-label": {"config-setting": "torch.variant"},
                 }
             ]
         },

@@ -45,9 +45,10 @@ x86_64.level = ["v3"]
 
 Then select one with the `variant-label` setting, as [PEP 817][] describes. It
 is **only allowed in config-settings or `[[tool.scikit-build.overrides]]`**; it
-cannot be set at the top level of `[tool.scikit-build]`. When it is set,
-[`variantlib`][] is added as a build requirement, and the experimental flag must
-be enabled. For example, with `pip`:
+cannot be set to a literal label at the top level of `[tool.scikit-build]` (see
+[below](#selecting-a-variant-with-a-config-setting) for the reference form).
+When it is set, [`variantlib`][] is added as a build requirement, and the
+experimental flag must be enabled. For example, with `pip`:
 
 ```bash
 pip wheel . -Cexperimental=true -Cvariant-label=x86_64_v3
@@ -68,6 +69,35 @@ time.
 
 You can also set `experimental = true` under `[tool.scikit-build]` instead of
 passing it every time.
+
+## Selecting a variant with a config-setting
+
+The static `[tool.scikit-build]` table can set `variant-label` to a reference to
+a [declared config-setting](./config_settings.md). A literal label is still not
+allowed there. The reference also works in an override:
+
+```toml
+[tool.scikit-build]
+experimental = true
+variant-label = { config-setting = "torch.variant" }
+
+[tool.scikit-build.config-setting."torch.variant"]
+env = "PYTORCH_VARIANT"
+```
+
+Then `-Ctorch.variant=cu130` or `PYTORCH_VARIANT=cu130` builds the `cu130`
+variant. If the setting has no value, no variant is built. A `default` in the
+declaration gives a variant for every build. The setting must be a string
+setting. `-Cvariant-label` and `SKBUILD_VARIANT_LABEL` still take precedence
+over the reference. `minimum-version`, if set, must be at least 1.2.
+
+The same setting can also drive [format-keys](./config_settings.md), overrides,
+`cmake.define`, and dynamic metadata, so one setting controls all parts of a
+variant build.
+
+:::{versionadded} 1.2
+
+:::
 
 For more information you can see the available PEPs:
 

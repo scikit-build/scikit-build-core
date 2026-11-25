@@ -179,9 +179,15 @@ print(mk_skbuild_docs())
 
   The ``null`` label builds the null variant.
 
-  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
+  A literal label cannot be set in the static ``[tool.scikit-build]`` table;
+  use it in an override, config-settings, or an environment variable. The
+  static table can give ``{ config-setting = "name" }``, a reference to a
+  declared config-setting; if the setting has no value, no variant is built.
 
   .. versionadded:: 1.0
+
+  .. versionchanged:: 1.2
+     A ``config-setting`` reference can be given.
 ```
 
 ## backport
