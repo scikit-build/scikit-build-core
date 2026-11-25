@@ -67,4 +67,5 @@ variant = { config-setting = "torch.variant", default = "cpu" }
 A key must be a valid identifier. A key with the name of a built-in variable
 overrides it. A value used in `build-dir` must be one path component: it cannot
 contain a path separator, and it cannot be empty, `.` or `..`. Overrides can set
-a key.
+a key. Config-settings and environment variables cannot set `format-keys`
+directly; use a `config-setting` reference to take a value at build time.

@@ -131,22 +131,26 @@ def test_build_requires(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert list(requires.dynamic_metadata()) == ["torch-cu126"]
 
 
-def test_shadowed_unset_reference(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    text = (
-        DECLARATION
-        + "[tool.scikit-build.format-keys]\n"
-        + 'variant = { config-setting = "torch.variant" }\n'
-    )
-    reader = read(tmp_path, text, {"format-keys.variant": "cpu"})
-    assert reader.settings.format_keys == {"variant": "cpu"}
-
-    monkeypatch.setenv("SKBUILD_FORMAT_KEYS", "variant=gpu")
-    assert read(tmp_path, text).settings.format_keys == {"variant": "gpu"}
-
-    # Another key in a source of higher precedence does not hide the error.
-    monkeypatch.setenv("SKBUILD_FORMAT_KEYS", "other=gpu")
+@pytest.mark.parametrize(
+    ("config_settings", "env"),
+    [({"format-keys.variant": "cpu"}, None), ({}, "variant=gpu")],
+    ids=["config-settings", "env"],
+)
+def test_dynamic_rejected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    config_settings: dict[str, str],
+    env: str | None,
+):
+    if env is not None:
+        monkeypatch.setenv("SKBUILD_FORMAT_KEYS", env)
+    text = BUILD_DIR + DECLARATION + FORMAT_KEYS
     with pytest.raises(SystemExit):
-        read(tmp_path, text)
+        read(tmp_path, text, config_settings)
+    assert "format-keys can only be set in configuration files" in (
+        capsys.readouterr().out
+    )
 
 
 def test_overrides_builtin_key(tmp_path: Path) -> None:
