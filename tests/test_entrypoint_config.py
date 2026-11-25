@@ -227,16 +227,15 @@ def test_override_only_field_allowed(tmp_path, register):
     assert str(reader.settings.cmake.toolchain_file) == toolchain
 
 
-def test_static_field_disallowed(tmp_path, register, monkeypatch, capsys):
+def test_static_field_allowed(tmp_path, register, monkeypatch):
     field = ScikitBuildSettings.__dataclass_fields__["build_dir"]
     monkeypatch.setattr(
         field, "metadata", types.MappingProxyType({"scope": FieldScope.STATIC})
     )
     register("default", "distro", lambda **_: {"build-dir": "a"})
     reader = make_reader(tmp_path, "[tool.scikit-build]\nstrict-config = true\n")
-    with pytest.raises(SystemExit):
-        reader.validate_may_exit()
-    assert "build-dir can only be set in pyproject.toml" in capsys.readouterr().out
+    reader.validate_may_exit()
+    assert reader.settings.build_dir == "a"
 
 
 def test_minimum_version_gate_not_triggered(tmp_path, register, monkeypatch):

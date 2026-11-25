@@ -145,7 +145,7 @@ def test_static_disallows_dynamic(
     config_settings: dict[str, str],
     env: dict[str, str],
 ):
-    msg = "build-dir can only be set in pyproject.toml"
+    msg = "build-dir can only be set in configuration files"
     caplog.set_level(logging.WARNING)
     for key, value in env.items():
         monkeypatch.setenv(key, value)

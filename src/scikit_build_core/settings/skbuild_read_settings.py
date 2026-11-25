@@ -191,16 +191,18 @@ def _validate_overrides(
     overrides: dict[str, OverrideRecord],
     *,
     dynamic_sources: tuple[Source, ...],
+    ep_sources: tuple[Source, ...],
     toml_sources: tuple[Source, ...],
 ) -> None:
     """
     Validate each field against its ``FieldScope``.
 
-    ``dynamic_sources`` are the build-time sources (env vars, PEP 517
-    config-settings, and machine-level entry-point config): ``OVERRIDE`` fields
-    may come from them, ``STATIC`` fields may not. ``toml_sources`` are the
-    static ``pyproject.toml`` (and ``extra_settings``) tables, where
-    ``OVERRIDE`` fields are forbidden outside of an ``[[overrides]]`` section.
+    ``dynamic_sources`` are the per-build sources (env vars and PEP 517
+    config-settings) and ``ep_sources`` the machine-level entry-point config.
+    ``OVERRIDE`` fields may come from either; ``STATIC`` fields may come only
+    from entry-point config. ``toml_sources`` are the static ``pyproject.toml``
+    (and ``extra_settings``) tables, where ``OVERRIDE`` fields are forbidden
+    outside of an ``[[overrides]]`` section.
     """
 
     def validate_field(
@@ -218,21 +220,23 @@ def _validate_overrides(
         # has_item needs dict-presence semantics for dict-valued fields,
         # since some sources represent dict entries as nested keys.
         is_dict = get_target_raw_type(field.type) is dict
-        set_dynamically = any(
-            source.has_item(*path, field.name, is_dict=is_dict)
-            for source in dynamic_sources
-        )
+
+        def set_in(sources: tuple[Source, ...]) -> bool:
+            return any(
+                source.has_item(*path, field.name, is_dict=is_dict)
+                for source in sources
+            )
 
         if scope is FieldScope.STATIC:
-            if set_dynamically:
+            if set_in(dynamic_sources):
                 _scope_error(
                     settings,
-                    f"{prefix}{conf_key} can only be set in pyproject.toml, not by "
-                    "environment variables, config-settings, or entry-point config",
+                    f"{prefix}{conf_key} can only be set in configuration files, "
+                    "not by environment variables or config-settings",
                 )
             return
 
-        if set_dynamically:
+        if set_in(dynamic_sources) or set_in(ep_sources):
             return
         # Decide whether the value was actually hard-coded in pyproject.toml.
         # We can't rely on `value is not None`, since some override-only
@@ -240,10 +244,7 @@ def _validate_overrides(
         # the TOML sources whether the key is really present.
         if record is not None:
             original_value = record.original_value
-        elif any(
-            source.has_item(*path, field.name, is_dict=is_dict)
-            for source in toml_sources
-        ):
+        elif set_in(toml_sources):
             original_value = value
         else:
             original_value = None
@@ -715,7 +716,8 @@ class SettingsReader:
         _validate_overrides(
             self.settings,
             self.overridden_items,
-            dynamic_sources=(*self._dynamic_srcs, *self._ep_srcs),
+            dynamic_sources=self._dynamic_srcs,
+            ep_sources=self._ep_srcs,
             toml_sources=self._static_srcs,
         )
 
