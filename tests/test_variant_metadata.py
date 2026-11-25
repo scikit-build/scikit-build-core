@@ -36,7 +36,7 @@ PROJECT = dedent(
     nvidia.sm_arch = ["90", "100"]
 
     [[tool.dynamic-metadata]]
-    provider = {path = "plugins", module = "variant_plugin"}
+    provider = {path = "plugins", module = "variant_label_plugin"}
     label = "none"
     props = {}
     tool.scikit-build.variant-label = "label"
@@ -58,7 +58,7 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)
     plugins = tmp_path / "plugins"
     plugins.mkdir()
-    plugins.joinpath("variant_plugin.py").write_text(PLUGIN, encoding="utf-8")
+    plugins.joinpath("variant_label_plugin.py").write_text(PLUGIN, encoding="utf-8")
     return write_pyproject(tmp_path, PROJECT)
 
 
@@ -93,7 +93,7 @@ def test_variant_reaches_provider(
     reader.validate_may_exit()
     assert reader.dynamic_metadata == [
         {
-            "provider": {"path": "plugins", "module": "variant_plugin"},
+            "provider": {"path": "plugins", "module": "variant_label_plugin"},
             "label": label or "none",
             "props": props,
         }
@@ -174,15 +174,15 @@ def test_variant_mapping_invalid(
 
 def test_variant_legacy_metadata_not_supported(project: Path):
     # The legacy table has no reserved tool key, so the plugin gets it as-is.
-    legacy_plugin = dedent(
+    legacy_variant_plugin = dedent(
         """\
         def dynamic_metadata(field, settings):
             assert set(settings) == {"label"}
             return [f"runtime-{settings['label']}"]
         """
     )
-    project.parent.joinpath("plugins", "legacy_plugin.py").write_text(
-        legacy_plugin, encoding="utf-8"
+    project.parent.joinpath("plugins", "legacy_variant_plugin.py").write_text(
+        legacy_variant_plugin, encoding="utf-8"
     )
     text = dedent(
         """\
@@ -195,7 +195,7 @@ def test_variant_legacy_metadata_not_supported(project: Path):
         nvidia.sm_arch = ["90"]
 
         [tool.scikit-build.metadata.dependencies]
-        provider = "legacy_plugin"
+        provider = "legacy_variant_plugin"
         provider-path = "plugins"
         label = "none"
         """
