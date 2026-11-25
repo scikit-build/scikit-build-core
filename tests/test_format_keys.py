@@ -215,7 +215,7 @@ def test_invalid(
     assert match in capsys.readouterr().err.replace("\n", " ")
 
 
-@pytest.mark.parametrize("value", ["a/b", "a\\b", "..", ".", ""])
+@pytest.mark.parametrize("value", ["a/b", "a\\b", "..", ".", "", "a/{cpu}"])
 def test_build_dir_value_one_path_component(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
 ):
@@ -228,6 +228,16 @@ def test_build_dir_value_one_path_component(
         'build-dir = "build/{variant}"', 'build.requires = ["{variant}"]'
     )
     read(tmp_path, text, {"torch.variant": value})
+
+
+@pytest.mark.parametrize("field", ["{variant:.0}", "{variant[0]:/>2}"])
+def test_build_dir_formatted_one_path_component(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], field: str
+):
+    text = BUILD_DIR.replace("{variant}", field) + DECLARATION + FORMAT_KEYS
+    with pytest.raises(SystemExit):
+        read(tmp_path, text)
+    assert "must be one path component" in capsys.readouterr().err.replace("\n", " ")
 
 
 def test_build_dir_unknown_placeholder(

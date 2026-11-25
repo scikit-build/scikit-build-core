@@ -330,21 +330,29 @@ def _validate_overrides(
 def _validate_build_dir(settings: ScikitBuildSettings) -> None:
     known = {*PyprojectFormatter.__annotations__, *settings.format_keys}
     try:
-        names = [n for _, n in template_fields(settings.build_dir) if n is not None]
+        fields = [f for f in template_fields(settings.build_dir) if f.name is not None]
     except ValueError:
         # Formatting reports a template that does not parse.
         return
-    for name in names:
+    for field in fields:
+        name = field.name
         if name not in known:
             rich_error("build-dir: unknown placeholder {name!r}", name=name)
+        if name not in settings.format_keys:
+            continue
         # The SDist exclude pattern matches one path component per placeholder.
-        value = settings.format_keys.get(name)
-        if value is not None and (
-            value in {"", ".", ".."} or {"/", "\\"}.intersection(value)
-        ):
+        try:
+            value = field.placeholder.format(**settings.format_keys)
+        except (AttributeError, IndexError, KeyError, ValueError):
+            # Formatting reports this error.
+            continue
+        if value in {"", ".", ".."} or {"/", "\\"}.intersection(value):
             rich_error(
-                f"build-dir: format-keys.{name} must be one path component,"
-                f" got {value!r}"
+                "build-dir: format-keys.{name} must be one path component"
+                " in {placeholder}, got {value!r}",
+                name=name,
+                placeholder=field.placeholder,
+                value=value,
             )
 
 

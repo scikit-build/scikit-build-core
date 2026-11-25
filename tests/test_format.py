@@ -73,6 +73,10 @@ def test_name_key_present_when_given() -> None:
         ("{root:parent:uri}", "*"),
         ("build/{root:uri}/x", "build/*/x"),
         ("{build_dir}/install", "*/install"),
+        ("out/{state!r}", "out/'*'"),
+        ("out/{state!a}/x", "out/'*'/x"),
+        ("out/{state!s}", "out/*"),
+        ("out/{state!r:>9}", "out/*"),
     ],
 )
 def test_template_glob(template: str, expected: str) -> None:

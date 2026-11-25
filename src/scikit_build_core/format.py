@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 __all__ = [
     "PyprojectFormatter",
     "RootPathResolver",
+    "TemplateField",
     "format_template",
     "pyproject_format",
     "template_fields",
@@ -75,30 +76,48 @@ def format_template(template: str, values: Mapping[str, object], *, key: str) ->
         rich_error("{key}: {err}", key=key, err=err)
 
 
-def template_fields(template: str) -> Iterator[tuple[str, str | None]]:
-    """
-    Yield the literal text and the placeholder name of each part of a template.
+class TemplateField(typing.NamedTuple):
+    literal: str
+    """The literal text before the placeholder."""
+    name: str | None
+    """The placeholder name without index or attribute. None for no placeholder."""
+    placeholder: str
+    """The placeholder with braces, or an empty string."""
+    conversion: str | None
+    spec: str
 
-    The name does not have the index or attribute. It is None for a part with
-    no placeholder.
-    """
-    for literal, field, _, _ in string.Formatter().parse(template):
-        name = None if field is None else re.split(r"[.\[]", field, maxsplit=1)[0]
-        yield literal, name
+
+def template_fields(template: str) -> Iterator[TemplateField]:
+    """Yield each literal and placeholder part of a template."""
+    for literal, field, spec, conversion in string.Formatter().parse(template):
+        if field is None:
+            yield TemplateField(literal, None, "", None, "")
+            continue
+        name = re.split(r"[.\[]", field, maxsplit=1)[0]
+        conv = f"!{conversion}" if conversion else ""
+        placeholder = f"{{{field}{conv}:{spec}}}" if spec else f"{{{field}{conv}}}"
+        yield TemplateField(literal, name, placeholder, conversion, spec or "")
+
+
+def _field_glob(field: TemplateField) -> str:
+    if field.name is None:
+        return ""
+    # A spec can pad or cut the quotes that a conversion adds.
+    if field.spec or not field.conversion:
+        return "*"
+    return f"{{!{field.conversion}}}".format("*")
 
 
 def template_glob(template: str, *, key: str) -> str:
     """
     Make a glob from the ``key`` setting, with ``*`` for each placeholder.
 
-    The index, attribute, conversion and format spec of a placeholder are not
-    applied, because the result on the real value is not known.
+    Without a format spec, the ``!r`` and ``!a`` conversions add their quotes
+    around the ``*``. The index, attribute and format spec are not applied,
+    because the result on the real value is not known.
     """
     try:
-        return "".join(
-            literal + ("" if name is None else "*")
-            for literal, name in template_fields(template)
-        )
+        return "".join(f.literal + _field_glob(f) for f in template_fields(template))
     except ValueError as err:
         rich_error("{key}: {err}", key=key, err=err)
 
