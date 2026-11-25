@@ -110,7 +110,6 @@ def add_dynamic_import_names(
         src_exclude=settings.sdist.exclude,
         target_exclude=settings.wheel.exclude,
         build_dir=settings.build_dir,
-        format_keys=settings.format_keys,
         mode=settings.sdist.inclusion_mode,
     )
     names, namespaces = find_import_names(

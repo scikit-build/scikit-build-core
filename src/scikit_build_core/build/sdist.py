@@ -182,7 +182,6 @@ def build_sdist(
             include=settings.sdist.include,
             exclude=settings.sdist.exclude,
             build_dir=settings.build_dir,
-            format_keys=settings.format_keys,
             mode=settings.sdist.inclusion_mode,
             resolve_symlinks=resolve_symlinks,
             yield_loop_symlinks=True,

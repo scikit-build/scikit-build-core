@@ -19,7 +19,7 @@ from ..format import template_glob
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable, Sequence
+    from collections.abc import Generator, Sequence
 
 __all__ = ["each_unignored_file", "symlink_escapes"]
 
@@ -148,7 +148,6 @@ def each_unignored_file(
     mode: Literal["classic", "default", "manual", "explicit"],
     resolve_symlinks: Literal["all", "external", "none", "classic", "error"] = "all",
     yield_loop_symlinks: bool = False,
-    format_keys: Iterable[str] = (),
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
@@ -185,9 +184,7 @@ def each_unignored_file(
                 nested_excludes[dirpath] = pathspec.GitIgnoreSpec.from_lines(lines)
     ignored_boundaries = _ignored_boundaries(nested_excludes, boundaries)
 
-    exclude_build_dir = template_glob(
-        build_dir, key="build-dir", format_keys=format_keys
-    )
+    exclude_build_dir = template_glob(build_dir, key="build-dir")
 
     # A build-dir made only of placeholders would become "*" or "*/*" and
     # exclude source files, so skip it.

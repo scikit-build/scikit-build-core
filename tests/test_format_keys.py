@@ -22,6 +22,8 @@ DECLARATION = dedent(
     """
 )
 
+BUILD_DIR = '[tool.scikit-build]\nbuild-dir = "build/{variant}"\n'
+
 FORMAT_KEYS = dedent(
     """\
     [tool.scikit-build.format-keys]
@@ -40,22 +42,28 @@ def read(
     return reader
 
 
-def test_default(tmp_path: Path):
-    reader = read(tmp_path, DECLARATION + FORMAT_KEYS)
-    assert reader.settings.format_keys == {"variant": "cpu"}
+@pytest.mark.parametrize(
+    ("config_settings", "env", "expected"),
+    [
+        ({}, None, "cpu"),
+        ({"torch.variant": "cu126"}, None, "cu126"),
+        ({}, "rocm7.1", "rocm7.1"),
+    ],
+)
+def test_sources(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    config_settings: dict[str, str],
+    env: str | None,
+    expected: str,
+):
+    if env is not None:
+        monkeypatch.setenv("PYTORCH_VARIANT", env)
+    reader = read(tmp_path, DECLARATION + FORMAT_KEYS, config_settings)
+    assert reader.settings.format_keys == {"variant": expected}
     # The default is for the format key only.
-    assert reader.custom_config_settings["torch.variant"] is None
-
-
-def test_from_config_settings(tmp_path: Path):
-    reader = read(tmp_path, DECLARATION + FORMAT_KEYS, {"torch.variant": "cu126"})
-    assert reader.settings.format_keys == {"variant": "cu126"}
-
-
-def test_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("PYTORCH_VARIANT", "rocm7.1")
-    reader = read(tmp_path, DECLARATION + FORMAT_KEYS)
-    assert reader.settings.format_keys == {"variant": "rocm7.1"}
+    if expected == "cpu":
+        assert reader.custom_config_settings["torch.variant"] is None
 
 
 def test_declaration_default_and_bool(tmp_path: Path):
@@ -94,11 +102,7 @@ def test_override_sets_key(tmp_path: Path):
 
 
 def test_build_dir(tmp_path: Path):
-    text = (
-        '[tool.scikit-build]\nbuild-dir = "build/{variant}"\n'
-        + DECLARATION
-        + FORMAT_KEYS
-    )
+    text = BUILD_DIR + DECLARATION + FORMAT_KEYS
     settings = read(tmp_path, text, {"torch.variant": "cu126"}).settings
     build_dir = get_build_dir(
         settings,
@@ -152,44 +156,24 @@ def test_overrides_builtin_key(tmp_path: Path) -> None:
     assert "{state}-{name}".format(**formatted) == "mine-other"
 
 
+@pytest.mark.parametrize(
+    "field", ["{variant}", "{variant[1]}", "{variant:0>4}", "{variant!r:>9}"]
+)
 def test_sdist_excludes_build_dir(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(tmp_path)
-    resolved = Path("out/gpu/cmake")
-    resolved.mkdir(parents=True)
-    resolved.joinpath("CMakeCache.txt").touch()
-    kept = Path("out/keep.txt")
-    kept.touch()
-
-    files = set(
-        each_unignored_file(
-            Path(),
-            build_dir="out/{variant}/cmake",
-            mode="default",
-            format_keys=["variant"],
-        )
-    )
-    assert files == {kept}
-
-
-@pytest.mark.parametrize("field", ["{variant[1]}", "{variant:0>4}", "{variant!r:>9}"])
-def test_sdist_excludes_build_dir_field_details(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    resolved = Path("out", field.format(variant="cpu"))
+    resolved = Path("out", field.format(variant="cpu"), "cmake")
     resolved.mkdir(parents=True)
     resolved.joinpath("CMakeCache.txt").touch()
-    kept = Path("keep.txt")
-    kept.touch()
+    kept = {Path("keep.txt"), Path("out/keep.txt")}
+    for path in kept:
+        path.touch()
 
     files = set(
-        each_unignored_file(
-            Path(), build_dir=f"out/{field}", mode="default", format_keys=["variant"]
-        )
+        each_unignored_file(Path(), build_dir=f"out/{field}/cmake", mode="default")
     )
-    assert files == {kept}
+    assert files == kept
 
 
 @pytest.mark.parametrize(
@@ -231,11 +215,7 @@ def test_invalid(
 def test_build_dir_value_one_path_component(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
 ):
-    text = (
-        '[tool.scikit-build]\nbuild-dir = "build/{variant}"\n'
-        + DECLARATION
-        + FORMAT_KEYS
-    )
+    text = BUILD_DIR + DECLARATION + FORMAT_KEYS
     with pytest.raises(SystemExit):
         read(tmp_path, text, {"torch.variant": value})
     assert "must be one path component" in capsys.readouterr().err.replace("\n", " ")
@@ -244,6 +224,14 @@ def test_build_dir_value_one_path_component(
         'build-dir = "build/{variant}"', 'build.requires = ["{variant}"]'
     )
     read(tmp_path, text, {"torch.variant": value})
+
+
+def test_build_dir_unknown_placeholder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    with pytest.raises(SystemExit):
+        read(tmp_path, '[tool.scikit-build]\nbuild-dir = "build/{nope}"\n')
+    assert "build-dir: unknown placeholder 'nope'" in capsys.readouterr().err
 
 
 def test_minimum_version_gate(

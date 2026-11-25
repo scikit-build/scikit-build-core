@@ -7,14 +7,13 @@ __lazy_modules__ = {
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
-    "re",
-    "string",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
@@ -29,8 +28,6 @@ import copy
 import dataclasses
 import difflib
 import os
-import re
-import string
 import sys
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
@@ -44,6 +41,7 @@ from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
+from ..format import PyprojectFormatter, template_fields
 from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
@@ -329,25 +327,23 @@ def _validate_overrides(
     validate_field_recursive(obj=settings)
 
 
-def _validate_format_keys(settings: ScikitBuildSettings) -> None:
-    for key in settings.format_keys:
-        if not key.isidentifier():
-            rich_error(f"format-keys.{key!r} must be a valid identifier")
-
+def _validate_build_dir(settings: ScikitBuildSettings) -> None:
+    known = {*PyprojectFormatter.__annotations__, *settings.format_keys}
     try:
-        fields = [f for _, f, _, _ in string.Formatter().parse(settings.build_dir)]
+        names = [n for _, n in template_fields(settings.build_dir) if n is not None]
     except ValueError:
         # Formatting reports a template that does not parse.
         return
-    # The SDist exclude pattern matches one path component per placeholder.
-    for field in fields:
-        key = re.split(r"[.\[]", field or "", maxsplit=1)[0]
-        value = settings.format_keys.get(key)
+    for name in names:
+        if name not in known:
+            rich_error("build-dir: unknown placeholder {name!r}", name=name)
+        # The SDist exclude pattern matches one path component per placeholder.
+        value = settings.format_keys.get(name)
         if value is not None and (
             value in {"", ".", ".."} or {"/", "\\"}.intersection(value)
         ):
             rich_error(
-                f"build-dir: format-keys.{key} must be one path component,"
+                f"build-dir: format-keys.{name} must be one path component,"
                 f" got {value!r}"
             )
 
@@ -547,19 +543,7 @@ class SettingsReader:
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
 
-        # An unset reference is an error only if its table gives the final value.
-        for table, unset in unset_format_keys:
-            for key, msg in unset.items():
-                for source in self.sources.sources:
-                    if not source.has_item("format_keys", is_dict=True):
-                        continue
-                    item = source.get_item("format_keys", is_dict=True)
-                    if item is table:
-                        rich_error(msg)
-                    if key in cast(
-                        "dict[str, str]", source.convert(item, dict[str, str])
-                    ):
-                        break
+        self._check_unset_format_keys(unset_format_keys)
 
         # CMake 3.22+ reads CMAKE_BUILD_TYPE from the environment, but only as a
         # default for the first configure; the -DCMAKE_BUILD_TYPE we always pass
@@ -716,7 +700,10 @@ class SettingsReader:
                 and self.settings.minimum_version < Version("1.2")
             ):
                 rich_error("minimum-version must be at least 1.2 to use format-keys")
-            _validate_format_keys(self.settings)
+            for key in self.settings.format_keys:
+                if not key.isidentifier():
+                    rich_error(f"format-keys.{key!r} must be a valid identifier")
+        _validate_build_dir(self.settings)
 
         if self.settings.sdist.inclusion_mode is not None:
             if (
@@ -765,6 +752,26 @@ class SettingsReader:
             self.settings.sdist.resolve_symlinks = "classic"
         else:
             self.settings.sdist.resolve_symlinks = "all"
+
+    def _check_unset_format_keys(
+        self, unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]]
+    ) -> None:
+        """
+        Report a format-key reference with no value, but only if its table
+        gives the final value of the key.
+        """
+        for table, unset in unset_format_keys:
+            for key, msg in unset.items():
+                for source in self.sources.sources:
+                    if not source.has_item("format_keys", is_dict=True):
+                        continue
+                    item = source.get_item("format_keys", is_dict=True)
+                    if item is table:
+                        rich_error(msg)
+                    if key in cast(
+                        "dict[str, str]", source.convert(item, dict[str, str])
+                    ):
+                        break
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)

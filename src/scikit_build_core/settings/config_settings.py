@@ -181,6 +181,14 @@ def resolve_config_settings(
     return values
 
 
+def _referenced_value(
+    context: str, name: object, values: "Mapping[str, str | bool | None]"
+) -> "str | bool | None":
+    if not isinstance(name, str) or name not in values:
+        rich_error(f"{context} references undeclared config-setting {name!r}")
+    return values[name]
+
+
 def resolve_define_references(
     tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
 ) -> None:
@@ -206,12 +214,9 @@ def resolve_define_references(
                 f" keys: {', '.join(sorted(unknown))} (put defaults in the"
                 " declaration instead)"
             )
-        name = entry["config-setting"]
-        if not isinstance(name, str) or name not in values:
-            rich_error(
-                f"cmake.define.{key} references undeclared config-setting {name!r}"
-            )
-        value = values[name]
+        value = _referenced_value(
+            f"cmake.define.{key}", entry["config-setting"], values
+        )
         if value is None:
             del define[key]
         else:
@@ -244,14 +249,10 @@ def resolve_format_keys(
                 f"format-keys.{key} has unrecognized keys: {', '.join(sorted(unknown))}"
             )
         name = entry.get("config-setting")
-        if not isinstance(name, str) or name not in values:
-            rich_error(
-                f"format-keys.{key} references undeclared config-setting {name!r}"
-            )
+        value = _referenced_value(f"format-keys.{key}", name, values)
         default = entry.get("default")
         if default is not None and not isinstance(default, str):
             rich_error(f"format-keys.{key} 'default' must be a string")
-        value = values[name]
         if value is None:
             value = default
         if value is None:

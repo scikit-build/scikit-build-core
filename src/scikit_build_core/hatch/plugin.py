@@ -287,7 +287,6 @@ class ScikitBuildHook(BuildHookInterface):  # type: ignore[type-arg]
                     target_exclude=settings.wheel.exclude,
                     build_dir=settings.build_dir,
                     mode=settings.sdist.inclusion_mode,
-                    format_keys=settings.format_keys,
                 )
                 reload_dir = build_dir.resolve() if settings.build_dir else None
                 editable_files = editable_redirect_files(

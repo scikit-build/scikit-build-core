@@ -22,7 +22,7 @@ from .settings.skbuild_model import normalize_build_types
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Iterator, Mapping
     from typing import Literal
 
     from scikit_build_core.builder.wheel_tag import WheelTag
@@ -33,6 +33,7 @@ __all__ = [
     "RootPathResolver",
     "format_template",
     "pyproject_format",
+    "template_fields",
     "template_glob",
 ]
 
@@ -92,27 +93,32 @@ def format_template(template: str, values: Mapping[str, object], *, key: str) ->
         rich_error("{key}: {err}", key=key, err=err)
 
 
-def template_glob(template: str, *, key: str, format_keys: Iterable[str] = ()) -> str:
+def template_fields(template: str) -> Iterator[tuple[str, str | None]]:
+    """
+    Yield the literal text and the placeholder name of each part of a template.
+
+    The name does not have the index or attribute. It is None for a part with
+    no placeholder.
+    """
+    for literal, field, _, _ in string.Formatter().parse(template):
+        name = None if field is None else re.split(r"[.\[]", field, maxsplit=1)[0]
+        yield literal, name
+
+
+def template_glob(template: str, *, key: str) -> str:
     """
     Make a glob from the ``key`` setting, with ``*`` for each placeholder.
 
     The index, attribute, conversion and format spec of a placeholder are not
     applied, because the result on the real value is not known.
     """
-    known = {*format_keys, *PyprojectFormatter.__annotations__}
-    result = []
     try:
-        for literal, field, _, _ in string.Formatter().parse(template):
-            result.append(literal)
-            if field is None:
-                continue
-            name = re.split(r"[.\[]", field, maxsplit=1)[0]
-            if name not in known:
-                rich_error("{key}: unknown placeholder {name!r}", key=key, name=name)
-            result.append("*")
+        return "".join(
+            literal + ("" if name is None else "*")
+            for literal, name in template_fields(template)
+        )
     except ValueError as err:
         rich_error("{key}: {err}", key=key, err=err)
-    return "".join(result)
 
 
 @typing.overload

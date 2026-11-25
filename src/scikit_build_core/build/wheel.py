@@ -581,7 +581,6 @@ def _build_wheel_impl_impl(
             target_exclude=settings.wheel.exclude,
             build_dir=settings.build_dir,
             mode=settings.sdist.inclusion_mode,
-            format_keys=settings.format_keys,
         )
 
         # Force-include into staging so entries override package sources and

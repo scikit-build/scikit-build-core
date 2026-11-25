@@ -1073,18 +1073,12 @@ def test_git_config_value(value: str, expected: str) -> None:
     assert _git_config_value(value) == expected
 
 
-@pytest.mark.parametrize(
-    ("build_dir", "match"),
-    [("build/{unclosed", "build-dir: expected '}'"), ("build/{nope}", "'nope'")],
-)
 def test_build_dir_bad_template(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    build_dir: str,
-    match: str,
 ) -> None:
     monkeypatch.chdir(tmp_path)
     with pytest.raises(SystemExit):
-        list(each_unignored_file(Path(), build_dir=build_dir, mode="default"))
-    assert match in capsys.readouterr().err
+        list(each_unignored_file(Path(), build_dir="build/{unclosed", mode="default"))
+    assert "build-dir: expected '}'" in capsys.readouterr().err
