@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import sysconfig
-import types
 import typing
 from pathlib import Path
 from textwrap import dedent
@@ -11,7 +10,6 @@ import packaging.tags
 import pytest
 
 import scikit_build_core.settings.skbuild_overrides
-from scikit_build_core.settings.skbuild_model import FieldScope, ScikitBuildSettings
 from scikit_build_core.settings.skbuild_overrides import regex_match
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
@@ -123,17 +121,6 @@ def test_override_only_allowed_dynamically(
     assert not [r for r in caplog.records if "hard-coded" in str(r.msg)]
 
 
-@pytest.fixture
-def static_fields(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Marked STATIC in a follow-up; neither converts from a flat string.
-    for name in ("generate", "metadata"):
-        field = ScikitBuildSettings.__dataclass_fields__[name]
-        monkeypatch.setattr(
-            field, "metadata", types.MappingProxyType({"scope": FieldScope.STATIC})
-        )
-
-
-@pytest.mark.usefixtures("static_fields")
 @pytest.mark.parametrize(
     ("key", "config_settings", "env"),
     [
@@ -173,7 +160,6 @@ def test_static_disallows_dynamic(
     assert msg in capsys.readouterr().out
 
 
-@pytest.mark.usefixtures("static_fields")
 def test_static_allows_toml(tmp_path: Path, caplog: pytest.LogCaptureFixture):
     caplog.set_level(logging.WARNING)
     pyproject_toml = tmp_path / "pyproject.toml"
