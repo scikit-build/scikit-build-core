@@ -57,6 +57,13 @@ def test_name_key_omitted_by_default() -> None:
     assert "name" not in pyproject_format(settings=settings)
 
 
+def test_variant_label_key() -> None:
+    settings = ScikitBuildSettings()
+    assert pyproject_format(settings=settings)["variant_label"] == ""
+    settings.variant_label = "x86_64_v3"
+    assert pyproject_format(settings=settings)["variant_label"] == "x86_64_v3"
+
+
 def test_name_key_present_when_given() -> None:
     settings = ScikitBuildSettings()
     formatted = pyproject_format(settings=settings, name="my_pkg")

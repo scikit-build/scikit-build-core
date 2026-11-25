@@ -18,6 +18,10 @@ The following configure keys are formatted as Python `str.format` templates:
 The `format-keys` table.
 ```
 
+```{versionadded} 1.2
+`{variant_label}`.
+```
+
 For example, to get a persistent build directory per wheel tag:
 
 ```toml
@@ -45,6 +49,9 @@ The available variables are the members of
    :no-index:
 
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.state
+   :no-index:
+
+.. autoattribute:: scikit_build_core.format.PyprojectFormatter.variant_label
    :no-index:
 
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.wheel_tag

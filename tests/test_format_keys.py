@@ -11,6 +11,10 @@ from scikit_build_core.builder.wheel_tag import WheelTag
 from scikit_build_core.format import pyproject_format
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
+
 DECLARATION = dedent(
     """\
     [tool.scikit-build.config-setting."torch.variant"]
@@ -262,3 +266,95 @@ def test_minimum_version_gate(
         read(tmp_path, text)
     err = capsys.readouterr().err.replace("\n", " ")
     assert "minimum-version must be at least 1.2 to use format-keys" in err
+
+
+VARIANT_BUILD_DIR = dedent(
+    """\
+    [tool.scikit-build]
+    experimental = true
+    build-dir = "build/{variant_label}"
+    """
+)
+
+
+def variant_build_dir(settings: ScikitBuildSettings) -> Path:
+    return get_build_dir(
+        settings,
+        tags=WheelTag.compute_best([]),
+        state="wheel",
+        editable=False,
+        has_cmake=True,
+        fallback=Path("unused"),
+        name="pkg",
+    )
+
+
+@pytest.mark.parametrize(
+    ("config_settings", "expected"),
+    [
+        ({}, Path("build")),
+        ({"variant-label": "x86_64_v3"}, Path("build/x86_64_v3")),
+        ({"variant-label": "null"}, Path("build/null")),
+    ],
+)
+def test_variant_label_build_dir(
+    tmp_path: Path, config_settings: dict[str, str], expected: Path
+) -> None:
+    settings = read(tmp_path, VARIANT_BUILD_DIR, config_settings).settings
+    assert variant_build_dir(settings) == expected
+
+
+def test_variant_label_build_dir_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    text = VARIANT_BUILD_DIR + dedent(
+        """\
+        [[tool.scikit-build.overrides]]
+        if.env.SKBC_TEST_VARIANT = true
+        variant-label = "x86_64_v3"
+        """
+    )
+    monkeypatch.setenv("SKBC_TEST_VARIANT", "1")
+    settings = read(tmp_path, text).settings
+    assert variant_build_dir(settings) == Path("build/x86_64_v3")
+
+
+def test_variant_label_rebuild_dir(tmp_path: Path) -> None:
+    from scikit_build_core.build.common_wheel_helpers import get_editable_rebuild_dir
+
+    text = dedent(
+        """\
+        [tool.scikit-build]
+        experimental = true
+        build-dir = "build"
+        editable.rebuild-dir = "{build_dir}/install/{variant_label}"
+        """
+    )
+    settings = read(tmp_path, text, {"variant-label": "x86_64_v3"}).settings
+    result = get_editable_rebuild_dir(
+        settings,
+        build_dir=tmp_path / "build",
+        targetlib="platlib",
+        tags=WheelTag.compute_best([]),
+        state="editable",
+        name="pkg",
+    )
+    assert result == (tmp_path / "build/install/x86_64_v3").resolve()
+
+
+def test_variant_label_format_key_overrides(tmp_path: Path) -> None:
+    text = (
+        VARIANT_BUILD_DIR + '[tool.scikit-build.format-keys]\nvariant_label = "mine"\n'
+    )
+    settings = read(tmp_path, text, {"variant-label": "x86_64_v3"}).settings
+    assert variant_build_dir(settings) == Path("build/mine")
+
+
+@pytest.mark.parametrize("label", ["..", "a/b"])
+def test_variant_label_build_dir_one_path_component(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], label: str
+) -> None:
+    with pytest.raises(SystemExit):
+        read(tmp_path, VARIANT_BUILD_DIR, {"variant-label": label})
+    err = capsys.readouterr().err.replace("\n", " ")
+    assert "build-dir: variant-label must be one path component" in err
