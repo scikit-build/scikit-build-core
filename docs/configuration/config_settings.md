@@ -118,6 +118,24 @@ formats as `true` or `false`.
 
 :::
 
+## Selecting a wheel variant
+
+The experimental `variant-label` setting can reference a setting in the static
+table, where a literal label is not allowed:
+
+```toml
+[tool.scikit-build]
+experimental = true
+variant-label = { config-setting = "torch.variant" }
+```
+
+If the setting has no value, no variant is built. See
+[wheel variants](./variants.md) for details.
+
+:::{versionadded} 1.2
+
+:::
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the

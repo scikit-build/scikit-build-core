@@ -646,6 +646,10 @@
       "default": "",
       "description": "The CMake build directory. Defaults to a unique temporary directory."
     },
+    "variant-label": {
+      "$ref": "#/$defs/config-setting-reference",
+      "description": "Experimental wheel variant label to build, from ``[variant.variants]``."
+    },
     "config-setting": {
       "type": "object",
       "description": "Declare package-specific config-settings, settable via `-C name=value` or a bound environment variable.",
@@ -945,7 +949,14 @@
             "$ref": "#/properties/build-dir"
           },
           "variant-label": {
-            "type": "string",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/config-setting-reference"
+              }
+            ],
             "description": "Experimental wheel variant label to build, from ``[variant.variants]``."
           },
           "fail": {
@@ -965,6 +976,20 @@
         },
         "provider-path": {
           "type": "string"
+        }
+      }
+    },
+    "config-setting-reference": {
+      "type": "object",
+      "required": [
+        "config-setting"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "config-setting": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The declared config-setting name whose resolved value this setting takes; unset when the config-setting has no value."
         }
       }
     },

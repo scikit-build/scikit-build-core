@@ -532,6 +532,187 @@ def test_minimum_version_gate_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     settings_reader.validate_may_exit()
 
 
+VARIANT_REFERENCE = dedent(
+    """\
+    [tool.scikit-build]
+    experimental = true
+    variant-label = { config-setting = "torch.variant" }
+
+    [tool.scikit-build.config-setting."torch.variant"]
+    env = "PYTORCH_VARIANT"
+    """
+)
+
+
+def test_variant_label_reference(tmp_path: Path):
+    pyproject_toml = write_pyproject(tmp_path, VARIANT_REFERENCE)
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"torch.variant": "cpu"})
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label == "cpu"
+
+
+def test_variant_label_reference_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("PYTORCH_VARIANT", "cu130")
+    pyproject_toml = write_pyproject(tmp_path, VARIANT_REFERENCE)
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label == "cu130"
+
+
+def test_variant_label_reference_unset(tmp_path: Path):
+    pyproject_toml = write_pyproject(tmp_path, VARIANT_REFERENCE)
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label is None
+
+
+def test_variant_label_reference_undeclared(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        dedent(
+            """\
+            [tool.scikit-build]
+            experimental = true
+            variant-label = { config-setting = "torch.variant" }
+            """
+        ),
+    )
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml)
+    assert exc.value.code == 7
+    _, err = capsys.readouterr()
+    assert "variant-label references undeclared config-setting 'torch.variant'" in err
+
+
+@pytest.mark.parametrize(
+    "entry",
+    [
+        pytest.param(
+            '{ config-setting = "torch.variant", default = "cpu" }', id="extra-key"
+        ),
+        pytest.param('{ env = "PYTORCH_VARIANT" }', id="no-config-setting"),
+    ],
+)
+def test_variant_label_reference_invalid(tmp_path: Path, entry: str):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        VARIANT_REFERENCE.replace('{ config-setting = "torch.variant" }', entry),
+    )
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml, {"torch.variant": "cpu"})
+    assert exc.value.code == 7
+
+
+def test_variant_label_reference_bool(tmp_path: Path):
+    pyproject_toml = write_pyproject(tmp_path, VARIANT_REFERENCE + 'type = "bool"\n')
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml, {"torch.variant": "on"})
+    assert exc.value.code == 7
+
+
+@pytest.mark.parametrize("source", ["conf", "env"])
+def test_variant_label_reference_overridden(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source: str
+):
+    pyproject_toml = write_pyproject(tmp_path, VARIANT_REFERENCE)
+    config_settings = {"torch.variant": "cpu"}
+    if source == "conf":
+        config_settings["variant-label"] = "cu130"
+    else:
+        monkeypatch.setenv("SKBUILD_VARIANT_LABEL", "cu130")
+    settings_reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label == "cu130"
+
+
+def test_variant_label_reference_in_override(tmp_path: Path):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        dedent(
+            """\
+            [tool.scikit-build]
+            experimental = true
+
+            [tool.scikit-build.config-setting."torch.variant"]
+            env = "PYTORCH_VARIANT"
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            variant-label = { config-setting = "torch.variant" }
+            """
+        ),
+    )
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, {"torch.variant": "cpu"}, state="wheel"
+    )
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label == "cpu"
+
+
+def test_variant_label_reference_replaced_by_override(tmp_path: Path):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        VARIANT_REFERENCE
+        + dedent(
+            """\
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            variant-label = "null"
+            """
+        ),
+    )
+    settings_reader = SettingsReader.from_file(
+        pyproject_toml, {"torch.variant": "cpu"}, state="wheel"
+    )
+    settings_reader.validate_may_exit()
+    assert settings_reader.settings.variant_label == "null"
+
+
+def test_variant_label_literal_still_forbidden(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        VARIANT_REFERENCE.replace('{ config-setting = "torch.variant" }', '"cpu"'),
+    )
+    settings_reader = SettingsReader.from_file(pyproject_toml)
+    with pytest.raises(SystemExit) as exc:
+        settings_reader.validate_may_exit()
+    assert exc.value.code == 7
+    out, _ = capsys.readouterr()
+    assert "variant-label is not allowed to be hard-coded" in out
+
+
+@pytest.mark.parametrize("minimum_version", ["1.1", "1.2"])
+def test_variant_label_reference_minimum_version(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    minimum_version: str,
+):
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.2.0"
+    )
+    pyproject_toml = write_pyproject(
+        tmp_path,
+        VARIANT_REFERENCE.replace(
+            "experimental = true",
+            f'experimental = true\nminimum-version = "{minimum_version}"',
+        ),
+    )
+    if minimum_version == "1.2":
+        SettingsReader.from_file(pyproject_toml).validate_may_exit()
+        return
+    with pytest.raises(SystemExit) as exc:
+        SettingsReader.from_file(pyproject_toml)
+    assert exc.value.code == 7
+    _, err = capsys.readouterr()
+    assert "minimum-version must be at least 1.2" in err
+
+
 @pytest.mark.configure
 @pytest.mark.parametrize("source", ["conf", "env"])
 def test_config_settings_reach_cmake(

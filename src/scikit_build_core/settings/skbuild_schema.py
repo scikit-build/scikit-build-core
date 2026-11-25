@@ -102,6 +102,31 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
     for v in inherit_only_props.values():
         del v["scikit-build:override-only"]
     props = {k: {"$ref": f"#/properties/{k}"} for k in schema["properties"]}
+
+    # The static table takes only the reference form; overrides take both.
+    schema["$defs"]["config-setting-reference"] = {
+        "type": "object",
+        "required": ["config-setting"],
+        "additionalProperties": False,
+        "properties": {
+            "config-setting": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The declared config-setting name whose resolved value this setting takes; unset when the config-setting has no value.",
+            }
+        },
+    }
+    for k, v in inherit_only_props.items():
+        if v.pop("scikit-build:reference", False):
+            description = v.pop("description")
+            schema["properties"][k] = {
+                "$ref": "#/$defs/config-setting-reference",
+                "description": description,
+            }
+            inherit_only_props[k] = {
+                "oneOf": [v, {"$ref": "#/$defs/config-setting-reference"}],
+                "description": description,
+            }
     props.update(inherit_only_props)
 
     schema["$defs"]["if_overrides"] = {

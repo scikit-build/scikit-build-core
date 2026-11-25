@@ -50,6 +50,7 @@ from .config_settings import (
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
+    resolve_field_references,
     resolve_format_keys,
     resolve_metadata_config_settings,
 )
@@ -237,6 +238,7 @@ def _validate_overrides(
     dynamic_sources: tuple[Source, ...],
     ep_sources: tuple[Source, ...],
     toml_sources: tuple[Source, ...],
+    referenced_fields: frozenset[tuple[str, ...]] = frozenset(),
 ) -> None:
     """
     Validate each field against its ``FieldScope``.
@@ -246,7 +248,8 @@ def _validate_overrides(
     ``OVERRIDE`` fields may come from either; ``STATIC`` fields may come only
     from entry-point config. ``toml_sources`` are the static ``pyproject.toml``
     (and ``extra_settings``) tables, where ``OVERRIDE`` fields are forbidden
-    outside of an ``[[overrides]]`` section.
+    outside of an ``[[overrides]]`` section. ``REFERENCE`` fields are like
+    ``OVERRIDE``, but are allowed there if ``referenced_fields`` lists them.
     """
 
     def validate_field(
@@ -281,6 +284,12 @@ def _validate_overrides(
             return
 
         if set_in(dynamic_sources) or set_in(ep_sources):
+            return
+        if scope is FieldScope.REFERENCE and (
+            (*path, field.name) in referenced_fields
+            # A static reference that an override replaced
+            or (record is not None and isinstance(record.original_value, dict))
+        ):
             return
         # Decide whether the value was actually hard-coded in pyproject.toml.
         # We can't rely on `value is not None`, since some override-only
@@ -388,9 +397,12 @@ class SettingsReader:
 
         # Format-key references with no value, by table.
         unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]] = []
+        # ``FieldScope.REFERENCE`` fields set by a config-setting reference in
+        # a static table.
+        self._referenced_fields: set[tuple[str, ...]] = set()
 
         def process_table(
-            skb: dict[str, Any], declaration_error: str
+            skb: dict[str, Any], declaration_error: str, *, static: bool = True
         ) -> tuple[set[str], dict[str, OverrideRecord]]:
             """
             Apply overrides to one settings table, reject stray config-setting
@@ -407,6 +419,9 @@ class SettingsReader:
             if "config-setting" in skb:
                 rich_error(declaration_error)
             resolve_define_references(skb, self.custom_config_settings)
+            referenced = resolve_field_references(skb, self.custom_config_settings)
+            if static:
+                self._referenced_fields |= referenced
             unset = resolve_format_keys(skb, self.custom_config_settings)
             if unset:
                 unset_format_keys.append((skb["format-keys"], unset))
@@ -494,6 +509,7 @@ class SettingsReader:
                 ep_matched, ep_overridden = process_table(
                     ep_skb,
                     "config-setting declarations are only allowed in pyproject.toml",
+                    static=False,
                 )
                 self.overrides |= ep_matched
                 ep_source = TOMLSource(settings=ep_skb)
@@ -702,6 +718,21 @@ class SettingsReader:
                 "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
             )
 
+        if (
+            self._referenced_fields
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("1.2")
+        ):
+            names = ", ".join(
+                sorted(
+                    ".".join(p.replace("_", "-") for p in path)
+                    for path in self._referenced_fields
+                )
+            )
+            rich_error(
+                f"minimum-version must be at least 1.2 to use a config-setting reference in {names}"
+            )
+
         if self.settings.format_keys:
             if (
                 self.settings.minimum_version is not None
@@ -832,6 +863,7 @@ class SettingsReader:
             dynamic_sources=self._dynamic_srcs,
             ep_sources=self._ep_srcs,
             toml_sources=self._static_srcs,
+            referenced_fields=frozenset(self._referenced_fields),
         )
 
         if self.settings.metadata and self.dynamic_metadata:

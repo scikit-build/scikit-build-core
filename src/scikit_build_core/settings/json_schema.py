@@ -132,8 +132,11 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         props[field.name]["description"] = docs[field.name].split("\n", maxsplit=1)[0]
         if field.metadata.get("deprecated"):
             props[field.name]["deprecated"] = True
-        if field.metadata.get("scope") is FieldScope.OVERRIDE:
+        scope = field.metadata.get("scope")
+        if scope in {FieldScope.OVERRIDE, FieldScope.REFERENCE}:
             props[field.name]["scikit-build:override-only"] = True
+        if scope is FieldScope.REFERENCE:
+            props[field.name]["scikit-build:reference"] = True
 
     if normalize_keys:
         props = {k.replace("_", "-"): v for k, v in props.items()}

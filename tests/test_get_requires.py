@@ -207,6 +207,39 @@ def test_get_requires_variant_providers(
 
 
 @pytest.mark.parametrize(
+    ("label", "expected"),
+    [
+        pytest.param(
+            "cpu",
+            {VARIANTLIB_BUILD_REQUIREMENT, "aot-provider>=1", "cpu-variant-provider"},
+            id="set",
+        ),
+        pytest.param(None, set(), id="unset"),
+    ],
+)
+def test_get_requires_variant_label_reference(
+    write_pyproject: Callable[[str], int],
+    monkeypatch: pytest.MonkeyPatch,
+    label: str | None,
+    expected: set[str],
+):
+    write_pyproject(
+        VARIANT_PYPROJECT
+        + """\
+[tool.scikit-build]
+experimental = true
+variant-label = { config-setting = "pkg.variant" }
+
+[tool.scikit-build.config-setting."pkg.variant"]
+env = "PKG_VARIANT"
+"""
+    )
+    if label is not None:
+        monkeypatch.setenv("PKG_VARIANT", label)
+    assert set(get_requires_for_build_wheel({})) - {"cmake>=3.15", *ninja} == expected
+
+
+@pytest.mark.parametrize(
     ("pyproject", "label", "match"),
     [
         pytest.param(
