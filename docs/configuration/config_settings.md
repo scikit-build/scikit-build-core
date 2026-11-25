@@ -89,6 +89,9 @@ entry's `tool` key is never passed to the plugin, and the mapping cannot set
 
 The deprecated `tool.scikit-build.metadata` table does not support this.
 
+To give the plugin the wheel variant, see
+[variant-specific metadata](./variants.md#variant-specific-metadata).
+
 :::{versionadded} 1.2
 
 :::

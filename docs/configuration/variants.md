@@ -69,6 +69,46 @@ time.
 You can also set `experimental = true` under `[tool.scikit-build]` instead of
 passing it every time.
 
+## Variant-specific metadata
+
+The dependencies often change between variants, for example a CUDA runtime
+package for each CUDA variant. A [`[[tool.dynamic-metadata]]`](./dynamic.md)
+entry can give the variant to its plugin. Set `tool.scikit-build.variant-label`
+and `tool.scikit-build.variant-properties` to the names of the plugin settings
+that get the values:
+
+```toml
+[variant.variants.cu130]
+nvidia.cuda_version_lower_bound = ["13.0"]
+
+[[tool.dynamic-metadata]]
+provider = "cuda-deps"
+label = "cpu"
+properties = {}
+tool.scikit-build.variant-label = "label"
+tool.scikit-build.variant-properties = "properties"
+```
+
+With `-Cvariant-label=cu130`, the plugin gets `label = "cu130"` and
+`properties = {nvidia = {cuda_version_lower_bound = ["13.0"]}}`. The properties
+are the `[variant.variants.<label>]` table: namespace, then feature, then a list
+of values. The plugin gets these values as normal settings, in all of its hooks,
+so it does not need to know about scikit-build-core.
+
+For the `null` variant, the label is `"null"` and the properties are an empty
+table. When no variant is built, for example for an SDist, the static values in
+the entry (`"cpu"` and `{}` above) stay. A plugin that changes a field between
+variants should report that field in its `dynamic_wheel` hook, so the SDist
+marks it as `Dynamic`.
+
+You can set one or both keys. A plugin setting may not also be set by
+`tool.scikit-build.config-setting`. The deprecated `tool.scikit-build.metadata`
+table does not support this.
+
+:::{versionadded} 1.2
+
+:::
+
 For more information you can see the available PEPs:
 
 - [PEP 817][]: the overview of the wheel variant proposal
