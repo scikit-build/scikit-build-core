@@ -63,7 +63,7 @@ from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping
+    from collections.abc import Generator, Iterator, Mapping
 
     from .skbuild_overrides import OverrideRecord
 
@@ -176,6 +176,47 @@ def _handle_move(
         )
 
     return before
+
+
+def _static_paths(
+    target: type[Any], path: tuple[str, ...] = ()
+) -> frozenset[tuple[str, ...]]:
+    paths: set[tuple[str, ...]] = set()
+    for field in dataclasses.fields(target):
+        field_path = (*path, field.name)
+        if field.metadata.get("scope") is FieldScope.STATIC:
+            paths.add(field_path)
+        elif dataclasses.is_dataclass(field.type) and isinstance(field.type, type):
+            paths |= _static_paths(field.type, field_path)
+    return frozenset(paths)
+
+
+class _HideStatic:
+    """
+    Hide ``STATIC`` fields from a dynamic source during conversion, so a bad
+    value does not fail conversion before ``_validate_overrides`` reports it.
+    """
+
+    def __init__(self, source: Source, paths: frozenset[tuple[str, ...]]) -> None:
+        self.source = source
+        self.paths = paths
+
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
+        if any(fields[:i] in self.paths for i in range(1, len(fields) + 1)):
+            return False
+        return self.source.has_item(*fields, is_dict=is_dict)
+
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
+        return self.source.get_item(*fields, is_dict=is_dict)
+
+    def convert(self, item: Any, target: type[Any] | Any) -> object:
+        return self.source.convert(item, target)
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        return self.source.unrecognized_options(options)
+
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        return self.source.all_option_names(target)
 
 
 def _scope_error(settings: ScikitBuildSettings, msg: str) -> None:
@@ -464,8 +505,9 @@ class SettingsReader:
         # value resolution and unrecognized-option reporting.
         self._toml_srcs = tuple(toml_srcs)
         self._toml_src_names = tuple(toml_src_names)
+        static_paths = _static_paths(ScikitBuildSettings)
         self.sources = SourceChain(
-            *dynamic_srcs,
+            *(_HideStatic(s, static_paths) for s in dynamic_srcs),
             *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )

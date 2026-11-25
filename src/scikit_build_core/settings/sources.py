@@ -308,8 +308,7 @@ class Source(Protocol):
         """
         ...
 
-    @classmethod
-    def convert(cls, item: Any, target: type[Any] | Any) -> object:
+    def convert(self, item: Any, target: type[Any] | Any) -> object:
         """
         Convert a source-native ``item`` into the requested ``target`` type.
 
