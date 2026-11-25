@@ -308,8 +308,7 @@ class Source(Protocol):
         """
         ...
 
-    @classmethod
-    def convert(cls, item: Any, target: type[Any] | Any) -> object:
+    def convert(self, item: Any, target: type[Any] | Any) -> object:
         """
         Convert a source-native ``item`` into the requested ``target`` type.
 
@@ -381,7 +380,7 @@ class EnvSource(Source):
         raise KeyError(msg)
 
     @classmethod
-    def convert(cls, item: str, target: type[Any] | Any) -> object:
+    def convert(cls, item: str, target: type[Any] | Any) -> object:  # pylint: disable=arguments-differ
         """
         Convert an item from the environment (always a string) into a target type.
         """
@@ -569,7 +568,7 @@ class ConfSource(Source):
         raise KeyError(msg)
 
     @classmethod
-    def convert(
+    def convert(  # pylint: disable=arguments-differ
         cls, item: str | list[str] | dict[str, str] | bool, target: type[Any] | Any
     ) -> object:
         target, _ = process_annotated(target)
@@ -744,7 +743,7 @@ class TOMLSource(Source):
             raise KeyError(msg) from None
 
     @classmethod
-    def convert(cls, item: Any, target: type[Any] | Any) -> object:
+    def convert(cls, item: Any, target: type[Any] | Any) -> object:  # pylint: disable=arguments-differ
         """
         Convert an ``item`` from TOML into a ``target`` type.
         """

@@ -26,6 +26,7 @@ from packaging.version import Version
 
 from .. import __version__
 from ..utils.typing import NoneType, is_union_type
+from .skbuild_model import FieldScope
 
 TYPE_CHECKING = False
 
@@ -96,17 +97,22 @@ class DCDoc:
     docs: str
     field: dataclasses.Field[typing.Any]
     deprecated: bool = False
-    override_only: bool = False
+    scope: FieldScope = FieldScope.ANY
     choices: tuple[str, ...] = ()
 
     def flat_expressible(self) -> bool:
         """
         Whether the option can be set via ``config-settings`` or an env var.
 
-        Arrays of tables (``generate[]``) and nested mappings can only be set in
-        ``pyproject.toml``, so the flat forms are skipped for them.
+        Arrays of tables (``generate[]``), nested mappings, and ``STATIC``
+        fields can only be set in ``pyproject.toml``, so the flat forms are
+        skipped for them.
         """
-        return "[]" not in self.name and _flat_expressible(self.field.type)
+        return (
+            self.scope is not FieldScope.STATIC
+            and "[]" not in self.name
+            and _flat_expressible(self.field.type)
+        )
 
 
 def sanitize_default_field(text: str) -> str:
@@ -205,6 +211,6 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             docs=docs[field.name],
             field=field,
             deprecated=field.metadata.get("deprecated", False),
-            override_only=field.metadata.get("override_only", False),
+            scope=field.metadata.get("scope", FieldScope.ANY),
             choices=get_choices(field.type),
         )

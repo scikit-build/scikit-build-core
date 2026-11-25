@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sysconfig
+import types
 import typing
 from pathlib import Path
 from textwrap import dedent
@@ -10,6 +11,7 @@ import packaging.tags
 import pytest
 
 import scikit_build_core.settings.skbuild_overrides
+from scikit_build_core.settings.skbuild_model import FieldScope, ScikitBuildSettings
 from scikit_build_core.settings.skbuild_overrides import regex_match
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
@@ -119,6 +121,79 @@ def test_override_only_allowed_dynamically(
     settings_reader.validate_may_exit()
     assert settings_reader.settings.cmake.toolchain_file == Path("bar.cmake")
     assert not [r for r in caplog.records if "hard-coded" in str(r.msg)]
+
+
+@pytest.fixture
+def static_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Marked STATIC in a follow-up; neither converts from a flat string.
+    for name in ("generate", "metadata"):
+        field = ScikitBuildSettings.__dataclass_fields__[name]
+        monkeypatch.setattr(
+            field, "metadata", types.MappingProxyType({"scope": FieldScope.STATIC})
+        )
+
+
+@pytest.mark.usefixtures("static_fields")
+@pytest.mark.parametrize(
+    ("key", "config_settings", "env"),
+    [
+        ("generate", {"generate": "x"}, {}),
+        ("generate", {}, {"SKBUILD_GENERATE": "x"}),
+        ("metadata", {"metadata.version.provider": "x"}, {}),
+    ],
+    ids=["generate-config-settings", "generate-env", "metadata-config-settings"],
+)
+def test_static_disallows_dynamic(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    key: str,
+    config_settings: dict[str, str],
+    env: dict[str, str],
+):
+    msg = f"{key} can only be set in configuration files"
+    caplog.set_level(logging.WARNING)
+    for name, value in env.items():
+        monkeypatch.setenv(name, value)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text("[tool.scikit-build]\nstrict-config = false\n")
+
+    reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    reader.validate_may_exit()
+    assert [r for r in caplog.records if msg in str(r.msg)]
+    assert not getattr(reader.settings, key)
+
+    pyproject_toml.write_text("[tool.scikit-build]\nstrict-config = true\n")
+    capsys.readouterr()
+    reader = SettingsReader.from_file(pyproject_toml, config_settings)
+    with pytest.raises(SystemExit) as exc:
+        reader.validate_may_exit()
+    assert exc.value.code == 7
+    assert msg in capsys.readouterr().out
+
+
+@pytest.mark.usefixtures("static_fields")
+def test_static_allows_toml(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    caplog.set_level(logging.WARNING)
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build]
+            strict-config = true
+            generate = [{path = "a.py", template = "a"}]
+
+            [[tool.scikit-build.overrides]]
+            if.state = "wheel"
+            generate = [{path = "b.py", template = "b"}]
+            """
+        )
+    )
+    reader = SettingsReader.from_file(pyproject_toml, {}, state="wheel")
+    reader.validate_may_exit()
+    assert [g.template for g in reader.settings.generate] == ["b"]
+    assert not caplog.records
 
 
 @pytest.mark.parametrize("python_version", ["3.9", "3.10"])

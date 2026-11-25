@@ -5,12 +5,15 @@ configuration providers.
 
 from __future__ import annotations
 
+import types
+
 import pytest
 from packaging.version import Version
 
 import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core._compat.importlib import metadata as compat_metadata
 from scikit_build_core.settings import _load_entrypoint_config
+from scikit_build_core.settings.skbuild_model import FieldScope, ScikitBuildSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 TYPE_CHECKING = False
@@ -222,6 +225,28 @@ def test_override_only_field_allowed(tmp_path, register):
     reader = make_reader(tmp_path, state="wheel")
     reader.validate_may_exit()
     assert str(reader.settings.cmake.toolchain_file) == toolchain
+
+
+@pytest.fixture
+def static_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Marked STATIC in a follow-up; neither converts from a flat string.
+    for name in ("generate", "metadata"):
+        field = ScikitBuildSettings.__dataclass_fields__[name]
+        monkeypatch.setattr(
+            field, "metadata", types.MappingProxyType({"scope": FieldScope.STATIC})
+        )
+
+
+@pytest.mark.usefixtures("static_fields")
+def test_static_field_allowed(tmp_path, register):
+    register(
+        "default",
+        "distro",
+        lambda **_: {"generate": [{"path": "a.py", "template": "a"}]},
+    )
+    reader = make_reader(tmp_path, "[tool.scikit-build]\nstrict-config = true\n")
+    reader.validate_may_exit()
+    assert [g.template for g in reader.settings.generate] == ["a"]
 
 
 def test_minimum_version_gate_not_triggered(tmp_path, register, monkeypatch):
