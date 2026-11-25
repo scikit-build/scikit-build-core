@@ -330,7 +330,8 @@ def test_git_mode_external_symlink(repo: Path) -> None:
     (repo.parent / "outside").mkdir()
     (repo.parent / "outside/data.txt").write_text("", encoding="utf-8")
     try:
-        Path("ext").symlink_to("../outside", target_is_directory=True)
+        # A target with "/" does not resolve on Windows.
+        Path("ext").symlink_to(Path("..", "outside"), target_is_directory=True)
     except OSError:
         pytest.skip("symlinks not supported")
     git("add", "ext")
