@@ -9,7 +9,6 @@ from scikit_build_core.build._file_processor import each_unignored_file
 from scikit_build_core.build.common_wheel_helpers import get_build_dir
 from scikit_build_core.builder.wheel_tag import WheelTag
 from scikit_build_core.format import pyproject_format
-from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
 
 DECLARATION = dedent(
@@ -128,10 +127,11 @@ def test_build_requires(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert list(requires.dynamic_metadata()) == ["torch-cu126"]
 
 
-def test_builtin_key_wins() -> None:
-    settings = ScikitBuildSettings(format_keys={"state": "mine", "variant": "cpu"})
-    formatted = pyproject_format(settings=settings, state="wheel")
-    assert "{state}-{variant}".format(**formatted) == "wheel-cpu"
+def test_overrides_builtin_key(tmp_path: Path) -> None:
+    text = '[tool.scikit-build.format-keys]\nstate = "mine"\nname = "other"\n'
+    settings = read(tmp_path, text).settings
+    formatted = pyproject_format(settings=settings, state="wheel", name="pkg")
+    assert "{state}-{name}".format(**formatted) == "mine-other"
 
 
 def test_sdist_excludes_build_dir(
@@ -175,7 +175,6 @@ def test_sdist_excludes_build_dir(
             "format-keys.variant 'default' must be a string",
         ),
         ('variant = { default = "cpu" }', "undeclared config-setting None"),
-        ('name = "x"', "format-keys.name is a built-in format key"),
         ('"a.b" = "x"', "format-keys.'a.b' must be a valid identifier"),
     ],
 )
@@ -207,7 +206,15 @@ def test_build_dir_value_one_path_component(
     read(tmp_path, text, {"torch.variant": value})
 
 
-def test_minimum_version_gate(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+def test_minimum_version_gate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    # CI shallow clones report 0.1.devN, tripping the backend-too-old check first
+    monkeypatch.setattr(
+        "scikit_build_core.settings.skbuild_read_settings.__version__", "1.2.0"
+    )
     text = '[tool.scikit-build]\nminimum-version = "1.1"\n' + DECLARATION + FORMAT_KEYS
     with pytest.raises(SystemExit):
         read(tmp_path, text)

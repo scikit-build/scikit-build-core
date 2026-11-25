@@ -15,7 +15,6 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
-    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
@@ -45,7 +44,6 @@ from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
-from ..format import PyprojectFormatter
 from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
@@ -333,8 +331,6 @@ def _validate_overrides(
 
 def _validate_format_keys(settings: ScikitBuildSettings) -> None:
     for key in settings.format_keys:
-        if key in PyprojectFormatter.__annotations__:
-            rich_error(f"format-keys.{key} is a built-in format key")
         if not key.isidentifier():
             rich_error(f"format-keys.{key!r} must be a valid identifier")
 

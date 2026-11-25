@@ -154,8 +154,9 @@ def pyproject_format(
         res["name"] = name
     if build_dir is not None:
         res["build_dir"] = str(build_dir.resolve())
-    # A built-in key takes precedence; the settings reader rejects a collision.
-    return typing.cast("PyprojectFormatter", {**settings.format_keys, **res})
+    # A format key overrides a built-in key, so a new built-in key does not
+    # change a project that already uses the name.
+    return typing.cast("PyprojectFormatter", {**res, **settings.format_keys})
 
 
 @dataclasses.dataclass()
