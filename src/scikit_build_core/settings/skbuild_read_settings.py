@@ -53,6 +53,7 @@ from .config_settings import (
 from .skbuild_model import (
     BuildSettings,
     CMakeSettings,
+    FieldScope,
     NinjaSettings,
     ScikitBuildSettings,
     normalize_build_types,
@@ -177,6 +178,14 @@ def _handle_move(
     return before
 
 
+def _scope_error(settings: ScikitBuildSettings, msg: str) -> None:
+    if settings.strict_config:
+        sys.stdout.flush()
+        rich_print(f"{{bold.red}}ERROR:{{normal}} {msg}")
+        raise SystemExit(7)
+    logger.warning(msg)
+
+
 def _validate_overrides(
     settings: ScikitBuildSettings,
     overrides: dict[str, OverrideRecord],
@@ -185,13 +194,13 @@ def _validate_overrides(
     toml_sources: tuple[Source, ...],
 ) -> None:
     """
-    Validate all fields with any override information.
+    Validate each field against its ``FieldScope``.
 
-    ``dynamic_sources`` are the sources that may legitimately set
-    ``override_only`` fields at build time (env vars, PEP 517 config-settings,
-    and machine-level entry-point config); ``toml_sources`` are the static
-    ``pyproject.toml`` (and ``extra_settings``) tables where ``override_only``
-    fields are forbidden outside of an ``[[overrides]]`` section.
+    ``dynamic_sources`` are the build-time sources (env vars, PEP 517
+    config-settings, and machine-level entry-point config): ``OVERRIDE`` fields
+    may come from them, ``STATIC`` fields may not. ``toml_sources`` are the
+    static ``pyproject.toml`` (and ``extra_settings``) tables, where
+    ``OVERRIDE`` fields are forbidden outside of an ``[[overrides]]`` section.
     """
 
     def validate_field(
@@ -202,41 +211,48 @@ def _validate_overrides(
         record: OverrideRecord | None = None,
     ) -> None:
         """Do the actual validation."""
-        # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
-        if field.metadata.get("override_only", False):
-            # has_item needs dict-presence semantics for dict-valued fields,
-            # since some sources represent dict entries as nested keys.
-            is_dict = get_target_raw_type(field.type) is dict
-            # override-only fields may be set dynamically via env vars or
-            # config-settings; only static pyproject.toml values are forbidden.
-            if any(
-                source.has_item(*path, field.name, is_dict=is_dict)
-                for source in dynamic_sources
-            ):
-                return
+        scope = field.metadata.get("scope", FieldScope.ANY)
+        if scope is FieldScope.ANY:
+            return
+        # has_item needs dict-presence semantics for dict-valued fields,
+        # since some sources represent dict entries as nested keys.
+        is_dict = get_target_raw_type(field.type) is dict
+        set_dynamically = any(
+            source.has_item(*path, field.name, is_dict=is_dict)
+            for source in dynamic_sources
+        )
 
-            # Decide whether the value was actually hard-coded in pyproject.toml.
-            # We can't rely on `value is not None`, since some override-only
-            # fields have non-None falsy defaults (e.g. [] or False), so we ask
-            # the TOML sources whether the key is really present.
-            if record is not None:
-                original_value = record.original_value
-            elif any(
-                source.has_item(*path, field.name, is_dict=is_dict)
-                for source in toml_sources
-            ):
-                original_value = value
-            else:
-                original_value = None
+        if scope is FieldScope.STATIC:
+            if set_dynamically:
+                _scope_error(
+                    settings,
+                    f"{prefix}{conf_key} can only be set in pyproject.toml, not by "
+                    "environment variables, config-settings, or entry-point config",
+                )
+            return
 
-            if original_value is not None:
-                msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
-                if settings.strict_config:
-                    sys.stdout.flush()
-                    rich_print(f"{{bold.red}}ERROR:{{normal}} {msg}")
-                    raise SystemExit(7)
-                logger.warning(msg)
+        if set_dynamically:
+            return
+        # Decide whether the value was actually hard-coded in pyproject.toml.
+        # We can't rely on `value is not None`, since some override-only
+        # fields have non-None falsy defaults (e.g. [] or False), so we ask
+        # the TOML sources whether the key is really present.
+        if record is not None:
+            original_value = record.original_value
+        elif any(
+            source.has_item(*path, field.name, is_dict=is_dict)
+            for source in toml_sources
+        ):
+            original_value = value
+        else:
+            original_value = None
+
+        if original_value is not None:
+            _scope_error(
+                settings,
+                f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file",
+            )
 
     def validate_field_recursive(
         obj: Any,

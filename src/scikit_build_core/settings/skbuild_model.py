@@ -1,6 +1,7 @@
 __lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing"}
 
 import dataclasses
+import enum
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypedDict
 
@@ -16,6 +17,7 @@ __all__ = [
     "CMakeSettingsDefine",
     "EditableSettings",
     "EnvValue",
+    "FieldScope",
     "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
@@ -45,11 +47,21 @@ def normalize_build_types(build_type: str | list[str]) -> list[str]:
     return build_type or [""]
 
 
+class FieldScope(enum.Enum):
+    """Where a setting may be set from."""
+
+    ANY = "any"
+    OVERRIDE = "override"
+    """Not in the static ``pyproject.toml`` table; env vars, config-settings,
+    entry-point config, and ``[[overrides]]`` are allowed."""
+    STATIC = "static"
+    """Only in ``pyproject.toml`` (including ``[[overrides]]``)."""
+
+
 class SettingsFieldMetadata(TypedDict, total=False):
     display_default: str | None
     deprecated: bool
-    override_only: bool
-    """Do not allow the field to be a top-level table."""
+    scope: FieldScope
 
 
 class CMakeSettingsDefine(str):
@@ -244,7 +256,7 @@ class CMakeSettings:
     """
 
     toolchain_file: Path | None = dataclasses.field(
-        default=None, metadata=SettingsFieldMetadata(override_only=True)
+        default=None, metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE)
     )
     """
     The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
@@ -561,7 +573,7 @@ class WheelSettings:
 
     tags: list[str] | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
     Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
@@ -887,7 +899,7 @@ class ScikitBuildSettings:
 
     variant_label: str | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
     Experimental wheel variant label to build, from ``[variant.variants]``.
@@ -918,7 +930,7 @@ class ScikitBuildSettings:
 
     fail: bool | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
     Immediately fail the build. This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.

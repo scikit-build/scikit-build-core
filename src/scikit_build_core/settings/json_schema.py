@@ -9,6 +9,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.builtins",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}.documentation",
+    f"{__spec__.parent}.skbuild_model",
 }
 
 import dataclasses
@@ -21,6 +22,7 @@ from packaging.version import Version
 from .._compat.builtins import ExceptionGroup, add_note
 from ..utils.typing import NoneType, is_union_type
 from .documentation import pull_docs
+from .skbuild_model import FieldScope
 
 __all__ = ["FailedConversionError", "convert_type", "to_json_schema"]
 
@@ -130,7 +132,7 @@ def to_json_schema(dclass: type[Any], *, normalize_keys: bool) -> dict[str, Any]
         props[field.name]["description"] = docs[field.name].split("\n", maxsplit=1)[0]
         if field.metadata.get("deprecated"):
             props[field.name]["deprecated"] = True
-        if field.metadata.get("override_only"):
+        if field.metadata.get("scope") is FieldScope.OVERRIDE:
             props[field.name]["scikit-build:override-only"] = True
 
     if normalize_keys:
