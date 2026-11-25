@@ -226,6 +226,30 @@ def generate_skbuild_schema(tool_name: str = "scikit-build") -> dict[str, Any]:
         }
     )
 
+    # The format-keys {config-setting = "...", default = "..."} reference form.
+    format_keys = schema["properties"]["format-keys"]["patternProperties"][".+"]
+    schema["properties"]["format-keys"]["patternProperties"][".+"] = {
+        "oneOf": [
+            format_keys,
+            {
+                "type": "object",
+                "required": ["config-setting"],
+                "additionalProperties": False,
+                "properties": {
+                    "config-setting": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The declared config-setting name whose resolved value this key takes.",
+                    },
+                    "default": {
+                        "type": "string",
+                        "description": "The value used when the config-setting has no value.",
+                    },
+                },
+            },
+        ]
+    }
+
     # Added after ``props`` is collected so overrides cannot target it.
     declaration_entry = to_json_schema(ConfigSettingDeclaration, normalize_keys=True)
     declaration_entry["properties"]["env"]["minLength"] = 1

@@ -14,6 +14,10 @@ The following configure keys are formatted as Python `str.format` templates:
 `{build_dir}` in `editable.rebuild-dir`.
 ```
 
+```{versionadded} 1.2
+The `format-keys` table.
+```
+
 For example, to get a persistent build directory per wheel tag:
 
 ```toml
@@ -46,3 +50,22 @@ The available variables are the members of
 .. autoattribute:: scikit_build_core.format.PyprojectFormatter.wheel_tag
    :no-index:
 ```
+
+## Extra variables
+
+The {confval}`format-keys` table adds variables. A value is a literal string or
+a reference to a [declared config-setting](./config_settings.md):
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{variant}"
+
+[tool.scikit-build.format-keys]
+variant = { config-setting = "torch.variant", default = "cpu" }
+```
+
+A key must be a valid identifier. A key with the name of a built-in variable
+overrides it. A value used in `build-dir` must be one path component: it cannot
+contain a path separator, and it cannot be empty, `.` or `..`. Overrides can set
+a key. Config-settings and environment variables cannot set `format-keys`
+directly; use a `config-setting` reference to take a value at build time.

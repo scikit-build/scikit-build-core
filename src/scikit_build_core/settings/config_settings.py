@@ -25,6 +25,7 @@ __all__ = [
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_format_keys",
     "resolve_metadata_config_settings",
 ]
 
@@ -180,6 +181,14 @@ def resolve_config_settings(
     return values
 
 
+def _referenced_value(
+    context: str, name: object, values: "Mapping[str, str | bool | None]"
+) -> "str | bool | None":
+    if not isinstance(name, str) or name not in values:
+        rich_error(f"{context} references undeclared config-setting {name!r}")
+    return values[name]
+
+
 def resolve_define_references(
     tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
 ) -> None:
@@ -205,16 +214,55 @@ def resolve_define_references(
                 f" keys: {', '.join(sorted(unknown))} (put defaults in the"
                 " declaration instead)"
             )
-        name = entry["config-setting"]
-        if not isinstance(name, str) or name not in values:
-            rich_error(
-                f"cmake.define.{key} references undeclared config-setting {name!r}"
-            )
-        value = values[name]
+        value = _referenced_value(
+            f"cmake.define.{key}", entry["config-setting"], values
+        )
         if value is None:
             del define[key]
         else:
             define[key] = value
+
+
+def resolve_format_keys(
+    tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
+) -> dict[str, str]:
+    """
+    Replace ``{config-setting = "...", default = "..."}`` values in the raw
+    ``format-keys`` table with strings, in place.
+
+    Returns an error message for each key that has no value. Such a key gets
+    an empty string, and the caller reports the error only if no source of
+    higher precedence sets the key.
+    """
+    unset: dict[str, str] = {}
+    table = tool_skb.get("format-keys", {})
+    if not isinstance(table, dict):
+        return unset
+    for key, entry in table.items():
+        if isinstance(entry, str):
+            continue
+        if not isinstance(entry, dict):
+            rich_error(f"format-keys.{key} must be a string or a table")
+        unknown = set(entry) - {"config-setting", "default"}
+        if unknown:
+            rich_error(
+                f"format-keys.{key} has unrecognized keys: {', '.join(sorted(unknown))}"
+            )
+        name = entry.get("config-setting")
+        value = _referenced_value(f"format-keys.{key}", name, values)
+        default = entry.get("default")
+        if default is not None and not isinstance(default, str):
+            rich_error(f"format-keys.{key} 'default' must be a string")
+        if value is None:
+            value = default
+        if value is None:
+            unset[key] = (
+                f"format-keys.{key}: config-setting {name!r} is not set;"
+                " set it or add a default"
+            )
+            value = ""
+        table[key] = str(value).lower() if isinstance(value, bool) else value
+    return unset
 
 
 def resolve_metadata_config_settings(

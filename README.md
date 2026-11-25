@@ -180,6 +180,7 @@ print()
 | - | - | - |
 | `metadata` | `{}` | List dynamic metadata fields and hook locations in this table. |
 | `env` | `{}` | A table of environment variables to set for the CMake subprocesses. |
+| `format-keys` | `{}` | A table of extra variables for the formatted fields. |
 | `strict-config` | `true` | Strictly check all config options. |
 | `experimental` | `false` | Enable early previews of features not finalized yet. |
 | `minimum-version` | `"1.1"` (current version) | If set, this will provide a method for backward compatibility. |

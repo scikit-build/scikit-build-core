@@ -596,6 +596,37 @@
       },
       "description": "A table of environment variables to set for the CMake subprocesses."
     },
+    "format-keys": {
+      "type": "object",
+      "patternProperties": {
+        ".+": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": [
+                "config-setting"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "config-setting": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The declared config-setting name whose resolved value this key takes."
+                },
+                "default": {
+                  "type": "string",
+                  "description": "The value used when the config-setting has no value."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "description": "A table of extra variables for the formatted fields."
+    },
     "strict-config": {
       "type": "boolean",
       "default": true,
@@ -897,6 +928,9 @@
           },
           "env": {
             "$ref": "#/properties/env"
+          },
+          "format-keys": {
+            "$ref": "#/properties/format-keys"
           },
           "strict-config": {
             "$ref": "#/properties/strict-config"

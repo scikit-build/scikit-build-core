@@ -217,3 +217,12 @@ def test_dynamic_import_names_plugin(chdir_tmp: Path) -> None:
     metadata = read_metadata(dist)
     assert metadata.get_all("Import-Name") == ["pkg", "ns.custom"]
     assert metadata.get_all("Import-Namespace") == ["ns"]
+
+
+def test_dynamic_import_names_format_key_build_dir(chdir_tmp: Path) -> None:
+    make_pkg(chdir_tmp, '["import-names", "import-namespaces"]')
+    with chdir_tmp.joinpath("pyproject.toml").open("a") as f:
+        f.write('build-dir = "build/{variant}"\nformat-keys.variant = "cpu"\n')
+    dist = chdir_tmp / "dist"
+    build_wheel(str(dist))
+    assert_computed(read_metadata(dist))
