@@ -191,6 +191,9 @@ class CMaker:
                 and (cmake_files / "fc-stamp").is_dir()
                 and cmake_files.resolve() == self.build_dir.resolve() / "CMakeFiles"
             ):
+                # If an executable in PATCH_COMMAND moves with the environment,
+                # CMake can rerun the patch on an already patched checkout.
+                # Use cmake.fresh=true for patches that cannot be applied twice.
                 logger.debug("Keeping FetchContent records in {}", cmake_files)
                 for entry in cmake_files.glob("*"):
                     if entry.name in {"fc-stamp", "fc-tmp"}:
