@@ -6,6 +6,7 @@ from scikit_build_core.format import (
     RootPathResolver,
     format_template,
     pyproject_format,
+    template_glob,
 )
 from scikit_build_core.settings.skbuild_model import ScikitBuildSettings
 
@@ -51,15 +52,6 @@ def test_root_invalid_format(resolver: RootPathResolver) -> None:
         f"{resolver:nonsense}"
 
 
-def test_dummy_plain_keys() -> None:
-    dummy = pyproject_format(dummy=True)
-    # All known keys are present and produce "*" for a plain format.
-    assert dummy["wheel_tag"] == "*"
-    assert "{wheel_tag}".format(**dummy) == "*"
-    assert dummy["name"] == "*"
-    assert "{name}".format(**dummy) == "*"
-
-
 def test_name_key_omitted_by_default() -> None:
     settings = ScikitBuildSettings()
     assert "name" not in pyproject_format(settings=settings)
@@ -73,26 +65,18 @@ def test_name_key_present_when_given() -> None:
 
 
 @pytest.mark.parametrize(
-    ("spec", "expected"),
+    ("template", "expected"),
     [
+        ("{wheel_tag}", "*"),
         ("{root}", "*"),
         ("{root:uri}", "*"),
         ("{root:parent:uri}", "*"),
         ("build/{root:uri}/x", "build/*/x"),
+        ("{build_dir}/install", "*/install"),
     ],
 )
-def test_dummy_root_spec(spec: str, expected: str) -> None:
-    # Regression: dummy mode mapped root to the plain string "*", so any
-    # build-dir containing a spec like {root:uri} raised
-    # "ValueError: Invalid format specifier 'uri' for object of type 'str'".
-    # The spec is kept out of a literal .format() call so linters don't try to
-    # validate the custom :uri spec against a plain str.
-    dummy = pyproject_format(dummy=True)
-    assert spec.format(**dummy) == expected
-
-
-def test_dummy_build_dir_key() -> None:
-    assert "{build_dir}/install".format(**pyproject_format(dummy=True)) == "*/install"
+def test_template_glob(template: str, expected: str) -> None:
+    assert template_glob(template, key="build-dir") == expected
 
 
 def test_rebuild_dir_follows_build_dir(tmp_path: Path) -> None:

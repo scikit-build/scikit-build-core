@@ -65,24 +65,6 @@ class PyprojectFormatter(TypedDict, total=False):
     """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
 
 
-class _AnySpecDummy:
-    """A dummy value whose ``__format__`` accepts any spec and returns ``"*"``.
-
-    Used for dummy-mode formatting of keys that take a format spec (e.g.
-    ``{root:uri}``), so that ``"{root:uri}".format(...)`` does not raise.
-    """
-
-    def __format__(self, fmt: str) -> str:
-        return "*"
-
-    def __str__(self) -> str:
-        return "*"
-
-
-# Keys in PyprojectFormatter whose values accept a format spec (e.g. ``root``).
-_SPEC_TAKING_KEYS = ("root",)
-
-
 def format_template(template: str, values: Mapping[str, object], *, key: str) -> str:
     """Format the ``key`` setting; exit with a clear error on a bad placeholder."""
     try:
@@ -121,25 +103,9 @@ def template_glob(template: str, *, key: str) -> str:
         rich_error("{key}: {err}", key=key, err=err)
 
 
-@typing.overload
 def pyproject_format(
     *,
     settings: ScikitBuildSettings,
-    state: Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
-    | None = ...,
-    tags: WheelTag | None = ...,
-    name: str | None = ...,
-    build_dir: Path | None = ...,
-) -> PyprojectFormatter: ...
-
-
-@typing.overload
-def pyproject_format(*, dummy: Literal[True]) -> dict[str, str]: ...
-
-
-def pyproject_format(
-    *,
-    settings: ScikitBuildSettings | None = None,
     state: (
         Literal["sdist", "wheel", "editable", "metadata_wheel", "metadata_editable"]
         | None
@@ -147,26 +113,12 @@ def pyproject_format(
     tags: WheelTag | None = None,
     name: str | None = None,
     build_dir: Path | None = None,
-    dummy: bool = False,
-) -> PyprojectFormatter | dict[str, str]:
+) -> PyprojectFormatter:
     """
     Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format.
 
     The result also has the ``format-keys`` of ``settings``.
     """
-    if dummy:
-        # Return a dict with all the known keys but with values replaced with dummy values
-        res_dummy: dict[str, object] = dict.fromkeys(
-            PyprojectFormatter.__annotations__, "*"
-        )
-        # Keys that accept a format spec (e.g. ``{root:uri}``) must use a value
-        # whose ``__format__`` accepts any spec, otherwise dummy formatting of a
-        # build-dir like ``{root:uri}`` raises ValueError.
-        for key in _SPEC_TAKING_KEYS:
-            res_dummy[key] = _AnySpecDummy()
-        return typing.cast("dict[str, str]", res_dummy)
-
-    assert settings is not None
     # First set all known values
     res = PyprojectFormatter(
         cache_tag=sys.implementation.cache_tag,
