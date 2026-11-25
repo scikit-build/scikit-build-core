@@ -2,31 +2,37 @@
 # runtime types from the dataclass fields, like `skbuild_model.py`.
 
 __lazy_modules__ = {
+    "copy",
     "typing",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{__spec__.parent}.skbuild_model",
     f"{__spec__.parent}.skbuild_overrides",
 }
 
+import copy
 import dataclasses
 import re
 from typing import Any, Literal
 
 from .._logging import rich_error
+from .._variants import NULL_VARIANT_LABEL, _no_label_entry
 from .skbuild_model import ScikitBuildSettings
 from .skbuild_overrides import strtobool
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
 __all__ = [
     "ConfigSettingDeclaration",
+    "MetadataVariantKeys",
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
     "resolve_format_keys",
     "resolve_metadata_config_settings",
+    "resolve_metadata_variant",
 ]
 
 
@@ -265,19 +271,34 @@ def resolve_format_keys(
     return unset
 
 
+@dataclasses.dataclass(frozen=True)
+class MetadataVariantKeys:
+    """
+    The plugin settings of one ``[[tool.dynamic-metadata]]`` entry that get the
+    variant label and properties. ``resolve_metadata_variant`` fills them after
+    the settings (and so the label) are resolved.
+    """
+
+    entry: dict[str, Any]
+    label: str | None
+    properties: str | None
+
+
 def resolve_metadata_config_settings(
     entries: Any, values: "Mapping[str, str | bool | None]"
-) -> bool:
+) -> tuple[bool, list[MetadataVariantKeys]]:
     """
     Apply ``tool.scikit-build.config-setting`` of each
     ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
     ``tool`` key. The table maps a plugin setting to a declared config-setting;
     a resolved value replaces the static one, and an unset setting keeps it.
-    Returns True if an entry has a mapping.
+    Returns True if an entry has a mapping, and the entries that map
+    ``variant-label`` or ``variant-properties``.
     """
     used = False
+    variant_keys: list[MetadataVariantKeys] = []
     if not isinstance(entries, list):
-        return used
+        return used, variant_keys
     for n, entry in enumerate(entries):
         if not isinstance(entry, dict) or "tool" not in entry:
             continue
@@ -290,9 +311,32 @@ def resolve_metadata_config_settings(
         context += ".scikit-build"
         if not isinstance(skb, dict):
             rich_error(f"{context} must be a table")
-        unknown = set(skb) - {"config-setting"}
+        unknown = set(skb) - {"config-setting", "variant-label", "variant-properties"}
         if unknown:
             rich_error(f"{context} has unrecognized keys: {', '.join(sorted(unknown))}")
+
+        # Plugin setting -> the reserved key that fills it
+        targets: dict[str, str] = {}
+        for name in ("variant-label", "variant-properties"):
+            if name not in skb:
+                continue
+            key = skb[name]
+            if not isinstance(key, str):
+                rich_error(f"{context}.{name} must be a string")
+            if key in {"provider", "tool"}:
+                rich_error(f"{context}.{name} may not set {key!r}")
+            if key in targets:
+                rich_error(f"{context}.{name} and {targets[key]} both set {key!r}")
+            targets[key] = name
+        if targets:
+            variant_keys.append(
+                MetadataVariantKeys(
+                    entry,
+                    label=skb.get("variant-label"),
+                    properties=skb.get("variant-properties"),
+                )
+            )
+
         mapping = skb.get("config-setting", {})
         context += ".config-setting"
         if not isinstance(mapping, dict):
@@ -301,6 +345,8 @@ def resolve_metadata_config_settings(
         for key, name in mapping.items():
             if key in {"provider", "tool"}:
                 rich_error(f"{context} may not set {key!r}")
+            if key in targets:
+                rich_error(f"{context}.{key} is also set by {targets[key]}")
             if not isinstance(name, str):
                 rich_error(f"{context}.{key} must be a string")
             if name not in values:
@@ -310,4 +356,31 @@ def resolve_metadata_config_settings(
             value = values[name]
             if value is not None:
                 entry[key] = value
-    return used
+    return used, variant_keys
+
+
+def resolve_metadata_variant(
+    variant_keys: "Sequence[MetadataVariantKeys]",
+    label: str | None,
+    variant_table: "Mapping[str, Any]",
+) -> None:
+    """
+    Set the mapped plugin settings to the resolved variant label and its
+    ``[variant.variants.<label>]`` properties (namespace -> feature -> list of
+    values). With no variant, the static values stay. The ``null`` variant has
+    no properties.
+    """
+    if not label or not variant_keys:
+        return
+    properties: dict[str, Any] = {}
+    if label != NULL_VARIANT_LABEL:
+        variants = variant_table.get("variants", {})
+        found = variants.get(label) if isinstance(variants, dict) else None
+        if not isinstance(found, dict):
+            _no_label_entry(label)
+        properties = found
+    for keys in variant_keys:
+        if keys.label is not None:
+            keys.entry[keys.label] = label
+        if keys.properties is not None:
+            keys.entry[keys.properties] = copy.deepcopy(properties)

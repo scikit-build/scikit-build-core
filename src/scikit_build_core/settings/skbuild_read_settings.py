@@ -52,6 +52,7 @@ from .config_settings import (
     resolve_define_references,
     resolve_format_keys,
     resolve_metadata_config_settings,
+    resolve_metadata_variant,
 )
 from .skbuild_model import (
     BuildSettings,
@@ -437,7 +438,7 @@ class SettingsReader:
         self.dynamic_metadata: list[dict[str, Any]] = pyproject.get("tool", {}).get(
             "dynamic-metadata", []
         )
-        metadata_mapping = resolve_metadata_config_settings(
+        metadata_mapping, metadata_variant_keys = resolve_metadata_config_settings(
             self.dynamic_metadata, self.custom_config_settings
         )
         self.variant: dict[str, Any] = pyproject.get("variant", {})
@@ -563,6 +564,9 @@ class SettingsReader:
             self.settings.cmake.build_type = environ["CMAKE_BUILD_TYPE"]
 
         validate_variant_settings(self.settings)
+        resolve_metadata_variant(
+            metadata_variant_keys, self.settings.variant_label, self.variant
+        )
 
         # The cmake/build values that come *only* from static project sources
         # (pyproject.toml and extra_settings), used by the minimum-version move
@@ -700,6 +704,15 @@ class SettingsReader:
         ):
             rich_error(
                 "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
+            )
+
+        if (
+            metadata_variant_keys
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("1.2")
+        ):
+            rich_error(
+                "minimum-version must be at least 1.2 to use tool.scikit-build.variant-label or variant-properties in tool.dynamic-metadata"
             )
 
         if self.settings.format_keys:
