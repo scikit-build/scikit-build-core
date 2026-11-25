@@ -334,6 +334,9 @@ def test_git_mode_external_symlink(repo: Path) -> None:
         Path("ext").symlink_to(Path("..", "outside"), target_is_directory=True)
     except OSError:
         pytest.skip("symlinks not supported")
+    # MSYS Python has "/" as the separator, so the link can't be made there.
+    if not Path("ext/data.txt").is_file():
+        pytest.skip("symlink does not resolve")
     git("add", "ext")
 
     # Git can't describe an external target, so it is walked.
