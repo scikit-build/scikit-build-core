@@ -883,8 +883,15 @@ There are several values you can access through Python's formatting syntax. See
 every member of a uv or hatch workspace (e.g. via `SKBUILD_BUILD_DIR`) avoid
 collisions: `SKBUILD_BUILD_DIR=/path/to/cache/{name}/{cache_tag}`.
 
+With CMake 3.30 or newer and `CMP0168` set to `NEW`, `FetchContent` can reuse
+checkouts across isolated builds. Changing the path to CMake can trigger another
+download. If a Git branch or tag moves, or the contents at a URL change, CMake
+can keep the previous copy. Pin a Git commit or specify `URL_HASH` for
+reproducible builds.
+
 If a cached configuration goes bad, you can throw it away and configure from
-scratch with {confval}`cmake.fresh`, like `cmake --fresh`.
+scratch with {confval}`cmake.fresh`, like `cmake --fresh`. With `CMP0168` set to
+`NEW`, this also reruns the `FetchContent` download, update, and patch steps.
 
 ```{conftabs} cmake.fresh True
 
