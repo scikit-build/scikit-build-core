@@ -127,6 +127,24 @@ def test_build_requires(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     assert list(requires.dynamic_metadata()) == ["torch-cu126"]
 
 
+def test_shadowed_unset_reference(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    text = (
+        DECLARATION
+        + "[tool.scikit-build.format-keys]\n"
+        + 'variant = { config-setting = "torch.variant" }\n'
+    )
+    reader = read(tmp_path, text, {"format-keys.variant": "cpu"})
+    assert reader.settings.format_keys == {"variant": "cpu"}
+
+    monkeypatch.setenv("SKBUILD_FORMAT_KEYS", "variant=gpu")
+    assert read(tmp_path, text).settings.format_keys == {"variant": "gpu"}
+
+    # Another key in a source of higher precedence does not hide the error.
+    monkeypatch.setenv("SKBUILD_FORMAT_KEYS", "other=gpu")
+    with pytest.raises(SystemExit):
+        read(tmp_path, text)
+
+
 def test_overrides_builtin_key(tmp_path: Path) -> None:
     text = '[tool.scikit-build.format-keys]\nstate = "mine"\nname = "other"\n'
     settings = read(tmp_path, text).settings
@@ -155,6 +173,25 @@ def test_sdist_excludes_build_dir(
     assert files == {kept}
 
 
+@pytest.mark.parametrize("field", ["{variant[1]}", "{variant:0>4}", "{variant!r:>9}"])
+def test_sdist_excludes_build_dir_field_details(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    resolved = Path("out", field.format(variant="cpu"))
+    resolved.mkdir(parents=True)
+    resolved.joinpath("CMakeCache.txt").touch()
+    kept = Path("keep.txt")
+    kept.touch()
+
+    files = set(
+        each_unignored_file(
+            Path(), build_dir=f"out/{field}", mode="default", format_keys=["variant"]
+        )
+    )
+    assert files == {kept}
+
+
 @pytest.mark.parametrize(
     ("format_keys", "match"),
     [
@@ -175,6 +212,9 @@ def test_sdist_excludes_build_dir(
             "format-keys.variant 'default' must be a string",
         ),
         ('variant = { default = "cpu" }', "undeclared config-setting None"),
+        ('variant = ["cpu"]', "format-keys.variant must be a string or a table"),
+        ("variant = true", "format-keys.variant must be a string or a table"),
+        ("variant = 1", "format-keys.variant must be a string or a table"),
         ('"a.b" = "x"', "format-keys.'a.b' must be a valid identifier"),
     ],
 )

@@ -220,18 +220,24 @@ def resolve_define_references(
 
 def resolve_format_keys(
     tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
-) -> None:
+) -> dict[str, str]:
     """
     Replace ``{config-setting = "...", default = "..."}`` values in the raw
-    ``format-keys`` table with strings, in place. Other values are left for
-    the normal settings conversion.
+    ``format-keys`` table with strings, in place.
+
+    Returns an error message for each key that has no value. Such a key gets
+    an empty string, and the caller reports the error only if no source of
+    higher precedence sets the key.
     """
+    unset: dict[str, str] = {}
     table = tool_skb.get("format-keys", {})
     if not isinstance(table, dict):
-        return
+        return unset
     for key, entry in table.items():
-        if not isinstance(entry, dict):
+        if isinstance(entry, str):
             continue
+        if not isinstance(entry, dict):
+            rich_error(f"format-keys.{key} must be a string or a table")
         unknown = set(entry) - {"config-setting", "default"}
         if unknown:
             rich_error(
@@ -249,11 +255,13 @@ def resolve_format_keys(
         if value is None:
             value = default
         if value is None:
-            rich_error(
+            unset[key] = (
                 f"format-keys.{key}: config-setting {name!r} is not set;"
                 " set it or add a default"
             )
+            value = ""
         table[key] = str(value).lower() if isinstance(value, bool) else value
+    return unset
 
 
 def resolve_metadata_config_settings(

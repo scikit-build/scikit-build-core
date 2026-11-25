@@ -33,7 +33,7 @@ import re
 import string
 import sys
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -382,6 +382,9 @@ class SettingsReader:
             self.config_setting_decls, config_settings, environ
         )
 
+        # Format-key references with no value, by table.
+        unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]] = []
+
         def process_table(
             skb: dict[str, Any], declaration_error: str
         ) -> tuple[set[str], dict[str, OverrideRecord]]:
@@ -400,7 +403,9 @@ class SettingsReader:
             if "config-setting" in skb:
                 rich_error(declaration_error)
             resolve_define_references(skb, self.custom_config_settings)
-            resolve_format_keys(skb, self.custom_config_settings)
+            unset = resolve_format_keys(skb, self.custom_config_settings)
+            if unset:
+                unset_format_keys.append((skb["format-keys"], unset))
             return matched, overridden
 
         # Handle overrides
@@ -541,6 +546,20 @@ class SettingsReader:
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+
+        # An unset reference is an error only if its table gives the final value.
+        for table, unset in unset_format_keys:
+            for key, msg in unset.items():
+                for source in self.sources.sources:
+                    if not source.has_item("format_keys", is_dict=True):
+                        continue
+                    item = source.get_item("format_keys", is_dict=True)
+                    if item is table:
+                        rich_error(msg)
+                    if key in cast(
+                        "dict[str, str]", source.convert(item, dict[str, str])
+                    ):
+                        break
 
         # CMake 3.22+ reads CMAKE_BUILD_TYPE from the environment, but only as a
         # default for the first configure; the -DCMAKE_BUILD_TYPE we always pass

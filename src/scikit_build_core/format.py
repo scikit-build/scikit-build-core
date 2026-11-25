@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "re",
+    "string",
     f"{__spec__.parent}._logging",
     f"{__spec__.parent}.settings.skbuild_model",
 }
 
 import dataclasses
+import re
+import string
 import sys
 import typing
 from pathlib import Path
@@ -29,6 +33,7 @@ __all__ = [
     "RootPathResolver",
     "format_template",
     "pyproject_format",
+    "template_glob",
 ]
 
 
@@ -87,6 +92,29 @@ def format_template(template: str, values: Mapping[str, object], *, key: str) ->
         rich_error("{key}: {err}", key=key, err=err)
 
 
+def template_glob(template: str, *, key: str, format_keys: Iterable[str] = ()) -> str:
+    """
+    Make a glob from the ``key`` setting, with ``*`` for each placeholder.
+
+    The index, attribute, conversion and format spec of a placeholder are not
+    applied, because the result on the real value is not known.
+    """
+    known = {*format_keys, *PyprojectFormatter.__annotations__}
+    result = []
+    try:
+        for literal, field, _, _ in string.Formatter().parse(template):
+            result.append(literal)
+            if field is None:
+                continue
+            name = re.split(r"[.\[]", field, maxsplit=1)[0]
+            if name not in known:
+                rich_error("{key}: unknown placeholder {name!r}", key=key, name=name)
+            result.append("*")
+    except ValueError as err:
+        rich_error("{key}: {err}", key=key, err=err)
+    return "".join(result)
+
+
 @typing.overload
 def pyproject_format(
     *,
@@ -100,9 +128,7 @@ def pyproject_format(
 
 
 @typing.overload
-def pyproject_format(
-    *, dummy: Literal[True], format_keys: Iterable[str] = ...
-) -> dict[str, str]: ...
+def pyproject_format(*, dummy: Literal[True]) -> dict[str, str]: ...
 
 
 def pyproject_format(
@@ -116,18 +142,16 @@ def pyproject_format(
     name: str | None = None,
     build_dir: Path | None = None,
     dummy: bool = False,
-    format_keys: Iterable[str] = (),
 ) -> PyprojectFormatter | dict[str, str]:
     """
     Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format.
 
-    The result also has the ``format-keys`` of ``settings``. In dummy mode,
-    ``format_keys`` gives their names.
+    The result also has the ``format-keys`` of ``settings``.
     """
     if dummy:
         # Return a dict with all the known keys but with values replaced with dummy values
         res_dummy: dict[str, object] = dict.fromkeys(
-            (*format_keys, *PyprojectFormatter.__annotations__), "*"
+            PyprojectFormatter.__annotations__, "*"
         )
         # Keys that accept a format spec (e.g. ``{root:uri}``) must use a value
         # whose ``__format__`` accepts any spec, otherwise dummy formatting of a
