@@ -19,7 +19,7 @@ from ._file_processor import EXCLUDE_LINES, each_unignored_file
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterator, Mapping, Sequence
+    from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 
 __all__ = [
     "NON_PLATLIB_REBUILD_MSG",
@@ -75,6 +75,7 @@ def iter_package_files(
     target_exclude: Sequence[str],
     build_dir: str,
     mode: Literal["classic", "default", "manual", "explicit"],
+    format_keys: Iterable[str] = (),
 ) -> Iterator[tuple[Path, Path]]:
     """
     Yield ``(source_file, target)`` pairs for the wheel packages, with
@@ -105,6 +106,7 @@ def iter_package_files(
             exclude=src_exclude,
             build_dir=build_dir,
             mode=mode,
+            format_keys=format_keys,
         ):
             rel_path = filepath.relative_to(source_dir)
             if not exclude_spec.match_file(rel_path):
@@ -120,6 +122,7 @@ def packages_to_file_mapping(
     target_exclude: Sequence[str],
     build_dir: str,
     mode: Literal["classic", "default", "manual", "explicit"],
+    format_keys: Iterable[str] = (),
 ) -> dict[str, str]:
     """
     This will output a mapping of source files to target files.
@@ -132,6 +135,7 @@ def packages_to_file_mapping(
         target_exclude=target_exclude,
         build_dir=build_dir,
         mode=mode,
+        format_keys=format_keys,
     ):
         target_path = platlib_dir / target
         if not target_path.is_file():

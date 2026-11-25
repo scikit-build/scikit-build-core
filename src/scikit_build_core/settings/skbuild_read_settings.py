@@ -7,12 +7,15 @@ __lazy_modules__ = {
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
+    "re",
+    "string",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._logging",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
@@ -27,6 +30,8 @@ import copy
 import dataclasses
 import difflib
 import os
+import re
+import string
 import sys
 from pathlib import Path
 from typing import Any, Literal, TypeVar
@@ -40,6 +45,7 @@ from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
+from ..format import PyprojectFormatter
 from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
@@ -48,6 +54,7 @@ from .config_settings import (
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
+    resolve_format_keys,
     resolve_metadata_config_settings,
 )
 from .skbuild_model import (
@@ -324,6 +331,31 @@ def _validate_overrides(
     validate_field_recursive(obj=settings)
 
 
+def _validate_format_keys(settings: ScikitBuildSettings) -> None:
+    for key in settings.format_keys:
+        if key in PyprojectFormatter.__annotations__:
+            rich_error(f"format-keys.{key} is a built-in format key")
+        if not key.isidentifier():
+            rich_error(f"format-keys.{key!r} must be a valid identifier")
+
+    try:
+        fields = [f for _, f, _, _ in string.Formatter().parse(settings.build_dir)]
+    except ValueError:
+        # Formatting reports a template that does not parse.
+        return
+    # The SDist exclude pattern matches one path component per placeholder.
+    for field in fields:
+        key = re.split(r"[.\[]", field or "", maxsplit=1)[0]
+        value = settings.format_keys.get(key)
+        if value is not None and (
+            value in {"", ".", ".."} or {"/", "\\"}.intersection(value)
+        ):
+            rich_error(
+                f"build-dir: format-keys.{key} must be one path component,"
+                f" got {value!r}"
+            )
+
+
 class SettingsReader:
     def __init__(
         self,
@@ -372,6 +404,7 @@ class SettingsReader:
             if "config-setting" in skb:
                 rich_error(declaration_error)
             resolve_define_references(skb, self.custom_config_settings)
+            resolve_format_keys(skb, self.custom_config_settings)
             return matched, overridden
 
         # Handle overrides
@@ -661,6 +694,14 @@ class SettingsReader:
             rich_error(
                 "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
             )
+
+        if self.settings.format_keys:
+            if (
+                self.settings.minimum_version is not None
+                and self.settings.minimum_version < Version("1.2")
+            ):
+                rich_error("minimum-version must be at least 1.2 to use format-keys")
+            _validate_format_keys(self.settings)
 
         if self.settings.sdist.inclusion_mode is not None:
             if (

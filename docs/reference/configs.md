@@ -119,6 +119,23 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: format-keys
+
+  :Type: ``dict[str,str]``
+  :Config-settings: ``format-keys`` or ``skbuild.format-keys``
+  :Environment variable: ``SKBUILD_FORMAT_KEYS``
+
+  A table of extra variables for the formatted fields.
+
+  Each value is a literal string or a table with ``config-setting`` (the name
+  of a declared config-setting) and ``default`` (used if the setting has no
+  value). The formatted fields, like :confval:`build-dir`, can use each key
+  as ``{key}``.
+
+  .. versionadded:: 1.2
+```
+
+```{eval-rst}
 .. confval:: metadata
 
   :Type: ``dict[str,dict[str,Any]]``

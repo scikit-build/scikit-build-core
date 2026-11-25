@@ -25,6 +25,7 @@ __all__ = [
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_format_keys",
     "resolve_metadata_config_settings",
 ]
 
@@ -215,6 +216,44 @@ def resolve_define_references(
             del define[key]
         else:
             define[key] = value
+
+
+def resolve_format_keys(
+    tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
+) -> None:
+    """
+    Replace ``{config-setting = "...", default = "..."}`` values in the raw
+    ``format-keys`` table with strings, in place. Other values are left for
+    the normal settings conversion.
+    """
+    table = tool_skb.get("format-keys", {})
+    if not isinstance(table, dict):
+        return
+    for key, entry in table.items():
+        if not isinstance(entry, dict):
+            continue
+        unknown = set(entry) - {"config-setting", "default"}
+        if unknown:
+            rich_error(
+                f"format-keys.{key} has unrecognized keys: {', '.join(sorted(unknown))}"
+            )
+        name = entry.get("config-setting")
+        if not isinstance(name, str) or name not in values:
+            rich_error(
+                f"format-keys.{key} references undeclared config-setting {name!r}"
+            )
+        default = entry.get("default")
+        if default is not None and not isinstance(default, str):
+            rich_error(f"format-keys.{key} 'default' must be a string")
+        value = values[name]
+        if value is None:
+            value = default
+        if value is None:
+            rich_error(
+                f"format-keys.{key}: config-setting {name!r} is not set;"
+                " set it or add a default"
+            )
+        table[key] = str(value).lower() if isinstance(value, bool) else value
 
 
 def resolve_metadata_config_settings(

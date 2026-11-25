@@ -93,6 +93,31 @@ The deprecated `tool.scikit-build.metadata` table does not support this.
 
 :::
 
+## Use in formatted fields
+
+A `format-keys` entry makes the resolved value available in
+[formatted fields](./formatted.md), for example to keep one build directory per
+variant:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{variant}"
+
+[tool.scikit-build.format-keys]
+variant = { config-setting = "torch.variant", default = "cpu" }
+```
+
+The `default` is used when the setting resolves to no value. It applies to this
+key only, so the setting stays unset for `cmake.define` and overrides. If there
+is no value and no `default`, the build stops with an error. A boolean value
+formats as `true` or `false`.
+
+`minimum-version`, if set, must be at least 1.2.
+
+:::{versionadded} 1.2
+
+:::
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the

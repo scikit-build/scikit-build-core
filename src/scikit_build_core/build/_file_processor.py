@@ -19,7 +19,7 @@ from ..format import format_template, pyproject_format
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Sequence
+    from collections.abc import Generator, Iterable, Sequence
 
 __all__ = ["each_unignored_file", "symlink_escapes"]
 
@@ -148,6 +148,7 @@ def each_unignored_file(
     mode: Literal["classic", "default", "manual", "explicit"],
     resolve_symlinks: Literal["all", "external", "none", "classic", "error"] = "all",
     yield_loop_symlinks: bool = False,
+    format_keys: Iterable[str] = (),
 ) -> Generator[Path, None, None]:
     """
     Runs through all non-ignored files. Must be run from the root directory.
@@ -185,7 +186,9 @@ def each_unignored_file(
     ignored_boundaries = _ignored_boundaries(nested_excludes, boundaries)
 
     exclude_build_dir = format_template(
-        build_dir, pyproject_format(dummy=True), key="build-dir"
+        build_dir,
+        pyproject_format(dummy=True, format_keys=format_keys),
+        key="build-dir",
     )
 
     # A build-dir made only of placeholders would become "*" or "*/*" and

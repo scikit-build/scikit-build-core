@@ -18,7 +18,7 @@ from .settings.skbuild_model import normalize_build_types
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Iterable, Mapping
     from typing import Literal
 
     from scikit_build_core.builder.wheel_tag import WheelTag
@@ -100,7 +100,9 @@ def pyproject_format(
 
 
 @typing.overload
-def pyproject_format(*, dummy: Literal[True]) -> dict[str, str]: ...
+def pyproject_format(
+    *, dummy: Literal[True], format_keys: Iterable[str] = ...
+) -> dict[str, str]: ...
 
 
 def pyproject_format(
@@ -114,12 +116,18 @@ def pyproject_format(
     name: str | None = None,
     build_dir: Path | None = None,
     dummy: bool = False,
+    format_keys: Iterable[str] = (),
 ) -> PyprojectFormatter | dict[str, str]:
-    """Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format."""
+    """
+    Generate :py:class:`PyprojectFormatter` dictionary to use in f-string format.
+
+    The result also has the ``format-keys`` of ``settings``. In dummy mode,
+    ``format_keys`` gives their names.
+    """
     if dummy:
         # Return a dict with all the known keys but with values replaced with dummy values
         res_dummy: dict[str, object] = dict.fromkeys(
-            PyprojectFormatter.__annotations__, "*"
+            (*format_keys, *PyprojectFormatter.__annotations__), "*"
         )
         # Keys that accept a format spec (e.g. ``{root:uri}``) must use a value
         # whose ``__format__`` accepts any spec, otherwise dummy formatting of a
@@ -146,8 +154,8 @@ def pyproject_format(
         res["name"] = name
     if build_dir is not None:
         res["build_dir"] = str(build_dir.resolve())
-    # Construct the final dict including the always known keys
-    return res
+    # A built-in key takes precedence; the settings reader rejects a collision.
+    return typing.cast("PyprojectFormatter", {**settings.format_keys, **res})
 
 
 @dataclasses.dataclass()

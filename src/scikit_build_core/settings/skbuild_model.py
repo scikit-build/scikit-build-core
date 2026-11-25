@@ -890,6 +890,18 @@ class ScikitBuildSettings:
     .. versionadded:: 1.0
     """
 
+    format_keys: dict[str, str] = dataclasses.field(default_factory=dict)
+    """
+    A table of extra variables for the formatted fields.
+
+    Each value is a literal string or a table with ``config-setting`` (the name
+    of a declared config-setting) and ``default`` (used if the setting has no
+    value). The formatted fields, like :confval:`build-dir`, can use each key
+    as ``{key}``.
+
+    .. versionadded:: 1.2
+    """
+
     strict_config: bool = True
     """
     Strictly check all config options.
