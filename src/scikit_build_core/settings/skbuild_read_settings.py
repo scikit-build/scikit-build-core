@@ -338,6 +338,18 @@ def _validate_build_dir(settings: ScikitBuildSettings) -> None:
         name = field.name
         if name not in known:
             rich_error("build-dir: unknown placeholder {name!r}", name=name)
+        if (
+            name == "variant_label"
+            and name not in settings.format_keys
+            and settings.variant_label
+        ):
+            # The label is checked later, but the build-dir is made before then.
+            label = settings.variant_label
+            if label in {".", ".."} or {"/", "\\"}.intersection(label):
+                rich_error(
+                    "build-dir: variant-label must be one path component, got {label!r}",
+                    label=label,
+                )
         if name not in settings.format_keys:
             continue
         # The SDist exclude pattern matches one path component per placeholder.

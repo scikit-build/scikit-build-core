@@ -64,6 +64,11 @@ class PyprojectFormatter(TypedDict, total=False):
     """Root path of the current project."""
     build_dir: str
     """The resolved ``build-dir``. Only available in :confval:`editable.rebuild-dir`, e.g. ``rebuild-dir = "{build_dir}/install/{wheel_tag}"`` keeps the install tree next to the build tree when ``SKBUILD_BUILD_DIR`` moves it."""
+    variant_label: str
+    """The experimental :pep:`817` wheel variant label from :confval:`variant-label`, or an empty string when no label is set. The null variant has the label ``null``. Use it to keep variant builds apart, e.g. ``build-dir = "build/{wheel_tag}-{variant_label}"``. In ``build-dir``, a label must be one path component.
+
+    .. versionadded:: 1.2
+    """
 
 
 def format_template(template: str, values: Mapping[str, object], *, key: str) -> str:
@@ -145,6 +150,7 @@ def pyproject_format(
         # as part of PEP517 standard.
         root=RootPathResolver(),
         build_type=normalize_build_types(settings.cmake.build_type)[0],
+        variant_label=settings.variant_label or "",
     )
     # Then compute all optional keys depending on the function input
     if tags is not None:

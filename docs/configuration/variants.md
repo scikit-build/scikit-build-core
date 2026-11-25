@@ -69,6 +69,25 @@ time.
 You can also set `experimental = true` under `[tool.scikit-build]` instead of
 passing it every time.
 
+## Build directory per variant
+
+The [`{variant_label}`](./formatted.md) placeholder gives the selected label, so
+each variant can have its own build directory:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}-{variant_label}"
+```
+
+```{versionadded} 1.2
+The `{variant_label}` placeholder.
+```
+
+When no label is set, `{variant_label}` is an empty string. Then
+`build/{wheel_tag}-{variant_label}` gives `build/<wheel tag>-`, and
+`build/{variant_label}` gives `build`. The null variant has the label `null`, so
+its build directory is different from a build with no variant.
+
 For more information you can see the available PEPs:
 
 - [PEP 817][]: the overview of the wheel variant proposal
