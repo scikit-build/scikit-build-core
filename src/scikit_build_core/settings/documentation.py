@@ -65,30 +65,6 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
     }
 
 
-def _flat_expressible(field_type: typing.Any) -> bool:
-    """
-    Whether a field can be set through a flat source (``config-settings`` or a
-    ``SKBUILD_*`` environment variable).
-
-    Both sources reject arrays of tables (handled separately via the ``[]`` name
-    marker) and can't round-trip nested mappings (e.g. a dict of dicts), so no
-    flat key is advertised for those. Dicts of scalars (including
-    ``cmake.define``) and lists of scalars are fine.
-    """
-    origin = get_origin(field_type)
-    if origin is Annotated:
-        return _flat_expressible(get_args(field_type)[0])
-    if is_union_type(origin):
-        return all(
-            _flat_expressible(arg)
-            for arg in get_args(field_type)
-            if arg is not NoneType
-        )
-    if origin is dict:
-        return get_origin(get_args(field_type)[1]) not in (dict, list)
-    return True
-
-
 @dataclasses.dataclass(frozen=True)
 class DCDoc:
     name: str
@@ -104,15 +80,10 @@ class DCDoc:
         """
         Whether the option can be set via ``config-settings`` or an env var.
 
-        Arrays of tables (``generate[]``), nested mappings, and ``STATIC``
-        fields can only be set in ``pyproject.toml``, so the flat forms are
-        skipped for them.
+        ``STATIC`` fields (including arrays of tables and nested mappings,
+        which flat sources cannot express) are skipped.
         """
-        return (
-            self.scope is not FieldScope.STATIC
-            and "[]" not in self.name
-            and _flat_expressible(self.field.type)
-        )
+        return self.scope is not FieldScope.STATIC
 
 
 def sanitize_default_field(text: str) -> str:
@@ -169,7 +140,9 @@ def get_choices(field_type: type | str) -> tuple[str, ...]:
     return ()
 
 
-def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
+def mk_docs(
+    dc: type[object], prefix: str = "", scope: FieldScope = FieldScope.ANY
+) -> Generator[DCDoc, None, None]:
     """
     Makes documentation for a dataclass.
     """
@@ -177,15 +150,20 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
     docs = pull_docs(dc)
 
     for field in dataclasses.fields(dc):
+        field_scope = field.metadata.get("scope", scope)
         field_type = field.type
         if dataclasses.is_dataclass(field_type) and isinstance(field_type, type):
-            yield from mk_docs(field_type, prefix=f"{prefix}{field.name}.")
+            yield from mk_docs(
+                field_type, prefix=f"{prefix}{field.name}.", scope=field_scope
+            )
             continue
 
         if get_origin(field.type) is list:
             field_type = get_args(field.type)[0]
             if dataclasses.is_dataclass(field_type) and isinstance(field_type, type):
-                yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
+                yield from mk_docs(
+                    field_type, prefix=f"{prefix}{field.name}[].", scope=field_scope
+                )
                 continue
 
         if default_before_format := field.metadata.get("display_default", None):
@@ -211,6 +189,6 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             docs=docs[field.name],
             field=field,
             deprecated=field.metadata.get("deprecated", False),
-            scope=field.metadata.get("scope", FieldScope.ANY),
+            scope=field_scope,
             choices=get_choices(field.type),
         )

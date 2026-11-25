@@ -859,11 +859,17 @@ class ScikitBuildSettings:
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
-    generate: list[GenerateSettings] = dataclasses.field(default_factory=list)
+    generate: list[GenerateSettings] = dataclasses.field(
+        default_factory=list,
+        metadata=SettingsFieldMetadata(scope=FieldScope.STATIC),
+    )
     messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
     search: SearchSettings = dataclasses.field(default_factory=SearchSettings)
 
-    metadata: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+    metadata: dict[str, dict[str, Any]] = dataclasses.field(
+        default_factory=dict,
+        metadata=SettingsFieldMetadata(scope=FieldScope.STATIC),
+    )
     """
     List dynamic metadata fields and hook locations in this table.
     """
