@@ -55,8 +55,8 @@ class FieldScope(enum.Enum):
     """Not in the static ``pyproject.toml`` table; env vars, config-settings,
     entry-point config, and ``[[overrides]]`` are allowed."""
     STATIC = "static"
-    """Only in configuration files: ``pyproject.toml`` (including
-    ``[[overrides]]``) and entry-point config."""
+    """Only in ``pyproject.toml`` (including ``[[overrides]]``) and
+    entry-point config."""
 
 
 class SettingsFieldMetadata(TypedDict, total=False):
