@@ -71,7 +71,6 @@ When setting up your dataclasses, these types are handled:
 - Any callable (`Path`, `Version`): Passed the string input.
 - ``Optional[T]``: Treated like T. Default should be None, since no input format supports None's.
 - ``Union[str, ...]``: Supports other input types in TOML form (bool currently). Otherwise a string.
-- ``Union[bool, Literal[...]]``: Supports booleans and the listed string values.
 - ``Union[str, List[str]]``: A single string, or a list (a repeated option in config form, ``;`` separated in EnvVar/config forms, or native in TOML).
 - ``List[T]``: A list of items. `;` separated supported in EnvVar/config forms. T can be a dataclass (TOML only).
 - ``Dict[str, T]``: A table of items. TOML supports a layer of nesting. Any is supported as an item type.
@@ -403,10 +402,6 @@ class EnvSource(Source):
 
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
-            if bool in args and Literal in args:
-                if item in get_args(process_union(args[Literal])):
-                    return item
-                return _process_bool(item)
             # A str+list union (e.g. cmake.build-type) takes a single string or
             # a ``;``-separated list, like a plain List[str] field.
             if str in args and list in args:
@@ -430,16 +425,10 @@ class EnvSource(Source):
             raise TypeError(msg)
 
         if raw_target is Literal:
-            literal_args = get_args(process_union(target))
-            if item in literal_args:
-                return item
-            if item == "external" and "environment" in literal_args:
-                return "environment"
-            bool_val = _process_bool(item)
-            if "interpreter" in literal_args and "none" in literal_args:
-                return "interpreter" if bool_val else "none"
-            msg = f"{item!r} not in {literal_args!r}"
-            raise TypeError(msg)
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
+                raise TypeError(msg)
+            return item
 
         if callable(raw_target):
             return raw_target(item)
@@ -603,13 +592,6 @@ class ConfSource(Source):
             return {k: cls.convert(v, get_inner_type(target)) for k, v in item.items()}
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
-            if bool in args and Literal in args:
-                if isinstance(item, bool):
-                    return item
-                if isinstance(item, str):
-                    if item in get_args(process_union(args[Literal])):
-                        return item
-                    return _process_bool(item)
             # A str+list union (e.g. cmake.build-type) takes a single string or
             # a list. The preferred way to pass a list is to repeat the option
             # (``-Ccmake.build-type=A -Ccmake.build-type=B``), which the backend
@@ -652,22 +634,10 @@ class ConfSource(Source):
         if raw_target is bool:
             return item if isinstance(item, bool) else _process_bool(item)
         if raw_target is Literal:
-            literal_args = get_args(process_union(target))
-            if isinstance(item, bool):
-                if "interpreter" in literal_args and "none" in literal_args:
-                    return "interpreter" if item else "none"
-                msg = f"Expected {target}, got bool"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
-            if item in literal_args:
-                return item
-            if item == "external" and "environment" in literal_args:
-                return "environment"
-            if isinstance(item, str):
-                bool_val = _process_bool(item)
-                if "interpreter" in literal_args and "none" in literal_args:
-                    return "interpreter" if bool_val else "none"
-            msg = f"{item!r} not in {literal_args!r}"
-            raise TypeError(msg)
+            return item
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"
@@ -809,11 +779,6 @@ class TOMLSource(Source):
             return item
         if is_union_type(raw_target):
             args = {get_target_raw_type(t): t for t in get_args(target)}
-            if bool in args and Literal in args and isinstance(item, str):
-                if item in get_args(process_union(args[Literal])):
-                    return item
-                msg = f"Expected {target}, got {item!r}"
-                raise TypeError(msg)
             if type(item) in args:
                 if isinstance(item, dict):
                     return {
@@ -826,18 +791,10 @@ class TOMLSource(Source):
             msg = f"Expected {target}, got {type(item).__name__}"
             raise TypeError(msg)
         if raw_target is Literal:
-            literal_args = get_args(process_union(target))
-            if isinstance(item, bool):
-                if "interpreter" in literal_args and "none" in literal_args:
-                    return "interpreter" if item else "none"
-                msg = f"Expected {target}, got bool"
+            if item not in get_args(process_union(target)):
+                msg = f"{item!r} not in {get_args(process_union(target))!r}"
                 raise TypeError(msg)
-            if item in literal_args:
-                return item
-            if item == "external" and "environment" in literal_args:
-                return "environment"
-            msg = f"{item!r} not in {literal_args!r}"
-            raise TypeError(msg)
+            return item
         if callable(raw_target):
             return raw_target(item)
         msg = f"Can't convert target {target}"

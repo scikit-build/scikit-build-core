@@ -332,7 +332,7 @@ print(mk_skbuild_docs())
 ```{eval-rst}
 .. confval:: cmake.python-hints
 
-  :Type: ``bool | "none" | "interpreter" | "environment" | "external"``
+  :Type: ``"none" | "interpreter" | "environment"``
   :Default: "interpreter"
   :Config-settings: ``cmake.python-hints`` or ``skbuild.cmake.python-hints``
   :Environment variable: ``SKBUILD_CMAKE_PYTHON_HINTS``
@@ -351,10 +351,10 @@ print(mk_skbuild_docs())
     ``PYTHON_LIBRARY`` is not used for stable-ABI builds.
 
   .. versionchanged:: 1.1
-     Changed from a boolean + ``"external"`` to a three-value enum.
-     Boolean ``True`` maps to ``"interpreter"``, boolean ``False`` maps to
-     ``"none"``, and ``"external"`` maps to ``"environment"`` for backward
-     compatibility.
+     With a minimum version below 1.1, boolean values are deprecated.
+     ``true`` maps to ``"interpreter"`` and ``false`` maps to ``"none"``.
+     Use one of the string values with minimum version 1.1 or later, or
+     when no minimum version is set.
 ```
 
 ```{eval-rst}

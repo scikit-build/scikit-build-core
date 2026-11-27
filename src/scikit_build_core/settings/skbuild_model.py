@@ -275,9 +275,7 @@ class CMakeSettings:
     .. versionadded:: 1.1
     """
 
-    python_hints: Union[
-        bool, Literal["none", "interpreter", "environment", "external"]
-    ] = "interpreter"
+    python_hints: Literal["none", "interpreter", "environment"] = "interpreter"
     """
     Control which Python hints are passed to FindPython.
 
@@ -293,19 +291,11 @@ class CMakeSettings:
       ``PYTHON_LIBRARY`` is not used for stable-ABI builds.
 
     .. versionchanged:: 1.1
-       Changed from a boolean + ``"external"`` to a three-value enum.
-       Boolean ``True`` maps to ``"interpreter"``, boolean ``False`` maps to
-       ``"none"``, and ``"external"`` maps to ``"environment"`` for backward
-       compatibility.
+       With a minimum version below 1.1, boolean values are deprecated.
+       ``true`` maps to ``"interpreter"`` and ``false`` maps to ``"none"``.
+       Use one of the string values with minimum version 1.1 or later, or
+       when no minimum version is set.
     """
-
-    def __post_init__(self) -> None:
-        if self.python_hints is True:
-            self.python_hints = "interpreter"
-        elif self.python_hints is False:
-            self.python_hints = "none"
-        elif self.python_hints == "external":
-            self.python_hints = "environment"
 
 
 @dataclasses.dataclass

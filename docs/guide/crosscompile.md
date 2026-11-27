@@ -119,14 +119,18 @@ also need to use `wheel.tags` to manually specify the wheel tags to use for the
 file and `cmake.python-hints = "none"` if the target python should be detected
 using the toolchain file instead.
 
-For a staged Python installation, set `PYTHON_INCLUDE_DIR` and the regular-build
-`PYTHON_LIBRARY` in the effective build environment and set
-`cmake.python-hints = "environment"`. These non-empty values are used as Python
-development hints; an unset or empty value keeps the normal
-`sysconfig`/`DIST_EXTRA_CONFIG` fallback. The default
-`cmake.python-hints = "interpreter"` ignores these environment variables, and
-the regular library hint is not used for stable-ABI (`abi3`/`abi3t`) builds.
-Boolean values and `"external"` are still accepted for backward compatibility.
+If you've staged a target Python installation, set `PYTHON_INCLUDE_DIR`
+and `PYTHON_LIBRARY` to its headers and regular library in the build
+environment. Set `cmake.python-hints = "environment"` to pass these non-empty
+values to FindPython. The interpreter hint still comes from the Python running
+the build backend. This mode is useful with [Crossenv], where build Python runs
+with the target Python's configuration and you can supply explicit paths to
+the staged target files.
+
+For each unset or empty value, scikit-build-core uses its usual
+`sysconfig`/`DIST_EXTRA_CONFIG` lookup. The default
+`cmake.python-hints = "interpreter"` skips these two environment variables.
+Stable-ABI (`abi3`/`abi3t`) builds skip the regular library hint.
 
 :::{note}
 

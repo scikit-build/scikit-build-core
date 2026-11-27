@@ -627,7 +627,7 @@ def test_builder_no_python_hints_skips_lookups(tmp_path, monkeypatch):
 
     builder = Builder(
         settings=ScikitBuildSettings(
-            cmake=CMakeSettings(python_hints=False),
+            cmake=CMakeSettings(python_hints="none"),
             search=SearchSettings(site_packages=False),
         ),
         config=config,
@@ -747,20 +747,18 @@ def test_builder_explicit_cmake_python_defines_override_environment_hints(
         ("environment", None, None, False),
         ("environment", True, "target/python.lib", False),
         ("interpreter", None, "target/python.lib", False),
-        (True, None, "target/python.lib", False),
     ],
     ids=[
         "environment-regular-explicit",
         "environment-regular-automatic",
         "environment-stable-abi",
         "interpreter-ignores-environment",
-        "true-maps-to-interpreter",
     ],
 )
 def test_builder_environment_library_hint_posix_modern_cache(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    python_hints: typing.Literal["none", "interpreter", "environment"] | bool,
+    python_hints: typing.Literal["none", "interpreter", "environment"],
     limited_api: bool | None,
     environment_library: str | None,
     modern_library: bool,
