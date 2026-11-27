@@ -275,11 +275,26 @@ class CMakeSettings:
     .. versionadded:: 1.1
     """
 
-    python_hints: bool = True
+    python_hints: Literal["none", "interpreter", "environment"] = "interpreter"
     """
-    Do not pass the current environment's python hints such as ``Python_EXECUTABLE``.
-    Primarily used for cross-compilation where the CMAKE_TOOLCHAIN_FILE should handle it
-    instead.
+    Control which Python hints are passed to FindPython.
+
+    - ``"none"``: Pass no hints; let CMake/FindPython discover everything on its
+      own. Use this when the toolchain file handles Python discovery.
+    - ``"interpreter"`` (default): Pass hints derived from the running Python
+      interpreter, but ignore ``PYTHON_INCLUDE_DIR`` and ``PYTHON_LIBRARY`` from
+      the build environment.
+    - ``"environment"``: Pass hints derived from the running Python interpreter,
+      and also use non-empty values from ``PYTHON_INCLUDE_DIR`` and
+      ``PYTHON_LIBRARY`` environment variables as development hints, falling
+      back to normal detection when a value is unset or empty.
+      ``PYTHON_LIBRARY`` is not used for stable-ABI builds.
+
+    .. versionchanged:: 1.1
+       With a minimum version below 1.1, boolean values are deprecated.
+       ``true`` maps to ``"interpreter"`` and ``false`` maps to ``"none"``.
+       Use one of the string values with minimum version 1.1 or later, or
+       when no minimum version is set.
     """
 
 

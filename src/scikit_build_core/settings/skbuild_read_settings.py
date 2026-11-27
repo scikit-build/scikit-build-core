@@ -194,10 +194,9 @@ def _static_paths(
     return frozenset(paths)
 
 
-class _HideStatic:
+class _HideFields:
     """
-    Hide ``STATIC`` fields from a dynamic source during conversion, so a bad
-    value does not fail conversion before ``_validate_overrides`` reports it.
+    Hide selected field paths during settings conversion.
     """
 
     def __init__(self, source: Source, paths: frozenset[tuple[str, ...]]) -> None:
@@ -354,6 +353,9 @@ def _validate_build_dir(settings: ScikitBuildSettings) -> None:
                 placeholder=field.placeholder,
                 value=value,
             )
+
+
+_PYTHON_HINTS_PATH = ("cmake", "python_hints")
 
 
 class SettingsReader:
@@ -545,11 +547,20 @@ class SettingsReader:
         self._toml_src_names = tuple(toml_src_names)
         static_paths = _static_paths(ScikitBuildSettings)
         self.sources = SourceChain(
-            *(_HideStatic(s, static_paths) for s in dynamic_srcs),
+            *(_HideFields(s, static_paths) for s in dynamic_srcs),
             *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )
-        self.settings = self.sources.convert_target(ScikitBuildSettings)
+        python_hints = self._legacy_python_hints()
+        conversion_sources = self.sources
+        if python_hints is not None:
+            # Convert the legacy value without changing source provenance.
+            conversion_sources = SourceChain(
+                TOMLSource(settings={"cmake": {"python-hints": python_hints}}),
+                *self.sources.sources,
+                prefixes=self.sources.prefixes,
+            )
+        self.settings = conversion_sources.convert_target(ScikitBuildSettings)
 
         self._check_unset_format_keys(unset_format_keys)
 
@@ -567,9 +578,13 @@ class SettingsReader:
         # The cmake/build values that come *only* from static project sources
         # (pyproject.toml and extra_settings), used by the minimum-version move
         # gates below. Entry-point config is excluded so it behaves like
-        # env/config-settings.
+        # env/config-settings. Python hints are validated on the winning source.
         static_chain = SourceChain(
-            *self._static_srcs, prefixes=["tool", "scikit-build"]
+            *(
+                _HideFields(source, frozenset({_PYTHON_HINTS_PATH}))
+                for source in self._static_srcs
+            ),
+            prefixes=["tool", "scikit-build"],
         )
         static_cmake = static_chain.convert_target(CMakeSettings, "cmake")
         static_build = static_chain.convert_target(BuildSettings, "build")
@@ -583,6 +598,15 @@ class SettingsReader:
                     f"Minimum required version is {self.settings.minimum_version}."
                 )
                 raise CMakeConfigError(msg)
+
+        if python_hints is not None:
+            minimum = self.settings.minimum_version
+            message = f'Use cmake.python-hints = "{python_hints}" instead of a boolean'
+            if minimum is None or minimum >= Version("1.1"):
+                rich_error(message)
+            rich_warning(
+                f"{message}. Boolean values for cmake.python-hints are deprecated."
+            )
 
         if isinstance(self.settings.wheel.packages, dict):
             for key, value in self.settings.wheel.packages.items():
@@ -760,6 +784,28 @@ class SettingsReader:
             self.settings.sdist.resolve_symlinks = "classic"
         else:
             self.settings.sdist.resolve_symlinks = "all"
+
+    def _legacy_python_hints(self) -> Literal["none", "interpreter"] | None:
+        for source in self.sources.sources:
+            if source.has_item(*_PYTHON_HINTS_PATH, is_dict=False):
+                value = source.get_item(*_PYTHON_HINTS_PATH, is_dict=False)
+                break
+        else:
+            return None
+
+        # Per-build sources transport booleans as strings. Recognize boolean
+        # spellings explicitly so a misspelled mode does not become True.
+        if (
+            isinstance(source, _HideFields)
+            and isinstance(value, str)
+            and value.strip().lower()
+            in {"", "0", "1", "false", "true", "no", "yes", "off", "on"}
+        ):
+            value = source.convert(value, bool)
+        if not isinstance(value, bool):
+            return None
+
+        return "interpreter" if value else "none"
 
     def _check_unset_format_keys(
         self, unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]]

@@ -116,8 +116,21 @@ CMake's guide on how to write the [toolchain file].
 You can pass the toolchain file using the environment variable
 `CMAKE_TOOLCHAIN_FILE`, or the `cmake.toolchain-file` pyproject option. You may
 also need to use `wheel.tags` to manually specify the wheel tags to use for the
-file and `cmake.python-hints = false` if the target python should be detected
+file and `cmake.python-hints = "none"` if the target python should be detected
 using the toolchain file instead.
+
+If you've staged a target Python installation, set `PYTHON_INCLUDE_DIR`
+and `PYTHON_LIBRARY` to its headers and regular library in the build
+environment. Set `cmake.python-hints = "environment"` to pass these non-empty
+values to FindPython. The interpreter hint still comes from the Python running
+the build backend. This mode is useful with [Crossenv], where build Python runs
+with the target Python's configuration and you can supply explicit paths to
+the staged target files.
+
+For each unset or empty value, scikit-build-core uses its usual
+`sysconfig`/`DIST_EXTRA_CONFIG` lookup. The default
+`cmake.python-hints = "interpreter"` skips these two environment variables.
+Stable-ABI (`abi3`/`abi3t`) builds skip the regular library hint.
 
 :::{note}
 

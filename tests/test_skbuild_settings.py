@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import textwrap
 from pathlib import Path
+from typing import Any, Literal
 
 import pytest
 from packaging.specifiers import SpecifierSet
@@ -15,6 +16,105 @@ import scikit_build_core.settings.skbuild_read_settings
 from scikit_build_core._compat.builtins import ExceptionGroup
 from scikit_build_core.settings.skbuild_model import EnvValue, GenerateSettings
 from scikit_build_core.settings.skbuild_read_settings import SettingsReader
+
+
+def _read_python_hints(
+    source: str, value: str | bool, minimum: str | None, **settings: Any
+) -> Literal["none", "interpreter", "environment"]:
+    config: dict[str, str | list[str] | bool] = {}
+    env = {}
+    project: dict[str, Any] = {"cmake": {"version": ">=3.15"}, **settings}
+    if minimum is not None:
+        project["minimum-version"] = minimum
+
+    if source == "toml":
+        project["cmake"]["python-hints"] = value
+    elif source == "config":
+        config["cmake.python-hints"] = value
+    else:
+        env["SKBUILD_CMAKE_PYTHON_HINTS"] = str(value)
+
+    return SettingsReader(
+        {
+            "tool": {"scikit-build": project},
+            "build-system": {"requires": ["scikit-build-core>=1.0"]},
+        },
+        config,
+        state="wheel",
+        env=env,
+    ).settings.cmake.python_hints
+
+
+@pytest.mark.parametrize("mode", ["none", "interpreter", "environment"])
+@pytest.mark.parametrize("source", ["toml", "config", "env"])
+def test_python_hints_current(source, mode, capsys):
+    assert _read_python_hints(source, mode, None) == mode
+    assert "deprecated" not in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("source", "value", "expected"),
+    [
+        ("toml", True, "interpreter"),
+        ("toml", False, "none"),
+        ("config", "off", "none"),
+        ("config", True, "interpreter"),
+        ("env", "YES", "interpreter"),
+        ("env", "0", "none"),
+    ],
+)
+def test_python_hints_legacy(source, value, expected, capsys):
+    assert _read_python_hints(source, value, "build-system.requires") == expected
+    assert "Boolean values for cmake.python-hints are deprecated" in (
+        capsys.readouterr().err
+    )
+
+
+@pytest.mark.parametrize("source", ["toml", "config", "env"])
+@pytest.mark.parametrize("minimum", [None, "1.1"])
+def test_python_hints_rejects_boolean_at_current_minimum(source, minimum, capsys):
+    value = False if source == "toml" else "off"
+    with pytest.raises(SystemExit):
+        _read_python_hints(source, value, minimum)
+    assert 'Use cmake.python-hints = "none" instead of a boolean' in (
+        capsys.readouterr().err
+    )
+
+
+@pytest.mark.parametrize("source", ["toml", "config", "env"])
+@pytest.mark.parametrize("value", ["external", "environmnt"])
+def test_python_hints_rejects_unknown_modes(source, value):
+    with pytest.raises(ExceptionGroup):
+        _read_python_hints(source, value, "1.0")
+
+
+def test_python_hints_uses_winning_sources(capsys):
+    assert (
+        _read_python_hints(
+            "env",
+            "environment",
+            None,
+            cmake={"version": ">=3.15", "python-hints": False},
+        )
+        == "environment"
+    )
+    assert "deprecated" not in capsys.readouterr().err
+
+    reader = SettingsReader(
+        {
+            "tool": {
+                "scikit-build": {
+                    "minimum-version": "1.1",
+                    "cmake": {"version": ">=3.15", "python-hints": False},
+                }
+            }
+        },
+        {"minimum-version": "1.0"},
+        state="wheel",
+        env={},
+    )
+    assert reader.settings.cmake.python_hints == "none"
+    assert "deprecated" in capsys.readouterr().err
 
 
 def test_skbuild_settings_default(tmp_path: Path):
