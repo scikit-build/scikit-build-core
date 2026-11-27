@@ -1,20 +1,27 @@
 # Debugging and IDE integration
 
 Coverage tools (`gcov`/`gcovr`), debuggers (GDB), and editor tooling (the VSCode
-C/C++ extension, clangd) all depend on paths recorded at compile time. Two
-scikit-build-core defaults make those paths disappear:
+C/C++ extension, clangd) all depend on paths recorded at compile time. Check
+which paths your tool needs and where the build recorded them.
 
-- **The build directory is temporary.** Without {confval}`build-dir` set,
-  scikit-build-core builds in a temporary directory that is deleted after the
-  build, taking coverage data, debug artifacts, and `compile_commands.json` with
-  it.
-- **Build isolation hides everything else.** `pip install .`, `python -m build`,
-  `uv build`, and `uv sync` copy your project and install the build dependencies
-  into throwaway environments, so recorded source paths and include paths no
-  longer exist after the build.
+- **CMake build directory.** Without {confval}`build-dir`, scikit-build-core
+  removes its temporary build directory when the build finishes. Set it to a
+  persistent directory to keep coverage notes, object files, and
+  `compile_commands.json`.
+- **Project sources.** For a local checkout, `pip install .`,
+  `pip install -e .`, and `uv sync` build from the checkout. By default,
+  `python -m build` and `uv build` first create an sdist, then build a wheel
+  from its temporary extracted sources. To build the wheel directly from the
+  checkout, use `python -m build --wheel` or `uv build --wheel`. See [pip’s
+  local project installs][pip-local] and [build’s default build
+  flow][build-default].
+- **Build dependencies.** Build isolation can leave recorded include paths
+  pointing to a temporary environment. If your editor or debugger needs those
+  headers after the build, install the build dependencies in your own
+  environment and disable isolation.
 
-The shared fix is a persistent build directory with isolation disabled (after
-preinstalling your build dependencies), so everything stays in place:
+For example, after installing the build dependencies, you can keep the sources,
+CMake output, and dependency headers available with an editable install:
 
 ```bash
 pip install --no-build-isolation -Cbuild-dir=build -ve .
@@ -30,10 +37,11 @@ build-dir = "build"
 
 ## Coverage and debugging (gcov / gcovr / GDB)
 
-gcov records the source path and compilation directory in the `.gcno`
-(compile-time) and `.gcda` (run-time) files, and DWARF debug info records the
-source path in the compiled extension. If those paths no longer exist when you
-run the tool, you get errors such as
+GCC writes source locations and the compilation directory to its `.gcno` notes
+at compile time. Running the instrumented code writes execution counts to the
+corresponding `.gcda` files. Debuggers use source paths recorded in the
+extension’s DWARF debug info. If the build or source paths no longer exist, you
+can get errors such as
 
 ```console
 $ gcovr --xml coverage.xml -r .
@@ -42,17 +50,26 @@ $ gcovr --xml coverage.xml -r .
 
 or GDB that cannot show source lines even with debug flags enabled.
 
-With the persistent-tree install above, run gcovr against the persistent tree,
-pointing the root at your source:
+Compile and link with coverage enabled (for GCC, `--coverage`), then run the
+installed extension to produce the `.gcda` files. From the source checkout,
+point gcovr at the directory that contains those files and the matching `.gcno`
+files:
 
 ```bash
 gcovr -r . build
 ```
 
-If you would rather not depend on the paths staying put, make the recorded paths
-relocatable with compiler flags -- `-fprofile-abs-path` for gcov and
-`-ffile-prefix-map=<build>=<src>` (or `-fdebug-prefix-map=...` for debug info
-only) -- for example via {confval}`cmake.define` or `CFLAGS`.
+If files were compiled from different working directories, GCC’s
+[`-fprofile-abs-path`][gcc-abs] records absolute source filenames in the `.gcno`
+files. Keep those source paths available when collecting coverage. For debug
+info, `-fdebug-prefix-map=OLD=NEW` can record a replacement path if you know
+where the sources will be available to the debugger.
+
+[pip-local]:
+  https://pip.pypa.io/en/stable/topics/local-project-installs/#build-artifacts
+[build-default]: https://build.pypa.io/en/stable/how-to/basic-usage.html
+[gcc-abs]:
+  https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html#index-fprofile-abs-path
 
 (compile-commands)=
 
@@ -104,6 +121,27 @@ VSCode C/C++ extension, set
 `"C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json"`.
 See [editable installs](../configuration/editable.md) for the related
 `--no-build-isolation` recommendations.
+
+(ccache)=
+
+## Compiler caches (ccache / sccache)
+
+A compiler cache compares the full compile command. With build isolation, the
+include path of a build dependency such as pybind11 is in a new temporary
+environment for each build (for example `/tmp/pip-build-env-xxxx/...` or
+`~/.cache/uv/builds-v0/.tmpxxxx/...`). Thus the command changes each time and
+the cache never hits, even with a fixed {confval}`build-dir`. `CCACHE_BASEDIR`
+does not help, because the random part stays in the path.
+
+The simplest fix is the persistent-tree install above: disable isolation and
+preinstall the build dependencies. Build isolation was not designed to work well
+with editable installs. A full fix would require tools like uv and pip to keep a
+consistent path for repeated isolated environments, which is outside the scope
+of scikit-build-core.
+
+If you must build with isolation (for example, wheel builds in CI), get the
+headers from a stable location instead of the build environment. Move pybind11
+from `build-system.requires` to a fixed location, like a git submodule.
 
 ## Debug builds on Windows
 

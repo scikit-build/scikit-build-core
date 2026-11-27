@@ -13,6 +13,7 @@ __lazy_modules__ = {
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}._variants",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.ast.ast",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.errors",
+    f"{(__spec__.parent or '').rsplit('.', 1)[0]}.format",
     f"{(__spec__.parent or '').rsplit('.', 1)[0]}.utils.typing",
     f"{__spec__.parent}._load_entrypoint_config",
     f"{__spec__.parent}.auto_cmake_version",
@@ -29,7 +30,7 @@ import difflib
 import os
 import sys
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -40,6 +41,7 @@ from .._logging import logger, rich_error, rich_print, rich_warning
 from .._variants import validate_variant_settings
 from ..ast.ast import ParseError
 from ..errors import CMakeConfigError
+from ..format import PyprojectFormatter, template_fields
 from ..utils.typing import get_target_raw_type
 from ._load_entrypoint_config import load_config_providers
 from .auto_cmake_version import find_min_cmake_version
@@ -48,10 +50,13 @@ from .config_settings import (
     load_declarations,
     resolve_config_settings,
     resolve_define_references,
+    resolve_format_keys,
+    resolve_metadata_config_settings,
 )
 from .skbuild_model import (
     BuildSettings,
     CMakeSettings,
+    FieldScope,
     NinjaSettings,
     ScikitBuildSettings,
     normalize_build_types,
@@ -61,7 +66,7 @@ from .sources import ConfSource, EnvSource, Source, SourceChain, TOMLSource
 
 TYPE_CHECKING = False
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping
+    from collections.abc import Generator, Iterator, Mapping
 
     from .skbuild_overrides import OverrideRecord
 
@@ -176,21 +181,72 @@ def _handle_move(
     return before
 
 
+def _static_paths(
+    target: type[Any], path: tuple[str, ...] = ()
+) -> frozenset[tuple[str, ...]]:
+    paths: set[tuple[str, ...]] = set()
+    for field in dataclasses.fields(target):
+        field_path = (*path, field.name)
+        if field.metadata.get("scope") is FieldScope.STATIC:
+            paths.add(field_path)
+        elif dataclasses.is_dataclass(field.type) and isinstance(field.type, type):
+            paths |= _static_paths(field.type, field_path)
+    return frozenset(paths)
+
+
+class _HideStatic:
+    """
+    Hide ``STATIC`` fields from a dynamic source during conversion, so a bad
+    value does not fail conversion before ``_validate_overrides`` reports it.
+    """
+
+    def __init__(self, source: Source, paths: frozenset[tuple[str, ...]]) -> None:
+        self.source = source
+        self.paths = paths
+
+    def has_item(self, *fields: str, is_dict: bool) -> bool:
+        if any(fields[:i] in self.paths for i in range(1, len(fields) + 1)):
+            return False
+        return self.source.has_item(*fields, is_dict=is_dict)
+
+    def get_item(self, *fields: str, is_dict: bool) -> Any:
+        return self.source.get_item(*fields, is_dict=is_dict)
+
+    def convert(self, item: Any, target: type[Any] | Any) -> object:
+        return self.source.convert(item, target)
+
+    def unrecognized_options(self, options: object) -> Generator[str, None, None]:
+        return self.source.unrecognized_options(options)
+
+    def all_option_names(self, target: type[Any]) -> Iterator[str]:
+        return self.source.all_option_names(target)
+
+
+def _scope_error(settings: ScikitBuildSettings, msg: str) -> None:
+    if settings.strict_config:
+        sys.stdout.flush()
+        rich_print(f"{{bold.red}}ERROR:{{normal}} {msg}")
+        raise SystemExit(7)
+    logger.warning(msg)
+
+
 def _validate_overrides(
     settings: ScikitBuildSettings,
     overrides: dict[str, OverrideRecord],
     *,
     dynamic_sources: tuple[Source, ...],
+    ep_sources: tuple[Source, ...],
     toml_sources: tuple[Source, ...],
 ) -> None:
     """
-    Validate all fields with any override information.
+    Validate each field against its ``FieldScope``.
 
-    ``dynamic_sources`` are the sources that may legitimately set
-    ``override_only`` fields at build time (env vars, PEP 517 config-settings,
-    and machine-level entry-point config); ``toml_sources`` are the static
-    ``pyproject.toml`` (and ``extra_settings``) tables where ``override_only``
-    fields are forbidden outside of an ``[[overrides]]`` section.
+    ``dynamic_sources`` are the per-build sources (env vars and PEP 517
+    config-settings) and ``ep_sources`` the machine-level entry-point config.
+    ``OVERRIDE`` fields may come from either; ``STATIC`` fields may come only
+    from entry-point config. ``toml_sources`` are the static ``pyproject.toml``
+    (and ``extra_settings``) tables, where ``OVERRIDE`` fields are forbidden
+    outside of an ``[[overrides]]`` section.
     """
 
     def validate_field(
@@ -201,41 +257,47 @@ def _validate_overrides(
         record: OverrideRecord | None = None,
     ) -> None:
         """Do the actual validation."""
-        # Check if we had a hard-coded value in the record
         conf_key = field.name.replace("_", "-")
-        if field.metadata.get("override_only", False):
-            # has_item needs dict-presence semantics for dict-valued fields,
-            # since some sources represent dict entries as nested keys.
-            is_dict = get_target_raw_type(field.type) is dict
-            # override-only fields may be set dynamically via env vars or
-            # config-settings; only static pyproject.toml values are forbidden.
-            if any(
-                source.has_item(*path, field.name, is_dict=is_dict)
-                for source in dynamic_sources
-            ):
-                return
+        scope = field.metadata.get("scope", FieldScope.ANY)
+        if scope is FieldScope.ANY:
+            return
+        # has_item needs dict-presence semantics for dict-valued fields,
+        # since some sources represent dict entries as nested keys.
+        is_dict = get_target_raw_type(field.type) is dict
 
-            # Decide whether the value was actually hard-coded in pyproject.toml.
-            # We can't rely on `value is not None`, since some override-only
-            # fields have non-None falsy defaults (e.g. [] or False), so we ask
-            # the TOML sources whether the key is really present.
-            if record is not None:
-                original_value = record.original_value
-            elif any(
+        def set_in(sources: tuple[Source, ...]) -> bool:
+            return any(
                 source.has_item(*path, field.name, is_dict=is_dict)
-                for source in toml_sources
-            ):
-                original_value = value
-            else:
-                original_value = None
+                for source in sources
+            )
 
-            if original_value is not None:
-                msg = f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file"
-                if settings.strict_config:
-                    sys.stdout.flush()
-                    rich_print(f"{{bold.red}}ERROR:{{normal}} {msg}")
-                    raise SystemExit(7)
-                logger.warning(msg)
+        if scope is FieldScope.STATIC:
+            if set_in(dynamic_sources):
+                _scope_error(
+                    settings,
+                    f"{prefix}{conf_key} can only be set in configuration files, "
+                    "not by environment variables or config-settings",
+                )
+            return
+
+        if set_in(dynamic_sources) or set_in(ep_sources):
+            return
+        # Decide whether the value was actually hard-coded in pyproject.toml.
+        # We can't rely on `value is not None`, since some override-only
+        # fields have non-None falsy defaults (e.g. [] or False), so we ask
+        # the TOML sources whether the key is really present.
+        if record is not None:
+            original_value = record.original_value
+        elif set_in(toml_sources):
+            original_value = value
+        else:
+            original_value = None
+
+        if original_value is not None:
+            _scope_error(
+                settings,
+                f"{prefix}{conf_key} is not allowed to be hard-coded in the pyproject.toml file",
+            )
 
     def validate_field_recursive(
         obj: Any,
@@ -263,6 +325,35 @@ def _validate_overrides(
 
     # Navigate all fields starting from the top-level
     validate_field_recursive(obj=settings)
+
+
+def _validate_build_dir(settings: ScikitBuildSettings) -> None:
+    known = {*PyprojectFormatter.__annotations__, *settings.format_keys}
+    try:
+        fields = [f for f in template_fields(settings.build_dir) if f.name is not None]
+    except ValueError:
+        # Formatting reports a template that does not parse.
+        return
+    for field in fields:
+        name = field.name
+        if name not in known:
+            rich_error("build-dir: unknown placeholder {name!r}", name=name)
+        if name not in settings.format_keys:
+            continue
+        # The SDist exclude pattern matches one path component per placeholder.
+        try:
+            value = field.placeholder.format(**settings.format_keys)
+        except (AttributeError, IndexError, KeyError, ValueError):
+            # Formatting reports this error.
+            continue
+        if value in {"", ".", ".."} or {"/", "\\"}.intersection(value):
+            rich_error(
+                "build-dir: format-keys.{name} must be one path component"
+                " in {placeholder}, got {value!r}",
+                name=name,
+                placeholder=field.placeholder,
+                value=value,
+            )
 
 
 class SettingsReader:
@@ -295,6 +386,9 @@ class SettingsReader:
             self.config_setting_decls, config_settings, environ
         )
 
+        # Format-key references with no value, by table.
+        unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]] = []
+
         def process_table(
             skb: dict[str, Any], declaration_error: str
         ) -> tuple[set[str], dict[str, OverrideRecord]]:
@@ -313,6 +407,9 @@ class SettingsReader:
             if "config-setting" in skb:
                 rich_error(declaration_error)
             resolve_define_references(skb, self.custom_config_settings)
+            unset = resolve_format_keys(skb, self.custom_config_settings)
+            if unset:
+                unset_format_keys.append((skb["format-keys"], unset))
             return matched, overridden
 
         # Handle overrides
@@ -340,6 +437,10 @@ class SettingsReader:
         self.dynamic_metadata: list[dict[str, Any]] = pyproject.get("tool", {}).get(
             "dynamic-metadata", []
         )
+        metadata_mapping = resolve_metadata_config_settings(
+            self.dynamic_metadata, self.custom_config_settings
+        )
+        self.variant: dict[str, Any] = pyproject.get("variant", {})
 
         # Support for cmake.version='CMakeLists.txt'
         # We will save the value for now since we need the CMakeLists location
@@ -442,12 +543,15 @@ class SettingsReader:
         # value resolution and unrecognized-option reporting.
         self._toml_srcs = tuple(toml_srcs)
         self._toml_src_names = tuple(toml_src_names)
+        static_paths = _static_paths(ScikitBuildSettings)
         self.sources = SourceChain(
-            *dynamic_srcs,
+            *(_HideStatic(s, static_paths) for s in dynamic_srcs),
             *toml_srcs,
             prefixes=["tool", "scikit-build"],
         )
         self.settings = self.sources.convert_target(ScikitBuildSettings)
+
+        self._check_unset_format_keys(unset_format_keys)
 
         # CMake 3.22+ reads CMAKE_BUILD_TYPE from the environment, but only as a
         # default for the first configure; the -DCMAKE_BUILD_TYPE we always pass
@@ -589,6 +693,26 @@ class SettingsReader:
                 "minimum-version must be at least 1.1 to use tool.scikit-build.config-setting"
             )
 
+        if (
+            metadata_mapping
+            and self.settings.minimum_version is not None
+            and self.settings.minimum_version < Version("1.2")
+        ):
+            rich_error(
+                "minimum-version must be at least 1.2 to use tool.scikit-build.config-setting in tool.dynamic-metadata"
+            )
+
+        if self.settings.format_keys:
+            if (
+                self.settings.minimum_version is not None
+                and self.settings.minimum_version < Version("1.2")
+            ):
+                rich_error("minimum-version must be at least 1.2 to use format-keys")
+            for key in self.settings.format_keys:
+                if not key.isidentifier():
+                    rich_error(f"format-keys.{key!r} must be a valid identifier")
+        _validate_build_dir(self.settings)
+
         if self.settings.sdist.inclusion_mode is not None:
             if (
                 self.settings.minimum_version is not None
@@ -636,6 +760,26 @@ class SettingsReader:
             self.settings.sdist.resolve_symlinks = "classic"
         else:
             self.settings.sdist.resolve_symlinks = "all"
+
+    def _check_unset_format_keys(
+        self, unset_format_keys: list[tuple[dict[str, Any], dict[str, str]]]
+    ) -> None:
+        """
+        Report a format-key reference with no value, but only if its table
+        gives the final value of the key.
+        """
+        for table, unset in unset_format_keys:
+            for key, msg in unset.items():
+                for source in self.sources.sources:
+                    if not source.has_item("format_keys", is_dict=True):
+                        continue
+                    item = source.get_item("format_keys", is_dict=True)
+                    if item is table:
+                        rich_error(msg)
+                    if key in cast(
+                        "dict[str, str]", source.convert(item, dict[str, str])
+                    ):
+                        break
 
     def unrecognized_options(self) -> Generator[str, None, None]:
         return self.sources.unrecognized_options(ScikitBuildSettings)
@@ -685,7 +829,8 @@ class SettingsReader:
         _validate_overrides(
             self.settings,
             self.overridden_items,
-            dynamic_sources=(*self._dynamic_srcs, *self._ep_srcs),
+            dynamic_sources=self._dynamic_srcs,
+            ep_sources=self._ep_srcs,
             toml_sources=self._static_srcs,
         )
 

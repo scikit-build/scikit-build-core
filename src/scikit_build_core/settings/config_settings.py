@@ -10,7 +10,7 @@ __lazy_modules__ = {
 
 import dataclasses
 import re
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 from .._logging import rich_error
 from .skbuild_model import ScikitBuildSettings
@@ -25,6 +25,8 @@ __all__ = [
     "load_declarations",
     "resolve_config_settings",
     "resolve_define_references",
+    "resolve_format_keys",
+    "resolve_metadata_config_settings",
 ]
 
 
@@ -61,12 +63,12 @@ class ConfigSettingDeclaration:
     The type of the setting.
     """
 
-    default: Optional[Union[str, bool]] = None
+    default: str | bool | None = None
     """
     The value used when the setting is not passed; must match the type.
     """
 
-    env: Optional[str] = None
+    env: str | None = None
     """
     An environment variable also read for this setting; it takes precedence over `-C`.
     """
@@ -146,16 +148,16 @@ def load_declarations(raw: Any) -> dict[str, ConfigSettingDeclaration]:
 
 def resolve_config_settings(
     decls: "Mapping[str, ConfigSettingDeclaration]",
-    config_settings: "Mapping[str, Union[str, list[str], bool]]",
+    config_settings: "Mapping[str, str | list[str] | bool]",
     env: "Mapping[str, str]",
-) -> dict[str, Optional[Union[str, bool]]]:
+) -> dict[str, str | bool | None]:
     """
     Resolve declared config-settings; precedence env var > config-setting >
     default, with ``None`` meaning "unset".
     """
-    values: dict[str, Optional[Union[str, bool]]] = {}
+    values: dict[str, str | bool | None] = {}
     for name, decl in decls.items():
-        raw: Optional[Union[str, bool]]
+        raw: str | bool | None
         if decl.env is not None and decl.env in env:
             raw = env[decl.env]
         elif name in config_settings:
@@ -179,8 +181,16 @@ def resolve_config_settings(
     return values
 
 
+def _referenced_value(
+    context: str, name: object, values: "Mapping[str, str | bool | None]"
+) -> "str | bool | None":
+    if not isinstance(name, str) or name not in values:
+        rich_error(f"{context} references undeclared config-setting {name!r}")
+    return values[name]
+
+
 def resolve_define_references(
-    tool_skb: dict[str, Any], values: "Mapping[str, Optional[Union[str, bool]]]"
+    tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
 ) -> None:
     """
     Replace ``{config-setting = "..."}`` values in the raw ``cmake.define``
@@ -204,13 +214,100 @@ def resolve_define_references(
                 f" keys: {', '.join(sorted(unknown))} (put defaults in the"
                 " declaration instead)"
             )
-        name = entry["config-setting"]
-        if not isinstance(name, str) or name not in values:
-            rich_error(
-                f"cmake.define.{key} references undeclared config-setting {name!r}"
-            )
-        value = values[name]
+        value = _referenced_value(
+            f"cmake.define.{key}", entry["config-setting"], values
+        )
         if value is None:
             del define[key]
         else:
             define[key] = value
+
+
+def resolve_format_keys(
+    tool_skb: dict[str, Any], values: "Mapping[str, str | bool | None]"
+) -> dict[str, str]:
+    """
+    Replace ``{config-setting = "...", default = "..."}`` values in the raw
+    ``format-keys`` table with strings, in place.
+
+    Returns an error message for each key that has no value. Such a key gets
+    an empty string, and the caller reports the error only if no source of
+    higher precedence sets the key.
+    """
+    unset: dict[str, str] = {}
+    table = tool_skb.get("format-keys", {})
+    if not isinstance(table, dict):
+        return unset
+    for key, entry in table.items():
+        if isinstance(entry, str):
+            continue
+        if not isinstance(entry, dict):
+            rich_error(f"format-keys.{key} must be a string or a table")
+        unknown = set(entry) - {"config-setting", "default"}
+        if unknown:
+            rich_error(
+                f"format-keys.{key} has unrecognized keys: {', '.join(sorted(unknown))}"
+            )
+        name = entry.get("config-setting")
+        value = _referenced_value(f"format-keys.{key}", name, values)
+        default = entry.get("default")
+        if default is not None and not isinstance(default, str):
+            rich_error(f"format-keys.{key} 'default' must be a string")
+        if value is None:
+            value = default
+        if value is None:
+            unset[key] = (
+                f"format-keys.{key}: config-setting {name!r} is not set;"
+                " set it or add a default"
+            )
+            value = ""
+        table[key] = str(value).lower() if isinstance(value, bool) else value
+    return unset
+
+
+def resolve_metadata_config_settings(
+    entries: Any, values: "Mapping[str, str | bool | None]"
+) -> bool:
+    """
+    Apply ``tool.scikit-build.config-setting`` of each
+    ``[[tool.dynamic-metadata]]`` entry, in place, and remove the reserved
+    ``tool`` key. The table maps a plugin setting to a declared config-setting;
+    a resolved value replaces the static one, and an unset setting keeps it.
+    Returns True if an entry has a mapping.
+    """
+    used = False
+    if not isinstance(entries, list):
+        return used
+    for n, entry in enumerate(entries):
+        if not isinstance(entry, dict) or "tool" not in entry:
+            continue
+        context = f"tool.dynamic-metadata[{n}].tool"
+        tool = entry.pop("tool")
+        if not isinstance(tool, dict):
+            rich_error(f"{context} must be a table")
+        # Other backends' tables are ignored.
+        skb = tool.get("scikit-build", {})
+        context += ".scikit-build"
+        if not isinstance(skb, dict):
+            rich_error(f"{context} must be a table")
+        unknown = set(skb) - {"config-setting"}
+        if unknown:
+            rich_error(f"{context} has unrecognized keys: {', '.join(sorted(unknown))}")
+        mapping = skb.get("config-setting", {})
+        context += ".config-setting"
+        if not isinstance(mapping, dict):
+            rich_error(f"{context} must be a table")
+        used = used or bool(mapping)
+        for key, name in mapping.items():
+            if key in {"provider", "tool"}:
+                rich_error(f"{context} may not set {key!r}")
+            if not isinstance(name, str):
+                rich_error(f"{context}.{key} must be a string")
+            if name not in values:
+                rich_error(
+                    f"{context}.{key} references undeclared config-setting {name!r}"
+                )
+            value = values[name]
+            if value is not None:
+                entry[key] = value
+    return used

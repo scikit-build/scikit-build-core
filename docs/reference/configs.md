@@ -119,6 +119,22 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
+.. confval:: format-keys
+
+  :Type: ``dict[str,str]``
+
+  A table of extra variables for the formatted fields.
+
+  Each value is a literal string or a table with ``config-setting`` (the name
+  of a declared config-setting) and ``default`` (used if the setting has no
+  value). The formatted fields, like :confval:`build-dir`, can use each key
+  as ``{key}``. This cannot be set by config-settings or environment
+  variables; use a ``config-setting`` reference instead.
+
+  .. versionadded:: 1.2
+```
+
+```{eval-rst}
 .. confval:: metadata
 
   :Type: ``dict[str,dict[str,Any]]``
@@ -138,21 +154,6 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
-.. confval:: null-variant
-
-  :Type: ``bool``
-  :Default: false
-  :Config-settings: ``null-variant`` or ``skbuild.null-variant``
-  :Environment variable: ``SKBUILD_NULL_VARIANT``
-
-  Experimental PEP 817 null-variant selector.
-
-  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-  .. versionadded:: 1.0
-```
-
-```{eval-rst}
 .. confval:: strict-config
 
   :Type: ``bool``
@@ -168,41 +169,15 @@ print(mk_skbuild_docs())
 ```
 
 ```{eval-rst}
-.. confval:: variant
-
-  :Type: ``list[str]``
-  :Config-settings: ``variant`` or ``skbuild.variant``
-  :Environment variable: ``SKBUILD_VARIANT``
-
-  Experimental PEP 817 variant properties.
-
-  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-  .. versionadded:: 1.0
-```
-
-```{eval-rst}
 .. confval:: variant-label
 
   :Type: ``str``
   :Config-settings: ``variant-label`` or ``skbuild.variant-label``
   :Environment variable: ``SKBUILD_VARIANT_LABEL``
 
-  Experimental PEP 817 wheel variant label override.
+  Experimental wheel variant label to build, from ``[variant.variants]``.
 
-  This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-  .. versionadded:: 1.0
-```
-
-```{eval-rst}
-.. confval:: variant-name
-
-  :Type: ``list[str]``
-  :Config-settings: ``variant-name`` or ``skbuild.variant-name``
-  :Environment variable: ``SKBUILD_VARIANT_NAME``
-
-  Experimental PEP 817 variant properties used for wheel metadata selection.
+  The ``null`` label builds the null variant.
 
   This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 
@@ -498,7 +473,8 @@ print(mk_skbuild_docs())
   is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
   tree. Must be an absolute (or source-relative) path that is stable between
   build and run time, and supports the same template substitutions as
-  :confval:`build-dir`. This relocates only
+  :confval:`build-dir`, plus ``{build_dir}`` for the resolved build directory.
+  This relocates only
   the install tree; :confval:`build-dir` is still required and still hosts the
   CMake build that the rebuild re-runs.
 
@@ -509,6 +485,9 @@ print(mk_skbuild_docs())
   stay out of backups and version control.
 
   .. versionadded:: 1.0
+
+  .. versionchanged:: 1.2
+     Added the ``{build_dir}`` template key.
 ```
 
 ```{eval-rst}
@@ -814,7 +793,7 @@ print(mk_skbuild_docs())
 
   Try to build a reproducible distribution.
 
-  Unix and Python 3.9+ recommended.
+  Unix and Python 3.10+ recommended.
 
   ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set.
 ```
@@ -1054,7 +1033,7 @@ print(mk_skbuild_docs())
 
   The default (empty string) will use the default Python version.
 
-  You can also set this to "cp39" to enable the CPython 3.9+ Stable
+  You can also set this to "cp310" to enable the CPython 3.10+ Stable
   ABI / Limited API (only on CPython and if the version is sufficient,
   otherwise this has no effect). For free-threaded Python, you can use
   "cp315t" to enable the free-threaded stable ABI (only on CPython
@@ -1085,7 +1064,7 @@ print(mk_skbuild_docs())
 
   Try to build a reproducible wheel.
 
-  Unix and Python 3.9+ recommended.
+  Unix and Python 3.10+ recommended.
 
   When enabled, archive timestamps and file permissions are normalized, and
   ``SOURCE_DATE_EPOCH`` is exported to the CMake build (if not already set) so

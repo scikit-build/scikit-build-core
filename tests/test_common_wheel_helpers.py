@@ -164,3 +164,14 @@ def test_build_dir_inplace_editable_uses_source_dir(tmp_path: Path) -> None:
     )
 
     assert build_dir == tmp_path / "src"
+
+
+def test_build_dir_unknown_placeholder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    settings = ScikitBuildSettings()
+    settings.build_dir = "build/{nope}"
+
+    with pytest.raises(SystemExit):
+        _build_dir(tmp_path, settings)
+    assert "build-dir: unknown placeholder 'nope'" in capsys.readouterr().err

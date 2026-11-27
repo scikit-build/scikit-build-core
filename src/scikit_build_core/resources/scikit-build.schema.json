@@ -608,6 +608,37 @@
       },
       "description": "A table of environment variables to set for the CMake subprocesses."
     },
+    "format-keys": {
+      "type": "object",
+      "patternProperties": {
+        ".+": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": [
+                "config-setting"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "config-setting": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The declared config-setting name whose resolved value this key takes."
+                },
+                "default": {
+                  "type": "string",
+                  "description": "The value used when the config-setting has no value."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "description": "A table of extra variables for the formatted fields."
+    },
     "strict-config": {
       "type": "boolean",
       "default": true,
@@ -910,6 +941,9 @@
           "env": {
             "$ref": "#/properties/env"
           },
+          "format-keys": {
+            "$ref": "#/properties/format-keys"
+          },
           "strict-config": {
             "$ref": "#/properties/strict-config"
           },
@@ -922,28 +956,9 @@
           "build-dir": {
             "$ref": "#/properties/build-dir"
           },
-          "variant": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Experimental PEP 817 variant properties."
-          },
-          "variant-name": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Experimental PEP 817 variant properties used for wheel metadata selection."
-          },
           "variant-label": {
             "type": "string",
-            "description": "Experimental PEP 817 wheel variant label override."
-          },
-          "null-variant": {
-            "type": "boolean",
-            "default": false,
-            "description": "Experimental PEP 817 null-variant selector."
+            "description": "Experimental wheel variant label to build, from ``[variant.variants]``."
           },
           "fail": {
             "type": "boolean",

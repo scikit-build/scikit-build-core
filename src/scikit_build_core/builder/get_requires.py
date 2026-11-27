@@ -28,7 +28,7 @@ from typing import Any, Literal
 from .._compat import tomllib
 from .._logging import logger
 from .._variants import variant_build_requires
-from ..format import pyproject_format
+from ..format import format_template, pyproject_format
 from ..program_search import (
     best_program,
     get_cmake_programs,
@@ -75,17 +75,26 @@ def _load_scikit_build_settings(
     ).settings
 
 
+def _read_pyproject() -> dict[str, Any]:
+    try:
+        with Path("pyproject.toml").open("rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
+        return {}
+
+
 def _read_dynamic_metadata() -> list[dict[str, Any]]:
     """Read the top-level ``[[tool.dynamic-metadata]]`` entries (0.3)."""
     try:
-        with Path("pyproject.toml").open("rb") as f:
-            pyproject = tomllib.load(f)
+        # The reader applies the config-setting mappings.
+        return SettingsReader.from_file("pyproject.toml").dynamic_metadata
     except FileNotFoundError:
         return []
-    entries: list[dict[str, Any]] = pyproject.get("tool", {}).get(
-        "dynamic-metadata", []
-    )
-    return entries
+
+
+def _read_variant_table() -> dict[str, Any]:
+    table: dict[str, Any] = _read_pyproject().get("variant", {})
+    return table
 
 
 @dataclasses.dataclass(frozen=True)
@@ -95,6 +104,9 @@ class GetRequires:
     )
     dynamic_metadata_entries: Sequence[dict[str, Any]] = dataclasses.field(
         default_factory=_read_dynamic_metadata
+    )
+    variant_table: Mapping[str, Any] = dataclasses.field(
+        default_factory=_read_variant_table
     )
 
     @classmethod
@@ -106,7 +118,7 @@ class GetRequires:
         reader = SettingsReader.from_file(
             "pyproject.toml", config_settings, state=state
         )
-        return cls(reader.settings, reader.dynamic_metadata)
+        return cls(reader.settings, reader.dynamic_metadata, reader.variant)
 
     def cmake(self) -> Generator[str, None, None]:
         if self.settings.fail or os.environ.get("CMAKE_EXECUTABLE", ""):
@@ -178,10 +190,10 @@ class GetRequires:
             return
 
         for build_require in self.settings.build.requires:
-            yield build_require.format(
-                **pyproject_format(
-                    settings=self.settings,
-                )
+            yield format_template(
+                build_require,
+                pyproject_format(settings=self.settings),
+                key="build.requires",
             )
 
         # Deprecated tool.scikit-build.metadata table.
@@ -205,4 +217,4 @@ class GetRequires:
         if self.settings.fail:
             return
 
-        yield from variant_build_requires(self.settings)
+        yield from variant_build_requires(self.settings, self.variant_table)

@@ -39,7 +39,7 @@ from ..builder.builder import (
 )
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMaker
-from ..format import pyproject_format
+from ..format import format_template, pyproject_format
 from ..settings.skbuild_model import normalize_build_types
 from ._pathutil import resolve_wheel_tree
 
@@ -140,8 +140,10 @@ def get_build_dir(
         build_dir = Path(settings.cmake.source_dir)
     elif settings.build_dir:
         build_dir = Path(
-            settings.build_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
+            format_template(
+                settings.build_dir,
+                pyproject_format(settings=settings, tags=tags, state=state, name=name),
+                key="build-dir",
             )
         )
     else:
@@ -162,15 +164,23 @@ def get_editable_rebuild_dir(
     """
     Persistent install tree for a rebuildable redirect editable.
 
-    ``editable.rebuild-dir`` (formatted like ``build-dir``) overrides the default
+    ``editable.rebuild-dir`` (formatted like ``build-dir``, plus ``{build_dir}``) overrides the default
     ``install/<targetlib>`` tree inside ``build-dir``. The redirect references the
     compiled artifacts here by absolute path, so it must be stable between build
     and run time (#1135).
     """
     if settings.editable.rebuild_dir:
         return Path(
-            settings.editable.rebuild_dir.format(
-                **pyproject_format(settings=settings, tags=tags, state=state, name=name)
+            format_template(
+                settings.editable.rebuild_dir,
+                pyproject_format(
+                    settings=settings,
+                    tags=tags,
+                    state=state,
+                    name=name,
+                    build_dir=build_dir,
+                ),
+                key="editable.rebuild-dir",
             )
         ).resolve()
     return (build_dir / "install" / targetlib).resolve()
@@ -295,6 +305,19 @@ def configure_wheel(
         fresh=settings.cmake.fresh and primary,
     )
     builder = Builder(settings=settings, config=config)
+
+    if settings.build_dir:
+        # An editable redirect from a previous install of this project is active
+        # in every Python the build starts. Listing the build dir in the skip
+        # marker makes that redirect yield to normal import resolution (#1612).
+        from ..resources._editable_redirect import MARKER
+
+        skip = config.env.get(MARKER, "").split(os.pathsep)
+        resolved_build_dir = os.fspath(build_dir.resolve())
+        if resolved_build_dir not in skip:
+            config.env[MARKER] = os.pathsep.join(
+                [*filter(None, skip), resolved_build_dir]
+            )
 
     # Setting the install prefix because some libs hardcode CMAKE_INSTALL_PREFIX
     # Otherwise `cmake --install --prefix` would work by itself

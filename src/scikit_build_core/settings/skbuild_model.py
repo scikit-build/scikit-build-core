@@ -1,8 +1,9 @@
 __lazy_modules__ = {f"{(__spec__.parent or '').rsplit('.', 1)[0]}._compat.typing"}
 
 import dataclasses
+import enum
 from pathlib import Path
-from typing import Annotated, Any, Literal, Optional, TypedDict, Union
+from typing import Annotated, Any, Literal, TypedDict
 
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
@@ -16,6 +17,7 @@ __all__ = [
     "CMakeSettingsDefine",
     "EditableSettings",
     "EnvValue",
+    "FieldScope",
     "GenerateSettings",
     "InstallSettings",
     "LoggingSettings",
@@ -33,7 +35,7 @@ def __dir__() -> list[str]:
     return __all__
 
 
-def normalize_build_types(build_type: Union[str, list[str]]) -> list[str]:
+def normalize_build_types(build_type: str | list[str]) -> list[str]:
     """
     Normalize ``cmake.build-type`` into a non-empty list of build types.
 
@@ -45,11 +47,22 @@ def normalize_build_types(build_type: Union[str, list[str]]) -> list[str]:
     return build_type or [""]
 
 
+class FieldScope(enum.Enum):
+    """Where a setting may be set from."""
+
+    ANY = "any"
+    OVERRIDE = "override"
+    """Not in the static ``pyproject.toml`` table; env vars, config-settings,
+    entry-point config, and ``[[overrides]]`` are allowed."""
+    STATIC = "static"
+    """Only in ``pyproject.toml`` (including ``[[overrides]]``) and
+    entry-point config."""
+
+
 class SettingsFieldMetadata(TypedDict, total=False):
-    display_default: Optional[str]
+    display_default: str | None
     deprecated: bool
-    override_only: bool
-    """Do not allow the field to be a top-level table."""
+    scope: FieldScope
 
 
 class CMakeSettingsDefine(str):
@@ -60,9 +73,9 @@ class CMakeSettingsDefine(str):
 
     __slots__ = ()
 
-    json_schema = Union[str, bool, list[str]]
+    json_schema = str | bool | list[str]
 
-    def __new__(cls, raw: Union[str, bool, list[str]]) -> Self:
+    def __new__(cls, raw: str | bool | list[str]) -> Self:
         def escape_semicolons(item: str) -> str:
             return item.replace(";", r"\;")
 
@@ -89,9 +102,9 @@ class EnvValue:
 
     __slots__ = ("default", "env", "force")
 
-    def __init__(self, raw: Union[str, dict[str, Any]]) -> None:
-        self.env: Optional[str] = None
-        self.default: Optional[str] = None
+    def __init__(self, raw: str | dict[str, Any]) -> None:
+        self.env: str | None = None
+        self.default: str | None = None
         self.force: bool = False
 
         if isinstance(raw, str):
@@ -125,7 +138,7 @@ class EnvValue:
         self.default = default
         self.force = force
 
-    def resolve(self, env: dict[str, str]) -> Optional[str]:
+    def resolve(self, env: dict[str, str]) -> str | None:
         """
         Resolve to the final string value (or ``None`` if unset) against ``env``.
 
@@ -156,14 +169,14 @@ class EnvValue:
 
 @dataclasses.dataclass
 class CMakeSettings:
-    minimum_version: Optional[Version] = dataclasses.field(
+    minimum_version: Version | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
     DEPRECATED in 0.8; use version instead.
     """
 
-    version: Optional[SpecifierSet] = None
+    version: SpecifierSet | None = None
     """
     The versions of CMake to allow as a python-compatible specifier.
 
@@ -200,14 +213,14 @@ class CMakeSettings:
     A table of defines to pass to CMake when configuring the project. Additive.
     """
 
-    verbose: Optional[bool] = dataclasses.field(
+    verbose: bool | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
     DEPRECATED in 0.10, use build.verbose instead.
     """
 
-    build_type: Union[str, list[str]] = "Release"
+    build_type: str | list[str] = "Release"
     """
     The build type to use when building the project.
 
@@ -236,15 +249,15 @@ class CMakeSettings:
     Currently only affects the native builder (not the setuptools plugin).
     """
 
-    targets: Optional[list[str]] = dataclasses.field(
+    targets: list[str] | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
     DEPRECATED in 0.10; use build.targets instead.
     """
 
-    toolchain_file: Optional[Path] = dataclasses.field(
-        default=None, metadata=SettingsFieldMetadata(override_only=True)
+    toolchain_file: Path | None = dataclasses.field(
+        default=None, metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE)
     )
     """
     The CMAKE_TOOLCHAIN_FILE / --toolchain used for cross-compilation.
@@ -305,7 +318,7 @@ class SearchSettings:
 
 @dataclasses.dataclass
 class NinjaSettings:
-    minimum_version: Optional[Version] = dataclasses.field(
+    minimum_version: Version | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(deprecated=True)
     )
     """
@@ -368,7 +381,7 @@ class SDistSettings:
        :confval:`sdist.include`
     """
 
-    inclusion_mode: Optional[Literal["classic", "default", "manual", "explicit"]] = (
+    inclusion_mode: Literal["classic", "default", "manual", "explicit"] | None = (
         dataclasses.field(
             default=None,
             metadata=SettingsFieldMetadata(display_default='"default"  # "classic"'),
@@ -398,7 +411,7 @@ class SDistSettings:
     """
     Try to build a reproducible distribution.
 
-    Unix and Python 3.9+ recommended.
+    Unix and Python 3.10+ recommended.
 
     ``SOURCE_DATE_EPOCH`` will be used for timestamps, or a fixed value if not set.
     """
@@ -428,11 +441,11 @@ class SDistSettings:
     .. versionadded:: 1.0
     """
 
-    resolve_symlinks: Optional[
-        Literal["all", "external", "none", "classic", "error"]
-    ] = dataclasses.field(
-        default=None,
-        metadata=SettingsFieldMetadata(display_default='"all"'),
+    resolve_symlinks: Literal["all", "external", "none", "classic", "error"] | None = (
+        dataclasses.field(
+            default=None,
+            metadata=SettingsFieldMetadata(display_default='"all"'),
+        )
     )
     """
     Which symlinks to resolve in the SDist, storing the target's contents instead.
@@ -466,7 +479,7 @@ class SDistSettings:
 
 @dataclasses.dataclass
 class WheelSettings:
-    packages: Optional[Union[list[str], dict[str, str]]] = dataclasses.field(
+    packages: list[str] | dict[str, str] | None = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(
             display_default='["src/<package>", "python/<package>", "<package>"]'
@@ -494,7 +507,7 @@ class WheelSettings:
 
     The default (empty string) will use the default Python version.
 
-    You can also set this to "cp39" to enable the CPython 3.9+ Stable
+    You can also set this to "cp310" to enable the CPython 3.10+ Stable
     ABI / Limited API (only on CPython and if the version is sufficient,
     otherwise this has no effect). For free-threaded Python, you can use
     "cp315t" to enable the free-threaded stable ABI (only on CPython
@@ -547,7 +560,7 @@ class WheelSettings:
        ``${SKBUILD_<TREE>_DIR}`` form and is one level higher than the platlib root.
     """
 
-    license_files: Optional[list[str]] = None
+    license_files: list[str] | None = None
     """
     A list of license files to include in the wheel. Supports glob patterns.
 
@@ -562,7 +575,7 @@ class WheelSettings:
     Run CMake as part of building the wheel.
     """
 
-    platlib: Optional[bool] = None
+    platlib: bool | None = None
     """
     Target the platlib or the purelib.
 
@@ -584,9 +597,9 @@ class WheelSettings:
     The build tag to use for the wheel. If empty, no build tag is used.
     """
 
-    tags: Optional[list[str]] = dataclasses.field(
+    tags: list[str] | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
     Wheel tags to manually force, {interpreter}-{abi}-{platform} format.
@@ -642,7 +655,7 @@ class WheelSettings:
     """
     Try to build a reproducible wheel.
 
-    Unix and Python 3.9+ recommended.
+    Unix and Python 3.10+ recommended.
 
     When enabled, archive timestamps and file permissions are normalized, and
     ``SOURCE_DATE_EPOCH`` is exported to the CMake build (if not already set) so
@@ -678,7 +691,7 @@ class EditableSettings:
     Turn on verbose output for the editable mode rebuilds.
     """
 
-    rebuild: Optional[bool] = dataclasses.field(
+    rebuild: bool | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(display_default="false")
     )
     """
@@ -702,7 +715,8 @@ class EditableSettings:
     is explicitly false; then use ``module.__loader__.rebuild()`` to refresh the
     tree. Must be an absolute (or source-relative) path that is stable between
     build and run time, and supports the same template substitutions as
-    :confval:`build-dir`. This relocates only
+    :confval:`build-dir`, plus ``{build_dir}`` for the resolved build directory.
+    This relocates only
     the install tree; :confval:`build-dir` is still required and still hosts the
     CMake build that the rebuild re-runs.
 
@@ -713,6 +727,9 @@ class EditableSettings:
     stay out of backups and version control.
 
     .. versionadded:: 1.0
+
+    .. versionchanged:: 1.2
+       Added the ``{build_dir}`` template key.
     """
 
     @property
@@ -785,7 +802,7 @@ class InstallSettings:
     .. versionadded:: 1.0
     """
 
-    strip: Optional[bool] = dataclasses.field(
+    strip: bool | None = dataclasses.field(
         default=None, metadata=SettingsFieldMetadata(display_default="true")
     )
     """
@@ -819,7 +836,7 @@ class GenerateSettings:
        :confval:`generate[].template-path`
     """
 
-    template_path: Optional[Path] = None
+    template_path: Path | None = None
     """
     The path to the template file. If empty, a template must be set.
 
@@ -867,11 +884,17 @@ class ScikitBuildSettings:
     editable: EditableSettings = dataclasses.field(default_factory=EditableSettings)
     build: BuildSettings = dataclasses.field(default_factory=BuildSettings)
     install: InstallSettings = dataclasses.field(default_factory=InstallSettings)
-    generate: list[GenerateSettings] = dataclasses.field(default_factory=list)
+    generate: list[GenerateSettings] = dataclasses.field(
+        default_factory=list,
+        metadata=SettingsFieldMetadata(scope=FieldScope.STATIC),
+    )
     messages: MessagesSettings = dataclasses.field(default_factory=MessagesSettings)
     search: SearchSettings = dataclasses.field(default_factory=SearchSettings)
 
-    metadata: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+    metadata: dict[str, dict[str, Any]] = dataclasses.field(
+        default_factory=dict,
+        metadata=SettingsFieldMetadata(scope=FieldScope.STATIC),
+    )
     """
     List dynamic metadata fields and hook locations in this table.
     """
@@ -892,6 +915,22 @@ class ScikitBuildSettings:
     .. versionadded:: 1.0
     """
 
+    format_keys: dict[str, str] = dataclasses.field(
+        default_factory=dict,
+        metadata=SettingsFieldMetadata(scope=FieldScope.STATIC),
+    )
+    """
+    A table of extra variables for the formatted fields.
+
+    Each value is a literal string or a table with ``config-setting`` (the name
+    of a declared config-setting) and ``default`` (used if the setting has no
+    value). The formatted fields, like :confval:`build-dir`, can use each key
+    as ``{key}``. This cannot be set by config-settings or environment
+    variables; use a ``config-setting`` reference instead.
+
+    .. versionadded:: 1.2
+    """
+
     strict_config: bool = True
     """
     Strictly check all config options.
@@ -906,55 +945,21 @@ class ScikitBuildSettings:
     Enable early previews of features not finalized yet.
     """
 
-    variant: list[str] = dataclasses.field(
-        default_factory=list,
-        metadata=SettingsFieldMetadata(override_only=True),
-    )
-    """
-    Experimental PEP 817 variant properties.
-
-    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-    .. versionadded:: 1.0
-    """
-
-    variant_name: list[str] = dataclasses.field(
-        default_factory=list,
-        metadata=SettingsFieldMetadata(override_only=True),
-    )
-    """
-    Experimental PEP 817 variant properties used for wheel metadata selection.
-
-    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-    .. versionadded:: 1.0
-    """
-
-    variant_label: Optional[str] = dataclasses.field(
+    variant_label: str | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
-    Experimental PEP 817 wheel variant label override.
+    Experimental wheel variant label to build, from ``[variant.variants]``.
+
+    The ``null`` label builds the null variant.
 
     This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
 
     .. versionadded:: 1.0
     """
 
-    null_variant: bool = dataclasses.field(
-        default=False,
-        metadata=SettingsFieldMetadata(override_only=True),
-    )
-    """
-    Experimental PEP 817 null-variant selector.
-
-    This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.
-
-    .. versionadded:: 1.0
-    """
-
-    minimum_version: Optional[Version] = dataclasses.field(
+    minimum_version: Version | None = dataclasses.field(
         default=None,
         metadata=SettingsFieldMetadata(
             display_default='"{version}"  # current version'
@@ -971,9 +976,9 @@ class ScikitBuildSettings:
     This can be set to reuse the build directory from previous runs.
     """
 
-    fail: Optional[bool] = dataclasses.field(
+    fail: bool | None = dataclasses.field(
         default=None,
-        metadata=SettingsFieldMetadata(override_only=True),
+        metadata=SettingsFieldMetadata(scope=FieldScope.OVERRIDE),
     )
     """
     Immediately fail the build. This cannot be set in the static ``[tool.scikit-build]`` table; use it in an override, config-settings, or an environment variable.

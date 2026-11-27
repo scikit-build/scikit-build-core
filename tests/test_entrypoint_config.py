@@ -224,6 +224,17 @@ def test_override_only_field_allowed(tmp_path, register):
     assert str(reader.settings.cmake.toolchain_file) == toolchain
 
 
+def test_static_field_allowed(tmp_path, register):
+    register(
+        "default",
+        "distro",
+        lambda **_: {"generate": [{"path": "a.py", "template": "a"}]},
+    )
+    reader = make_reader(tmp_path, "[tool.scikit-build]\nstrict-config = true\n")
+    reader.validate_may_exit()
+    assert [g.template for g in reader.settings.generate] == ["a"]
+
+
 def test_minimum_version_gate_not_triggered(tmp_path, register, monkeypatch):
     # A field gated behind a newer minimum-version (build.verbose, introduced in
     # 0.10) set by entry-point config must not hard-fail a project pinning an

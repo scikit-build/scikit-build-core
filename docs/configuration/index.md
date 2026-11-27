@@ -417,16 +417,16 @@ support:
 
 ```toml
 [tool.scikit-build]
-wheel.py-api = "cp39"
+wheel.py-api = "cp310"
 ```
 
-| `wheel.py-api`   | Use for                                           | Resulting tags     |
-| ---------------- | ------------------------------------------------- | ------------------ |
-| `"cp39"`         | Limited API / Stable ABI extension (CPython 3.9+) | `cp39-abi3`        |
-| `"py3"`          | Extension not using the Python API                | `py3-none`         |
-| `"py2.py3"`      | Same, but installable on Python 2 as well         | `py2.py3-none`     |
-| `"cp315t"`       | Free-threaded stable ABI ([PEP 803][])            | `cp315-abi3t`      |
-| `"cp315.cp315t"` | Both stable ABIs from one free-threaded build     | `cp315-abi3.abi3t` |
+| `wheel.py-api`   | Use for                                            | Resulting tags     |
+| ---------------- | -------------------------------------------------- | ------------------ |
+| `"cp310"`        | Limited API / Stable ABI extension (CPython 3.10+) | `cp310-abi3`       |
+| `"py3"`          | Extension not using the Python API                 | `py3-none`         |
+| `"py2.py3"`      | Same, but installable on Python 2 as well          | `py2.py3-none`     |
+| `"cp315t"`       | Free-threaded stable ABI ([PEP 803][])             | `cp315-abi3t`      |
+| `"cp315.cp315t"` | Both stable ABIs from one free-threaded build      | `cp315-abi3.abi3t` |
 
 Scikit-build-core will only target ABI3 if the version of Python is equal to or
 newer than the one you set. `cp315t` also sets `Py_TARGET_ABI3T` (if using CMake
@@ -883,8 +883,15 @@ There are several values you can access through Python's formatting syntax. See
 every member of a uv or hatch workspace (e.g. via `SKBUILD_BUILD_DIR`) avoid
 collisions: `SKBUILD_BUILD_DIR=/path/to/cache/{name}/{cache_tag}`.
 
+With CMake 3.30 or newer and `CMP0168` set to `NEW`, `FetchContent` can reuse
+checkouts across isolated builds. Changing the path to CMake can trigger another
+download. If a Git branch or tag moves, or the contents at a URL change, CMake
+can keep the previous copy. Pin a Git commit or specify `URL_HASH` for
+reproducible builds.
+
 If a cached configuration goes bad, you can throw it away and configure from
-scratch with {confval}`cmake.fresh`, like `cmake --fresh`.
+scratch with {confval}`cmake.fresh`, like `cmake --fresh`. With `CMP0168` set to
+`NEW`, this also reruns the `FetchContent` download, update, and patch steps.
 
 ```{conftabs} cmake.fresh True
 
@@ -914,8 +921,8 @@ experimental = true
 
 The following features currently require this flag:
 
-- **Wheel variants**: [PEP 817][] variant support (`variant`, `variant-name`,
-  `variant-label`, and `null-variant`), added in 1.0. See [](./variants.md).
+- **Wheel variants**: [PEP 817][] variant support (`variant-label`), added in
+  1.0. See [](./variants.md).
 - **Legacy `tool.scikit-build.metadata` plugins**: dynamic metadata providers
   not shipped with scikit-build-core (anything using `provider-path` or a
   provider outside the `scikit_build_core.*` namespace) used through the

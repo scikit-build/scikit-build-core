@@ -65,6 +65,59 @@ The define is left unset when the setting resolves to no value, so
 `if(DEFINED ZMQ_PREFIX)` works in CMake, and `-C cmake.define.NAME=...` or
 `SKBUILD_CMAKE_DEFINE` still win over the referenced value.
 
+## Passing values to dynamic metadata plugins
+
+A `[[tool.dynamic-metadata]]` entry can map plugin settings to declared settings
+with a `tool.scikit-build.config-setting` table. The plugin receives the
+resolved value as if it was written in the entry, so the plugin does not need to
+know about config-settings:
+
+```toml
+[tool.scikit-build.config-setting."torch.variant"]
+env = "PYTORCH_VARIANT"
+
+[[tool.dynamic-metadata]]
+provider = "torch-deps"
+variant = "cpu"
+tool.scikit-build.config-setting.variant = "torch.variant"
+```
+
+The static value (`"cpu"` above) is used when the setting resolves to no value.
+A `default` in the declaration takes precedence over the static value. The
+entry's `tool` key is never passed to the plugin, and the mapping cannot set
+`provider` or `tool`. Use dotted keys as shown.
+
+The deprecated `tool.scikit-build.metadata` table does not support this.
+
+:::{versionadded} 1.2
+
+:::
+
+## Use in formatted fields
+
+A `format-keys` entry makes the resolved value available in
+[formatted fields](./formatted.md), for example to keep one build directory per
+variant:
+
+```toml
+[tool.scikit-build]
+build-dir = "build/{variant}"
+
+[tool.scikit-build.format-keys]
+variant = { config-setting = "torch.variant", default = "cpu" }
+```
+
+The `default` is used when the setting resolves to no value. It applies to this
+key only, so the setting stays unset for `cmake.define` and overrides. If there
+is no value and no `default`, the build stops with an error. A boolean value
+formats as `true` or `false`.
+
+`minimum-version`, if set, must be at least 1.2.
+
+:::{versionadded} 1.2
+
+:::
+
 ## Use in overrides
 
 Declared settings can drive [overrides](./overrides.md) with the

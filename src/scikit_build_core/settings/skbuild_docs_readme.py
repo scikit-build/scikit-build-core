@@ -10,7 +10,7 @@ import dataclasses
 import typing
 
 from .documentation import mk_docs
-from .skbuild_model import ScikitBuildSettings
+from .skbuild_model import FieldScope, ScikitBuildSettings
 
 TYPE_CHECKING = False
 
@@ -65,7 +65,7 @@ def mk_skbuild_docs() -> str:
     """
     sections: dict[str | None, list[Item]] = {}
     for item in mk_docs(ScikitBuildSettings):
-        if item.deprecated or item.override_only:
+        if item.deprecated or item.scope is FieldScope.OVERRIDE:
             continue
         prefix, sep, _ = item.name.partition(".")
         sections.setdefault(prefix if sep else None, []).append(Item(item))

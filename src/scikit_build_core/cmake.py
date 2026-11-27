@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 __lazy_modules__ = {
+    "contextlib",
     "json",
     "packaging.version",
     "shutil",
@@ -18,6 +19,7 @@ __lazy_modules__ = {
     f"{__spec__.parent}.program_search",
 }
 
+import contextlib
 import dataclasses
 import json
 import os
@@ -141,29 +143,27 @@ class CMaker:
         self._file_api_query = stateless_query(self.build_dir)
         skbuild_info = self.build_dir / ".skbuild-info.json"
         stale = self.fresh
+        keep_fetchcontent = False
         if self.fresh:
             logger.info("Fresh build requested, clearing cache")
         else:
-            info: dict[str, str] = {}
             try:
                 with skbuild_info.open("r", encoding="utf-8") as f:
                     info = json.load(f)
+                cached_source_dir = Path(info["source_dir"])
+                cached_skbuild_dir = Path(info["skbuild_path"])
             except FileNotFoundError:
                 pass
+            except (KeyError, TypeError):
+                logger.warning("Invalid {}, clearing cache", skbuild_info)
+                stale = True
             except (OSError, ValueError):
                 # An interrupted build can leave a truncated or empty file
                 logger.warning("Unreadable {}, clearing cache", skbuild_info)
                 stale = True
             else:
-                if not isinstance(info, dict):
-                    logger.warning("Invalid {}, clearing cache", skbuild_info)
-                    info = {}
-                    stale = True
-
-            if info:
                 # If building via SDist, this could be pre-filled
-                cached_source_dir = info.get("source_dir")
-                if cached_source_dir is None or Path(cached_source_dir) != source_dir:
+                if cached_source_dir != source_dir:
                     logger.warning(
                         "Original src {} != {}, clearing cache",
                         cached_source_dir,
@@ -172,20 +172,39 @@ class CMaker:
                     stale = True
 
                 # Isolated environments can cause this
-                cached_skbuild_dir = info.get("skbuild_path")
-                if cached_skbuild_dir is None or Path(cached_skbuild_dir) != DIR:
+                if cached_skbuild_dir != DIR:
                     logger.info(
                         "New isolated environment {} -> {}, clearing cache",
                         cached_skbuild_dir,
                         DIR,
                     )
+                    keep_fetchcontent = not stale
                     stale = True
 
-        # Not using --fresh here, not just due to CMake 3.24+, but also just in
-        # case it triggers an extra FetchContent pull in CMake 3.30+
+        # cmake --fresh requires CMake 3.24+ and clears FetchContent records
+        # under CMP0168 NEW. Keep those records when only the environment moves.
         if stale:
             self.build_dir.joinpath("CMakeCache.txt").unlink(missing_ok=True)
-            shutil.rmtree(self.build_dir.joinpath("CMakeFiles"), ignore_errors=True)
+            cmake_files = self.build_dir.joinpath("CMakeFiles")
+            if (
+                keep_fetchcontent
+                and (cmake_files / "fc-stamp").is_dir()
+                and cmake_files.resolve() == self.build_dir.resolve() / "CMakeFiles"
+            ):
+                # If an executable in PATCH_COMMAND moves with the environment,
+                # CMake can rerun the patch on an already patched checkout.
+                # Use cmake.fresh=true for patches that cannot be applied twice.
+                logger.debug("Keeping FetchContent records in {}", cmake_files)
+                for entry in cmake_files.glob("*"):
+                    if entry.name in {"fc-stamp", "fc-tmp"}:
+                        continue
+                    with contextlib.suppress(OSError):
+                        if not entry.is_symlink() and entry.is_dir():
+                            shutil.rmtree(entry, ignore_errors=True)
+                        else:
+                            entry.unlink()
+            else:
+                shutil.rmtree(cmake_files, ignore_errors=True)
 
         with skbuild_info.open("w", encoding="utf-8") as f:
             json.dump(self._info_dict(), f, indent=2)

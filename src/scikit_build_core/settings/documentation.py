@@ -3,6 +3,7 @@ from __future__ import annotations
 __lazy_modules__ = {
     "ast",
     "inspect",
+    "itertools",
     "packaging.specifiers",
     "packaging.version",
     "pathlib",
@@ -14,6 +15,7 @@ __lazy_modules__ = {
 import ast
 import dataclasses
 import inspect
+import itertools
 import textwrap
 import typing
 from pathlib import Path
@@ -23,7 +25,8 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from .. import __version__
-from ..utils.typing import NoneType
+from ..utils.typing import NoneType, is_union_type
+from .skbuild_model import FieldScope
 
 TYPE_CHECKING = False
 
@@ -57,33 +60,9 @@ def pull_docs(dc: type[object]) -> dict[str, str]:
     body = obody.body
     return {
         assign.target.id: textwrap.dedent(_get_value(expr.value)).strip()  # type: ignore[union-attr]
-        for assign, expr in zip(body[:-1], body[1:])
+        for assign, expr in itertools.pairwise(body)
         if isinstance(assign, ast.AnnAssign) and isinstance(expr, ast.Expr)
     }
-
-
-def _flat_expressible(field_type: typing.Any) -> bool:
-    """
-    Whether a field can be set through a flat source (``config-settings`` or a
-    ``SKBUILD_*`` environment variable).
-
-    Both sources reject arrays of tables (handled separately via the ``[]`` name
-    marker) and can't round-trip nested mappings (e.g. a dict of dicts), so no
-    flat key is advertised for those. Dicts of scalars (including
-    ``cmake.define``) and lists of scalars are fine.
-    """
-    origin = get_origin(field_type)
-    if origin is Annotated:
-        return _flat_expressible(get_args(field_type)[0])
-    if origin is typing.Union:
-        return all(
-            _flat_expressible(arg)
-            for arg in get_args(field_type)
-            if arg is not NoneType
-        )
-    if origin is dict:
-        return get_origin(get_args(field_type)[1]) not in (dict, list)
-    return True
 
 
 @dataclasses.dataclass(frozen=True)
@@ -94,17 +73,17 @@ class DCDoc:
     docs: str
     field: dataclasses.Field[typing.Any]
     deprecated: bool = False
-    override_only: bool = False
+    scope: FieldScope = FieldScope.ANY
     choices: tuple[str, ...] = ()
 
     def flat_expressible(self) -> bool:
         """
         Whether the option can be set via ``config-settings`` or an env var.
 
-        Arrays of tables (``generate[]``) and nested mappings can only be set in
-        ``pyproject.toml``, so the flat forms are skipped for them.
+        ``STATIC`` fields (including arrays of tables and nested mappings,
+        which flat sources cannot express) are skipped.
         """
-        return "[]" not in self.name and _flat_expressible(self.field.type)
+        return self.scope is not FieldScope.STATIC
 
 
 def sanitize_default_field(text: str) -> str:
@@ -112,7 +91,7 @@ def sanitize_default_field(text: str) -> str:
 
 
 def is_optional(field: type) -> bool:
-    return get_origin(field) is typing.Union and NoneType in get_args(field)
+    return is_union_type(get_origin(field)) and NoneType in get_args(field)
 
 
 def get_display_type(field_type: type | str) -> str:
@@ -121,7 +100,7 @@ def get_display_type(field_type: type | str) -> str:
     if is_optional(field_type):
         # Special case for optional, we just take the first part
         return get_display_type(get_args(field_type)[0])
-    if get_origin(field_type) is typing.Union:
+    if is_union_type(get_origin(field_type)):
         return " | ".join(
             get_display_type(a) for a in get_args(field_type) if a is not NoneType
         )
@@ -139,9 +118,6 @@ def get_display_type(field_type: type | str) -> str:
         # Display the real inner type, not the annotation metadata (e.g.
         # ``Annotated[Dict[...], "EnvVar"]`` should show the dict, not "EnvVar").
         return get_display_type(get_args(field_type)[0])
-    if field_type is typing.Any:
-        # Workaround for python<3.10 where typing.Any.__name__ does not evaluate
-        return "Any"
     # Otherwise just get the formatted form of the `type` object
     return field_type.__name__
 
@@ -164,7 +140,9 @@ def get_choices(field_type: type | str) -> tuple[str, ...]:
     return ()
 
 
-def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
+def mk_docs(
+    dc: type[object], prefix: str = "", scope: FieldScope = FieldScope.ANY
+) -> Generator[DCDoc, None, None]:
     """
     Makes documentation for a dataclass.
     """
@@ -172,15 +150,20 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
     docs = pull_docs(dc)
 
     for field in dataclasses.fields(dc):
+        field_scope = field.metadata.get("scope", scope)
         field_type = field.type
         if dataclasses.is_dataclass(field_type) and isinstance(field_type, type):
-            yield from mk_docs(field_type, prefix=f"{prefix}{field.name}.")
+            yield from mk_docs(
+                field_type, prefix=f"{prefix}{field.name}.", scope=field_scope
+            )
             continue
 
         if get_origin(field.type) is list:
             field_type = get_args(field.type)[0]
             if dataclasses.is_dataclass(field_type) and isinstance(field_type, type):
-                yield from mk_docs(field_type, prefix=f"{prefix}{field.name}[].")
+                yield from mk_docs(
+                    field_type, prefix=f"{prefix}{field.name}[].", scope=field_scope
+                )
                 continue
 
         if default_before_format := field.metadata.get("display_default", None):
@@ -206,6 +189,6 @@ def mk_docs(dc: type[object], prefix: str = "") -> Generator[DCDoc, None, None]:
             docs=docs[field.name],
             field=field,
             deprecated=field.metadata.get("deprecated", False),
-            override_only=field.metadata.get("override_only", False),
+            scope=field_scope,
             choices=get_choices(field.type),
         )
