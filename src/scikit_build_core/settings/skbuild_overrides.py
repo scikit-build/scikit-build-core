@@ -441,6 +441,7 @@ def process_overrides(
                 current_state=state,
                 has_dist_info=has_dist_info,
                 retry=retry,
+                current_config_settings=config_settings,
                 **select,
             )
             unknown |= set(unknown_not)

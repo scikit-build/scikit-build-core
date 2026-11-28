@@ -479,6 +479,36 @@ def test_skbuild_overrides_not_mixed(
         assert not settings_reader.overridden_items
 
 
+def test_skbuild_overrides_not_config_setting(tmp_path: Path):
+    # if.not must resolve if.config-setting against the same declared
+    # config-settings that if and if.any see; otherwise every declared key
+    # looks undeclared and the override raises instead of matching.
+    pyproject_toml = tmp_path / "pyproject.toml"
+    pyproject_toml.write_text(
+        dedent(
+            """\
+            [tool.scikit-build.config-setting."zmq.debug"]
+            type = "bool"
+            default = false
+
+            [[tool.scikit-build.overrides]]
+            if.not.config-setting = {"zmq.debug" = true}
+            install.components = ["headers"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # The condition matches, so if.not rejects the override.
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.debug": "true"})
+    assert not settings_reader.settings.install.components
+    assert not settings_reader.overridden_items
+
+    # The condition does not match, so if.not applies it.
+    settings_reader = SettingsReader.from_file(pyproject_toml, {"zmq.debug": "false"})
+    assert settings_reader.settings.install.components == ["headers"]
+
+
 def test_skbuild_overrides_not_unknown(tmp_path: Path):
     pyproject_toml = tmp_path / "pyproject.toml"
     pyproject_toml.write_text(
